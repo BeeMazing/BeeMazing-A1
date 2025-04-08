@@ -7,35 +7,46 @@ const { connectDB } = require('./db');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+const corsOptions = {
+  origin: ['https://g4mechanger.github.io'],
+  methods: ['GET', 'POST'],
+  credentials: false,
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
-// 1. Serve static files (e.g., mobile folder HTML)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 2. Registration endpoint
+// Routes
 app.post('/register', async (req, res) => {
   const { email, password } = req.body;
-  const result = await registerUser(email, password);
-  res.json(result);
+  try {
+    const result = await registerUser(email, password);
+    res.json(result);
+  } catch (err) {
+    console.error("Registration error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 });
 
-// 3. Login endpoint
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  const db = await connectDB();
-  const users = db.collection('users');
+  try {
+    const db = await connectDB();
+    const users = db.collection('users');
+    const user = await users.findOne({ email });
 
-  const user = await users.findOne({ email });
+    if (!user || user.password !== password) {
+      return res.status(401).json({ success: false, message: "Invalid email or password" });
+    }
 
-  if (!user || user.password !== password) {
-    return res.status(401).json({ success: false, message: "Invalid email or password" });
+    res.json({ success: true, message: "Login successful" });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
-
-  res.json({ success: true, message: "Login successful" });
 });
 
-// 4. Get all users
 app.get('/users', async (req, res) => {
   try {
     const users = await getAllUsers();
@@ -45,15 +56,10 @@ app.get('/users', async (req, res) => {
   }
 });
 
-
-
 app.get("/", (req, res) => {
-    res.send("BeeMazing backend is working!");
-  });
+  res.send("BeeMazing backend is working!");
+});
 
-  
-  
-// ✅ Always put this at the end!
 app.listen(port, () => {
-  console.log(`✅ Server is running on http://localhost:${port}`);
+  console.log(`✅ Server running on http://localhost:${port}`);
 });

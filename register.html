@@ -66,7 +66,7 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register X1</h2> <!--heeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-->
+    <h2 id="formTitle">Register X2</h2>
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -99,7 +99,8 @@
       const endpoint = isRegistering ? "/register" : "/login";
 
       try {
-        const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
+        const apiURL = `https://beemazing.onrender.com${endpoint}`;
+        const res = await fetch(apiURL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
@@ -108,22 +109,18 @@
         const data = await res.json();
 
         if (res.ok && data.success) {
-  message.style.color = "#4CAF50";
-  message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
-
-  // Optionally set admin status here (based on your logic or a field in user data)
-  localStorage.setItem("isAdmin", "true");
-
-  // Redirect after short delay
-  setTimeout(() => {
-    window.location.href = "/BeeMazing-Y1/mobile/1-Home/home.html";
-  }, 1000);
-}
-else {
+          message.style.color = "#4CAF50";
+          message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
+          localStorage.setItem("isAdmin", "true");
+          setTimeout(() => {
+            window.location.href = "/BeeMazing-Y1/mobile/1-Home/home.html";
+          }, 1000);
+        } else {
           message.style.color = "#D32F2F";
           message.textContent = "❌ " + (data.message || "Something went wrong");
         }
       } catch (err) {
+        console.error(err);
         message.style.color = "#D32F2F";
         message.textContent = "❌ Error connecting to server";
       }
