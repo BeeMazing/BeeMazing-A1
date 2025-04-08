@@ -1,5 +1,4 @@
-// backend/register.js
-const { connectDB, client } = require('./db');
+const { connectDB } = require('./db');
 
 async function registerUser(email, password) {
   const db = await connectDB();
@@ -11,7 +10,6 @@ async function registerUser(email, password) {
   }
 
   const result = await users.insertOne({ email, password });
-  await client.close();
   return { success: true, id: result.insertedId };
 }
 
@@ -20,7 +18,6 @@ async function getAllUsers() {
   const users = db.collection('users');
 
   const allUsers = await users.find().toArray();
-  await client.close();
   return allUsers;
 }
 
