@@ -66,7 +66,7 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register 8</h2> <!--heeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-->
+    <h2 id="formTitle">Register 1</h2> <!--yeaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-->
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -100,36 +100,40 @@
 
       try {
         const apiURL = `https://beemazing.onrender.com${endpoint}`;
-console.log("▶ Sending request to:", apiURL);
+        console.log("▶ Sending request to:", apiURL);
 
-const res = await fetch(apiURL, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ email, password }),
-});
+        // Show a loading message to handle Render.com spin-up delay
+        message.style.color = "#FFC107";
+        message.textContent = "⏳ Connecting to server, please wait...";
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+
+        const res = await fetch(apiURL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
 
         const data = await res.json();
 
         if (res.ok && data.success) {
-  message.style.color = "#4CAF50";
-  message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
-
-  // Optionally set admin status here (based on your logic or a field in user data)
-  localStorage.setItem("isAdmin", "true");
-
-  // Redirect after short delay
-  setTimeout(() => {
-    window.location.href = "/BeeMazing-Y1/mobile/1-Home/home.html";
-  }, 1000);
-}
-else {
+          message.style.color = "#4CAF50";
+          message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
+          localStorage.setItem("isAdmin", "true");
+          setTimeout(() => {
+            window.location.href = "/BeeMazing-Y1/mobile/1-Home/home.html";
+          }, 1000);
+        } else {
           message.style.color = "#D32F2F";
           message.textContent = "❌ " + (data.message || "Something went wrong");
         }
       } catch (err) {
         message.style.color = "#D32F2F";
-        message.textContent = "❌ Error connecting to server";
+        message.textContent = "❌ " + (err.message === "Failed to fetch" ? "Error connecting to server" : err.message);
       }
     });
   </script>

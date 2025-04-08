@@ -1,3 +1,4 @@
+const bcrypt = require('bcrypt');
 const { connectDB } = require('./db');
 
 async function registerUser(email, password) {
@@ -9,7 +10,9 @@ async function registerUser(email, password) {
     return { success: false, message: "User already exists" };
   }
 
-  const result = await users.insertOne({ email, password });
+  // Hash the password before storing
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const result = await users.insertOne({ email, password: hashedPassword });
   return { success: true, id: result.insertedId };
 }
 

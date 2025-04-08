@@ -1,15 +1,23 @@
-// backend/db.js
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
-const uri = "mongodb+srv://g4mechanger888:wearewe12@beemazing.mniyzbt.mongodb.net/?retryWrites=true&w=majority&appName=BeeMazing";
+// Use environment variable for MongoDB URI, fallback to hardcoded value for local testing
+const uri = process.env.MONGODB_URI || "mongodb+srv://g4mechanger888:wearewe12@beemazing.mniyzbt.mongodb.net/?retryWrites=true&w=majority&appName=BeeMazing";
 
 const client = new MongoClient(uri, {
-  serverApi: ServerApiVersion.v1
+  serverApi: ServerApiVersion.v1,
+  connectTimeoutMS: 10000, // 10 seconds timeout
+  serverSelectionTimeoutMS: 10000 // 10 seconds timeout for server selection
 });
 
 async function connectDB() {
-  await client.connect();
-  return client.db("BeeMazingDB");
+  try {
+    await client.connect();
+    console.log("✅ Connected to MongoDB");
+    return client.db("BeeMazingDB");
+  } catch (err) {
+    console.error("❌ Failed to connect to MongoDB:", err);
+    throw err;
+  }
 }
 
 module.exports = { connectDB, client };
