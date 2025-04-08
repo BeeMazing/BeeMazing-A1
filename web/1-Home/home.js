@@ -1,5 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
 
+
+    const addUserModal = document.getElementById("inviteUserModal");
+
+
     const urlParams = new URLSearchParams(window.location.search);
 const adminFromURL = urlParams.get("admin");
 if (adminFromURL) {
@@ -82,7 +86,7 @@ if (!isAdmin && footer) {
     // Show the modal with a smooth animation when "Add Members" button is clicked
     if (addUserBtn && isAdmin) {
         addUserBtn.addEventListener("click", () => {
-            document.getElementById("inviteUserModal").style.display = "flex";
+            addUserModal.style.display = "flex";
         });
     }
     
@@ -94,6 +98,7 @@ if (!isAdmin && footer) {
             const name = document.getElementById("inviteName").value.trim();
             const tempPassword = document.getElementById("inviteTempPassword").value.trim();
             const currentAdmin = localStorage.getItem("currentAdminEmail");
+        
     
             if (!email || !name || !tempPassword) {
                 alert("Please fill out all fields.");
@@ -113,7 +118,7 @@ if (!isAdmin && footer) {
                 const inviteLink = `${window.location.origin}/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodedAdmin}&user=${encodedUser}`;
                 alert(`Invite sent to ${email}!\n\nShare this link with them:\n${inviteLink}`);
     
-                document.getElementById("inviteUserModal").style.display = "none";
+                addUserModal.style.display = "none"; // reuse variable
             } catch (err) {
                 console.error("Error sending invite:", err);
                 alert("Something went wrong. Try again.");
