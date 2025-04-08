@@ -357,6 +357,23 @@ body {
 
 
 
+#addUserBtn {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  background: red;
+  color: white;
+  border: none;
+  font-size: 32px;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  cursor: pointer;
+  z-index: 999;
+}
+
+
     </style>
 </head>
 <body>
@@ -449,5 +466,17 @@ body {
 
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     <script src="/BeeMazing-Y1/web/1-Home/home.js"></script>
+
+    <!-- 🎯 Invite User Modal -->
+<div id="inviteUserModal" class="modal" style="display:none;">
+    <div class="sell-modal-content">
+      <h3 style="margin-bottom: 12px;">Invite a New User</h3>
+      <input type="email" id="inviteEmail" placeholder="Email" required />
+      <input type="text" id="inviteName" placeholder="Name" required />
+      <input type="text" id="inviteTempPassword" placeholder="Temporary Password" required />
+      <button id="sendInviteBtn">Send Invite</button>
+    </div>
+  </div>
+  
 </body>
 </html>
