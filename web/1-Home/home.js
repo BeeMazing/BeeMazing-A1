@@ -44,7 +44,22 @@ if (!isAdmin && footer) {
     const basePath = isMobile ? "/BeeMazing-Y1/mobile" : "/web";
 
     // Load users from localStorage on page load
-    const currentAdmin = localStorage.getItem("currentAdminEmail");
+    let currentAdmin = null;
+
+    // Wait until currentAdminEmail is available in localStorage (max 2 sec)
+    const waitForAdmin = setInterval(() => {
+      const stored = localStorage.getItem("currentAdminEmail");
+      if (stored) {
+        clearInterval(waitForAdmin);
+        currentAdmin = stored;
+        fetchUsersFromServer(currentAdmin);
+        renderUsers();
+      }
+    }, 100);
+    
+    // Stop trying after 2 seconds to avoid infinite loop
+    setTimeout(() => clearInterval(waitForAdmin), 2000);
+    
 
     async function fetchUsersFromServer(email) {
         try {
@@ -69,10 +84,6 @@ if (!isAdmin && footer) {
       }
       
       
-      fetchUsersFromServer(currentAdmin); // 🔥 Call it
-      
-
-    renderUsers();
 
     // Show the modal with a smooth animation when "Add Members" button is clicked
     if (addUserBtn) {
