@@ -1,12 +1,12 @@
 // backend/db.js
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
-const uri = "mongodb+srv://g4mechanger888:wearewe12@beemazing.mniyzbt.mongodb.net/?retryWrites=true&w=majority&appName=BeeMazing";
+const uri = "mongodb+srv://g4mechanger888:pass123@beemazing.mniyzbt.mongodb.net/?retryWrites=true&w=majority&appName=BeeMazing";
 
 const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
-  tls: true, // ✅ Ensure TLS is used
-  tlsAllowInvalidCertificates: false, // ✅ Validate certificates (set to true only for testing)
+  tls: true,
+  tlsAllowInvalidCertificates: false, // Make sure certs are required and verified
   useNewUrlParser: true,
   useUnifiedTopology: true
 });
