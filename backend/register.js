@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs'); // Changed to bcryptjs
 const { connectDB } = require('./db');
 
 async function registerUser(email, password) {
