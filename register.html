@@ -66,7 +66,7 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register X2</h2>
+    <h2 id="formTitle">Register V1</h2>
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -99,8 +99,7 @@
       const endpoint = isRegistering ? "/register" : "/login";
 
       try {
-        const apiURL = `https://beemazing.onrender.com${endpoint}`;
-        const res = await fetch(apiURL, {
+        const res = await fetch(`http://localhost:3000${endpoint}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
@@ -111,16 +110,12 @@
         if (res.ok && data.success) {
           message.style.color = "#4CAF50";
           message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
-          localStorage.setItem("isAdmin", "true");
-          setTimeout(() => {
-            window.location.href = "/BeeMazing-Y1/mobile/1-Home/home.html";
-          }, 1000);
+          // Optional redirect here
         } else {
           message.style.color = "#D32F2F";
           message.textContent = "❌ " + (data.message || "Something went wrong");
         }
       } catch (err) {
-        console.error(err);
         message.style.color = "#D32F2F";
         message.textContent = "❌ Error connecting to server";
       }

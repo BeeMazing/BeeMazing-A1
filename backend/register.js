@@ -1,4 +1,4 @@
-const { connectDB, client } = require('./db');
+const { connectDB } = require('./db');
 
 async function registerUser(email, password) {
   const db = await connectDB();
@@ -16,10 +16,12 @@ async function registerUser(email, password) {
 async function getAllUsers() {
   const db = await connectDB();
   const users = db.collection('users');
-  return await users.find().toArray();
+
+  const allUsers = await users.find().toArray();
+  return allUsers;
 }
 
 module.exports = {
   registerUser,
-  getAllUsers,
+  getAllUsers
 };

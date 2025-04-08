@@ -7,44 +7,43 @@ const { connectDB } = require('./db');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// ✅ CORS for GitHub Pages
 const corsOptions = {
   origin: ['https://g4mechanger.github.io'],
   methods: ['GET', 'POST'],
-  credentials: false,
+  credentials: false
 };
-app.use(cors(corsOptions));
+app.use(cors(corsOptions)); // ✅ only once, with correct options!
+
 app.use(express.json());
 
+// ✅ Serve frontend files if any (optional)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Routes
+// ✅ API routes
 app.post('/register', async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const result = await registerUser(email, password);
-    res.json(result);
-  } catch (err) {
-    console.error("Registration error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
+    try {
+      const { email, password } = req.body;
+      const result = await registerUser(email, password);
+      res.json(result);
+    } catch (err) {
+      console.error("🔥 Error in /register:", err);
+      res.status(500).json({ success: false, message: "Server error during registration" });
+    }
+  });
 
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  try {
-    const db = await connectDB();
-    const users = db.collection('users');
-    const user = await users.findOne({ email });
+  const db = await connectDB();
+  const users = db.collection('users');
 
-    if (!user || user.password !== password) {
-      return res.status(401).json({ success: false, message: "Invalid email or password" });
-    }
+  const user = await users.findOne({ email });
 
-    res.json({ success: true, message: "Login successful" });
-  } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+  if (!user || user.password !== password) {
+    return res.status(401).json({ success: false, message: "Invalid email or password" });
   }
+
+  res.json({ success: true, message: "Login successful" });
 });
 
 app.get('/users', async (req, res) => {
@@ -56,10 +55,11 @@ app.get('/users', async (req, res) => {
   }
 });
 
+// ✅ Health check
 app.get("/", (req, res) => {
   res.send("BeeMazing backend is working!");
 });
 
 app.listen(port, () => {
-  console.log(`✅ Server running on http://localhost:${port}`);
+  console.log(`✅ Server is running on http://localhost:${port}`);
 });
