@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>BeeMazing 1 - Register / Login</title>
+  <title>BeeMazing 2 - Register / Login</title> <!--heeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-->
   <style>
     body {
       background: #1E1F26;
@@ -99,7 +99,7 @@
       const endpoint = isRegistering ? "/register" : "/login";
 
       try {
-        const res = await fetch(`http://localhost:3000${endpoint}`, {
+        const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
