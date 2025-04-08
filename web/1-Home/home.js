@@ -27,13 +27,7 @@ if (!isAdmin && footer) {
         addUserBtn.style.display = "none";
     }
 
-    const addUserModal = document.getElementById("addUserModal");
-    const submitUserBtn = document.getElementById("submitUserBtn");
-    if (!isAdmin && submitUserBtn) {
-        submitUserBtn.disabled = true;
-    }
 
-    const usernameInput = document.getElementById("usernameInput");
     const userList = document.getElementById("userList");
     const manageMembersBtn = document.getElementById("manageMembersBtn");
     const manageMembersModal = document.getElementById("manageMembersModal");
@@ -86,62 +80,47 @@ if (!isAdmin && footer) {
       
 
     // Show the modal with a smooth animation when "Add Members" button is clicked
-    if (addUserBtn) {
-        addUserBtn.addEventListener("click", function () {
-            if (isAdmin) {
-                addUserModal.classList.add("show");
-            }
+    if (addUserBtn && isAdmin) {
+        addUserBtn.addEventListener("click", () => {
+            document.getElementById("inviteUserModal").style.display = "flex";
         });
     }
+    
 
-
-    // Add user when "Add" button is clicked
-    if (submitUserBtn) {
-        submitUserBtn.addEventListener("click", async function () {
-            const username = usernameInput.value.trim();
-            const errorMessage = document.getElementById("errorMessage");
-
-            if (username) {
-                try {
-                    const res = await fetch("https://beemazing.onrender.com/add-user", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ adminEmail: currentAdmin, newUser: username })
-                    });
-            
-                    const result = await res.json();
-                    if (result.success) {
-                        usernameInput.value = "";
-                        addUserModal.classList.remove("show");
-                        errorMessage.style.display = "none";
-            
-                        // Reload from server to sync
-                        fetchUsersFromServer(currentAdmin);
-            
-                        if (manageMembersModal && manageMembersModal.classList.contains("show")) {
-                            renderManageMembers();
-                        }
-            
-                        const encodedAdmin = encodeURIComponent(currentAdmin);
-                        const encodedUser = encodeURIComponent(username);
-                        const inviteLink = `${window.location.origin}/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodedAdmin}&user=${encodedUser}`;
-                        alert(`Send this link to the user: ${inviteLink}`);
-                    } else {
-                        errorMessage.textContent = "Failed to add user.";
-                        errorMessage.style.display = "block";
-                    }
-                } catch (err) {
-                    console.error("Failed to add user:", err);
-                    errorMessage.textContent = "Server error. Please try again.";
-                    errorMessage.style.display = "block";
+    const sendInviteBtn = document.getElementById("sendInviteBtn");
+    if (sendInviteBtn) {
+        sendInviteBtn.addEventListener("click", async () => {
+            const email = document.getElementById("inviteEmail").value.trim();
+            const name = document.getElementById("inviteName").value.trim();
+            const tempPassword = document.getElementById("inviteTempPassword").value.trim();
+            const currentAdmin = localStorage.getItem("currentAdminEmail");
+    
+            if (!email || !name || !tempPassword) {
+                alert("Please fill out all fields.");
+                return;
+            }
+    
+            try {
+                const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                if (!allUserData[currentAdmin]) {
+                    allUserData[currentAdmin] = { users: [], permissions: {} };
                 }
-            } else {
-                errorMessage.textContent = "Please enter a valid user name.";
-                errorMessage.style.display = "block";
+                allUserData[currentAdmin].users.push(name);
+                localStorage.setItem("userData", JSON.stringify(allUserData));
+    
+                const encodedAdmin = encodeURIComponent(currentAdmin);
+                const encodedUser = encodeURIComponent(name);
+                const inviteLink = `${window.location.origin}/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodedAdmin}&user=${encodedUser}`;
+                alert(`Invite sent to ${email}!\n\nShare this link with them:\n${inviteLink}`);
+    
+                document.getElementById("inviteUserModal").style.display = "none";
+            } catch (err) {
+                console.error("Error sending invite:", err);
+                alert("Something went wrong. Try again.");
             }
-
         });
     }
+    
 
     // Close modal when clicking outside the modal content
     if (addUserModal) {
@@ -421,13 +400,6 @@ document.getElementById("changePasswordModal").addEventListener("click", (e) => 
 });
 
 
-
-
-
-// Show Invite Modal when "+" is clicked
-document.getElementById("addUserBtn").addEventListener("click", () => {
-    document.getElementById("inviteUserModal").style.display = "flex";
-  });
   
   // Close Invite Modal on outside click
   document.getElementById("inviteUserModal").addEventListener("click", (e) => {
@@ -436,41 +408,7 @@ document.getElementById("addUserBtn").addEventListener("click", () => {
     }
   });
   
-  // Handle Send Invite
-  document.getElementById("sendInviteBtn").addEventListener("click", async () => {
-    const email = document.getElementById("inviteEmail").value.trim();
-    const name = document.getElementById("inviteName").value.trim();
-    const tempPassword = document.getElementById("inviteTempPassword").value.trim();
-    const currentAdmin = localStorage.getItem("currentAdminEmail");
-  
-    if (!email || !name || !tempPassword) {
-      alert("Please fill out all fields.");
-      return;
-    }
-  
-    try {
-      // Save to your admin's local data (you can expand this later to hit your backend)
-      const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-      if (!allUserData[currentAdmin]) {
-        allUserData[currentAdmin] = { users: [], permissions: {} };
-      }
-      allUserData[currentAdmin].users.push(name);
-      localStorage.setItem("userData", JSON.stringify(allUserData));
-  
-      // ✅ Generate Invite Link
-      const encodedAdmin = encodeURIComponent(currentAdmin);
-      const encodedUser = encodeURIComponent(name);
-      const inviteLink = `${window.location.origin}/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodedAdmin}&user=${encodedUser}`;
-      alert(`Invite sent to ${email}!\n\nShare this link with them:\n${inviteLink}`);
-  
-      document.getElementById("inviteUserModal").style.display = "none";
-    } catch (err) {
-      console.error("Error sending invite:", err);
-      alert("Something went wrong. Try again.");
-    }
-  });
-  
-
+ 
 
 
 });
