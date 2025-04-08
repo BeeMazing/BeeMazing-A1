@@ -701,64 +701,6 @@
 
 
 
-
-
-
-
-
-.lucky-chest-card {
-    background: var(--card-bg);
-    border: 2px solid var(--border-dark);
-    border-radius: 12px;
-    padding: 15px 20px;
-    margin-top: 10px;
-    display: flex;
-    gap: 20px; /* increased spacing between image and text */
-    align-items: center;
-    justify-content: flex-start;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-
-.lucky-chest-card img {
-    width: 100px;
-    height: 100px;
-    object-fit: contain;
-    flex-shrink: 0;
-    border-radius: 12px;
-}
-
-.lucky-chest-card .info {
-    flex: 1;
-    padding-left: 10px;
-}
-
-.lucky-chest-card .info p {
-    margin: 0;
-    font-size: 15px;
-    color: var(--text-color);
-}
-
-.lucky-chest-progress {
-    font-weight: bold;
-    color: var(--text-color);
-    margin-top: 6px;
-}
-
-.lucky-chest-card:hover img {
-    animation: pulse 1s infinite;
-}
-
-.lucky-chest-card.locked img {
-    opacity: 0.8;
-    filter: grayscale(50%);
-}
-
-.pulse {
-    animation: pulse 1.2s ease-in-out infinite;
-}
-
-
-
 #changePasswordBtn {
     background: var(--primary-color);
     color: var(--secondary-color);
@@ -918,6 +860,9 @@
         
             const urlParams = new URLSearchParams(window.location.search);
             const userName = urlParams.get('user');
+const adminEmail = urlParams.get('admin');
+localStorage.setItem("currentAdminEmail", adminEmail);
+
             const addPoints = Number(urlParams.get('addPoints')) || 0;
         
 
@@ -1513,7 +1458,9 @@
         function showAdminControlsIfNeeded() {
             const urlParams = new URLSearchParams(window.location.search);
             const currentUser = urlParams.get('user');
-            const userPermissions = JSON.parse(localStorage.getItem("userPermissions") || "{}");
+            const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+const currentAdmin = localStorage.getItem("currentAdminEmail");
+const userPermissions = allUserData[currentAdmin]?.permissions || {};
             const isUserAdmin = userPermissions[currentUser] === "Admin";
             const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
             const changePasswordBtn = document.getElementById("changePasswordBtn");
@@ -1558,10 +1505,6 @@
             if (event.key === "isAdmin" || event.key === "userPermissions") {
                 showAdminControlsIfNeeded();
             }
-        });
-        
-        document.addEventListener("DOMContentLoaded", () => {
-            showAdminControlsIfNeeded();
         });
         </script>
 

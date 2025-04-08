@@ -1,6 +1,12 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-    
+    const urlParams = new URLSearchParams(window.location.search);
+const adminFromURL = urlParams.get("admin");
+if (adminFromURL) {
+    localStorage.setItem("currentAdminEmail", adminFromURL);
+}
+
+
     // Redirect to login if user not logged in
     if (localStorage.getItem("isAdmin") === null) {
         window.location.href = "/BeeMazing-Y1/login.html";
@@ -38,7 +44,10 @@ if (!isAdmin && footer) {
     const basePath = isMobile ? "/BeeMazing-Y1/mobile" : "/web";
 
     // Load users from localStorage on page load
-    const users = JSON.parse(localStorage.getItem("users")) || [];
+    const currentAdmin = localStorage.getItem("currentAdminEmail");
+const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+const users = allUserData[currentAdmin]?.users || [];
+
     renderUsers();
 
     // Show the modal with a smooth animation when "Add Members" button is clicked
@@ -58,8 +67,17 @@ if (!isAdmin && footer) {
             const errorMessage = document.getElementById("errorMessage");
 
             if (username) {
-                users.push(username);
-                localStorage.setItem("users", JSON.stringify(users));
+                const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+if (!allUserData[currentAdmin]) {
+    allUserData[currentAdmin] = { users: [] };
+}
+if (!allUserData[currentAdmin].permissions) {
+    allUserData[currentAdmin].permissions = {};
+}
+allUserData[currentAdmin].users.push(username);
+localStorage.setItem("userData", JSON.stringify(allUserData));
+
+
                 renderUsers();
                 usernameInput.value = "";
                 addUserModal.classList.remove("show");
@@ -72,6 +90,12 @@ if (!isAdmin && footer) {
                 errorMessage.textContent = "Please enter a valid user name.";
                 errorMessage.style.display = "block";
             }
+
+            const encodedAdmin = encodeURIComponent(currentAdmin);
+const encodedUser = encodeURIComponent(username);
+const inviteLink = `${window.location.origin}/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodedAdmin}&user=${encodedUser}`;
+alert(`Send this link to the user: ${inviteLink}`);
+
         });
     }
 
@@ -104,7 +128,9 @@ if (!isAdmin && footer) {
     // Function to render users in the main list
     function renderUsers() {
         const isAdmin = localStorage.getItem("isAdmin") === "true";
-        const userPermissions = JSON.parse(localStorage.getItem("userPermissions") || "{}");
+        const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+        const users = allUserData[currentAdmin]?.users || [];
+        const userPermissions = allUserData[currentAdmin]?.permissions || {};        
         userList.innerHTML = "";
         users.forEach((username) => {
             const newUserItem = document.createElement("li");
@@ -183,7 +209,11 @@ if (!isAdmin && footer) {
         if (!manageMembersList) return; // Skip if not in web version
 
         manageMembersList.innerHTML = "";
-        users.forEach((username, index) => {
+        const updatedUserData = JSON.parse(localStorage.getItem("userData")) || {};
+const updatedUsers = updatedUserData[currentAdmin]?.users || [];
+
+updatedUsers.forEach((username, index) => {
+
             const manageItem = document.createElement("li");
             manageItem.classList.add("manage-members-item");
 
@@ -192,11 +222,16 @@ if (!isAdmin && footer) {
             input.type = "text";
             input.value = username;
             input.addEventListener("change", function () {
-                users[index] = input.value.trim();
-                if (users[index] === "") {
-                    users.splice(index, 1); // Remove if the name is cleared
+                const newName = input.value.trim();
+                if (newName !== "") {
+                    updatedUsers[index] = newName;
+                } else {
+                    updatedUsers.splice(index, 1);
                 }
-                localStorage.setItem("users", JSON.stringify(users));
+                allUserData[currentAdmin].users = updatedUsers;
+                localStorage.setItem("userData", JSON.stringify(allUserData));
+                
+
                 renderUsers();
                 renderManageMembers();
             });
@@ -206,8 +241,11 @@ if (!isAdmin && footer) {
             deleteBtn.classList.add("delete-btn");
             deleteBtn.textContent = "Delete";
             deleteBtn.addEventListener("click", function () {
-                users.splice(index, 1);
-                localStorage.setItem("users", JSON.stringify(users));
+                updatedUsers.splice(index, 1);
+                allUserData[currentAdmin].users = updatedUsers;        
+                localStorage.setItem("userData", JSON.stringify(allUserData));
+                
+
                 renderUsers();
                 renderManageMembers();
             });
@@ -218,9 +256,9 @@ if (!isAdmin && footer) {
         });
 
         // Show a message if no users exist
-        if (users.length === 0) {
+        if (updatedUsers.length === 0) {
             manageMembersList.innerHTML = "<p>No members to manage.</p>";
-        }
+        }        
     }
 
 
@@ -233,9 +271,13 @@ function showConfirmModal(username) {
 
 document.getElementById("confirmYesBtn").addEventListener("click", () => {
     if (userToRemove) {
-        const users = JSON.parse(localStorage.getItem("users")) || [];
-        const updated = users.filter(user => user !== userToRemove);
-        localStorage.setItem("users", JSON.stringify(updated));
+
+const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+let users = allUserData[currentAdmin]?.users || [];
+users = users.filter(user => user !== userToRemove);
+allUserData[currentAdmin].users = users;
+localStorage.setItem("userData", JSON.stringify(allUserData));
+
         userToRemove = null;
         document.getElementById("confirmModal").classList.remove("show");
         location.reload(); // Reload to re-render the user list
@@ -272,18 +314,21 @@ function showPermissionModal(username) {
     selectedUserForPermission = username;
     permissionModalUser.textContent = `Permissions for ${username}`;
     
-    const userPermissions = JSON.parse(localStorage.getItem("userPermissions") || "{}");
+    const userPermissions = allUserData[currentAdmin]?.permissions || {};
     permissionSelect.value = userPermissions[username] || "User";
+    
 
     permissionModal.classList.add("show");
 }
 
 savePermissionBtn.addEventListener("click", () => {
-    const permissions = JSON.parse(localStorage.getItem("userPermissions") || "{}");
-    if (selectedUserForPermission) {
-        permissions[selectedUserForPermission] = permissionSelect.value;
-        localStorage.setItem("userPermissions", JSON.stringify(permissions));
-    }
+if (!allUserData[currentAdmin].permissions) {
+    allUserData[currentAdmin].permissions = {};
+}
+if (selectedUserForPermission) {
+    allUserData[currentAdmin].permissions[selectedUserForPermission] = permissionSelect.value;
+    localStorage.setItem("userData", JSON.stringify(allUserData));
+}
     permissionModal.classList.remove("show");
 });
 
