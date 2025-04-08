@@ -1,23 +1,17 @@
 {
   "name": "app-achieveit",
   "version": "1.0.0",
-  "description": "",
+  "description": "BeeMazing backend service",
   "main": "backend/server.js",
   "scripts": {
-    "start": "node backend/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node backend/server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.17.1",
-    "firebase": "^11.1.0",
-    "mongodb": "^6.15.0",
-    "bcryptjs": "^2.4.3"
-  },
-  "engines": {
-    "node": "18.x"
+    "express": "^5.1.0",
+    "mongodb": "^6.5.0"
   }
 }
