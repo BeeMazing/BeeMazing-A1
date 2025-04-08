@@ -45,8 +45,27 @@ if (!isAdmin && footer) {
 
     // Load users from localStorage on page load
     const currentAdmin = localStorage.getItem("currentAdminEmail");
-const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-const users = allUserData[currentAdmin]?.users || [];
+
+    async function fetchUsersFromServer(email) {
+        try {
+          const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(email)}`);
+          const data = await res.json();
+          if (data.success && data.users) {
+            const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+            if (!allUserData[email]) {
+              allUserData[email] = { users: [], permissions: {} };
+            }
+            allUserData[email].users = data.users;
+            localStorage.setItem("userData", JSON.stringify(allUserData));
+            renderUsers(); // ✅ Refresh the list now that it's synced
+          }
+        } catch (err) {
+          console.error("❌ Failed to fetch user list from server:", err);
+        }
+      }
+      
+      fetchUsersFromServer(currentAdmin); // 🔥 Call it
+      
 
     renderUsers();
 
@@ -313,13 +332,14 @@ let selectedUserForPermission = null;
 function showPermissionModal(username) {
     selectedUserForPermission = username;
     permissionModalUser.textContent = `Permissions for ${username}`;
-    
+
+    const allUserData = JSON.parse(localStorage.getItem("userData")) || {}; // ✅ NOW it's fresh
     const userPermissions = allUserData[currentAdmin]?.permissions || {};
     permissionSelect.value = userPermissions[username] || "User";
-    
 
     permissionModal.classList.add("show");
 }
+
 
 savePermissionBtn.addEventListener("click", () => {
 if (!allUserData[currentAdmin].permissions) {
