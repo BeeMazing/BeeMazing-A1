@@ -50,19 +50,24 @@ if (!isAdmin && footer) {
         try {
           const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(email)}`);
           const data = await res.json();
-          if (data.success && data.users) {
+      
+          if (data.success) {
             const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
             if (!allUserData[email]) {
               allUserData[email] = { users: [], permissions: {} };
             }
-            allUserData[email].users = data.users;
+      
+            allUserData[email].users = data.users || [];
+            allUserData[email].permissions = data.permissions || {};
+      
             localStorage.setItem("userData", JSON.stringify(allUserData));
-            renderUsers(); // ✅ Refresh the list now that it's synced
+            renderUsers(); // Refresh UI
           }
         } catch (err) {
           console.error("❌ Failed to fetch user list from server:", err);
         }
       }
+      
       
       fetchUsersFromServer(currentAdmin); // 🔥 Call it
       
@@ -81,34 +86,49 @@ if (!isAdmin && footer) {
 
     // Add user when "Add" button is clicked
     if (submitUserBtn) {
-        submitUserBtn.addEventListener("click", function () {
+        submitUserBtn.addEventListener("click", async function () {
             const username = usernameInput.value.trim();
             const errorMessage = document.getElementById("errorMessage");
 
             if (username) {
-                const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-if (!allUserData[currentAdmin]) {
-    allUserData[currentAdmin] = { users: [] };
-}
-if (!allUserData[currentAdmin].permissions) {
-    allUserData[currentAdmin].permissions = {};
-}
-allUserData[currentAdmin].users.push(username);
-localStorage.setItem("userData", JSON.stringify(allUserData));
-
-
-                renderUsers();
-                usernameInput.value = "";
-                addUserModal.classList.remove("show");
-                errorMessage.style.display = "none";
-                // Refresh the manage members modal if it's open
-                if (manageMembersModal && manageMembersModal.classList.contains("show")) {
-                    renderManageMembers();
+                try {
+                    const res = await fetch("https://beemazing.onrender.com/add-user", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ adminEmail: currentAdmin, newUser: username })
+                    });
+            
+                    const result = await res.json();
+                    if (result.success) {
+                        usernameInput.value = "";
+                        addUserModal.classList.remove("show");
+                        errorMessage.style.display = "none";
+            
+                        // Reload from server to sync
+                        fetchUsersFromServer(currentAdmin);
+            
+                        if (manageMembersModal && manageMembersModal.classList.contains("show")) {
+                            renderManageMembers();
+                        }
+            
+                        const encodedAdmin = encodeURIComponent(currentAdmin);
+                        const encodedUser = encodeURIComponent(username);
+                        const inviteLink = `${window.location.origin}/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodedAdmin}&user=${encodedUser}`;
+                        alert(`Send this link to the user: ${inviteLink}`);
+                    } else {
+                        errorMessage.textContent = "Failed to add user.";
+                        errorMessage.style.display = "block";
+                    }
+                } catch (err) {
+                    console.error("Failed to add user:", err);
+                    errorMessage.textContent = "Server error. Please try again.";
+                    errorMessage.style.display = "block";
                 }
             } else {
                 errorMessage.textContent = "Please enter a valid user name.";
                 errorMessage.style.display = "block";
             }
+            
 
             const encodedAdmin = encodeURIComponent(currentAdmin);
 const encodedUser = encodeURIComponent(username);
