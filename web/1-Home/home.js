@@ -342,15 +342,17 @@ function showPermissionModal(username) {
 
 
 savePermissionBtn.addEventListener("click", () => {
-if (!allUserData[currentAdmin].permissions) {
-    allUserData[currentAdmin].permissions = {};
-}
-if (selectedUserForPermission) {
-    allUserData[currentAdmin].permissions[selectedUserForPermission] = permissionSelect.value;
-    localStorage.setItem("userData", JSON.stringify(allUserData));
-}
+    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+    if (!allUserData[currentAdmin].permissions) {
+      allUserData[currentAdmin].permissions = {};
+    }
+    if (selectedUserForPermission) {
+      allUserData[currentAdmin].permissions[selectedUserForPermission] = permissionSelect.value;
+      localStorage.setItem("userData", JSON.stringify(allUserData));
+    }
     permissionModal.classList.remove("show");
-});
+  });
+  
 
 permissionModal.addEventListener("click", (e) => {
     if (e.target === permissionModal) {
