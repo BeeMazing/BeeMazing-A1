@@ -66,7 +66,7 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register Z1</h2>
+    <h2 id="formTitle">Register Z2</h2>
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -81,36 +81,39 @@
 
   <script>
     let isRegistering = true;
-
+  
     const form = document.getElementById("authForm");
     const message = document.getElementById("message");
-
+  
     function toggleForm() {
       isRegistering = !isRegistering;
       document.getElementById("formTitle").textContent = isRegistering ? "Register" : "Login";
       document.getElementById("submitBtn").textContent = isRegistering ? "Register" : "Login";
       document.getElementById("toggleText").textContent = isRegistering ? "Already have an account?" : "Don't have an account?";
     }
-
+  
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
       const endpoint = isRegistering ? "/register" : "/login";
-
+  
       try {
         const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
         });
-
+  
         const data = await res.json();
-
+  
         if (res.ok && data.success) {
           message.style.color = "#4CAF50";
           message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
-          // Optional redirect here
+          
+          setTimeout(() => {
+            window.location.href = "BeeMazing-Y1/mobile/1-Home/home.html";
+          }, 1000);
         } else {
           message.style.color = "#D32F2F";
           message.textContent = "❌ " + (data.message || "Something went wrong");
@@ -121,5 +124,6 @@
       }
     });
   </script>
+  
 </body>
 </html>
