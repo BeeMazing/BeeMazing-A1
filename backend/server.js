@@ -45,6 +45,14 @@ app.get('/users', async (req, res) => {
   }
 });
 
+
+
+app.get("/", (req, res) => {
+    res.send("BeeMazing backend is working!");
+  });
+
+  
+  
 // ✅ Always put this at the end!
 app.listen(port, () => {
   console.log(`✅ Server is running on http://localhost:${port}`);
