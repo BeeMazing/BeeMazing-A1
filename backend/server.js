@@ -1,12 +1,11 @@
-// backend/server.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { registerUser, getAllUsers } = require('./register');
-const { connectDB } = require('./db'); // ✅ Don't forget this
+const { connectDB } = require('./db');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -46,6 +45,7 @@ app.get('/users', async (req, res) => {
   }
 });
 
+// ✅ Always put this at the end!
 app.listen(port, () => {
   console.log(`✅ Server is running on http://localhost:${port}`);
 });
