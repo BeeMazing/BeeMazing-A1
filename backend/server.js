@@ -7,20 +7,26 @@ const { connectDB } = require('./db');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+// ✅ CORS for GitHub Pages
+const corsOptions = {
+  origin: ['https://g4mechanger.github.io'],
+  methods: ['GET', 'POST'],
+  credentials: false
+};
+app.use(cors(corsOptions)); // ✅ only once, with correct options!
+
 app.use(express.json());
 
-// 1. Serve static files (e.g., mobile folder HTML)
+// ✅ Serve frontend files if any (optional)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 2. Registration endpoint
+// ✅ API routes
 app.post('/register', async (req, res) => {
   const { email, password } = req.body;
   const result = await registerUser(email, password);
   res.json(result);
 });
 
-// 3. Login endpoint
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const db = await connectDB();
@@ -35,7 +41,6 @@ app.post('/login', async (req, res) => {
   res.json({ success: true, message: "Login successful" });
 });
 
-// 4. Get all users
 app.get('/users', async (req, res) => {
   try {
     const users = await getAllUsers();
@@ -45,15 +50,11 @@ app.get('/users', async (req, res) => {
   }
 });
 
-
-
+// ✅ Health check
 app.get("/", (req, res) => {
-    res.send("BeeMazing backend is working!");
-  });
+  res.send("BeeMazing backend is working!");
+});
 
-  
-  
-// ✅ Always put this at the end!
 app.listen(port, () => {
   console.log(`✅ Server is running on http://localhost:${port}`);
 });
