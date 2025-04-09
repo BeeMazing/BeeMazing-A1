@@ -3,6 +3,8 @@ const cors = require('cors');
 const path = require('path');
 const { registerUser, getAllUsers } = require('./register');
 const { connectDB } = require('./db');
+const nodemailer = require('nodemailer');
+require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -21,61 +23,50 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ✅ REGISTER
 app.post('/register', async (req, res) => {
-    try {
-      const { email, password } = req.body;
-  
-      console.log("📨 Registering admin:", email); // 👉 LOG before registration
-  
-      const result = await registerUser(email, password);
-  
-      console.log("✅ Registered admin:", result); // 👉 LOG result
-  
-      res.json({ ...result, role: "admin" }); // ✅ Include role
-    } catch (err) {
-      console.error("🔥 Error in /register:", err);
-      res.status(500).json({ success: false, message: "Server error during registration" });
-    }
-  });
-  
+  try {
+    const { email, password } = req.body;
+    console.log("📨 Registering admin:", email);
+    const result = await registerUser(email, password);
+    console.log("✅ Registered admin:", result);
+    res.json({ ...result, role: "admin", success: true });
+  } catch (err) {
+    console.error("🔥 Error in /register:", err);
+    res.status(500).json({ success: false, message: "Server error during registration" });
+  }
+});
 
 // ✅ LOGIN
 app.post('/login', async (req, res) => {
-    const { email, password, adminEmail } = req.body;
-    const db = await connectDB();
-    const users = db.collection('users');
-    const adminUsers = db.collection('adminUsers');
-  
-    // 1. Try to log in as an admin
-    const user = await users.findOne({ email });
-  
-    if (user && user.password === password) {
-        console.log("👑 Admin login:", email); // Log for confirmation
-        return res.json({ success: true, role: "admin", message: "Login successful" });
-      }
-      
-  
-    // 2. Try to log in as an invited user under admin
-    const invited = await adminUsers.findOne({ email: adminEmail });
-    const matchingUser = Object.entries(invited?.passwords || {}).find(
-      ([username, storedPass]) => storedPass === password && invited.users.includes(username)
-    );
-  
-    if (matchingUser) {
-        const [username] = matchingUser;
-        console.log("👤 Invited user login:", username);
-        return res.json({
-          success: true,
-          role: "user",
-          username: username,
-          message: "Login successful"
-        });
-      }
-      
-      
-  
-    res.status(401).json({ success: false, message: "Invalid credentials" });
-  });
-  
+  const { email, password, adminEmail } = req.body;
+  const db = await connectDB();
+  const users = db.collection('users');
+  const adminUsers = db.collection('adminUsers');
+
+  const user = await users.findOne({ email });
+
+  if (user && user.password === password) {
+    console.log("👑 Admin login:", email);
+    return res.json({ success: true, role: "admin", message: "Login successful" });
+  }
+
+  const invited = await adminUsers.findOne({ email: adminEmail });
+  const matchingUser = Object.entries(invited?.passwords || {}).find(
+    ([username, storedPass]) => storedPass === password && invited.users.includes(username)
+  );
+
+  if (matchingUser) {
+    const [username] = matchingUser;
+    console.log("👤 Invited user login:", username);
+    return res.json({
+      success: true,
+      role: "user",
+      username: username,
+      message: "Login successful"
+    });
+  }
+
+  res.status(401).json({ success: false, message: "Invalid credentials" });
+});
 
 // ✅ GET ALL REGISTERED USERS (Not user-added ones)
 app.get('/users', async (req, res) => {
@@ -98,7 +89,6 @@ app.get('/get-users', async (req, res) => {
   try {
     const db = await connectDB();
     const adminUsers = db.collection('adminUsers');
-
     const adminDoc = await adminUsers.findOne({ email: adminEmail });
 
     res.json({
@@ -114,50 +104,35 @@ app.get('/get-users', async (req, res) => {
 
 // ✅ ADD NEW USER TO SPECIFIC ADMIN
 app.post('/add-user', async (req, res) => {
-    const { adminEmail, newUser, tempPassword } = req.body;
-  
-    if (!adminEmail || !newUser || !tempPassword) {
-      return res.status(400).json({ success: false, message: "Missing data" });
-    }
-  
-    try {
-      const db = await connectDB();
-      const adminUsers = db.collection('adminUsers');
-  
-      // Add user and their password (per-admin scope)
-      await adminUsers.updateOne(
-        { email: adminEmail },
-        {
-          $addToSet: { users: newUser },
-          $set: { [`passwords.${newUser}`]: tempPassword }
-        },
-        { upsert: true }
-      );
-  
-      res.json({ success: true });
-    } catch (err) {
-      console.error("🔥 Error in /add-user:", err);
-      res.status(500).json({ success: false, message: "Failed to save user" });
-    }
-  });
-  
+  const { adminEmail, newUser, tempPassword } = req.body;
 
-// ✅ HEALTH CHECK
-app.get("/", (req, res) => {
-  res.send("BeeMazing backend is working!");
+  if (!adminEmail || !newUser || !tempPassword) {
+    return res.status(400).json({ success: false, message: "Missing data" });
+  }
+
+  try {
+    const db = await connectDB();
+    const adminUsers = db.collection('adminUsers');
+
+    await adminUsers.updateOne(
+      { email: adminEmail },
+      {
+        $addToSet: { users: newUser },
+        $set: { [`passwords.${newUser}`]: tempPassword }
+      },
+      { upsert: true }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("🔥 Error in /add-user:", err);
+    res.status(500).json({ success: false, message: "Failed to save user" });
+  }
 });
 
-app.listen(port, () => {
-  console.log(`✅ Server is running on http://localhost:${port}`);
-});
-
-
-const nodemailer = require('nodemailer');
-require('dotenv').config();
-
+// ✅ EMAIL INVITE
 app.post('/send-invite', async (req, res) => {
   const { toEmail, name, tempPassword, adminEmail } = req.body;
-
   const inviteLink = `https://g4mechanger.github.io/BeeMazing-Y1/register.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(name)}`;
 
   const transporter = nodemailer.createTransport({
@@ -190,4 +165,13 @@ app.post('/send-invite', async (req, res) => {
     console.error("Email failed:", err);
     res.status(500).json({ success: false, error: "Failed to send email." });
   }
+});
+
+// ✅ HEALTH CHECK
+app.get("/", (req, res) => {
+  res.send("BeeMazing backend is working!");
+});
+
+app.listen(port, () => {
+  console.log(`✅ Server is running on http://localhost:${port}`);
 });
