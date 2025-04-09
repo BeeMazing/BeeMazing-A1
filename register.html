@@ -66,7 +66,7 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register 2</h2>
+    <h2 id="formTitle">Register Z8</h2>
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -110,6 +110,10 @@
         if (res.ok && data.success) {
           message.style.color = "#4CAF50";
           message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
+
+            // 👇 ADD THIS TO FLAG THE ADMIN
+  localStorage.setItem("isAdmin", "true");
+  localStorage.setItem("currentAdminEmail", email); // Also ensures the email is saved
           
           setTimeout(() => {
             window.location.href = "mobile/1-Home/home.html";
