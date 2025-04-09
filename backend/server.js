@@ -21,15 +21,22 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ✅ REGISTER
 app.post('/register', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const result = await registerUser(email, password);
-    res.json(result);
-  } catch (err) {
-    console.error("🔥 Error in /register:", err);
-    res.status(500).json({ success: false, message: "Server error during registration" });
-  }
-});
+    try {
+      const { email, password } = req.body;
+  
+      console.log("📨 Registering admin:", email); // 👉 LOG before registration
+  
+      const result = await registerUser(email, password);
+  
+      console.log("✅ Registered admin:", result); // 👉 LOG result
+  
+      res.json({ ...result, role: "admin" }); // ✅ Include role
+    } catch (err) {
+      console.error("🔥 Error in /register:", err);
+      res.status(500).json({ success: false, message: "Server error during registration" });
+    }
+  });
+  
 
 // ✅ LOGIN
 app.post('/login', async (req, res) => {
