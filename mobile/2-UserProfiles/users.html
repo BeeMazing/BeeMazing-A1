@@ -959,6 +959,8 @@
                     `;
     
                     function getCurrentTurn(task, selectedDate) {
+  if (!task.startDate || !task.users?.length) return task.users?.[0] || "";
+
   const startDate = new Date(task.startDate);
   const currentDate = new Date(selectedDate || new Date().toISOString().split("T")[0]);
   const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
@@ -966,6 +968,7 @@
   return task.users[userIndex];
 }
 
+                    const currentTurn = task.tempTurnReplacement?.replacement || getCurrentTurn(task, selectedDate);
                     const remainingForUser = completedUsers.filter(u => u === userName).length;
     
                     const canFinish = isToday && currentTurn === userName && remainingForUser < requiredTimes;
