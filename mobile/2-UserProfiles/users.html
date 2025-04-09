@@ -927,7 +927,20 @@
     console.error("Failed to fetch tasks from server:", err);
 }
     
-            const userTasks = tasks.filter(task => task.users?.includes(userName));
+const userTasks = tasks.filter(task => {
+    if (!task.users?.includes(userName)) return false;
+
+    // Check if this is the correct day for this user based on rotation
+    const selected = selectedDate || new Date().toLocaleDateString("sv-SE");
+    const startDate = new Date(task.startDate || selected);
+    const currentDate = new Date(selected);
+    const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+    const userIndex = diffDays % task.users.length;
+    const turnUser = task.users[userIndex];
+
+    return turnUser === userName;
+});
+
             if (userTasks.length === 0) {
                 userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
             } else {
@@ -1089,11 +1102,11 @@
     const remainingTurns = requiredTimes - completedUsers.length;
 
     let nextTurn = [];
-    let index = currentIndex;
-    for (let i = 0; i < remainingTurns - 1; i++) {
-        index = (index + 1) % userOrder.length;
-        nextTurn.push(userOrder[index]);
-    }
+let index = currentIndex;
+for (let i = 1; i < task.users.length; i++) {
+    index = (currentIndex + i) % task.users.length;
+    nextTurn.push(userOrder[index]);
+}
 
     let taskDetails = "";
 
