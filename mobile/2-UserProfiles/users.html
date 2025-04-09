@@ -968,7 +968,7 @@
                         finishedButton.className = "finished-btn";
                         finishedButton.onclick = (e) => {
                             e.stopPropagation();
-                            finishTask(userName, task, finishedButton, selectedDate);
+                            finishTask(task, userName, selectedDate);
                         };
                         taskDiv.appendChild(finishedButton);
                     }
