@@ -66,7 +66,7 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register 2</h2>
+    <h2 id="formTitle">Register Z111111111</h2>
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -112,8 +112,8 @@
 
       try {
         const body = isRegistering
-          ? { email, password } // Only email/password for admin registration
-          : { email, password, adminEmail: invitedAdmin || email }; // Only needed on login
+          ? { email, password }
+          : { email, password, adminEmail: invitedAdmin || email };
 
         console.log("📤 Sending request to:", endpoint, "with body:", body);
 
@@ -152,12 +152,12 @@
             }, 1000);
           } else {
             // Non-invited user login or invalid scenario
-            console.log("❌ Invalid login scenario");
+            console.log("❌ Invalid login scenario - role:", data.role);
             message.style.color = "#D32F2F";
             message.textContent = "❌ Please use the invite link to log in as a user, or register/login as an admin.";
           }
         } else {
-          console.log("❌ Request failed:", data.message);
+          console.log("❌ Request failed - status:", res.status, "data:", data);
           message.style.color = "#D32F2F";
           message.textContent = "❌ " + (data.message || "Something went wrong");
         }

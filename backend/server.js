@@ -44,26 +44,54 @@ app.post('/login', async (req, res) => {
   try {
     const { email, password, adminEmail } = req.body;
     if (!email || !password || !adminEmail) {
-      console.log("❌ Missing required fields in /login request");
+      console.log("❌ Missing required fields in /login request:", { email, password, adminEmail });
       return res.status(400).json({ success: false, message: "Missing required fields" });
     }
 
     console.log(`🔍 Attempting login - email: ${email}, adminEmail: ${adminEmail}`);
 
-    const db = await connectDB();
+    let db;
+    try {
+      db = await connectDB();
+    } catch (dbErr) {
+      console.error("❌ Failed to connect to database:", dbErr);
+      return res.status(500).json({ success: false, message: "Database connection failed" });
+    }
+
     const users = db.collection('users');
     const adminUsers = db.collection('adminUsers');
 
     // 1. Try to log in as an admin
-    const user = await users.findOne({ email });
+    console.log(`🔍 Checking admin login for email: ${email}`);
+    let user;
+    try {
+      user = await users.findOne({ email });
+      console.log(`🔍 Admin user lookup result for ${email}:`, user ? "Found" : "Not found");
+    } catch (err) {
+      console.error(`❌ Error querying users collection for email ${email}:`, err);
+      return res.status(500).json({ success: false, message: "Error querying users" });
+    }
 
     if (user && user.password === password) {
       console.log("👑 Admin login successful:", email);
-      return res.json({ success: true, role: "admin" }); // No username for admins
+      return res.json({ success: true, role: "admin" });
+    } else if (user) {
+      console.log(`❌ Password mismatch for admin user ${email}`);
+    } else {
+      console.log(`❌ Admin user ${email} not found in users collection`);
     }
 
     // 2. Try to log in as an invited user under admin
-    const invited = await adminUsers.findOne({ email: adminEmail });
+    console.log(`🔍 Checking invited user login for adminEmail: ${adminEmail}`);
+    let invited;
+    try {
+      invited = await adminUsers.findOne({ email: adminEmail });
+      console.log(`🔍 Invited user lookup result for adminEmail ${adminEmail}:`, invited ? "Found" : "Not found");
+    } catch (err) {
+      console.error(`❌ Error querying adminUsers collection for adminEmail ${adminEmail}:`, err);
+      return res.status(500).json({ success: false, message: "Error querying admin users" });
+    }
+
     if (!invited) {
       console.log(`❌ No admin found with adminEmail: ${adminEmail}`);
       return res.status(401).json({ success: false, message: "Invalid admin email" });
@@ -81,7 +109,7 @@ app.post('/login', async (req, res) => {
     if (matchingUser) {
       const [username] = matchingUser;
       console.log("👤 Invited user login successful:", username);
-      return res.json({ success: true, role: "user", username }); // Username only for invited users
+      return res.json({ success: true, role: "user", username });
     }
 
     console.log("❌ Invalid credentials for email:", email);
@@ -98,7 +126,7 @@ app.get('/users', async (req, res) => {
     const users = await getAllUsers();
     res.json(users);
   } catch (err) {
-    console.error("🔥 Error in /users:", err);
+    console.error("�fire Error in /users:", err);
     res.status(500).json({ error: 'Failed to fetch users' });
   }
 });
