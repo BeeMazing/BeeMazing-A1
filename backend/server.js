@@ -1,35 +1,35 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const nodemailer = require('nodemailer');
 const { registerUser, getAllUsers } = require('./register');
 const { connectDB } = require('./db');
-const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// CORS for GitHub Pages
+// ✅ CORS for GitHub Pages
 const corsOptions = {
-  origin: ['https://g4mechanger.github.io', 'http://localhost:3000'],
+  origin: ['https://g4mechanger.github.io'],
   methods: ['GET', 'POST'],
-  credentials: false,
+  credentials: false
 };
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Serve static files (optional)
+// ✅ Serve static files (optional)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// REGISTER
+// ✅ REGISTER ADMIN
 app.post('/register', async (req, res) => {
   try {
     const { email, password } = req.body;
 
     console.log("📨 Registering admin:", email);
-    const result = await registerUser(email, password);
-
+    const result = await registerUser(email, password); // likely stores in adminUsers
     console.log("✅ Registered admin:", result);
+
     res.json({ ...result, role: "admin", success: true });
   } catch (err) {
     console.error("🔥 Error in /register:", err);
@@ -37,75 +37,38 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// LOGIN (Updated with more robust error handling)
+// ✅ LOGIN (supports admin + invited user)
 app.post('/login', async (req, res) => {
   try {
-    // Validate request body
     const { email, password, adminEmail } = req.body;
-    if (!email || !password || !adminEmail) {
-      console.log("❌ Missing required fields in /login request");
-      return res.status(400).json({ success: false, message: "Missing required fields" });
-    }
-
-    console.log(`🔍 Attempting login - email: ${email}, adminEmail: ${adminEmail}`);
-
-    // Connect to the database
-    let db;
-    try {
-      db = await connectDB();
-    } catch (dbErr) {
-      console.error("❌ Failed to connect to database:", dbErr);
-      return res.status(500).json({ success: false, message: "Database connection failed" });
-    }
-
+    const db = await connectDB();
     const users = db.collection('users');
     const adminUsers = db.collection('adminUsers');
 
-    // 1. Admin login
-    console.log(`🔍 Checking admin login for email: ${email}`);
-    let user;
-    try {
-      user = await users.findOne({ email });
-    } catch (err) {
-      console.error(`❌ Error querying users collection for email: ${email}`, err);
-      return res.status(500).json({ success: false, message: "Error querying users collection" });
-    }
-
+    // ✅ 1. Admin login from "users" collection
+    const user = await users.findOne({ email });
     if (user && user.password === password) {
-      console.log("👑 Admin login successful:", email);
+      console.log("👑 Admin login (users):", email);
       return res.json({ success: true, role: "admin", message: "Login successful" });
-    } else {
-      console.log(`❌ No admin found or password mismatch for email: ${email}`);
     }
 
-    // 2. Invited user login
-    console.log(`🔍 Checking invited user for adminEmail: ${adminEmail}`);
-    let invited;
-    try {
-      invited = await adminUsers.findOne({ email: adminEmail });
-    } catch (err) {
-      console.error(`❌ Error querying adminUsers collection for adminEmail: ${adminEmail}`, err);
-      return res.status(500).json({ success: false, message: "Error querying adminUsers collection" });
+    // ✅ 2. Admin login from "adminUsers" collection
+    const admin = await adminUsers.findOne({ email });
+    if (admin && admin.password === password) {
+      console.log("👑 Admin login (adminUsers):", email);
+      return res.json({ success: true, role: "admin", message: "Login successful" });
     }
 
-    if (!invited) {
-      console.log(`❌ No admin found with adminEmail: ${adminEmail}`);
-      return res.status(401).json({ success: false, message: "Invalid admin email" });
-    }
-
-    if (!invited.passwords || !invited.users) {
-      console.log(`❌ Admin ${adminEmail} has no passwords or users`);
-      return res.status(401).json({ success: false, message: "No users associated with this admin" });
-    }
-
-    const match = Object.entries(invited.passwords).find(
+    // ✅ 3. Invited user login under specific admin
+    const invited = await adminUsers.findOne({ email: adminEmail });
+    const match = Object.entries(invited?.passwords || {}).find(
       ([username, storedPass]) =>
         storedPass === password && invited.users.includes(username)
     );
 
     if (match) {
       const [username] = match;
-      console.log("👤 Invited user login successful:", username);
+      console.log("👤 Invited user login:", username);
       return res.json({
         success: true,
         role: "user",
@@ -114,15 +77,14 @@ app.post('/login', async (req, res) => {
       });
     }
 
-    console.log(`❌ No matching user or password for adminEmail: ${adminEmail}`);
     return res.status(401).json({ success: false, message: "Invalid credentials" });
   } catch (err) {
-    console.error("🔥 Unexpected error in /login:", err);
-    res.status(500).json({ success: false, message: "Unexpected server error during login", error: err.message });
+    console.error("🔥 Error in /login:", err);
+    res.status(500).json({ success: false, message: "Server error during login" });
   }
 });
 
-// GET ALL REGISTERED USERS (Admins)
+// ✅ GET ALL REGISTERED ADMINS
 app.get('/users', async (req, res) => {
   try {
     const users = await getAllUsers();
@@ -132,7 +94,7 @@ app.get('/users', async (req, res) => {
   }
 });
 
-// GET USERS ADDED BY SPECIFIC ADMIN
+// ✅ GET USERS ADDED BY SPECIFIC ADMIN
 app.get('/get-users', async (req, res) => {
   const { adminEmail } = req.query;
 
@@ -156,7 +118,7 @@ app.get('/get-users', async (req, res) => {
   }
 });
 
-// ADD NEW USER TO SPECIFIC ADMIN
+// ✅ ADD NEW USER TO SPECIFIC ADMIN
 app.post('/add-user', async (req, res) => {
   const { adminEmail, newUser, tempPassword } = req.body;
 
@@ -184,7 +146,7 @@ app.post('/add-user', async (req, res) => {
   }
 });
 
-// EMAIL INVITE
+// ✅ SEND INVITE EMAIL
 app.post('/send-invite', async (req, res) => {
   const { toEmail, name, tempPassword, adminEmail } = req.body;
 
@@ -222,12 +184,12 @@ app.post('/send-invite', async (req, res) => {
   }
 });
 
-// HEALTH CHECK
+// ✅ HEALTH CHECK
 app.get("/", (req, res) => {
   res.send("🐝 BeeMazing backend is running!");
 });
 
-// Start server
+// ✅ START SERVER
 app.listen(port, () => {
   console.log(`✅ Server is running on http://localhost:${port}`);
 });

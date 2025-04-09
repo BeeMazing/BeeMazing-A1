@@ -113,7 +113,7 @@
         });
 
         const data = await res.json();
-        console.log("📥 Response:", data);
+        console.log("📥 Login response:", data);
 
         if (res.ok && data.success) {
           message.style.color = "#4CAF50";
@@ -135,17 +135,16 @@
               window.location.href = `mobile/2-UserProfiles/users.html?admin=${cleanAdmin}&user=${cleanUser}`;
             }, 1000);
           } else {
-            throw new Error("Unexpected response format");
+            throw new Error("Unexpected login response format");
           }
         } else {
-          // Display the server's error message if available
           message.style.color = "#D32F2F";
-          message.textContent = `❌ ${data.message || "Something went wrong"}`;
+          message.textContent = "❌ " + (data.message || "Something went wrong");
         }
       } catch (err) {
-        console.error("❌ Fetch error:", err);
+        console.error("❌ Login error:", err);
         message.style.color = "#D32F2F";
-        message.textContent = "❌ Failed to connect to server. Please check your network or try again later.";
+        message.textContent = "❌ Error connecting to server";
       }
     });
   </script>
