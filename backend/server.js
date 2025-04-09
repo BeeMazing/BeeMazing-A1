@@ -59,9 +59,11 @@ app.post('/login', async (req, res) => {
     );
   
     if (matchingUser) {
-      const [username] = matchingUser;
-      return res.json({ success: true, role: "user", username });
-    }
+        const [username] = matchingUser;
+        console.log("👤 Invited user login:", username);
+        return res.json({ success: true, role: "user", username: username });
+      }
+      
   
     res.status(401).json({ success: false, message: "Invalid credentials" });
   });
