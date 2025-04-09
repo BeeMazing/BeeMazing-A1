@@ -1627,18 +1627,31 @@
   if (!task.completions) task.completions = {};
   if (!task.completions[today]) task.completions[today] = [];
 
-  // 📆 Determine how many completions are needed
+  // ✅ Move this block up FIRST
   let requiredTimes = 1;
   if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
   if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
   if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-  // 🔁 Avoid over-completion
   const userCompletionsToday = task.completions[today].filter(u => u === currentUser).length;
   if (userCompletionsToday >= requiredTimes) return;
 
   // ✅ Mark user as completed
   task.completions[today].push(currentUser);
+
+  // 🔁 Rotate turn to next user if needed
+  const totalCompletions = task.completions[today].length;
+  if (totalCompletions < requiredTimes) {
+    const currentIndex = task.users.indexOf(currentUser);
+    const nextUser = task.users[(currentIndex + 1) % task.users.length];
+
+    task.tempTurnReplacement = {
+      original: task.tempTurnReplacement?.original || currentUser,
+      replacement: nextUser,
+    };
+  } else {
+    delete task.tempTurnReplacement;
+  }
 
   // 💾 Save to backend
   await saveTaskToBackend(task);
@@ -1651,7 +1664,6 @@
   rewards[rewardTarget] = (rewards[rewardTarget] || 0) + Number(task.reward || 0);
   localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
 
-  // 🐝 Update chests and UI
   updateLuckyChestProgress(rewardTarget, Number(task.reward || 0));
   triggerHoneyRain(Number(task.reward || 0));
 
