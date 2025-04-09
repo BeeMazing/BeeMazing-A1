@@ -26,32 +26,21 @@ app.post('/register', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: "Email and password are required" });
-    }
-
     console.log("📨 Registering admin:", email);
     const result = await registerUser(email, password);
-
-    if (result && result.error === "user_exists") {
-      return res.status(400).json({ success: false, message: "User already exists" });
-    }
 
     console.log("✅ Registered admin:", result);
     res.json({ ...result, role: "admin", success: true });
   } catch (err) {
     console.error("🔥 Error in /register:", err);
-    if (err.message.includes("already exists")) {
-      res.status(400).json({ success: false, message: "User already exists" });
-    } else {
-      res.status(500).json({ success: false, message: "Server error during registration" });
-    }
+    res.status(500).json({ success: false, message: "Server error during registration" });
   }
 });
 
 // LOGIN (Updated with more robust error handling)
 app.post('/login', async (req, res) => {
   try {
+    // Validate request body
     const { email, password, adminEmail } = req.body;
     if (!email || !password || !adminEmail) {
       console.log("❌ Missing required fields in /login request");
@@ -60,27 +49,26 @@ app.post('/login', async (req, res) => {
 
     console.log(`🔍 Attempting login - email: ${email}, adminEmail: ${adminEmail}`);
 
-    // Test database connection
+    // Connect to the database
     let db;
     try {
       db = await connectDB();
-      console.log("✅ Database connection successful");
     } catch (dbErr) {
-      console.error("🔥 Database connection failed:", dbErr);
-      return res.status(500).json({ success: false, message: "Database connection failed", error: dbErr.message });
+      console.error("❌ Failed to connect to database:", dbErr);
+      return res.status(500).json({ success: false, message: "Database connection failed" });
     }
 
     const users = db.collection('users');
     const adminUsers = db.collection('adminUsers');
 
-    // Check admin login
+    // 1. Admin login
     console.log(`🔍 Checking admin login for email: ${email}`);
     let user;
     try {
       user = await users.findOne({ email });
     } catch (err) {
-      console.error("🔥 Error querying users collection:", err);
-      return res.status(500).json({ success: false, message: "Error querying users collection", error: err.message });
+      console.error(`❌ Error querying users collection for email: ${email}`, err);
+      return res.status(500).json({ success: false, message: "Error querying users collection" });
     }
 
     if (user && user.password === password) {
@@ -90,14 +78,14 @@ app.post('/login', async (req, res) => {
       console.log(`❌ No admin found or password mismatch for email: ${email}`);
     }
 
-    // Check invited user login
+    // 2. Invited user login
     console.log(`🔍 Checking invited user for adminEmail: ${adminEmail}`);
     let invited;
     try {
       invited = await adminUsers.findOne({ email: adminEmail });
     } catch (err) {
-      console.error("🔥 Error querying adminUsers collection:", err);
-      return res.status(500).json({ success: false, message: "Error querying adminUsers collection", error: err.message });
+      console.error(`❌ Error querying adminUsers collection for adminEmail: ${adminEmail}`, err);
+      return res.status(500).json({ success: false, message: "Error querying adminUsers collection" });
     }
 
     if (!invited) {
@@ -129,8 +117,8 @@ app.post('/login', async (req, res) => {
     console.log(`❌ No matching user or password for adminEmail: ${adminEmail}`);
     return res.status(401).json({ success: false, message: "Invalid credentials" });
   } catch (err) {
-    console.error("🔥 Error in /login:", err);
-    res.status(500).json({ success: false, message: "Server error during login", error: err.message });
+    console.error("🔥 Unexpected error in /login:", err);
+    res.status(500).json({ success: false, message: "Unexpected server error during login", error: err.message });
   }
 });
 

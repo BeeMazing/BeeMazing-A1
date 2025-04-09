@@ -62,7 +62,7 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register 64312</h2>
+    <h2 id="formTitle">Register 1</h2>
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -93,7 +93,6 @@
       document.getElementById("formTitle").textContent = isRegistering ? "Register" : "Login";
       document.getElementById("submitBtn").textContent = isRegistering ? "Register" : "Login";
       document.getElementById("toggleText").textContent = isRegistering ? "Already have an account?" : "Don't have an account?";
-      message.textContent = ""; // Clear any previous messages
     }
 
     form.addEventListener("submit", async (e) => {
@@ -101,8 +100,6 @@
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
       const endpoint = isRegistering ? "/register" : "/login";
-
-      console.log(`📤 Sending request to ${endpoint} with email: ${email}`);
 
       try {
         const body = isRegistering
@@ -141,12 +138,9 @@
             throw new Error("Unexpected response format");
           }
         } else {
+          // Display the server's error message if available
           message.style.color = "#D32F2F";
-          if (isRegistering && data.message && data.message.includes("already exists")) {
-            message.textContent = "❌ User already exists. Please log in instead.";
-          } else {
-            message.textContent = `❌ ${data.message || "Something went wrong"}`;
-          }
+          message.textContent = `❌ ${data.message || "Something went wrong"}`;
         }
       } catch (err) {
         console.error("❌ Fetch error:", err);
