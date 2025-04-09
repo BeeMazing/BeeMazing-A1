@@ -22,7 +22,10 @@
       width: 90%;
       max-width: 400px;
     }
-    h2 { text-align: center; margin-bottom: 20px; }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
     input, button {
       width: 100%;
       margin: 10px 0;
@@ -31,7 +34,10 @@
       border-radius: 5px;
       border: 1px solid #444754;
     }
-    input { background: #1E1F26; color: white; }
+    input {
+      background: #1E1F26;
+      color: white;
+    }
     button {
       background-color: #FFC107;
       color: #212121;
@@ -39,15 +45,28 @@
       border: none;
       cursor: pointer;
     }
-    button:hover { background-color: #FFB300; }
-    .toggle { text-align: center; margin-top: 10px; font-size: 14px; }
-    .toggle a { color: #FFC107; cursor: pointer; }
-    .message { text-align: center; margin-top: 10px; font-size: 14px; }
+    button:hover {
+      background-color: #FFB300;
+    }
+    .toggle {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    .toggle a {
+      color: #FFC107;
+      cursor: pointer;
+    }
+    .message {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register 22</h2>
+    <h2 id="formTitle">Register 1A1</h2>
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -62,50 +81,62 @@
 
   <script>
     let isRegistering = true;
-  
+
     const urlParams = new URLSearchParams(window.location.search);
     const invitedAdmin = urlParams.get("admin");
     const invitedUser = urlParams.get("user");
-  
+
+    // Save admin info from invite link if available
     if (invitedAdmin && invitedAdmin !== "null" && invitedAdmin !== "undefined") {
       localStorage.setItem("currentAdminEmail", invitedAdmin);
     }
-  
+
     const form = document.getElementById("authForm");
     const message = document.getElementById("message");
-  
+
     function toggleForm() {
       isRegistering = !isRegistering;
       document.getElementById("formTitle").textContent = isRegistering ? "Register" : "Login";
       document.getElementById("submitBtn").textContent = isRegistering ? "Register" : "Login";
       document.getElementById("toggleText").textContent = isRegistering ? "Already have an account?" : "Don't have an account?";
     }
-  
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
       const endpoint = isRegistering ? "/register" : "/login";
-  
+
       try {
         const body = isRegistering
           ? { email, password }
           : { email, password, adminEmail: invitedAdmin || email };
-  
+
         const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
-  
+
         const data = await res.json();
         console.log("📥 Response:", data);
-  
+
         if (res.ok && data.success) {
           message.style.color = "#4CAF50";
           message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
-  
-          // ✅ Temporary universal redirect
+
+          // ✅ Set role & redirect to home
+          if (data.role === "admin") {
+            localStorage.setItem("isAdmin", "true");
+            localStorage.setItem("currentAdminEmail", email);
+          } else {
+            const cleanAdmin = (invitedAdmin && invitedAdmin !== "null" && invitedAdmin !== "undefined") ? invitedAdmin : email;
+            localStorage.setItem("isAdmin", "false");
+            localStorage.setItem("currentAdminEmail", cleanAdmin);
+            localStorage.setItem("currentUser", data.username);
+          }
+
           setTimeout(() => {
             window.location.href = "mobile/1-Home/home.html";
           }, 1000);
@@ -113,13 +144,11 @@
           message.style.color = "#D32F2F";
           message.textContent = "❌ " + (data.message || "Something went wrong");
         }
-  
       } catch (err) {
         message.style.color = "#D32F2F";
         message.textContent = "❌ Error connecting to server";
       }
     });
   </script>
-  
 </body>
 </html>

@@ -11,11 +11,33 @@ if (adminFromURL) {
 }
 
 
-    // Redirect to login if user not logged in
-    if (localStorage.getItem("isAdmin") === null) {
-        window.location.href = "/BeeMazing-Y1/login.html";
-        return;
+// Wait for localStorage to be ready (esp. after login redirect)
+const waitForAuth = setInterval(() => {
+    const isAdmin = localStorage.getItem("isAdmin");
+  
+    if (isAdmin !== null) {
+      clearInterval(waitForAuth);
+  
+      if (isAdmin !== "true") {
+        // If not admin, hide admin-only UI
+        const addUserBtn = document.getElementById("addUserBtn");
+        const footer = document.getElementById("footer");
+        if (addUserBtn) addUserBtn.style.display = "none";
+        if (footer) footer.style.display = "none";
+      }
+  
+      // Proceed to fetch and render users after auth is confirmed
+      const currentAdmin = localStorage.getItem("currentAdminEmail");
+      if (currentAdmin) {
+        fetchUsersFromServer(currentAdmin);
+        renderUsers();
+      }
     }
+  }, 100);
+  
+  // stop trying after 2 seconds
+  setTimeout(() => clearInterval(waitForAuth), 2000);
+  
 
     // Determine if this user is admin
     const isAdmin = localStorage.getItem("isAdmin") === "true";
@@ -25,11 +47,6 @@ if (!isAdmin && footer) {
     footer.style.display = "none";
 }
 
-
-    const addUserBtn = document.getElementById("addUserBtn");
-    if (!isAdmin && addUserBtn) {
-        addUserBtn.style.display = "none";
-    }
 
 
     const userList = document.getElementById("userList");
