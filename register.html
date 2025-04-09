@@ -62,7 +62,7 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register 1</h2>
+    <h2 id="formTitle">Register 7</h2>
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -113,7 +113,7 @@
         });
 
         const data = await res.json();
-        console.log("📥 Login response:", data);
+        console.log("📥 Response:", data);
 
         if (res.ok && data.success) {
           message.style.color = "#4CAF50";
@@ -135,16 +135,17 @@
               window.location.href = `mobile/2-UserProfiles/users.html?admin=${cleanAdmin}&user=${cleanUser}`;
             }, 1000);
           } else {
-            throw new Error("Unexpected login response format");
+            throw new Error("Unexpected response format");
           }
         } else {
+          // Display the server's error message if available
           message.style.color = "#D32F2F";
-          message.textContent = "❌ " + (data.message || "Something went wrong");
+          message.textContent = `❌ ${data.message || "Something went wrong"}`;
         }
       } catch (err) {
-        console.error("❌ Login error:", err);
+        console.error("❌ Fetch error:", err);
         message.style.color = "#D32F2F";
-        message.textContent = "❌ Error connecting to server";
+        message.textContent = "❌ Failed to connect to server. Please check your network or try again later.";
       }
     });
   </script>
