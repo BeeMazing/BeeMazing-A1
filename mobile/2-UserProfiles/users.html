@@ -828,7 +828,7 @@
 
 
     <div class="footer">
-        <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
+        <a id="homeFooterLink" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
             <span>Home</span>
         </a>
@@ -1506,6 +1506,17 @@ const userPermissions = allUserData[currentAdmin]?.permissions || {};
                 showAdminControlsIfNeeded();
             }
         });
+
+
+
+         // Update home link with ?admin=... when footer loads
+  document.addEventListener("DOMContentLoaded", () => {
+      const homeLink = document.getElementById("homeFooterLink");
+      const adminEmail = localStorage.getItem("currentAdminEmail");
+      if (adminEmail) {
+          homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+      }
+  });
         </script>
 
 <div id="chestVideoOverlay" style="
