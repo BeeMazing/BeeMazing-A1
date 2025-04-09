@@ -1091,27 +1091,33 @@ const canFinish = isToday && usersForToday.includes(userName) && remainingForUse
         }
     
         function triggerHoneyRain(rewardAmount) {
-            for (let i = 0; i < 50; i++) {
-                const drop = document.createElement("div");
-                drop.className = "honey-drop";
-                drop.style.left = `${Math.random() * 100}vw`;
-                drop.style.animationDelay = `${Math.random() * 0.5}s`;
-                document.body.appendChild(drop);
-                setTimeout(() => drop.remove(), 2000);
-            }
-            const popup = document.createElement("div");
-            popup.className = "reward-popup";
-            popup.textContent = `+${rewardAmount} 🍯`;
-            document.body.appendChild(popup);
-            setTimeout(() => {
-                const rewardElement = document.getElementById("rewardAmount");
-                rewardElement.classList.add("pulse");
-                setTimeout(() => {
-                    rewardElement.classList.remove("pulse");
-                    popup.remove();
-                }, 1000);
-            }, 1000);
-        }
+    for (let i = 0; i < 50; i++) {
+        const drop = document.createElement("div");
+        drop.className = "honey-drop";
+        drop.style.left = `${Math.random() * 100}vw`;
+        drop.style.animationDelay = `${Math.random() * 0.5}s`;
+        document.body.appendChild(drop);
+        setTimeout(() => drop.remove(), 2000);
+    }
+
+    // ✅ Add this here to instantly update honey before animation
+    const rewardElement = document.getElementById("rewardAmount");
+    rewardElement.textContent = Number(rewardElement.textContent) + rewardAmount;
+
+    const popup = document.createElement("div");
+    popup.className = "reward-popup";
+    popup.textContent = `+${rewardAmount} 🍯`;
+    document.body.appendChild(popup);
+
+    setTimeout(() => {
+        rewardElement.classList.add("pulse");
+        setTimeout(() => {
+            rewardElement.classList.remove("pulse");
+            popup.remove();
+        }, 1000);
+    }, 1000);
+}
+
     
         function showTaskDetails(task) {
             let currentUser = task.tempTurnReplacement?.replacement || getCurrentTurn(task, selectedDate);
@@ -1665,7 +1671,8 @@ setTimeout(() => modal.remove(), 300);
 
 
   const rewardElement = document.getElementById("rewardAmount");
-rewardElement.textContent = Number(rewardElement.textContent) + rewardAmount;
+rewardElement.textContent = Number(rewardElement.textContent) + Number(task.reward || 0);
+
 
   // 🍯 Celebration popup
   const popup = document.createElement("div");
