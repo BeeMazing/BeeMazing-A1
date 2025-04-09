@@ -84,48 +84,47 @@ if (!isAdmin && footer) {
       
 
     // Show the modal with a smooth animation when "Add Members" button is clicked
-    if (addUserBtn && isAdmin) {
-        addUserBtn.addEventListener("click", () => {
-            addUserModal.style.display = "flex";
-        });
-    }
-    
+   // Existing addUserBtn event listener modification
+if (isAdmin) {
+    addUserBtn.style.display = "block";
+    addUserBtn.addEventListener("click", () => {
+        addUserModal.style.display = "flex"; // Make sure this modal contains the fields for adding a user.
+    });
+} else {
+    addUserBtn.style.display = "none";
+}
 
-    const sendInviteBtn = document.getElementById("sendInviteBtn");
-    if (sendInviteBtn) {
-        sendInviteBtn.addEventListener("click", async () => {
-            const email = document.getElementById("inviteEmail").value.trim();
-            const name = document.getElementById("inviteName").value.trim();
-            const tempPassword = document.getElementById("inviteTempPassword").value.trim();
-            const currentAdmin = localStorage.getItem("currentAdminEmail");
-        
-    
-            if (!email || !name || !tempPassword) {
-                alert("Please fill out all fields.");
-                return;
-            }
-    
-            try {
-                const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-                if (!allUserData[currentAdmin]) {
-                    allUserData[currentAdmin] = { users: [], permissions: {} };
-                }
-                allUserData[currentAdmin].users.push(name);
-                localStorage.setItem("userData", JSON.stringify(allUserData));
-    
-                const encodedAdmin = encodeURIComponent(currentAdmin);
-                const encodedUser = encodeURIComponent(name);
-                const inviteLink = `${window.location.origin}/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodedAdmin}&user=${encodedUser}`;
-                alert(`Invite sent to ${email}!\n\nShare this link with them:\n${inviteLink}`);
-    
-                addUserModal.style.display = "none"; // reuse variable
-            } catch (err) {
-                console.error("Error sending invite:", err);
-                alert("Something went wrong. Try again.");
-            }
-        });
+// Replace the sendInviteBtn click event logic
+sendInviteBtn.addEventListener("click", async () => {
+    const email = document.getElementById("inviteEmail").value.trim();
+    const name = document.getElementById("inviteName").value.trim();
+    const tempPassword = document.getElementById("inviteTempPassword").value.trim();
+    const currentAdmin = localStorage.getItem("currentAdminEmail");
+
+    if (!email || !name || !tempPassword) {
+        alert("Please fill out all fields.");
+        return;
     }
-    
+
+    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+    if (!allUserData[currentAdmin]) {
+        allUserData[currentAdmin] = { users: [], permissions: {} };
+    }
+
+    // Add the new user to the admin's user list
+    allUserData[currentAdmin].users.push({ name, email, tempPassword });
+
+    // Save the updated data back to localStorage
+    localStorage.setItem("userData", JSON.stringify(allUserData));
+
+    // Optionally, here you would also send this data to your server if needed
+    // Example POST request to your server endpoint to add a new user
+    // await fetch('/api/add-user', { method: 'POST', body: JSON.stringify({ adminEmail: currentAdmin, user: { name, email, tempPassword } }) });
+
+    addUserModal.style.display = "none"; // Close the modal
+    alert(`User ${name} added successfully.`);
+});
+
 
     // Close modal when clicking outside the modal content
     if (addUserModal) {
