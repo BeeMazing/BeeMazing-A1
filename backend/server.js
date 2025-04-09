@@ -111,6 +111,33 @@ app.get("/", (req, res) => {
   res.send("BeeMazing backend is working!");
 });
 
+
+
+// ✅ GET ALL TASKS FOR ADMIN (used in users.html)
+app.get('/get-tasks', async (req, res) => {
+  const { adminEmail } = req.query;
+
+  if (!adminEmail) {
+    return res.status(400).json({ success: false, message: "Missing adminEmail" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    const tasks = admin?.tasks || [];
+
+    res.json({ success: true, tasks });
+  } catch (err) {
+    console.error("🔥 Error in /get-tasks:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch tasks" });
+  }
+});
+
+
+
+
 app.listen(port, () => {
   console.log(`✅ Server is running on http://localhost:${port}`);
 });
