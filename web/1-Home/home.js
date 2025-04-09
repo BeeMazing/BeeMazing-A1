@@ -1,9 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-
-    const addUserModal = document.getElementById("inviteUserModal");
-
-
     const urlParams = new URLSearchParams(window.location.search);
 const adminFromURL = urlParams.get("admin");
 if (adminFromURL) {
@@ -31,7 +27,13 @@ if (!isAdmin && footer) {
         addUserBtn.style.display = "none";
     }
 
+    const addUserModal = document.getElementById("addUserModal");
+    const submitUserBtn = document.getElementById("submitUserBtn");
+    if (!isAdmin && submitUserBtn) {
+        submitUserBtn.disabled = true;
+    }
 
+    const usernameInput = document.getElementById("usernameInput");
     const userList = document.getElementById("userList");
     const manageMembersBtn = document.getElementById("manageMembersBtn");
     const manageMembersModal = document.getElementById("manageMembersModal");
@@ -42,89 +44,60 @@ if (!isAdmin && footer) {
     const basePath = isMobile ? "/BeeMazing-Y1/mobile" : "/web";
 
     // Load users from localStorage on page load
-    let currentAdmin = null;
+    const currentAdmin = localStorage.getItem("currentAdminEmail");
+const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+const users = allUserData[currentAdmin]?.users || [];
 
-    // Wait until currentAdminEmail is available in localStorage (max 2 sec)
-    const waitForAdmin = setInterval(() => {
-      const stored = localStorage.getItem("currentAdminEmail");
-      if (stored) {
-        clearInterval(waitForAdmin);
-        currentAdmin = stored;
-        fetchUsersFromServer(currentAdmin);
-        renderUsers();
-      }
-    }, 100);
-    
-    // Stop trying after 2 seconds to avoid infinite loop
-    setTimeout(() => clearInterval(waitForAdmin), 2000);
-    
-
-    async function fetchUsersFromServer(email) {
-        try {
-          const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(email)}`);
-          const data = await res.json();
-      
-          if (data.success) {
-            const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-            if (!allUserData[email]) {
-              allUserData[email] = { users: [], permissions: {} };
-            }
-      
-            allUserData[email].users = data.users || [];
-            allUserData[email].permissions = data.permissions || {};
-      
-            localStorage.setItem("userData", JSON.stringify(allUserData));
-            renderUsers(); // Refresh UI
-          }
-        } catch (err) {
-          console.error("❌ Failed to fetch user list from server:", err);
-        }
-      }
-      
-      
+    renderUsers();
 
     // Show the modal with a smooth animation when "Add Members" button is clicked
-   // Existing addUserBtn event listener modification
-if (isAdmin) {
-    addUserBtn.style.display = "block";
-    addUserBtn.addEventListener("click", () => {
-        addUserModal.style.display = "flex"; // Make sure this modal contains the fields for adding a user.
-    });
-} else {
-    addUserBtn.style.display = "none";
+    if (addUserBtn) {
+        addUserBtn.addEventListener("click", function () {
+            if (isAdmin) {
+                addUserModal.classList.add("show");
+            }
+        });
+    }
+
+
+    // Add user when "Add" button is clicked
+    if (submitUserBtn) {
+        submitUserBtn.addEventListener("click", function () {
+            const username = usernameInput.value.trim();
+            const errorMessage = document.getElementById("errorMessage");
+
+            if (username) {
+                const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+if (!allUserData[currentAdmin]) {
+    allUserData[currentAdmin] = { users: [] };
 }
+if (!allUserData[currentAdmin].permissions) {
+    allUserData[currentAdmin].permissions = {};
+}
+allUserData[currentAdmin].users.push(username);
+localStorage.setItem("userData", JSON.stringify(allUserData));
 
-// Replace the sendInviteBtn click event logic
-sendInviteBtn.addEventListener("click", async () => {
-    const email = document.getElementById("inviteEmail").value.trim();
-    const name = document.getElementById("inviteName").value.trim();
-    const tempPassword = document.getElementById("inviteTempPassword").value.trim();
-    const currentAdmin = localStorage.getItem("currentAdminEmail");
 
-    if (!email || !name || !tempPassword) {
-        alert("Please fill out all fields.");
-        return;
+                renderUsers();
+                usernameInput.value = "";
+                addUserModal.classList.remove("show");
+                errorMessage.style.display = "none";
+                // Refresh the manage members modal if it's open
+                if (manageMembersModal && manageMembersModal.classList.contains("show")) {
+                    renderManageMembers();
+                }
+            } else {
+                errorMessage.textContent = "Please enter a valid user name.";
+                errorMessage.style.display = "block";
+            }
+
+            const encodedAdmin = encodeURIComponent(currentAdmin);
+const encodedUser = encodeURIComponent(username);
+const inviteLink = `${window.location.origin}/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodedAdmin}&user=${encodedUser}`;
+alert(`Send this link to the user: ${inviteLink}`);
+
+        });
     }
-
-    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-    if (!allUserData[currentAdmin]) {
-        allUserData[currentAdmin] = { users: [], permissions: {} };
-    }
-
-    // Add the new user to the admin's user list
-    allUserData[currentAdmin].users.push({ name, email, tempPassword });
-
-    // Save the updated data back to localStorage
-    localStorage.setItem("userData", JSON.stringify(allUserData));
-
-    // Optionally, here you would also send this data to your server if needed
-    // Example POST request to your server endpoint to add a new user
-    // await fetch('/api/add-user', { method: 'POST', body: JSON.stringify({ adminEmail: currentAdmin, user: { name, email, tempPassword } }) });
-
-    addUserModal.style.display = "none"; // Close the modal
-    alert(`User ${name} added successfully.`);
-});
-
 
     // Close modal when clicking outside the modal content
     if (addUserModal) {
@@ -340,27 +313,24 @@ let selectedUserForPermission = null;
 function showPermissionModal(username) {
     selectedUserForPermission = username;
     permissionModalUser.textContent = `Permissions for ${username}`;
-
-    const allUserData = JSON.parse(localStorage.getItem("userData")) || {}; // ✅ NOW it's fresh
+    
     const userPermissions = allUserData[currentAdmin]?.permissions || {};
     permissionSelect.value = userPermissions[username] || "User";
+    
 
     permissionModal.classList.add("show");
 }
 
-
 savePermissionBtn.addEventListener("click", () => {
-    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-    if (!allUserData[currentAdmin].permissions) {
-      allUserData[currentAdmin].permissions = {};
-    }
-    if (selectedUserForPermission) {
-      allUserData[currentAdmin].permissions[selectedUserForPermission] = permissionSelect.value;
-      localStorage.setItem("userData", JSON.stringify(allUserData));
-    }
+if (!allUserData[currentAdmin].permissions) {
+    allUserData[currentAdmin].permissions = {};
+}
+if (selectedUserForPermission) {
+    allUserData[currentAdmin].permissions[selectedUserForPermission] = permissionSelect.value;
+    localStorage.setItem("userData", JSON.stringify(allUserData));
+}
     permissionModal.classList.remove("show");
-  });
-  
+});
 
 permissionModal.addEventListener("click", (e) => {
     if (e.target === permissionModal) {
@@ -404,17 +374,6 @@ document.getElementById("changePasswordModal").addEventListener("click", (e) => 
 });
 
 
-  
-  // Close Invite Modal on outside click
-  document.getElementById("inviteUserModal").addEventListener("click", (e) => {
-    if (e.target.id === "inviteUserModal") {
-      e.target.style.display = "none";
-    }
-  });
-  
- 
-
 
 });
-
 
