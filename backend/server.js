@@ -114,3 +114,32 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`✅ Server is running on http://localhost:${port}`);
 });
+
+
+app.post("/api/tasks", async (req, res) => {
+  const { adminEmail, tasks } = req.body;
+  try {
+    await db.collection("admins").updateOne(
+      { email: adminEmail },
+      { $set: { tasks: tasks } },
+      { upsert: true }
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error saving tasks:", err);
+    res.status(500).json({ error: "Failed to save tasks" });
+  }
+});
+
+
+
+app.get("/api/tasks", async (req, res) => {
+  const { adminEmail } = req.query;
+  try {
+    const admin = await db.collection("admins").findOne({ email: adminEmail });
+    res.json({ tasks: admin?.tasks || [] });
+  } catch (err) {
+    console.error("Error fetching tasks:", err);
+    res.status(500).json({ error: "Failed to fetch tasks" });
+  }
+});

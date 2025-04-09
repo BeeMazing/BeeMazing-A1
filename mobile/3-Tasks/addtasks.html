@@ -622,87 +622,30 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
 
-document.addEventListener("DOMContentLoaded", () => {
-    const editTask = JSON.parse(localStorage.getItem("familyApp_editTask"));
+document.addEventListener("DOMContentLoaded", async () => {
+  const currentAdmin = localStorage.getItem("currentAdminEmail");
+  if (!currentAdmin) {
+    alert("Admin not logged in!");
+    return;
+  }
 
-    if (editTask) {
-        document.getElementById("taskTitle").value = editTask.title || "";
-        document.getElementById("taskNotes").value = editTask.notes || "";
-        document.getElementById("roomSelection").value = editTask.room || "";
-        document.getElementById("selectRoom").textContent = editTask.room || "Select";
+  // Fetch tasks from backend instead of localStorage
+  let tasks = [];
+  try {
+    const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(currentAdmin)}`);
+    const data = await response.json();
+    tasks = data.tasks || [];
+  } catch (err) {
+    console.error("Failed to fetch tasks:", err);
+  }
 
-        document.getElementById("repeatSelection").value = editTask.repeat || "";
-        document.getElementById("selectRepeat").textContent = editTask.repeat || "Select";
+  const editTask = JSON.parse(localStorage.getItem("familyApp_editTask"));
+  if (editTask) {
+    // ... your existing pre-fill logic ...
+  }
 
-        document.getElementById("settingsSelection").value = editTask.settings || "";
-        document.getElementById("selectSettings").textContent = editTask.settings || "Select";
-
-        document.getElementById("RewardValue").value = editTask.reward || "";
-        document.getElementById("selectReward").textContent = editTask.reward ? `Reward: ${editTask.reward} 🍯` : "Reward";
-
-        document.getElementById("taskReminder").checked = !!editTask.reminder;
-
-        if (editTask.reminder && editTask.alarms) {
-            editTask.alarms.forEach(time => {
-                const alarmWrapper = document.createElement('div');
-                alarmWrapper.style.marginBottom = '10px';
-                alarmWrapper.style.display = 'flex';
-                alarmWrapper.style.alignItems = 'center';
-
-                const alarmInput = document.createElement('input');
-                alarmInput.type = 'time';
-                alarmInput.value = time;
-                alarmInput.style.marginRight = '10px';
-                alarmInput.style.padding = '10px';
-                alarmInput.style.border = '2px solid var(--primary-color)';
-                alarmInput.style.borderRadius = '8px';
-                alarmInput.style.background = 'var(--accent-color)';
-
-                const removeButton = document.createElement('button');
-                removeButton.textContent = 'Remove';
-                removeButton.className = 'btn-cancel';
-                removeButton.addEventListener('click', () => alarmWrapper.remove());
-
-                alarmWrapper.appendChild(alarmInput);
-                alarmWrapper.appendChild(removeButton);
-                document.getElementById("alarmContainer").appendChild(alarmWrapper);
-            });
-        }
-
-        if (editTask.date && editTask.date.includes(" to ")) {
-            const [from, to] = editTask.date.split(" to ");
-            document.getElementById("taskDate").value = from;
-            document.getElementById("taskDateTo").value = to;
-            document.getElementById("dateDisplay").textContent = new Date(from).toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
-            document.getElementById("dateDisplayTo").textContent = new Date(to).toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
-            document.getElementById("dateDisplayTo").style.display = "inline-block";
-            document.getElementById("dateModeToggle").textContent = "From - To";
-            dateMode = "from-to";
-        } else {
-            document.getElementById("taskDate").value = editTask.date || "";
-            document.getElementById("dateDisplay").textContent = new Date(editTask.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
-        }
-
-        if (editTask.users) {
-            selectedUsers = [...editTask.users];
-            updateSelectedUsersDisplay();
-        }
-
-        if (editTask.repeat === "Daily" && editTask.timesPerDay) {
-            document.getElementById("timesPerDayGroup").style.display = "flex";
-            document.getElementById("timesPerDayInput").value = editTask.timesPerDay;
-        }
-        if (editTask.repeat === "Weekly" && editTask.timesPerWeek) {
-            document.getElementById("timesPerWeekGroup").style.display = "flex";
-            document.getElementById("timesPerWeekInput").value = editTask.timesPerWeek;
-        }
-        if (editTask.repeat === "Monthly" && editTask.timesPerMonth) {
-            document.getElementById("timesPerMonthGroup").style.display = "flex";
-            document.getElementById("timesPerMonthInput").value = editTask.timesPerMonth;
-        }
-    }
+  populateUsers(); // make sure this still runs
 });
-
 
 
 
@@ -1109,7 +1052,8 @@ window.addEventListener('click', (e) => {
         });
     
         // Form Submission
-        document.getElementById("addTaskForm").addEventListener("submit", function (event) {
+        document.getElementById("addTaskForm").addEventListener("submit", async function (event) {
+
             event.preventDefault();
     
             const title = document.getElementById("taskTitle").value.trim();
@@ -1149,7 +1093,10 @@ if (timesPerMonth !== null && timesPerMonth < 1) timesPerMonth = 1;
             }
     
             const dateValue = dateMode === "from" ? dateFrom : `${dateFrom} to ${dateTo}`;
-            const tasks = JSON.parse(localStorage.getItem("familyApp_tasks")) || [];
+            const currentAdmin = localStorage.getItem("currentAdminEmail");
+const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(currentAdmin)}`);
+const tasks = (await response.json()).tasks || [];
+
             const editTask = JSON.parse(localStorage.getItem("familyApp_editTask"));
 if (editTask) {
     // Replace existing task by title + date match
@@ -1172,7 +1119,12 @@ if (editTask) {
 }
 
 
-localStorage.setItem("familyApp_tasks", JSON.stringify(tasks));
+await fetch("https://beemazing.onrender.com/api/tasks", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ adminEmail: currentAdmin, tasks }),
+});
+
 
     
             alert("Task saved successfully!");
