@@ -1623,11 +1623,18 @@
     task.turn = nextUser;
   }
 
-  // Save & reward
-  await saveTaskToBackend(task);
-  updateLuckyChestProgress(currentUser, task.reward || 0);
-  triggerHoneyRain(task.reward || 0);
-  loadUserReward(currentUser);
+// Save & reward
+await saveTaskToBackend(task);
+
+// 🐝 Add honey reward to user
+const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
+rewards[currentUser] = (rewards[currentUser] || 0) + (task.reward || 0);
+localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
+
+updateLuckyChestProgress(currentUser, task.reward || 0);
+triggerHoneyRain(task.reward || 0);
+loadUserReward(currentUser);
+
 
   await loadUserTasks(currentUser, selectedDate);
 }
