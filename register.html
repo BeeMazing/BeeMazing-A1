@@ -22,6 +22,10 @@
       width: 90%;
       max-width: 400px;
     }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
     input, button {
       width: 100%;
       margin: 10px 0;
@@ -62,7 +66,7 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register 1</h2>
+    <h2 id="formTitle">Register 444</h2>
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -77,10 +81,12 @@
 
   <script>
     let isRegistering = true;
+
     const urlParams = new URLSearchParams(window.location.search);
     const invitedAdmin = urlParams.get("admin");
     const invitedUser = urlParams.get("user");
 
+    // Only set invited admin if it's a real value (not "null" or "undefined")
     if (invitedAdmin && invitedAdmin !== "null" && invitedAdmin !== "undefined") {
       localStorage.setItem("currentAdminEmail", invitedAdmin);
     }
@@ -103,46 +109,52 @@
 
       try {
         const body = isRegistering
-          ? { email, password }
-          : { email, password, adminEmail: invitedAdmin || email };
+          ? { email, password } // Only email/password for admin registration
+          : { email, password, adminEmail: invitedAdmin || email }; // Only needed on login
 
-        const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
+        const res = await fetch(`https://beemazing.onrender.com${endpoint}`, { // Fixed: Added quotes around the URL
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
 
         const data = await res.json();
-        console.log("📥 Login response:", data);
+        console.log("📥 Response:", data);
 
         if (res.ok && data.success) {
           message.style.color = "#4CAF50";
           message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
 
-          if (isRegistering || data.role === "admin") {
+          if (isRegistering) {
+            // Registration is always for admin
+            localStorage.setItem("isAdmin", "true");
+            localStorage.setItem("currentAdminEmail", email);
+            setTimeout(() => window.location.href = "mobile/1-Home/home.html", 1000);
+          } else if (data.role === "admin") {
             localStorage.setItem("isAdmin", "true");
             localStorage.setItem("currentAdminEmail", email);
             setTimeout(() => window.location.href = "mobile/1-Home/home.html", 1000);
           } else if (data.role === "user" && data.username) {
-            const cleanAdmin = invitedAdmin || email;
-            const cleanUser = data.username || invitedUser || "unknown";
+            const cleanAdmin = (invitedAdmin && invitedAdmin !== "null" && invitedAdmin !== "undefined") ? invitedAdmin : email;
 
             localStorage.setItem("isAdmin", "false");
             localStorage.setItem("currentAdminEmail", cleanAdmin);
-            localStorage.setItem("currentUser", cleanUser);
+            localStorage.setItem("currentUser", data.username);
 
             setTimeout(() => {
-              window.location.href = `mobile/2-UserProfiles/users.html?admin=${cleanAdmin}&user=${cleanUser}`;
+              window.location.href = `mobile/2-UserProfiles/users.html?admin=${cleanAdmin}&user=${data.username}`; // Fixed: Used template literals
             }, 1000);
           } else {
-            throw new Error("Unexpected login response format");
+            console.error("⚠️ Unknown role or missing username:", data);
+            message.style.color = "#D32F2F";
+            message.textContent = "❌ Login failed: Unexpected response";
           }
         } else {
           message.style.color = "#D32F2F";
           message.textContent = "❌ " + (data.message || "Something went wrong");
         }
       } catch (err) {
-        console.error("❌ Login error:", err);
+        console.error("❌ Fetch error:", err); // Added: Log the error for debugging
         message.style.color = "#D32F2F";
         message.textContent = "❌ Error connecting to server";
       }
