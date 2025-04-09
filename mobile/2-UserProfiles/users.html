@@ -1582,33 +1582,43 @@
 
 
 
+
+
+
+
+
+
+
+
+
         async function finishTask(task, currentUser, selectedDate) {
   const today = selectedDate || new Date().toISOString().split("T")[0];
 
-  // Show popup
+  // 🍯 Celebration popup
   const popup = document.createElement("div");
   popup.className = "reward-popup";
   popup.textContent = `Finished! ✅ +${task.reward || 0} 🍯`;
   document.body.appendChild(popup);
   setTimeout(() => popup.remove(), 2000);
 
-  // Init completions
+  // 📝 Initialize completions if missing
   if (!task.completions) task.completions = {};
   if (!task.completions[today]) task.completions[today] = [];
 
-  // Allow multiple completions per user if requiredTimes > 1
+  // 📆 Determine how many completions are needed
   let requiredTimes = 1;
   if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
   if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
   if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
+  // 🔁 Avoid over-completion
   const userCompletionsToday = task.completions[today].filter(u => u === currentUser).length;
   if (userCompletionsToday >= requiredTimes) return;
 
-  // Add to completions
+  // ✅ Mark user as completed
   task.completions[today].push(currentUser);
 
-  // Handle turn rotation
+  // 🔄 Turn rotation
   const currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
   const currentIndex = task.users.indexOf(currentTurn);
   const nextIndex = (currentIndex + 1) % task.users.length;
@@ -1623,21 +1633,55 @@
     task.turn = nextUser;
   }
 
-// Save & reward
-await saveTaskToBackend(task);
+  // 💾 Save to backend
+  await saveTaskToBackend(task);
 
-// 🐝 Add honey reward to user
-const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
-rewards[currentUser] = (rewards[currentUser] || 0) + (task.reward || 0);
-localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
+  // 🍯 Add honey reward safely
+  const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
+  const currentPoints = Number(rewards[currentUser] || 0);
+  const earnedPoints = Number(task.reward || 0);
+  rewards[currentUser] = currentPoints + earnedPoints;
+  localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
 
-updateLuckyChestProgress(currentUser, task.reward || 0);
-triggerHoneyRain(task.reward || 0);
-loadUserReward(currentUser);
+  // 🎉 Visual and chest progress
+  updateLuckyChestProgress(currentUser, earnedPoints);
+  triggerHoneyRain(earnedPoints);
 
-
+  // 🐝 Refresh honey count & task list
+  setTimeout(() => loadUserReward(currentUser), 100);
   await loadUserTasks(currentUser, selectedDate);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
