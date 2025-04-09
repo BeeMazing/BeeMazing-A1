@@ -990,15 +990,10 @@ return usersForToday.includes(userName);
   return task.users[userIndex];
 }
 
-let usersForToday = [];
-for (let i = 0; i < requiredTimes; i++) {
-    const index = (diffDays + i) % task.users.length;
-    usersForToday.push(task.users[index]);
-}
-
-const remainingForUser = completedUsers.filter(u => u === userName).length;
-const canFinish = isToday && usersForToday.includes(userName) && remainingForUser < requiredTimes;
-
+                    const currentTurn = task.tempTurnReplacement?.replacement || getCurrentTurn(task, selectedDate);
+                    const remainingForUser = completedUsers.filter(u => u === userName).length;
+    
+                    const canFinish = isToday && currentTurn === userName && remainingForUser < requiredTimes;
                     if (canFinish) {
                         const finishedButton = document.createElement("button");
                         finishedButton.textContent = "Finish Task";
