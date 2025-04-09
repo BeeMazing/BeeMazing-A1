@@ -935,10 +935,19 @@ const userTasks = tasks.filter(task => {
     const startDate = new Date(task.startDate || selected);
     const currentDate = new Date(selected);
     const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-    const userIndex = diffDays % task.users.length;
-    const turnUser = task.users[userIndex];
+    let requiredTimes = 1;
+if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-    return turnUser === userName;
+const usersForToday = [];
+for (let i = 0; i < requiredTimes; i++) {
+    const index = (diffDays + i) % task.users.length;
+    usersForToday.push(task.users[index]);
+}
+
+return usersForToday.includes(userName);
+
 });
 
             if (userTasks.length === 0) {
