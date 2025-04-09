@@ -775,7 +775,10 @@ document.addEventListener("DOMContentLoaded", () => {
     
         let selectedUsers = [];
         const populateUsers = () => {
-            const users = JSON.parse(localStorage.getItem("users")) || [];
+            const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+const currentAdmin = localStorage.getItem("currentAdminEmail");
+const users = allUserData[currentAdmin]?.users || [];
+
             userList.innerHTML = "";
             users.forEach((user) => {
                 const userItem = document.createElement("li");

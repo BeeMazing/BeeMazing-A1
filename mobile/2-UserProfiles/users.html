@@ -858,29 +858,19 @@
     </div>
 
     <script>
-        
-            document.addEventListener("DOMContentLoaded", () => {
-
-                if (adminEmail && adminEmail !== "null") {
-    localStorage.setItem("currentAdminEmail", adminEmail);
-    const homeLink = document.getElementById("homeFooterLink");
-    if (homeLink) {
-        homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
-    }
-}
-
-const userName = urlParams.get('user');
-const addPoints = Number(urlParams.get('addPoints')) || 0;
-
-
-    if (adminEmail && adminEmail !== "null") {
-        localStorage.setItem("currentAdminEmail", adminEmail);
-        const homeLink = document.getElementById("homeFooterLink");
-        if (homeLink) {
-            homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
-        }
-    }
-
+        document.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const adminEmail = urlParams.get('admin');
+            const userName = urlParams.get('user');
+            const addPoints = Number(urlParams.get('addPoints')) || 0;
+    
+            if (adminEmail && adminEmail !== "null") {
+                localStorage.setItem("currentAdminEmail", adminEmail);
+                const homeLink = document.getElementById("homeFooterLink");
+                if (homeLink) {
+                    homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+                }
+            }
     
             if (userName) {
                 document.getElementById('profileName').textContent = userName;
@@ -889,7 +879,7 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
                 document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${userName}`;
                 document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${userName}`;
         
-                loadUserTasks(userName);
+                loadUserTasks(userName); // Initial load
                 loadUserReward(userName);
                 loadLuckyChests(userName);
         
@@ -917,47 +907,57 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
             adjustContentTop();
             generateScrollableDates();
             showAdminControlsIfNeeded();
-
         });
-        
-        function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
-            const tasks = JSON.parse(localStorage.getItem("familyApp_tasks")) || [];
-            const userTasks = tasks.filter(task => task.users.includes(userName));
+    
+        // Replace your existing loadUserTasks with this updated version
+        async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
+            let tasks = JSON.parse(localStorage.getItem("familyApp_tasks")) || [];
             const userTasksDiv = document.getElementById("userTasks");
-        
+    
+            // Optional: Fetch from server if implemented
+            try {
+                const adminEmail = localStorage.getItem("currentAdminEmail");
+                const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+                const data = await res.json();
+                if (data.success) tasks = data.tasks || tasks; // Fallback to local if server fails
+            } catch (err) {
+                console.error("Failed to fetch tasks from server:", err);
+            }
+    
+            const userTasks = tasks.filter(task => task.users?.includes(userName));
             if (userTasks.length === 0) {
                 userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
             } else {
                 userTasksDiv.innerHTML = "";
                 const today = new Date().toLocaleDateString("sv-SE");
                 const isToday = selectedDate === today;
-        
+    
                 userTasks.forEach(task => {
                     const taskDiv = document.createElement("div");
                     taskDiv.className = "task-item";
-        
+    
                     let requiredTimes = 1;
                     if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
                     if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
                     if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-        
+    
                     let completedRaw = task.completions?.[selectedDate] || [];
                     let completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
                     let completedTimes = completedUsers.length;
-        
+    
                     let progressText = completedTimes >= requiredTimes
                         ? `<span style="color: green; font-weight: bold;">Completed</span>`
                         : `${completedTimes}/${requiredTimes}`;
-        
+    
                     taskDiv.innerHTML = `
                         <strong>${task.title}</strong><br>
                         Honey: ${task.reward || "0"} 🍯<br>
                         Progress: ${progressText}
                     `;
-        
+    
                     const currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
                     const remainingForUser = completedUsers.filter(u => u === userName).length;
-        
+    
                     const canFinish = isToday && currentTurn === userName && remainingForUser < requiredTimes;
                     if (canFinish) {
                         const finishedButton = document.createElement("button");
@@ -969,19 +969,19 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
                         };
                         taskDiv.appendChild(finishedButton);
                     }
-        
+    
                     taskDiv.addEventListener("click", () => showTaskDetails(task));
                     userTasksDiv.appendChild(taskDiv);
                 });
             }
         }
-        
+    
         function loadUserReward(userName) {
             const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
             const userReward = rewards[userName] || 0;
             document.getElementById("rewardAmount").textContent = userReward;
         }
-        
+    
         function sellReward(userName, amount) {
             const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
             const userReward = rewards[userName] || 0;
@@ -993,17 +993,17 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
                 alert("Not enough honey!");
             }
         }
-        
+    
         document.getElementById('sellButton').addEventListener('click', () => {
             document.getElementById('sellModal').style.display = 'flex';
         });
-        
+    
         document.getElementById('sellModal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('sellModal')) {
                 document.getElementById('sellModal').style.display = 'none';
             }
         });
-        
+    
         document.getElementById('confirmSell').addEventListener('click', () => {
             const sellAmount = Number(document.getElementById('sellAmount').value);
             const urlParams = new URLSearchParams(window.location.search);
@@ -1015,37 +1015,37 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
                 alert("Please enter a valid amount.");
             }
         });
-        
+    
         function finishTask(userName, task, button, selectedDate) {
             const tasks = JSON.parse(localStorage.getItem("familyApp_tasks")) || [];
             const taskIndex = tasks.findIndex(t => t.title === task.title && t.date === task.date);
             if (taskIndex === -1) return;
-        
+    
             const today = selectedDate;
             if (!task.completions) task.completions = {};
             if (!Array.isArray(task.completions[today])) task.completions[today] = [];
-        
+    
             const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
                                 task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                                 task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-        
+    
             const userCompletions = task.completions[today].filter(u => u === userName).length;
             if (userCompletions >= repeatLimit) return;
-        
+    
             task.completions[today].push(userName);
             const rewardAmount = Number(task.reward) || 0;
             const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
             const originalUser = task.originalOwner?.[userName] || userName;
             rewards[originalUser] = (rewards[originalUser] || 0) + rewardAmount;
             localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
-        
+    
             if (typeof updateLuckyChestProgress === "function") {
                 updateLuckyChestProgress(originalUser, rewardAmount);
             }
-        
+    
             const userList = task.users;
             const currentTurn = task.tempTurnReplacement?.replacement || task.turn || userList[0];
-        
+    
             if (task.tempTurnReplacement && userName === task.tempTurnReplacement.replacement) {
                 const originalUser = task.tempTurnReplacement.original;
                 const originalIndex = userList.indexOf(originalUser);
@@ -1061,31 +1061,31 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
                 const currentIndex = userList.indexOf(currentTurn);
                 let nextIndex = (currentIndex + 1) % userList.length;
                 let looped = false;
-        
+    
                 while ((userCompletionCounts[userList[nextIndex]] || 0) >= repeatLimit && !looped) {
                     nextIndex = (nextIndex + 1) % userList.length;
                     if (nextIndex === currentIndex) looped = true;
                 }
-        
+    
                 task.turn = looped ? userList[0] : userList[nextIndex];
             }
-        
+    
             tasks[taskIndex] = task;
             localStorage.setItem("familyApp_tasks", JSON.stringify(tasks));
-        
+    
             if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
             if (typeof loadTasksForDate === 'function') loadTasksForDate(selectedDate);
             if (typeof loadUserTasks === 'function') loadUserTasks(userName, selectedDate);
             if (typeof loadUserReward === 'function') loadUserReward(userName);
         }
-        
+    
         function saveTaskHistory(userName, task) {
             const now = new Date();
             const month = now.toLocaleString("default", { month: "long" });
             const date = now.getDate();
             const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
             const dateString = now.toLocaleDateString();
-        
+    
             const history = JSON.parse(localStorage.getItem("familyApp_history")) || {};
             if (!history[month]) history[month] = {};
             if (!history[month][date]) history[month][date] = [];
@@ -1096,7 +1096,7 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
             });
             localStorage.setItem("familyApp_history", JSON.stringify(history));
         }
-        
+    
         function triggerHoneyRain(rewardAmount) {
             for (let i = 0; i < 50; i++) {
                 const drop = document.createElement("div");
@@ -1119,7 +1119,7 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
                 }, 1000);
             }, 1000);
         }
-        
+    
         function showTaskDetails(task) {
             const taskDetails = `
                 <strong>Title:</strong> ${task.title}<br>
@@ -1141,54 +1141,54 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
                 if (e.target === modal) modal.remove();
             });
         }
-        
+    
         let monthOffset = 0;
-        
+    
         function generateScrollableDates(monthOffset = 0) {
             const container = document.getElementById("dayScrollContainer");
             container.innerHTML = "";
-        
+    
             const today = new Date();
             today.setDate(1);
             today.setMonth(today.getMonth() + monthOffset);
-        
+    
             const currentMonth = today.getMonth();
             const currentYear = today.getFullYear();
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-        
+    
             document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
                 month: 'long',
                 year: 'numeric'
             });
-        
+    
             const urlParams = new URLSearchParams(window.location.search);
             const userName = urlParams.get('user');
-        
+    
             for (let i = 1; i <= daysInMonth; i++) {
                 const date = new Date(currentYear, currentMonth, i);
                 const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        
+    
                 const btn = document.createElement("div");
                 btn.className = "day";
                 btn.textContent = i;
                 btn.dataset.date = dateStr;
-        
+    
                 btn.addEventListener("click", () => {
                     document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
                     btn.classList.add("selected");
                     loadUserTasks(userName, dateStr);
                 });
-        
+    
                 const now = new Date();
                 const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
                 if (dateStr === nowStr) {
                     btn.classList.add("selected");
                     loadUserTasks(userName, dateStr);
                 }
-        
+    
                 container.appendChild(btn);
             }
-        
+    
             setTimeout(() => {
                 const selected = document.querySelector(".day.selected");
                 if (selected) {
@@ -1196,37 +1196,37 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
                 }
             }, 50);
         }
-        
+    
         document.getElementById("prevMonth").addEventListener("click", () => {
             monthOffset--;
             generateScrollableDates(monthOffset);
         });
-        
+    
         document.getElementById("nextMonth").addEventListener("click", () => {
             monthOffset++;
             generateScrollableDates(monthOffset);
         });
-        
+    
         document.getElementById("scrollLeft").addEventListener("click", () => {
             document.getElementById("dayScrollContainer").scrollBy({
                 left: -200,
                 behavior: "smooth"
             });
         });
-        
+    
         document.getElementById("scrollRight").addEventListener("click", () => {
             document.getElementById("dayScrollContainer").scrollBy({
                 left: 200,
                 behavior: "smooth"
             });
         });
-        
+    
         function updateLuckyChestProgress(userName, earnedHoney) {
             const allChests = JSON.parse(localStorage.getItem("familyApp_luckyChests")) || {};
             const userChests = allChests[userName] || [];
-        
+    
             let updated = false;
-        
+    
             userChests.forEach(chest => {
                 if (chest.progress < chest.requiredPoints) {
                     chest.progress += earnedHoney;
@@ -1236,38 +1236,38 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
                     updated = true;
                 }
             });
-        
+    
             if (updated) {
                 allChests[userName] = userChests;
                 localStorage.setItem("familyApp_luckyChests", JSON.stringify(allChests));
                 loadLuckyChests(userName);
             }
         }
-        
+    
         function loadLuckyChests(userName) {
             const container = document.getElementById("luckyChestContainer");
             const allChests = JSON.parse(localStorage.getItem("familyApp_luckyChests")) || {};
             const userChests = allChests[userName] || [];
-        
+    
             container.innerHTML = "";
-        
+    
             if (userChests.length === 0) {
                 container.innerHTML = "<p>No Lucky Chests assigned yet.</p>";
                 return;
             }
-        
+    
             userChests.forEach((chest, index) => {
                 const isUnlocked = chest.progress >= chest.requiredPoints;
                 const chestImage = isUnlocked
                     ? '/BeeMazing-Y1/mobile/4-Market/LuckyChest/ChestReady.gif'
                     : '/BeeMazing-Y1/mobile/4-Market/LuckyChest/ChestPending.png';
-        
+    
                 const card = document.createElement("div");
                 card.className = "lucky-chest-card";
                 if (!isUnlocked) {
                     card.classList.add("locked");
                 }
-        
+    
                 card.innerHTML = `
                     <img src="${chestImage}" alt="Chest" class="${isUnlocked ? 'pulse' : ''}">
                     <div class="info">
@@ -1277,30 +1277,30 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
                         </div>
                     </div>
                 `;
-        
+    
                 if (isUnlocked) {
                     card.style.cursor = "pointer";
                     card.addEventListener("click", () => revealLuckyChestReward(userName, chest, index, true));
                 }
-        
+    
                 container.appendChild(card);
             });
         }
-        
+    
         function revealLuckyChestReward(userName, chest, chestIndex, isUserAction = false) {
             const overlay = document.getElementById("chestVideoOverlay");
             const video = document.getElementById("chestVideo");
             const audio = document.getElementById("chestUnlockSound");
-        
+    
             overlay.style.display = "flex";
             video.currentTime = 0;
             video.play();
-        
+    
             audio.currentTime = 0;
             audio.play().catch(error => console.log("Audio playback failed:", error));
-        
+    
             let skipped = false;
-        
+    
             const skipVideo = () => {
                 if (skipped) return;
                 skipped = true;
@@ -1309,28 +1309,28 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
                 overlay.style.display = "none";
                 showLuckyChestRewardOverlay(userName, chest, chestIndex);
             };
-        
+    
             overlay.addEventListener("click", skipVideo, { once: true });
             video.onended = () => skipVideo();
             video.onerror = () => skipVideo();
         }
-        
+    
         function showLuckyChestRewardOverlay(userName, chest, chestIndex) {
             const flash = document.createElement("div");
             flash.className = "flash-effect";
             document.body.appendChild(flash);
-        
+    
             setTimeout(() => {
                 flash.remove();
-        
+    
                 const allChests = JSON.parse(localStorage.getItem("familyApp_luckyChests")) || {};
                 const userChests = allChests[userName] || [];
                 const currentChest = userChests[chestIndex];
-        
+    
                 let rewardToShow;
                 const hasHoney = currentChest.honey !== undefined && currentChest.honey > 0;
                 const hasCustomReward = !currentChest.onlyHoney;
-        
+    
                 if (hasCustomReward) {
                     rewardToShow = {
                         name: currentChest.name,
@@ -1346,10 +1346,10 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
                         image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png"
                     };
                 }
-        
+    
                 const rewardOverlay = document.createElement("div");
                 rewardOverlay.className = "reward-overlay";
-        
+    
                 const modal = document.createElement("div");
                 modal.className = "modal-content reward-reveal";
                 modal.innerHTML = `
@@ -1361,41 +1361,41 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
                     </p>
                     <button class="claim-button">Claim Reward</button>
                 `;
-        
+    
                 rewardOverlay.addEventListener("click", (e) => {
                     if (!e.target.closest(".modal-content")) rewardOverlay.remove();
                 });
-        
+    
                 rewardOverlay.appendChild(modal);
                 document.body.appendChild(rewardOverlay);
-        
+    
                 modal.querySelector(".claim-button").addEventListener("click", () => {
                     claimLuckyChest(userName, chestIndex);
                     rewardOverlay.remove();
                 });
             }, 500);
         }
-        
+    
         function claimLuckyChest(userName, chestIndex) {
             const allChests = JSON.parse(localStorage.getItem("familyApp_luckyChests")) || {};
             const rewards = JSON.parse(localStorage.getItem("familyApp_user_rewards")) || {};
             const userChests = allChests[userName] || [];
-        
+    
             const claimedChest = userChests[chestIndex];
             if (!claimedChest) {
                 console.log("No chest found at index", chestIndex);
                 return;
             }
-        
+    
             console.log("Claiming chest:", claimedChest);
-        
+    
             if (!rewards[userName]) rewards[userName] = [];
             const now = new Date();
-        
+    
             const hasHoney = claimedChest.honey !== undefined && claimedChest.honey > 0;
             const hasCustomReward = !claimedChest.onlyHoney;
             const isHoneyOnlyName = !hasHoney && claimedChest.name.endsWith(" Honey");
-        
+    
             if (claimedChest.type === "dice") {
                 console.log("Claiming dice chest");
                 rewards[userName].push({
@@ -1419,7 +1419,7 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
                     claimedAt: now.toISOString(),
                     type: "normal"
                 });
-        
+    
                 if (hasHoney) {
                     const updatedChest = {
                         name: `${claimedChest.honey} Honey`,
@@ -1455,13 +1455,13 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
                 console.log("Removed chest after honey claim");
                 localStorage.setItem("familyApp_luckyChests", JSON.stringify(allChests));
             }
-        
+    
             console.log("Saving rewards:", rewards[userName]);
             localStorage.setItem("familyApp_user_rewards", JSON.stringify(rewards));
-        
+    
             loadLuckyChests(userName);
         }
-        
+    
         function adjustContentTop() {
             const header = document.querySelector(".date-header");
             const content = document.querySelector(".content");
@@ -1470,17 +1470,17 @@ const addPoints = Number(urlParams.get('addPoints')) || 0;
                 content.style.top = `${headerHeight}px`;
             }
         }
-        
+    
         function showAdminControlsIfNeeded() {
             const urlParams = new URLSearchParams(window.location.search);
             const currentUser = urlParams.get('user');
             const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-const currentAdmin = localStorage.getItem("currentAdminEmail");
-const userPermissions = allUserData[currentAdmin]?.permissions || {};
+            const currentAdmin = localStorage.getItem("currentAdminEmail");
+            const userPermissions = allUserData[currentAdmin]?.permissions || {};
             const isUserAdmin = userPermissions[currentUser] === "Admin";
             const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
             const changePasswordBtn = document.getElementById("changePasswordBtn");
-        
+    
             if (isUserAdmin && isLoggedInAsAdmin) {
                 changePasswordBtn.style.display = "inline-block";
                 if (!changePasswordBtn.dataset.listenersAdded) {
@@ -1490,7 +1490,7 @@ const userPermissions = allUserData[currentAdmin]?.permissions || {};
                         document.getElementById("newAdminPassword").value = "";
                         document.getElementById("newAdminPassword").focus();
                     });
-        
+    
                     document.getElementById("confirmChangePasswordBtn").addEventListener("click", () => {
                         const newPassword = document.getElementById("newAdminPassword").value.trim();
                         if (newPassword.length < 4) {
@@ -1501,20 +1501,20 @@ const userPermissions = allUserData[currentAdmin]?.permissions || {};
                         alert("Admin password updated!");
                         document.getElementById("changePasswordModal").style.display = "none";
                     });
-        
+    
                     document.getElementById("changePasswordModal").addEventListener("click", (e) => {
                         if (e.target.id === "changePasswordModal") {
                             document.getElementById("changePasswordModal").style.display = "none";
                         }
                     });
-        
+    
                     changePasswordBtn.dataset.listenersAdded = "true";
                 }
             } else {
                 if (changePasswordBtn) changePasswordBtn.style.display = "none";
             }
         }
-        
+    
         window.addEventListener("resize", adjustContentTop);
         window.addEventListener("load", adjustContentTop);
         window.addEventListener("storage", (event) => {
@@ -1522,10 +1522,8 @@ const userPermissions = allUserData[currentAdmin]?.permissions || {};
                 showAdminControlsIfNeeded();
             }
         });
-
-
-        </script>
-
+    </script>
+    
 <div id="chestVideoOverlay" style="
     display:none;
     position:fixed;
