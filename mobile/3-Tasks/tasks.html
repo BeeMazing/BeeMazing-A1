@@ -753,6 +753,7 @@ async function finishTask(userName, task, button, selectedDate) {
     if (taskIndex === -1) return;
 
     const today = selectedDate;
+    
 
     // Repeat limits
     const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
@@ -769,6 +770,7 @@ async function finishTask(userName, task, button, selectedDate) {
 
     // Add completion
     task.completions[today].push(userName);
+    
 
     // Give reward to original user (if delegated)
     const rewardAmount = Number(task.reward) || 0;
@@ -814,8 +816,10 @@ async function finishTask(userName, task, button, selectedDate) {
         task.turn = looped ? userList[0] : userList[nextIndex];
     }
 
-    tasks[taskIndex] = task;
-    await saveTask(taskIndex, task);
+    task.date = selectedDate; // ✅ Ensures backend match works
+tasks[taskIndex] = task;
+await saveTask(taskIndex, task);
+
 
 
     if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
@@ -1196,46 +1200,6 @@ document.getElementById("scrollRight").addEventListener("click", () => {
 
 
 
-async function finishTask(task, currentUser, selectedDate) {
-  const today = selectedDate || new Date().toISOString().split("T")[0];
-
-  // Init completions if needed
-  if (!task.completions) task.completions = {};
-  if (!task.completions[today]) task.completions[today] = [];
-
-  // Prevent double-finishing
-  if (task.completions[today].includes(currentUser)) return;
-
-  // ✅ Add user to completions
-  task.completions[today].push(currentUser);
-
-  // Handle reward logic (optional animation or honey increment here)
-
-  const requiredTimes = task.requiredTimes || 1;
-
-  // 🔁 ROTATION LOGIC
-  const currentIndex = task.users.indexOf(task.currentTurn);
-  const nextIndex = (currentIndex + 1) % task.users.length;
-  const nextUser = task.users[nextIndex];
-
-  const completionsToday = task.completions[today].length;
-
-  if (completionsToday < requiredTimes) {
-    task.currentTurn = nextUser; // Rotate immediately
-  } else {
-    // Fully done today → rotate for next day
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
-    if (!task.completions[tomorrow]) task.completions[tomorrow] = [];
-    task.currentTurn = nextUser;
-  }
-
-  // ✅ SAVE UPDATED TASK
-  await saveTaskToBackend(task);
-
-  // ✅ Refresh UI
-  updateTaskPopup(task, currentUser, today);
-}
-
 
 
 
@@ -1244,7 +1208,7 @@ async function saveTaskToBackend(task) {
   const currentAdminEmail = localStorage.getItem("currentAdminEmail");
   if (!currentAdminEmail) return;
 
-  await fetch("https://your-backend-url/api/tasks", {
+  await fetch("https://beemazing.onrender.com/api/tasks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ adminEmail: currentAdminEmail, task }),
