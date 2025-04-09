@@ -1585,6 +1585,14 @@
         async function finishTask(task, currentUser, selectedDate) {
   const today = selectedDate || new Date().toISOString().split("T")[0];
 
+
+  const popup = document.createElement("div");
+popup.className = "reward-popup";
+popup.textContent = `Finished! ✅ +${task.reward || 0} 🍯`;
+document.body.appendChild(popup);
+setTimeout(() => popup.remove(), 2000);
+
+
   // Init completions if needed
   if (!task.completions) task.completions = {};
   if (!task.completions[today]) task.completions[today] = [];
@@ -1598,19 +1606,21 @@
   const requiredTimes = task.requiredTimes || 1;
 
   // 🔁 ROTATION LOGIC
-  const currentIndex = task.users.indexOf(task.currentTurn);
+  const currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+const currentIndex = task.users.indexOf(currentTurn);
   const nextIndex = (currentIndex + 1) % task.users.length;
   const nextUser = task.users[nextIndex];
 
   const completionsToday = task.completions[today].length;
 
   if (completionsToday < requiredTimes) {
-    task.currentTurn = nextUser;
-  } else {
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
-    if (!task.completions[tomorrow]) task.completions[tomorrow] = [];
-    task.currentTurn = nextUser;
-  }
+  task.turn = nextUser;
+} else {
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+  if (!task.completions[tomorrow]) task.completions[tomorrow] = [];
+  task.turn = nextUser;
+}
+
 
   // ✅ SAVE TO BACKEND
   await saveTaskToBackend(task);
@@ -1663,28 +1673,6 @@ async function saveTaskToBackend(task) {
 
 
 
-
-function updateTaskPopup(task, currentUser, selectedDate) {
-  const popup = document.getElementById("taskPopup");
-
-  popup.querySelector(".popup-title").textContent = task.title;
-
-  popup.querySelector(".popup-frequency").textContent =
-    `Frequency: ${task.frequency} - ${task.requiredTimes} time(s) per ${task.frequencyType?.toLowerCase() || 'day'}`;
-
-  popup.querySelector(".popup-settings").textContent = `Settings: ${task.settings || 'None'}`;
-  popup.querySelector(".popup-users").textContent = `Users: ${task.users.join(", ")}`;
-  popup.querySelector(".popup-reward").textContent = `Reward: ${task.reward}`;
-  popup.querySelector(".popup-current").textContent = `Current Turn: ${task.currentTurn}`;
-  popup.querySelector(".popup-next").textContent = `Next: ${getNextUsers(task).join(" -> ")}`;
-
-  const finishBtn = popup.querySelector(".finish-task-btn");
-  if (task.currentTurn === currentUser && !task.completions[selectedDate]?.includes(currentUser)) {
-    finishBtn.style.display = "inline-block";
-  } else {
-    finishBtn.style.display = "none";
-  }
-}
 
 
 
