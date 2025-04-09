@@ -902,6 +902,13 @@ localStorage.setItem("currentAdminEmail", adminEmail);
             adjustContentTop();
             generateScrollableDates();
             showAdminControlsIfNeeded();
+
+            const homeLink = document.getElementById("homeFooterLink");
+if (homeLink && adminEmail) {
+    homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+}
+
+
         });
         
         function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
@@ -1508,15 +1515,6 @@ const userPermissions = allUserData[currentAdmin]?.permissions || {};
         });
 
 
-
-         // Update home link with ?admin=... when footer loads
-  document.addEventListener("DOMContentLoaded", () => {
-      const homeLink = document.getElementById("homeFooterLink");
-      const adminEmail = localStorage.getItem("currentAdminEmail");
-      if (adminEmail) {
-          homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
-      }
-  });
         </script>
 
 <div id="chestVideoOverlay" style="
