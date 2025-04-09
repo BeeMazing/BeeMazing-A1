@@ -962,10 +962,11 @@ if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
 if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
 const usersForToday = [];
-for (let i = 0; i < requiredTimes; i++) {
-    const index = (diffDays + i) % task.users.length;
+if (task.repeat === "Daily") {
+    const index = diffDays % task.users.length;
     usersForToday.push(task.users[index]);
 }
+
 
 
 
