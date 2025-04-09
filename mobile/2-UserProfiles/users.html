@@ -769,6 +769,22 @@
 }
 
 
+
+.fade-out {
+  animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; }
+}
+
+
+
+
+.reward-popup, .honey-drop {
+  pointer-events: none;
+}
+
     </style>
 </head>
 <body>
@@ -1201,10 +1217,12 @@ for (let i = 1; i < task.users.length; i++) {
     document.body.appendChild(modal);
 
     modal.addEventListener("click", (e) => {
-        if (e.target.classList.contains("task-modal")) {
-            modal.remove();
-        }
-    });
+    if (e.target.classList.contains("task-modal")) {
+        modal.classList.add("fade-out");
+        setTimeout(() => modal.remove(), 300);
+    }
+});
+
 
     document.getElementById("editTurnBtn").addEventListener("click", () => {
         modal.remove();
@@ -1231,7 +1249,9 @@ for (let i = 1; i < task.users.length; i++) {
     if (finishBtn) {
         finishBtn.addEventListener("click", async () => {
             await finishTask(currentUser, task, finishBtn, selectedDate);
-            modal.remove(); // Close modal after finishing
+            modal.classList.add("fade-out");
+setTimeout(() => modal.remove(), 300);
+
         });
     }
 }
@@ -1642,6 +1662,10 @@ for (let i = 1; i < task.users.length; i++) {
 
         async function finishTask(task, currentUser, selectedDate) {
   const today = selectedDate || new Date().toISOString().split("T")[0];
+
+
+  const rewardElement = document.getElementById("rewardAmount");
+rewardElement.textContent = Number(rewardElement.textContent) + rewardAmount;
 
   // 🍯 Celebration popup
   const popup = document.createElement("div");
