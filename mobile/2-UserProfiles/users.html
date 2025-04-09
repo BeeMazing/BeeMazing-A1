@@ -916,13 +916,16 @@
     
             // Optional: Fetch from server if implemented
             try {
-                const adminEmail = localStorage.getItem("currentAdminEmail");
-                const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-                const data = await res.json();
-                if (data.success) tasks = data.tasks || tasks; // Fallback to local if server fails
-            } catch (err) {
-                console.error("Failed to fetch tasks from server:", err);
-            }
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const data = await res.json();
+    if (data.success) {
+        tasks = data.tasks || tasks;
+        localStorage.setItem("familyApp_tasks", JSON.stringify(tasks)); // ✅ Add this
+    }
+} catch (err) {
+    console.error("Failed to fetch tasks from server:", err);
+}
     
             const userTasks = tasks.filter(task => task.users?.includes(userName));
             if (userTasks.length === 0) {
@@ -1523,7 +1526,7 @@
             }
         });
     </script>
-    
+
 <div id="chestVideoOverlay" style="
     display:none;
     position:fixed;
