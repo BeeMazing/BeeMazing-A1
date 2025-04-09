@@ -66,7 +66,7 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register Z1</h2>
+    <h2 id="formTitle">Register Z111</h2>
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -84,10 +84,13 @@
   
     const urlParams = new URLSearchParams(window.location.search);
     const invitedAdmin = urlParams.get("admin");
-    const invitedUser = urlParams.get("user");
-    if (invitedAdmin) {
-      localStorage.setItem("currentAdminEmail", invitedAdmin);
-    }
+const invitedUser = urlParams.get("user");
+
+// Only set invited admin if it's a real value (not "null" or "undefined")
+if (invitedAdmin && invitedAdmin !== "null" && invitedAdmin !== "undefined") {
+  localStorage.setItem("currentAdminEmail", invitedAdmin);
+}
+
   
     const form = document.getElementById("authForm");
     const message = document.getElementById("message");
@@ -127,13 +130,17 @@ const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
             localStorage.setItem("currentAdminEmail", email);
             setTimeout(() => window.location.href = "mobile/1-Home/home.html", 1000);
           } else {
-            localStorage.setItem("isAdmin", "false");
-            localStorage.setItem("currentAdminEmail", invitedAdmin);
-            localStorage.setItem("currentUser", data.username);
-            setTimeout(() => {
-              window.location.href = `mobile/2-UserProfiles/users.html?admin=${invitedAdmin}&user=${data.username}`;
-            }, 1000);
-          }
+  const cleanAdmin = (invitedAdmin && invitedAdmin !== "null" && invitedAdmin !== "undefined") ? invitedAdmin : email;
+
+  localStorage.setItem("isAdmin", "false");
+  localStorage.setItem("currentAdminEmail", cleanAdmin);
+  localStorage.setItem("currentUser", data.username);
+
+  setTimeout(() => {
+    window.location.href = `mobile/2-UserProfiles/users.html?admin=${cleanAdmin}&user=${data.username}`;
+  }, 1000);
+}
+
         } else {
           message.style.color = "#D32F2F";
           message.textContent = "❌ " + (data.message || "Something went wrong");
