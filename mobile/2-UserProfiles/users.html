@@ -1288,8 +1288,9 @@ setTimeout(() => modal.remove(), 300);
     }
 }
 
-    
-        let monthOffset = 0;
+let monthOffset = 0;
+generateScrollableDates(monthOffset); // ✅ load dates on initial page load
+
     
         function generateScrollableDates(monthOffset = 0) {
             const container = document.getElementById("dayScrollContainer");
@@ -1329,9 +1330,10 @@ setTimeout(() => modal.remove(), 300);
                 const now = new Date();
                 const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
                 if (dateStr === nowStr) {
-                    btn.classList.add("selected");
-                    loadUserTasks(userName, dateStr);
-                }
+    btn.classList.add("selected");
+    // ❌ Don't auto-call loadUserTasks here — it's already called on initial page load
+}
+
     
                 container.appendChild(btn);
             }
