@@ -828,7 +828,8 @@
 
 
     <div class="footer">
-        <a id="homeFooterLink" class="footer-icon" aria-label="Home">
+        <a id="homeFooterLink" class="footer-icon" href="/BeeMazing-Y1/mobile/1-Home/home.html" aria-label="Home">
+
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
             <span>Home</span>
         </a>
@@ -858,15 +859,29 @@
 
     <script>
         
-            const urlParams = new URLSearchParams(window.location.search);
-            const userName = urlParams.get('user');
-const adminEmail = urlParams.get('admin');
-localStorage.setItem("currentAdminEmail", adminEmail);
-
-            const addPoints = Number(urlParams.get('addPoints')) || 0;
-        
-
             document.addEventListener("DOMContentLoaded", () => {
+
+                if (adminEmail && adminEmail !== "null") {
+    localStorage.setItem("currentAdminEmail", adminEmail);
+    const homeLink = document.getElementById("homeFooterLink");
+    if (homeLink) {
+        homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+    }
+}
+
+const userName = urlParams.get('user');
+const addPoints = Number(urlParams.get('addPoints')) || 0;
+
+
+    if (adminEmail && adminEmail !== "null") {
+        localStorage.setItem("currentAdminEmail", adminEmail);
+        const homeLink = document.getElementById("homeFooterLink");
+        if (homeLink) {
+            homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+        }
+    }
+
+    
             if (userName) {
                 document.getElementById('profileName').textContent = userName;
                 document.getElementById('userName').textContent = userName;
@@ -902,12 +917,6 @@ localStorage.setItem("currentAdminEmail", adminEmail);
             adjustContentTop();
             generateScrollableDates();
             showAdminControlsIfNeeded();
-
-            const homeLink = document.getElementById("homeFooterLink");
-if (homeLink && adminEmail) {
-    homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
-}
-
 
         });
         
