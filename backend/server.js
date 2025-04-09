@@ -21,7 +21,7 @@ app.use(express.json());
 // Serve static files (optional)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// REGISTER (Updated to handle "user already exists" more clearly)
+// REGISTER
 app.post('/register', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -33,7 +33,7 @@ app.post('/register', async (req, res) => {
     console.log("📨 Registering admin:", email);
     const result = await registerUser(email, password);
 
-    if (result && result.error === "user_exists") { // Assuming registerUser returns this error
+    if (result && result.error === "user_exists") {
       return res.status(400).json({ success: false, message: "User already exists" });
     }
 
@@ -49,7 +49,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// LOGIN
+// LOGIN (Updated with more robust error handling)
 app.post('/login', async (req, res) => {
   try {
     const { email, password, adminEmail } = req.body;
@@ -60,12 +60,29 @@ app.post('/login', async (req, res) => {
 
     console.log(`🔍 Attempting login - email: ${email}, adminEmail: ${adminEmail}`);
 
-    const db = await connectDB();
+    // Test database connection
+    let db;
+    try {
+      db = await connectDB();
+      console.log("✅ Database connection successful");
+    } catch (dbErr) {
+      console.error("🔥 Database connection failed:", dbErr);
+      return res.status(500).json({ success: false, message: "Database connection failed", error: dbErr.message });
+    }
+
     const users = db.collection('users');
     const adminUsers = db.collection('adminUsers');
 
+    // Check admin login
     console.log(`🔍 Checking admin login for email: ${email}`);
-    const user = await users.findOne({ email });
+    let user;
+    try {
+      user = await users.findOne({ email });
+    } catch (err) {
+      console.error("🔥 Error querying users collection:", err);
+      return res.status(500).json({ success: false, message: "Error querying users collection", error: err.message });
+    }
+
     if (user && user.password === password) {
       console.log("👑 Admin login successful:", email);
       return res.json({ success: true, role: "admin", message: "Login successful" });
@@ -73,8 +90,15 @@ app.post('/login', async (req, res) => {
       console.log(`❌ No admin found or password mismatch for email: ${email}`);
     }
 
+    // Check invited user login
     console.log(`🔍 Checking invited user for adminEmail: ${adminEmail}`);
-    const invited = await adminUsers.findOne({ email: adminEmail });
+    let invited;
+    try {
+      invited = await adminUsers.findOne({ email: adminEmail });
+    } catch (err) {
+      console.error("🔥 Error querying adminUsers collection:", err);
+      return res.status(500).json({ success: false, message: "Error querying adminUsers collection", error: err.message });
+    }
 
     if (!invited) {
       console.log(`❌ No admin found with adminEmail: ${adminEmail}`);
@@ -105,7 +129,7 @@ app.post('/login', async (req, res) => {
     console.log(`❌ No matching user or password for adminEmail: ${adminEmail}`);
     return res.status(401).json({ success: false, message: "Invalid credentials" });
   } catch (err) {
-    console.error("�fire Error in /login:", err);
+    console.error("🔥 Error in /login:", err);
     res.status(500).json({ success: false, message: "Server error during login", error: err.message });
   }
 });
