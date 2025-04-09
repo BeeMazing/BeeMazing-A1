@@ -958,7 +958,14 @@
                         Progress: ${progressText}
                     `;
     
-                    const currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+                    function getCurrentTurn(task, selectedDate) {
+  const startDate = new Date(task.startDate);
+  const currentDate = new Date(selectedDate || new Date().toISOString().split("T")[0]);
+  const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+  const userIndex = diffDays % task.users.length;
+  return task.users[userIndex];
+}
+
                     const remainingForUser = completedUsers.filter(u => u === userName).length;
     
                     const canFinish = isToday && currentTurn === userName && remainingForUser < requiredTimes;
@@ -1619,7 +1626,11 @@
   task.completions[today].push(currentUser);
 
   // 🔄 Turn rotation
-  const currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+  const currentTurn = task.tempTurnReplacement?.replacement || getCurrentTurn(task, today);
+
+// For 1-per-day rotation: No need to update turn manually, it's based on date.
+// Only update turn manually if requiredTimes > 1
+if (requiredTimes > 1) {
   const currentIndex = task.users.indexOf(currentTurn);
   const nextIndex = (currentIndex + 1) % task.users.length;
   const nextUser = task.users[nextIndex];
@@ -1632,6 +1643,8 @@
     if (!task.completions[tomorrow]) task.completions[tomorrow] = [];
     task.turn = nextUser;
   }
+}
+
 
   // 💾 Save to backend
   await saveTaskToBackend(task);
