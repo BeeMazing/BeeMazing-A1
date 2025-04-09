@@ -11,7 +11,7 @@ const port = process.env.PORT || 3000;
 
 // CORS for GitHub Pages
 const corsOptions = {
-  origin: ['https://g4mechanger.github.io', 'http://localhost:3000'], // Added localhost for testing
+  origin: ['https://g4mechanger.github.io', 'http://localhost:3000'],
   methods: ['GET', 'POST'],
   credentials: false,
 };
@@ -21,26 +21,37 @@ app.use(express.json());
 // Serve static files (optional)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// REGISTER
+// REGISTER (Updated to handle "user already exists" more clearly)
 app.post('/register', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: "Email and password are required" });
+    }
+
     console.log("📨 Registering admin:", email);
     const result = await registerUser(email, password);
+
+    if (result && result.error === "user_exists") { // Assuming registerUser returns this error
+      return res.status(400).json({ success: false, message: "User already exists" });
+    }
 
     console.log("✅ Registered admin:", result);
     res.json({ ...result, role: "admin", success: true });
   } catch (err) {
     console.error("🔥 Error in /register:", err);
-    res.status(500).json({ success: false, message: "Server error during registration" });
+    if (err.message.includes("already exists")) {
+      res.status(400).json({ success: false, message: "User already exists" });
+    } else {
+      res.status(500).json({ success: false, message: "Server error during registration" });
+    }
   }
 });
 
-// LOGIN (Improved with better error handling and logging)
+// LOGIN
 app.post('/login', async (req, res) => {
   try {
-    // Validate request body
     const { email, password, adminEmail } = req.body;
     if (!email || !password || !adminEmail) {
       console.log("❌ Missing required fields in /login request");
@@ -49,12 +60,10 @@ app.post('/login', async (req, res) => {
 
     console.log(`🔍 Attempting login - email: ${email}, adminEmail: ${adminEmail}`);
 
-    // Connect to the database
     const db = await connectDB();
     const users = db.collection('users');
     const adminUsers = db.collection('adminUsers');
 
-    // 1. Admin login
     console.log(`🔍 Checking admin login for email: ${email}`);
     const user = await users.findOne({ email });
     if (user && user.password === password) {
@@ -64,7 +73,6 @@ app.post('/login', async (req, res) => {
       console.log(`❌ No admin found or password mismatch for email: ${email}`);
     }
 
-    // 2. Invited user login
     console.log(`🔍 Checking invited user for adminEmail: ${adminEmail}`);
     const invited = await adminUsers.findOne({ email: adminEmail });
 
@@ -97,7 +105,7 @@ app.post('/login', async (req, res) => {
     console.log(`❌ No matching user or password for adminEmail: ${adminEmail}`);
     return res.status(401).json({ success: false, message: "Invalid credentials" });
   } catch (err) {
-    console.error("🔥 Error in /login:", err);
+    console.error("�fire Error in /login:", err);
     res.status(500).json({ success: false, message: "Server error during login", error: err.message });
   }
 });
