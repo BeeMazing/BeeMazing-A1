@@ -948,31 +948,48 @@ loadUserTasks(userName, todayStr);
 const userTasks = tasks.filter(task => {
     if (!task.users?.some(u => u.trim().toLowerCase() === userName.trim().toLowerCase())) return false;
 
-
-    // Check if this is the correct day for this user based on rotation
     const selected = selectedDate || new Date().toLocaleDateString("sv-SE");
-const toDateOnly = (str) => new Date(str + "T00:00:00");
-const startDate = toDateOnly(task.startDate || selected);
-const currentDate = toDateOnly(selected);
-const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+    const toDateOnly = (str) => new Date(str + "T00:00:00");
+    const startDate = toDateOnly(task.startDate || selected);
+    const currentDate = toDateOnly(selected);
+    const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
 
-let requiredTimes = 1;
-if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+    let requiredTimes = 1;
+    if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+    if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+    if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-const usersForToday = [];
-if (task.repeat === "Daily") {
-    const index = diffDays % task.users.length;
-    usersForToday.push(task.users[index]);
-}
+    let usersForToday = [];
 
+    // ✅ Handle Daily rotation
+    if (task.repeat === "Daily") {
+        for (let i = 0; i < requiredTimes; i++) {
+            const index = (diffDays + i) % task.users.length;
+            usersForToday.push(task.users[index]);
+        }
+    }
 
+    // ✅ Handle Weekly rotation (every 7 days)
+    if (task.repeat === "Weekly") {
+        for (let i = 0; i < requiredTimes; i++) {
+            const weekOffset = Math.floor(diffDays / 7) + i;
+            const index = weekOffset % task.users.length;
+            usersForToday.push(task.users[index]);
+        }
+    }
 
+    // ✅ Handle Monthly rotation (every 30 days)
+    if (task.repeat === "Monthly") {
+        for (let i = 0; i < requiredTimes; i++) {
+            const monthOffset = Math.floor(diffDays / 30) + i;
+            const index = monthOffset % task.users.length;
+            usersForToday.push(task.users[index]);
+        }
+    }
 
-return usersForToday.includes(userName);
-
+    return usersForToday.includes(userName);
 });
+
 
             if (userTasks.length === 0) {
                 userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
