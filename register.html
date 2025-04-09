@@ -66,7 +66,7 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register Z11</h2>
+    <h2 id="formTitle">Register Z1</h2>
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -81,6 +81,13 @@
 
   <script>
     let isRegistering = true;
+  
+    const urlParams = new URLSearchParams(window.location.search);
+    const invitedAdmin = urlParams.get("admin");
+    const invitedUser = urlParams.get("user");
+    if (invitedAdmin) {
+      localStorage.setItem("currentAdminEmail", invitedAdmin);
+    }
   
     const form = document.getElementById("authForm");
     const message = document.getElementById("message");
@@ -102,7 +109,11 @@
         const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({
+            email,
+            password,
+            adminEmail: invitedAdmin || email
+          }),
         });
   
         const data = await res.json();
@@ -110,14 +121,19 @@
         if (res.ok && data.success) {
           message.style.color = "#4CAF50";
           message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
-
-            // 👇 ADD THIS TO FLAG THE ADMIN
-  localStorage.setItem("isAdmin", "true");
-  localStorage.setItem("currentAdminEmail", email); // Also ensures the email is saved
-          
-          setTimeout(() => {
-            window.location.href = "mobile/1-Home/home.html";
-          }, 1000);
+  
+          if (data.role === "admin") {
+            localStorage.setItem("isAdmin", "true");
+            localStorage.setItem("currentAdminEmail", email);
+            setTimeout(() => window.location.href = "mobile/1-Home/home.html", 1000);
+          } else {
+            localStorage.setItem("isAdmin", "false");
+            localStorage.setItem("currentAdminEmail", invitedAdmin);
+            localStorage.setItem("currentUser", data.username);
+            setTimeout(() => {
+              window.location.href = `mobile/2-UserProfiles/users.html?admin=${invitedAdmin}&user=${data.username}`;
+            }, 1000);
+          }
         } else {
           message.style.color = "#D32F2F";
           message.textContent = "❌ " + (data.message || "Something went wrong");
@@ -128,6 +144,7 @@
       }
     });
   </script>
+  
   
 </body>
 </html>
