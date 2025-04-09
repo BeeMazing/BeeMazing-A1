@@ -1071,7 +1071,8 @@
         }
     
         function showTaskDetails(task) {
-    let currentUser = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+            let currentUser = task.tempTurnReplacement?.replacement || getCurrentTurn(task, selectedDate);
+
     const userOrder = [...task.users];
     const currentIndex = userOrder.indexOf(currentUser);
 
