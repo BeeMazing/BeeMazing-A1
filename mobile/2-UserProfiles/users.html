@@ -895,7 +895,9 @@
                 document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${userName}`;
                 document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${userName}`;
         
-                loadUserTasks(userName); // Initial load
+                const todayStr = new Date().toISOString().split("T")[0];
+loadUserTasks(userName, todayStr);
+
                 loadUserReward(userName);
                 loadLuckyChests(userName);
         
@@ -949,9 +951,9 @@ const userTasks = tasks.filter(task => {
 
     // Check if this is the correct day for this user based on rotation
     const selected = selectedDate || new Date().toLocaleDateString("sv-SE");
-    const startDate = new Date(task.startDate || selected);
-    const currentDate = new Date(selected);
-    const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+    const startDate = toDateOnly(task.startDate || selected);
+const currentDate = toDateOnly(selected);
+    const toDateOnly = (str) => new Date(str + "T00:00:00");
     let requiredTimes = 1;
 if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
 if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
@@ -1121,12 +1123,13 @@ const canFinish = isToday && usersForToday.includes(userName) && remainingForUse
 
     
         function showTaskDetails(task) {
+            const selectedDate = document.querySelector(".day.selected")?.dataset.date;
             let currentUser = task.tempTurnReplacement?.replacement || getCurrentTurn(task, selectedDate);
 
     const userOrder = [...task.users];
     const currentIndex = userOrder.indexOf(currentUser);
 
-    const selectedDate = document.querySelector(".day.selected")?.dataset.date;
+
     const completedRaw = task.completions?.[selectedDate] || [];
 
     const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
