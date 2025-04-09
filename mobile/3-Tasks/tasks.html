@@ -1194,6 +1194,103 @@ document.getElementById("scrollRight").addEventListener("click", () => {
     });
 });
 
+
+
+async function finishTask(task, currentUser, selectedDate) {
+  const today = selectedDate || new Date().toISOString().split("T")[0];
+
+  // Init completions if needed
+  if (!task.completions) task.completions = {};
+  if (!task.completions[today]) task.completions[today] = [];
+
+  // Prevent double-finishing
+  if (task.completions[today].includes(currentUser)) return;
+
+  // ✅ Add user to completions
+  task.completions[today].push(currentUser);
+
+  // Handle reward logic (optional animation or honey increment here)
+
+  const requiredTimes = task.requiredTimes || 1;
+
+  // 🔁 ROTATION LOGIC
+  const currentIndex = task.users.indexOf(task.currentTurn);
+  const nextIndex = (currentIndex + 1) % task.users.length;
+  const nextUser = task.users[nextIndex];
+
+  const completionsToday = task.completions[today].length;
+
+  if (completionsToday < requiredTimes) {
+    task.currentTurn = nextUser; // Rotate immediately
+  } else {
+    // Fully done today → rotate for next day
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+    if (!task.completions[tomorrow]) task.completions[tomorrow] = [];
+    task.currentTurn = nextUser;
+  }
+
+  // ✅ SAVE UPDATED TASK
+  await saveTaskToBackend(task);
+
+  // ✅ Refresh UI
+  updateTaskPopup(task, currentUser, today);
+}
+
+
+
+
+
+async function saveTaskToBackend(task) {
+  const currentAdminEmail = localStorage.getItem("currentAdminEmail");
+  if (!currentAdminEmail) return;
+
+  await fetch("https://your-backend-url/api/tasks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ adminEmail: currentAdminEmail, task }),
+  });
+}
+
+
+
+function updateTaskPopup(task, currentUser, selectedDate) {
+  const popup = document.getElementById("taskPopup");
+
+  popup.querySelector(".popup-title").textContent = task.title;
+
+  popup.querySelector(".popup-frequency").textContent =
+    `Frequency: ${task.frequency} - ${task.requiredTimes} time(s) per ${task.frequencyType?.toLowerCase() || 'day'}`;
+
+  popup.querySelector(".popup-settings").textContent = `Settings: ${task.settings || 'None'}`;
+  popup.querySelector(".popup-users").textContent = `Users: ${task.users.join(", ")}`;
+  popup.querySelector(".popup-reward").textContent = `Reward: ${task.reward}`;
+  popup.querySelector(".popup-current").textContent = `Current Turn: ${task.currentTurn}`;
+  popup.querySelector(".popup-next").textContent = `Next: ${getNextUsers(task).join(" -> ")}`;
+
+  const finishBtn = popup.querySelector(".finish-task-btn");
+  if (task.currentTurn === currentUser && !task.completions[selectedDate]?.includes(currentUser)) {
+    finishBtn.style.display = "inline-block";
+  } else {
+    finishBtn.style.display = "none";
+  }
+}
+
+
+
+
+function getNextUsers(task) {
+  const idx = task.users.indexOf(task.currentTurn);
+  const nextUsers = [];
+
+  for (let i = 1; i < task.users.length; i++) {
+    nextUsers.push(task.users[(idx + i) % task.users.length]);
+  }
+
+  return nextUsers;
+}
+
+
+
     </script>
 </body>
 </html>
