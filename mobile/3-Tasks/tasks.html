@@ -527,11 +527,15 @@ body {
 
 
 
+    async function loadTasksForDate(selectedDate) {
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    if (!adminEmail) return;
 
+    // 🔁 Fetch tasks from server instead of localStorage
+    const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const result = await response.json();
+    const tasks = result.tasks || [];
 
-
-    function loadTasksForDate(selectedDate) {
-    const tasks = JSON.parse(localStorage.getItem("familyApp_tasks")) || [];
     const taskList = document.getElementById("taskList");
     taskList.innerHTML = "";
 
@@ -554,8 +558,6 @@ body {
         return;
     }
 
-    const today = selectedDate;
-
     visibleTasks.forEach((task, index) => {
         const taskDiv = document.createElement("div");
         taskDiv.className = "task-item";
@@ -566,28 +568,14 @@ body {
         if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
         if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
-        // Get completed users on this date
+        const today = selectedDate;
         const completedUsers = Array.isArray(task.completions?.[today]) ? task.completions[today] : [];
         const completedCount = completedUsers.length;
         const isCompleted = completedCount >= repeatLimit;
 
-        // Handle currentTurn with delegation
         let currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
 
-        // Use original user order
-        const userOrder = [...task.users];
-        const originalCurrentIndex = userOrder.indexOf(task.tempTurnReplacement?.original || currentTurn);
-        const nextTurn = [];
-        const remainingTurns = repeatLimit - completedCount;
-
-        if (originalCurrentIndex !== -1) {
-            let index = originalCurrentIndex;
-            for (let i = 0; i < remainingTurns; i++) {
-                index = (index + 1) % userOrder.length;
-                nextTurn.push(userOrder[index]);
-            }
-        }
-
+        // Show task info
         taskDiv.innerHTML = `
             <strong>${task.title}</strong><br>
             Turn: ${currentTurn}<br>
@@ -595,68 +583,16 @@ body {
             ${isCompleted ? `<span style="color: green; font-weight: bold;">Completed</span><br>` : ""}
         `;
 
-        // Delete Button
-        const deleteButton = document.createElement("button");
-        deleteButton.className = "delete-btn";
-        deleteButton.textContent = "Delete";
-        deleteButton.addEventListener("click", (e) => {
-            e.stopPropagation();
-            deleteTask(index);
-            loadTasksForDate(selectedDate);
-        });
-        taskDiv.appendChild(deleteButton);
-
-        // Swipe support (unchanged)
-        let startX = 0;
-        let isDragging = false;
-        let swipedLeft = false;
-        let clickStartTime = 0;
-
-        const onStart = (e) => {
-            isDragging = false;
-            startX = e.type.includes("mouse") ? e.pageX : e.touches[0].pageX;
-            clickStartTime = new Date().getTime();
-        };
-
-        const onMove = (e) => {
-            const currentX = e.type.includes("mouse") ? e.pageX : e.touches[0].pageX;
-            const diffX = currentX - startX;
-
-            if (Math.abs(diffX) > 10) isDragging = true;
-
-            if (diffX < -50 && !swipedLeft) {
-                taskDiv.classList.add("swiped-left");
-                swipedLeft = true;
-            } else if (diffX > 50 && swipedLeft) {
-                taskDiv.classList.remove("swiped-left");
-                swipedLeft = false;
-            }
-        };
-
-        const onEnd = () => {
-            isDragging = false;
-        };
-
-        taskDiv.addEventListener("touchstart", onStart);
-        taskDiv.addEventListener("touchmove", onMove);
-        taskDiv.addEventListener("touchend", onEnd);
-        taskDiv.addEventListener("mousedown", onStart);
-        taskDiv.addEventListener("mousemove", (e) => {
-            if (e.buttons !== 1) return;
-            onMove(e);
-        });
-        taskDiv.addEventListener("mouseup", onEnd);
-
         // Click opens details
-        taskDiv.addEventListener("click", (e) => {
-            const clickDuration = new Date().getTime() - clickStartTime;
-            if (swipedLeft || isDragging || clickDuration > 300) return;
+        taskDiv.addEventListener("click", () => {
             showTaskDetails(task);
         });
 
         taskList.appendChild(taskDiv);
     });
 }
+
+
 
 
 
@@ -811,7 +747,7 @@ if (editBtn) {
 
 
 
-function finishTask(userName, task, button, selectedDate) {
+async function finishTask(userName, task, button, selectedDate) {
     const tasks = JSON.parse(localStorage.getItem("familyApp_tasks")) || [];
     const taskIndex = tasks.findIndex(t => t.title === task.title && t.date === task.date);
     if (taskIndex === -1) return;
@@ -879,12 +815,32 @@ function finishTask(userName, task, button, selectedDate) {
     }
 
     tasks[taskIndex] = task;
-    localStorage.setItem("familyApp_tasks", JSON.stringify(tasks));
+    await saveTask(taskIndex, task);
+
 
     if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
     if (typeof loadTasksForDate === 'function') loadTasksForDate(selectedDate);
     if (typeof loadUserTasks === 'function') loadUserTasks(userName, selectedDate);
     if (typeof loadUserReward === 'function') loadUserReward(userName);
+}
+
+async function saveTask(index, task) {
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    if (!adminEmail) {
+        alert("No admin email found.");
+        return;
+    }
+
+    await fetch("https://beemazing.onrender.com/api/tasks", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            adminEmail,
+            task
+        })
+    });
 }
 
 
@@ -1216,6 +1172,9 @@ document.getElementById("nextMonth").addEventListener("click", () => {
     monthOffset++;
     generateScrollableDates(monthOffset);
 });
+
+
+
 
 
         generateScrollableDates();
