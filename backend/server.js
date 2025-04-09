@@ -49,8 +49,10 @@ app.post('/login', async (req, res) => {
     const user = await users.findOne({ email });
   
     if (user && user.password === password) {
-      return res.json({ success: true, role: "admin" });
-    }
+        console.log("👑 Admin login:", email); // Log for confirmation
+        return res.json({ success: true, role: "admin", message: "Login successful" });
+      }
+      
   
     // 2. Try to log in as an invited user under admin
     const invited = await adminUsers.findOne({ email: adminEmail });
@@ -61,8 +63,14 @@ app.post('/login', async (req, res) => {
     if (matchingUser) {
         const [username] = matchingUser;
         console.log("👤 Invited user login:", username);
-        return res.json({ success: true, role: "user", username: username });
+        return res.json({
+          success: true,
+          role: "user",
+          username: username,
+          message: "Login successful"
+        });
       }
+      
       
   
     res.status(401).json({ success: false, message: "Invalid credentials" });
