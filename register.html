@@ -47,7 +47,7 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register 77</h2>
+    <h2 id="formTitle">Register 1</h2>
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -81,57 +81,40 @@
     }
 
     form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const endpoint = isRegistering ? "/register" : "/login";
+  e.preventDefault();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const endpoint = isRegistering ? "/register" : "/login";
 
-      try {
-        const body = isRegistering
-          ? { email, password }
-          : { email, password, adminEmail: invitedAdmin || email };
+  try {
+    const body = isRegistering
+      ? { email, password }
+      : { email, password, adminEmail: invitedAdmin || email };
 
-        const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-
-        const data = await res.json();
-        console.log("📥 Response:", data);
-
-        if (res.ok && data.success) {
-          message.style.color = "#4CAF50";
-          message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
-
-          if (data.role === "admin") {
-            localStorage.setItem("isAdmin", "true");
-            localStorage.setItem("currentAdminEmail", email);
-            setTimeout(() => window.location.href = "mobile/1-Home/home.html", 1000);
-          } else if (data.role === "user" && data.username) {
-            const cleanAdmin = invitedAdmin || email;
-            const cleanUser = data.username || invitedUser || "unknown";
-
-            localStorage.setItem("isAdmin", "false");
-            localStorage.setItem("currentAdminEmail", cleanAdmin);
-            localStorage.setItem("currentUser", cleanUser);
-
-            setTimeout(() => {
-              window.location.href = `mobile/2-UserProfiles/users.html?admin=${cleanAdmin}&user=${cleanUser}`;
-            }, 1000);
-          } else {
-            throw new Error("Unexpected login response format");
-          }
-        } else {
-          message.style.color = "#D32F2F";
-          message.textContent = "❌ " + (data.message || "Something went wrong");
-        }
-      } catch (err) {
-        console.error("❌ Login error:", err);
-        message.style.color = "#D32F2F";
-        message.textContent = `❌ ${err.message || "Error connecting to server"}`;
-      }
+    const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
+
+    const data = await res.json();
+    console.log("📥 Response:", data);
+
+    if (res.ok && data.success) {
+      message.style.color = "#4CAF50";
+      message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
+
+      // ✅ Temporary universal redirect
+      setTimeout(() => {
+        window.location.href = "mobile/1-Home/home.html";
+      }, 1000);
+    }
+  } catch (err) {
+    message.style.color = "#D32F2F";
+    message.textContent = "❌ Error connecting to server";
+  }
+});
+
   </script>
 </body>
 </html>
