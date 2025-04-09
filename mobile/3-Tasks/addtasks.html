@@ -1051,85 +1051,62 @@ window.addEventListener('click', (e) => {
             alarmContainer.appendChild(alarmWrapper);
         });
     
-        // Form Submission
         document.getElementById("addTaskForm").addEventListener("submit", async function (event) {
+  event.preventDefault();
 
-            event.preventDefault();
-    
-            const title = document.getElementById("taskTitle").value.trim();
-            const notes = document.getElementById("taskNotes").value.trim();
-            const room = document.getElementById("roomSelection").value;
-            const repeat = document.getElementById("repeatSelection").value;
-            const settings = document.getElementById("settingsSelection").value;
-            const dateFrom = document.getElementById("taskDate").value;
-            const dateTo = document.getElementById("taskDateTo").value;
-            const reminder = document.getElementById("taskReminder").checked;
-            const users = document.getElementById("assignedToSelection").value
+  const title = document.getElementById("taskTitle").value.trim();
+  const notes = document.getElementById("taskNotes").value.trim();
+  const room = document.getElementById("roomSelection").value;
+  const repeat = document.getElementById("repeatSelection").value;
+  const settings = document.getElementById("settingsSelection").value;
+  const dateFrom = document.getElementById("taskDate").value;
+  const dateTo = document.getElementById("taskDateTo").value;
+  const reminder = document.getElementById("taskReminder").checked;
+  const users = document.getElementById("assignedToSelection").value
     .split(",")
     .map(u => u.trim())
     .filter(u => u);
 
-            const reward = document.getElementById("RewardValue").value;
-            let timesPerDay = parseInt(document.getElementById("timesPerDayInput").value) || null;
-let timesPerWeek = parseInt(document.getElementById("timesPerWeekInput").value) || null;
-let timesPerMonth = parseInt(document.getElementById("timesPerMonthInput").value) || null;
+  const reward = document.getElementById("RewardValue").value;
+  let timesPerDay = parseInt(document.getElementById("timesPerDayInput").value) || null;
+  let timesPerWeek = parseInt(document.getElementById("timesPerWeekInput").value) || null;
+  let timesPerMonth = parseInt(document.getElementById("timesPerMonthInput").value) || null;
 
-// Cap values at 100
-if (timesPerDay > 100) timesPerDay = 100;
-if (timesPerWeek > 100) timesPerWeek = 100;
-if (timesPerMonth > 100) timesPerMonth = 100;
-// Ensure values are at least 1 (if not null)
-if (timesPerDay !== null && timesPerDay < 1) timesPerDay = 1;
-if (timesPerWeek !== null && timesPerWeek < 1) timesPerWeek = 1;
-if (timesPerMonth !== null && timesPerMonth < 1) timesPerMonth = 1;
+  if (!title) {
+    alert("Task title is required!");
+    return;
+  }
 
+  // Cap and sanitize
+  if (timesPerDay > 100) timesPerDay = 100;
+  if (timesPerWeek > 100) timesPerWeek = 100;
+  if (timesPerMonth > 100) timesPerMonth = 100;
+  if (timesPerDay !== null && timesPerDay < 1) timesPerDay = 1;
+  if (timesPerWeek !== null && timesPerWeek < 1) timesPerWeek = 1;
+  if (timesPerMonth !== null && timesPerMonth < 1) timesPerMonth = 1;
 
+  const dateValue = dateMode === "from" ? dateFrom : `${dateFrom} to ${dateTo}`;
+  const currentAdmin = localStorage.getItem("currentAdminEmail");
 
+  const task = {
+    title, notes, room, repeat, settings,
+    date: dateValue, reminder, users, reward, alarms,
+    timesPerDay, timesPerWeek, timesPerMonth
+  };
 
-    
-            if (!title) {
-                alert("Task title is required!");
-                return;
-            }
-    
-            const dateValue = dateMode === "from" ? dateFrom : `${dateFrom} to ${dateTo}`;
-            const currentAdmin = localStorage.getItem("currentAdminEmail");
-const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(currentAdmin)}`);
-const tasks = (await response.json()).tasks || [];
+  // Clear edit mode if present
+  localStorage.removeItem("familyApp_editTask");
 
-            const editTask = JSON.parse(localStorage.getItem("familyApp_editTask"));
-if (editTask) {
-    // Replace existing task by title + date match
-    const index = tasks.findIndex(t => t.title === editTask.title && t.date === editTask.date);
-    if (index !== -1) {
-        tasks[index] = {
-            title, notes, room, repeat, settings,
-            date: dateValue, reminder, users, reward, alarms,
-            timesPerDay, timesPerWeek, timesPerMonth
-        };
-    }
-    localStorage.removeItem("familyApp_editTask");
-} else {
-    // New task
-    tasks.push({
-        title, notes, room, repeat, settings,
-        date: dateValue, reminder, users, reward, alarms,
-        timesPerDay, timesPerWeek, timesPerMonth
-    });
-}
+  await fetch("https://beemazing.onrender.com/api/tasks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ adminEmail: currentAdmin, task })
+  });
 
-
-await fetch("https://beemazing.onrender.com/api/tasks", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ adminEmail: currentAdmin, tasks }),
+  alert("Task saved successfully!");
+  window.location.href = "tasks.html";
 });
 
-
-    
-            alert("Task saved successfully!");
-            window.location.href = "tasks.html";
-        });
     </script>    
 </body>
 </html>
