@@ -17,38 +17,37 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json());
-
-// ✅ Serve frontend files (optional)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ✅ REGISTER
+// ✅ REGISTER (Admin only)
 app.post('/register', async (req, res) => {
   try {
     const { email, password } = req.body;
     console.log("📨 Registering admin:", email);
     const result = await registerUser(email, password);
     console.log("✅ Registered admin:", result);
-    res.json({ ...result, role: "admin", success: true });
+    res.json({ success: true, role: "admin", message: "Registered successfully" });
   } catch (err) {
     console.error("🔥 Error in /register:", err);
     res.status(500).json({ success: false, message: "Server error during registration" });
   }
 });
 
-// ✅ LOGIN
+// ✅ LOGIN (Admin or invited user)
 app.post('/login', async (req, res) => {
   const { email, password, adminEmail } = req.body;
   const db = await connectDB();
   const users = db.collection('users');
   const adminUsers = db.collection('adminUsers');
 
+  // Try admin login
   const user = await users.findOne({ email });
-
   if (user && user.password === password) {
     console.log("👑 Admin login:", email);
     return res.json({ success: true, role: "admin", message: "Login successful" });
   }
 
+  // Try invited user login
   const invited = await adminUsers.findOne({ email: adminEmail });
   const matchingUser = Object.entries(invited?.passwords || {}).find(
     ([username, storedPass]) => storedPass === password && invited.users.includes(username)
@@ -60,7 +59,7 @@ app.post('/login', async (req, res) => {
     return res.json({
       success: true,
       role: "user",
-      username: username,
+      username,
       message: "Login successful"
     });
   }
@@ -68,7 +67,7 @@ app.post('/login', async (req, res) => {
   res.status(401).json({ success: false, message: "Invalid credentials" });
 });
 
-// ✅ GET ALL REGISTERED USERS (Not user-added ones)
+// ✅ GET ALL REGISTERED ADMINS
 app.get('/users', async (req, res) => {
   try {
     const users = await getAllUsers();
@@ -78,13 +77,10 @@ app.get('/users', async (req, res) => {
   }
 });
 
-// ✅ GET USERS ADDED BY SPECIFIC ADMIN
+// ✅ GET USERS ADDED BY A SPECIFIC ADMIN
 app.get('/get-users', async (req, res) => {
   const { adminEmail } = req.query;
-
-  if (!adminEmail) {
-    return res.status(400).json({ success: false, message: "Missing adminEmail" });
-  }
+  if (!adminEmail) return res.status(400).json({ success: false, message: "Missing adminEmail" });
 
   try {
     const db = await connectDB();
@@ -102,10 +98,9 @@ app.get('/get-users', async (req, res) => {
   }
 });
 
-// ✅ ADD NEW USER TO SPECIFIC ADMIN
+// ✅ ADD NEW USER FOR SPECIFIC ADMIN
 app.post('/add-user', async (req, res) => {
   const { adminEmail, newUser, tempPassword } = req.body;
-
   if (!adminEmail || !newUser || !tempPassword) {
     return res.status(400).json({ success: false, message: "Missing data" });
   }
@@ -130,9 +125,10 @@ app.post('/add-user', async (req, res) => {
   }
 });
 
-// ✅ EMAIL INVITE
+// ✅ INVITE VIA EMAIL
 app.post('/send-invite', async (req, res) => {
   const { toEmail, name, tempPassword, adminEmail } = req.body;
+
   const inviteLink = `https://g4mechanger.github.io/BeeMazing-Y1/register.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(name)}`;
 
   const transporter = nodemailer.createTransport({
