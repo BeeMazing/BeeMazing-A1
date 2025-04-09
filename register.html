@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>BeeMazing - Register / Login</title>
   <style>
     body {
@@ -66,7 +66,7 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register 1A133333</h2>
+    <h2 id="formTitle">Register A888</h2>
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -81,62 +81,40 @@
 
   <script>
     let isRegistering = true;
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const invitedAdmin = urlParams.get("admin");
-    const invitedUser = urlParams.get("user");
-
-    // Save admin info from invite link if available
-    if (invitedAdmin && invitedAdmin !== "null" && invitedAdmin !== "undefined") {
-      localStorage.setItem("currentAdminEmail", invitedAdmin);
-    }
-
+  
     const form = document.getElementById("authForm");
     const message = document.getElementById("message");
-
+  
     function toggleForm() {
       isRegistering = !isRegistering;
       document.getElementById("formTitle").textContent = isRegistering ? "Register" : "Login";
       document.getElementById("submitBtn").textContent = isRegistering ? "Register" : "Login";
       document.getElementById("toggleText").textContent = isRegistering ? "Already have an account?" : "Don't have an account?";
     }
-
+  
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
       const endpoint = isRegistering ? "/register" : "/login";
-
+  
       try {
-        const body = isRegistering
-          ? { email, password }
-          : { email, password, adminEmail: invitedAdmin || email };
-
         const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ email, password }),
         });
-
+  
         const data = await res.json();
-        console.log("📥 Response:", data);
-
+  
         if (res.ok && data.success) {
           message.style.color = "#4CAF50";
           message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
 
-          // ✅ Set role & redirect to home
-          if (data.role === "admin") {
-            localStorage.setItem("isAdmin", "true");
-            localStorage.setItem("currentAdminEmail", email);
-          } else {
-            const cleanAdmin = (invitedAdmin && invitedAdmin !== "null" && invitedAdmin !== "undefined") ? invitedAdmin : email;
-            localStorage.setItem("isAdmin", "false");
-            localStorage.setItem("currentAdminEmail", cleanAdmin);
-            localStorage.setItem("currentUser", data.username);
-          }
-
+            // 👇 ADD THIS TO FLAG THE ADMIN
+  localStorage.setItem("isAdmin", "true");
+  localStorage.setItem("currentAdminEmail", email); // Also ensures the email is saved
+          
           setTimeout(() => {
             window.location.href = "mobile/1-Home/home.html";
           }, 1000);
@@ -150,5 +128,6 @@
       }
     });
   </script>
+  
 </body>
 </html>
