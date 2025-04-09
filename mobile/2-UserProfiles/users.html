@@ -1585,54 +1585,53 @@
         async function finishTask(task, currentUser, selectedDate) {
   const today = selectedDate || new Date().toISOString().split("T")[0];
 
-
+  // Show popup
   const popup = document.createElement("div");
-popup.className = "reward-popup";
-popup.textContent = `Finished! ✅ +${task.reward || 0} 🍯`;
-document.body.appendChild(popup);
-setTimeout(() => popup.remove(), 2000);
+  popup.className = "reward-popup";
+  popup.textContent = `Finished! ✅ +${task.reward || 0} 🍯`;
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 2000);
 
-
-  // Init completions if needed
+  // Init completions
   if (!task.completions) task.completions = {};
   if (!task.completions[today]) task.completions[today] = [];
 
-  // Prevent double-finishing
-  if (task.completions[today].includes(currentUser)) return;
+  // Allow multiple completions per user if requiredTimes > 1
+  let requiredTimes = 1;
+  if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+  if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+  if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-  // ✅ Add user to completions
+  const userCompletionsToday = task.completions[today].filter(u => u === currentUser).length;
+  if (userCompletionsToday >= requiredTimes) return;
+
+  // Add to completions
   task.completions[today].push(currentUser);
 
-  const requiredTimes = task.requiredTimes || 1;
-
-  // 🔁 ROTATION LOGIC
+  // Handle turn rotation
   const currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
-const currentIndex = task.users.indexOf(currentTurn);
+  const currentIndex = task.users.indexOf(currentTurn);
   const nextIndex = (currentIndex + 1) % task.users.length;
   const nextUser = task.users[nextIndex];
 
-  const completionsToday = task.completions[today].length;
+  const totalCompletionsToday = task.completions[today].length;
+  if (totalCompletionsToday < requiredTimes) {
+    task.turn = nextUser;
+  } else {
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+    if (!task.completions[tomorrow]) task.completions[tomorrow] = [];
+    task.turn = nextUser;
+  }
 
-  if (completionsToday < requiredTimes) {
-  task.turn = nextUser;
-} else {
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
-  if (!task.completions[tomorrow]) task.completions[tomorrow] = [];
-  task.turn = nextUser;
-}
-
-
-  // ✅ SAVE TO BACKEND
+  // Save & reward
   await saveTaskToBackend(task);
-
-  // ✅ Give reward
   updateLuckyChestProgress(currentUser, task.reward || 0);
   triggerHoneyRain(task.reward || 0);
   loadUserReward(currentUser);
 
-  // ✅ Refresh tasks visually
   await loadUserTasks(currentUser, selectedDate);
 }
+
 
 
 
