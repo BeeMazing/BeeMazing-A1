@@ -1478,8 +1478,6 @@
   // ✅ Add user to completions
   task.completions[today].push(currentUser);
 
-  // Handle reward logic (optional animation or honey increment here)
-
   const requiredTimes = task.requiredTimes || 1;
 
   // 🔁 ROTATION LOGIC
@@ -1490,20 +1488,25 @@
   const completionsToday = task.completions[today].length;
 
   if (completionsToday < requiredTimes) {
-    task.currentTurn = nextUser; // Rotate immediately
+    task.currentTurn = nextUser;
   } else {
-    // Fully done today → rotate for next day
     const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
     if (!task.completions[tomorrow]) task.completions[tomorrow] = [];
     task.currentTurn = nextUser;
   }
 
-  // ✅ SAVE UPDATED TASK
+  // ✅ SAVE TO BACKEND
   await saveTaskToBackend(task);
 
-  // ✅ Refresh UI
-  updateTaskPopup(task, currentUser, today);
+  // ✅ Give reward
+  updateLuckyChestProgress(currentUser, task.reward || 0);
+  triggerHoneyRain(task.reward || 0);
+  loadUserReward(currentUser);
+
+  // ✅ Refresh tasks visually
+  await loadUserTasks(currentUser, selectedDate);
 }
+
 
 
 function updateTaskPopup(task, currentUser, selectedDate) {
