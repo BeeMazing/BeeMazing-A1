@@ -769,22 +769,6 @@
 }
 
 
-
-.fade-out {
-  animation: fadeOut 0.3s ease-out forwards;
-}
-
-@keyframes fadeOut {
-  to { opacity: 0; }
-}
-
-
-
-
-.reward-popup, .honey-drop {
-  pointer-events: none;
-}
-
     </style>
 </head>
 <body>
@@ -895,9 +879,7 @@
                 document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${userName}`;
                 document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${userName}`;
         
-                const todayStr = new Date().toISOString().split("T")[0];
-loadUserTasks(userName, todayStr);
-
+                loadUserTasks(userName); // Initial load
                 loadUserReward(userName);
                 loadLuckyChests(userName);
         
@@ -946,50 +928,27 @@ loadUserTasks(userName, todayStr);
 }
     
 const userTasks = tasks.filter(task => {
-    if (!task.users?.some(u => u.trim().toLowerCase() === userName.trim().toLowerCase())) return false;
+    if (!task.users?.includes(userName)) return false;
 
+    // Check if this is the correct day for this user based on rotation
     const selected = selectedDate || new Date().toLocaleDateString("sv-SE");
-    const toDateOnly = (str) => new Date(str + "T00:00:00");
-    const startDate = toDateOnly(task.startDate || selected);
-    const currentDate = toDateOnly(selected);
+    const startDate = new Date(task.startDate || selected);
+    const currentDate = new Date(selected);
     const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-
     let requiredTimes = 1;
-    if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-    if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-    if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-    let usersForToday = [];
+const usersForToday = [];
+for (let i = 0; i < requiredTimes; i++) {
+    const index = (diffDays + i) % task.users.length;
+    usersForToday.push(task.users[index]);
+}
 
-    // ✅ Handle Daily rotation
-    if (task.repeat === "Daily") {
-        for (let i = 0; i < requiredTimes; i++) {
-            const index = (diffDays + i) % task.users.length;
-            usersForToday.push(task.users[index]);
-        }
-    }
+return usersForToday.includes(userName);
 
-    // ✅ Handle Weekly rotation (every 7 days)
-    if (task.repeat === "Weekly") {
-        for (let i = 0; i < requiredTimes; i++) {
-            const weekOffset = Math.floor(diffDays / 7) + i;
-            const index = weekOffset % task.users.length;
-            usersForToday.push(task.users[index]);
-        }
-    }
-
-    // ✅ Handle Monthly rotation (every 30 days)
-    if (task.repeat === "Monthly") {
-        for (let i = 0; i < requiredTimes; i++) {
-            const monthOffset = Math.floor(diffDays / 30) + i;
-            const index = monthOffset % task.users.length;
-            usersForToday.push(task.users[index]);
-        }
-    }
-
-    return usersForToday.includes(userName);
 });
-
 
             if (userTasks.length === 0) {
                 userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
@@ -1116,42 +1075,35 @@ const canFinish = isToday && usersForToday.includes(userName) && remainingForUse
         }
     
         function triggerHoneyRain(rewardAmount) {
-    for (let i = 0; i < 50; i++) {
-        const drop = document.createElement("div");
-        drop.className = "honey-drop";
-        drop.style.left = `${Math.random() * 100}vw`;
-        drop.style.animationDelay = `${Math.random() * 0.5}s`;
-        document.body.appendChild(drop);
-        setTimeout(() => drop.remove(), 2000);
-    }
-
-    // ✅ Add this here to instantly update honey before animation
-    const rewardElement = document.getElementById("rewardAmount");
-    rewardElement.textContent = Number(rewardElement.textContent) + rewardAmount;
-
-    const popup = document.createElement("div");
-    popup.className = "reward-popup";
-    popup.textContent = `+${rewardAmount} 🍯`;
-    document.body.appendChild(popup);
-
-    setTimeout(() => {
-        rewardElement.classList.add("pulse");
-        setTimeout(() => {
-            rewardElement.classList.remove("pulse");
-            popup.remove();
-        }, 1000);
-    }, 1000);
-}
-
+            for (let i = 0; i < 50; i++) {
+                const drop = document.createElement("div");
+                drop.className = "honey-drop";
+                drop.style.left = `${Math.random() * 100}vw`;
+                drop.style.animationDelay = `${Math.random() * 0.5}s`;
+                document.body.appendChild(drop);
+                setTimeout(() => drop.remove(), 2000);
+            }
+            const popup = document.createElement("div");
+            popup.className = "reward-popup";
+            popup.textContent = `+${rewardAmount} 🍯`;
+            document.body.appendChild(popup);
+            setTimeout(() => {
+                const rewardElement = document.getElementById("rewardAmount");
+                rewardElement.classList.add("pulse");
+                setTimeout(() => {
+                    rewardElement.classList.remove("pulse");
+                    popup.remove();
+                }, 1000);
+            }, 1000);
+        }
     
         function showTaskDetails(task) {
-            const selectedDate = document.querySelector(".day.selected")?.dataset.date;
             let currentUser = task.tempTurnReplacement?.replacement || getCurrentTurn(task, selectedDate);
 
     const userOrder = [...task.users];
     const currentIndex = userOrder.indexOf(currentUser);
 
-
+    const selectedDate = document.querySelector(".day.selected")?.dataset.date;
     const completedRaw = task.completions?.[selectedDate] || [];
 
     const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
@@ -1249,12 +1201,10 @@ for (let i = 1; i < task.users.length; i++) {
     document.body.appendChild(modal);
 
     modal.addEventListener("click", (e) => {
-    if (e.target.classList.contains("task-modal")) {
-        modal.classList.add("fade-out");
-        setTimeout(() => modal.remove(), 300);
-    }
-});
-
+        if (e.target.classList.contains("task-modal")) {
+            modal.remove();
+        }
+    });
 
     document.getElementById("editTurnBtn").addEventListener("click", () => {
         modal.remove();
@@ -1281,16 +1231,13 @@ for (let i = 1; i < task.users.length; i++) {
     if (finishBtn) {
         finishBtn.addEventListener("click", async () => {
             await finishTask(currentUser, task, finishBtn, selectedDate);
-            modal.classList.add("fade-out");
-setTimeout(() => modal.remove(), 300);
-
+            modal.remove(); // Close modal after finishing
         });
     }
 }
 
-let monthOffset = 0;
-generateScrollableDates(monthOffset); // ✅ load dates on initial page load
-
+    
+        let monthOffset = 0;
     
         function generateScrollableDates(monthOffset = 0) {
             const container = document.getElementById("dayScrollContainer");
@@ -1330,10 +1277,9 @@ generateScrollableDates(monthOffset); // ✅ load dates on initial page load
                 const now = new Date();
                 const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
                 if (dateStr === nowStr) {
-    btn.classList.add("selected");
-    // ❌ Don't auto-call loadUserTasks here — it's already called on initial page load
-}
-
+                    btn.classList.add("selected");
+                    loadUserTasks(userName, dateStr);
+                }
     
                 container.appendChild(btn);
             }
@@ -1696,11 +1642,6 @@ generateScrollableDates(monthOffset); // ✅ load dates on initial page load
 
         async function finishTask(task, currentUser, selectedDate) {
   const today = selectedDate || new Date().toISOString().split("T")[0];
-
-
-  const rewardElement = document.getElementById("rewardAmount");
-rewardElement.textContent = Number(rewardElement.textContent) + Number(task.reward || 0);
-
 
   // 🍯 Celebration popup
   const popup = document.createElement("div");
