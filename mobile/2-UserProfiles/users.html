@@ -944,7 +944,8 @@
 }
     
 const userTasks = tasks.filter(task => {
-    if (!task.users?.includes(userName)) return false;
+    if (!task.users?.some(u => u.trim().toLowerCase() === userName.trim().toLowerCase())) return false;
+
 
     // Check if this is the correct day for this user based on rotation
     const selected = selectedDate || new Date().toLocaleDateString("sv-SE");
