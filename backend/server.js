@@ -116,30 +116,59 @@ app.listen(port, () => {
 });
 
 
+// ✅ Save a single task for an admin
 app.post("/api/tasks", async (req, res) => {
-  const { adminEmail, tasks } = req.body;
+  const { adminEmail, task } = req.body;
+
+  if (!adminEmail || !task) {
+    return res.status(400).json({ error: "Missing adminEmail or task" });
+  }
+
   try {
-    await db.collection("admins").updateOne(
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    const updatedTasks = admin?.tasks || [];
+
+    // Replace if exists, otherwise add new
+    const taskIndex = updatedTasks.findIndex(t => t.title === task.title && t.date === task.date);
+    if (taskIndex >= 0) {
+      updatedTasks[taskIndex] = task;
+    } else {
+      updatedTasks.push(task);
+    }
+
+    await admins.updateOne(
       { email: adminEmail },
-      { $set: { tasks: tasks } },
+      { $set: { tasks: updatedTasks } },
       { upsert: true }
     );
+
     res.json({ success: true });
   } catch (err) {
-    console.error("Error saving tasks:", err);
-    res.status(500).json({ error: "Failed to save tasks" });
+    console.error("Error saving task:", err);
+    res.status(500).json({ error: "Failed to save task" });
   }
 });
 
-
-
+// ✅ Get all tasks for an admin
 app.get("/api/tasks", async (req, res) => {
   const { adminEmail } = req.query;
+
+  if (!adminEmail) {
+    return res.status(400).json({ error: "Missing adminEmail" });
+  }
+
   try {
-    const admin = await db.collection("admins").findOne({ email: adminEmail });
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
     res.json({ tasks: admin?.tasks || [] });
   } catch (err) {
     console.error("Error fetching tasks:", err);
     res.status(500).json({ error: "Failed to fetch tasks" });
   }
 });
+
