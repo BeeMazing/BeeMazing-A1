@@ -66,7 +66,7 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register Z1</h2>
+    <h2 id="formTitle">Register Z11</h2>
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -128,10 +128,10 @@ const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
           message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
   
           if (data.role === "admin") {
-            localStorage.setItem("isAdmin", "true");
-            localStorage.setItem("currentAdminEmail", email);
-            setTimeout(() => window.location.href = "mobile/1-Home/home.html", 1000);
-          } else {
+  localStorage.setItem("isAdmin", "true");
+  localStorage.setItem("currentAdminEmail", email);
+  setTimeout(() => window.location.href = "mobile/1-Home/home.html", 1000);
+} else if (data.role === "user" && data.username) {
   const cleanAdmin = (invitedAdmin && invitedAdmin !== "null" && invitedAdmin !== "undefined") ? invitedAdmin : email;
 
   localStorage.setItem("isAdmin", "false");
@@ -141,7 +141,12 @@ const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
   setTimeout(() => {
     window.location.href = `mobile/2-UserProfiles/users.html?admin=${cleanAdmin}&user=${data.username}`;
   }, 1000);
+} else {
+  console.error("⚠️ Unknown role or missing username:", data);
+  message.style.color = "#D32F2F";
+  message.textContent = "❌ Login failed: Unexpected response";
 }
+
 
         } else {
           message.style.color = "#D32F2F";
