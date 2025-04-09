@@ -930,25 +930,20 @@
 const userTasks = tasks.filter(task => {
     if (!task.users?.includes(userName)) return false;
 
-    // Check if this is the correct day for this user based on rotation
-    const selected = selectedDate || new Date().toLocaleDateString("sv-SE");
-    const startDate = new Date(task.startDate || selected);
-    const currentDate = new Date(selected);
-    const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-    let requiredTimes = 1;
-if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+    // Determine whose turn it is for this task
+    function getCurrentTurn(task, selectedDate) {
+        if (!task.startDate || !task.users?.length) return task.users?.[0] || "";
+        const startDate = new Date(task.startDate);
+        const currentDate = new Date(selectedDate);
+        const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+        const userIndex = diffDays % task.users.length;
+        return task.users[userIndex];
+    }
 
-const usersForToday = [];
-for (let i = 0; i < requiredTimes; i++) {
-    const index = (diffDays + i) % task.users.length;
-    usersForToday.push(task.users[index]);
-}
-
-return usersForToday.includes(userName);
-
+    const currentTurn = task.tempTurnReplacement?.replacement || getCurrentTurn(task, selectedDate);
+    return currentTurn === userName;
 });
+
 
             if (userTasks.length === 0) {
                 userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";

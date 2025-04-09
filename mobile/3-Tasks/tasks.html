@@ -636,15 +636,13 @@ const completedRaw = task.completions?.[selectedDate] || [];
     if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
     // Calculate how many turns are left
-    const remainingTurns = requiredTimes - completedUsers.length;
-
-    // Build nextTurn array from current turn, cycling through users
     let nextTurn = [];
     let index = currentIndex;
-    for (let i = 0; i < remainingTurns - 1; i++) {
-        index = (index + 1) % userOrder.length;
+    for (let i = 1; i < task.users.length; i++) {
+        index = (currentIndex + i) % task.users.length;
         nextTurn.push(userOrder[index]);
     }
+
 
     let taskDetails = "";
 
