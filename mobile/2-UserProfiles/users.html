@@ -1601,6 +1601,17 @@
 
 
 
+        
+
+
+
+
+
+
+
+
+
+
         async function finishTask(task, currentUser, selectedDate) {
   const today = selectedDate || new Date().toISOString().split("T")[0];
 
@@ -1628,46 +1639,24 @@
   // ✅ Mark user as completed
   task.completions[today].push(currentUser);
 
-  // 🔄 Turn rotation
-  const currentTurn = task.tempTurnReplacement?.replacement || getCurrentTurn(task, today);
-
-// For 1-per-day rotation: No need to update turn manually, it's based on date.
-// Only update turn manually if requiredTimes > 1
-if (requiredTimes > 1) {
-  const currentIndex = task.users.indexOf(currentTurn);
-  const nextIndex = (currentIndex + 1) % task.users.length;
-  const nextUser = task.users[nextIndex];
-
-  const totalCompletionsToday = task.completions[today].length;
-  if (totalCompletionsToday < requiredTimes) {
-    task.turn = nextUser;
-  } else {
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
-    if (!task.completions[tomorrow]) task.completions[tomorrow] = [];
-    task.turn = nextUser;
-  }
-}
-
-
   // 💾 Save to backend
   await saveTaskToBackend(task);
 
-  // 🍯 Add honey reward safely
+  // 🎯 Determine who should receive the honey reward
+  const rewardTarget = task.tempTurnReplacement?.original || currentUser;
+
+  // 🍯 Add honey reward
   const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
-  const currentPoints = Number(rewards[currentUser] || 0);
-  const earnedPoints = Number(task.reward || 0);
-  rewards[currentUser] = currentPoints + earnedPoints;
+  rewards[rewardTarget] = (rewards[rewardTarget] || 0) + Number(task.reward || 0);
   localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
 
-  // 🎉 Visual and chest progress
-  updateLuckyChestProgress(currentUser, earnedPoints);
-  triggerHoneyRain(earnedPoints);
+  // 🐝 Update chests and UI
+  updateLuckyChestProgress(rewardTarget, Number(task.reward || 0));
+  triggerHoneyRain(Number(task.reward || 0));
 
-  // 🐝 Refresh honey count & task list
-  setTimeout(() => loadUserReward(currentUser), 100);
+  setTimeout(() => loadUserReward(rewardTarget), 100);
   await loadUserTasks(currentUser, selectedDate);
 }
-
 
 
 
