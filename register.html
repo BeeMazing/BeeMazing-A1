@@ -66,7 +66,7 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register 1444</h2>
+    <h2 id="formTitle">Register 2</h2>
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -81,79 +81,92 @@
 
   <script>
     let isRegistering = true;
-  
+
     const urlParams = new URLSearchParams(window.location.search);
     const invitedAdmin = urlParams.get("admin");
-const invitedUser = urlParams.get("user");
+    const invitedUser = urlParams.get("user");
 
-// Only set invited admin if it's a real value (not "null" or "undefined")
-if (invitedAdmin && invitedAdmin !== "null" && invitedAdmin !== "undefined") {
-  localStorage.setItem("currentAdminEmail", invitedAdmin);
-}
+    // Log the URL parameters for debugging
+    console.log("🔍 URL Parameters - invitedAdmin:", invitedAdmin, "invitedUser:", invitedUser);
 
-  
+    // Only set invited admin if it's a real value (not "null" or "undefined")
+    if (invitedAdmin && invitedAdmin !== "null" && invitedAdmin !== "undefined") {
+      localStorage.setItem("currentAdminEmail", invitedAdmin);
+    }
+
     const form = document.getElementById("authForm");
     const message = document.getElementById("message");
-  
+
     function toggleForm() {
       isRegistering = !isRegistering;
       document.getElementById("formTitle").textContent = isRegistering ? "Register" : "Login";
       document.getElementById("submitBtn").textContent = isRegistering ? "Register" : "Login";
       document.getElementById("toggleText").textContent = isRegistering ? "Already have an account?" : "Don't have an account?";
     }
-  
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
       const endpoint = isRegistering ? "/register" : "/login";
-  
+
       try {
         const body = isRegistering
-  ? { email, password } // Only email/password for admin registration
-  : { email, password, adminEmail: invitedAdmin || email }; // Only needed on login
+          ? { email, password } // Only email/password for admin registration
+          : { email, password, adminEmail: invitedAdmin || email }; // Only needed on login
 
-const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(body),
-});
-  
+        console.log("📤 Sending request to:", endpoint, "with body:", body);
+
+        const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
         const data = await res.json();
-        console.log("📥 Login response:", data);
+        console.log("📥 Response:", data);
 
-  
         if (res.ok && data.success) {
           message.style.color = "#4CAF50";
           message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
-  
-          if (data.role === "admin") {
+
+          console.log("🔍 Redirect logic - isRegistering:", isRegistering, "data.role:", data.role);
+
+          if (isRegistering || data.role === "admin") {
+            // Admin registration or admin login redirects to home.html
+            console.log("👑 Redirecting to home.html (admin)");
             localStorage.setItem("isAdmin", "true");
             localStorage.setItem("currentAdminEmail", email);
             setTimeout(() => window.location.href = "mobile/1-Home/home.html", 1000);
+          } else if (data.role === "user" && invitedAdmin && invitedUser && invitedAdmin !== "null" && invitedAdmin !== "undefined" && invitedUser !== "null" && invitedUser !== "undefined") {
+            // Invited user login via invite link redirects to users.html
+            console.log("👤 Redirecting to users.html (invited user)");
+            const cleanAdmin = invitedAdmin || email;
+
+            localStorage.setItem("isAdmin", "false");
+            localStorage.setItem("currentAdminEmail", cleanAdmin);
+            localStorage.setItem("currentUser", data.username || "unknown");
+
+            setTimeout(() => {
+              window.location.href = `mobile/2-UserProfiles/users.html?admin=${cleanAdmin}&user=${data.username || "unknown"}`;
+            }, 1000);
           } else {
-  const cleanAdmin = (invitedAdmin && invitedAdmin !== "null" && invitedAdmin !== "undefined") ? invitedAdmin : email;
-
-  localStorage.setItem("isAdmin", "false");
-  localStorage.setItem("currentAdminEmail", cleanAdmin);
-  localStorage.setItem("currentUser", data.username);
-
-  setTimeout(() => {
-    window.location.href = `mobile/2-UserProfiles/users.html?admin=${cleanAdmin}&user=${data.username}`;
-  }, 1000);
-}
-
+            // Non-invited user login or invalid scenario
+            console.log("❌ Invalid login scenario");
+            message.style.color = "#D32F2F";
+            message.textContent = "❌ Please use the invite link to log in as a user, or register/login as an admin.";
+          }
         } else {
+          console.log("❌ Request failed:", data.message);
           message.style.color = "#D32F2F";
           message.textContent = "❌ " + (data.message || "Something went wrong");
         }
       } catch (err) {
+        console.error("❌ Fetch error:", err);
         message.style.color = "#D32F2F";
         message.textContent = "❌ Error connecting to server";
       }
     });
   </script>
-  
-  
 </body>
 </html>
