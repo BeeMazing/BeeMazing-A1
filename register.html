@@ -47,7 +47,7 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register 1</h2>
+    <h2 id="formTitle">Register 22</h2>
     <form id="authForm">
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Password" required />
@@ -62,59 +62,64 @@
 
   <script>
     let isRegistering = true;
+  
     const urlParams = new URLSearchParams(window.location.search);
     const invitedAdmin = urlParams.get("admin");
     const invitedUser = urlParams.get("user");
-
+  
     if (invitedAdmin && invitedAdmin !== "null" && invitedAdmin !== "undefined") {
       localStorage.setItem("currentAdminEmail", invitedAdmin);
     }
-
+  
     const form = document.getElementById("authForm");
     const message = document.getElementById("message");
-
+  
     function toggleForm() {
       isRegistering = !isRegistering;
       document.getElementById("formTitle").textContent = isRegistering ? "Register" : "Login";
       document.getElementById("submitBtn").textContent = isRegistering ? "Register" : "Login";
       document.getElementById("toggleText").textContent = isRegistering ? "Already have an account?" : "Don't have an account?";
     }
-
+  
     form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const endpoint = isRegistering ? "/register" : "/login";
-
-  try {
-    const body = isRegistering
-      ? { email, password }
-      : { email, password, adminEmail: invitedAdmin || email };
-
-    const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      e.preventDefault();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const endpoint = isRegistering ? "/register" : "/login";
+  
+      try {
+        const body = isRegistering
+          ? { email, password }
+          : { email, password, adminEmail: invitedAdmin || email };
+  
+        const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+  
+        const data = await res.json();
+        console.log("📥 Response:", data);
+  
+        if (res.ok && data.success) {
+          message.style.color = "#4CAF50";
+          message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
+  
+          // ✅ Temporary universal redirect
+          setTimeout(() => {
+            window.location.href = "mobile/1-Home/home.html";
+          }, 1000);
+        } else {
+          message.style.color = "#D32F2F";
+          message.textContent = "❌ " + (data.message || "Something went wrong");
+        }
+  
+      } catch (err) {
+        message.style.color = "#D32F2F";
+        message.textContent = "❌ Error connecting to server";
+      }
     });
-
-    const data = await res.json();
-    console.log("📥 Response:", data);
-
-    if (res.ok && data.success) {
-      message.style.color = "#4CAF50";
-      message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
-
-      // ✅ Temporary universal redirect
-      setTimeout(() => {
-        window.location.href = "mobile/1-Home/home.html";
-      }, 1000);
-    }
-  } catch (err) {
-    message.style.color = "#D32F2F";
-    message.textContent = "❌ Error connecting to server";
-  }
-});
-
   </script>
+  
 </body>
 </html>
