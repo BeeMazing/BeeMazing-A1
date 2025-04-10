@@ -6,6 +6,7 @@
     <title>BeeMazing Market</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
+        /* Your existing CSS remains unchanged */
         * {
             margin: 0;
             padding: 0;
@@ -239,8 +240,7 @@
     </div>
 
     <div class="footer">
-        <a id="homeFooterLink" class="footer-icon" href="/BeeMazing-Y1/mobile/1-Home/home.html" aria-label="Home">
-
+        <a href="/BeeMazing-Y1/mobile/1-Home/home.html" id="homeFooterLink" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
             <span>Home</span>
         </a>
@@ -269,40 +269,43 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const adminEmail = urlParams.get('admin');
             const userName = urlParams.get('user');
-            const addPoints = Number(urlParams.get('addPoints')) || 0;
-    
-            if (adminEmail && adminEmail !== "null") {
-                localStorage.setItem("currentAdminEmail", adminEmail);
-                const homeLink = document.getElementById("homeFooterLink");
-                if (homeLink) {
-                    homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
-                }
+            let adminEmail = urlParams.get('adminEmail') || localStorage.getItem('currentAdminEmail');
+
+            // Store adminEmail in localStorage if it exists
+            if (adminEmail) {
+                localStorage.setItem('currentAdminEmail', adminEmail);
+            } else {
+                adminEmail = localStorage.getItem('currentAdminEmail'); // Fallback to localStorage if no URL param
             }
-    
-            if (userName) {
-                document.getElementById('profileName').textContent = userName;
+
+            // Debug: Log the values to ensure they're correct
+            console.log('userName:', userName);
+            console.log('adminEmail:', adminEmail);
+
+            // Update footer links
+            const homeLink = document.getElementById('homeFooterLink');
+            const profileButton = document.getElementById('profileButton');
+            const marketButton = document.getElementById('marketButton');
+            const rewardsButton = document.getElementById('rewardsButton');
+
+            if (!userName || !adminEmail) {
+                document.getElementById('rewardList').innerHTML = "<p>Error: Missing user or admin information.</p>";
+            } else {
+                // Set username in header
                 document.getElementById('userName').textContent = userName;
-                document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${userName}`;
-                document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${userName}&adminEmail=${adminEmail}`;
-                document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${userName}`;
-        
-                loadUserTasks(userName); // Initial load
-                loadUserReward(userName);
-                loadLuckyChests(userName);
-        
-                if (addPoints > 0) {
-                    setTimeout(() => {
-                        const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
-                        rewards[userName] = (rewards[userName] || 0) + addPoints;
-                        localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
-                        triggerHoneyRain(addPoints);
-                        loadUserReward(userName);
-                    }, 500);
-                }
+
+                // Update all footer links with both user and adminEmail
+                homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+                profileButton.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+                marketButton.href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+                rewardsButton.href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+
+                // Load rewards
+                loadRewards();
             }
-        
+
+            // Highlight active footer icon
             document.querySelectorAll('.footer a').forEach(link => {
                 const currentPath = window.location.pathname.replace(/\/$/, '');
                 const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
@@ -312,118 +315,111 @@
                     link.classList.remove('active');
                 }
             });
-        
-            adjustContentTop();
-            generateScrollableDates();
-            showAdminControlsIfNeeded();
-        });
-    
 
+            async function loadRewards() {
+                const rewardList = document.getElementById('rewardList');
 
+                try {
+                    // Fetch user's honey balance
+                    const rewardResponse = await fetch(`https://beemazing.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+                    const rewardData = await rewardResponse.json();
+                    if (!rewardResponse.ok) {
+                        throw new Error(rewardData.error || 'Failed to fetch user rewards');
+                    }
+                    const userDiamonds = rewardData.rewards[userName] || 0;
 
-        async function loadRewards() {
-            const rewardList = document.getElementById('rewardList');
+                    // Fetch market rewards
+                    const marketResponse = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+                    const marketData = await marketResponse.json();
+                    if (!marketResponse.ok) {
+                        throw new Error(marketData.error || 'Failed to fetch market rewards');
+                    }
+                    const rewards = marketData.rewards || [];
 
-            try {
-                // Fetch user's honey balance
-                const rewardResponse = await fetch(`https://beemazing.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-                const rewardData = await rewardResponse.json();
-                if (!rewardResponse.ok) {
-                    throw new Error(rewardData.error || 'Failed to fetch user rewards');
+                    rewardList.innerHTML = '';
+                    if (rewards.length === 0) {
+                        rewardList.innerHTML = '<p>No rewards available in the hive.</p>';
+                    } else {
+                        rewards.forEach(reward => {
+                            const rewardItem = document.createElement('li');
+                            rewardItem.className = 'reward-item';
+                            const canAfford = userDiamonds >= reward.diamonds;
+                            rewardItem.innerHTML = `
+                                <div class="reward-details">
+                                    <strong>${reward.name}</strong><br>
+                                    Honey: ${reward.diamonds} 🍯
+                                </div>
+                                <button class="get-it-btn ${canAfford ? 'enabled' : 'disabled'}" 
+                                        ${canAfford ? '' : 'disabled'} 
+                                        onclick="purchaseReward('${userName}', '${reward.name}', ${reward.diamonds})">
+                                    Get It
+                                </button>
+                            `;
+                            rewardList.appendChild(rewardItem);
+                        });
+                    }
+                } catch (err) {
+                    console.error('Error loading rewards:', err);
+                    rewardList.innerHTML = '<p>Failed to load rewards. Please try again later.</p>';
                 }
-                const userDiamonds = rewardData.rewards[userName] || 0;
+            }
 
-                // Fetch market rewards
-                const marketResponse = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-                const marketData = await marketResponse.json();
-                if (!marketResponse.ok) {
-                    throw new Error(marketData.error || 'Failed to fetch market rewards');
-                }
-                const rewards = marketData.rewards || [];
-
-                rewardList.innerHTML = '';
-                if (rewards.length === 0) {
-                    rewardList.innerHTML = '<p>No rewards available in the hive.</p>';
-                } else {
-                    rewards.forEach(reward => {
-                        const rewardItem = document.createElement('li');
-                        rewardItem.className = 'reward-item';
-                        const canAfford = userDiamonds >= reward.diamonds;
-                        rewardItem.innerHTML = `
-                            <div class="reward-details">
-                                <strong>${reward.name}</strong><br>
-                                Honey: ${reward.diamonds} 🍯
-                            </div>
-                            <button class="get-it-btn ${canAfford ? 'enabled' : 'disabled'}" 
-                                    ${canAfford ? '' : 'disabled'} 
-                                    onclick="purchaseReward('${userName}', '${reward.name}', ${reward.diamonds})">
-                                Get It
-                            </button>
-                        `;
-                        rewardList.appendChild(rewardItem);
+            async function purchaseReward(userName, rewardName, diamondCost) {
+                try {
+                    const response = await fetch('https://beemazing.onrender.com/api/purchase-reward', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ adminEmail, user: userName, rewardName, diamondCost })
                     });
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to purchase reward');
+                    }
+                    showRewardEffect(rewardName, userName);
+                    loadRewards(); // Refresh the reward list
+                } catch (err) {
+                    console.error('Error purchasing reward:', err);
+                    alert('Failed to purchase reward. Please try again.');
                 }
-            } catch (err) {
-                console.error('Error loading rewards:', err);
-                rewardList.innerHTML = '<p>Failed to load rewards. Please try again later.</p>';
-            }
-        }
-
-        async function purchaseReward(userName, rewardName, diamondCost) {
-            try {
-                const response = await fetch('https://beemazing.onrender.com/api/purchase-reward', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ adminEmail, user: userName, rewardName, diamondCost })
-                });
-                const data = await response.json();
-                if (!response.ok) {
-                    throw new Error(data.error || 'Failed to purchase reward');
-                }
-                showRewardEffect(rewardName, userName);
-                loadRewards(); // Refresh the reward list
-            } catch (err) {
-                console.error('Error purchasing reward:', err);
-                alert('Failed to purchase reward. Please try again.');
-            }
-        }
-
-        function showRewardEffect(rewardName, userName) {
-            const overlay = document.getElementById('rewardOverlay');
-            const rewardMessage = document.getElementById('claimedRewardName');
-            rewardMessage.textContent = rewardName;
-
-            overlay.classList.add('show');
-
-            // Add flashing effect
-            const flash = document.createElement('div');
-            flash.className = 'flash';
-            overlay.appendChild(flash);
-            setTimeout(() => flash.remove(), 600);
-
-            // Add confetti burst
-            for (let i = 0; i < 30; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                const angle = Math.random() * 360;
-                const distance = Math.random() * 20 + 10;
-                confetti.style.setProperty('--x', Math.cos(angle * Math.PI / 180) * distance);
-                confetti.style.setProperty('--y', Math.sin(angle * Math.PI / 180) * distance);
-                confetti.style.left = '50%';
-                confetti.style.top = '50%';
-                confetti.style.background = i % 2 === 0 ? 'var(--primary-color)' : '#FFB300';
-                overlay.appendChild(confetti);
-                setTimeout(() => confetti.remove(), 1500);
             }
 
-            // Close overlay when clicking outside the message
-            overlay.addEventListener('click', function closeOverlay(e) {
-                if (e.target === overlay) {
-                    overlay.classList.remove('show');
-                    overlay.removeEventListener('click', closeOverlay);
+            function showRewardEffect(rewardName, userName) {
+                const overlay = document.getElementById('rewardOverlay');
+                const rewardMessage = document.getElementById('claimedRewardName');
+                rewardMessage.textContent = rewardName;
+
+                overlay.classList.add('show');
+
+                // Add flashing effect
+                const flash = document.createElement('div');
+                flash.className = 'flash';
+                overlay.appendChild(flash);
+                setTimeout(() => flash.remove(), 600);
+
+                // Add confetti burst
+                for (let i = 0; i < 30; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    const angle = Math.random() * 360;
+                    const distance = Math.random() * 20 + 10;
+                    confetti.style.setProperty('--x', Math.cos(angle * Math.PI / 180) * distance);
+                    confetti.style.setProperty('--y', Math.sin(angle * Math.PI / 180) * distance);
+                    confetti.style.left = '50%';
+                    confetti.style.top = '50%';
+                    confetti.style.background = i % 2 === 0 ? 'var(--primary-color)' : '#FFB300';
+                    overlay.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 1500);
                 }
-            }, { once: true });
-        }
+
+                // Close overlay when clicking outside the message
+                overlay.addEventListener('click', function closeOverlay(e) {
+                    if (e.target === overlay) {
+                        overlay.classList.remove('show');
+                        overlay.removeEventListener('click', closeOverlay);
+                    }
+                }, { once: true });
+            }
+        });
     </script>
 </body>
 </html>
