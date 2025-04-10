@@ -46,60 +46,6 @@ if (!isAdmin && footer) {
     // Load users from localStorage on page load
     const currentAdmin = localStorage.getItem("currentAdminEmail");
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-// Update footer links dynamically
-const encodedAdmin = encodeURIComponent(currentAdmin);
-document.getElementById("tasksButton").href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?adminEmail=${encodedAdmin}`;
-document.getElementById("statsButton").href = `/BeeMazing-Y1/mobile/5-Stats/stats.html?adminEmail=${encodedAdmin}`;
-const marketButton = document.getElementById("marketButton");
-
-if (isAdmin) {
-    marketButton.href = `/BeeMazing-Y1/mobile/4-Market/market.html?adminEmail=${encodedAdmin}`;
-} else {
-    marketButton.href = "#"; // Prevent default navigation for non-admins until user is selected
-    marketButton.addEventListener("click", function (e) {
-        e.preventDefault();
-        alert("Please select a user from the list to view their market.");
-    });
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     async function fetchUsersFromServer(email) {
         try {
           const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(email)}`);
