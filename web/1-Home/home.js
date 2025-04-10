@@ -246,59 +246,88 @@ alert(`Send this link to the user: ${inviteLink}`);
     // Function to render users in the manage members modal
     function renderManageMembers() {
         if (!manageMembersList) return; // Skip if not in web version
-
+    
         manageMembersList.innerHTML = "";
         const updatedUserData = JSON.parse(localStorage.getItem("userData")) || {};
-const updatedUsers = updatedUserData[currentAdmin]?.users || [];
-
-updatedUsers.forEach((username, index) => {
-
+        const updatedUsers = updatedUserData[currentAdmin]?.users || [];
+    
+        updatedUsers.forEach((username, index) => {
             const manageItem = document.createElement("li");
             manageItem.classList.add("manage-members-item");
-
+    
             // Input field for editing the username
             const input = document.createElement("input");
             input.type = "text";
             input.value = username;
-            input.addEventListener("change", function () {
+            input.addEventListener("change", async function () {
                 const newName = input.value.trim();
                 if (newName !== "") {
                     updatedUsers[index] = newName;
+                    updatedUserData[currentAdmin].users = updatedUsers;
+                    localStorage.setItem("userData", JSON.stringify(updatedUserData));
+                    renderUsers();
+                    renderManageMembers();
                 } else {
-                    updatedUsers.splice(index, 1);
+                    // If the input is empty, treat it as a deletion
+                    await deleteUserFromServer(username);
                 }
-                allUserData[currentAdmin].users = updatedUsers;
-                localStorage.setItem("userData", JSON.stringify(allUserData));
-                
-
-                renderUsers();
-                renderManageMembers();
             });
-
+    
             // Delete button
             const deleteBtn = document.createElement("button");
             deleteBtn.classList.add("delete-btn");
             deleteBtn.textContent = "Delete";
-            deleteBtn.addEventListener("click", function () {
-                updatedUsers.splice(index, 1);
-                allUserData[currentAdmin].users = updatedUsers;        
-                localStorage.setItem("userData", JSON.stringify(allUserData));
-                
-
-                renderUsers();
-                renderManageMembers();
+            deleteBtn.addEventListener("click", async function () {
+                await deleteUserFromServer(username);
             });
-
+    
             manageItem.appendChild(input);
             manageItem.appendChild(deleteBtn);
             manageMembersList.appendChild(manageItem);
         });
-
+    
         // Show a message if no users exist
         if (updatedUsers.length === 0) {
             manageMembersList.innerHTML = "<p>No members to manage.</p>";
-        }        
+        }
     }
+    
+// Helper function to delete a user from the server
+async function deleteUserFromServer(username) {
+    try {
+        const res = await fetch(
+            `https://beemazing.onrender.com/delete-user?adminEmail=${encodeURIComponent(currentAdmin)}&username=${encodeURIComponent(username)}`,
+            {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+            }
+        );
+
+        const result = await res.json();
+        if (result.success) {
+            // Update localStorage after successful server deletion
+            const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+            let users = allUserData[currentAdmin]?.users || [];
+            users = users.filter(user => user !== username);
+            allUserData[currentAdmin].users = users;
+            localStorage.setItem("userData", JSON.stringify(allUserData));
+
+            renderUsers();
+            renderManageMembers();
+        } else {
+            alert("Failed to delete user from server: " + result.message);
+        }
+    } catch (err) {
+        console.error("Failed to delete user:", err);
+        alert("Error deleting user. Please try again.");
+    }
+}
+
+
+
+
+
+
 
 
     let userToRemove = null;
