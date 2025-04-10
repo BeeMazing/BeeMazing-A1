@@ -46,6 +46,50 @@ if (!isAdmin && footer) {
     // Load users from localStorage on page load
     const currentAdmin = localStorage.getItem("currentAdminEmail");
 
+
+
+
+
+    const invitedUser = urlParams.get("user");
+    if (invitedUser) {
+        // Save invited user to localStorage for later use (optional)
+        localStorage.setItem("currentInvitedUser", invitedUser);
+    
+        // Hide add button and footer
+        if (addUserBtn) addUserBtn.style.display = "none";
+        if (footer) footer.style.display = "none";
+    
+        // Filter just the invited user
+        const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+        const adminUsers = allUserData[currentAdmin]?.users || [];
+    
+        // If the invited user is in the list, show only that one
+        if (adminUsers.includes(invitedUser)) {
+            const fakeUserData = {};
+            fakeUserData[currentAdmin] = {
+                users: [invitedUser],
+                permissions: { [invitedUser]: "User" }
+            };
+            localStorage.setItem("userData", JSON.stringify(fakeUserData));
+        }
+    
+        // Re-render only invited user's card
+        renderUsers();
+        return; // Prevent loading rest of the admin-only logic
+    }
+    
+
+
+
+
+
+
+
+
+
+
+
+
     async function fetchUsersFromServer(email) {
         try {
           const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(email)}`);
@@ -414,6 +458,22 @@ document.getElementById("changePasswordModal").addEventListener("click", (e) => 
     document.getElementById("changePasswordModal").classList.remove("show");
   }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -860,7 +860,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const urlParams = new URLSearchParams(window.location.search);
-const adminEmail = urlParams.get('admin') || urlParams.get('adminEmail') || localStorage.getItem('currentAdminEmail');
+            const adminEmail = urlParams.get('adminEmail')  || localStorage.getItem('currentAdminEmail');
 const userName = urlParams.get('user');
 const addPoints = Number(urlParams.get('addPoints')) || 0;
 
