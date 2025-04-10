@@ -10,7 +10,7 @@ const port = process.env.PORT || 3000;
 // ✅ CORS for GitHub Pages
 const corsOptions = {
   origin: ['https://g4mechanger.github.io'],
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST', 'DELETE'], // Add DELETE
   credentials: false
 };
 app.use(cors(corsOptions));
