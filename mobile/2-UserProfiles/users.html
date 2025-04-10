@@ -860,7 +860,7 @@
     <script>
 document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const adminEmail = urlParams.get('adminEmail') || localStorage.getItem("currentAdminEmail"); // Use URL param or fallback to localStorage
+    const adminEmail = urlParams.get('adminEmail') || localStorage.getItem("currentAdminEmail") || "null"; // Fallback to "null"
     const userName = urlParams.get('user');
     const addPoints = Number(urlParams.get('addPoints')) || 0;
 
@@ -908,8 +908,6 @@ document.addEventListener("DOMContentLoaded", () => {
     generateScrollableDates();
     showAdminControlsIfNeeded();
 });
-
-
 
 
 
