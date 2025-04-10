@@ -299,6 +299,19 @@
         </a>
     </div>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
     <script>
         // Dynamically highlight the active footer icon
         document.querySelectorAll('.footer a').forEach(link => {
@@ -312,9 +325,9 @@
           }
         });
         
-        // Get adminEmail from URL query parameters
+        // Get adminEmail from URL query parameters or localStorage
         const urlParams = new URLSearchParams(window.location.search);
-        const adminEmail = urlParams.get('adminEmail');
+        let adminEmail = urlParams.get('adminEmail') || localStorage.getItem("currentAdminEmail");
         
         // Update the add-reward-btn href to include adminEmail
         const addRewardBtn = document.querySelector('.add-reward-btn');
@@ -335,8 +348,7 @@
           rewardList.innerHTML = "<p>Loading rewards...</p>";
         
           if (!adminEmail) {
-            console.error("No adminEmail provided in URL");
-            rewardList.innerHTML = "<p>Error: No admin email provided.</p>";
+            rewardList.innerHTML = "<p>Error: No admin email provided. Please log in again.</p>";
             return;
           }
         
@@ -463,5 +475,18 @@
           loadRewards();
         });
         </script>
+
+    
+
+
+
+
+
+
+
+
+
+
+
 </body>
 </html>
