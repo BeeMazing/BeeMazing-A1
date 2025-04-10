@@ -797,7 +797,6 @@ async function finishTask(userName, task, button, selectedDate) {
     if (taskIndex === -1) return;
 
     const today = selectedDate;
-    
 
     // Repeat limits
     const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
@@ -814,63 +813,47 @@ async function finishTask(userName, task, button, selectedDate) {
 
     // Add completion
     task.completions[today].push(userName);
-    
 
-    // Give reward to original user (if delegated)
+    // Update reward for original user (if delegated)
     const rewardAmount = Number(task.reward) || 0;
     const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
     const originalUser = task.originalOwner?.[userName] || userName;
     rewards[originalUser] = (rewards[originalUser] || 0) + rewardAmount;
     localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
 
-    if (typeof updateLuckyChestProgress === "function") {
-        updateLuckyChestProgress(originalUser, rewardAmount);
-    }
-
-    const completedCount = task.completions[today].length;
+    // Update turn rotation after task completion
     const userList = task.users;
     const currentTurn = task.tempTurnReplacement?.replacement || task.turn || userList[0];
 
-    // Handle turn rotation
-    if (task.tempTurnReplacement && userName === task.tempTurnReplacement.replacement) {
-        // Replacement user completed their turn; move to next in original order
-        const originalUser = task.tempTurnReplacement.original;
-        const originalIndex = userList.indexOf(originalUser);
-        const nextIndex = (originalIndex + 1) % userList.length;
-        task.turn = userList[nextIndex];
+    const currentIndex = userList.indexOf(currentTurn);
+    let nextIndex = (currentIndex + 1) % userList.length;
+    let looped = false;
 
-        // Clean up temporary replacement
-        delete task.tempTurnReplacement;
-        if (task.originalOwner) delete task.originalOwner[userName];
-    } else {
-        // Normal rotation: move to next user who hasn’t completed fully
-        const userCompletionCounts = {};
-        task.completions[today].forEach(u => {
-            userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
-        });
-        const currentIndex = userList.indexOf(currentTurn);
-        let nextIndex = (currentIndex + 1) % userList.length;
-        let looped = false;
-
-        while ((userCompletionCounts[userList[nextIndex]] || 0) >= repeatLimit && !looped) {
-            nextIndex = (nextIndex + 1) % userList.length;
-            if (nextIndex === currentIndex) looped = true;
-        }
-
-        task.turn = looped ? userList[0] : userList[nextIndex];
+    while ((task.completions[today].filter(u => u === userList[nextIndex]).length) >= repeatLimit && !looped) {
+        nextIndex = (nextIndex + 1) % userList.length;
+        if (nextIndex === currentIndex) looped = true;
     }
 
+    task.turn = userList[nextIndex];
+
+    // Ensure that turn rotation updates for the next day
     task.date = selectedDate; // ✅ Ensures backend match works
-tasks[taskIndex] = task;
-await saveTask(taskIndex, task);
+    tasks[taskIndex] = task;
+    await saveTask(taskIndex, task);
 
-
-
-    if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
     if (typeof loadTasksForDate === 'function') loadTasksForDate(selectedDate);
     if (typeof loadUserTasks === 'function') loadUserTasks(userName, selectedDate);
     if (typeof loadUserReward === 'function') loadUserReward(userName);
 }
+
+
+
+
+
+
+
+
+
 
 async function saveTask(index, task) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
