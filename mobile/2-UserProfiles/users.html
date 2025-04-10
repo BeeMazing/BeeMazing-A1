@@ -1024,9 +1024,7 @@
             // For "Daily" tasks with timesPerDay > 1, calculate the current turn based on completions
             if (task.repeat === "Daily" && task.timesPerDay > 1) {
                 const userOrder = [...task.users];
-                // Determine how many completions are needed in total (timesPerDay)
                 const totalRequiredCompletions = task.timesPerDay;
-                // Each user can contribute up to 1 completion per turn
                 const completionIndex = completedTimes % userOrder.length;
                 currentTurn = userOrder[completionIndex];
             } else if (task.repeat === "Daily" && task.timesPerDay === 1) {
@@ -1043,8 +1041,8 @@
                 ? `<span style="color: green; font-weight: bold;">Completed</span>`
                 : `${completedTimes}/${requiredTimes}`;
 
-            // For "Daily" tasks with timesPerDay > 1, show the "Turn" field
-            const showTurn = true; // Now showing turn for all tasks
+            // Show the "Turn" field for all tasks
+            const showTurn = true;
             const turnText = showTurn ? `Turn: ${currentTurn}<br>` : '';
 
             // Build the task item HTML
@@ -1056,12 +1054,7 @@
             `;
 
             // Determine if the user can finish the task
-            const userCompletions = completedUsers.filter(u => u === userName).length;
-            const maxCompletionsPerUser = task.repeat === "Daily" && task.timesPerDay > 1
-                ? 1 // Each user can only complete once per turn cycle
-                : requiredTimes;
-            const hasCompletedForTurn = userCompletions >= maxCompletionsPerUser;
-            const canFinish = isToday && !hasCompletedForTurn && currentTurn === userName;
+            const canFinish = isToday && currentTurn === userName && completedTimes < requiredTimes;
 
             if (canFinish) {
                 const finishedButton = document.createElement("button");
@@ -1072,7 +1065,7 @@
                     finishTask(userName, task, selectedDate);
                 };
                 taskDiv.appendChild(finishedButton);
-            } else if (hasCompletedForTurn && task.repeat === "Daily" && task.timesPerDay > 1) {
+            } else if (completedTimes >= requiredTimes) {
                 const completedText = document.createElement("div");
                 completedText.style.color = "green";
                 completedText.style.fontWeight = "bold";
@@ -1086,8 +1079,6 @@
         });
     }
 }
-
-
 
 
 
@@ -1220,7 +1211,7 @@
 
 
 
-function showTaskDetails(task) {
+        function showTaskDetails(task) {
     const selectedDate = document.querySelector(".day.selected")?.dataset.date;
     if (!selectedDate) return;
 
@@ -1342,15 +1333,12 @@ function showTaskDetails(task) {
             cursor: pointer;">Edit Task</button>
     `;
 
-    // Add Finish Task button if the user hasn't completed their required times and it's their turn
+    // Add Finish Task button if it's the user's turn and the task isn't fully completed
     const urlParams = new URLSearchParams(window.location.search);
     const currentUserName = urlParams.get('user');
     const today = new Date().toLocaleDateString("sv-SE");
     const isToday = selectedDate === today;
-    const userCompletions = completedUsers.filter(u => u === currentUserName).length;
-    const maxCompletionsPerUser = isDailyMoreThanOnce ? 1 : requiredTimes;
-    const hasCompletedForTurn = userCompletions >= maxCompletionsPerUser;
-    const canFinish = isToday && !hasCompletedForTurn && currentUser === currentUserName;
+    const canFinish = isToday && currentUser === currentUserName && completedUsers.length < requiredTimes;
 
     if (canFinish) {
         taskDetails += `
@@ -1405,8 +1393,6 @@ function showTaskDetails(task) {
         });
     }
 }
-
-
 
 
 
@@ -1826,11 +1812,6 @@ function showTaskDetails(task) {
 
 
 
-
-
-
-
-
         async function finishTask(currentUser, task, selectedDate) {
     const today = selectedDate || new Date().toISOString().split("T")[0];
 
@@ -1851,10 +1832,10 @@ function showTaskDetails(task) {
     if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
     if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-    // Check if the user has already completed the task enough times
-    const userCompletionsToday = task.completions[today].filter(u => u === currentUser).length;
-    const maxCompletionsPerUser = task.repeat === "Daily" && task.timesPerDay > 1 ? 1 : requiredTimes;
-    if (userCompletionsToday >= maxCompletionsPerUser) return;
+    // Check if the task is already fully completed for the day
+    const completedUsers = task.completions[today] || [];
+    const totalCompletions = completedUsers.length;
+    if (totalCompletions >= requiredTimes) return;
 
     // Mark user as completed
     task.completions[today].push(currentUser);
@@ -1905,6 +1886,9 @@ function showTaskDetails(task) {
     setTimeout(() => loadUserReward(currentUser), 100);
     await loadUserTasks(currentUser, selectedDate);
 }
+
+
+
 
 
 
