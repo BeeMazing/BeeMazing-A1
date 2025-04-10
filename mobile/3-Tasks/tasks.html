@@ -576,6 +576,7 @@ async function loadTasksForDate(selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (!adminEmail) return;
 
+    // Fetch tasks from the backend
     const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
     const result = await response.json();
     const tasks = result.tasks || [];
@@ -602,11 +603,12 @@ async function loadTasksForDate(selectedDate) {
         return;
     }
 
-    visibleTasks.forEach((task, index) => {
+    visibleTasks.forEach((task) => {
         const taskDiv = document.createElement("div");
         taskDiv.className = "task-item";
 
-        const currentTurn = getCurrentTurn(task, selectedDate); // Updated to check selected date
+        // Use the selected date to get the current turn for the task
+        const currentTurn = getCurrentTurn(task, selectedDate); // Calculate current turn based on selected date
 
         taskDiv.innerHTML = `
             <strong>${task.title}</strong><br>
@@ -614,7 +616,7 @@ async function loadTasksForDate(selectedDate) {
         `;
 
         taskDiv.addEventListener("click", () => {
-            showTaskDetails(task); // Show task details when clicked
+            showTaskDetails(task, selectedDate); // Pass selectedDate to showTaskDetails
         });
 
         taskList.appendChild(taskDiv);
@@ -623,11 +625,22 @@ async function loadTasksForDate(selectedDate) {
 
 
 function getCurrentTurn(task, selectedDate) {
-    // Get the current turn based on the selected date (not the current date)
+    // Check if there's a temporary turn replacement
     if (task.tempTurnReplacement?.replacement) return task.tempTurnReplacement.replacement;
-    return task.turn || task.users[0]; // Default to first user if no turn replacement is set
-}
+    
+    // Get the list of users who have completed the task for the selected date
+    const completedUsers = task.completions?.[selectedDate] || [];
+    let currentUser = task.turn || task.users[0];
 
+    if (completedUsers.length > 0) {
+        // Cycle through users based on the completed list for the selected date
+        const currentIndex = task.users.indexOf(currentUser);
+        const nextIndex = (currentIndex + 1) % task.users.length;
+        currentUser = task.users[nextIndex];
+    }
+
+    return currentUser;
+}
 
 
 
@@ -655,16 +668,13 @@ function getCurrentTurn(task, selectedDate) {
 
 
 
-
-        function showTaskDetails(task) {
-            let currentUser = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+        function showTaskDetails(task, selectedDate) {
+    let currentUser = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
 
     const userOrder = [...task.users];
     const currentIndex = userOrder.indexOf(currentUser);
 
-    const selectedDate = document.querySelector(".day.selected")?.dataset.date;
-const completedRaw = task.completions?.[selectedDate] || [];
-
+    const completedRaw = task.completions?.[selectedDate] || [];
     const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
 
     let requiredTimes = 1;
@@ -705,21 +715,18 @@ const completedRaw = task.completions?.[selectedDate] || [];
     if (task.reward && task.reward !== "0") taskDetails += `<strong>Reward:</strong> ${task.reward} 🍯<br>`;
 
     const nextUsers = getNextUsers(task, selectedDate);
-let nextLine = nextUsers.length > 0 ? nextUsers[0] : "-";
+    let nextLine = nextUsers.length > 0 ? nextUsers[0] : "-";
 
-const today = new Date();
-const selected = new Date(selectedDate);
-const isToday = today.toDateString() === selected.toDateString();
+    const today = new Date();
+    const selected = new Date(selectedDate);
+    const isToday = today.toDateString() === selected.toDateString();
 
-if (isToday && nextUsers.length > 0 && task.timesPerDay === 1) {
-  nextLine += " (tomorrow)";
-}
+    if (isToday && nextUsers.length > 0 && task.timesPerDay === 1) {
+        nextLine += " (tomorrow)";
+    }
 
-
-taskDetails += `<strong>Current Turn:</strong> ${currentUser}<br>`;
-taskDetails += `<strong>Next:</strong> ${nextLine}<br>`;
-
-
+    taskDetails += `<strong>Current Turn:</strong> ${currentUser}<br>`;
+    taskDetails += `<strong>Next:</strong> ${nextLine}<br>`;
 
     if (completedUsers.length > 0) {
         taskDetails += `
@@ -732,25 +739,9 @@ taskDetails += `<strong>Next:</strong> ${nextLine}<br>`;
 
     taskDetails += `
         <br>
-        <button id="editTurnBtn" style="
-    padding: 6px 10px;
-    background: var(--primary-color);
-    color: var(--secondary-color);
-    font-weight: bold;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-">Edit Turn Order</button>
+        <button id="editTurnBtn" style="padding: 6px 10px; background: var(--primary-color); color: var(--secondary-color); font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">Edit Turn Order</button>
         &nbsp;
-        <button id="editTaskBtn" style="
-    padding: 6px 10px;
-    background: var(--secondary-color);
-    color: var(--accent-color);
-    font-weight: bold;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-">Edit Task</button>
+        <button id="editTaskBtn" style="padding: 6px 10px; background: var(--secondary-color); color: var(--accent-color); font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">Edit Task</button>
     `;
 
     const modal = document.createElement("div");
@@ -780,20 +771,28 @@ taskDetails += `<strong>Next:</strong> ${nextLine}<br>`;
     });
 
     const editBtn = document.getElementById("editCompletionBtn");
-if (editBtn) {
-    editBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        modal.remove();
+    if (editBtn) {
+        editBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            modal.remove();
 
-        const selectedDate = document.querySelector(".day.selected")?.dataset.date;
-        const completedRaw = task.completions?.[selectedDate] || [];
-        const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
+            const selectedDate = document.querySelector(".day.selected")?.dataset.date;
+            const completedRaw = task.completions?.[selectedDate] || [];
+            const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
 
-        showEditCompletionModal(task, completedUsers, selectedDate, modal);
-    });
+            showEditCompletionModal(task, completedUsers, selectedDate, modal);
+        });
+    }
 }
 
-}
+
+
+
+
+
+
+
+
 
 
 
@@ -1260,7 +1259,8 @@ function updateTaskPopup(task, currentUser, selectedDate) {
   popup.querySelector(".popup-users").textContent = `Users: ${task.users.join(", ")}`;
   popup.querySelector(".popup-reward").textContent = `Reward: ${task.reward}`;
   const actualTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
-popup.querySelector(".popup-current").textContent = `Current Turn: ${actualTurn}`;
+  popup.querySelector(".popup-current").textContent = `Current Turn: ${currentUser}`;
+
 
   popup.querySelector(".popup-next").textContent = `Next: ${getNextUsers(task).join(" -> ")}`;
 
