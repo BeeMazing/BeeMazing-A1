@@ -402,6 +402,21 @@ document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProf
                 }
             }, { once: true });
         }
+
+
+
+
+        const homeLink = document.querySelector('a[href="/BeeMazing-Y1/mobile/1-Home/home.html"]');
+    if (homeLink && adminEmail) {
+        homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+    }
+
+
+
+
+
+
+
     </script>
 </body>
 </html>
