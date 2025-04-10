@@ -287,29 +287,24 @@ app.get("/api/rewards", async (req, res) => {
 
 
 // ✅ Save all market rewards for an admin
-app.post("/api/market-rewards", async (req, res) => {
-  const { adminEmail, rewards } = req.body;
-
-  if (!adminEmail || !Array.isArray(rewards)) {
-    return res.status(400).json({ error: "Missing adminEmail or rewards array" });
+app.get("/api/market-rewards", async (req, res) => {
+  const { adminEmail } = req.query;
+  if (!adminEmail) {
+    return res.status(400).json({ error: "Missing adminEmail" });
   }
-
   try {
     const db = await connectDB();
     const admins = db.collection("admins");
-
-    await admins.updateOne(
-      { email: adminEmail },
-      { $set: { marketRewards: rewards } },
-      { upsert: true }
-    );
-
-    res.json({ success: true });
+    const admin = await admins.findOne({ email: adminEmail });
+    console.log(`Fetching market rewards for adminEmail: ${adminEmail}`); // Debug log
+    console.log("Admin document found:", admin); // Debug log
+    res.json({ rewards: admin?.marketRewards || [] });
   } catch (err) {
-    console.error("Error saving market rewards:", err);
-    res.status(500).json({ error: "Failed to save market rewards" });
+    console.error("Error fetching market rewards:", err);
+    res.status(500).json({ error: "Failed to fetch market rewards" });
   }
 });
+
 
 // ✅ Get all market rewards for an admin
 app.get("/api/market-rewards", async (req, res) => {
