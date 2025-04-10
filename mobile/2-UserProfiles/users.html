@@ -769,6 +769,63 @@
 }
 
 
+
+
+
+
+.market-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.market-item {
+    background: var(--card-bg);
+    color: var(--text-color);
+    padding: 15px;
+    border: 2px solid var(--border-dark);
+    border-radius: 12px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.market-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
+}
+
+.market-item strong {
+    color: var(--primary-color);
+}
+
+.buy-btn {
+    background: var(--primary-color);
+    color: var(--secondary-color);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.buy-btn:hover {
+    background: #FFD54F;
+}
+
+.buy-btn:disabled {
+    background: #666;
+    cursor: not-allowed;
+}
+
+
+
+
+
     </style>
 </head>
 <body>
@@ -789,34 +846,40 @@
 
     <div class="content">
         <div class="profile-card">
-
             <button id="changePasswordBtn" class="change-password-btn" style="display: none; margin-bottom: 20px;">
                 Change Admin Password
             </button>
-
+        
             <div class="modal" id="changePasswordModal" style="display: none;">
                 <div class="modal-content">
-                  <h3>Change Admin Password</h3>
-                  <input type="password" id="newAdminPassword" placeholder="Enter new password" />
-                  <button id="confirmChangePasswordBtn">Update Password</button>
+                    <h3>Change Admin Password</h3>
+                    <input type="password" id="newAdminPassword" placeholder="Enter new password" />
+                    <button id="confirmChangePasswordBtn">Update Password</button>
                 </div>
-              </div>
-
-              
+            </div>
+        
             <h1 id="profileName">Bee Name</h1>
             <p>Welcome to the hive of <span id="userName"></span>.</p>
-
-                   <!-- 🎁 Lucky Chest Section -->
-<div class="lucky-chests-section">
-    <h3 style="margin-top: 30px; color: var(--primary-color);">🕋 Lucky Chests</h3>
-    <div id="luckyChestContainer"></div>
-  </div>
-
-  
+        
+            <!-- 🎁 Lucky Chests Section -->
+            <div class="lucky-chests-section">
+                <h3 style="margin-top: 30px; color: var(--primary-color);">🕋 Lucky Chests</h3>
+                <div id="luckyChestContainer"></div>
+            </div>
+        
             <div class="reward-container">
                 <p><strong>Honey:</strong> <span id="rewardAmount">0</span> 🍯</p>
                 <button id="sellButton">Sell Honey</button>
             </div>
+        
+            <!-- 🛒 Market Section -->
+            <div class="market-section">
+                <h3 style="margin-top: 30px; color: var(--primary-color);">🛒 Market</h3>
+                <div id="marketRewards" class="market-list">
+                    <!-- Market rewards will be displayed here -->
+                </div>
+            </div>
+        
             <h3>Assigned Tasks:</h3>
             <div id="userTasks" class="task-list">
                 <!-- Tasks will be displayed here -->
@@ -858,58 +921,57 @@
     </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const adminEmail = urlParams.get('admin');
-            const userName = urlParams.get('user');
-            const addPoints = Number(urlParams.get('addPoints')) || 0;
-    
-            if (adminEmail && adminEmail !== "null") {
-                localStorage.setItem("currentAdminEmail", adminEmail);
-                const homeLink = document.getElementById("homeFooterLink");
-                if (homeLink) {
-                    homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
-                }
-            }
-    
-            if (userName) {
-                document.getElementById('profileName').textContent = userName;
-                document.getElementById('userName').textContent = userName;
-                document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${userName}`;
-                document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${userName}`;
-                document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${userName}`;
-        
-                loadUserTasks(userName); // Initial load
-                loadUserReward(userName);
-                loadLuckyChests(userName);
-        
-                if (addPoints > 0) {
-                    setTimeout(() => {
-                        const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
-                        rewards[userName] = (rewards[userName] || 0) + addPoints;
-                        localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
-                        triggerHoneyRain(addPoints);
-                        loadUserReward(userName);
-                    }, 500);
-                }
-            }
-        
-            document.querySelectorAll('.footer a').forEach(link => {
-                const currentPath = window.location.pathname.replace(/\/$/, '');
-                const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
-                if (currentPath === linkPath) {
-                    link.classList.add('active');
-                } else {
-                    link.classList.remove('active');
-                }
-            });
-        
-            adjustContentTop();
-            generateScrollableDates();
-            showAdminControlsIfNeeded();
-        });
-    
+document.addEventListener("DOMContentLoaded", () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminEmail = urlParams.get('admin');
+    const userName = urlParams.get('user');
+    const addPoints = Number(urlParams.get('addPoints')) || 0;
 
+    if (adminEmail && adminEmail !== "null") {
+        localStorage.setItem("currentAdminEmail", adminEmail);
+        const homeLink = document.getElementById("homeFooterLink");
+        if (homeLink) {
+            homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+        }
+    }
+
+    if (userName) {
+        document.getElementById('profileName').textContent = userName;
+        document.getElementById('userName').textContent = userName;
+        document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${userName}`;
+        document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${userName}`;
+        document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${userName}`;
+
+        loadUserTasks(userName); // Initial load
+        loadUserReward(userName);
+        loadMarketRewards(userName); // Load market rewards
+        loadLuckyChests(userName);
+
+        if (addPoints > 0) {
+            setTimeout(() => {
+                const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
+                rewards[userName] = (rewards[userName] || 0) + addPoints;
+                localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
+                triggerHoneyRain(addPoints);
+                loadUserReward(userName);
+            }, 500);
+        }
+    }
+
+    document.querySelectorAll('.footer a').forEach(link => {
+        const currentPath = window.location.pathname.replace(/\/$/, '');
+        const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
+        if (currentPath === linkPath) {
+            link.classList.add('active');
+        } else {
+            link.classList.remove('active');
+        }
+    });
+
+    adjustContentTop();
+    generateScrollableDates();
+    showAdminControlsIfNeeded();
+});
 
 
 
@@ -1113,6 +1175,122 @@
             const userReward = rewards[userName] || 0;
             document.getElementById("rewardAmount").textContent = userReward;
         }
+
+
+
+
+        async function loadMarketRewards(userName) {
+    const marketRewardsDiv = document.getElementById("marketRewards");
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+
+    if (!adminEmail) {
+        marketRewardsDiv.innerHTML = "<p>Error: No admin email provided.</p>";
+        return;
+    }
+
+    try {
+        // Fetch market rewards from MongoDB
+        const response = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "Failed to fetch market rewards");
+        }
+
+        const rewards = data.rewards || [];
+        marketRewardsDiv.innerHTML = "";
+
+        if (rewards.length === 0) {
+            marketRewardsDiv.innerHTML = "<p>No rewards available in the market.</p>";
+            return;
+        }
+
+        // Fetch user's current honey balance
+        const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const userRewardsData = await userRewardsResponse.json();
+        const userHoney = (userRewardsData.rewards && userRewardsData.rewards[userName]) || 0;
+
+        rewards.forEach((reward, index) => {
+            const rewardItem = document.createElement("div");
+            rewardItem.className = "market-item";
+            rewardItem.innerHTML = `
+                <div>
+                    <strong>${reward.name}</strong><br>
+                    Honey: ${reward.diamonds} 🍯
+                </div>
+            `;
+
+            const buyButton = document.createElement("button");
+            buyButton.className = "buy-btn";
+            buyButton.textContent = "Buy";
+            buyButton.disabled = userHoney < reward.diamonds;
+            buyButton.addEventListener("click", async () => {
+                await buyReward(userName, reward, index);
+                await loadMarketRewards(userName); // Refresh market rewards
+                await loadUserReward(userName); // Refresh honey balance
+            });
+
+            rewardItem.appendChild(buyButton);
+            marketRewardsDiv.appendChild(rewardItem);
+        });
+    } catch (err) {
+        console.error("Error loading market rewards:", err);
+        marketRewardsDiv.innerHTML = "<p>Failed to load market rewards. Please try again later.</p>";
+    }
+}
+
+async function buyReward(userName, reward, index) {
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+
+    try {
+        // Fetch user's current honey balance
+        const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const userRewardsData = await userRewardsResponse.json();
+        const userHoney = (userRewardsData.rewards && userRewardsData.rewards[userName]) || 0;
+
+        if (userHoney < reward.diamonds) {
+            alert("Not enough honey to buy this reward!");
+            return;
+        }
+
+        // Deduct the honey cost
+        const newHoney = userHoney - reward.diamonds;
+        await fetch("https://beemazing.onrender.com/api/rewards", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ adminEmail, user: userName, amount: -reward.diamonds })
+        });
+
+        // Add the reward to the user's rewards history
+        const userRewards = JSON.parse(localStorage.getItem("familyApp_user_rewards")) || {};
+        if (!userRewards[userName]) userRewards[userName] = [];
+        userRewards[userName].push({
+            name: reward.name,
+            type: "Market Purchase",
+            cost: reward.diamonds,
+            date: new Date().toLocaleDateString(),
+            claimedAt: new Date().toISOString()
+        });
+        localStorage.setItem("familyApp_user_rewards", JSON.stringify(userRewards));
+
+        // Show a confirmation popup
+        const popup = document.createElement("div");
+        popup.className = "reward-popup";
+        popup.textContent = `Purchased ${reward.name}! 🎉`;
+        document.body.appendChild(popup);
+        setTimeout(() => popup.remove(), 2000);
+
+    } catch (err) {
+        console.error("Error buying reward:", err);
+        alert("Failed to buy reward. Please try again.");
+    }
+}
+
+
+
+
+
+
     
         function sellReward(userName, amount) {
             const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
