@@ -426,3 +426,108 @@ app.get("/api/user-rewards", async (req, res) => {
   }
 });
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ✅ Save task history for an admin
+app.post("/api/history", async (req, res) => {
+  const { adminEmail, history } = req.body;
+
+  if (!adminEmail || !history) {
+    return res.status(400).json({ error: "Missing adminEmail or history" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { history } },
+      { upsert: true }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error saving history:", err);
+    res.status(500).json({ error: "Failed to save history" });
+  }
+});
+
+// ✅ Get task history for an admin
+app.get("/api/history", async (req, res) => {
+  const { adminEmail } = req.query;
+
+  if (!adminEmail) {
+    return res.status(400).json({ error: "Missing adminEmail" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    res.json({ history: admin?.history || {} });
+  } catch (err) {
+    console.error("Error fetching history:", err);
+    res.status(500).json({ error: "Failed to fetch history" });
+  }
+});
+
+// ✅ Save lucky chests for an admin
+app.post("/api/lucky-chests", async (req, res) => {
+  const { adminEmail, luckyChests } = req.body;
+
+  if (!adminEmail || !luckyChests) {
+    return res.status(400).json({ error: "Missing adminEmail or luckyChests" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { luckyChests } },
+      { upsert: true }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error saving lucky chests:", err);
+    res.status(500).json({ error: "Failed to save lucky chests" });
+  }
+});
+
+// ✅ Get lucky chests for an admin
+app.get("/api/lucky-chests", async (req, res) => {
+  const { adminEmail } = req.query;
+
+  if (!adminEmail) {
+    return res.status(400).json({ error: "Missing adminEmail" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    res.json({ luckyChests: admin?.luckyChests || {} });
+  } catch (err) {
+    console.error("Error fetching lucky chests:", err);
+    res.status(500).json({ error: "Failed to fetch lucky chests" });
+  }
+});
