@@ -240,8 +240,7 @@
     </div>
 
     <div class="footer">
-        <a id="homeFooterLink" class="footer-icon" href="/BeeMazing-Y1/mobile/1-Home/home.html" aria-label="Home">
-
+        <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
             <span>Home</span>
         </a>
@@ -268,6 +267,34 @@
     </div>
 
     <script>
+
+let keyTransferData = null;
+
+const urlParams = new URLSearchParams(window.location.search);
+ const userName = urlParams.get('user');
+
+ if (userName) {
+     document.getElementById('userName').textContent = userName;
+
+     document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${userName}`;
+     document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${userName}`;
+     document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${userName}`;
+     document.getElementById('historyButton').href = `userrewardshistory.html?user=${userName}`;
+
+     loadUserRewards(userName);
+ }
+
+ // Highlight correct footer icon
+ document.querySelectorAll('.footer a').forEach(link => {
+     const currentPath = window.location.pathname.replace(/\/$/, '');
+     const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
+     if (currentPath === linkPath) {
+         link.classList.add('active');
+     } else {
+         link.classList.remove('active');
+     }
+ });
+ 
         document.addEventListener("DOMContentLoaded", () => {
             const urlParams = new URLSearchParams(window.location.search);
             const userName = urlParams.get('user');
