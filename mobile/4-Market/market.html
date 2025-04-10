@@ -300,165 +300,133 @@
     </div>
 
     <script>
-        // Dynamically highlight the active footer icon
-        document.querySelectorAll('.footer a').forEach(link => {
-          const currentPath = window.location.pathname.replace(/\/$/, '');
-          const linkPath = new URL(link.href).pathname.replace(/\/$/, '');
-        
-          if (currentPath === linkPath) {
+
+
+
+    // Dynamically highlight the active footer icon
+    document.querySelectorAll('.footer a').forEach(link => {
+        // Normalize both paths (remove trailing slashes)
+        const currentPath = window.location.pathname.replace(/\/$/, '');
+        const linkPath = new URL(link.href).pathname.replace(/\/$/, '');
+
+        if (currentPath === linkPath) {
             link.classList.add('active');
-          } else {
+        } else {
             link.classList.remove('active');
-          }
-        });
-        
-        // Get adminEmail from URL query parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const adminEmail = urlParams.get('adminEmail');
-        
-        if (!adminEmail) {
-          console.error("No adminEmail provided in URL");
-          document.getElementById("rewardList").innerHTML = "<p>Error: No admin email provided.</p>";
         }
-        
-        // Update the add-reward-btn href to include adminEmail
-        const addRewardBtn = document.querySelector('.add-reward-btn');
-        addRewardBtn.href = `/BeeMazing-Y1/mobile/4-Market/addreward.html?adminEmail=${encodeURIComponent(adminEmail)}`;
-        
-        // Update the lucky-chest-btn href to include adminEmail
-        const luckyChestBtn = document.querySelector('.lucky-chest-btn');
-        luckyChestBtn.href = `/BeeMazing-Y1/mobile/4-Market/luckychest.html?adminEmail=${encodeURIComponent(adminEmail)}`;
-        
-        async function loadRewards() {
-          const rewardList = document.getElementById("rewardList");
-        
-          try {
-            const response = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-            const data = await response.json();
-        
-            if (!response.ok) {
-              throw new Error(data.error || "Failed to fetch rewards");
-            }
-        
-            const rewards = data.rewards || [];
+    });
+
+
+
+
+
+
+
+
+        function loadRewards() {
+            const rewards = JSON.parse(localStorage.getItem("familyApp_rewards_market")) || [];
+            const rewardList = document.getElementById("rewardList");
+
             rewardList.innerHTML = "";
             if (rewards.length === 0) {
-              rewardList.innerHTML = "<p>No rewards in the hive. Click + to add one.</p>";
-              return;
+                rewardList.innerHTML = "<p>No rewards in the hive. Click + to add one.</p>";
+                return;
             }
-        
+
             rewards.forEach((reward, index) => {
-              const rewardItem = document.createElement("li");
-              rewardItem.className = "reward-item";
-              rewardItem.innerHTML = `
-                <strong>${reward.name}</strong><br>
-                Honey: ${reward.diamonds} 🍯
-              `;
-        
-              // Create delete button
-              const deleteButton = document.createElement("button");
-              deleteButton.className = "delete-btn";
-              deleteButton.textContent = "Delete";
-              deleteButton.addEventListener("click", async (e) => {
-                e.stopPropagation();
-                await deleteReward(index);
-                await loadRewards();
-              });
-              rewardItem.appendChild(deleteButton);
-        
-              // Swipe functionality
-              let startX = 0;
-              let currentX = 0;
-              let isSwiping = false;
-        
-              // Touch events
-              rewardItem.addEventListener("touchstart", (e) => {
-                startX = e.touches[0].clientX;
-                isSwiping = true;
-                document.querySelectorAll('.reward-item.swiped').forEach(item => {
-                  if (item !== rewardItem) item.classList.remove('swiped');
+                const rewardItem = document.createElement("li");
+                rewardItem.className = "reward-item";
+                rewardItem.innerHTML = `
+                    <strong>${reward.name}</strong><br>
+                    Honey: ${reward.diamonds} 🍯
+                `;
+
+                // Create delete button
+                const deleteButton = document.createElement("button");
+                deleteButton.className = "delete-btn";
+                deleteButton.textContent = "Delete";
+                deleteButton.addEventListener("click", (e) => {
+                    e.stopPropagation(); // Prevent event bubbling
+                    deleteReward(index);
+                    loadRewards();
                 });
-              });
-        
-              rewardItem.addEventListener("touchmove", (e) => {
-                if (!isSwiping) return;
-                currentX = e.touches[0].clientX;
-                const diffX = startX - currentX;
-                if (diffX > 50 && diffX < 150) {
-                  rewardItem.classList.add("swiped");
-                } else if (diffX < -10) {
-                  rewardItem.classList.remove("swiped");
-                }
-              });
-        
-              rewardItem.addEventListener("touchend", (e) => {
-                isSwiping = false;
-              });
-        
-              // Mouse events (for desktop)
-              rewardItem.addEventListener("mousedown", (e) => {
-                startX = e.clientX;
-                isSwiping = true;
-                document.querySelectorAll('.reward-item.swiped').forEach(item => {
-                  if (item !== rewardItem) item.classList.remove('swiped');
+                rewardItem.appendChild(deleteButton);
+
+                // Swipe functionality
+                let startX = 0;
+                let currentX = 0;
+                let isSwiping = false;
+
+                // Touch events
+                rewardItem.addEventListener("touchstart", (e) => {
+                    startX = e.touches[0].clientX;
+                    isSwiping = true;
+                    // Reset other swiped items
+                    document.querySelectorAll('.reward-item.swiped').forEach(item => {
+                        if (item !== rewardItem) item.classList.remove('swiped');
+                    });
                 });
-              });
-        
-              rewardItem.addEventListener("mousemove", (e) => {
-                if (!isSwiping) return;
-                currentX = e.clientX;
-                const diffX = startX - currentX;
-                if (diffX > 50 && diffX < 150) {
-                  rewardItem.classList.add("swiped");
-                } else if (diffX < -10) {
-                  rewardItem.classList.remove("swiped");
-                }
-              });
-        
-              rewardItem.addEventListener("mouseup", (e) => {
-                isSwiping = false;
-              });
-        
-              // Click outside to close swipe
-              document.addEventListener("click", (e) => {
-                if (!rewardItem.contains(e.target) && rewardItem.classList.contains("swiped")) {
-                  rewardItem.classList.remove("swiped");
-                }
-              });
-        
-              rewardList.appendChild(rewardItem);
+
+                rewardItem.addEventListener("touchmove", (e) => {
+                    if (!isSwiping) return;
+                    currentX = e.touches[0].clientX;
+                    const diffX = startX - currentX;
+                    if (diffX > 50 && diffX < 150) { // Added upper limit to prevent excessive sliding
+                        rewardItem.classList.add("swiped");
+                    } else if (diffX < -10) { // Slightly negative threshold to close
+                        rewardItem.classList.remove("swiped");
+                    }
+                });
+
+                rewardItem.addEventListener("touchend", (e) => {
+                    isSwiping = false;
+                    // Don't trigger delete here - let the button handle it
+                });
+
+                // Mouse events (for desktop)
+                rewardItem.addEventListener("mousedown", (e) => {
+                    startX = e.clientX;
+                    isSwiping = true;
+                    document.querySelectorAll('.reward-item.swiped').forEach(item => {
+                        if (item !== rewardItem) item.classList.remove('swiped');
+                    });
+                });
+
+                rewardItem.addEventListener("mousemove", (e) => {
+                    if (!isSwiping) return;
+                    currentX = e.clientX;
+                    const diffX = startX - currentX;
+                    if (diffX > 50 && diffX < 150) {
+                        rewardItem.classList.add("swiped");
+                    } else if (diffX < -10) {
+                        rewardItem.classList.remove("swiped");
+                    }
+                });
+
+                rewardItem.addEventListener("mouseup", (e) => {
+                    isSwiping = false;
+                });
+
+                // Click outside to close swipe
+                document.addEventListener("click", (e) => {
+                    if (!rewardItem.contains(e.target) && rewardItem.classList.contains("swiped")) {
+                        rewardItem.classList.remove("swiped");
+                    }
+                });
+
+                rewardList.appendChild(rewardItem);
             });
-          } catch (err) {
-            console.error("Error loading rewards:", err);
-            rewardList.innerHTML = "<p>Failed to load rewards. Please try again later.</p>";
-          }
         }
-        
-        async function deleteReward(index) {
-          try {
-            const response = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}&index=${index}`, {
-              method: "DELETE"
-            });
-            const data = await response.json();
-        
-            if (!response.ok) {
-              throw new Error(data.error || "Failed to delete reward");
+
+        function deleteReward(index) {
+            const rewards = JSON.parse(localStorage.getItem("familyApp_rewards_market")) || [];
+            if (rewards[index]) {
+                rewards.splice(index, 1);
+                localStorage.setItem("familyApp_rewards_market", JSON.stringify(rewards));
             }
-          } catch (err) {
-            console.error("Error deleting reward:", err);
-            alert("Failed to delete reward. Please try again.");
-          }
         }
-        
-        // Load rewards when the page loads
+
         document.addEventListener("DOMContentLoaded", loadRewards);
-        
-        // Listen for storage events to sync across tabs (optional, for same-device sync)
-        window.addEventListener("storage", (event) => {
-          if (event.key === "familyApp_rewards_market") {
-            loadRewards();
-          }
-        });
-        </script>
+    </script>
 </body>
 </html>
