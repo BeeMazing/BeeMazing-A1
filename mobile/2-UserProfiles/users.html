@@ -934,7 +934,6 @@
 
 
 
-        // Replace your existing loadUserTasks with this updated version
         async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
     let tasks = JSON.parse(localStorage.getItem("familyApp_tasks")) || [];
     const userTasksDiv = document.getElementById("userTasks");
@@ -973,19 +972,22 @@
 
         if (currentDate < startDate || currentDate > endDate) return false;
 
-        // Calculate the current turn for the selected date
-        let currentTurn;
+        // For "Daily" tasks with timesPerDay > 1, always show the task
+        if (task.repeat === "Daily" && task.timesPerDay > 1) {
+            return true;
+        }
+
+        // For "Daily" tasks with timesPerDay === 1, only show if it's the user's turn
         if (task.repeat === "Daily" && task.timesPerDay === 1) {
             const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
             const userOrder = [...task.users];
             const currentIndex = diffDays % userOrder.length;
-            currentTurn = userOrder[currentIndex];
-        } else {
-            // Fallback to stored turn or temporary replacement for other task types
-            currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+            const currentTurn = userOrder[currentIndex];
+            return currentTurn === userName;
         }
 
-        // Only show the task if it's the user's turn
+        // For other task types (Weekly, Monthly, or Daily with temp turn), check the turn
+        const currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
         return currentTurn === userName;
     });
 
@@ -1001,7 +1003,7 @@
             const taskDiv = document.createElement("div");
             taskDiv.className = "task-item";
 
-            // Calculate the current turn for display (same logic as above)
+            // Calculate the current turn for display
             const dateRange = task.date.split(" to ");
             const startDateStr = dateRange[0];
             const startDate = parseLocalDate(startDateStr);
@@ -1032,17 +1034,22 @@
                 ? `<span style="color: green; font-weight: bold;">Completed</span>`
                 : `${completedTimes}/${requiredTimes}`;
 
+            // For "Daily" tasks with timesPerDay > 1, don't show the "Turn" field
+            const showTurn = !(task.repeat === "Daily" && task.timesPerDay > 1);
+            const turnText = showTurn ? `Turn: ${currentTurn}<br>` : '';
+
             // Build the task item HTML
             taskDiv.innerHTML = `
                 <strong>${task.title}</strong><br>
-                Turn: ${currentTurn}<br>
+                ${turnText}
                 Honey: ${task.reward || "0"} 🍯<br>
                 Progress: ${progressText}
             `;
 
             // Add "Finish Task" button if applicable
-            const remainingForUser = completedUsers.filter(u => u === userName).length;
-            const canFinish = isToday && currentTurn === userName && remainingForUser < requiredTimes;
+            const userCompletions = completedUsers.filter(u => u === userName).length;
+            const canFinish = isToday && userCompletions < requiredTimes;
+
             if (canFinish) {
                 const finishedButton = document.createElement("button");
                 finishedButton.textContent = "Finish Task";
@@ -1059,7 +1066,6 @@
         });
     }
 }
-
 
 
 
@@ -1183,6 +1189,21 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         function showTaskDetails(task) {
     const selectedDate = document.querySelector(".day.selected")?.dataset.date;
     if (!selectedDate) return;
@@ -1193,34 +1214,39 @@
         return new Date(year, month - 1, day);
     }
 
-    // Get the start date of the task (use task.date's "from" date if it's a range)
+    // Get the start date of the task
     const dateRange = task.date.split(" to ");
     const startDateStr = dateRange[0];
     const startDate = parseLocalDate(startDateStr);
 
-    // Calculate the current turn based on the selected date
+    // Calculate the current turn (if applicable)
     const currentDate = parseLocalDate(selectedDate);
     const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
     const userOrder = [...task.users];
+    let currentUser;
+    let nextTurn = [];
 
-    // For a "Daily" task with 1 time per day, rotate the turn based on the day difference
-    let currentIndex;
-    if (task.repeat === "Daily" && task.timesPerDay === 1) {
-        currentIndex = diffDays % userOrder.length;
-    } else {
-        // Fallback to the stored turn or temporary replacement
-        const storedTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
-        currentIndex = userOrder.indexOf(storedTurn);
-    }
+    const isDailyMoreThanOnce = task.repeat === "Daily" && task.timesPerDay > 1;
 
-    const currentUser = userOrder[currentIndex];
+    if (!isDailyMoreThanOnce) {
+        // For "Daily" tasks with 1 time per day, rotate the turn based on the day difference
+        let currentIndex;
+        if (task.repeat === "Daily" && task.timesPerDay === 1) {
+            currentIndex = diffDays % userOrder.length;
+        } else {
+            // Fallback to the stored turn or temporary replacement
+            const storedTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+            currentIndex = userOrder.indexOf(storedTurn);
+        }
 
-    // Calculate the next users in the turn order
-    const nextTurn = [];
-    let index = currentIndex;
-    for (let i = 1; i < task.users.length; i++) {
-        index = (currentIndex + i) % task.users.length;
-        nextTurn.push(userOrder[index]);
+        currentUser = userOrder[currentIndex];
+
+        // Calculate the next users in the turn order
+        let index = currentIndex;
+        for (let i = 1; i < task.users.length; i++) {
+            index = (currentIndex + i) % task.users.length;
+            nextTurn.push(userOrder[index]);
+        }
     }
 
     // Get completions for the selected date
@@ -1254,8 +1280,11 @@
     if (task.users?.length) taskDetails += `<strong>Users:</strong> ${task.users.join(", ")}<br>`;
     if (task.reward && task.reward !== "0") taskDetails += `<strong>Reward:</strong> ${task.reward} 🍯<br>`;
 
-    taskDetails += `<strong>Current Turn:</strong> ${currentUser}<br>`;
-    taskDetails += `<strong>Next:</strong> ${nextTurn.length > 0 ? nextTurn.join(" → ") : "-"}<br>`;
+    // Only show turn information for tasks that aren't "Daily" with timesPerDay > 1
+    if (!isDailyMoreThanOnce) {
+        taskDetails += `<strong>Current Turn:</strong> ${currentUser}<br>`;
+        taskDetails += `<strong>Next:</strong> ${nextTurn.length > 0 ? nextTurn.join(" → ") : "-"}<br>`;
+    }
 
     if (completedUsers.length > 0) {
         taskDetails += `
@@ -1287,12 +1316,13 @@
             cursor: pointer;">Edit Task</button>
     `;
 
-    // Add Finish Task button if it's this user's turn and they haven't completed
+    // Add Finish Task button if the user hasn't completed their required times
     const urlParams = new URLSearchParams(window.location.search);
     const currentUserName = urlParams.get('user');
-    const canFinish = currentUser === currentUserName &&
-        !completedUsers.includes(currentUserName) &&
-        completedUsers.filter(u => u === currentUserName).length < requiredTimes;
+    const today = new Date().toLocaleDateString("sv-SE");
+    const isToday = selectedDate === today;
+    const userCompletions = completedUsers.filter(u => u === currentUserName).length;
+    const canFinish = isToday && userCompletions < requiredTimes;
 
     if (canFinish) {
         taskDetails += `
@@ -1342,11 +1372,24 @@
     const finishBtn = document.getElementById("finishTaskBtn");
     if (finishBtn) {
         finishBtn.addEventListener("click", async () => {
-            await finishTask(currentUserName, task, finishBtn, selectedDate);
+            await finishTask(currentUserName, task, selectedDate);
             modal.remove();
         });
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1815,8 +1858,6 @@
     setTimeout(() => loadUserReward(currentUser), 100);
     await loadUserTasks(currentUser, selectedDate);
 }
-
-
 
 
 
