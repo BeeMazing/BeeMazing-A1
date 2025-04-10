@@ -582,3 +582,66 @@ app.get("/api/reward-history", async (req, res) => {
 
 
 // ✅ Save reward history for an admin userrewards.html
+
+
+
+
+// ✅ Save custom chests for an admin
+app.post("/api/custom-chests", async (req, res) => {
+  const { adminEmail, customChests } = req.body;
+
+  if (!adminEmail || !customChests) {
+    return res.status(400).json({ error: "Missing adminEmail or customChests" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { customChests } },
+      { upsert: true }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error saving custom chests:", err);
+    res.status(500).json({ error: "Failed to save custom chests" });
+  }
+});
+
+// ✅ Get custom chests for an admin
+app.get("/api/custom-chests", async (req, res) => {
+  const { adminEmail } = req.query;
+
+  if (!adminEmail) {
+    return res.status(400).json({ error: "Missing adminEmail" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    res.json({ customChests: admin?.customChests || [] });
+  } catch (err) {
+    console.error("Error fetching custom chests:", err);
+    res.status(500).json({ error: "Failed to fetch custom chests" });
+  }
+});
+
+
+
+
+
+
+
+
+
+// ✅ Save reward history for an admin luckychest.html
+
+
+
+
+
