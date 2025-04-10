@@ -286,6 +286,86 @@ app.get("/api/rewards", async (req, res) => {
 
 
 
+// ✅ Save all market rewards for an admin
+app.post("/api/market-rewards", async (req, res) => {
+  const { adminEmail, rewards } = req.body;
+
+  if (!adminEmail || !Array.isArray(rewards)) {
+    return res.status(400).json({ error: "Missing adminEmail or rewards array" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { marketRewards: rewards } },
+      { upsert: true }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error saving market rewards:", err);
+    res.status(500).json({ error: "Failed to save market rewards" });
+  }
+});
+
+// ✅ Get all market rewards for an admin
+app.get("/api/market-rewards", async (req, res) => {
+  const { adminEmail } = req.query;
+
+  if (!adminEmail) {
+    return res.status(400).json({ error: "Missing adminEmail" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    res.json({ rewards: admin?.marketRewards || [] });
+  } catch (err) {
+    console.error("Error fetching market rewards:", err);
+    res.status(500).json({ error: "Failed to fetch market rewards" });
+  }
+});
+
+// ✅ Delete a specific market reward for an admin
+app.delete("/api/market-rewards", async (req, res) => {
+  const { adminEmail, index } = req.query;
+
+  if (!adminEmail || index === undefined) {
+    return res.status(400).json({ error: "Missing adminEmail or index" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const rewards = admin.marketRewards || [];
+    if (index < 0 || index >= rewards.length) {
+      return res.status(400).json({ error: "Invalid index" });
+    }
+
+    rewards.splice(index, 1); // Remove the reward at the specified index
+
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { marketRewards: rewards } }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error deleting market reward:", err);
+    res.status(500).json({ error: "Failed to delete market reward" });
+  }
+});
 
 
 
@@ -293,3 +373,69 @@ app.get("/api/rewards", async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ✅ Save user rewards (claimed rewards) for an admin
+app.post("/api/user-rewards", async (req, res) => {
+  const { adminEmail, userRewards } = req.body;
+
+  if (!adminEmail || !userRewards) {
+    return res.status(400).json({ error: "Missing adminEmail or userRewards" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { userRewards } },
+      { upsert: true }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error saving user rewards:", err);
+    res.status(500).json({ error: "Failed to save user rewards" });
+  }
+});
+
+// ✅ Get user rewards (claimed rewards) for an admin
+app.get("/api/user-rewards", async (req, res) => {
+  const { adminEmail } = req.query;
+
+  if (!adminEmail) {
+    return res.status(400).json({ error: "Missing adminEmail" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    res.json({ userRewards: admin?.userRewards || {} });
+  } catch (err) {
+    console.error("Error fetching user rewards:", err);
+    res.status(500).json({ error: "Failed to fetch user rewards" });
+  }
+});
