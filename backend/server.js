@@ -111,8 +111,6 @@ app.get("/", (req, res) => {
   res.send("BeeMazing backend is working!");
 });
 
-
-
 // ✅ GET ALL TASKS FOR ADMIN (used in users.html)
 app.get('/get-tasks', async (req, res) => {
   const { adminEmail } = req.query;
@@ -135,13 +133,9 @@ app.get('/get-tasks', async (req, res) => {
   }
 });
 
-
-
-
 app.listen(port, () => {
   console.log(`✅ Server is running on http://localhost:${port}`);
 });
-
 
 // ✅ Save a single task for an admin
 app.post("/api/tasks", async (req, res) => {
@@ -198,15 +192,6 @@ app.get("/api/tasks", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch tasks" });
   }
 });
-
-
-
-
-
-
-
-
-
 
 // ✅ Delete a specific task for an admin
 app.delete("/api/tasks", async (req, res) => {
@@ -283,10 +268,7 @@ app.get("/api/rewards", async (req, res) => {
   }
 });
 
-
-
-
-// ✅ Save all market rewards for an admin
+// ✅ Get all market rewards for an admin
 app.get("/api/market-rewards", async (req, res) => {
   const { adminEmail } = req.query;
   if (!adminEmail) {
@@ -298,27 +280,6 @@ app.get("/api/market-rewards", async (req, res) => {
     const admin = await admins.findOne({ email: adminEmail });
     console.log(`Fetching market rewards for adminEmail: ${adminEmail}`); // Debug log
     console.log("Admin document found:", admin); // Debug log
-    res.json({ rewards: admin?.marketRewards || [] });
-  } catch (err) {
-    console.error("Error fetching market rewards:", err);
-    res.status(500).json({ error: "Failed to fetch market rewards" });
-  }
-});
-
-
-// ✅ Get all market rewards for an admin
-app.get("/api/market-rewards", async (req, res) => {
-  const { adminEmail } = req.query;
-
-  if (!adminEmail) {
-    return res.status(400).json({ error: "Missing adminEmail" });
-  }
-
-  try {
-    const db = await connectDB();
-    const admins = db.collection("admins");
-
-    const admin = await admins.findOne({ email: adminEmail });
     res.json({ rewards: admin?.marketRewards || [] });
   } catch (err) {
     console.error("Error fetching market rewards:", err);
@@ -361,34 +322,6 @@ app.delete("/api/market-rewards", async (req, res) => {
     res.status(500).json({ error: "Failed to delete market reward" });
   }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // ✅ Save user rewards (claimed rewards) for an admin
 app.post("/api/user-rewards", async (req, res) => {
