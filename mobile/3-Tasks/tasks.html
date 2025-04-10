@@ -560,11 +560,10 @@ body {
 
 
 
-    async function loadTasksForDate(selectedDate) {
+async function loadTasksForDate(selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (!adminEmail) return;
 
-    // 🔁 Fetch tasks from server instead of localStorage
     const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
     const result = await response.json();
     const tasks = result.tasks || [];
@@ -591,40 +590,22 @@ body {
         return;
     }
 
+    // ✅ ACTUAL RENDERING BLOCK
     visibleTasks.forEach((task, index) => {
         const taskDiv = document.createElement("div");
         taskDiv.className = "task-item";
 
-        // Determine repeat count
         let repeatLimit = 1;
         if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
         if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
         if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
-        const today = selectedDate;
-        const completedUsers = Array.isArray(task.completions?.[today]) ? task.completions[today] : [];
+        const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
         const completedCount = completedUsers.length;
         const isCompleted = completedCount >= repeatLimit;
 
-        let currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+        const currentTurn = getCurrentTurn(task, selectedDate);
 
-// 🔁 Try to rotate the turn automatically if no completions yet today
-const lastCompletionDate = Object.keys(task.completions || {}).sort().reverse()[0];
-const isFutureDate = new Date(selectedDate) > new Date(lastCompletionDate || 0);
-const noOneCompletedToday = !task.completions?.[selectedDate]?.length;
-
-if (isFutureDate && noOneCompletedToday && task.users?.length > 1) {
-    const currentIndex = task.users.indexOf(currentTurn);
-    const nextIndex = (currentIndex + 1) % task.users.length;
-    currentTurn = task.users[nextIndex];
-
-    // Optionally persist the rotation
-    task.turn = currentTurn;
-}
-
-
-
-        // Show task info
         taskDiv.innerHTML = `
             <strong>${task.title}</strong><br>
             Turn: ${currentTurn}<br>
@@ -632,7 +613,6 @@ if (isFutureDate && noOneCompletedToday && task.users?.length > 1) {
             ${isCompleted ? `<span style="color: green; font-weight: bold;">Completed</span><br>` : ""}
         `;
 
-        // Click opens details
         taskDiv.addEventListener("click", () => {
             showTaskDetails(task);
         });
