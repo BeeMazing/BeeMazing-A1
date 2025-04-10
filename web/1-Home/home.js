@@ -1,9 +1,10 @@
 document.addEventListener("DOMContentLoaded", function () {
 
     const urlParams = new URLSearchParams(window.location.search);
-    const adminFromURL = urlParams.get("admin");
-    localStorage.setItem("currentAdminEmail", "null"); // Hardcode for now
-    console.log("home.js set adminEmail to: null");
+const adminFromURL = urlParams.get("admin");
+if (adminFromURL) {
+    localStorage.setItem("currentAdminEmail", adminFromURL);
+}
 
 
     // Redirect to login if user not logged in
