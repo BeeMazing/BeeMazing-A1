@@ -268,21 +268,15 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const userName = urlParams.get('user');
-        let adminEmail = urlParams.get('adminEmail') || localStorage.getItem('currentAdminEmail');
-if (adminEmail) {
-    localStorage.setItem('currentAdminEmail', adminEmail); // Save it for future access
-}
-
+        const adminEmail = localStorage.getItem('currentAdminEmail');
 
         if (!userName || !adminEmail) {
             document.getElementById('rewardList').innerHTML = "<p>Error: Missing user or admin information.</p>";
         } else {
             document.getElementById('userName').textContent = userName;
-            document.getElementById('homeButton').href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
-            document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(userName)}&admin=${encodeURIComponent(adminEmail)}`;
-document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
-document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${encodeURIComponent(userName)}&admin=${encodeURIComponent(adminEmail)}`;
-
+            document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(userName)}`;
+            document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${encodeURIComponent(userName)}`;
+            document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${encodeURIComponent(userName)}`;
             loadRewards();
         }
 
