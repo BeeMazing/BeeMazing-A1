@@ -531,3 +531,51 @@ app.get("/api/lucky-chests", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch lucky chests" });
   }
 });
+
+
+
+
+// ✅ Save reward history for an admin
+app.post("/api/reward-history", async (req, res) => {
+  const { adminEmail, rewardHistory } = req.body;
+
+  if (!adminEmail || !rewardHistory) {
+    return res.status(400).json({ error: "Missing adminEmail or rewardHistory" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { rewardHistory } },
+      { upsert: true }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error saving reward history:", err);
+    res.status(500).json({ error: "Failed to save reward history" });
+  }
+});
+
+// ✅ Get reward history for an admin
+app.get("/api/reward-history", async (req, res) => {
+  const { adminEmail } = req.query;
+
+  if (!adminEmail) {
+    return res.status(400).json({ error: "Missing adminEmail" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    res.json({ rewardHistory: admin?.rewardHistory || {} });
+  } catch (err) {
+    console.error("Error fetching reward history:", err);
+    res.status(500).json({ error: "Failed to fetch reward history" });
+  }
+});
