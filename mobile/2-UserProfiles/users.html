@@ -1761,65 +1761,60 @@
 
 
 
-        async function finishTask(task, currentUser, selectedDate) {
-  const today = selectedDate || new Date().toISOString().split("T")[0];
+        async function finishTask(currentUser, task, selectedDate) {
+    const today = selectedDate || new Date().toISOString().split("T")[0];
 
-  // 🍯 Celebration popup
-  const popup = document.createElement("div");
-  popup.className = "reward-popup";
-  popup.textContent = `Finished! ✅ +${task.reward || 0} 🍯`;
-  document.body.appendChild(popup);
-  setTimeout(() => popup.remove(), 2000);
+    // Celebration popup
+    const popup = document.createElement("div");
+    popup.className = "reward-popup";
+    popup.textContent = `Finished! ✅ +${task.reward || 0} 🍯`;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 2000);
 
-  // 📝 Initialize completions if missing
-  if (!task.completions) task.completions = {};
-  if (!task.completions[today]) task.completions[today] = [];
+    // Initialize completions if missing
+    if (!task.completions) task.completions = {};
+    if (!task.completions[today]) task.completions[today] = [];
 
-  // ✅ Move this block up FIRST
-  let requiredTimes = 1;
-  if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-  if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-  if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+    // Determine required times
+    let requiredTimes = 1;
+    if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+    if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+    if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-  const userCompletionsToday = task.completions[today].filter(u => u === currentUser).length;
-  if (userCompletionsToday >= requiredTimes) return;
+    // Check if the user has already completed the task enough times
+    const userCompletionsToday = task.completions[today].filter(u => u === currentUser).length;
+    if (userCompletionsToday >= requiredTimes) return;
 
-  // ✅ Mark user as completed
-  task.completions[today].push(currentUser);
+    // Mark user as completed
+    task.completions[today].push(currentUser);
 
-  // 🔁 Rotate turn to next user if needed
-  const totalCompletions = task.completions[today].length;
-  if (totalCompletions < requiredTimes) {
-    const currentIndex = task.users.indexOf(currentUser);
-    const nextUser = task.users[(currentIndex + 1) % task.users.length];
+    // Rotate turn only for non-"Daily 1 time per day" tasks
+    const totalCompletions = task.completions[today].length;
+    if (totalCompletions < requiredTimes && !(task.repeat === "Daily" && task.timesPerDay === 1)) {
+        const currentIndex = task.users.indexOf(currentUser);
+        const nextUser = task.users[(currentIndex + 1) % task.users.length];
+        task.tempTurnReplacement = {
+            original: task.tempTurnReplacement?.original || currentUser,
+            replacement: nextUser,
+        };
+    } else {
+        delete task.tempTurnReplacement;
+    }
 
-    task.tempTurnReplacement = {
-      original: task.tempTurnReplacement?.original || currentUser,
-      replacement: nextUser,
-    };
-  } else {
-    delete task.tempTurnReplacement;
-  }
+    // Save to backend
+    await saveTaskToBackend(task);
 
-  // 💾 Save to backend
-  await saveTaskToBackend(task);
+    // Add honey reward
+    const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
+    rewards[currentUser] = (rewards[currentUser] || 0) + Number(task.reward || 0);
+    localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
 
-  // 🎯 Determine who should receive the honey reward
-  const rewardTarget = task.tempTurnReplacement?.original || currentUser;
+    updateLuckyChestProgress(currentUser, Number(task.reward || 0));
+    triggerHoneyRain(Number(task.reward || 0));
 
-  // 🍯 Add honey reward
-  const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
-  rewards[rewardTarget] = (rewards[rewardTarget] || 0) + Number(task.reward || 0);
-  localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
-
-  updateLuckyChestProgress(rewardTarget, Number(task.reward || 0));
-  triggerHoneyRain(Number(task.reward || 0));
-
-  setTimeout(() => loadUserReward(rewardTarget), 100);
-  await loadUserTasks(currentUser, selectedDate);
+    setTimeout(() => loadUserReward(currentUser), 100);
+    await loadUserTasks(currentUser, selectedDate);
 }
-
-
 
 
 
