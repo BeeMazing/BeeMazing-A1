@@ -995,7 +995,10 @@
             `;
 
             const remainingForUser = completedUsers.filter(u => u === userName).length;
-            const canFinish = remainingForUser < requiredTimes;
+// ⛔ Block if not today
+const isToday = selectedDate === new Date().toISOString().split("T")[0];
+const canFinish = isToday && remainingForUser < requiredTimes;
+
 
             if (canFinish) {
                 const finishedButton = document.createElement("button");
@@ -1677,18 +1680,20 @@ for (let i = 1; i < task.users.length; i++) {
   task.completions[today].push(currentUser);
 
   // 🔁 Rotate turn to next user if needed
-  const totalCompletions = task.completions[today].length;
-  if (totalCompletions < requiredTimes) {
-    const currentIndex = task.users.indexOf(currentUser);
-    const nextUser = task.users[(currentIndex + 1) % task.users.length];
+  // 🔁 Rotate turn immediately after user completes
+const currentIndex = task.users.indexOf(currentUser);
+const nextUser = task.users[(currentIndex + 1) % task.users.length];
+task.tempTurnReplacement = {
+  original: task.tempTurnReplacement?.original || currentUser,
+  replacement: nextUser,
+};
 
-    task.tempTurnReplacement = {
-      original: task.tempTurnReplacement?.original || currentUser,
-      replacement: nextUser,
-    };
-  } else {
-    delete task.tempTurnReplacement;
-  }
+// ✅ Remove tempTurnReplacement only when fully completed
+const totalCompletions = task.completions[today].length;
+if (totalCompletions >= requiredTimes) {
+  delete task.tempTurnReplacement;
+}
+
 
   // 💾 Save to backend
   await saveTaskToBackend(task);
@@ -1705,7 +1710,10 @@ for (let i = 1; i < task.users.length; i++) {
   triggerHoneyRain(Number(task.reward || 0));
 
   setTimeout(() => loadUserReward(rewardTarget), 100);
-  await loadUserTasks(currentUser, selectedDate);
+  const urlParams = new URLSearchParams(window.location.search);
+const realUserName = urlParams.get("user");
+await loadUserTasks(realUserName, selectedDate);
+
 }
 
 
