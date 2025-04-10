@@ -616,18 +616,29 @@ body {
 
         
 
+// ✅ Centralized turn logic
+function getCurrentTurn(task, dateString) {
+    if (!task.startDate || !task.users?.length) return task.users?.[0] || "";
+
+    const startDate = new Date(task.startDate);
+    const currentDate = new Date(dateString || new Date().toISOString().split("T")[0]);
+
+    const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+    const userIndex = diffDays % task.users.length;
+    return task.users[userIndex];
+}
 
 
 
 
-        function showTaskDetails(task) {
-    let currentUser = task.turn || task.users[0];
+function showTaskDetails(task) {
+    const selectedDate = document.querySelector(".day.selected")?.dataset.date;
+    let currentUser = getCurrentTurn(task, selectedDate);
+
     const userOrder = [...task.users];
     const currentIndex = userOrder.indexOf(currentUser);
 
-    const selectedDate = document.querySelector(".day.selected")?.dataset.date;
-const completedRaw = task.completions?.[selectedDate] || [];
-
+    const completedRaw = task.completions?.[selectedDate] || [];
     const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
 
     let requiredTimes = 1;
@@ -635,14 +646,12 @@ const completedRaw = task.completions?.[selectedDate] || [];
     if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
     if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-    // Calculate how many turns are left
+    // Build nextTurn array from current turn
     let nextTurn = [];
-    let index = currentIndex;
-    for (let i = 1; i < task.users.length; i++) {
-        index = (currentIndex + i) % task.users.length;
-        nextTurn.push(userOrder[index]);
+    for (let i = 1; i < userOrder.length; i++) {
+        const nextUser = userOrder[(currentIndex + i) % userOrder.length];
+        nextTurn.push(nextUser);
     }
-
 
     let taskDetails = "";
 

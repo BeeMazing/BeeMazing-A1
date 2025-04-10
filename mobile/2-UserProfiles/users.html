@@ -908,104 +908,107 @@
             generateScrollableDates();
             showAdminControlsIfNeeded();
         });
+
+
+
+        // ✅ Centralized turn logic
+function getCurrentTurn(task, dateString) {
+    if (!task.startDate || !task.users?.length) return task.users?.[0] || "";
+
+    const startDate = new Date(task.startDate);
+    const currentDate = new Date(dateString || new Date().toISOString().split("T")[0]);
+
+    const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+    const userIndex = diffDays % task.users.length;
+    return task.users[userIndex];
+}
+
     
         // Replace your existing loadUserTasks with this updated version
         async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
-            let tasks = JSON.parse(localStorage.getItem("familyApp_tasks")) || [];
-            const userTasksDiv = document.getElementById("userTasks");
-    
-            // Optional: Fetch from server if implemented
-            try {
-    const adminEmail = localStorage.getItem("currentAdminEmail");
-    const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-    const data = await res.json();
-    if (data.success) {
-        tasks = data.tasks || tasks;
-        localStorage.setItem("familyApp_tasks", JSON.stringify(tasks)); // ✅ Add this
-    }
-} catch (err) {
-    console.error("Failed to fetch tasks from server:", err);
-}
-    
-const userTasks = tasks.filter(task => {
-    if (!task.users?.includes(userName)) return false;
+    let tasks = JSON.parse(localStorage.getItem("familyApp_tasks")) || [];
+    const userTasksDiv = document.getElementById("userTasks");
 
-    // Determine whose turn it is for this task
-    function getCurrentTurn(task, selectedDate) {
-        if (!task.startDate || !task.users?.length) return task.users?.[0] || "";
-        const startDate = new Date(task.startDate);
-        const currentDate = new Date(selectedDate);
-        const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-        const userIndex = diffDays % task.users.length;
-        return task.users[userIndex];
-    }
-
-    const currentTurn = task.tempTurnReplacement?.replacement || getCurrentTurn(task, selectedDate);
-    return currentTurn === userName;
-});
-
-
-            if (userTasks.length === 0) {
-                userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
-            } else {
-                userTasksDiv.innerHTML = "";
-                const today = new Date().toLocaleDateString("sv-SE");
-                const isToday = selectedDate === today;
-    
-                userTasks.forEach(task => {
-                    const taskDiv = document.createElement("div");
-                    taskDiv.className = "task-item";
-    
-                    let requiredTimes = 1;
-                    if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-                    if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-                    if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-    
-                    let completedRaw = task.completions?.[selectedDate] || [];
-                    let completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
-                    let completedTimes = completedUsers.length;
-    
-                    let progressText = completedTimes >= requiredTimes
-                        ? `<span style="color: green; font-weight: bold;">Completed</span>`
-                        : `${completedTimes}/${requiredTimes}`;
-    
-                    taskDiv.innerHTML = `
-                        <strong>${task.title}</strong><br>
-                        Honey: ${task.reward || "0"} 🍯<br>
-                        Progress: ${progressText}
-                    `;
-    
-                    function getCurrentTurn(task, selectedDate) {
-  if (!task.startDate || !task.users?.length) return task.users?.[0] || "";
-
-  const startDate = new Date(task.startDate);
-  const currentDate = new Date(selectedDate || new Date().toISOString().split("T")[0]);
-  const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-  const userIndex = diffDays % task.users.length;
-  return task.users[userIndex];
-}
-
-                    const currentTurn = task.tempTurnReplacement?.replacement || getCurrentTurn(task, selectedDate);
-                    const remainingForUser = completedUsers.filter(u => u === userName).length;
-    
-                    const canFinish = isToday && currentTurn === userName && remainingForUser < requiredTimes;
-                    if (canFinish) {
-                        const finishedButton = document.createElement("button");
-                        finishedButton.textContent = "Finish Task";
-                        finishedButton.className = "finished-btn";
-                        finishedButton.onclick = (e) => {
-                            e.stopPropagation();
-                            finishTask(task, userName, selectedDate);
-                        };
-                        taskDiv.appendChild(finishedButton);
-                    }
-    
-                    taskDiv.addEventListener("click", () => showTaskDetails(task));
-                    userTasksDiv.appendChild(taskDiv);
-                });
-            }
+    // Optional: Fetch from server if implemented
+    try {
+        const adminEmail = localStorage.getItem("currentAdminEmail");
+        const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const data = await res.json();
+        if (data.success) {
+            tasks = data.tasks || tasks;
+            localStorage.setItem("familyApp_tasks", JSON.stringify(tasks));
         }
-    
+    } catch (err) {
+        console.error("Failed to fetch tasks from server:", err);
+    }
+
+    // ✅ Show only tasks where it's this user's turn on selectedDate
+    const userTasks = tasks.filter(task => {
+        if (!task.users?.includes(userName)) return false;
+        const currentTurn = getCurrentTurn(task, selectedDate);
+        return currentTurn === userName;
+    });
+
+    if (userTasks.length === 0) {
+        userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
+    } else {
+        userTasksDiv.innerHTML = "";
+
+        userTasks.forEach(task => {
+            const taskDiv = document.createElement("div");
+            taskDiv.className = "task-item";
+
+            let requiredTimes = 1;
+            if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+            if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+            if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+
+            let completedRaw = task.completions?.[selectedDate] || [];
+            let completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
+            let completedTimes = completedUsers.length;
+
+            let progressText = completedTimes >= requiredTimes
+                ? `<span style="color: green; font-weight: bold;">Completed</span>`
+                : `${completedTimes}/${requiredTimes}`;
+
+            taskDiv.innerHTML = `
+                <strong>${task.title}</strong><br>
+                Honey: ${task.reward || "0"} 🍯<br>
+                Progress: ${progressText}
+            `;
+
+            const remainingForUser = completedUsers.filter(u => u === userName).length;
+            const canFinish = remainingForUser < requiredTimes;
+
+            if (canFinish) {
+                const finishedButton = document.createElement("button");
+                finishedButton.textContent = "Finish Task";
+                finishedButton.className = "finished-btn";
+                finishedButton.onclick = (e) => {
+                    e.stopPropagation();
+                    finishTask(task, userName, selectedDate);
+                };
+                taskDiv.appendChild(finishedButton);
+            }
+
+            taskDiv.addEventListener("click", () => showTaskDetails(task));
+            userTasksDiv.appendChild(taskDiv);
+        });
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
         function loadUserReward(userName) {
             const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
             const userReward = rewards[userName] || 0;
