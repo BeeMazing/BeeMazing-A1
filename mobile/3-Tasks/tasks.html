@@ -608,6 +608,22 @@ body {
 
         let currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
 
+// 🔁 Try to rotate the turn automatically if no completions yet today
+const lastCompletionDate = Object.keys(task.completions || {}).sort().reverse()[0];
+const isFutureDate = new Date(selectedDate) > new Date(lastCompletionDate || 0);
+const noOneCompletedToday = !task.completions?.[selectedDate]?.length;
+
+if (isFutureDate && noOneCompletedToday && task.users?.length > 1) {
+    const currentIndex = task.users.indexOf(currentTurn);
+    const nextIndex = (currentIndex + 1) % task.users.length;
+    currentTurn = task.users[nextIndex];
+
+    // Optionally persist the rotation
+    task.turn = currentTurn;
+}
+
+
+
         // Show task info
         taskDiv.innerHTML = `
             <strong>${task.title}</strong><br>
@@ -1193,14 +1209,11 @@ loadTasksForDate(document.querySelector(".day.selected")?.dataset.date);
 
         // Preselect today
         const now = new Date();
-       if (date.toDateString() === new Date().toDateString()) {
+        if (date.toDateString() === new Date().toDateString()) {
     btn.classList.add("selected");
+    loadTasksForDate(btn.dataset.date); // always load today's tasks
+}
 
-    // Only load tasks if no day is currently selected (prevents duplicate reloads)
-    if (!document.querySelector(".day.selected")) {
-        loadTasksForDate(btn.dataset.date);
-    }
-        }
 
         container.appendChild(btn);
     }
