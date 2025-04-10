@@ -925,53 +925,89 @@
 
 
 
-
         async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
     let tasks = JSON.parse(localStorage.getItem("familyApp_tasks")) || [];
     const userTasksDiv = document.getElementById("userTasks");
 
-    // Log the raw tasks for debugging
-    console.log("Raw tasks from localStorage:", tasks);
+    // Log initial localStorage tasks
+    console.log("Initial tasks from localStorage:", tasks);
 
-    // Optional: Fetch from server if implemented
+    // Fetch tasks from the server
     try {
         const adminEmail = localStorage.getItem("currentAdminEmail");
+        if (!adminEmail) {
+            console.error("No adminEmail found in localStorage. Cannot fetch tasks from server.");
+            return;
+        }
+
+        console.log("Fetching tasks for adminEmail:", adminEmail);
         const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
         const data = await res.json();
+
+        console.log("Server response:", data);
+
         if (data.success) {
-            tasks = data.tasks || tasks;
+            tasks = data.tasks || [];
+            if (!Array.isArray(tasks)) {
+                console.error("Server returned invalid tasks format (not an array):", tasks);
+                tasks = [];
+            }
             localStorage.setItem("familyApp_tasks", JSON.stringify(tasks));
+            console.log("Tasks updated from server:", tasks);
+        } else {
+            console.error("Server fetch failed:", data.message || "Unknown error");
         }
     } catch (err) {
-        console.error("Failed to fetch tasks from server:", err);
+        console.error("Error fetching tasks from server:", err);
     }
 
-    // Log tasks after fetching
-    console.log("Tasks after fetching:", tasks);
+    // If no tasks are available, show a message
+    if (!tasks || tasks.length === 0) {
+        console.log("No tasks available after fetch.");
+        userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
+        return;
+    }
 
     // Filter tasks for the user based on the dynamic turn for the selected date
     const userTasks = tasks.filter(task => {
+        // Check if task has required fields
+        if (!task || !task.users || !task.date || !task.repeat) {
+            console.log("Task missing required fields:", task);
+            return false;
+        }
+
         // Check if the user is assigned to the task
-        if (!task.users?.includes(userName)) {
+        if (!task.users.includes(userName)) {
             console.log(`Task "${task.title}" filtered out: ${userName} not in users`, task.users);
             return false;
         }
 
         // Parse dates for comparison
         function parseLocalDate(dateStr) {
+            if (!dateStr || typeof dateStr !== "string") {
+                console.error("Invalid date string:", dateStr);
+                return new Date(NaN); // Return an invalid date to trigger the catch block
+            }
             const [year, month, day] = dateStr.split("-").map(Number);
+            if (!year || !month || !day) {
+                console.error("Malformed date string:", dateStr);
+                return new Date(NaN); // Return an invalid date to trigger the catch block
+            }
             return new Date(year, month - 1, day);
         }
 
         // Handle task.date: it could be a range ("YYYY-MM-DD to YYYY-MM-DD") or a single date ("YYYY-MM-DD")
         let startDateStr, endDateStr;
-        if (task.date.includes(" to ")) {
+        if (typeof task.date === "string" && task.date.includes(" to ")) {
             const dateRange = task.date.split(" to ");
             startDateStr = dateRange[0];
             endDateStr = dateRange[1] || "9999-12-31";
-        } else {
+        } else if (typeof task.date === "string") {
             startDateStr = task.date;
             endDateStr = "9999-12-31"; // If no end date, assume it continues indefinitely
+        } else {
+            console.log(`Task "${task.title}" has invalid date format:`, task.date);
+            return false;
         }
 
         let startDate, endDate, currentDate;
@@ -979,6 +1015,9 @@
             startDate = parseLocalDate(startDateStr);
             endDate = parseLocalDate(endDateStr);
             currentDate = parseLocalDate(selectedDate);
+            if (isNaN(startDate) || isNaN(endDate) || isNaN(currentDate)) {
+                throw new Error("Invalid date after parsing");
+            }
         } catch (error) {
             console.error(`Error parsing dates for task "${task.title}":`, { date: task.date, selectedDate, error });
             return false; // Skip tasks with invalid dates
@@ -1048,11 +1087,13 @@
                 if (!task.date || !task.users?.length) return task.users?.[0] || "";
 
                 let startDateStr;
-                if (task.date.includes(" to ")) {
+                if (typeof task.date === "string" && task.date.includes(" to ")) {
                     const dateRange = task.date.split(" to ");
                     startDateStr = dateRange[0];
-                } else {
+                } else if (typeof task.date === "string") {
                     startDateStr = task.date;
+                } else {
+                    return task.users[0]; // Fallback if date is invalid
                 }
 
                 const startDate = parseLocalDate(startDateStr);
@@ -1082,8 +1123,6 @@
         });
     }
 }
-
-
 
 
 
