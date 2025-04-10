@@ -1251,16 +1251,15 @@ function updateTaskPopup(task, currentUser, selectedDate) {
   const popup = document.getElementById("taskPopup");
 
   popup.querySelector(".popup-title").textContent = task.title;
-
   popup.querySelector(".popup-frequency").textContent =
     `Frequency: ${task.frequency} - ${task.requiredTimes} time(s) per ${task.frequencyType?.toLowerCase() || 'day'}`;
-
   popup.querySelector(".popup-settings").textContent = `Settings: ${task.settings || 'None'}`;
   popup.querySelector(".popup-users").textContent = `Users: ${task.users.join(", ")}`;
   popup.querySelector(".popup-reward").textContent = `Reward: ${task.reward}`;
-  const actualTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
-  popup.querySelector(".popup-current").textContent = `Current Turn: ${currentUser}`;
 
+  // Ensure the current turn is updated correctly
+  const actualTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+  popup.querySelector(".popup-current").textContent = `Current Turn: ${currentUser}`; // Ensure this uses currentUser, which should be the updated turn
 
   popup.querySelector(".popup-next").textContent = `Next: ${getNextUsers(task).join(" -> ")}`;
 
@@ -1271,6 +1270,7 @@ function updateTaskPopup(task, currentUser, selectedDate) {
     finishBtn.style.display = "none";
   }
 }
+
 
 
     </script>
