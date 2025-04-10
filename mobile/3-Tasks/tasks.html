@@ -623,8 +623,13 @@ function getCurrentTurn(task, dateString) {
     const startDate = new Date(task.startDate);
     const currentDate = new Date(dateString || new Date().toISOString().split("T")[0]);
 
+    // Ensure dates are treated in UTC to avoid timezone issues
+    startDate.setUTCHours(0, 0, 0, 0);
+    currentDate.setUTCHours(0, 0, 0, 0);
+
     const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
     const userIndex = diffDays % task.users.length;
+
     return task.users[userIndex];
 }
 

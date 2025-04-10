@@ -1088,11 +1088,25 @@ window.addEventListener('click', (e) => {
   const dateValue = dateMode === "from" ? dateFrom : `${dateFrom} to ${dateTo}`;
   const currentAdmin = localStorage.getItem("currentAdminEmail");
 
-  const task = {
-    title, notes, room, repeat, settings,
-    date: dateValue, reminder, users, reward, alarms,
-    timesPerDay, timesPerWeek, timesPerMonth
-  };
+  const startDateOnly = dateFrom?.split("T")[0] || new Date().toISOString().split("T")[0];
+
+const task = {
+  title,
+  notes,
+  room,
+  repeat,
+  settings,
+  date: dateValue,
+  startDate: startDateOnly, // 👈 NEW: sets the task start date for alternating turns
+  reminder,
+  users,
+  reward,
+  alarms,
+  timesPerDay,
+  timesPerWeek,
+  timesPerMonth
+};
+
 
   // Clear edit mode if present
   localStorage.removeItem("familyApp_editTask");

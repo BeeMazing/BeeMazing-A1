@@ -912,16 +912,22 @@
 
 
         // ✅ Centralized turn logic
-function getCurrentTurn(task, dateString) {
+        function getCurrentTurn(task, dateString) {
     if (!task.startDate || !task.users?.length) return task.users?.[0] || "";
 
     const startDate = new Date(task.startDate);
     const currentDate = new Date(dateString || new Date().toISOString().split("T")[0]);
 
+    // Ensure dates are treated in UTC to avoid timezone issues
+    startDate.setUTCHours(0, 0, 0, 0);
+    currentDate.setUTCHours(0, 0, 0, 0);
+
     const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
     const userIndex = diffDays % task.users.length;
+
     return task.users[userIndex];
 }
+
 
     
         // Replace your existing loadUserTasks with this updated version
@@ -944,10 +950,21 @@ function getCurrentTurn(task, dateString) {
 
     // ✅ Show only tasks where it's this user's turn on selectedDate
     const userTasks = tasks.filter(task => {
-        if (!task.users?.includes(userName)) return false;
-        const currentTurn = getCurrentTurn(task, selectedDate);
-        return currentTurn === userName;
-    });
+    if (!task.users?.includes(userName)) return false;
+
+    // Get starting point and selected date
+    const startDate = new Date(task.startDate || task.date?.split(" to ")[0]);
+    const selected = new Date(selectedDate);
+
+    const dayDiff = Math.floor((selected - startDate) / (1000 * 60 * 60 * 24));
+    if (dayDiff < 0) return false;
+
+    const turnIndex = dayDiff % task.users.length;
+    const expectedUser = task.users[turnIndex];
+
+    return expectedUser === userName;
+});
+
 
     if (userTasks.length === 0) {
         userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
