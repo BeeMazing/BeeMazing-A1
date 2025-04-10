@@ -95,28 +95,21 @@ body {
 
 
 
-
-
-
-
-
-
-
 .task-item {
     padding: 16px;
     background: #2A2B32;
     color: #FFFFFF;
-    border: 2px solid var(--border-dark); 
+    border: 2px solid var(--border-dark);
     border-radius: 12px;
     margin-bottom: 12px;
     cursor: pointer;
     position: relative;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    touch-action: pan-y;
 }
 
-.task-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
+.task-item.swiped-left {
+    transform: translateX(-100px);
 }
 
 .task-item .delete-btn {
@@ -127,16 +120,12 @@ body {
     background-color: var(--danger-color);
     color: white;
     border: none;
-    padding: 10px;
+    padding: 10px 15px;
     border-radius: 5px;
     font-size: 16px;
     display: none;
     cursor: pointer;
     transition: background-color 0.3s ease;
-}
-
-.task-item.swiped-left {
-    transform: translateX(-100px);
 }
 
 .task-item.swiped-left .delete-btn {
@@ -147,6 +136,12 @@ body {
     background-color: #B71C1C;
 }
 
+
+
+.task-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
+}
         .footer {
     position: fixed;
     bottom: 0;
@@ -531,36 +526,22 @@ body {
     </div>
 
     <script>
-  
 
+// Dynamically highlight the active footer icon
+document.querySelectorAll('.footer a').forEach(link => {
+    const currentPath = window.location.pathname.replace(/\/$/, '');
+    const linkPath = new URL(link.href).pathname.replace(/\/$/, '');
+    if (currentPath === linkPath) {
+        link.classList.add('active');
+    } else {
+        link.classList.remove('active');
+    }
+});
 
-
-        // Dynamically highlight the active footer icon
-        document.querySelectorAll('.footer a').forEach(link => {
-        // Normalize both paths (remove trailing slashes)
-        const currentPath = window.location.pathname.replace(/\/$/, '');
-        const linkPath = new URL(link.href).pathname.replace(/\/$/, '');
-
-        if (currentPath === linkPath) {
-            link.classList.add('active');
-        } else {
-            link.classList.remove('active');
-        }
-    });
-
-
-
-
-
-
-
-
-
-    async function loadTasksForDate(selectedDate) {
+async function loadTasksForDate(selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (!adminEmail) return;
 
-    // 🔁 Fetch tasks from server instead of localStorage
     const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
     const result = await response.json();
     const tasks = result.tasks || [];
@@ -590,8 +571,9 @@ body {
     visibleTasks.forEach((task, index) => {
         const taskDiv = document.createElement("div");
         taskDiv.className = "task-item";
+        taskDiv.dataset.taskTitle = task.title;
+        taskDiv.dataset.taskDate = task.date;
 
-        // Determine repeat count
         let repeatLimit = 1;
         if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
         if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
@@ -604,59 +586,144 @@ body {
 
         let currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
 
-        // Show task info
         taskDiv.innerHTML = `
             <strong>${task.title}</strong><br>
             Turn: ${currentTurn}<br>
             ${repeatLimit > 1 ? `Completed: ${completedCount}/${repeatLimit}<br>` : ""}
             ${isCompleted ? `<span style="color: green; font-weight: bold;">Completed</span><br>` : ""}
+            <button class="delete-btn">Delete</button>
         `;
 
-        // Click opens details
-        taskDiv.addEventListener("click", () => {
-            showTaskDetails(task);
+        taskDiv.addEventListener("click", (e) => {
+            if (!taskDiv.classList.contains("swiped-left") && e.target !== taskDiv.querySelector(".delete-btn")) {
+                showTaskDetails(task);
+            }
+        });
+
+        let startX = 0;
+        let currentX = 0;
+        let isSwiping = false;
+
+        taskDiv.addEventListener("touchstart", (e) => {
+            startX = e.touches[0].clientX;
+            isSwiping = true;
+        });
+
+        taskDiv.addEventListener("touchmove", (e) => {
+            if (!isSwiping) return;
+            currentX = e.touches[0].clientX;
+            const diffX = startX - currentX;
+            if (diffX > 50) {
+                taskDiv.classList.add("swiped-left");
+            } else if (diffX < -20) {
+                taskDiv.classList.remove("swiped-left");
+            }
+        });
+
+        taskDiv.addEventListener("touchend", () => {
+            isSwiping = false;
+        });
+
+        taskDiv.addEventListener("mousedown", (e) => {
+            startX = e.clientX;
+            isSwiping = true;
+        });
+
+        taskDiv.addEventListener("mousemove", (e) => {
+            if (!isSwiping) return;
+            currentX = e.clientX;
+            const diffX = startX - currentX;
+            if (diffX > 50) {
+                taskDiv.classList.add("swiped-left");
+            } else if (diffX < -20) {
+                taskDiv.classList.remove("swiped-left");
+            }
+        });
+
+        taskDiv.addEventListener("mouseup", () => {
+            isSwiping = false;
+        });
+
+        taskDiv.addEventListener("mouseleave", () => {
+            isSwiping = false;
+        });
+
+        taskDiv.querySelector(".delete-btn").addEventListener("click", async () => {
+            if (confirm(`Are you sure you want to delete "${task.title}"?`)) {
+                await deleteTaskFromBackend(task.title, task.date);
+                taskDiv.remove();
+                if (taskList.children.length === 0) {
+                    taskList.innerHTML = "<p>No tasks for this day.</p>";
+                }
+            }
         });
 
         taskList.appendChild(taskDiv);
     });
 }
 
+async function deleteTaskFromBackend(title, date) {
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    if (!adminEmail) {
+        alert("No admin email found.");
+        return;
+    }
 
+    try {
+        const response = await fetch(
+            `https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(title)}&date=${encodeURIComponent(date)}`,
+            {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }
+        );
 
-
-
-
-
-
-
-
-        function saveTask(index, task) {
-            const tasks = JSON.parse(localStorage.getItem("familyApp_tasks")) || [];
-            tasks[index] = task;
-            localStorage.setItem("familyApp_tasks", JSON.stringify(tasks));
+        if (!response.ok) {
+            throw new Error("Failed to delete task from backend");
         }
+    } catch (error) {
+        console.error("Error deleting task:", error);
+        alert("Failed to delete task. Please try again.");
+    }
+}
 
-        function deleteTask(index) {
-            const tasks = JSON.parse(localStorage.getItem("familyApp_tasks")) || [];
-            tasks.splice(index, 1);
-            localStorage.setItem("familyApp_tasks", JSON.stringify(tasks));
+async function saveTaskToBackend(task) {
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    if (!adminEmail) {
+        alert("No admin email found.");
+        return;
+    }
+
+    try {
+        const response = await fetch("https://beemazing.onrender.com/api/tasks", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                adminEmail,
+                task
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to save task to backend");
         }
+    } catch (error) {
+        console.error("Error saving task:", error);
+        alert("Failed to save task. Please try again.");
+    }
+}
 
-
-        
-
-
-
-
-
-        function showTaskDetails(task) {
+async function showTaskDetails(task) {
     let currentUser = task.turn || task.users[0];
     const userOrder = [...task.users];
     const currentIndex = userOrder.indexOf(currentUser);
 
     const selectedDate = document.querySelector(".day.selected")?.dataset.date;
-const completedRaw = task.completions?.[selectedDate] || [];
-
+    const completedRaw = task.completions?.[selectedDate] || [];
     const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
 
     let requiredTimes = 1;
@@ -664,10 +731,8 @@ const completedRaw = task.completions?.[selectedDate] || [];
     if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
     if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-    // Calculate how many turns are left
     const remainingTurns = requiredTimes - completedUsers.length;
 
-    // Build nextTurn array from current turn, cycling through users
     let nextTurn = [];
     let index = currentIndex;
     for (let i = 0; i < remainingTurns - 1; i++) {
@@ -676,7 +741,6 @@ const completedRaw = task.completions?.[selectedDate] || [];
     }
 
     let taskDetails = "";
-
     if (task.title) taskDetails += `<strong>Title:</strong> ${task.title}<br>`;
     if (task.notes) taskDetails += `<strong>Notes:</strong> ${task.notes}<br>`;
     if (task.room) taskDetails += `<strong>Room:</strong> ${task.room}<br>`;
@@ -710,25 +774,8 @@ const completedRaw = task.completions?.[selectedDate] || [];
 
     taskDetails += `
         <br>
-        <button id="editTurnBtn" style="
-    padding: 6px 10px;
-    background: var(--primary-color);
-    color: var(--secondary-color);
-    font-weight: bold;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-">Edit Turn Order</button>
-        &nbsp;
-        <button id="editTaskBtn" style="
-    padding: 6px 10px;
-    background: var(--secondary-color);
-    color: var(--accent-color);
-    font-weight: bold;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-">Edit Task</button>
+        <button id="editTurnBtn" style="padding: 6px 10px; background: var(--primary-color); color: var(--secondary-color); font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">Edit Turn Order</button>
+        <button id="editTaskBtn" style="padding: 6px 10px; background: var(--secondary-color); color: var(--accent-color); font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">Edit Task</button>
     `;
 
     const modal = document.createElement("div");
@@ -758,77 +805,42 @@ const completedRaw = task.completions?.[selectedDate] || [];
     });
 
     const editBtn = document.getElementById("editCompletionBtn");
-if (editBtn) {
-    editBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        modal.remove();
-
-        const selectedDate = document.querySelector(".day.selected")?.dataset.date;
-        const completedRaw = task.completions?.[selectedDate] || [];
-        const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
-
-        showEditCompletionModal(task, completedUsers, selectedDate, modal);
-    });
+    if (editBtn) {
+        editBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            modal.remove();
+            showEditCompletionModal(task, completedUsers, selectedDate, modal);
+        });
+    }
 }
-
-}
-
-
-
 
 async function finishTask(userName, task, button, selectedDate) {
-    const tasks = JSON.parse(localStorage.getItem("familyApp_tasks")) || [];
-    const taskIndex = tasks.findIndex(t => t.title === task.title && t.date === task.date);
-    if (taskIndex === -1) return;
-
     const today = selectedDate;
-    
 
-    // Repeat limits
     const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
                         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-    // Init completions if needed
     if (!task.completions) task.completions = {};
     if (!Array.isArray(task.completions[today])) task.completions[today] = [];
 
-    // Check if user can still complete (up to repeatLimit)
     const userCompletions = task.completions[today].filter(u => u === userName).length;
     if (userCompletions >= repeatLimit) return;
 
-    // Add completion
     task.completions[today].push(userName);
-    
 
-    // Give reward to original user (if delegated)
     const rewardAmount = Number(task.reward) || 0;
-    const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
-    const originalUser = task.originalOwner?.[userName] || userName;
-    rewards[originalUser] = (rewards[originalUser] || 0) + rewardAmount;
-    localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
-
-    if (typeof updateLuckyChestProgress === "function") {
-        updateLuckyChestProgress(originalUser, rewardAmount);
-    }
-
-    const completedCount = task.completions[today].length;
     const userList = task.users;
     const currentTurn = task.tempTurnReplacement?.replacement || task.turn || userList[0];
 
-    // Handle turn rotation
     if (task.tempTurnReplacement && userName === task.tempTurnReplacement.replacement) {
-        // Replacement user completed their turn; move to next in original order
         const originalUser = task.tempTurnReplacement.original;
         const originalIndex = userList.indexOf(originalUser);
         const nextIndex = (originalIndex + 1) % userList.length;
         task.turn = userList[nextIndex];
-
-        // Clean up temporary replacement
         delete task.tempTurnReplacement;
         if (task.originalOwner) delete task.originalOwner[userName];
     } else {
-        // Normal rotation: move to next user who hasn’t completed fully
         const userCompletionCounts = {};
         task.completions[today].forEach(u => {
             userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
@@ -845,11 +857,14 @@ async function finishTask(userName, task, button, selectedDate) {
         task.turn = looped ? userList[0] : userList[nextIndex];
     }
 
-    task.date = selectedDate; // ✅ Ensures backend match works
-tasks[taskIndex] = task;
-await saveTask(taskIndex, task);
+    task.date = selectedDate;
+    await saveTaskToBackend(task);
 
-
+    // Note: Rewards are not stored in backend; consider adding a backend endpoint for rewards
+    const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
+    const originalUser = task.originalOwner?.[userName] || userName;
+    rewards[originalUser] = (rewards[originalUser] || 0) + rewardAmount;
+    localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
 
     if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
     if (typeof loadTasksForDate === 'function') loadTasksForDate(selectedDate);
@@ -857,50 +872,7 @@ await saveTask(taskIndex, task);
     if (typeof loadUserReward === 'function') loadUserReward(userName);
 }
 
-async function saveTask(index, task) {
-    const adminEmail = localStorage.getItem("currentAdminEmail");
-    if (!adminEmail) {
-        alert("No admin email found.");
-        return;
-    }
-
-    await fetch("https://beemazing.onrender.com/api/tasks", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            adminEmail,
-            task
-        })
-    });
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function showEditCompletionModal(task, completedUsers, today, parentModal) {
+async function showEditCompletionModal(task, completedUsers, today, parentModal) {
     const modal = document.createElement("div");
     modal.className = "task-modal";
 
@@ -928,7 +900,7 @@ function showEditCompletionModal(task, completedUsers, today, parentModal) {
         }
     });
 
-    document.getElementById("saveCompletionBtn").addEventListener("click", () => {
+    document.getElementById("saveCompletionBtn").addEventListener("click", async () => {
         const checkboxes = modal.querySelectorAll("input[type='checkbox']");
         const newCompleted = [];
         const removedUsers = [];
@@ -945,9 +917,7 @@ function showEditCompletionModal(task, completedUsers, today, parentModal) {
         if (!task.completions) task.completions = {};
         task.completions[today] = newCompleted;
 
-        // ✅ Recalculate turn: PRIORITIZE removed users
         let newTurn = null;
-
         for (const removed of removedUsers) {
             if (task.users.includes(removed)) {
                 newTurn = removed;
@@ -962,24 +932,16 @@ function showEditCompletionModal(task, completedUsers, today, parentModal) {
 
         task.turn = newTurn;
 
-        // 💸 Deduct honey for removed users
+        // Note: Rewards are not stored in backend; consider adding a backend endpoint
         const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
         const rewardAmount = Number(task.reward) || 0;
-
         removedUsers.forEach(user => {
             if (!rewards[user]) rewards[user] = 0;
             rewards[user] = Math.max(0, rewards[user] - rewardAmount);
         });
-
         localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
 
-        // 💾 Save updated task
-        const tasks = JSON.parse(localStorage.getItem("familyApp_tasks")) || [];
-        const index = tasks.findIndex(t => t.title === task.title && t.date === task.date);
-        if (index !== -1) {
-            tasks[index] = task;
-            localStorage.setItem("familyApp_tasks", JSON.stringify(tasks));
-        }
+        await saveTaskToBackend(task);
 
         modal.remove();
         parentModal.remove();
@@ -990,15 +952,7 @@ function showEditCompletionModal(task, completedUsers, today, parentModal) {
     });
 }
 
-
-
-
-
-
-
-
-
-function showEditTurnModal(task) {
+async function showEditTurnModal(task) {
     const modal = document.createElement("div");
     modal.className = "task-modal";
 
@@ -1010,10 +964,10 @@ function showEditTurnModal(task) {
 
     const generateUserList = (excludeUser) => {
         return task.users
-    .filter(user => user !== excludeUser)
-    .map(user => `
-        <li class="draggable-user">${user}</li>
-    `).join("");
+            .filter(user => user !== excludeUser)
+            .map(user => `
+                <li class="draggable-user">${user}</li>
+            `).join("");
     };
 
     const currentTurn = task.turn || task.users[0];
@@ -1024,12 +978,10 @@ function showEditTurnModal(task) {
             <select id="turnSelector" style="margin: 6px 0 12px;">
                 ${generateUserOptions(currentTurn)}
             </select><br>
-
             <strong>Edit Turn Order:</strong><br>
             <ul id="userOrderList" style="list-style: none; padding: 0; margin: 10px 0;">
                 ${generateUserList(currentTurn)}
             </ul>
-
             <button id="saveTurnOrder" style="padding: 8px 12px; background: var(--primary-color); color: var(--secondary-color); border: none; font-weight: bold; border-radius: 6px; cursor: pointer;">
                 Save
             </button>
@@ -1041,83 +993,71 @@ function showEditTurnModal(task) {
     const listContainer = () => modal.querySelector("#userOrderList");
 
     const enableDragAndDrop = () => {
-    const list = listContainer();
-    let draggedItem = null;
-    let startY = 0;
-    let currentIndex = -1;
+        const list = listContainer();
+        let draggedItem = null;
+        let startY = 0;
+        let currentIndex = -1;
 
-    const handleStart = (e) => {
-        draggedItem = e.target.closest("li");
-        startY = e.touches ? e.touches[0].clientY : e.clientY;
-        currentIndex = Array.from(list.children).indexOf(draggedItem);
-        draggedItem.classList.add("dragging");
-    };
+        const handleStart = (e) => {
+            draggedItem = e.target.closest("li");
+            startY = e.touches ? e.touches[0].clientY : e.clientY;
+            currentIndex = Array.from(list.children).indexOf(draggedItem);
+            draggedItem.classList.add("dragging");
+        };
 
-    const handleMove = (e) => {
-        if (!draggedItem) return;
-        const moveY = e.touches ? e.touches[0].clientY : e.clientY;
+        const handleMove = (e) => {
+            if (!draggedItem) return;
+            const moveY = e.touches ? e.touches[0].clientY : e.clientY;
+            const targetIndex = Array.from(list.children).findIndex(child => {
+                const rect = child.getBoundingClientRect();
+                return moveY >= rect.top && moveY <= rect.bottom;
+            });
 
-        const targetIndex = Array.from(list.children).findIndex(child => {
-            const rect = child.getBoundingClientRect();
-            return moveY >= rect.top && moveY <= rect.bottom;
+            if (targetIndex !== -1 && targetIndex !== currentIndex) {
+                const movingUp = targetIndex < currentIndex;
+                list.insertBefore(draggedItem, movingUp ? list.children[targetIndex] : list.children[targetIndex].nextSibling);
+                currentIndex = targetIndex;
+            }
+        };
+
+        const handleEnd = () => {
+            if (draggedItem) {
+                draggedItem.classList.remove("dragging");
+                draggedItem = null;
+            }
+        };
+
+        list.querySelectorAll("li").forEach((li) => {
+            li.addEventListener("touchstart", handleStart);
+            li.addEventListener("touchmove", handleMove);
+            li.addEventListener("touchend", handleEnd);
+            li.addEventListener("mousedown", handleStart);
+            li.addEventListener("mousemove", (e) => {
+                if (e.buttons === 1) handleMove(e);
+            });
+            li.addEventListener("mouseup", handleEnd);
         });
-
-        if (targetIndex !== -1 && targetIndex !== currentIndex) {
-            const movingUp = targetIndex < currentIndex;
-            list.insertBefore(draggedItem, movingUp ? list.children[targetIndex] : list.children[targetIndex].nextSibling);
-            currentIndex = targetIndex;
-        }
     };
-
-    const handleEnd = () => {
-        if (draggedItem) {
-            draggedItem.classList.remove("dragging");
-            draggedItem = null;
-        }
-    };
-
-    list.querySelectorAll("li").forEach((li) => {
-        li.addEventListener("touchstart", handleStart);
-        li.addEventListener("touchmove", handleMove);
-        li.addEventListener("touchend", handleEnd);
-
-        li.addEventListener("mousedown", handleStart);
-        li.addEventListener("mousemove", (e) => {
-            if (e.buttons === 1) handleMove(e);
-        });
-        li.addEventListener("mouseup", handleEnd);
-    });
-};
-
-
 
     enableDragAndDrop();
 
-    // Sync the user order list when current turn changes
     document.getElementById("turnSelector").addEventListener("change", (e) => {
         const newTurn = e.target.value;
         listContainer().innerHTML = generateUserList(newTurn);
-        enableDragAndDrop(); // Re-enable drag after rebuilding list
+        enableDragAndDrop();
     });
 
-    // Save logic
-    document.getElementById("saveTurnOrder").addEventListener("click", () => {
+    document.getElementById("saveTurnOrder").addEventListener("click", async () => {
         const selectedTurn = document.getElementById("turnSelector").value;
         const reordered = Array.from(listContainer().querySelectorAll("li")).map(li => li.textContent.trim());
 
         task.turn = selectedTurn;
         task.users = [selectedTurn, ...reordered];
 
-        const tasks = JSON.parse(localStorage.getItem("familyApp_tasks")) || [];
-        const index = tasks.findIndex(t => t.title === task.title && t.date === task.date);
-        if (index !== -1) {
-            tasks[index] = task;
-            localStorage.setItem("familyApp_tasks", JSON.stringify(tasks));
-        }
+        await saveTaskToBackend(task);
 
         modal.remove();
-loadTasksForDate(document.querySelector(".day.selected")?.dataset.date);
-
+        loadTasksForDate(document.querySelector(".day.selected")?.dataset.date);
     });
 
     modal.addEventListener("click", (e) => {
@@ -1127,25 +1067,12 @@ loadTasksForDate(document.querySelector(".day.selected")?.dataset.date);
     });
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-        function generateScrollableDates(monthOffset = 0) {
+function generateScrollableDates(monthOffset = 0) {
     const container = document.getElementById("dayScrollContainer");
     container.innerHTML = "";
 
     const today = new Date();
-    today.setDate(1); // start from 1st of month
+    today.setDate(1);
     today.setMonth(today.getMonth() + monthOffset);
 
     const currentMonth = today.getMonth();
@@ -1165,35 +1092,30 @@ loadTasksForDate(document.querySelector(".day.selected")?.dataset.date);
         btn.textContent = i;
         btn.dataset.date = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
-
         btn.addEventListener("click", () => {
             document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
             btn.classList.add("selected");
             loadTasksForDate(btn.dataset.date);
         });
 
-        // Preselect today
         const now = new Date();
-       if (date.toDateString() === new Date().toDateString()) {
-    btn.classList.add("selected");
-
-    // Only load tasks if no day is currently selected (prevents duplicate reloads)
-    if (!document.querySelector(".day.selected")) {
-        loadTasksForDate(btn.dataset.date);
-    }
+        if (date.toDateString() === now.toDateString()) {
+            btn.classList.add("selected");
+            if (!document.querySelector(".day.selected")) {
+                loadTasksForDate(btn.dataset.date);
+            }
         }
 
         container.appendChild(btn);
     }
 
     setTimeout(() => {
-    const selected = document.querySelector(".day.selected");
-    if (selected) {
-        selected.scrollIntoView({ behavior: "smooth", inline: "center" });
-    }
-}, 50);
+        const selected = document.querySelector(".day.selected");
+        if (selected) {
+            selected.scrollIntoView({ behavior: "smooth", inline: "center" });
+        }
+    }, 50);
 }
-
 
 let monthOffset = 0;
 document.getElementById("prevMonth").addEventListener("click", () => {
@@ -1206,13 +1128,8 @@ document.getElementById("nextMonth").addEventListener("click", () => {
     generateScrollableDates(monthOffset);
 });
 
+generateScrollableDates();
 
-
-
-
-        generateScrollableDates();
-
-        // Scroll buttons
 document.getElementById("scrollLeft").addEventListener("click", () => {
     document.getElementById("dayScrollContainer").scrollBy({
         left: -200,
@@ -1226,186 +1143,6 @@ document.getElementById("scrollRight").addEventListener("click", () => {
         behavior: "smooth"
     });
 });
-
-
-
-
-
-
-
-async function saveTaskToBackend(task) {
-  const currentAdminEmail = localStorage.getItem("currentAdminEmail");
-  if (!currentAdminEmail) return;
-
-  await fetch("https://beemazing.onrender.com/api/tasks", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ adminEmail: currentAdminEmail, task }),
-  });
-}
-
-
-
-function updateTaskPopup(task, currentUser, selectedDate) {
-  const popup = document.getElementById("taskPopup");
-
-  popup.querySelector(".popup-title").textContent = task.title;
-
-  popup.querySelector(".popup-frequency").textContent =
-    `Frequency: ${task.frequency} - ${task.requiredTimes} time(s) per ${task.frequencyType?.toLowerCase() || 'day'}`;
-
-  popup.querySelector(".popup-settings").textContent = `Settings: ${task.settings || 'None'}`;
-  popup.querySelector(".popup-users").textContent = `Users: ${task.users.join(", ")}`;
-  popup.querySelector(".popup-reward").textContent = `Reward: ${task.reward}`;
-  popup.querySelector(".popup-current").textContent = `Current Turn: ${task.currentTurn}`;
-  popup.querySelector(".popup-next").textContent = `Next: ${getNextUsers(task).join(" -> ")}`;
-
-  const finishBtn = popup.querySelector(".finish-task-btn");
-  if (task.currentTurn === currentUser && !task.completions[selectedDate]?.includes(currentUser)) {
-    finishBtn.style.display = "inline-block";
-  } else {
-    finishBtn.style.display = "none";
-  }
-}
-
-
-
-
-function getNextUsers(task) {
-  const idx = task.users.indexOf(task.currentTurn);
-  const nextUsers = [];
-
-  for (let i = 1; i < task.users.length; i++) {
-    nextUsers.push(task.users[(idx + i) % task.users.length]);
-  }
-
-  return nextUsers;
-}
-
-
-
-
-
-// Add swipe gesture and delete button visibility
-document.querySelectorAll('.task-item').forEach(taskItem => {
-    let touchStartX = 0;
-    let touchEndX = 0;
-    let mouseStartX = 0;
-    let mouseEndX = 0;
-
-    // For mobile devices
-    taskItem.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-    });
-
-    taskItem.addEventListener('touchmove', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-    });
-
-    taskItem.addEventListener('touchend', async (e) => {
-        // Detect swipe left
-        if (touchStartX - touchEndX > 50) {
-            taskItem.classList.add('swiped-left');
-            const deleteBtn = taskItem.querySelector('.delete-btn');
-            deleteBtn.style.display = 'block'; // Show the delete button
-            deleteBtn.addEventListener('click', async () => {
-                await deleteTaskFromBackend(taskItem.dataset.id, taskItem);
-            });
-        } else {
-            taskItem.classList.remove('swiped-left');
-        }
-    });
-
-    // For desktop devices (mouse events)
-    taskItem.addEventListener('mousedown', (e) => {
-        mouseStartX = e.clientX;
-    });
-
-    taskItem.addEventListener('mousemove', (e) => {
-        mouseEndX = e.clientX;
-    });
-
-    taskItem.addEventListener('mouseup', async (e) => {
-        if (mouseStartX - mouseEndX > 50) {
-            taskItem.classList.add('swiped-left');
-            const deleteBtn = taskItem.querySelector('.delete-btn');
-            deleteBtn.style.display = 'block'; // Show the delete button
-            deleteBtn.addEventListener('click', async () => {
-                await deleteTaskFromBackend(taskItem.dataset.id, taskItem);
-            });
-        } else {
-            taskItem.classList.remove('swiped-left');
-        }
-    });
-});
-
-// Send delete request to backend
-async function deleteTaskFromBackend(taskID, taskItem) {
-    const adminEmail = localStorage.getItem('currentAdminEmail');
-    if (!adminEmail) {
-        alert("No admin email found.");
-        return;
-    }
-
-    // Sending request to delete the task from MongoDB
-    const response = await fetch(`https://beemazing.onrender.com/api/tasks/${taskID}`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ adminEmail }),
-    });
-
-    const result = await response.json();
-    if (result.success) {
-        taskItem.remove();  // Remove the task item from the UI
-    } else {
-        alert("Failed to delete task.");
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Send delete request to backend
-async function deleteTaskFromBackend(taskID, taskItem) {
-    const adminEmail = localStorage.getItem('currentAdminEmail');
-    if (!adminEmail) {
-        alert("No admin email found.");
-        return;
-    }
-
-    // Sending request to delete the task from MongoDB
-    const response = await fetch(`https://beemazing.onrender.com/api/tasks/${taskID}`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ adminEmail }),  // Pass adminEmail in the body
-    });
-
-    const result = await response.json();
-    if (result.success) {
-        taskItem.remove();  // Remove the task item from the UI
-    } else {
-        alert("Failed to delete task.");
-    }
-}
-
-
 
     </script>
 </body>

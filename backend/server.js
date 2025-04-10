@@ -201,36 +201,83 @@ app.get("/api/tasks", async (req, res) => {
 
 
 
-// ✅ DELETE TASK BY ID
-app.delete('/api/tasks/:taskId', async (req, res) => {
-  const { taskId } = req.params;
-  const { adminEmail } = req.body;
 
-  if (!adminEmail) {
-    return res.status(400).json({ success: false, message: "Missing adminEmail" });
+
+
+
+
+
+
+// ✅ Delete a specific task for an admin
+app.delete("/api/tasks", async (req, res) => {
+  const { adminEmail, title, date } = req.query;
+
+  if (!adminEmail || !title || !date) {
+    return res.status(400).json({ error: "Missing adminEmail, title, or date" });
   }
 
   try {
     const db = await connectDB();
     const admins = db.collection("admins");
 
-    // Find the admin and the tasks
     const admin = await admins.findOne({ email: adminEmail });
     if (!admin) {
-      return res.status(404).json({ success: false, message: "Admin not found" });
+      return res.status(404).json({ error: "Admin not found" });
     }
 
-    // Remove the task from the admin's tasks array
-    const updatedTasks = admin.tasks.filter(task => task._id.toString() !== taskId);
-    
+    const updatedTasks = admin.tasks.filter(
+      task => !(task.title === title && task.date === date)
+    );
+
     await admins.updateOne(
       { email: adminEmail },
       { $set: { tasks: updatedTasks } }
     );
 
-    res.json({ success: true, message: "Task deleted successfully" });
+    res.json({ success: true });
   } catch (err) {
-    console.error("🔥 Error in /delete-task:", err);
-    res.status(500).json({ success: false, message: "Failed to delete task" });
+    console.error("Error deleting task:", err);
+    res.status(500).json({ error: "Failed to delete task" });
+  }
+});
+
+
+// In server.js
+app.post("/api/rewards", async (req, res) => {
+  const { adminEmail, user, amount } = req.body;
+  if (!adminEmail || !user || amount === undefined) {
+      return res.status(400).json({ error: "Missing data" });
+  }
+  try {
+      const db = await connectDB();
+      const admins = db.collection("admins");
+      const admin = await admins.findOne({ email: adminEmail });
+      const rewards = admin?.rewards || {};
+      rewards[user] = (rewards[user] || 0) + amount;
+      await admins.updateOne(
+          { email: adminEmail },
+          { $set: { rewards } },
+          { upsert: true }
+      );
+      res.json({ success: true });
+  } catch (err) {
+      console.error("Error saving reward:", err);
+      res.status(500).json({ error: "Failed to save reward" });
+  }
+});
+
+app.get("/api/rewards", async (req, res) => {
+  const { adminEmail } = req.query;
+  if (!adminEmail) {
+      return res.status(400).json({ error: "Missing adminEmail" });
+  }
+  try {
+      const db = await connectDB();
+      const admins = db.collection("admins");
+      const admin = await admins.findOne({ email: adminEmail });
+      res.json({ rewards: admin?.rewards || {} });
+  } catch (err) {
+      console.error("Error fetching rewards:", err);
+      res.status(500).json({ error: "Failed to fetch rewards" });
   }
 });
