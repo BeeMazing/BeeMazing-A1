@@ -308,20 +308,39 @@ function showConfirmModal(username) {
     document.getElementById("confirmModal").classList.add("show");
 }
 
-document.getElementById("confirmYesBtn").addEventListener("click", () => {
+document.getElementById("confirmYesBtn").addEventListener("click", async () => {
     if (userToRemove) {
-
-const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-let users = allUserData[currentAdmin]?.users || [];
-users = users.filter(user => user !== userToRemove);
-allUserData[currentAdmin].users = users;
-localStorage.setItem("userData", JSON.stringify(allUserData));
-
-        userToRemove = null;
-        document.getElementById("confirmModal").classList.remove("show");
-        location.reload(); // Reload to re-render the user list
+      try {
+        // Call the server to delete the user
+        const res = await fetch(
+          `https://beemazing.onrender.com/delete-user?adminEmail=${encodeURIComponent(currentAdmin)}&username=${encodeURIComponent(userToRemove)}`,
+          {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+  
+        const result = await res.json();
+        if (result.success) {
+          // Update localStorage after successful server deletion
+          const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+          let users = allUserData[currentAdmin]?.users || [];
+          users = users.filter(user => user !== userToRemove);
+          allUserData[currentAdmin].users = users;
+          localStorage.setItem("userData", JSON.stringify(allUserData));
+  
+          userToRemove = null;
+          document.getElementById("confirmModal").classList.remove("show");
+          location.reload(); // Reload to re-render the user list
+        } else {
+          alert("Failed to delete user from server: " + result.message);
+        }
+      } catch (err) {
+        console.error("Failed to delete user:", err);
+        alert("Error deleting user. Please try again.");
+      }
     }
-});
+  });
 
 document.getElementById("confirmNoBtn").addEventListener("click", () => {
     userToRemove = null;

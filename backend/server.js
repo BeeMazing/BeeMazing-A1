@@ -111,7 +111,38 @@ app.get("/", (req, res) => {
   res.send("BeeMazing backend is working!");
 });
 
+// ✅ Delete a specific user for an admin
+app.delete("/delete-user", async (req, res) => {
+  const { adminEmail, username } = req.query;
 
+  if (!adminEmail || !username) {
+    return res.status(400).json({ success: false, message: "Missing adminEmail or username" });
+  }
+
+  try {
+    const db = await connectDB();
+    const adminUsers = db.collection("adminUsers");
+
+    const admin = await adminUsers.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({ success: false, message: "Admin not found" });
+    }
+
+    // Filter out the user to delete
+    const updatedUsers = admin.users.filter(user => user !== username);
+
+    // Update the admin's user list in the database
+    await adminUsers.updateOne(
+      { email: adminEmail },
+      { $set: { users: updatedUsers } }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("🔥 Error in /delete-user:", err);
+    res.status(500).json({ success: false, message: "Failed to delete user" });
+  }
+});
 
 // ✅ GET ALL TASKS FOR ADMIN (used in users.html)
 app.get('/get-tasks', async (req, res) => {
