@@ -199,3 +199,38 @@ app.get("/api/tasks", async (req, res) => {
   }
 });
 
+
+
+// ✅ DELETE TASK BY ID
+app.delete('/api/tasks/:taskId', async (req, res) => {
+  const { taskId } = req.params;
+  const { adminEmail } = req.body;
+
+  if (!adminEmail) {
+    return res.status(400).json({ success: false, message: "Missing adminEmail" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    // Find the admin and the tasks
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({ success: false, message: "Admin not found" });
+    }
+
+    // Remove the task from the admin's tasks array
+    const updatedTasks = admin.tasks.filter(task => task._id.toString() !== taskId);
+    
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { tasks: updatedTasks } }
+    );
+
+    res.json({ success: true, message: "Task deleted successfully" });
+  } catch (err) {
+    console.error("🔥 Error in /delete-task:", err);
+    res.status(500).json({ success: false, message: "Failed to delete task" });
+  }
+});
