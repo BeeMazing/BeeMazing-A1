@@ -268,7 +268,11 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const userName = urlParams.get('user');
-        const adminEmail = localStorage.getItem('currentAdminEmail');
+        let adminEmail = urlParams.get('adminEmail') || localStorage.getItem('currentAdminEmail');
+if (adminEmail) {
+    localStorage.setItem('currentAdminEmail', adminEmail); // Save it for future access
+}
+
 
         if (!userName || !adminEmail) {
             document.getElementById('rewardList').innerHTML = "<p>Error: Missing user or admin information.</p>";
