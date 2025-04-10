@@ -307,45 +307,70 @@
             }
         }
 
+
+
+
+
+
+
         async function loadRewards(userName) {
-            const rewardList = document.getElementById("rewardList");
+    const rewardList = document.getElementById("rewardList");
 
-            try {
-                // Fetch market rewards from MongoDB
-                const marketResponse = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-                const marketData = await marketResponse.json();
-                if (!marketResponse.ok) throw new Error(marketData.error || "Failed to fetch market rewards");
-                const rewards = marketData.rewards || [];
+    try {
+        // Fetch market rewards from MongoDB
+        const marketResponse = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const marketData = await marketResponse.json();
+        console.log("Fetching market rewards for adminEmail:", adminEmail); // Debug log
+        console.log("Raw market response:", marketData); // Debug log
 
-                const userDiamonds = await getUserDiamonds(userName);
-
-                rewardList.innerHTML = "";
-                if (rewards.length === 0) {
-                    rewardList.innerHTML = "<p>No rewards available in the hive.</p>";
-                } else {
-                    rewards.forEach((reward) => {
-                        const rewardItem = document.createElement("li");
-                        rewardItem.className = "reward-item";
-                        const canAfford = userDiamonds >= reward.diamonds;
-                        rewardItem.innerHTML = `
-                            <div class="reward-details">
-                                <strong>${reward.name}</strong><br>
-                                Honey: ${reward.diamonds} 🍯
-                            </div>
-                            <button class="get-it-btn ${canAfford ? 'enabled' : 'disabled'}" 
-                                    ${canAfford ? '' : 'disabled'} 
-                                    onclick="purchaseReward('${userName}', '${reward.name}', ${reward.diamonds})">
-                                Get It
-                            </button>
-                        `;
-                        rewardList.appendChild(rewardItem);
-                    });
-                }
-            } catch (err) {
-                console.error("Error loading rewards:", err);
-                rewardList.innerHTML = "<p>Failed to load rewards. Please try again later.</p>";
-            }
+        if (!marketResponse.ok) {
+            console.error("Server returned an error:", marketData.error);
+            throw new Error(marketData.error || "Failed to fetch market rewards");
         }
+
+        const rewards = marketData.rewards || [];
+        console.log("Parsed rewards:", rewards); // Debug log
+
+        const userDiamonds = await getUserDiamonds(userName);
+        console.log("User diamonds for", userName, ":", userDiamonds); // Debug log
+
+        rewardList.innerHTML = "";
+        if (rewards.length === 0) {
+            rewardList.innerHTML = "<p>No rewards available in the hive.</p>";
+        } else {
+            rewards.forEach((reward) => {
+                const rewardItem = document.createElement("li");
+                rewardItem.className = "reward-item";
+                const canAfford = userDiamonds >= reward.diamonds;
+                rewardItem.innerHTML = `
+                    <div class="reward-details">
+                        <strong>${reward.name}</strong><br>
+                        Honey: ${reward.diamonds} 🍯
+                    </div>
+                    <button class="get-it-btn ${canAfford ? 'enabled' : 'disabled'}" 
+                            ${canAfford ? '' : 'disabled'} 
+                            onclick="purchaseReward('${userName}', '${reward.name}', ${reward.diamonds})">
+                        Get It
+                    </button>
+                `;
+                rewardList.appendChild(rewardItem);
+            });
+        }
+    } catch (err) {
+        console.error("Error loading rewards:", err);
+        rewardList.innerHTML = "<p>Failed to load rewards. Please try again later.</p>";
+    }
+}
+
+
+
+
+
+
+
+
+
+
 
         async function purchaseReward(userName, rewardName, diamondCost) {
             try {
