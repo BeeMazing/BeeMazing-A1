@@ -930,6 +930,9 @@
     let tasks = JSON.parse(localStorage.getItem("familyApp_tasks")) || [];
     const userTasksDiv = document.getElementById("userTasks");
 
+    // Log the raw tasks for debugging
+    console.log("Raw tasks from localStorage:", tasks);
+
     // Optional: Fetch from server if implemented
     try {
         const adminEmail = localStorage.getItem("currentAdminEmail");
@@ -943,9 +946,16 @@
         console.error("Failed to fetch tasks from server:", err);
     }
 
+    // Log tasks after fetching
+    console.log("Tasks after fetching:", tasks);
+
     // Filter tasks for the user based on the dynamic turn for the selected date
     const userTasks = tasks.filter(task => {
-        if (!task.users?.includes(userName)) return false;
+        // Check if the user is assigned to the task
+        if (!task.users?.includes(userName)) {
+            console.log(`Task "${task.title}" filtered out: ${userName} not in users`, task.users);
+            return false;
+        }
 
         // Parse dates for comparison
         function parseLocalDate(dateStr) {
@@ -953,15 +963,32 @@
             return new Date(year, month - 1, day);
         }
 
-        // Check if the task is active on the selected date
-        const dateRange = task.date.split(" to ");
-        const startDateStr = dateRange[0];
-        const endDateStr = dateRange[1] || "9999-12-31";
-        const startDate = parseLocalDate(startDateStr);
-        const endDate = parseLocalDate(endDateStr);
-        const currentDate = parseLocalDate(selectedDate);
+        // Handle task.date: it could be a range ("YYYY-MM-DD to YYYY-MM-DD") or a single date ("YYYY-MM-DD")
+        let startDateStr, endDateStr;
+        if (task.date.includes(" to ")) {
+            const dateRange = task.date.split(" to ");
+            startDateStr = dateRange[0];
+            endDateStr = dateRange[1] || "9999-12-31";
+        } else {
+            startDateStr = task.date;
+            endDateStr = "9999-12-31"; // If no end date, assume it continues indefinitely
+        }
 
-        if (currentDate < startDate || currentDate > endDate) return false;
+        let startDate, endDate, currentDate;
+        try {
+            startDate = parseLocalDate(startDateStr);
+            endDate = parseLocalDate(endDateStr);
+            currentDate = parseLocalDate(selectedDate);
+        } catch (error) {
+            console.error(`Error parsing dates for task "${task.title}":`, { date: task.date, selectedDate, error });
+            return false; // Skip tasks with invalid dates
+        }
+
+        // Check if the task is active on the selected date
+        if (currentDate < startDate || currentDate > endDate) {
+            console.log(`Task "${task.title}" filtered out: Not active on ${selectedDate}`, { startDate, endDate, currentDate });
+            return false;
+        }
 
         // Calculate the current turn for the selected date
         const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
@@ -971,14 +998,21 @@
         if (task.repeat === "Daily" && task.timesPerDay === 1) {
             const currentIndex = diffDays % userOrder.length;
             currentTurn = userOrder[currentIndex];
+            console.log(`Task "${task.title}" turn calculation:`, { diffDays, currentIndex, currentTurn, userOrder });
         } else {
             // Fallback to the stored turn or temporary replacement for other task types
             currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+            console.log(`Task "${task.title}" using stored turn:`, { currentTurn, tempTurnReplacement: task.tempTurnReplacement, storedTurn: task.turn });
         }
 
         // Only include the task if it's the user's turn on this date
-        return currentTurn === userName;
+        const isUserTurn = currentTurn === userName;
+        console.log(`Task "${task.title}" for ${userName} on ${selectedDate}:`, { isUserTurn, currentTurn });
+        return isUserTurn;
     });
+
+    // Log the filtered tasks
+    console.log(`Filtered tasks for ${userName} on ${selectedDate}:`, userTasks);
 
     if (userTasks.length === 0) {
         userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
@@ -1013,8 +1047,14 @@
             function getCurrentTurn(task, selectedDate) {
                 if (!task.date || !task.users?.length) return task.users?.[0] || "";
 
-                const dateRange = task.date.split(" to ");
-                const startDateStr = dateRange[0];
+                let startDateStr;
+                if (task.date.includes(" to ")) {
+                    const dateRange = task.date.split(" to ");
+                    startDateStr = dateRange[0];
+                } else {
+                    startDateStr = task.date;
+                }
+
                 const startDate = parseLocalDate(startDateStr);
                 const currentDate = parseLocalDate(selectedDate || new Date().toISOString().split("T")[0]);
                 const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
@@ -1042,9 +1082,6 @@
         });
     }
 }
-
-    
-
 
 
 
