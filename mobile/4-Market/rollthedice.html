@@ -119,6 +119,7 @@
 
   <script>
     let user = "";
+    let adminEmail = "";
     let outcomes = [];
 
     const dotMap = {
@@ -143,13 +144,12 @@
     }
 
     function formatOutcomeText(outcome) {
-  if (typeof outcome === "string") return outcome;
-  if (outcome?.type === "Honey (amount)" || outcome?.type === "honey") {
-    return `${outcome.value || outcome.amount} Honey 🍯`;
-  }
-  return outcome?.type || "Mystery Reward";
-}
-
+      if (typeof outcome === "string") return outcome;
+      if (outcome?.type === "Honey (amount)" || outcome?.type === "honey") {
+        return `${outcome.value || outcome.amount} Honey 🍯`;
+      }
+      return outcome?.type || "Mystery Reward";
+    }
 
     function rollDice() {
       resultText.textContent = "";
@@ -181,107 +181,129 @@
       animateRoll();
     }
 
+    async function grantChestToUser(userName, reward) {
+      try {
+        const customResponse = await fetch(`https://beemazing.onrender.com/api/custom-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const customData = await customResponse.json();
+        if (!customResponse.ok) throw new Error(customData.error || "Failed to fetch custom chests");
+        const allChestsList = [
+          { name: "The Key", quote: "You hold the key to the path of others.", effect: "➡ Transfer one of your tasks to another user. You get the honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Keyy.gif" },
+          { name: "Double Trouble", quote: "Today’s efforts are worth double.", effect: "➡ Next task = double honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/DoubleTrouble.png" },
+          { name: "Roll the Dice", quote: "Test your Luck", effect: "➡ Get a surprise reward.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/dice.gif" },
+          { name: "Dance Party", quote: "Feel the rhythm!", effect: "➡ Dance after a task. If someone joins, both get honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Dance.jpg" },
+          { name: "Bee-Witched!", quote: "Your magical aura changes the rules...", effect: "➡ Make a silly rule. Others who follow it get honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Bee-Witched.jpg" },
+          { name: "Special Buzz Off", quote: "You’re too cool for chores today.", effect: "➡ Skip all tasks today.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Special.jpg" },
+          ...(customData.customChests || [])
+        ];
 
+        const chestResponse = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const chestData = await chestResponse.json();
+        if (!chestResponse.ok) throw new Error(chestData.error || "Failed to fetch lucky chests");
+        const allChests = chestData.luckyChests || {};
+        if (!allChests[userName]) allChests[userName] = [];
 
+        let chest;
+        if (reward.type === "Honey (amount)" || reward.type === "honey") {
+          const honeyAmount = parseInt(reward.value || reward.amount);
+          chest = {
+            name: `${honeyAmount} Honey`,
+            quote: "",
+            effect: `🍯 Collect ${honeyAmount} honey instantly!`,
+            image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/honey.gif",
+            honey: honeyAmount,
+            requiredPoints: 0,
+            progress: 0,
+            type: "normal",
+            fromDiceChest: true
+          };
+        } else {
+          const match = allChestsList.find(c => c.name === reward.type);
+          chest = {
+            name: match?.name || reward.type || "Mystery Reward",
+            quote: match?.quote || "",
+            effect: match?.effect || "",
+            image: match?.image || "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png",
+            requiredPoints: 0,
+            progress: 0,
+            type: "normal",
+            fromDiceChest: true
+          };
+        }
 
-
-
-
-
-
-
-
-
-    function grantChestToUser(userName, reward) {
-  const allChests = JSON.parse(localStorage.getItem("familyApp_luckyChests")) || {};
-  if (!allChests[userName]) allChests[userName] = [];
-
-  const allChestsList = JSON.parse(localStorage.getItem("customChests")) || [
-    { name: "The Key", quote: "You hold the key to the path of others.", effect: "➡ Transfer one of your tasks to another user. You get the honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Keyy.gif" },
-    { name: "Double Trouble", quote: "Today’s efforts are worth double.", effect: "➡ Next task = double honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/DoubleTrouble.png" },
-    { name: "Roll the Dice", quote: "Test your Luck", effect: "➡ Get a surprise reward.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/dice.gif" },
-    { name: "Dance Party", quote: "Feel the rhythm!", effect: "➡ Dance after a task. If someone joins, both get honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Dance.jpg" },
-    { name: "Bee-Witched!", quote: "Your magical aura changes the rules...", effect: "➡ Make a silly rule. Others who follow it get honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Bee-Witched.jpg" },
-    { name: "Special Buzz Off", quote: "You’re too cool for chores today.", effect: "➡ Skip all tasks today.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Special.jpg" }
-  ];
-
-  let chest;
-
-  if (reward.type === "Honey (amount)" || reward.type === "honey") {
-    const honeyAmount = parseInt(reward.value || reward.amount);
-
-    // 🟡 Create a chest that holds Honey — don't reward yet!
-    chest = {
-      name: `${honeyAmount} Honey`,
-      quote: "",
-      effect: `🍯 Collect ${honeyAmount} honey instantly!`,
-      image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/honey.gif",
-      honey: honeyAmount,
-      requiredPoints: 0,
-      progress: 0,
-      type: "normal",
-      fromDiceChest: true
-    };
-
-  } else {
-    const match = allChestsList.find(c => c.name === reward.type);
-    chest = {
-      name: match?.name || reward.type || "Mystery Reward",
-      quote: match?.quote || "",
-      effect: match?.effect || "",
-      image: match?.image || "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png",
-      requiredPoints: 0,
-      progress: 0,
-      type: "normal",
-      fromDiceChest: true
-    };
-  }
-
-  allChests[userName].push(chest);
-  localStorage.setItem("familyApp_luckyChests", JSON.stringify(allChests));
-}
-
-
-
-
-
-
-
-
-
-
-
-
-    function removeDiceChestFromUser(userName) {
-      const rewards = JSON.parse(localStorage.getItem("familyApp_user_rewards")) || {};
-      const history = JSON.parse(localStorage.getItem("familyApp_reward_history")) || {};
-      if (!rewards[userName]) return;
-
-      const index = rewards[userName].findIndex(r => r.type === "dice");
-      if (index !== -1) {
-        const reward = rewards[userName][index];
-        rewards[userName].splice(index, 1);
-
-        if (!history[userName]) history[userName] = [];
-        history[userName].push({
-          name: reward.name,
-          date: reward.date,
-          receivedDate: new Date().toLocaleDateString()
+        allChests[userName].push(chest);
+        await fetch("https://beemazing.onrender.com/api/lucky-chests", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ adminEmail, luckyChests: allChests })
         });
+      } catch (err) {
+        console.error("Error granting chest:", err);
+        alert("Failed to grant reward. Please try again.");
+      }
+    }
 
-        localStorage.setItem("familyApp_user_rewards", JSON.stringify(rewards));
-        localStorage.setItem("familyApp_reward_history", JSON.stringify(history));
+    async function removeDiceChestFromUser(userName) {
+      try {
+        const rewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const rewardsData = await rewardsResponse.json();
+        if (!rewardsResponse.ok) throw new Error(rewardsData.error || "Failed to fetch user rewards");
+        const rewards = rewardsData.userRewards || {};
+        if (!rewards[userName]) return;
+
+        const historyResponse = await fetch(`https://beemazing.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const historyData = await historyResponse.json();
+        if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
+        const history = historyData.rewardHistory || {};
+
+        const index = rewards[userName].findIndex(r => r.type === "dice");
+        if (index !== -1) {
+          const reward = rewards[userName][index];
+          rewards[userName].splice(index, 1);
+
+          if (!history[userName]) history[userName] = [];
+          history[userName].push({
+            name: reward.name,
+            date: reward.date,
+            receivedDate: new Date().toLocaleString()
+          });
+
+          await fetch("https://beemazing.onrender.com/api/user-rewards", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ adminEmail, userRewards: rewards })
+          });
+
+          await fetch("https://beemazing.onrender.com/api/reward-history", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ adminEmail, rewardHistory: history })
+          });
+        }
+      } catch (err) {
+        console.error("Error removing dice chest:", err);
+        alert("Failed to remove dice chest. Please try again.");
       }
     }
 
     function goBack() {
-      window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(user)}`;
+      window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(user)}&adminEmail=${encodeURIComponent(adminEmail)}`;
     }
 
     document.addEventListener("DOMContentLoaded", function () {
       const params = new URLSearchParams(window.location.search);
       user = params.get("user");
+      adminEmail = params.get("adminEmail") || localStorage.getItem("currentAdminEmail");
+
+      if (adminEmail && adminEmail !== "null") {
+        localStorage.setItem("currentAdminEmail", adminEmail);
+      }
+
       const encodedData = params.get("data");
+
+      if (!user || !adminEmail) {
+        document.body.innerHTML = `<p class="error-message">Missing user or admin email. Please try again.</p>`;
+        return;
+      }
 
       try {
         const decoded = JSON.parse(atob(decodeURIComponent(encodedData)));
@@ -296,7 +318,6 @@
           li.textContent = `${i + 1} = ${formatOutcomeText(outcome)}`;
           rewardLegend.appendChild(li);
         });
-
       } catch (e) {
         document.body.innerHTML = `<p class="error-message">Invalid Dice Chest format.</p>`;
       }
