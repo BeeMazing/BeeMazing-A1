@@ -560,6 +560,18 @@ body {
 
 
 
+// When clicking a day (like 11th), set the selected date and refresh tasks
+document.querySelectorAll('.day').forEach(day => {
+    day.addEventListener('click', (e) => {
+        const selectedDate = e.target.dataset.date;
+        document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+        e.target.classList.add("selected");
+
+        loadTasksForDate(selectedDate); // Load tasks for the selected date
+    });
+});
+
+// This function will now load tasks for the selected date and reflect the correct current/next turn info
 async function loadTasksForDate(selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (!adminEmail) return;
@@ -590,35 +602,30 @@ async function loadTasksForDate(selectedDate) {
         return;
     }
 
-    // ✅ ACTUAL RENDERING BLOCK
     visibleTasks.forEach((task, index) => {
         const taskDiv = document.createElement("div");
         taskDiv.className = "task-item";
 
-        let repeatLimit = 1;
-        if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
-        if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
-        if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
-
-        const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-        const completedCount = completedUsers.length;
-        const isCompleted = completedCount >= repeatLimit;
-
-        const currentTurn = getCurrentTurn(task, selectedDate);
+        const currentTurn = getCurrentTurn(task, selectedDate); // Updated to check selected date
 
         taskDiv.innerHTML = `
             <strong>${task.title}</strong><br>
             Turn: ${currentTurn}<br>
-            ${repeatLimit > 1 ? `Completed: ${completedCount}/${repeatLimit}<br>` : ""}
-            ${isCompleted ? `<span style="color: green; font-weight: bold;">Completed</span><br>` : ""}
         `;
 
         taskDiv.addEventListener("click", () => {
-            showTaskDetails(task);
+            showTaskDetails(task); // Show task details when clicked
         });
 
         taskList.appendChild(taskDiv);
     });
+}
+
+
+function getCurrentTurn(task, selectedDate) {
+    // Get the current turn based on the selected date (not the current date)
+    if (task.tempTurnReplacement?.replacement) return task.tempTurnReplacement.replacement;
+    return task.turn || task.users[0]; // Default to first user if no turn replacement is set
 }
 
 
