@@ -13,17 +13,15 @@
         }
         :root {
             --primary-color: #FFC107;
-    --secondary-color: #212121;
-    --accent-color: #FFFFFF;
-    --light-bg: #1E1F26; /* 🌑 dark background */
-    --text-color: #FFFFFF; /* white text */
-    --header-height: 58px;
-    --footer-height: 70px;
-    --border-dark: #444754;
---card-bg: #2A2B32;
+            --secondary-color: #212121;
+            --accent-color: #FFFFFF;
+            --light-bg: #1E1F26;
+            --text-color: #FFFFFF;
+            --header-height: 58px;
+            --footer-height: 70px;
+            --border-dark: #444754;
+            --card-bg: #2A2B32;
         }
-
-
         body {
             font-family: 'Poppins', Arial, sans-serif;
             background-color: var(--light-bg);
@@ -33,26 +31,25 @@
             height: 100vh;
             overflow-x: hidden;
         }
-       .header {
-        background: var(--secondary-color); /* dark background */
-    padding: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    position: fixed;
-    top: 0;
-    width: 100%;
-    height: var(--header-height);
-    z-index: 100;
-}
-
-.title {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--primary-color);
-    letter-spacing: 1px;
-}
+        .header {
+            background: var(--secondary-color);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: var(--header-height);
+            z-index: 100;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-color);
+            letter-spacing: 1px;
+        }
         .content {
             position: absolute;
             top: var(--header-height);
@@ -86,7 +83,7 @@
             transform: translateY(-5px);
         }
         .reward-details strong {
-            color: var(--accent-color); /* white */
+            color: var(--accent-color);
         }
         .get-it-btn {
             padding: 10px 20px;
@@ -110,84 +107,52 @@
             color: #666;
             cursor: not-allowed;
         }
-     
-
-
         .footer {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    display: flex;
-    justify-content: space-around;
-    background: var(--secondary-color);
-    padding: 10px 0;
-    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
-    z-index: 100;
-    height: var(--footer-height);
-}
-
-.footer a {
-    text-decoration: none;
-    color: var(--text-color);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transition: transform 0.3s ease;
-}
-
-.footer a:hover {
-    transform: scale(1.1);
-}
-
-.footer-icon img {
-    width: 40px;
-    height: 40px;
-    filter: invert(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-
-.footer-icon span {
-    font-size: 12px;
-    margin-top: 5px;
-    font-weight: 600;
-}
-
-.footer a.active img {
-    filter: invert(77%) sepia(88%) saturate(900%) hue-rotate(0deg)
-        brightness(100%) contrast(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
-}
-
-.footer a.active span {
-    color: var(--primary-color);
-}
-
-@media (max-width: 600px) {
-    .footer-icon img {
-        width: 35px;
-        height: 35px;
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        /* Reward Claim Animation */
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            background: var(--secondary-color);
+            padding: 10px 0;
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            height: var(--footer-height);
+        }
+        .footer a {
+            text-decoration: none;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+        .footer a:hover {
+            transform: scale(1.1);
+        }
+        .footer-icon img {
+            width: 40px;
+            height: 40px;
+            filter: invert(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+        .footer-icon span {
+            font-size: 12px;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+        .footer a.active img {
+            filter: invert(77%) sepia(88%) saturate(900%) hue-rotate(0deg)
+                brightness(100%) contrast(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+        }
+        .footer a.active span {
+            color: var(--primary-color);
+        }
+        @media (max-width: 600px) {
+            .footer-icon img {
+                width: 35px;
+                height: 35px;
+            }
+        }
         .reward-overlay {
             display: none;
             position: fixed;
@@ -291,8 +256,6 @@
             <span>Rewards</span>
         </a>
     </div>
-    
-    
 
     <!-- Reward Claim Overlay -->
     <div class="reward-overlay" id="rewardOverlay">
@@ -305,101 +268,113 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const userName = urlParams.get('user');
+        const adminEmail = localStorage.getItem('currentAdminEmail');
 
-        if (userName) {
-    document.getElementById('userName').textContent = userName;
-
-    document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${userName}`;
-    document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${userName}`;
-    document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${userName}`;
-
-    loadRewards(userName);
-}
-
-
-
-
-document.querySelectorAll('.footer a').forEach(link => {
-    const currentPath = window.location.pathname.replace(/\/$/, '');
-    const linkPath = new URL(link.href).pathname.replace(/\/$/, '');
-
-    if (currentPath === linkPath) {
-        link.classList.add('active');
-    } else {
-        link.classList.remove('active');
-    }
-});
-
-
-
-        function getUserDiamonds(userName) {
-            const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
-            return rewards[userName] || 0;
+        if (!userName || !adminEmail) {
+            document.getElementById('rewardList').innerHTML = "<p>Error: Missing user or admin information.</p>";
+        } else {
+            document.getElementById('userName').textContent = userName;
+            document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(userName)}`;
+            document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${encodeURIComponent(userName)}`;
+            document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${encodeURIComponent(userName)}`;
+            loadRewards();
         }
 
-        function loadRewards(userName) {
-            const rewards = JSON.parse(localStorage.getItem("familyApp_rewards_market")) || [];
-            const rewardList = document.getElementById("rewardList");
-            const userDiamonds = getUserDiamonds(userName);
-
-            rewardList.innerHTML = "";
-            if (rewards.length === 0) {
-                rewardList.innerHTML = "<p>No rewards available in the hive.</p>";
+        // Highlight active footer icon
+        document.querySelectorAll('.footer a').forEach(link => {
+            const currentPath = window.location.pathname.replace(/\/$/, '');
+            const linkPath = new URL(link.href).pathname.replace(/\/$/, '');
+            if (currentPath === linkPath) {
+                link.classList.add('active');
             } else {
-                rewards.forEach((reward) => {
-                    const rewardItem = document.createElement("li");
-                    rewardItem.className = "reward-item";
-                    const canAfford = userDiamonds >= reward.diamonds;
-                    rewardItem.innerHTML = `
-                        <div class="reward-details">
-                            <strong>${reward.name}</strong><br>
-                            Honey: ${reward.diamonds} 🍯
-                        </div>
-                        <button class="get-it-btn ${canAfford ? 'enabled' : 'disabled'}" 
-                                ${canAfford ? '' : 'disabled'} 
-                                onclick="purchaseReward('${userName}', '${reward.name}', ${reward.diamonds})">
-                            Get It
-                        </button>
-                    `;
-                    rewardList.appendChild(rewardItem);
-                });
+                link.classList.remove('active');
+            }
+        });
+
+        async function loadRewards() {
+            const rewardList = document.getElementById('rewardList');
+
+            try {
+                // Fetch user's honey balance
+                const rewardResponse = await fetch(`https://beemazing.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+                const rewardData = await rewardResponse.json();
+                if (!rewardResponse.ok) {
+                    throw new Error(rewardData.error || 'Failed to fetch user rewards');
+                }
+                const userDiamonds = rewardData.rewards[userName] || 0;
+
+                // Fetch market rewards
+                const marketResponse = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+                const marketData = await marketResponse.json();
+                if (!marketResponse.ok) {
+                    throw new Error(marketData.error || 'Failed to fetch market rewards');
+                }
+                const rewards = marketData.rewards || [];
+
+                rewardList.innerHTML = '';
+                if (rewards.length === 0) {
+                    rewardList.innerHTML = '<p>No rewards available in the hive.</p>';
+                } else {
+                    rewards.forEach(reward => {
+                        const rewardItem = document.createElement('li');
+                        rewardItem.className = 'reward-item';
+                        const canAfford = userDiamonds >= reward.diamonds;
+                        rewardItem.innerHTML = `
+                            <div class="reward-details">
+                                <strong>${reward.name}</strong><br>
+                                Honey: ${reward.diamonds} 🍯
+                            </div>
+                            <button class="get-it-btn ${canAfford ? 'enabled' : 'disabled'}" 
+                                    ${canAfford ? '' : 'disabled'} 
+                                    onclick="purchaseReward('${userName}', '${reward.name}', ${reward.diamonds})">
+                                Get It
+                            </button>
+                        `;
+                        rewardList.appendChild(rewardItem);
+                    });
+                }
+            } catch (err) {
+                console.error('Error loading rewards:', err);
+                rewardList.innerHTML = '<p>Failed to load rewards. Please try again later.</p>';
             }
         }
 
-        function purchaseReward(userName, rewardName, diamondCost) {
-            const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
-            const userDiamonds = rewards[userName] || 0;
-
-            if (userDiamonds >= diamondCost) {
-                rewards[userName] = userDiamonds - diamondCost;
-                localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
-
-                const userRewards = JSON.parse(localStorage.getItem("familyApp_user_rewards")) || {};
-                if (!userRewards[userName]) userRewards[userName] = [];
-                userRewards[userName].push({ name: rewardName, date: new Date().toLocaleString() });
-                localStorage.setItem("familyApp_user_rewards", JSON.stringify(userRewards));
-
+        async function purchaseReward(userName, rewardName, diamondCost) {
+            try {
+                const response = await fetch('https://beemazing.onrender.com/api/purchase-reward', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ adminEmail, user: userName, rewardName, diamondCost })
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to purchase reward');
+                }
                 showRewardEffect(rewardName, userName);
+                loadRewards(); // Refresh the reward list
+            } catch (err) {
+                console.error('Error purchasing reward:', err);
+                alert('Failed to purchase reward. Please try again.');
             }
         }
 
         function showRewardEffect(rewardName, userName) {
-            const overlay = document.getElementById("rewardOverlay");
-            const rewardMessage = document.getElementById("claimedRewardName");
+            const overlay = document.getElementById('rewardOverlay');
+            const rewardMessage = document.getElementById('claimedRewardName');
             rewardMessage.textContent = rewardName;
 
-            overlay.classList.add("show");
+            overlay.classList.add('show');
 
             // Add flashing effect
-            const flash = document.createElement("div");
-            flash.className = "flash";
+            const flash = document.createElement('div');
+            flash.className = 'flash';
             overlay.appendChild(flash);
             setTimeout(() => flash.remove(), 600);
 
             // Add confetti burst
             for (let i = 0; i < 30; i++) {
-                const confetti = document.createElement("div");
-                confetti.className = "confetti";
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
                 const angle = Math.random() * 360;
                 const distance = Math.random() * 20 + 10;
                 confetti.style.setProperty('--x', Math.cos(angle * Math.PI / 180) * distance);
@@ -412,13 +387,12 @@ document.querySelectorAll('.footer a').forEach(link => {
             }
 
             // Close overlay when clicking outside the message
-            overlay.addEventListener("click", function closeOverlay(e) {
+            overlay.addEventListener('click', function closeOverlay(e) {
                 if (e.target === overlay) {
-                    overlay.classList.remove("show");
-                    loadRewards(userName);
-                    overlay.removeEventListener("click", closeOverlay);
+                    overlay.classList.remove('show');
+                    overlay.removeEventListener('click', closeOverlay);
                 }
-            });
+            }, { once: true });
         }
     </script>
 </body>

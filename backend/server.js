@@ -366,3 +366,78 @@ app.delete("/api/market-rewards", async (req, res) => {
     res.status(500).json({ error: "Failed to delete market reward" });
   }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ✅ Purchase a reward for a user
+app.post('/api/purchase-reward', async (req, res) => {
+  const { adminEmail, user, rewardName, diamondCost } = req.body;
+
+  if (!adminEmail || !user || !rewardName || diamondCost === undefined) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection('admins');
+
+    // Fetch admin document
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({ error: 'Admin not found' });
+    }
+
+    // Check user's current honey balance
+    const rewards = admin.rewards || {};
+    const userHoney = rewards[user] || 0;
+
+    if (userHoney < diamondCost) {
+      return res.status(400).json({ error: 'Insufficient honey' });
+    }
+
+    // Deduct honey
+    rewards[user] = userHoney - diamondCost;
+
+    // Initialize userRewards if it doesn't exist
+    if (!admin.userRewards) {
+      admin.userRewards = {};
+    }
+    if (!admin.userRewards[user]) {
+      admin.userRewards[user] = [];
+    }
+
+    // Add reward to user's reward history
+    admin.userRewards[user].push({
+      name: rewardName,
+      diamondCost,
+      date: new Date().toISOString()
+    });
+
+    // Update admin document
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { rewards, userRewards: admin.userRewards } }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error purchasing reward:', err);
+    res.status(500).json({ error: 'Failed to purchase reward' });
+  }
+});
