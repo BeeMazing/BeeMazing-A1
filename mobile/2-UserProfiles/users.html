@@ -1065,6 +1065,14 @@
                     finishTask(userName, task, selectedDate);
                 };
                 taskDiv.appendChild(finishedButton);
+            } else if (completedTimes < requiredTimes && completedUsers.includes(userName) && currentTurn !== userName) {
+                // Show "Completed" for the user if they have completed their turn, the task isn't fully completed, and it's not their turn
+                const completedText = document.createElement("div");
+                completedText.style.color = "green";
+                completedText.style.fontWeight = "bold";
+                completedText.style.marginTop = "10px";
+                completedText.textContent = "Completed";
+                taskDiv.appendChild(completedText);
             }
 
             taskDiv.addEventListener("click", () => showTaskDetails(task));
@@ -1072,8 +1080,6 @@
         });
     }
 }
-
-
 
 
 
