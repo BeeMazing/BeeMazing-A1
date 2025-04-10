@@ -538,6 +538,14 @@ document.querySelectorAll('.footer a').forEach(link => {
     }
 });
 
+
+
+
+
+
+
+
+
 async function loadTasksForDate(selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (!adminEmail) return;
@@ -574,6 +582,22 @@ async function loadTasksForDate(selectedDate) {
         taskDiv.dataset.taskTitle = task.title;
         taskDiv.dataset.taskDate = task.date;
 
+        // Calculate the current turn dynamically for "Daily" tasks with 1 time per day
+        let currentTurn;
+        if (task.repeat === "Daily" && task.timesPerDay === 1) {
+            const dateRange = task.date.split(" to ");
+            const startDateStr = dateRange[0];
+            const startDate = parseLocalDate(startDateStr);
+            const currentDate = parseLocalDate(selectedDate);
+            const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+            const userOrder = [...task.users];
+            const currentIndex = diffDays % userOrder.length;
+            currentTurn = userOrder[currentIndex];
+        } else {
+            // Fallback to the stored turn for other task types
+            currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+        }
+
         let repeatLimit = 1;
         if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
         if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
@@ -583,8 +607,6 @@ async function loadTasksForDate(selectedDate) {
         const completedUsers = Array.isArray(task.completions?.[today]) ? task.completions[today] : [];
         const completedCount = completedUsers.length;
         const isCompleted = completedCount >= repeatLimit;
-
-        let currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
 
         taskDiv.innerHTML = `
             <strong>${task.title}</strong><br>
@@ -649,35 +671,47 @@ async function loadTasksForDate(selectedDate) {
         });
 
         taskDiv.querySelector(".delete-btn").addEventListener("click", async () => {
-    if (confirm(`Are you sure you want to delete "${task.title}"?`)) {
-        // Show loading indicator
-        const loadingDiv = document.createElement("div");
-        loadingDiv.textContent = "Deleting task...";
-        loadingDiv.style.position = "fixed";
-        loadingDiv.style.top = "50%";
-        loadingDiv.style.left = "50%";
-        loadingDiv.style.transform = "translate(-50%, -50%)";
-        loadingDiv.style.background = "rgba(0, 0, 0, 0.8)";
-        loadingDiv.style.color = "white";
-        loadingDiv.style.padding = "20px";
-        loadingDiv.style.borderRadius = "10px";
-        document.body.appendChild(loadingDiv);
+            if (confirm(`Are you sure you want to delete "${task.title}"?`)) {
+                const loadingDiv = document.createElement("div");
+                loadingDiv.textContent = "Deleting task...";
+                loadingDiv.style.position = "fixed";
+                loadingDiv.style.top = "50%";
+                loadingDiv.style.left = "50%";
+                loadingDiv.style.transform = "translate(-50%, -50%)";
+                loadingDiv.style.background = "rgba(0, 0, 0, 0.8)";
+                loadingDiv.style.color = "white";
+                loadingDiv.style.padding = "20px";
+                loadingDiv.style.borderRadius = "10px";
+                document.body.appendChild(loadingDiv);
 
-        try {
-            await deleteTaskFromBackend(task.title, task.date);
-            taskDiv.remove();
-            if (taskList.children.length === 0) {
-                taskList.innerHTML = "<p>No tasks for this day.</p>";
+                try {
+                    await deleteTaskFromBackend(task.title, task.date);
+                    taskDiv.remove();
+                    if (taskList.children.length === 0) {
+                        taskList.innerHTML = "<p>No tasks for this day.</p>";
+                    }
+                } finally {
+                    loadingDiv.remove();
+                }
             }
-        } finally {
-            loadingDiv.remove(); // Remove the loading indicator
-        }
-    }
-});
+        });
 
         taskList.appendChild(taskDiv);
     });
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 async function deleteTaskFromBackend(title, date) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
