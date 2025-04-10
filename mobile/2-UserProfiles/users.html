@@ -1009,14 +1009,6 @@
             const startDate = parseLocalDate(startDateStr);
             const currentDate = parseLocalDate(selectedDate);
             let currentTurn;
-            if (task.repeat === "Daily" && task.timesPerDay === 1) {
-                const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-                const userOrder = [...task.users];
-                const currentIndex = diffDays % userOrder.length;
-                currentTurn = userOrder[currentIndex];
-            } else {
-                currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
-            }
 
             // Determine required times for the task
             let requiredTimes = 1;
@@ -1029,13 +1021,30 @@
             let completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
             let completedTimes = completedUsers.length;
 
+            // For "Daily" tasks with timesPerDay > 1, calculate the current turn based on completions
+            if (task.repeat === "Daily" && task.timesPerDay > 1) {
+                const userOrder = [...task.users];
+                // Determine how many completions are needed in total (timesPerDay)
+                const totalRequiredCompletions = task.timesPerDay;
+                // Each user can contribute up to 1 completion per turn
+                const completionIndex = completedTimes % userOrder.length;
+                currentTurn = userOrder[completionIndex];
+            } else if (task.repeat === "Daily" && task.timesPerDay === 1) {
+                const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+                const userOrder = [...task.users];
+                const currentIndex = diffDays % userOrder.length;
+                currentTurn = userOrder[currentIndex];
+            } else {
+                currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+            }
+
             // Display progress
             let progressText = completedTimes >= requiredTimes
                 ? `<span style="color: green; font-weight: bold;">Completed</span>`
                 : `${completedTimes}/${requiredTimes}`;
 
-            // For "Daily" tasks with timesPerDay > 1, don't show the "Turn" field
-            const showTurn = !(task.repeat === "Daily" && task.timesPerDay > 1);
+            // For "Daily" tasks with timesPerDay > 1, show the "Turn" field
+            const showTurn = true; // Now showing turn for all tasks
             const turnText = showTurn ? `Turn: ${currentTurn}<br>` : '';
 
             // Build the task item HTML
@@ -1046,9 +1055,13 @@
                 Progress: ${progressText}
             `;
 
-            // Add "Finish Task" button if applicable
+            // Determine if the user can finish the task
             const userCompletions = completedUsers.filter(u => u === userName).length;
-            const canFinish = isToday && userCompletions < requiredTimes;
+            const maxCompletionsPerUser = task.repeat === "Daily" && task.timesPerDay > 1
+                ? 1 // Each user can only complete once per turn cycle
+                : requiredTimes;
+            const hasCompletedForTurn = userCompletions >= maxCompletionsPerUser;
+            const canFinish = isToday && !hasCompletedForTurn && currentTurn === userName;
 
             if (canFinish) {
                 const finishedButton = document.createElement("button");
@@ -1059,6 +1072,13 @@
                     finishTask(userName, task, selectedDate);
                 };
                 taskDiv.appendChild(finishedButton);
+            } else if (hasCompletedForTurn && task.repeat === "Daily" && task.timesPerDay > 1) {
+                const completedText = document.createElement("div");
+                completedText.style.color = "green";
+                completedText.style.fontWeight = "bold";
+                completedText.style.marginTop = "10px";
+                completedText.textContent = "Completed";
+                taskDiv.appendChild(completedText);
             }
 
             taskDiv.addEventListener("click", () => showTaskDetails(task));
@@ -1066,9 +1086,6 @@
         });
     }
 }
-
-
-
 
 
 
@@ -1203,8 +1220,7 @@
 
 
 
-
-        function showTaskDetails(task) {
+function showTaskDetails(task) {
     const selectedDate = document.querySelector(".day.selected")?.dataset.date;
     if (!selectedDate) return;
 
@@ -1219,7 +1235,7 @@
     const startDateStr = dateRange[0];
     const startDate = parseLocalDate(startDateStr);
 
-    // Calculate the current turn (if applicable)
+    // Calculate the current turn
     const currentDate = parseLocalDate(selectedDate);
     const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
     const userOrder = [...task.users];
@@ -1228,7 +1244,29 @@
 
     const isDailyMoreThanOnce = task.repeat === "Daily" && task.timesPerDay > 1;
 
-    if (!isDailyMoreThanOnce) {
+    // Get completions for the selected date
+    const completedRaw = task.completions?.[selectedDate] || [];
+    const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
+
+    // Determine required times for the task
+    let requiredTimes = 1;
+    if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+    if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+    if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+
+    if (isDailyMoreThanOnce) {
+        // For "Daily" tasks with timesPerDay > 1, calculate turn based on completions
+        const totalRequiredCompletions = task.timesPerDay;
+        const completionIndex = completedUsers.length % userOrder.length;
+        currentUser = userOrder[completionIndex];
+
+        // Calculate the next users in the turn order
+        let index = completionIndex;
+        for (let i = 1; i < userOrder.length; i++) {
+            index = (completionIndex + i) % userOrder.length;
+            nextTurn.push(userOrder[index]);
+        }
+    } else {
         // For "Daily" tasks with 1 time per day, rotate the turn based on the day difference
         let currentIndex;
         if (task.repeat === "Daily" && task.timesPerDay === 1) {
@@ -1248,16 +1286,6 @@
             nextTurn.push(userOrder[index]);
         }
     }
-
-    // Get completions for the selected date
-    const completedRaw = task.completions?.[selectedDate] || [];
-    const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
-
-    // Determine required times for the task
-    let requiredTimes = 1;
-    if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-    if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-    if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
     // Build the task details HTML
     let taskDetails = "";
@@ -1280,11 +1308,9 @@
     if (task.users?.length) taskDetails += `<strong>Users:</strong> ${task.users.join(", ")}<br>`;
     if (task.reward && task.reward !== "0") taskDetails += `<strong>Reward:</strong> ${task.reward} 🍯<br>`;
 
-    // Only show turn information for tasks that aren't "Daily" with timesPerDay > 1
-    if (!isDailyMoreThanOnce) {
-        taskDetails += `<strong>Current Turn:</strong> ${currentUser}<br>`;
-        taskDetails += `<strong>Next:</strong> ${nextTurn.length > 0 ? nextTurn.join(" → ") : "-"}<br>`;
-    }
+    // Show turn information for all tasks
+    taskDetails += `<strong>Current Turn:</strong> ${currentUser}<br>`;
+    taskDetails += `<strong>Next:</strong> ${nextTurn.length > 0 ? nextTurn.join(" → ") : "-"}<br>`;
 
     if (completedUsers.length > 0) {
         taskDetails += `
@@ -1316,13 +1342,15 @@
             cursor: pointer;">Edit Task</button>
     `;
 
-    // Add Finish Task button if the user hasn't completed their required times
+    // Add Finish Task button if the user hasn't completed their required times and it's their turn
     const urlParams = new URLSearchParams(window.location.search);
     const currentUserName = urlParams.get('user');
     const today = new Date().toLocaleDateString("sv-SE");
     const isToday = selectedDate === today;
     const userCompletions = completedUsers.filter(u => u === currentUserName).length;
-    const canFinish = isToday && userCompletions < requiredTimes;
+    const maxCompletionsPerUser = isDailyMoreThanOnce ? 1 : requiredTimes;
+    const hasCompletedForTurn = userCompletions >= maxCompletionsPerUser;
+    const canFinish = isToday && !hasCompletedForTurn && currentUser === currentUserName;
 
     if (canFinish) {
         taskDetails += `
@@ -1377,7 +1405,6 @@
         });
     }
 }
-
 
 
 
@@ -1826,22 +1853,42 @@
 
     // Check if the user has already completed the task enough times
     const userCompletionsToday = task.completions[today].filter(u => u === currentUser).length;
-    if (userCompletionsToday >= requiredTimes) return;
+    const maxCompletionsPerUser = task.repeat === "Daily" && task.timesPerDay > 1 ? 1 : requiredTimes;
+    if (userCompletionsToday >= maxCompletionsPerUser) return;
 
     // Mark user as completed
     task.completions[today].push(currentUser);
 
-    // Rotate turn only for non-"Daily 1 time per day" tasks
-    const totalCompletions = task.completions[today].length;
-    if (totalCompletions < requiredTimes && !(task.repeat === "Daily" && task.timesPerDay === 1)) {
-        const currentIndex = task.users.indexOf(currentUser);
-        const nextUser = task.users[(currentIndex + 1) % task.users.length];
-        task.tempTurnReplacement = {
-            original: task.tempTurnReplacement?.original || currentUser,
-            replacement: nextUser,
-        };
-    } else {
+    // Rotate turn for "Daily" tasks with timesPerDay > 1
+    if (task.repeat === "Daily" && task.timesPerDay > 1) {
+        const totalCompletions = task.completions[today].length;
+        if (totalCompletions < requiredTimes) {
+            const userOrder = [...task.users];
+            const currentIndex = userOrder.indexOf(currentUser);
+            const nextUser = userOrder[(currentIndex + 1) % userOrder.length];
+            task.tempTurnReplacement = {
+                original: task.tempTurnReplacement?.original || currentUser,
+                replacement: nextUser,
+            };
+        } else {
+            delete task.tempTurnReplacement;
+        }
+    } else if (task.repeat === "Daily" && task.timesPerDay === 1) {
+        // For "Daily" tasks with 1 time per day, don't rotate turn here (handled by date-based logic)
         delete task.tempTurnReplacement;
+    } else {
+        // For other task types, rotate turn if needed
+        const totalCompletions = task.completions[today].length;
+        if (totalCompletions < requiredTimes) {
+            const currentIndex = task.users.indexOf(currentUser);
+            const nextUser = task.users[(currentIndex + 1) % task.users.length];
+            task.tempTurnReplacement = {
+                original: task.tempTurnReplacement?.original || currentUser,
+                replacement: nextUser,
+            };
+        } else {
+            delete task.tempTurnReplacement;
+        }
     }
 
     // Save to backend
@@ -1858,10 +1905,6 @@
     setTimeout(() => loadUserReward(currentUser), 100);
     await loadUserTasks(currentUser, selectedDate);
 }
-
-
-
-
 
 
 
