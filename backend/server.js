@@ -535,7 +535,7 @@ app.get("/api/lucky-chests", async (req, res) => {
 
 
 
-// ✅ Save reward history for an admin
+// ✅ Save reward history for an admin userrewards.html
 app.post("/api/reward-history", async (req, res) => {
   const { adminEmail, rewardHistory } = req.body;
 
@@ -579,3 +579,6 @@ app.get("/api/reward-history", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch reward history" });
   }
 });
+
+
+// ✅ Save reward history for an admin userrewards.html
