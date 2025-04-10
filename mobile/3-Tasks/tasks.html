@@ -860,11 +860,14 @@ async function finishTask(userName, task, button, selectedDate) {
     task.date = selectedDate;
     await saveTaskToBackend(task);
 
-    // Note: Rewards are not stored in backend; consider adding a backend endpoint for rewards
-    const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
-    const originalUser = task.originalOwner?.[userName] || userName;
-    rewards[originalUser] = (rewards[originalUser] || 0) + rewardAmount;
-    localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    if (adminEmail && rewardAmount > 0) {
+        await fetch("https://beemazing.onrender.com/api/rewards", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ adminEmail, user: userName, amount: rewardAmount })
+        });
+    }
 
     if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
     if (typeof loadTasksForDate === 'function') loadTasksForDate(selectedDate);
@@ -932,14 +935,17 @@ async function showEditCompletionModal(task, completedUsers, today, parentModal)
 
         task.turn = newTurn;
 
-        // Note: Rewards are not stored in backend; consider adding a backend endpoint
-        const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
+        const adminEmail = localStorage.getItem("currentAdminEmail");
         const rewardAmount = Number(task.reward) || 0;
-        removedUsers.forEach(user => {
-            if (!rewards[user]) rewards[user] = 0;
-            rewards[user] = Math.max(0, rewards[user] - rewardAmount);
-        });
-        localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
+        if (adminEmail && removedUsers.length > 0) {
+            for (const user of removedUsers) {
+                await fetch("https://beemazing.onrender.com/api/rewards", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ adminEmail, user, amount: -rewardAmount })
+                });
+            }
+        }
 
         await saveTaskToBackend(task);
 
