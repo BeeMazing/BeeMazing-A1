@@ -860,17 +860,18 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const adminEmail = urlParams.get('admin');
-            const userName = urlParams.get('user');
-            const addPoints = Number(urlParams.get('addPoints')) || 0;
-    
-            if (adminEmail && adminEmail !== "null") {
-                localStorage.setItem("currentAdminEmail", adminEmail);
-                const homeLink = document.getElementById("homeFooterLink");
-                if (homeLink) {
-                    homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
-                }
-            }
+const adminEmail = urlParams.get('admin') || urlParams.get('adminEmail') || localStorage.getItem('currentAdminEmail');
+const userName = urlParams.get('user');
+const addPoints = Number(urlParams.get('addPoints')) || 0;
+
+if (adminEmail && adminEmail !== "null") {
+    localStorage.setItem("currentAdminEmail", adminEmail);
+    const homeLink = document.getElementById("homeFooterLink");
+    if (homeLink) {
+        homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+    }
+}
+
     
             if (userName) {
                 document.getElementById('profileName').textContent = userName;
