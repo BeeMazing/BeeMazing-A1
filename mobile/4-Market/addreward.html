@@ -148,13 +148,61 @@
   </div>
 
   <div class="footer">
-    <a href="market.html" aria-label="Back">
+    <a href="market.html" id="backLink" aria-label="Back">
       <img src="/BeeMazing-Y1/mobile/1-Home/BackBtn.png" alt="Back" />
     </a>
   </div>
 
   <script>
-    function saveReward() {
+    // Get adminEmail from URL query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminEmail = urlParams.get('adminEmail');
+
+    if (!adminEmail) {
+      console.error("No adminEmail provided in URL");
+      alert("Error: No admin email provided.");
+      document.querySelector('.form-container button').disabled = true;
+    }
+
+    // Update the back link to include adminEmail
+    const backLink = document.getElementById('backLink');
+    backLink.href = `/BeeMazing-Y1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}`;
+
+    // Function to fetch existing rewards from MongoDB
+    async function fetchRewards() {
+      try {
+        const response = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to fetch rewards");
+        }
+        return data.rewards || [];
+      } catch (err) {
+        console.error("Error fetching rewards:", err);
+        throw err;
+      }
+    }
+
+    // Function to save rewards to MongoDB
+    async function saveRewards(rewards) {
+      try {
+        const response = await fetch("https://beemazing.onrender.com/api/market-rewards", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ adminEmail, rewards })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to save rewards");
+        }
+      } catch (err) {
+        console.error("Error saving rewards:", err);
+        throw err;
+      }
+    }
+
+    // Function to save a new reward
+    async function saveReward() {
       const rewardName = document.getElementById("rewardName").value.trim();
       const rewardDiamonds = Number(document.getElementById("rewardDiamonds").value);
 
@@ -163,11 +211,21 @@
         return;
       }
 
-      const rewards = JSON.parse(localStorage.getItem("familyApp_rewards_market")) || [];
-      rewards.push({ name: rewardName, diamonds: rewardDiamonds });
-      localStorage.setItem("familyApp_rewards_market", JSON.stringify(rewards));
+      try {
+        // Fetch existing rewards
+        const rewards = await fetchRewards();
 
-      window.location.href = "market.html";
+        // Add the new reward
+        rewards.push({ name: rewardName, diamonds: rewardDiamonds });
+
+        // Save the updated rewards to MongoDB
+        await saveRewards(rewards);
+
+        // Redirect back to market.html with adminEmail
+        window.location.href = `/BeeMazing-Y1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}`;
+      } catch (err) {
+        alert("Failed to save reward. Please try again.");
+      }
     }
   </script>
 </body>
