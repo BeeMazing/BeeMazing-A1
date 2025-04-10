@@ -1290,7 +1290,10 @@ function getNextUsers(task) {
 document.querySelectorAll('.task-item').forEach(taskItem => {
     let touchStartX = 0;
     let touchEndX = 0;
+    let mouseStartX = 0;
+    let mouseEndX = 0;
 
+    // For mobile devices
     taskItem.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
     });
@@ -1300,24 +1303,82 @@ document.querySelectorAll('.task-item').forEach(taskItem => {
     });
 
     taskItem.addEventListener('touchend', async (e) => {
-        const taskID = taskItem.dataset.id;  // Assuming task ID is stored in data-id
-
         // Detect swipe left
-        if (touchStartX - touchEndX > 50) {  // swipe left threshold
+        if (touchStartX - touchEndX > 50) {
             taskItem.classList.add('swiped-left');
-
-            // Wait for the user to click the delete button
             const deleteBtn = taskItem.querySelector('.delete-btn');
-            deleteBtn.style.display = 'block';
-
+            deleteBtn.style.display = 'block'; // Show the delete button
             deleteBtn.addEventListener('click', async () => {
-                await deleteTaskFromBackend(taskID, taskItem);
+                await deleteTaskFromBackend(taskItem.dataset.id, taskItem);
             });
         } else {
-            taskItem.classList.remove('swiped-left'); // Remove swipe left if swipe is small
+            taskItem.classList.remove('swiped-left');
+        }
+    });
+
+    // For desktop devices (mouse events)
+    taskItem.addEventListener('mousedown', (e) => {
+        mouseStartX = e.clientX;
+    });
+
+    taskItem.addEventListener('mousemove', (e) => {
+        mouseEndX = e.clientX;
+    });
+
+    taskItem.addEventListener('mouseup', async (e) => {
+        if (mouseStartX - mouseEndX > 50) {
+            taskItem.classList.add('swiped-left');
+            const deleteBtn = taskItem.querySelector('.delete-btn');
+            deleteBtn.style.display = 'block'; // Show the delete button
+            deleteBtn.addEventListener('click', async () => {
+                await deleteTaskFromBackend(taskItem.dataset.id, taskItem);
+            });
+        } else {
+            taskItem.classList.remove('swiped-left');
         }
     });
 });
+
+// Send delete request to backend
+async function deleteTaskFromBackend(taskID, taskItem) {
+    const adminEmail = localStorage.getItem('currentAdminEmail');
+    if (!adminEmail) {
+        alert("No admin email found.");
+        return;
+    }
+
+    // Sending request to delete the task from MongoDB
+    const response = await fetch(`https://beemazing.onrender.com/api/tasks/${taskID}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ adminEmail }),
+    });
+
+    const result = await response.json();
+    if (result.success) {
+        taskItem.remove();  // Remove the task item from the UI
+    } else {
+        alert("Failed to delete task.");
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Send delete request to backend
 async function deleteTaskFromBackend(taskID, taskItem) {
