@@ -1092,33 +1092,63 @@ return usersForToday.includes(userName);
             }, 1000);
         }
     
+
+        
+
+
+
         function showTaskDetails(task) {
-            let currentUser = task.tempTurnReplacement?.replacement || getCurrentTurn(task, selectedDate);
-
-    const userOrder = [...task.users];
-    const currentIndex = userOrder.indexOf(currentUser);
-
     const selectedDate = document.querySelector(".day.selected")?.dataset.date;
-    const completedRaw = task.completions?.[selectedDate] || [];
+    if (!selectedDate) return;
 
+    // Parse dates for comparison
+    function parseLocalDate(dateStr) {
+        const [year, month, day] = dateStr.split("-").map(Number);
+        return new Date(year, month - 1, day);
+    }
+
+    // Get the start date of the task (use task.date's "from" date if it's a range)
+    const dateRange = task.date.split(" to ");
+    const startDateStr = dateRange[0];
+    const startDate = parseLocalDate(startDateStr);
+
+    // Calculate the current turn based on the selected date
+    const currentDate = parseLocalDate(selectedDate);
+    const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+    const userOrder = [...task.users];
+
+    // For a "Daily" task with 1 time per day, rotate the turn based on the day difference
+    let currentIndex;
+    if (task.repeat === "Daily" && task.timesPerDay === 1) {
+        currentIndex = diffDays % userOrder.length;
+    } else {
+        // Fallback to the stored turn or temporary replacement
+        const storedTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+        currentIndex = userOrder.indexOf(storedTurn);
+    }
+
+    const currentUser = userOrder[currentIndex];
+
+    // Calculate the next users in the turn order
+    const nextTurn = [];
+    let index = currentIndex;
+    for (let i = 1; i < task.users.length; i++) {
+        index = (currentIndex + i) % task.users.length;
+        nextTurn.push(userOrder[index]);
+    }
+
+    // Get completions for the selected date
+    const completedRaw = task.completions?.[selectedDate] || [];
     const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
 
+    // Determine required times for the task
     let requiredTimes = 1;
     if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
     if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
     if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-    const remainingTurns = requiredTimes - completedUsers.length;
-
-    let nextTurn = [];
-let index = currentIndex;
-for (let i = 1; i < task.users.length; i++) {
-    index = (currentIndex + i) % task.users.length;
-    nextTurn.push(userOrder[index]);
-}
-
+    // Build the task details HTML
     let taskDetails = "";
-
     if (task.title) taskDetails += `<strong>Title:</strong> ${task.title}<br>`;
     if (task.notes) taskDetails += `<strong>Notes:</strong> ${task.notes}<br>`;
     if (task.room) taskDetails += `<strong>Room:</strong> ${task.room}<br>`;
@@ -1160,7 +1190,7 @@ for (let i = 1; i < task.users.length; i++) {
             border-radius: 6px;
             border: none;
             cursor: pointer;">Edit Turn Order</button>
-        &nbsp;
+         
         <button id="editTaskBtn" style="
             padding: 6px 10px;
             background: var(--secondary-color);
@@ -1171,10 +1201,12 @@ for (let i = 1; i < task.users.length; i++) {
             cursor: pointer;">Edit Task</button>
     `;
 
-    // ✅ Add Finish Task button if it's this user's turn and they haven't completed
-    const canFinish = currentUser &&
-        !completedUsers.includes(currentUser) &&
-        completedUsers.filter(u => u === currentUser).length < requiredTimes;
+    // Add Finish Task button if it's this user's turn and they haven't completed
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentUserName = urlParams.get('user');
+    const canFinish = currentUser === currentUserName &&
+        !completedUsers.includes(currentUserName) &&
+        completedUsers.filter(u => u === currentUserName).length < requiredTimes;
 
     if (canFinish) {
         taskDetails += `
@@ -1221,17 +1253,25 @@ for (let i = 1; i < task.users.length; i++) {
         });
     }
 
-    // ✅ Wire up finish button
     const finishBtn = document.getElementById("finishTaskBtn");
     if (finishBtn) {
         finishBtn.addEventListener("click", async () => {
-            await finishTask(currentUser, task, finishBtn, selectedDate);
-            modal.remove(); // Close modal after finishing
+            await finishTask(currentUserName, task, finishBtn, selectedDate);
+            modal.remove();
         });
     }
 }
 
-    
+
+
+
+
+
+
+
+
+
+
         let monthOffset = 0;
     
         function generateScrollableDates(monthOffset = 0) {

@@ -761,24 +761,59 @@ async function saveTaskToBackend(task) {
     }
 }
 
-async function showTaskDetails(task) {
-    let currentUser = task.turn || task.users[0];
-    const userOrder = [...task.users];
-    const currentIndex = userOrder.indexOf(currentUser);
 
+
+
+
+
+
+async function showTaskDetails(task) {
     const selectedDate = document.querySelector(".day.selected")?.dataset.date;
+    if (!selectedDate) return;
+
+    // Parse dates for comparison
+    function parseLocalDate(dateStr) {
+        const [year, month, day] = dateStr.split("-").map(Number);
+        return new Date(year, month - 1, day);
+    }
+
+    // Get the start date of the task (use task.date's "from" date if it's a range)
+    const dateRange = task.date.split(" to ");
+    const startDateStr = dateRange[0];
+    const startDate = parseLocalDate(startDateStr);
+
+    // Calculate the current turn based on the selected date
+    const currentDate = parseLocalDate(selectedDate);
+    const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+    const userOrder = [...task.users];
+
+    // For a "Daily" task with 1 time per day, rotate the turn based on the day difference
+    let currentIndex;
+    if (task.repeat === "Daily" && task.timesPerDay === 1) {
+        currentIndex = diffDays % userOrder.length;
+    } else {
+        // Fallback to the stored turn if the task isn't a daily 1-time-per-day task
+        const storedTurn = task.turn || task.users[0];
+        currentIndex = userOrder.indexOf(storedTurn);
+    }
+
+    const currentUser = userOrder[currentIndex];
+
+    // Calculate the next user in the turn order
+    const nextIndex = (currentIndex + 1) % userOrder.length;
+    const nextUser = userOrder[nextIndex];
+
+    // Get completions for the selected date
     const completedRaw = task.completions?.[selectedDate] || [];
     const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
 
+    // Determine required times for the task
     let requiredTimes = 1;
     if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
     if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
     if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-    // Calculate the next user in the turn order, regardless of remaining turns
-    const nextIndex = (currentIndex + 1) % userOrder.length;
-    const nextUser = userOrder[nextIndex];
-
+    // Build the task details HTML
     let taskDetails = "";
     if (task.title) taskDetails += `<strong>Title:</strong> ${task.title}<br>`;
     if (task.notes) taskDetails += `<strong>Notes:</strong> ${task.notes}<br>`;
@@ -852,14 +887,6 @@ async function showTaskDetails(task) {
         });
     }
 }
-
-
-
-
-
-
-
-
 
 
 
