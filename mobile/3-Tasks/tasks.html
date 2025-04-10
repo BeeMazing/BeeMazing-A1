@@ -531,11 +531,15 @@ body {
   const nextUsers = [];
 
   for (let i = 1; i < task.users.length; i++) {
-    nextUsers.push(task.users[(currentIndex + i) % task.users.length]);
+    const nextUser = task.users[(currentIndex + i) % task.users.length];
+    if (nextUser !== current) {
+      nextUsers.push(nextUser);
+    }
   }
 
   return nextUsers;
 }
+
 
 
 
@@ -634,7 +638,8 @@ body {
 
 
         function showTaskDetails(task) {
-    let currentUser = task.turn || task.users[0];
+            let currentUser = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+
     const userOrder = [...task.users];
     const currentIndex = userOrder.indexOf(currentUser);
 
@@ -1255,7 +1260,9 @@ function updateTaskPopup(task, currentUser, selectedDate) {
   popup.querySelector(".popup-settings").textContent = `Settings: ${task.settings || 'None'}`;
   popup.querySelector(".popup-users").textContent = `Users: ${task.users.join(", ")}`;
   popup.querySelector(".popup-reward").textContent = `Reward: ${task.reward}`;
-  popup.querySelector(".popup-current").textContent = `Current Turn: ${task.currentTurn}`;
+  const actualTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+popup.querySelector(".popup-current").textContent = `Current Turn: ${actualTurn}`;
+
   popup.querySelector(".popup-next").textContent = `Next: ${getNextUsers(task).join(" -> ")}`;
 
   const finishBtn = popup.querySelector(".finish-task-btn");
@@ -1265,21 +1272,6 @@ function updateTaskPopup(task, currentUser, selectedDate) {
     finishBtn.style.display = "none";
   }
 }
-
-
-
-
-function getNextUsers(task) {
-  const idx = task.users.indexOf(task.currentTurn);
-  const nextUsers = [];
-
-  for (let i = 1; i < task.users.length; i++) {
-    nextUsers.push(task.users[(idx + i) % task.users.length]);
-  }
-
-  return nextUsers;
-}
-
 
 
     </script>
