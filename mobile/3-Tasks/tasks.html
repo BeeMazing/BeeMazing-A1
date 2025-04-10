@@ -453,6 +453,24 @@ body {
 }
 
         
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-content {
+    animation: slideUp 0.4s ease-out;
+}
+
+
+
+
     </style>
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
@@ -520,6 +538,10 @@ body {
     });
 
 
+    function getCurrentTurn(task, selectedDate) {
+    if (task.tempTurnReplacement?.replacement) return task.tempTurnReplacement.replacement;
+    return task.turn || task.users[0];
+}
 
 
 
