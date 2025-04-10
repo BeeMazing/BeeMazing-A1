@@ -523,6 +523,19 @@ body {
 
 
 
+    function getNextUsers(task, selectedDate) {
+  if (!task.users?.length) return [];
+
+  const current = task.tempTurnReplacement?.replacement || getCurrentTurn(task, selectedDate);
+  const currentIndex = task.users.indexOf(current);
+  const nextUsers = [];
+
+  for (let i = 1; i < task.users.length; i++) {
+    nextUsers.push(task.users[(currentIndex + i) % task.users.length]);
+  }
+
+  return nextUsers;
+}
 
 
 
@@ -667,8 +680,22 @@ const completedRaw = task.completions?.[selectedDate] || [];
     if (task.users?.length) taskDetails += `<strong>Users:</strong> ${task.users.join(", ")}<br>`;
     if (task.reward && task.reward !== "0") taskDetails += `<strong>Reward:</strong> ${task.reward} 🍯<br>`;
 
-    taskDetails += `<strong>Current Turn:</strong> ${currentUser}<br>`;
-    taskDetails += `<strong>Next:</strong> ${nextTurn.length > 0 ? nextTurn.join(" → ") : "-"}<br>`;
+    const nextUsers = getNextUsers(task, selectedDate);
+let nextLine = nextUsers.length > 0 ? nextUsers[0] : "-";
+
+const today = new Date();
+const selected = new Date(selectedDate);
+const isToday = today.toDateString() === selected.toDateString();
+
+if (isToday && nextUsers.length > 0 && task.timesPerDay === 1) {
+  nextLine += " (tomorrow)";
+}
+
+
+taskDetails += `<strong>Current Turn:</strong> ${currentUser}<br>`;
+taskDetails += `<strong>Next:</strong> ${nextLine}<br>`;
+
+
 
     if (completedUsers.length > 0) {
         taskDetails += `
