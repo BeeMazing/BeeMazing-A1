@@ -616,34 +616,18 @@ body {
 
         
 
-// ✅ Centralized turn logic
-function getCurrentTurn(task, dateString) {
-    if (!task.startDate || !task.users?.length) return task.users?.[0] || "";
-
-    const startDate = new Date(task.startDate);
-    const currentDate = new Date(dateString || new Date().toISOString().split("T")[0]);
-
-    // Ensure dates are treated in UTC to avoid timezone issues
-    startDate.setUTCHours(0, 0, 0, 0);
-    currentDate.setUTCHours(0, 0, 0, 0);
-
-    const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-    const userIndex = diffDays % task.users.length;
-
-    return task.users[userIndex];
-}
 
 
 
 
-function showTaskDetails(task) {
-    const selectedDate = document.querySelector(".day.selected")?.dataset.date;
-    let currentUser = getCurrentTurn(task, selectedDate);
-
+        function showTaskDetails(task) {
+    let currentUser = task.turn || task.users[0];
     const userOrder = [...task.users];
     const currentIndex = userOrder.indexOf(currentUser);
 
-    const completedRaw = task.completions?.[selectedDate] || [];
+    const selectedDate = document.querySelector(".day.selected")?.dataset.date;
+const completedRaw = task.completions?.[selectedDate] || [];
+
     const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
 
     let requiredTimes = 1;
@@ -651,11 +635,15 @@ function showTaskDetails(task) {
     if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
     if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-    // Build nextTurn array from current turn
+    // Calculate how many turns are left
+    const remainingTurns = requiredTimes - completedUsers.length;
+
+    // Build nextTurn array from current turn, cycling through users
     let nextTurn = [];
-    for (let i = 1; i < userOrder.length; i++) {
-        const nextUser = userOrder[(currentIndex + i) % userOrder.length];
-        nextTurn.push(nextUser);
+    let index = currentIndex;
+    for (let i = 0; i < remainingTurns - 1; i++) {
+        index = (index + 1) % userOrder.length;
+        nextTurn.push(userOrder[index]);
     }
 
     let taskDetails = "";
