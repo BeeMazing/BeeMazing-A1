@@ -46,6 +46,26 @@ if (!isAdmin && footer) {
     // Load users from localStorage on page load
     const currentAdmin = localStorage.getItem("currentAdminEmail");
 
+
+
+    // Update footer links dynamically
+const encodedAdmin = encodeURIComponent(currentAdmin);
+document.getElementById("tasksButton").href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?adminEmail=${encodedAdmin}`;
+document.getElementById("statsButton").href = `/BeeMazing-Y1/mobile/5-Stats/stats.html?adminEmail=${encodedAdmin}`;
+const marketButton = document.getElementById("marketButton");
+
+if (isAdmin) {
+    marketButton.href = `/BeeMazing-Y1/mobile/4-Market/market.html?adminEmail=${encodedAdmin}`;
+} else {
+    marketButton.href = "#"; // Prevent default navigation for non-admins until user is selected
+    marketButton.addEventListener("click", function (e) {
+        e.preventDefault();
+        alert("Please select a user from the list to view their market.");
+    });
+}
+
+
+
     async function fetchUsersFromServer(email) {
         try {
           const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(email)}`);
@@ -175,21 +195,18 @@ alert(`Send this link to the user: ${inviteLink}`);
             const newUserItem = document.createElement("li");
             newUserItem.classList.add("user-list-item");
     
-            // Container for username and checkmark
             const nameContainer = document.createElement("div");
             nameContainer.style.display = "flex";
             nameContainer.style.alignItems = "center";
             nameContainer.style.gap = "8px";
     
-            // Add user name
             const userNameSpan = document.createElement("span");
             userNameSpan.textContent = username;
     
-            // Add checkmark if user is an admin
             if (userPermissions[username] === "Admin") {
                 const checkmark = document.createElement("span");
                 checkmark.textContent = "✓";
-                checkmark.style.color = "#00C4B4"; // A nice teal color, you can change this
+                checkmark.style.color = "#00C4B4";
                 checkmark.style.fontSize = "16px";
                 checkmark.style.fontWeight = "bold";
                 checkmark.title = "Admin";
@@ -199,22 +216,23 @@ alert(`Send this link to the user: ${inviteLink}`);
                 nameContainer.appendChild(userNameSpan);
             }
     
-            // Make the entire user item clickable
             newUserItem.style.cursor = "pointer";
             newUserItem.addEventListener("click", function () {
-                window.location.href = `${basePath}/2-UserProfiles/users.html?user=${encodeURIComponent(username)}`;
+                const encodedUser = encodeURIComponent(username);
+                if (isAdmin) {
+                    window.location.href = `${basePath}/2-UserProfiles/users.html?user=${encodedUser}&adminEmail=${encodedAdmin}`;
+                } else {
+                    window.location.href = `${basePath}/2-UserProfiles/usermarket.html?user=${encodedUser}&adminEmail=${encodedAdmin}`;
+                }
             });
     
-            // Append name container
             newUserItem.appendChild(nameContainer);
     
-            // Show remove and edit buttons only for mobile AND admin
             if (isMobile && isAdmin) {
                 const actionsContainer = document.createElement("div");
                 actionsContainer.style.display = "flex";
                 actionsContainer.style.gap = "8px";
     
-                // Remove button
                 const removeBtn = document.createElement("button");
                 removeBtn.classList.add("remove-user-btn");
                 removeBtn.textContent = "X";
@@ -223,9 +241,8 @@ alert(`Send this link to the user: ${inviteLink}`);
                     showConfirmModal(username);
                 });
     
-                // Edit button
                 const editBtn = document.createElement("button");
-                editBtn.classList.add("remove-user-btn"); // reusing style
+                editBtn.classList.add("remove-user-btn");
                 editBtn.innerHTML = "⚙️";
                 editBtn.style.fontSize = "16px";
                 editBtn.addEventListener("click", function (event) {
@@ -240,8 +257,7 @@ alert(`Send this link to the user: ${inviteLink}`);
     
             userList.appendChild(newUserItem);
         });
-    }
-    
+    }    
 
     // Function to render users in the manage members modal
     function renderManageMembers() {
@@ -336,6 +352,7 @@ const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
         localStorage.removeItem("isAdmin");
+        localStorage.removeItem("currentAdminEmail");
         window.location.href = "/BeeMazing-Y1/login.html";
     });
 }
