@@ -860,24 +860,23 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const adminEmail = urlParams.get('adminEmail')  || localStorage.getItem('currentAdminEmail');
-const userName = urlParams.get('user');
-const addPoints = Number(urlParams.get('addPoints')) || 0;
-
-if (adminEmail && adminEmail !== "null") {
-    localStorage.setItem("currentAdminEmail", adminEmail);
-    const homeLink = document.getElementById("homeFooterLink");
-    if (homeLink) {
-        homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
-    }
-}
-
+            const adminEmail = urlParams.get('admin');
+            const userName = urlParams.get('user');
+            const addPoints = Number(urlParams.get('addPoints')) || 0;
+    
+            if (adminEmail && adminEmail !== "null") {
+                localStorage.setItem("currentAdminEmail", adminEmail);
+                const homeLink = document.getElementById("homeFooterLink");
+                if (homeLink) {
+                    homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+                }
+            }
     
             if (userName) {
                 document.getElementById('profileName').textContent = userName;
                 document.getElementById('userName').textContent = userName;
                 document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${userName}`;
-                document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${userName}&adminEmail=${adminEmail}`;
+                document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${userName}`;
                 document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${userName}`;
         
                 loadUserTasks(userName); // Initial load
@@ -1109,40 +1108,23 @@ if (adminEmail && adminEmail !== "null") {
 
 
 
-async function loadUserReward(userName) {
-    try {
-        const adminEmail = localStorage.getItem('currentAdminEmail');
-        const response = await fetch(`https://beemazing.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-        const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to fetch rewards');
+        function loadUserReward(userName) {
+            const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
+            const userReward = rewards[userName] || 0;
+            document.getElementById("rewardAmount").textContent = userReward;
         }
-        const userReward = data.rewards[userName] || 0;
-        document.getElementById('rewardAmount').textContent = userReward;
-    } catch (err) {
-        console.error('Error loading user reward:', err);
-        document.getElementById('rewardAmount').textContent = 'Error';
-    }
-}
     
-async function sellReward(userName, amount) {
-    try {
-        const adminEmail = localStorage.getItem('currentAdminEmail');
-        const response = await fetch('https://beemazing.onrender.com/api/rewards', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ adminEmail, user: userName, amount: -amount })
-        });
-        const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to sell reward');
+        function sellReward(userName, amount) {
+            const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
+            const userReward = rewards[userName] || 0;
+            if (userReward >= amount) {
+                rewards[userName] = userReward - amount;
+                localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
+                loadUserReward(userName);
+            } else {
+                alert("Not enough honey!");
+            }
         }
-        loadUserReward(userName);
-    } catch (err) {
-        console.error('Error selling reward:', err);
-        alert('Not enough honey or server error!');
-    }
-}
     
         document.getElementById('sellButton').addEventListener('click', () => {
             document.getElementById('sellModal').style.display = 'flex';

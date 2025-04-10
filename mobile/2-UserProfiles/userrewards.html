@@ -234,27 +234,19 @@
 
 let keyTransferData = null;
 
-const urlParams = new URLSearchParams(window.location.search);
-const adminEmail = urlParams.get('admin') || urlParams.get('adminEmail') || localStorage.getItem('currentAdminEmail');
-const userName = urlParams.get('user');
+   const urlParams = new URLSearchParams(window.location.search);
+    const userName = urlParams.get('user');
 
-if (adminEmail && adminEmail !== "null") {
-    localStorage.setItem("currentAdminEmail", adminEmail);
-}
+    if (userName) {
+        document.getElementById('userName').textContent = userName;
 
-if (userName) {
-    document.getElementById('userName').textContent = userName;
+        document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${userName}`;
+        document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${userName}`;
+        document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${userName}`;
+        document.getElementById('historyButton').href = `userrewardshistory.html?user=${userName}`;
 
-    const adminQuery = adminEmail ? `?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}` : `?user=${encodeURIComponent(userName)}`;
-
-    document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html${adminQuery}`;
-    document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html${adminQuery}`;
-    document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html${adminQuery}`;
-    document.getElementById('historyButton').href = `userrewardshistory.html${adminQuery}`;
-
-    loadUserRewards(userName);
-}
-
+        loadUserRewards(userName);
+    }
 
     // Highlight correct footer icon
     document.querySelectorAll('.footer a').forEach(link => {

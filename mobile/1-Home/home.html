@@ -421,7 +421,7 @@ body {
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
             <span>Tasks</span>
         </a>
-        <a href="#" id="marketFooterLink" class="footer-icon" aria-label="Market">
+        <a href="/BeeMazing-Y1/mobile/4-Market/market.html" class="footer-icon" aria-label="Market">
             <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
             <span>Market</span>
         </a>
@@ -444,15 +444,6 @@ body {
             link.classList.remove('active');
         }
     });
-
-
-    document.addEventListener("DOMContentLoaded", () => {
-    const adminEmail = localStorage.getItem("currentAdminEmail");
-    const marketLink = document.getElementById("marketFooterLink");
-    if (marketLink && adminEmail) {
-      marketLink.href = `/BeeMazing-Y1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}`;
-    }
-  });
     </script>
     
 
