@@ -860,24 +860,33 @@
     <script>
 document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const adminEmail = urlParams.get('adminEmail') || localStorage.getItem("currentAdminEmail") || "null"; // Fallback to "null"
+    const adminEmailFromURL = urlParams.get('adminEmail');
+    const adminEmailFromStorage = localStorage.getItem("currentAdminEmail");
+    const adminEmail = adminEmailFromURL || adminEmailFromStorage || "null"; // Fallback to "null"
     const userName = urlParams.get('user');
     const addPoints = Number(urlParams.get('addPoints')) || 0;
 
+    // Debug logs to trace adminEmail source
+    console.log("adminEmail from URL:", adminEmailFromURL);
+    console.log("adminEmail from localStorage:", adminEmailFromStorage);
+    console.log("Final adminEmail used:", adminEmail);
+
     if (adminEmail && adminEmail !== "null") {
         localStorage.setItem("currentAdminEmail", adminEmail);
-        const homeLink = document.getElementById("homeFooterLink");
-        if (homeLink) {
-            homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?adminEmail=${encodeURIComponent(adminEmail)}`;
-        }
+    } else {
+        localStorage.setItem("currentAdminEmail", "null"); // Force "null" if no valid adminEmail
     }
 
-    if (userName && adminEmail) {
+    const finalAdminEmail = localStorage.getItem("currentAdminEmail"); // Use this consistently
+    console.log("Stored adminEmail:", finalAdminEmail);
+
+    if (userName && finalAdminEmail) {
         document.getElementById('profileName').textContent = userName;
         document.getElementById('userName').textContent = userName;
-        document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
-        document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
-        document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+        document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(finalAdminEmail)}`;
+        document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(finalAdminEmail)}`;
+        document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(finalAdminEmail)}`;
+        document.getElementById('homeFooterLink').href = `/BeeMazing-Y1/mobile/1-Home/home.html?adminEmail=${encodeURIComponent(finalAdminEmail)}`;
 
         loadUserTasks(userName);
         loadUserReward(userName);
