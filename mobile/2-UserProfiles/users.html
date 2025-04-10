@@ -1041,8 +1041,8 @@
                 ? `<span style="color: green; font-weight: bold;">Completed</span>`
                 : `${completedTimes}/${requiredTimes}`;
 
-            // Show the "Turn" field for all tasks
-            const showTurn = true;
+            // Show the "Turn" field for all tasks, unless the task is fully completed
+            const showTurn = completedTimes < requiredTimes;
             const turnText = showTurn ? `Turn: ${currentTurn}<br>` : '';
 
             // Build the task item HTML
@@ -1065,13 +1065,6 @@
                     finishTask(userName, task, selectedDate);
                 };
                 taskDiv.appendChild(finishedButton);
-            } else if (completedTimes >= requiredTimes) {
-                const completedText = document.createElement("div");
-                completedText.style.color = "green";
-                completedText.style.fontWeight = "bold";
-                completedText.style.marginTop = "10px";
-                completedText.textContent = "Completed";
-                taskDiv.appendChild(completedText);
             }
 
             taskDiv.addEventListener("click", () => showTaskDetails(task));
@@ -1079,8 +1072,6 @@
         });
     }
 }
-
-
 
 
 
@@ -1299,9 +1290,11 @@
     if (task.users?.length) taskDetails += `<strong>Users:</strong> ${task.users.join(", ")}<br>`;
     if (task.reward && task.reward !== "0") taskDetails += `<strong>Reward:</strong> ${task.reward} 🍯<br>`;
 
-    // Show turn information for all tasks
-    taskDetails += `<strong>Current Turn:</strong> ${currentUser}<br>`;
-    taskDetails += `<strong>Next:</strong> ${nextTurn.length > 0 ? nextTurn.join(" → ") : "-"}<br>`;
+    // Show turn information only if the task isn't fully completed
+    if (completedUsers.length < requiredTimes) {
+        taskDetails += `<strong>Current Turn:</strong> ${currentUser}<br>`;
+        taskDetails += `<strong>Next:</strong> ${nextTurn.length > 0 ? nextTurn.join(" → ") : "-"}<br>`;
+    }
 
     if (completedUsers.length > 0) {
         taskDetails += `
@@ -1393,8 +1386,6 @@
         });
     }
 }
-
-
 
 
 
