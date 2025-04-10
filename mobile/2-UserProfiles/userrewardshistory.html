@@ -227,9 +227,9 @@
         const deleteButton = document.createElement("button");
         deleteButton.className = "delete-btn";
         deleteButton.textContent = "Delete";
-        deleteButton.addEventListener("click", () => {
-          deleteReward(userName, history.length - 1 - index);
-          loadRewardHistory(userName);
+        deleteButton.addEventListener("click", async () => {
+          await deleteReward(userName, history.length - 1 - index); // Await deletion
+          // loadRewardHistory is called inside deleteReward after success
         });
         historyItem.appendChild(deleteButton);
 
@@ -237,7 +237,6 @@
         let currentX = 0;
         let isSwiping = false;
 
-        // Touch events
         historyItem.addEventListener("touchstart", (e) => {
           startX = e.touches[0].clientX;
           isSwiping = true;
@@ -258,7 +257,6 @@
           isSwiping = false;
         });
 
-        // Mouse events (for desktop)
         historyItem.addEventListener("mousedown", (e) => {
           startX = e.clientX;
           isSwiping = true;
@@ -304,6 +302,8 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ adminEmail, rewardHistory })
           });
+          // Refresh the UI immediately after successful deletion
+          loadRewardHistory(userName);
         }
       } catch (err) {
         console.error("Error deleting reward:", err);
