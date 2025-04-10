@@ -239,7 +239,8 @@
     </div>
 
     <div class="footer">
-        <a href="/BeeMazing-Y1/mobile/1-Home/home.html" id="homeFooterLink" class="footer-icon" aria-label="Home">
+        <a id="homeFooterLink" class="footer-icon" href="/BeeMazing-Y1/mobile/1-Home/home.html" aria-label="Home">
+
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
             <span>Home</span>
         </a>
@@ -266,37 +267,59 @@
     </div>
 
     <script>
-const urlParams = new URLSearchParams(window.location.search);
-const userName = urlParams.get('user');
-let adminEmail = urlParams.get('adminEmail') || localStorage.getItem('currentAdminEmail');
-if (adminEmail) {
-    localStorage.setItem('currentAdminEmail', adminEmail);
-    const homeLink = document.getElementById('homeFooterLink');
-    if (homeLink) {
-        homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?adminEmail=${encodeURIComponent(adminEmail)}`;
-    }
-}
+        document.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const adminEmail = urlParams.get('admin');
+            const userName = urlParams.get('user');
+            const addPoints = Number(urlParams.get('addPoints')) || 0;
+    
+            if (adminEmail && adminEmail !== "null") {
+                localStorage.setItem("currentAdminEmail", adminEmail);
+                const homeLink = document.getElementById("homeFooterLink");
+                if (homeLink) {
+                    homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+                }
+            }
+    
+            if (userName) {
+                document.getElementById('profileName').textContent = userName;
+                document.getElementById('userName').textContent = userName;
+                document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${userName}`;
+                document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${userName}&adminEmail=${adminEmail}`;
+                document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${userName}`;
+        
+                loadUserTasks(userName); // Initial load
+                loadUserReward(userName);
+                loadLuckyChests(userName);
+        
+                if (addPoints > 0) {
+                    setTimeout(() => {
+                        const rewards = JSON.parse(localStorage.getItem("familyApp_rewards")) || {};
+                        rewards[userName] = (rewards[userName] || 0) + addPoints;
+                        localStorage.setItem("familyApp_rewards", JSON.stringify(rewards));
+                        triggerHoneyRain(addPoints);
+                        loadUserReward(userName);
+                    }, 500);
+                }
+            }
+        
+            document.querySelectorAll('.footer a').forEach(link => {
+                const currentPath = window.location.pathname.replace(/\/$/, '');
+                const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
+                if (currentPath === linkPath) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        
+            adjustContentTop();
+            generateScrollableDates();
+            showAdminControlsIfNeeded();
+        });
+    
 
-if (!userName || !adminEmail) {
-    document.getElementById('rewardList').innerHTML = "<p>Error: Missing user or admin information.</p>";
-} else {
-    document.getElementById('userName').textContent = userName;
-    document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(userName)}`;
-    document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
-    document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${encodeURIComponent(userName)}`;
-    loadRewards();
-}
 
-// Highlight active footer icon
-document.querySelectorAll('.footer a').forEach(link => {
-    const currentPath = window.location.pathname.replace(/\/$/, '');
-    const linkPath = new URL(link.href).pathname.replace(/\/$/, '');
-    if (currentPath === linkPath) {
-        link.classList.add('active');
-    } else {
-        link.classList.remove('active');
-    }
-});
 
         async function loadRewards() {
             const rewardList = document.getElementById('rewardList');
