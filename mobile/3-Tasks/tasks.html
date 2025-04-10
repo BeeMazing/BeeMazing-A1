@@ -664,14 +664,18 @@ async function loadTasksForDate(selectedDate) {
 
 async function deleteTaskFromBackend(title, date) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
+    console.log("Deleting task with:", { adminEmail, title, date }); // For debugging
     if (!adminEmail) {
         alert("No admin email found.");
         return;
     }
 
+    // Extract the start date from the range (e.g., "2025-04-09 to 2025-04-09" -> "2025-04-09")
+    const startDate = date.split(" to ")[0];
+
     try {
         const response = await fetch(
-            `https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(title)}&date=${encodeURIComponent(date)}`,
+            `https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(title)}&date=${encodeURIComponent(startDate)}`,
             {
                 method: "DELETE",
                 headers: {
@@ -681,11 +685,14 @@ async function deleteTaskFromBackend(title, date) {
         );
 
         if (!response.ok) {
-            throw new Error("Failed to delete task from backend");
+            const errorData = await response.json(); // Get the error message from the backend
+            throw new Error(`Failed to delete task: ${errorData.error || response.statusText}`);
         }
+
+        console.log("Task deleted successfully");
     } catch (error) {
         console.error("Error deleting task:", error);
-        alert("Failed to delete task. Please try again.");
+        alert(`Failed to delete task: ${error.message}`);
     }
 }
 

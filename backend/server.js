@@ -213,34 +213,35 @@ app.delete("/api/tasks", async (req, res) => {
   const { adminEmail, title, date } = req.query;
 
   if (!adminEmail || !title || !date) {
-    return res.status(400).json({ error: "Missing adminEmail, title, or date" });
+      return res.status(400).json({ error: "Missing adminEmail, title, or date" });
   }
 
   try {
-    const db = await connectDB();
-    const admins = db.collection("admins");
+      const db = await connectDB();
+      const admins = db.collection("admins");
 
-    const admin = await admins.findOne({ email: adminEmail });
-    if (!admin) {
-      return res.status(404).json({ error: "Admin not found" });
-    }
+      const admin = await admins.findOne({ email: adminEmail });
+      if (!admin) {
+          return res.status(404).json({ error: "Admin not found" });
+      }
 
-    const updatedTasks = admin.tasks.filter(
-      task => !(task.title === title && task.date === date)
-    );
+      // Filter tasks by comparing the start date of the task's date range
+      const updatedTasks = admin.tasks.filter(task => {
+          const taskStartDate = task.date.split(" to ")[0];
+          return !(task.title === title && taskStartDate === date);
+      });
 
-    await admins.updateOne(
-      { email: adminEmail },
-      { $set: { tasks: updatedTasks } }
-    );
+      await admins.updateOne(
+          { email: adminEmail },
+          { $set: { tasks: updatedTasks } }
+      );
 
-    res.json({ success: true });
+      res.json({ success: true });
   } catch (err) {
-    console.error("Error deleting task:", err);
-    res.status(500).json({ error: "Failed to delete task" });
+      console.error("Error deleting task:", err);
+      res.status(500).json({ error: "Failed to delete task" });
   }
 });
-
 
 // In server.js
 app.post("/api/rewards", async (req, res) => {
