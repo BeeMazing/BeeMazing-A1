@@ -997,12 +997,31 @@ closeTimesModal.addEventListener("click", () => {
 });
 
 
+// Existing setup for Daily
+setupTimesModal(
+    document.getElementById("timesPerDayInput"),
+    document.getElementById("timesPerDayModal"),
+    document.getElementById("closeTimesModal"),
+    document.getElementById("customTimesInput"),
+    document.getElementById("saveCustomTimesBtn")
+);
+
+// Existing setup for Monthly
 setupTimesModal(
     document.getElementById("timesPerMonthInput"),
     document.getElementById("timesPerMonthModal"),
     document.getElementById("closeTimesMonthModal"),
     document.getElementById("customTimesMonthInput"),
     document.getElementById("saveCustomTimesMonthBtn")
+);
+
+// NEW: Setup for Weekly
+setupTimesModal(
+    document.getElementById("timesPerWeekInput"),
+    document.getElementById("timesPerWeekModal"),
+    document.getElementById("closeTimesWeekModal"),
+    document.getElementById("customTimesWeekInput"),
+    document.getElementById("saveCustomTimesWeekBtn")
 );
 
 // Close times modals when clicking outside
