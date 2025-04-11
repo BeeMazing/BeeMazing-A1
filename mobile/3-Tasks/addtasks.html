@@ -153,18 +153,75 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); /* Reduced shadow */
 }
 
-    .date-display {
-        background: var(--accent-color);
-        border: 2px solid var(--border-dark);
-        border-radius: 8px;
-        padding: 10px 15px;
-        font-size: 16px;
-        font-weight: 600;
-        color: var(--text-color);
-        text-align: center;
-        cursor: pointer;
-        transition: background-color 0.3s ease, color 0.3s ease;
+.date-display {
+    background: var(--accent-color);
+    border: 2px solid var(--border-dark);
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color);
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    flex-grow: 1; /* Expand to fill space */
+    min-width: 100px; /* Prevent shrinking too much */
+}
+
+
+
+/* Add button styling */
+.add-btn {
+    background: transparent;
+    border: none;
+    color: var(--primary-color);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.3s ease;
+}
+
+.add-btn:hover {
+    color: #FFB300;
+}
+
+/* Remove button styling */
+.remove-btn {
+    background: var(--danger-color);
+    border: none;
+    color: var(--text-color);
+    font-size: 16px;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.remove-btn:hover {
+    background: #B71C1C;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+    .date-controls {
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: wrap;
     }
+    .date-field {
+        flex: 1; /* Equal width on larger screens */
+    }
+    .add-btn {
+        margin-left: 10px;
+    }
+}
+
+
+
+
 
     .date-display:hover {
         background: var(--primary-color);
@@ -182,12 +239,21 @@
         margin: 0;
     }
 
-    .date-controls {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        flex-wrap: wrap;
-    }
+ /* Adjust .date-controls for stacking */
+.date-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+/* Wrapper for each date field */
+.date-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+}
 
     .date-input {
         display: none;
@@ -235,16 +301,16 @@
     }
 
     .modal-content {
-        background: var(--accent-color);
-        padding: 20px;
-        border-radius: 15px;
-        border: 2px solid var(--primary-color);
-        width: 80%;
-        max-width: 400px;
-        text-align: center;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-        color: var(--text-color);
-    }
+    background: var(--accent-color);
+    padding: 20px;
+    border-radius: 15px;
+    border: 2px solid var(--primary-color);
+    width: 90%; /* Slightly wider modal */
+    max-width: 500px; /* Increased from 400px to accommodate full-width calendar */
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    color: var(--text-color);
+}
 
     .modal-content h3 {
         color: var(--text-color);
@@ -462,14 +528,14 @@
     color: #B71C1C;
 }
 
-/* Ensure calendar in modal is centered and sized appropriately */
+/* Make calendar full-width within the modal */
 #specificDatesCalendar .flatpickr-calendar {
     background: var(--light-bg);
     border: 2px solid var(--border-dark);
     border-radius: 8px;
-    width: 100%;
-    max-width: 300px;
-    margin: 0 auto;
+    width: 100%; /* Full width of the modal content */
+    margin: 0; /* Remove auto centering */
+    padding: 10px; /* Add padding for internal spacing */
 }
 
 #specificDatesCalendar .flatpickr-day.selected,
@@ -478,6 +544,23 @@
     background: var(--primary-color);
     border-color: var(--primary-color);
     color: var(--secondary-color);
+}
+
+#specificDatesCalendar .flatpickr-day {
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    font-size: 16px;
+}
+
+@media (max-width: 767px) {
+    #specificDatesCalendar .flatpickr-calendar {
+        padding: 5px;
+    }
+    .modal-content {
+        max-width: 100%;
+        padding: 15px;
+    }
 }
 
 #specificDatesCalendar .flatpickr-day.inRange {
@@ -491,6 +574,10 @@
     border-color: var(--border-dark);
 }
 
+#specificDatesCalendar {
+    margin: 20px 0; /* Keep vertical spacing */
+    width: 100%; /* Ensure container matches modal width */
+}
 
 
 /* Add spacing and alignment for the specific dates group */
@@ -590,15 +677,22 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
                 <button type="button" id="selectSettings" class="select-btn">Select</button>
                 <input type="hidden" id="settingsSelection" value="">
             </div>
-            <div class="form-group date-flex-row">
+            <div class="form-group" id="dateGroup">
                 <label>Date</label>
-                <div class="date-controls">
-                    <button type="button" id="dateModeToggle" class="select-btn">From</button>
-                    <div id="dateDisplay" class="date-display">Today</div>
-                    <div id="dateDisplayTo" class="date-display" style="display: none;">To Date</div>
+                <div class="date-controls-wrapper">
+                    <div class="date-controls">
+                        <div class="date-field">
+                            <span id="dateDisplay" class="date-display">Today</span>
+                            <input type="text" id="taskDate" class="date-input" />
+                        </div>
+                        <div class="date-field" id="toDateWrapper" style="display: none;">
+                            <span id="dateDisplayTo" class="date-display">To Date</span>
+                            <input type="text" id="taskDateTo" class="date-input" />
+                            <button type="button" id="removeToDate" class="remove-btn">×</button>
+                        </div>
+                        <button type="button" id="addToDate" class="add-btn">+ Add End Date</button>
+                    </div>
                 </div>
-                <input type="text" id="taskDate" class="date-input" />
-                <input type="text" id="taskDateTo" class="date-input" />
             </div>
             
             <div class="form-group">
@@ -751,7 +845,7 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
             <button id="clearSpecificDates" class="btn-cancel">Clear</button>
             <button id="saveSpecificDates" class="btn-save">Save</button>
         </div>
-        <div id="specificDatesCalendar" style="margin: 20px 0;"></div>
+        <div id="specificDatesCalendar"></div>
     </div>
 </div>
     
@@ -792,30 +886,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("timesPerMonthGroup").style.display = editTask.repeat === "Monthly" ? "flex" : "none";
 
     // Handle date
-    if (editTask.date) {
-      const [from, to] = editTask.date.split(" to ");
-      document.getElementById("taskDate").value = from || "";
-      flatpickrFrom.setDate(from);
-      document.getElementById("dateDisplay").textContent = new Date(from).toLocaleDateString(undefined, {
-        month: "long",
-        day: "numeric",
-      });
-      if (to) {
-        dateMode = "from-to";
-        document.getElementById("dateModeToggle").textContent = "From - To";
-        document.getElementById("dateDisplayTo").style.display = "inline-block";
-        document.getElementById("taskDateTo").value = to;
+// Handle date
+if (editTask.date) {
+    const [from, to] = editTask.date.split(" to ");
+    dateInputFrom.value = from || "";
+    flatpickrFrom.setDate(from);
+    dateDisplay.textContent = new Date(from).toLocaleDateString(undefined, { month: "long", day: "numeric" });
+    if (to) {
+        hasEndDate = true;
+        toDateWrapper.style.display = "flex";
+        addToDateBtn.style.display = "none";
+        dateInputTo.value = to;
         flatpickrTo.setDate(to);
-        document.getElementById("dateDisplayTo").textContent = new Date(to).toLocaleDateString(undefined, {
-          month: "long",
-          day: "numeric",
-        });
-      } else {
-        dateMode = "from";
-        document.getElementById("dateModeToggle").textContent = "From";
-        document.getElementById("dateDisplayTo").style.display = "none";
-      }
+        dateDisplayTo.textContent = new Date(to).toLocaleDateString(undefined, { month: "long", day: "numeric" });
     }
+}
 
     // Handle users
     if (editTask.users) {
@@ -1185,52 +1270,67 @@ window.addEventListener('click', (e) => {
 
 
     
-        // Date Mode Toggle Logic
-        let dateMode = "from";
-        const dateDisplay = document.getElementById("dateDisplay");
-        const dateDisplayTo = document.getElementById("dateDisplayTo");
-        const dateInputFrom = document.getElementById("taskDate");
-        const dateInputTo = document.getElementById("taskDateTo");
-        const toggleButton = document.getElementById("dateModeToggle");
-    
-        toggleButton.addEventListener("click", () => {
-            if (dateMode === "from") {
-                dateMode = "from-to";
-                toggleButton.textContent = "From - To";
-                dateDisplayTo.style.display = "inline-block";
-            } else {
-                dateMode = "from";
-                toggleButton.textContent = "From";
-                dateDisplayTo.style.display = "none";
-                dateInputTo.value = "";
-                dateDisplayTo.textContent = "To Date";
-            }
-        });
-    
-        const flatpickrFrom = flatpickr("#taskDate", {
-            dateFormat: "Y-m-d",
-            defaultDate: "today",
-            disableMobile: true,
-            onChange: function (selectedDates) {
-                const formatted = new Date(selectedDates[0]).toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
-                dateDisplay.textContent = formatted;
-            },
-            positionElement: dateDisplay,
-            appendTo: document.body
-        });
-    
-        const flatpickrTo = flatpickr("#taskDateTo", {
-            dateFormat: "Y-m-d",
-            disableMobile: true,
-            onChange: function (selectedDates) {
-                const formatted = new Date(selectedDates[0]).toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
-                dateDisplayTo.textContent = formatted;
-            },
-            positionElement: dateDisplayTo,
-            appendTo: document.body
-        });
+     // Date Logic
+const dateDisplay = document.getElementById("dateDisplay");
+const dateDisplayTo = document.getElementById("dateDisplayTo");
+const dateInputFrom = document.getElementById("taskDate");
+const dateInputTo = document.getElementById("taskDateTo");
+const addToDateBtn = document.getElementById("addToDate");
+const toDateWrapper = document.getElementById("toDateWrapper");
+const removeToDateBtn = document.getElementById("removeToDate");
 
+let hasEndDate = false;
 
+addToDateBtn.addEventListener("click", () => {
+    hasEndDate = true;
+    toDateWrapper.style.display = "flex";
+    addToDateBtn.style.display = "none";
+    flatpickrTo.set("minDate", dateInputFrom.value || "today"); // Ensure "To" is after "From"
+});
+
+removeToDateBtn.addEventListener("click", () => {
+    hasEndDate = false;
+    toDateWrapper.style.display = "none";
+    addToDateBtn.style.display = "block";
+    dateInputTo.value = "";
+    dateDisplayTo.textContent = "To Date";
+});
+
+const flatpickrFrom = flatpickr("#taskDate", {
+    dateFormat: "Y-m-d",
+    defaultDate: "today",
+    disableMobile: true,
+    onChange: function(selectedDates) {
+        const formatted = new Date(selectedDates[0]).toLocaleDateString(undefined, { month: "long", day: "numeric" });
+        dateDisplay.textContent = formatted;
+        if (hasEndDate) {
+            flatpickrTo.set("minDate", selectedDates[0]); // Update minDate for "To"
+        }
+    },
+    positionElement: dateDisplay,
+    appendTo: document.body
+});
+
+const flatpickrTo = flatpickr("#taskDateTo", {
+    dateFormat: "Y-m-d",
+    disableMobile: true,
+    onChange: function(selectedDates) {
+        const formatted = new Date(selectedDates[0]).toLocaleDateString(undefined, { month: "long", day: "numeric" });
+        dateDisplayTo.textContent = formatted;
+    },
+    positionElement: dateDisplayTo,
+    appendTo: document.body
+});
+
+dateDisplay.addEventListener("click", () => {
+    flatpickrFrom.open();
+});
+
+dateDisplayTo.addEventListener("click", () => {
+    if (hasEndDate) {
+        flatpickrTo.open();
+    }
+});
    
         
 
@@ -1275,20 +1375,21 @@ const flatpickrSpecific = flatpickr("#specificDatesCalendar", {
     onReady: function(_, __, instance) {
         const calendar = instance.calendarContainer;
 
-        calendar.addEventListener("mousedown", (e) => {
+        // Mouse event handlers
+        function handleStart(e) {
             const dayElem = e.target.closest(".flatpickr-day");
             if (dayElem && !dayElem.classList.contains("disabled")) {
                 isDragging = true;
                 startDate = new Date(dayElem.getAttribute("aria-label"));
                 const startIsSelected = selectedDates.some(d => d.getTime() === startDate.getTime());
                 dragMode = startIsSelected ? "deselect" : "select";
-                selectedDatesAtDragStart = [...selectedDates]; // snapshot current selection
+                selectedDatesAtDragStart = [...selectedDates];
                 e.preventDefault();
                 e.stopPropagation();
             }
-        });
+        }
 
-        calendar.addEventListener("mousemove", (e) => {
+        function handleMove(e) {
             if (!isDragging || !dragMode) return;
             const dayElem = e.target.closest(".flatpickr-day");
             if (dayElem && !dayElem.classList.contains("disabled")) {
@@ -1310,9 +1411,9 @@ const flatpickrSpecific = flatpickr("#specificDatesCalendar", {
                 selectedDates = newDates.sort((a, b) => a - b);
                 instance.setDate(selectedDates, false);
             }
-        });
+        }
 
-        calendar.addEventListener("mouseup", (e) => {
+        function handleEnd(e) {
             if (isDragging) {
                 isDragging = false;
                 startDate = null;
@@ -1320,9 +1421,9 @@ const flatpickrSpecific = flatpickr("#specificDatesCalendar", {
                 selectedDatesAtDragStart = [];
                 e.stopPropagation();
             }
-        });
+        }
 
-        calendar.addEventListener("click", (e) => {
+        function handleClick(e) {
             const dayElem = e.target.closest(".flatpickr-day");
             if (dayElem && !dayElem.classList.contains("disabled")) {
                 if (!isDragging && !startDate) {
@@ -1337,7 +1438,37 @@ const flatpickrSpecific = flatpickr("#specificDatesCalendar", {
                     instance.setDate(selectedDates, false);
                 }
             }
-        });
+        }
+
+        // Mouse events
+        calendar.addEventListener("mousedown", handleStart);
+        calendar.addEventListener("mousemove", handleMove);
+        calendar.addEventListener("mouseup", handleEnd);
+        calendar.addEventListener("click", handleClick);
+
+        // Touch events
+        calendar.addEventListener("touchstart", (e) => {
+            const touch = e.touches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            e.target = target; // Simulate mouse event target
+            handleStart(e);
+        }, { passive: false });
+
+        calendar.addEventListener("touchmove", (e) => {
+            const touch = e.touches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            e.target = target; // Update target as finger moves
+            handleMove(e);
+            e.preventDefault(); // Prevent scrolling
+        }, { passive: false });
+
+        calendar.addEventListener("touchend", (e) => {
+            // Use changedTouches to get the final touch point
+            const touch = e.changedTouches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            e.target = target;
+            handleEnd(e);
+        }, { passive: false });
     },
     onChange: function(dates, text, instance) {
         if (!isDragging) {
@@ -1533,7 +1664,7 @@ window.addEventListener("click", (e) => {
   if (timesPerWeek !== null && timesPerWeek < 1) timesPerWeek = 1;
   if (timesPerMonth !== null && timesPerMonth < 1) timesPerMonth = 1;
 
-  const dateValue = dateMode === "from" ? dateFrom : `${dateFrom} to ${dateTo}`;
+  const dateValue = hasEndDate ? `${dateFrom} to ${dateTo}` : dateFrom;
   const currentAdmin = localStorage.getItem("currentAdminEmail");
 
   const task = {
