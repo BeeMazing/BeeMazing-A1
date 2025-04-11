@@ -2,119 +2,346 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BeeMazing - Register / Login</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-      background: #1E1F26;
-      color: white;
+      background: linear-gradient(135deg, #1E1F26 0%, #2A2B32 100%);
+      color: #ffffff;
       font-family: 'Poppins', sans-serif;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
+      overflow: hidden;
+      animation: gradientShift 15s ease infinite;
     }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
     .container {
-      background: #2A2B32;
-      padding: 20px;
-      border-radius: 10px;
-      border: 2px solid #444754;
+      background: rgba(42, 43, 50, 0.2);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       width: 90%;
-      max-width: 400px;
+      max-width: 500px;
+      min-width: 300px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      animation: fadeIn 0.5s ease-out;
     }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 0px;
+    }
+
+    .logo img {
+      width: 120px;
+      height: auto;
+    }
+
     h2 {
       text-align: center;
-      margin-bottom: 20px;
-    }
-    input, button {
-      width: 100%;
-      margin: 10px 0;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 5px;
-      border: 1px solid #444754;
-    }
-    input {
-      background: #1E1F26;
-      color: white;
-    }
-    button {
-      background-color: #FFC107;
-      color: #212121;
+      margin-bottom: 1.5rem;
+      font-size: 1.75rem;
       font-weight: 600;
+      color: #FFC107;
+      cursor: default;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 1.25rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(30, 31, 38, 0.5);
+      color: #ffffff;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      cursor: text;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #FFC107;
+      box-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
+    }
+
+    .input-group::before {
+      content: '';
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      background-size: contain;
+      opacity: 0.5;
+    }
+
+    .input-group.email::before {
+      background: url('https://img.icons8.com/ios-filled/50/ffffff/email.png') no-repeat center;
+    }
+
+    .input-group.password::before {
+      background: url('https://img.icons8.com/ios-filled/50/ffffff/lock.png') no-repeat center;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
       border: none;
+      background: #FFC107;
+      color: #212121;
       cursor: pointer;
+      transition: transform 0.2s, background 0.3s, box-shadow 0.3s;
     }
+
     button:hover {
-      background-color: #FFB300;
+      background: #FFB300;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
     }
+
+    button:active {
+      transform: translateY(0);
+    }
+
     .toggle {
       text-align: center;
-      margin-top: 10px;
-      font-size: 14px;
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      color: #B0B0B0;
     }
-    .toggle a {
+
+    .toggle span {
+      cursor: default;
+    }
+
+    .toggle a#toggleFormText {
       color: #FFC107;
-      cursor: pointer;
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer !important;
+      position: relative;
+      transition: color 0.3s;
     }
+
+    .toggle a#toggleFormText:hover {
+      color: #FFB300;
+    }
+
+    .toggle a#toggleFormText::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 1px;
+      bottom: -2px;
+      left: 0;
+      background-color: #FFB300;
+      transition: width 0.3s ease;
+    }
+
+    .toggle a#toggleFormText:hover::after {
+      width: 100%;
+    }
+
     .message {
       text-align: center;
-      margin-top: 10px;
-      font-size: 14px;
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      min-height: 1.25rem;
     }
-  </style>
+
+    /* Large screens (desktops, monitors) */
+    @media (min-width: 1200px) {
+      .container {
+        max-width: 600px;
+        padding: 2.5rem;
+      }
+
+      .logo img {
+        width: 150px;
+      }
+
+      h2 {
+        font-size: 2rem;
+      }
+
+      input, button {
+        font-size: 1.125rem;
+        padding: 0.875rem 0.875rem 0.875rem 3rem;
+      }
+
+      .input-group::before {
+        left: 15px;
+        width: 24px;
+        height: 24px;
+      }
+
+      .toggle, .message {
+        font-size: 1rem;
+      }
+    }
+
+    /* Medium screens (tablets, small laptops) */
+    @media (min-width: 768px) and (max-width: 1199px) {
+      .container {
+        max-width: 500px;
+        padding: 2rem;
+      }
+
+      .logo img {
+        width: 130px;
+      }
+
+      h2 {
+        font-size: 1.875rem;
+      }
+
+      input, button {
+        font-size: 1rem;
+      }
+    }
+
+    /* Small screens (phones) */
+    @media (max-width: 767px) {
+      .container {
+        padding: 1.5rem;
+        max-width: 400px;
+        min-width: 280px;
+      }
+
+      .logo img {
+        width: 100px;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+      }
+
+      input, button {
+        font-size: 0.875rem;
+        padding: 0.625rem 0.625rem 0.625rem 2.25rem;
+      }
+
+      .input-group::before {
+        left: 10px;
+        width: 18px;
+        height: 18px;
+      }
+
+      .toggle, .message {
+        font-size: 0.75rem;
+      }
+    }
+
+    /* Very small screens (e.g., old phones < 320px) */
+    @media (max-width: 360px) {
+      .container {
+        padding: 1rem;
+        min-width: 260px;
+      }
+
+      .logo img {
+        width: 80px;
+      }
+
+      h2 {
+        font-size: 1.25rem;
+      }
+
+      input, button {
+        font-size: 0.75rem;
+      }
+    }
+</style>
 </head>
 <body>
   <div class="container">
-    <h2 id="formTitle">Register z1</h2>
+    <div class="logo">
+      <!-- Replace with your logo URL or remove if not needed -->
+      <img src="https://i.postimg.cc/x1fDPQPX/pngtree-honey-bee-logo-design-vector-png-image-12507314-removebg-preview.png" alt="BeeMazing Logo">
+    </div>
+    <h2 id="formTitle">Register</h2>
     <form id="authForm">
-      <input type="email" id="email" placeholder="Email" required />
-      <input type="password" id="password" placeholder="Password" required />
+      <div class="input-group email">
+        <input type="email" id="email" placeholder="Email" required />
+      </div>
+      <div class="input-group password">
+        <input type="password" id="password" placeholder="Password" required />
+      </div>
       <button type="submit" id="submitBtn">Register</button>
       <div class="message" id="message"></div>
     </form>
     <div class="toggle">
       <span id="toggleText">Already have an account?</span>
-      <a onclick="toggleForm()">Login</a>
+      <a onclick="toggleForm()" id="toggleFormText">Login</a>
     </div>
   </div>
 
   <script>
     let isRegistering = true;
-  
+
     const form = document.getElementById("authForm");
     const message = document.getElementById("message");
-  
+
     function toggleForm() {
       isRegistering = !isRegistering;
       document.getElementById("formTitle").textContent = isRegistering ? "Register" : "Login";
       document.getElementById("submitBtn").textContent = isRegistering ? "Register" : "Login";
       document.getElementById("toggleText").textContent = isRegistering ? "Already have an account?" : "Don't have an account?";
+      document.getElementById("toggleFormText").textContent = isRegistering ? "Login" : "Register";
     }
-  
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
       const endpoint = isRegistering ? "/register" : "/login";
-  
+
       try {
         const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
         });
-  
+
         const data = await res.json();
-  
+
         if (res.ok && data.success) {
           message.style.color = "#4CAF50";
           message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
 
-            // 👇 ADD THIS TO FLAG THE ADMIN
-  localStorage.setItem("isAdmin", "true");
-  localStorage.setItem("currentAdminEmail", email); // Also ensures the email is saved
-          
+          // Store admin info in localStorage
+          localStorage.setItem("isAdmin", "true");
+          localStorage.setItem("currentAdminEmail", email);
+
           setTimeout(() => {
             window.location.href = "mobile/1-Home/home.html";
           }, 1000);
@@ -128,6 +355,5 @@
       }
     });
   </script>
-  
 </body>
 </html>
