@@ -121,9 +121,37 @@
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-    .select-btn:hover {
-        background: #FFB300;
-    }
+.select-btn:hover {
+    background: #FFB300;
+}
+
+/* New class for the circular + button */
+.plus-btn {
+    background: var(--primary-color);
+    border: none;
+    color: var(--secondary-color);
+    font-size: 20px;
+    font-weight: 600;
+    width: 32px;
+    height: 32px;
+    line-height: 32px; /* Centers the + vertically */
+    border-radius: 50%; /* Fully circular */
+    cursor: pointer;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.plus-btn:hover {
+    background: #FFB300; /* Brighter gold on hover */
+    transform: translateY(-2px); /* Slight lift */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); /* Enhanced shadow */
+}
+
+.plus-btn:active {
+    transform: translateY(0); /* Pressed effect */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); /* Reduced shadow */
+}
 
     .date-display {
         background: var(--accent-color);
@@ -404,9 +432,89 @@
         to { opacity: 1; transform: scale(1); }
     }
 
-    #specificDatesDisplay {
-    min-width: 120px;
-    text-align: center;
+
+    /* Styling for date chips */
+.date-chip {
+    background: var(--accent-color);
+    color: var(--text-color);
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--border-dark);
+    transition: background-color 0.3s ease;
+}
+
+.date-chip:hover {
+    background: var(--hover-accent);
+}
+
+.date-chip-remove {
+    cursor: pointer;
+    color: var(--danger-color);
+    font-size: 16px;
+    line-height: 1;
+}
+
+.date-chip-remove:hover {
+    color: #B71C1C;
+}
+
+/* Ensure calendar in modal is centered and sized appropriately */
+#specificDatesCalendar .flatpickr-calendar {
+    background: var(--light-bg);
+    border: 2px solid var(--border-dark);
+    border-radius: 8px;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+#specificDatesCalendar .flatpickr-day.selected,
+#specificDatesCalendar .flatpickr-day.startRange,
+#specificDatesCalendar .flatpickr-day.endRange {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--secondary-color);
+}
+
+#specificDatesCalendar .flatpickr-day.inRange {
+    background: rgba(224, 176, 24, 0.3); /* Semi-transparent gold for range */
+    border-color: var(--border-dark);
+    color: var(--text-color);
+}
+
+#specificDatesCalendar .flatpickr-day:hover {
+    background: var(--hover-accent);
+    border-color: var(--border-dark);
+}
+
+
+
+/* Add spacing and alignment for the specific dates group */
+#specificDatesGroup {
+    display: flex;
+    flex-direction: column; /* Stack label, button, and chips vertically */
+    align-items: flex-start; /* Align items to the left */
+    gap: 15px; /* Space between label/button and chips */
+}
+
+/* Ensure the button and label are aligned nicely */
+#specificDatesGroup .button-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between label and + button */
+}
+
+/* Adjust container spacing */
+#selectedDatesContainer {
+    margin-top: 15px; /* Increased from 10px for more breathing room */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* Slightly more gap between chips */
+    width: 100%; /* Full width for better alignment */
 }
 </style>
 
@@ -448,9 +556,13 @@
             </div>
 
             <!-- NEW: Specific Dates input (only shown when Daily is selected) -->
+<!-- NEW: Specific Dates input (only shown when Daily is selected) -->
 <div class="form-group" id="specificDatesGroup" style="display: none;">
-    <label>Specific Dates</label>
-    <div class="date-display" id="specificDatesDisplay">Each</div>
+    <div class="button-wrapper">
+        <label>Specific Dates</label>
+        <button type="button" id="selectSpecificDates" class="plus-btn">+</button>
+    </div>
+    <div id="selectedDatesContainer"></div>
     <input type="hidden" id="specificDatesInput" value="">
 </div>
 
@@ -629,6 +741,19 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
         </div>
     </div>
 </div>
+
+
+<div class="modal" id="specificDatesModal">
+    <div class="modal-content fancy-modal">
+        <h3>Select Specific Dates</h3>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 15px;">Choose dates for the task or leave empty for every day.</p>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <button id="clearSpecificDates" class="btn-cancel">Clear</button>
+            <button id="saveSpecificDates" class="btn-save">Save</button>
+        </div>
+        <div id="specificDatesCalendar" style="margin: 20px 0;"></div>
+    </div>
+</div>
     
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -731,15 +856,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     }
 
-    // Handle specific dates
-    if (editTask.specificDates) {
+
+      // Handle specific dates
+      if (editTask.specificDates) {
+      selectedDates = editTask.specificDates.split(",").map(date => new Date(date));
       specificDatesInput.value = editTask.specificDates;
-      const dates = editTask.specificDates.split(",");
-      const formatted = dates.map(date =>
-        new Date(date).toLocaleDateString(undefined, { month: "short", day: "numeric" })
-      ).join(", ");
-      specificDatesDisplay.textContent = formatted || "Each";
-      flatpickrSpecific.setDate(dates);
+      flatpickrSpecific.setDate(selectedDates);
+      updateSelectedDatesDisplay();
+    } else {
+      updateSelectedDatesDisplay();
     }
     specificDatesGroup.style.display = editTask.repeat === "Daily" ? "flex" : "none";
   }
@@ -1106,35 +1231,210 @@ window.addEventListener('click', (e) => {
         });
 
 
-        const specificDatesDisplay = document.getElementById("specificDatesDisplay");
-const specificDatesInput = document.getElementById("specificDatesInput");
+   
+        
 
-const flatpickrSpecific = flatpickr(specificDatesInput, {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        const specificDatesButton = document.getElementById("selectSpecificDates");
+const specificDatesModal = document.getElementById("specificDatesModal");
+const specificDatesInput = document.getElementById("specificDatesInput");
+const selectedDatesContainer = document.getElementById("selectedDatesContainer");
+const saveSpecificDatesBtn = document.getElementById("saveSpecificDates");
+const clearSpecificDatesBtn = document.getElementById("clearSpecificDates");
+const specificDatesGroup = document.getElementById("specificDatesGroup");
+
+let selectedDates = [];
+let isDragging = false;
+let startDate = null;
+let dragMode = null; // 'select' or 'deselect'
+let selectedDatesAtDragStart = [];
+
+const flatpickrSpecific = flatpickr("#specificDatesCalendar", {
     dateFormat: "Y-m-d",
     mode: "multiple",
     disableMobile: true,
-    onChange: function (selectedDates) {
-        if (selectedDates.length === 0) {
-            specificDatesDisplay.textContent = "Each";
-            specificDatesInput.value = "";
-        } else {
-            selectedDates.sort((a, b) => a - b);
-            const formatted = selectedDates.map(date =>
-                date.toLocaleDateString(undefined, { month: "short", day: "numeric" })
-            ).join(", ");
-            specificDatesDisplay.textContent = formatted;
-            specificDatesInput.value = selectedDates.map(date =>
-                date.toISOString().split("T")[0]
-            ).join(",");
+    inline: true,
+    enable: [
+        function(date) {
+            return true; // Allow all dates
         }
+    ],
+    onReady: function(_, __, instance) {
+        const calendar = instance.calendarContainer;
+
+        calendar.addEventListener("mousedown", (e) => {
+            const dayElem = e.target.closest(".flatpickr-day");
+            if (dayElem && !dayElem.classList.contains("disabled")) {
+                isDragging = true;
+                startDate = new Date(dayElem.getAttribute("aria-label"));
+                const startIsSelected = selectedDates.some(d => d.getTime() === startDate.getTime());
+                dragMode = startIsSelected ? "deselect" : "select";
+                selectedDatesAtDragStart = [...selectedDates]; // snapshot current selection
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+
+        calendar.addEventListener("mousemove", (e) => {
+            if (!isDragging || !dragMode) return;
+            const dayElem = e.target.closest(".flatpickr-day");
+            if (dayElem && !dayElem.classList.contains("disabled")) {
+                const endDate = new Date(dayElem.getAttribute("aria-label"));
+                const datesInRange = getDatesInRange(startDate, endDate);
+
+                let newDates = [...selectedDatesAtDragStart];
+                if (dragMode === "select") {
+                    newDates = [...new Set([
+                        ...newDates,
+                        ...datesInRange
+                    ].map(d => d.getTime()))].map(t => new Date(t));
+                } else if (dragMode === "deselect") {
+                    newDates = newDates.filter(d =>
+                        !datesInRange.some(r => r.getTime() === d.getTime())
+                    );
+                }
+
+                selectedDates = newDates.sort((a, b) => a - b);
+                instance.setDate(selectedDates, false);
+            }
+        });
+
+        calendar.addEventListener("mouseup", (e) => {
+            if (isDragging) {
+                isDragging = false;
+                startDate = null;
+                dragMode = null;
+                selectedDatesAtDragStart = [];
+                e.stopPropagation();
+            }
+        });
+
+        calendar.addEventListener("click", (e) => {
+            const dayElem = e.target.closest(".flatpickr-day");
+            if (dayElem && !dayElem.classList.contains("disabled")) {
+                if (!isDragging && !startDate) {
+                    const date = new Date(dayElem.getAttribute("aria-label"));
+                    const index = selectedDates.findIndex(d => d.getTime() === date.getTime());
+                    if (index >= 0) {
+                        selectedDates.splice(index, 1);
+                    } else {
+                        selectedDates.push(date);
+                    }
+                    selectedDates.sort((a, b) => a - b);
+                    instance.setDate(selectedDates, false);
+                }
+            }
+        });
     },
-    positionElement: specificDatesDisplay,
-    appendTo: document.body
+    onChange: function(dates, text, instance) {
+        if (!isDragging) {
+            selectedDates = dates.sort((a, b) => a - b);
+        }
+    }
 });
 
-specificDatesDisplay.addEventListener("click", () => {
-    flatpickrSpecific.open();
+function getDatesInRange(start, end) {
+    const dates = [];
+    const current = new Date(Math.min(start, end));
+    const max = new Date(Math.max(start, end));
+    while (current <= max) {
+        dates.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+    }
+    return dates;
+}
+
+function updateSelectedDatesDisplay() {
+    selectedDatesContainer.innerHTML = "";
+    if (selectedDates.length === 0) {
+        specificDatesInput.value = "";
+        const placeholder = document.createElement("span");
+        placeholder.textContent = "Every day";
+        placeholder.style.color = "rgba(255, 255, 255, 0.7)";
+        placeholder.style.fontSize = "14px";
+        selectedDatesContainer.appendChild(placeholder);
+    } else {
+        specificDatesInput.value = selectedDates.map(date =>
+            date.toISOString().split("T")[0]
+        ).join(",");
+        selectedDates.forEach(date => {
+            const chip = document.createElement("div");
+            chip.className = "date-chip";
+            const dateText = document.createElement("span");
+            dateText.textContent = date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+            const removeBtn = document.createElement("span");
+            removeBtn.className = "date-chip-remove";
+            removeBtn.textContent = "×";
+            removeBtn.addEventListener("click", () => {
+                selectedDates = selectedDates.filter(d => d.getTime() !== date.getTime());
+                flatpickrSpecific.setDate(selectedDates);
+                updateSelectedDatesDisplay();
+            });
+            chip.appendChild(dateText);
+            chip.appendChild(removeBtn);
+            selectedDatesContainer.appendChild(chip);
+        });
+    }
+}
+
+specificDatesButton.addEventListener("click", () => {
+    showModal(specificDatesModal);
 });
+
+saveSpecificDatesBtn.addEventListener("click", () => {
+    updateSelectedDatesDisplay();
+    hideModal(specificDatesModal);
+});
+
+clearSpecificDatesBtn.addEventListener("click", () => {
+    selectedDates = [];
+    flatpickrSpecific.clear();
+    updateSelectedDatesDisplay();
+    hideModal(specificDatesModal);
+});
+
+window.addEventListener("click", (e) => {
+    if (e.target === specificDatesModal) {
+        hideModal(specificDatesModal);
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
         dateDisplay.addEventListener("click", () => {
             flatpickrFrom.open();
