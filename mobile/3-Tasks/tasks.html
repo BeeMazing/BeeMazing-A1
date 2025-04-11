@@ -546,6 +546,7 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
+
 async function loadTasksForDate(selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (!adminEmail) return;
@@ -582,7 +583,6 @@ async function loadTasksForDate(selectedDate) {
         taskDiv.dataset.taskTitle = task.title;
         taskDiv.dataset.taskDate = task.date;
 
-        // Calculate the current turn dynamically for "Daily" tasks with 1 time per day
         let currentTurn;
         if (task.repeat === "Daily" && task.timesPerDay === 1) {
             const dateRange = task.date.split(" to ");
@@ -594,7 +594,6 @@ async function loadTasksForDate(selectedDate) {
             const currentIndex = diffDays % userOrder.length;
             currentTurn = userOrder[currentIndex];
         } else {
-            // Fallback to the stored turn for other task types
             currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
         }
 
@@ -611,7 +610,7 @@ async function loadTasksForDate(selectedDate) {
         taskDiv.innerHTML = `
             <strong>${task.title}</strong><br>
             Turn: ${currentTurn}<br>
-            ${repeatLimit > 1 ? `Completed: ${completedCount}/${repeatLimit}<br>` : ""}
+            Completed: ${completedCount}/${repeatLimit}<br>
             ${isCompleted ? `<span style="color: green; font-weight: bold;">Completed</span><br>` : ""}
             <button class="delete-btn">Delete</button>
         `;
@@ -699,6 +698,9 @@ async function loadTasksForDate(selectedDate) {
         taskList.appendChild(taskDiv);
     });
 }
+
+
+
 
 
 
