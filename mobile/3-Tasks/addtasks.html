@@ -1178,35 +1178,49 @@ window.addEventListener('click', (e) => {
   };
 
   const editTask = JSON.parse(localStorage.getItem("familyApp_editTask"));
-  if (editTask) {
-    // Delete the old task if title or date changed
-    const oldTitle = editTask.title;
-    const oldDate = editTask.date.split(" to ")[0];
-    if (oldTitle !== title || oldDate !== dateFrom) {
-      await fetch(
-        `https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(
-          currentAdmin
-        )}&title=${encodeURIComponent(oldTitle)}&date=${encodeURIComponent(oldDate)}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+
+  try {
+    if (editTask) {
+      // Update existing task
+      const response = await fetch("https://beemazing.onrender.com/api/tasks", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adminEmail: currentAdmin,
+          task,
+          originalTitle: editTask.title,
+          originalDate: editTask.date
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to update task: ${errorData.error}`);
+      }
+    } else {
+      // Create new task
+      const response = await fetch("https://beemazing.onrender.com/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail: currentAdmin, task }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to save task: ${errorData.error}`);
+      }
     }
+
+    // Clear edit mode
+    localStorage.removeItem("familyApp_editTask");
+    localStorage.removeItem("familyApp_editTask_index");
+
+    alert("Task saved successfully!");
+    window.location.href = "tasks.html";
+  } catch (error) {
+    console.error("Error saving task:", error);
+    alert(`Failed to save task: ${error.message}`);
   }
-
-  await fetch("https://beemazing.onrender.com/api/tasks", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ adminEmail: currentAdmin, task }),
-  });
-
-  // Clear edit mode
-  localStorage.removeItem("familyApp_editTask");
-  localStorage.removeItem("familyApp_editTask_index");
-
-  alert("Task saved successfully!");
-  window.location.href = "tasks.html";
 });
 
     </script>    

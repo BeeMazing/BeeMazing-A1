@@ -10,7 +10,7 @@ const port = process.env.PORT || 3000;
 // ✅ CORS for GitHub Pages
 const corsOptions = {
   origin: ['https://g4mechanger.github.io'],
-  methods: ['GET', 'POST', 'DELETE'], // Add DELETE
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Added PUT
   credentials: false
 };
 app.use(cors(corsOptions));
@@ -273,6 +273,51 @@ app.delete("/api/tasks", async (req, res) => {
       res.status(500).json({ error: "Failed to delete task" });
   }
 });
+
+
+
+// ✅ Update a specific task for an admin
+app.put("/api/tasks", async (req, res) => {
+  const { adminEmail, task, originalTitle, originalDate } = req.body;
+
+  if (!adminEmail || !task || !originalTitle || !originalDate) {
+    return res.status(400).json({ error: "Missing adminEmail, task, originalTitle, or originalDate" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const tasks = admin.tasks || [];
+    const taskIndex = tasks.findIndex(
+      (t) => t.title === originalTitle && t.date === originalDate
+    );
+
+    if (taskIndex === -1) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    // Update the task at its original index
+    tasks[taskIndex] = task;
+
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { tasks } }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error updating task:", err);
+    res.status(500).json({ error: "Failed to update task" });
+  }
+});
+
+
 
 // In server.js
 app.post("/api/rewards", async (req, res) => {
