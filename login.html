@@ -163,10 +163,10 @@
 </head>
 <body>
 
-  <div class="top-left" id="setPasswordBtn" style="display: none;">Set Admin Password</div>
+  <div class="top-left" id="setPasswordBtn" style="display: none;">Set Parent Password</div>
 
   <div class="wrapper">
-    <h1>BeeMazing Q25</h1> <!-- whaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-->
+    <h1>BeeMazing</h1> <!-- whaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-->
 
     <div class="button-container">
       <button class="login-btn" id="adminBtn">Parent</button>
@@ -183,7 +183,7 @@
 <!-- Modal -->
 <div class="modal" id="adminModal">
   <div class="modal-content">
-    <h3 id="modalTitle">Set Admin Password</h3>
+    <h3 id="modalTitle">Set Parent Password</h3>
     <div id="setPasswordSection">
       <input type="password" id="setPasswordInput" placeholder="Enter Password" />
       <input type="password" id="confirmSetPasswordInput" placeholder="Confirm Password" />
@@ -203,6 +203,7 @@
     <div class="error" id="modalError"></div>
   </div>
 </div>
+
 
 <script>
   // Immediately hide the "Set Admin Password" button to prevent flash
@@ -248,34 +249,35 @@
         .then(res => res.json())
         .then(data => {
           setPasswordBtn.style.display = "block";
-          if (data.success) {
-            // Password exists, show "Change Admin Password"
-            setPasswordBtn.textContent = "Change Admin Password";
-            modalTitle.textContent = "Change Admin Password";
+          // Check if admin document exists and has a password
+          if (!data.success && data.message !== "Invalid Parent password") {
+            // No password set
+            setPasswordBtn.textContent = "Set Parent Password";
+            modalTitle.textContent = "Set Parent Password";
           } else {
-            // No password, show "Set Admin Password"
-            setPasswordBtn.textContent = "Set Admin Password";
-            modalTitle.textContent = "Set Admin Password";
+            // Password exists (either success or "Invalid admin password" means document exists)
+            setPasswordBtn.textContent = "Change Parent Password";
+            modalTitle.textContent = "Change Parent Password";
           }
         })
         .catch(() => {
           // Show button on error to allow setting password
           setPasswordBtn.style.display = "block";
-          setPasswordBtn.textContent = "Set Admin Password";
-          modalTitle.textContent = "Set Admin Password";
+          setPasswordBtn.textContent = "Set Parent Password";
+          modalTitle.textContent = "Set Parent Password";
         });
     } else {
       // Show button if no email (user needs to register)
       setPasswordBtn.style.display = "block";
-      setPasswordBtn.textContent = "Set Admin Password";
-      modalTitle.textContent = "Set Admin Password";
+      setPasswordBtn.textContent = "Set Parent Password";
+      modalTitle.textContent = "Set Parent Password";
     }
   
     // Show modal to set/change admin password
     setPasswordBtn.addEventListener("click", () => {
       adminModal.classList.add("show");
       modalError.textContent = "";
-      if (setPasswordBtn.textContent === "Set Admin Password") {
+      if (setPasswordBtn.textContent === "Set Parent Password") {
         setPasswordSection.style.display = "block";
         changePasswordSection.style.display = "none";
         setPasswordInput.value = "";
@@ -321,12 +323,12 @@
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          alert("Admin password set successfully!");
+          alert("Parent password set successfully!");
           adminModal.classList.remove("show");
-          setPasswordBtn.textContent = "Change Admin Password";
-          modalTitle.textContent = "Change Admin Password";
+          setPasswordBtn.textContent = "Change Parent Password";
+          modalTitle.textContent = "Change Parent Password";
         } else {
-          modalError.textContent = data.message || "Failed to set admin password.";
+          modalError.textContent = data.message || "Failed to set Parent password.";
         }
       } catch (err) {
         modalError.textContent = "Error connecting to server.";
@@ -396,10 +398,10 @@
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          alert("Admin password changed successfully!");
+          alert("Parent password changed successfully!");
           adminModal.classList.remove("show");
         } else {
-          modalError.textContent = data.message || "Failed to change admin password.";
+          modalError.textContent = data.message || "Failed to change Parent password.";
         }
       } catch (err) {
         modalError.textContent = "Error connecting to server.";
@@ -462,5 +464,6 @@
     });
   });
   </script>
+
 </body>
 </html>
