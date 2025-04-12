@@ -48,7 +48,7 @@ app.post('/login', async (req, res) => {
 
 
 
-// login.html
+// login.html _________________________________________________________________________________________________________
 
 // ✅ SET ADMIN PASSWORD
 app.post('/set-admin-password', async (req, res) => {
@@ -173,10 +173,13 @@ app.post('/change-admin-password', async (req, res) => {
 
 
 
-// login.html
+// login.html __________________________________________________________________________________________________________
 
 
 
+
+
+// home.html _________________________________________________________________________________________________________
 
 // ✅ GET ALL REGISTERED USERS (Not user-added ones)
 app.get('/users', async (req, res) => {
@@ -276,6 +279,31 @@ app.delete("/delete-user", async (req, res) => {
   }
 });
 
+
+// ✅ LOGOUT
+app.post('/logout', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Missing email" });
+  }
+
+  try {
+    // Optionally clear any server-side state (e.g., cached data) in the future
+    // For now, just acknowledge the logout
+    res.json({ success: true, message: "Logout successful" });
+  } catch (err) {
+    console.error("🔥 Error in /logout:", err);
+    res.status(500).json({ success: false, message: "Failed to logout" });
+  }
+});
+
+
+// home.html _________________________________________________________________________________________________________
+
+
+
+// users.html _________________________________________________________________________________________________________
 // ✅ GET ALL TASKS FOR ADMIN (used in users.html)
 app.get('/get-tasks', async (req, res) => {
   const { adminEmail } = req.query;
