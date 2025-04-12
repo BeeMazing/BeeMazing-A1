@@ -380,24 +380,18 @@ document.getElementById("confirmNoBtn").addEventListener("click", () => {
 
 
 
-const logoutBtn = document.getElementById("logoutBtn");
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-        try {
-            await fetch("https://beemazing.onrender.com/logout", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-            });
-        } catch (err) {
-            console.error("Logout request failed:", err);
-        }
-        // Clear localStorage and redirect
-        localStorage.removeItem("isAdmin");
-        localStorage.removeItem("currentAdminEmail");
-        localStorage.removeItem("userData");
-        window.location.href = "/BeeMazing-Y1/login.html";
-    });
-}
+logoutBtn.addEventListener("click", () => {
+    // Only remove login session info
+    localStorage.removeItem("isAdmin");
+    localStorage.removeItem("userData");
+    localStorage.removeItem("adminPassword"); // optional, if stored
+
+    // Keep currentAdminEmail so login.html still knows the registered account
+    window.location.href = "/BeeMazing-Y1/login.html";
+});
+
+
+
 
 
 const permissionModal = document.getElementById("permissionModal");

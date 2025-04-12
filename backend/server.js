@@ -178,8 +178,6 @@ app.post('/change-admin-password', async (req, res) => {
 
 
 
-//home.html
-
 // ✅ GET ALL REGISTERED USERS (Not user-added ones)
 app.get('/users', async (req, res) => {
   try {
@@ -277,16 +275,6 @@ app.delete("/delete-user", async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to delete user" });
   }
 });
-
-
-
-// In server.js
-app.post("/logout", (req, res) => {
-  // Future: Invalidate server-side session if implemented
-  res.json({ success: true, message: "Logged out successfully" });
-});
-
-// home.html
 
 // ✅ GET ALL TASKS FOR ADMIN (used in users.html)
 app.get('/get-tasks', async (req, res) => {
