@@ -407,7 +407,13 @@ if (logoutBtn) {
             localStorage.removeItem("userData");
             localStorage.removeItem("adminPassword");
 
-            // Clear service worker caches
+            // Unregister service workers and clear caches
+            if ('serviceWorker' in navigator) {
+                console.log("Unregistering service workers");
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(reg => reg.unregister());
+                });
+            }
             if ('caches' in window) {
                 console.log("Clearing service worker caches");
                 caches.keys().then(cacheNames => {
@@ -417,9 +423,11 @@ if (logoutBtn) {
                 });
             }
 
-            // Redirect to cloud-hosted login page
-            console.log("Redirecting to cloud login");
-            window.location.assign("https://g4mechanger.github.io/BeeMazing-Y1/login.html");
+            // Redirect to cloud-hosted login page with cache-busting query
+            const cacheBust = Date.now();
+            const loginUrl = `https://g4mechanger.github.io/BeeMazing-Y1/login.html?cb=${cacheBust}`;
+            console.log("Attempting redirect to:", loginUrl);
+            window.location.assign(loginUrl);
         } catch (err) {
             console.error("❌ Failed to logout:", err);
             // Clear data and redirect even if server call fails
@@ -428,8 +436,26 @@ if (logoutBtn) {
             localStorage.removeItem("currentAdminEmail");
             localStorage.removeItem("userData");
             localStorage.removeItem("adminPassword");
-            console.log("Redirecting to cloud login after error");
-            window.location.assign("https://g4mechanger.github.io/BeeMazing-Y1/login.html");
+            // Unregister service workers and clear caches
+            if ('serviceWorker' in navigator) {
+                console.log("Unregistering service workers after error");
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(reg => reg.unregister());
+                });
+            }
+            if ('caches' in window) {
+                console.log("Clearing service worker caches after error");
+                caches.keys().then(cacheNames => {
+                    cacheNames.forEach(cacheName => {
+                        caches.delete(cacheName);
+                    });
+                });
+            }
+            // Redirect with cache-busting query
+            const cacheBust = Date.now();
+            const loginUrl = `https://g4mechanger.github.io/BeeMazing-Y1/login.html?cb=${cacheBust}`;
+            console.log("Attempting redirect to after error:", loginUrl);
+            window.location.assign(loginUrl);
         }
     });
 }
