@@ -288,7 +288,7 @@
       <!-- Replace with your logo URL or remove if not needed -->
       <img src="https://i.postimg.cc/x1fDPQPX/pngtree-honey-bee-logo-design-vector-png-image-12507314-removebg-preview.png" alt="BeeMazing Logo">
     </div>
-    <h2 id="formTitle">Register - z6</h2>
+    <h2 id="formTitle">Register - z7</h2>
     <form id="authForm">
       <div class="input-group email">
         <input type="email" id="email" placeholder="Email" required />
@@ -320,40 +320,40 @@
     }
 
     form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const endpoint = isRegistering ? "/register" : "/login";
+  e.preventDefault();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const endpoint = isRegistering ? "/register" : "/login";
 
-      try {
-        const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        });
-
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-          message.style.color = "#4CAF50";
-          message.textContent = isRegistering ? "✅ Registered successfully!" : "✅ Logged in!";
-
-          // Store admin info in localStorage
-          localStorage.setItem("isAdmin", "true");
-          localStorage.setItem("currentAdminEmail", email);
-
-          setTimeout(() => {
-            window.location.href = "login.html";
-          }, 1000);
-        } else {
-          message.style.color = "#D32F2F";
-          message.textContent = "❌ " + (data.message || "Something went wrong");
-        }
-      } catch (err) {
-        message.style.color = "#D32F2F";
-        message.textContent = "❌ Error connecting to server";
-      }
+  try {
+    const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      message.style.color = "#4CAF50";
+      message.textContent = isRegistering ? "✅ Registered successfully! Redirecting to login..." : "✅ Logged in!";
+
+      // Store admin info in localStorage
+      localStorage.setItem("isAdmin", "true");
+      localStorage.setItem("currentAdminEmail", email);
+
+      setTimeout(() => {
+        window.location.href = "login.html"; // Redirect to login.html
+      }, 1000);
+    } else {
+      message.style.color = "#D32F2F";
+      message.textContent = "❌ " + (data.message || "Something went wrong");
+    }
+  } catch (err) {
+    message.style.color = "#D32F2F";
+    message.textContent = "❌ Error connecting to server";
+  }
+});
   </script>
 </body>
 </html>

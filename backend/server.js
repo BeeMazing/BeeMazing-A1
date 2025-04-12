@@ -50,59 +50,55 @@ app.post('/login', async (req, res) => {
 
 // login.html
 
-app.post("/set-admin-password", async (req, res) => {
-  const { password } = req.body;
+// ✅ SET ADMIN PASSWORD
+app.post('/set-admin-password', async (req, res) => {
+  const { email, password } = req.body;
 
-  if (!password) return res.status(400).json({ success: false, message: "Missing password" });
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: "Missing email or password" });
+  }
 
   try {
     const db = await connectDB();
-    const config = db.collection("config");
+    const admins = db.collection('admins');
 
-    // Prevent overwriting an existing password
-    const existing = await config.findOne({ key: "adminPassword" });
-    if (existing) {
-      return res.status(400).json({ success: false, message: "Admin password already set" });
-    }
+    await admins.updateOne(
+      { email },
+      { $set: { adminPassword: password } },
+      { upsert: true }
+    );
 
-    await config.insertOne({ key: "adminPassword", value: password });
-    res.json({ success: true });
+    res.json({ success: true, message: "Admin password set successfully" });
   } catch (err) {
     console.error("🔥 Error in /set-admin-password:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: "Failed to set admin password" });
   }
 });
 
+// ✅ VERIFY ADMIN PASSWORD
+app.post('/verify-admin-password', async (req, res) => {
+  const { email, password } = req.body;
 
-
-
-app.post("/admin-login", async (req, res) => {
-  const { password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: "Missing email or password" });
+  }
 
   try {
     const db = await connectDB();
-    const config = db.collection("config");
+    const admins = db.collection('admins');
 
-    const entry = await config.findOne({ key: "adminPassword" });
+    const admin = await admins.findOne({ email });
 
-    if (password === "__check__") {
-      if (!entry) return res.status(401).json({ success: false });
-      return res.json({ success: true }); // Password exists
-    }
-
-    if (!entry || entry.value !== password) {
+    if (!admin || admin.adminPassword !== password) {
       return res.status(401).json({ success: false, message: "Invalid admin password" });
     }
 
-    res.json({ success: true, message: "Admin login successful" });
+    res.json({ success: true, message: "Admin password verified" });
   } catch (err) {
-    console.error("🔥 Error in /admin-login:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("🔥 Error in /verify-admin-password:", err);
+    res.status(500).json({ success: false, message: "Failed to verify admin password" });
   }
 });
-
-
-
 
 // login.html
 
