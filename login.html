@@ -218,8 +218,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Clear localStorage except for currentAdminEmail if set via URL
-  localStorage.removeItem("isAdmin");
-  localStorage.removeItem("userData");
   localStorage.removeItem("adminPassword");
   // Note: currentAdminEmail is preserved if set above
 
