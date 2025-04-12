@@ -205,10 +205,11 @@
 </div>
 
 
+
 <script>
-  // Immediately hide the "Set Admin Password" button to prevent flash
+  // Immediately hide the "Set Parent Password" button to prevent flash
   document.getElementById("setPasswordBtn").style.display = "none";
-  
+
   document.addEventListener("DOMContentLoaded", () => {
     const setPasswordBtn = document.getElementById("setPasswordBtn");
     const adminBtn = document.getElementById("adminBtn");
@@ -217,7 +218,7 @@
     const submitPasswordBtn = document.getElementById("submitPasswordBtn");
     const adminPasswordInput = document.getElementById("adminPasswordInput");
     const passwordError = document.getElementById("passwordError");
-  
+
     const adminModal = document.getElementById("adminModal");
     const modalTitle = document.getElementById("modalTitle");
     const setPasswordSection = document.getElementById("setPasswordSection");
@@ -233,31 +234,30 @@
     const confirmNewPasswordInput = document.getElementById("confirmNewPasswordInput");
     const saveChangePasswordBtn = document.getElementById("saveChangePasswordBtn");
     const modalError = document.getElementById("modalError");
-  
+
     const targetPage = "mobile/1-Home/home.html";
-  
+
     // Retrieve current admin email from localStorage (set during registration)
     const adminEmail = localStorage.getItem("currentAdminEmail");
-  
+
     // Check if admin password exists in MongoDB
     if (adminEmail) {
-      fetch(`https://beemazing.onrender.com/verify-admin-password`, {
+      fetch(`https://beemazing.onrender.com/check-admin-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: adminEmail, password: "" }), // Empty password to check existence
+        body: JSON.stringify({ email: adminEmail }),
       })
         .then(res => res.json())
         .then(data => {
           setPasswordBtn.style.display = "block";
-          // Check if admin document exists and has a password
-          if (!data.success && data.message !== "Invalid Parent password") {
+          if (data.success && data.hasPassword) {
+            // Password exists
+            setPasswordBtn.textContent = "Change Parent Password";
+            modalTitle.textContent = "Change Parent Password";
+          } else {
             // No password set
             setPasswordBtn.textContent = "Set Parent Password";
             modalTitle.textContent = "Set Parent Password";
-          } else {
-            // Password exists (either success or "Invalid admin password" means document exists)
-            setPasswordBtn.textContent = "Change Parent Password";
-            modalTitle.textContent = "Change Parent Password";
           }
         })
         .catch(() => {
@@ -272,7 +272,7 @@
       setPasswordBtn.textContent = "Set Parent Password";
       modalTitle.textContent = "Set Parent Password";
     }
-  
+
     // Show modal to set/change admin password
     setPasswordBtn.addEventListener("click", () => {
       adminModal.classList.add("show");
@@ -294,27 +294,27 @@
         currentPasswordInput.focus();
       }
     });
-  
+
     // Save initial admin password
     saveSetPasswordBtn.addEventListener("click", async () => {
       const password = setPasswordInput.value.trim();
       const confirmPassword = confirmSetPasswordInput.value.trim();
-  
+
       if (!adminEmail) {
         modalError.textContent = "No admin email found. Please register first.";
         return;
       }
-  
+
       if (!password || !confirmPassword) {
         modalError.textContent = "Please fill in both password fields.";
         return;
       }
-  
+
       if (password !== confirmPassword) {
         modalError.textContent = "Passwords do not match.";
         return;
       }
-  
+
       try {
         const res = await fetch(`https://beemazing.onrender.com/set-admin-password`, {
           method: "POST",
@@ -334,21 +334,21 @@
         modalError.textContent = "Error connecting to server.";
       }
     });
-  
+
     // Verify current password for change
     verifyPasswordBtn.addEventListener("click", async () => {
       const currentPassword = currentPasswordInput.value.trim();
-  
+
       if (!adminEmail) {
         modalError.textContent = "No admin email found. Please register first.";
         return;
       }
-  
+
       if (!currentPassword) {
         modalError.textContent = "Please enter the current password.";
         return;
       }
-  
+
       try {
         const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
           method: "POST",
@@ -368,28 +368,28 @@
         modalError.textContent = "Error connecting to server.";
       }
     });
-  
+
     // Save new admin password for change
     saveChangePasswordBtn.addEventListener("click", async () => {
       const newPassword = newPasswordInput.value.trim();
       const confirmPassword = confirmNewPasswordInput.value.trim();
       const currentPassword = currentPasswordInput.value.trim();
-  
+
       if (!adminEmail) {
         modalError.textContent = "No admin email found. Please register first.";
         return;
       }
-  
+
       if (!newPassword || !confirmPassword) {
         modalError.textContent = "Please fill in both new password fields.";
         return;
       }
-  
+
       if (newPassword !== confirmPassword) {
         modalError.textContent = "New passwords do not match.";
         return;
       }
-  
+
       try {
         const res = await fetch(`https://beemazing.onrender.com/change-admin-password`, {
           method: "POST",
@@ -407,14 +407,14 @@
         modalError.textContent = "Error connecting to server.";
       }
     });
-  
+
     // Close modal if clicked outside
     adminModal.addEventListener("click", (e) => {
       if (e.target === adminModal) {
         adminModal.classList.remove("show");
       }
     });
-  
+
     // Admin login
     adminBtn.addEventListener("click", () => {
       if (!adminEmail) {
@@ -424,7 +424,7 @@
       passwordPrompt.style.display = "flex";
       adminPasswordInput.focus();
     });
-  
+
     submitPasswordBtn.addEventListener("click", async () => {
       const enteredPassword = adminPasswordInput.value.trim();
       if (!adminEmail) {
@@ -451,7 +451,7 @@
         passwordError.textContent = "Error connecting to server.";
       }
     });
-  
+
     // User login
     userBtn.addEventListener("click", () => {
       localStorage.setItem("isAdmin", "false");
@@ -463,7 +463,10 @@
       }, 1000);
     });
   });
-  </script>
+</script>
+
+
+
 
 </body>
 </html>

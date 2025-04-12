@@ -84,8 +84,12 @@ app.post('/set-admin-password', async (req, res) => {
 app.post('/verify-admin-password', async (req, res) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ success: false, message: "Missing email or password" });
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Missing email" });
+  }
+
+  if (password === undefined || password === null) {
+    return res.status(400).json({ success: false, message: "Missing password" });
   }
 
   try {
@@ -94,7 +98,11 @@ app.post('/verify-admin-password', async (req, res) => {
 
     const admin = await admins.findOne({ email });
 
-    if (!admin || admin.adminPassword !== password) {
+    if (!admin || !admin.adminPassword) {
+      return res.status(401).json({ success: false, message: "No admin password set" });
+    }
+
+    if (admin.adminPassword !== password) {
       return res.status(401).json({ success: false, message: "Invalid admin password" });
     }
 
@@ -102,6 +110,32 @@ app.post('/verify-admin-password', async (req, res) => {
   } catch (err) {
     console.error("🔥 Error in /verify-admin-password:", err);
     res.status(500).json({ success: false, message: "Failed to verify admin password" });
+  }
+});
+
+
+// ✅ CHECK ADMIN PASSWORD EXISTENCE
+app.post('/check-admin-password', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Missing email" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection('admins');
+
+    const admin = await admins.findOne({ email });
+
+    if (!admin || !admin.adminPassword) {
+      return res.json({ success: false, hasPassword: false, message: "No admin password set" });
+    }
+
+    res.json({ success: true, hasPassword: true, message: "Admin password exists" });
+  } catch (err) {
+    console.error("🔥 Error in /check-admin-password:", err);
+    res.status(500).json({ success: false, message: "Failed to check admin password" });
   }
 });
 
@@ -804,18 +838,6 @@ app.get("/api/custom-chests", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch custom chests" });
   }
 });
-
-
-
-
-
-
-
-
-
-// ✅ Save reward history for an admin luckychest.html
-
-
 
 
 
