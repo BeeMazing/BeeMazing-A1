@@ -48,7 +48,7 @@ app.post('/login', async (req, res) => {
 
 
 
-// login.html
+// login.html //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ✅ SET ADMIN PASSWORD
 app.post('/set-admin-password', async (req, res) => {
@@ -173,10 +173,10 @@ app.post('/change-admin-password', async (req, res) => {
 
 
 
-// login.html
+// login.html ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-
+// home.html ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ✅ GET ALL REGISTERED USERS (Not user-added ones)
 app.get('/users', async (req, res) => {
@@ -275,6 +275,41 @@ app.delete("/delete-user", async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to delete user" });
   }
 });
+
+
+
+
+// ✅ Save updated user permissions for an admin
+app.post("/save-permissions", async (req, res) => {
+  const { adminEmail, permissions } = req.body;
+
+  if (!adminEmail || !permissions) {
+    return res.status(400).json({ success: false, message: "Missing adminEmail or permissions" });
+  }
+
+  try {
+    const db = await connectDB();
+    const adminUsers = db.collection("adminUsers");
+
+    await adminUsers.updateOne(
+      { email: adminEmail },
+      { $set: { permissions } },
+      { upsert: true }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("🔥 Error saving permissions:", err);
+    res.status(500).json({ success: false, message: "Failed to save permissions" });
+  }
+});
+
+
+
+
+
+
+// home.html ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ✅ GET ALL TASKS FOR ADMIN (used in users.html)
 app.get('/get-tasks', async (req, res) => {

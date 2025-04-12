@@ -413,17 +413,38 @@ function showPermissionModal(username) {
 }
 
 
-savePermissionBtn.addEventListener("click", () => {
+savePermissionBtn.addEventListener("click", async () => {
     const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
     if (!allUserData[currentAdmin].permissions) {
       allUserData[currentAdmin].permissions = {};
     }
+  
     if (selectedUserForPermission) {
       allUserData[currentAdmin].permissions[selectedUserForPermission] = permissionSelect.value;
       localStorage.setItem("userData", JSON.stringify(allUserData));
+  
+      // 🔥 Save to server
+      try {
+        const res = await fetch("https://beemazing.onrender.com/save-permissions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            adminEmail: currentAdmin,
+            permissions: allUserData[currentAdmin].permissions
+          })
+        });
+        const result = await res.json();
+        if (!result.success) {
+          console.warn("❌ Failed to save permissions to cloud");
+        }
+      } catch (err) {
+        console.error("Error saving permissions to server:", err);
+      }
     }
+  
     permissionModal.classList.remove("show");
   });
+  
   
 
 permissionModal.addEventListener("click", (e) => {

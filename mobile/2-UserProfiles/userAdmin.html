@@ -1,0 +1,1896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeeMazing Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary-color: #FFC107;
+    --secondary-color: #212121;
+    --accent-color: #FFFFFF;
+    --light-bg: #1E1F26; /* dark background */
+    --text-color: #FFFFFF; /* white text */
+            --danger-color: #D32F2F;
+            --modal-bg: rgba(33, 33, 33, 0.7);
+            --header-height: 68px;
+            --footer-height: 70px;
+            --border-dark: #444754; /* 👈 Add this if not already present */
+            --card-bg: #2A2B32;
+        }
+        body {
+            font-family: 'Poppins', Arial, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+        }
+        .header {
+    background: linear-gradient(135deg, var(--primary-color), #FFB300);
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: var(--header-height);
+    z-index: 100;
+}
+
+.title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--secondary-color);
+    letter-spacing: 1px;
+}
+
+
+.content {
+    position: absolute;
+    top: 0;
+    bottom: var(--footer-height);
+    width: 100%;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: var(--light-bg); /* <-- Add this */
+    background-image: url('data:image/svg+xml,%3Csvg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"%3E%3Ccircle cx="20" cy="20" r="2" fill="%23FFC107" fill-opacity="0.1"/%3E%3C/svg%3E');
+    background-repeat: repeat;
+    bottom: var(--footer-height);
+}
+
+        .profile-card {
+            background: var(--card-bg); /* dark card background like task items */
+            border: 2px solid var(--border-dark); /* dark border like tasks */
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            transition: transform 0.3s ease;
+        }
+        .profile-card:hover {
+            transform: translateY(-10px);
+        }
+        .profile-card h1 {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--accent-color); /* white */
+            margin-bottom: 15px;
+        }
+        .profile-card p {
+            font-size: 18px;
+            color: var(--accent-color); /* white */
+            margin-bottom: 20px;
+        }
+        .reward-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        #sellButton {
+            background: var(--secondary-color);
+            color: var(--accent-color);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 20px;
+            transition: background-color 0.3s ease;
+        }
+        #sellButton:hover {
+            background: #424242;
+        }
+        .task-list {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        .task-item {
+    background: #2A2B32; /* match tasks.html dark card background */
+    color: var(--text-color); /* ensure text is white */
+    padding: 16px;
+    border: 2px solid var(--border-dark);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.task-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 8px rgba(255, 193, 7, 0.3); /* subtle yellow glow */
+}
+        .finished-btn {
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .finished-btn:hover {
+            background: #FFD54F;
+        }
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        .footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    background: var(--secondary-color);
+    padding: 10px 0;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    height: var(--footer-height);
+}
+
+.footer a {
+    text-decoration: none;
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.3s ease;
+}
+
+.footer a:hover {
+    transform: scale(1.1);
+}
+
+.footer-icon img {
+    width: 40px;
+    height: 40px;
+    filter: invert(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.footer a.active img {
+    filter: invert(77%) sepia(88%) saturate(900%) hue-rotate(0deg)
+        brightness(100%) contrast(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+}
+
+.footer-icon span {
+    font-size: 12px;
+    margin-top: 5px;
+    font-weight: 600;
+}
+
+.footer a.active span {
+    color: var(--primary-color);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .modal-content, .sell-modal-content {
+            background: #2A2B32; /* match task card background */
+            color: var(--accent-color); /* white text */
+            padding: 25px;
+            border-radius: 15px;
+            width: 85%;
+            max-width: 400px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            border: 2px solid var(--primary-color);
+        }
+        .modal-content strong, .sell-modal-content strong {
+            color: var(--accent-color); /* white */
+            font-weight: 600;
+        }
+        .sell-modal-content input {
+            padding: 12px;
+            font-size: 16px;
+            width: 100%;
+            margin: 15px 0;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+        }
+        .sell-modal-content button {
+            background: var(--secondary-color);
+            color: var(--accent-color);
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+        .sell-modal-content button:hover {
+            background: #424242;
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        .honey-drop {
+            position: fixed;
+            width: 15px;
+            height: 20px;
+            background: radial-gradient(circle, #FFB300 30%, var(--primary-color) 70%);
+            border-radius: 50% 50% 70% 70%;
+            animation: rain 1.5s linear forwards;
+            z-index: 1001;
+            pointer-events: none;
+        }
+        @keyframes rain {
+            0% { transform: translateY(-20vh); opacity: 1; }
+            100% { transform: translateY(120vh); opacity: 0.5; }
+        }
+        .reward-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: 600;
+            color: var(--primary-color);
+            text-shadow: 0 0 10px rgba(255, 193, 7, 0.8);
+            animation: floatUp 2s ease-out forwards;
+            z-index: 1002;
+            pointer-events: none;
+        }
+        @keyframes floatUp {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            20% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            80% { transform: translate(-50%, -70%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -90%) scale(0.8); opacity: 0; }
+        }
+        .pulse {
+            animation: pulse 1s ease-in-out;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        @media (max-width: 480px) {
+            .profile-card {
+                max-width: 100%;
+                padding: 15px;
+            }
+            .reward-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            #sellButton {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+
+
+
+
+
+
+
+
+
+        .date-header {
+    background: var(--secondary-color);
+    position: fixed; /* <--- change from sticky to fixed */
+    top: 0;
+    width: 100%;
+    z-index: 50;
+    padding: 5px 0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+.month-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4px 0;
+    font-weight: bold;
+    font-size: 18px;
+    color: var(--accent-color); /* white text */
+}
+.month-nav button {
+    background: var(--secondary-color); /* dark background */
+    border: none;
+    color: var(--accent-color);         /* white text */
+    padding: 4px 10px;
+    font-size: 16px;
+    border-radius: 8px;
+    margin: 0 8px;
+    cursor: pointer;
+}
+
+
+.month-nav button:hover {
+    background: var(--primary-color);  /* yellow on hover */
+    color: var(--secondary-color);     /* black text */
+}
+
+.day-scroll-wrapper {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    background: transparent;
+    padding: 6px 0;
+}
+.day-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 6px 10px;
+    scroll-behavior: smooth;
+}
+.day-scroll::-webkit-scrollbar {
+    display: none;
+}
+.day {
+    min-width: 38px;
+    height: 38px;
+    line-height: 38px;
+    text-align: center;
+    border-radius: 50%;
+    background: var(--secondary-color); /* dark bubble */
+    color: var(--accent-color);         /* white text */
+    font-weight: bold;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.day:hover {
+    background: #FFF3CD;
+}
+.day.selected {
+    background: var(--primary-color);
+    color: var(--secondary-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.scroll-btn {
+    background: var(--secondary-color);
+    border: none;
+    color: var(--accent-color);             /* White arrows */
+    font-size: 20px;
+    font-weight: bold;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 10px;
+    margin: 0 5px;
+}
+
+@media (max-width: 600px) {
+    .footer-icon img {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+
+
+
+
+
+
+
+
+.lucky-chest-card {
+  background: var(--card-bg);
+  border: 2px solid var(--border-dark);
+  border-radius: 12px;
+  padding: 15px 20px;
+  margin-top: 10px;
+  display: flex;
+  gap: 20px; /* increased spacing between image and text */
+  align-items: center;
+  justify-content: flex-start;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.lucky-chest-card img {
+  width: 100px; /* increased from 80px */
+  height: 100px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 12px;
+}
+
+.lucky-chest-card .info {
+  flex: 1;
+  padding-left: 10px; /* 👈 helps shift content slightly right */
+}
+
+.lucky-chest-card .info h4 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  color: var(--primary-color);
+}
+
+.lucky-chest-card .info p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-color);
+}
+
+.lucky-chest-progress {
+  font-weight: bold;
+  color: var(--text-color);
+  margin-top: 6px;
+}
+
+.lucky-chest-card:hover img {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+
+
+.lucky-chest-card.locked img {
+    opacity: 0.8;
+    filter: grayscale(50%);
+}
+
+
+
+.pulse {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.flash-effect {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: white;
+    opacity: 0;
+    animation: flashBang 0.5s ease-out;
+    z-index: 3000;
+}
+
+@keyframes flashBang {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    70% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.reward-reveal {
+    animation: rewardAppear 0.8s ease-out;
+    text-align: center;
+    padding-top: 20px;
+}
+
+.reward-image {
+    width: 90px;
+    height: 90px;
+    margin-bottom: 12px;
+    animation: rewardPulse 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 12px var(--primary-color));
+}
+
+.reward-title {
+    font-size: 26px;
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 10px;
+    animation: floatText 1s ease-out;
+}
+
+.reward-description {
+    font-size: 16px;
+    color: var(--accent-color);
+    margin-bottom: 20px;
+    animation: floatText 1.2s ease-out;
+}
+
+.claim-button {
+    background: var(--primary-color);
+    color: var(--secondary-color);
+    border: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.claim-button:hover {
+    background-color: #ffd54f;
+}
+
+@keyframes rewardAppear {
+    0% { transform: scale(0.6); opacity: 0; }
+    60% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); }
+}
+
+@keyframes rewardPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+@keyframes floatText {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+
+
+
+
+.reward-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 10, 10, 0.9); /* Almost black */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2001; /* on top of the flash */
+  animation: fadeInOverlay 0.4s ease-out;
+}
+
+@keyframes fadeInOverlay {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@keyframes chestZoomIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
+
+
+
+
+#chestVideoOverlay video {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 20px;
+  box-shadow: 0 0 30px rgba(255, 193, 7, 0.6);
+  background: #1a1a1a;
+  display: block;
+  animation: chestZoomIn 0.4s ease-out;
+}
+
+
+
+
+
+
+#changePasswordBtn {
+    background: var(--primary-color);
+    color: var(--secondary-color);
+    border: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: inline-block;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+#changePasswordBtn:hover {
+    background-color: #FFD54F;
+}
+
+
+
+
+#newAdminPassword {
+    padding: 16px;
+    font-size: 20px;
+    width: 100%;
+    margin-top: 18px;
+    margin-bottom: 22px;
+    border-radius: 10px;
+    border: 2px solid var(--primary-color);
+    background-color: var(--card-bg);
+    color: var(--text-color);
+}
+
+
+
+
+
+
+
+#confirmChangePasswordBtn {
+    background: var(--secondary-color);
+    color: var(--accent-color);
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 10px;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.3s ease;
+}
+
+#confirmChangePasswordBtn:hover {
+    background: #424242;
+}
+
+
+
+.modal-content {
+    animation: zoomIn 0.3s ease-out;
+}
+
+@keyframes zoomIn {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+
+    </style>
+</head>
+<body>
+
+    <div class="date-header">
+        <div class="month-nav">
+            <button id="prevMonth">&lt;</button>
+            <span id="monthLabel">Loading...</span>
+            <button id="nextMonth">&gt;</button>
+        </div>
+        <div class="day-scroll-wrapper">
+            <button class="scroll-btn" id="scrollLeft">&lt;</button>
+            <div class="day-scroll" id="dayScrollContainer"></div>
+            <button class="scroll-btn" id="scrollRight">&gt;</button>
+        </div>
+    </div>
+    
+
+    <div class="content">
+        <div class="profile-card">
+
+            <button id="changePasswordBtn" class="change-password-btn" style="display: none; margin-bottom: 20px;">
+                Change Admin Password
+            </button>
+
+            <div class="modal" id="changePasswordModal" style="display: none;">
+                <div class="modal-content">
+                  <h3>Change Admin Password</h3>
+                  <input type="password" id="newAdminPassword" placeholder="Enter new password" />
+                  <button id="confirmChangePasswordBtn">Update Password</button>
+                </div>
+              </div>
+
+              
+            <h1 id="profileName">Bee Name</h1>
+            <p>Welcome to the hive of Admin <span id="userName"></span>.</p>
+
+                   <!-- 🎁 Lucky Chest Section -->
+<div class="lucky-chests-section">
+    <h3 style="margin-top: 30px; color: var(--primary-color);">🕋 Lucky Chests</h3>
+    <div id="luckyChestContainer"></div>
+  </div>
+
+  
+            <div class="reward-container">
+                <p><strong>Honey:</strong> <span id="rewardAmount">0</span> 🍯</p>
+                <button id="sellButton">Sell Honey</button>
+            </div>
+            <h3>Assigned Tasks:</h3>
+            <div id="userTasks" class="task-list">
+                <!-- Tasks will be displayed here -->
+            </div>
+        </div>
+
+     
+    </div>
+
+
+    <div class="footer">
+        <a id="homeFooterLink" class="footer-icon" href="/BeeMazing-Y1/mobile/1-Home/home.html" aria-label="Home">
+
+            <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
+            <span>Home</span>
+        </a>
+        <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
+            <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
+            <span>Profile</span>
+        </a>
+        <a href="#" id="marketButton" class="footer-icon" aria-label="Market">
+            <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
+            <span>Market</span>
+        </a>
+        <a href="#" id="rewardsButton" class="footer-icon" aria-label="Rewards">
+            <img src="/BeeMazing-Y1/mobile/1-Home/RewardsBtn.png" alt="Rewards" />
+            <span>Rewards</span>
+        </a>
+    </div>
+    
+    
+
+    <div id="sellModal" class="modal" style="display:none;">
+        <div class="sell-modal-content">
+            <strong>Enter honey to sell:</strong><br>
+            <input type="number" id="sellAmount" placeholder="Enter amount" />
+            <button id="confirmSell">Sell</button>
+        </div>
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const urlParams = new URLSearchParams(window.location.search);
+          let adminEmail = urlParams.get('admin') || localStorage.getItem("currentAdminEmail");
+          const userName = urlParams.get('user');
+          const addPoints = Number(urlParams.get('addPoints')) || 0;
+        
+          if (adminEmail && adminEmail !== "null") {
+            localStorage.setItem("currentAdminEmail", adminEmail);
+            const homeLink = document.getElementById("homeFooterLink");
+            if (homeLink) {
+              homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+            }
+          }
+        
+          if (userName && adminEmail) {
+            document.getElementById('profileName').textContent = userName;
+            document.getElementById('userName').textContent = userName;
+            document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+            document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+            document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+        
+            loadUserTasks(userName);
+            loadUserReward(userName);
+            loadLuckyChests(userName);
+        
+            if (addPoints > 0) {
+              setTimeout(async () => {
+                await updateUserReward(userName, addPoints);
+                triggerHoneyRain(addPoints);
+                loadUserReward(userName);
+              }, 500);
+            }
+          } else {
+            document.getElementById('userTasks').innerHTML = "<p>Error: Missing user or admin email. Please log in again.</p>";
+          }
+        
+          document.querySelectorAll('.footer a').forEach(link => {
+            const currentPath = window.location.pathname.replace(/\/$/, '');
+            const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
+            if (currentPath === linkPath) {
+              link.classList.add('active');
+            } else {
+              link.classList.remove('active');
+            }
+          });
+        
+          adjustContentTop();
+          generateScrollableDates();
+          showAdminControlsIfNeeded();
+        });
+        
+        async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
+          const userTasksDiv = document.getElementById("userTasks");
+          userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
+        
+          const adminEmail = localStorage.getItem("currentAdminEmail");
+          let tasks = [];
+        
+          try {
+            const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
+            tasks = data.tasks || [];
+          } catch (err) {
+            console.error("Failed to fetch tasks from server:", err);
+            userTasksDiv.innerHTML = "<p>Failed to load tasks. Please try again later.</p>";
+            return;
+          }
+        
+          function parseLocalDate(dateStr) {
+            const [year, month, day] = dateStr.split("-").map(Number);
+            return new Date(year, month - 1, day);
+          }
+        
+          const userTasks = tasks.filter(task => {
+            if (!task.users?.includes(userName)) return false;
+        
+            const dateRange = task.date.split(" to ");
+            const startDateStr = dateRange[0];
+            const startDate = parseLocalDate(startDateStr);
+            const endDateStr = dateRange[1] || "3000-01-01";
+            const endDate = parseLocalDate(endDateStr);
+            const currentDate = parseLocalDate(selectedDate);
+        
+            if (currentDate < startDate || currentDate > endDate) return false;
+        
+            if (task.repeat === "Daily" && task.timesPerDay > 1) return true;
+        
+            if (task.repeat === "Daily" && task.timesPerDay === 1) {
+              const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+              const userOrder = [...task.users];
+              const currentIndex = diffDays % userOrder.length;
+              const currentTurn = userOrder[currentIndex];
+              return currentTurn === userName;
+            }
+        
+            const currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+            return currentTurn === userName;
+          });
+        
+          if (userTasks.length === 0) {
+            userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
+          } else {
+            userTasksDiv.innerHTML = "";
+            const today = new Date().toLocaleDateString("sv-SE");
+            const isToday = selectedDate === today;
+        
+            userTasks.forEach(task => {
+              const taskDiv = document.createElement("div");
+              taskDiv.className = "task-item";
+        
+              const dateRange = task.date.split(" to ");
+              const startDateStr = dateRange[0];
+              const startDate = parseLocalDate(startDateStr);
+              const currentDate = parseLocalDate(selectedDate);
+              let currentTurn;
+        
+              let requiredTimes = 1;
+              if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+              if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+              if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+        
+              let completedRaw = task.completions?.[selectedDate] || [];
+              let completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
+              let completedTimes = completedUsers.length;
+        
+              if (task.repeat === "Daily" && task.timesPerDay > 1) {
+                const userOrder = [...task.users];
+                const totalRequiredCompletions = task.timesPerDay;
+                const completionIndex = completedTimes % userOrder.length;
+                currentTurn = userOrder[completionIndex];
+              } else if (task.repeat === "Daily" && task.timesPerDay === 1) {
+                const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+                const userOrder = [...task.users];
+                const currentIndex = diffDays % userOrder.length;
+                currentTurn = userOrder[currentIndex];
+              } else {
+                currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+              }
+        
+              let progressText = completedTimes >= requiredTimes
+                ? `<span style="color: green; font-weight: bold;">Completed</span>`
+                : `${completedTimes}/${requiredTimes}`;
+        
+              const showTurn = completedTimes < requiredTimes;
+              const turnText = showTurn ? `Turn: ${currentTurn}<br>` : '';
+        
+              taskDiv.innerHTML = `
+                <strong>${task.title}</strong><br>
+                ${turnText}
+                Honey: ${task.reward || "0"} 🍯<br>
+                Progress: ${progressText}
+              `;
+        
+              const canFinish = isToday && currentTurn === userName && completedTimes < requiredTimes;
+        
+              if (canFinish) {
+                const finishedButton = document.createElement("button");
+                finishedButton.textContent = "Finish Task";
+                finishedButton.className = "finished-btn";
+                finishedButton.onclick = (e) => {
+                  e.stopPropagation();
+                  finishTask(userName, task, selectedDate);
+                };
+                taskDiv.appendChild(finishedButton);
+              } else if (completedTimes < requiredTimes && completedUsers.includes(userName) && currentTurn !== userName) {
+                const completedText = document.createElement("div");
+                completedText.style.color = "green";
+                completedText.style.fontWeight = "bold";
+                completedText.style.marginTop = "10px";
+                completedText.textContent = "Completed";
+                taskDiv.appendChild(completedText);
+              }
+        
+              taskDiv.addEventListener("click", () => showTaskDetails(task));
+              userTasksDiv.appendChild(taskDiv);
+            });
+          }
+        }
+        
+        async function loadUserReward(userName) {
+          const adminEmail = localStorage.getItem("currentAdminEmail");
+          try {
+            const response = await fetch(`https://beemazing.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Failed to fetch rewards");
+            const rewards = data.rewards || {};
+            const userReward = rewards[userName] || 0;
+            document.getElementById("rewardAmount").textContent = userReward;
+          } catch (err) {
+            console.error("Error loading user reward:", err);
+            document.getElementById("rewardAmount").textContent = "Error";
+          }
+        }
+        
+        async function updateUserReward(userName, amount) {
+          const adminEmail = localStorage.getItem("currentAdminEmail");
+          try {
+            const response = await fetch("https://beemazing.onrender.com/api/rewards", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ adminEmail, user: userName, amount })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Failed to update rewards");
+          } catch (err) {
+            console.error("Error updating user reward:", err);
+            throw err;
+          }
+        }
+        
+        async function sellReward(userName, amount) {
+          const adminEmail = localStorage.getItem("currentAdminEmail");
+          try {
+            const response = await fetch(`https://beemazing.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Failed to fetch rewards");
+            const rewards = data.rewards || {};
+            const userReward = rewards[userName] || 0;
+        
+            if (userReward >= amount) {
+              await fetch("https://beemazing.onrender.com/api/rewards", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ adminEmail, user: userName, amount: -amount })
+              });
+              loadUserReward(userName);
+            } else {
+              alert("Not enough honey!");
+            }
+          } catch (err) {
+            console.error("Error selling reward:", err);
+            alert("Failed to sell honey. Please try again.");
+          }
+        }
+        
+        document.getElementById('sellButton').addEventListener('click', () => {
+          document.getElementById('sellModal').style.display = 'flex';
+        });
+        
+        document.getElementById('sellModal').addEventListener('click', (e) => {
+          if (e.target === document.getElementById('sellModal')) {
+            document.getElementById('sellModal').style.display = 'none';
+          }
+        });
+        
+        document.getElementById('confirmSell').addEventListener('click', () => {
+          const sellAmount = Number(document.getElementById('sellAmount').value);
+          const urlParams = new URLSearchParams(window.location.search);
+          const userName = urlParams.get('user');
+          if (sellAmount > 0) {
+            sellReward(userName, sellAmount);
+            document.getElementById('sellModal').style.display = 'none';
+          } else {
+            alert("Please enter a valid amount.");
+          }
+        });
+        
+        async function saveTaskHistory(userName, task) {
+          const adminEmail = localStorage.getItem("currentAdminEmail");
+          const now = new Date();
+          const month = now.toLocaleString("default", { month: "long" });
+          const date = now.getDate();
+          const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          const dateString = now.toLocaleDateString();
+        
+          try {
+            const response = await fetch(`https://beemazing.onrender.com/api/history?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Failed to fetch history");
+            const history = data.history || {};
+        
+            if (!history[month]) history[month] = {};
+            if (!history[month][date]) history[month][date] = [];
+            history[month][date].push({
+              title: task.title,
+              user: userName,
+              timestamp: `${dateString} at ${time}`,
+            });
+        
+            await fetch("https://beemazing.onrender.com/api/history", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ adminEmail, history })
+            });
+          } catch (err) {
+            console.error("Error saving task history:", err);
+          }
+        }
+        
+        function triggerHoneyRain(rewardAmount) {
+          for (let i = 0; i < 50; i++) {
+            const drop = document.createElement("div");
+            drop.className = "honey-drop";
+            drop.style.left = `${Math.random() * 100}vw`;
+            drop.style.animationDelay = `${Math.random() * 0.5}s`;
+            document.body.appendChild(drop);
+            setTimeout(() => drop.remove(), 2000);
+          }
+          const popup = document.createElement("div");
+          popup.className = "reward-popup";
+          popup.textContent = `+${rewardAmount} 🍯`;
+          document.body.appendChild(popup);
+          setTimeout(() => {
+            const rewardElement = document.getElementById("rewardAmount");
+            rewardElement.classList.add("pulse");
+            setTimeout(() => {
+              rewardElement.classList.remove("pulse");
+              popup.remove();
+            }, 1000);
+          }, 1000);
+        }
+        
+        function showTaskDetails(task) {
+          const selectedDate = document.querySelector(".day.selected")?.dataset.date;
+          if (!selectedDate) return;
+        
+          function parseLocalDate(dateStr) {
+            const [year, month, day] = dateStr.split("-").map(Number);
+            return new Date(year, month - 1, day);
+          }
+        
+          const dateRange = task.date.split(" to ");
+          const startDateStr = dateRange[0];
+          const startDate = parseLocalDate(startDateStr);
+          const currentDate = parseLocalDate(selectedDate);
+          const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+          const userOrder = [...task.users];
+          let currentUser;
+          let nextTurn = [];
+        
+          const isDailyMoreThanOnce = task.repeat === "Daily" && task.timesPerDay > 1;
+        
+          const completedRaw = task.completions?.[selectedDate] || [];
+          const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
+        
+          let requiredTimes = 1;
+          if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+          if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+          if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+        
+          if (isDailyMoreThanOnce) {
+            const totalRequiredCompletions = task.timesPerDay;
+            const completionIndex = completedUsers.length % userOrder.length;
+            currentUser = userOrder[completionIndex];
+            let index = completionIndex;
+            for (let i = 1; i < userOrder.length; i++) {
+              index = (completionIndex + i) % userOrder.length;
+              nextTurn.push(userOrder[index]);
+            }
+          } else {
+            let currentIndex;
+            if (task.repeat === "Daily" && task.timesPerDay === 1) {
+              currentIndex = diffDays % userOrder.length;
+            } else {
+              const storedTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+              currentIndex = userOrder.indexOf(storedTurn);
+            }
+            currentUser = userOrder[currentIndex];
+            let index = currentIndex;
+            for (let i = 1; i < task.users.length; i++) {
+              index = (currentIndex + i) % task.users.length;
+              nextTurn.push(userOrder[index]);
+            }
+          }
+        
+          let taskDetails = "";
+          if (task.title) taskDetails += `<strong>Title:</strong> ${task.title}<br>`;
+          if (task.notes) taskDetails += `<strong>Notes:</strong> ${task.notes}<br>`;
+          if (task.room) taskDetails += `<strong>Room:</strong> ${task.room}<br>`;
+          if (task.repeat) {
+            taskDetails += `<strong>Frequency:</strong> ${task.repeat}`;
+            if (task.repeat === "Daily" && task.timesPerDay)
+              taskDetails += ` - ${task.timesPerDay} time(s) per day`;
+            if (task.repeat === "Weekly" && task.timesPerWeek)
+              taskDetails += ` - ${task.timesPerWeek} time(s) per week`;
+            if (task.repeat === "Monthly" && task.timesPerMonth)
+              taskDetails += ` - ${task.timesPerMonth} time(s) per month`;
+            taskDetails += "<br>";
+          }
+          if (task.settings) taskDetails += `<strong>Settings:</strong> ${task.settings}<br>`;
+          if (task.date) taskDetails += `<strong>Date:</strong> ${task.date}<br>`;
+          if (task.reminder) taskDetails += `<strong>Reminder:</strong> Yes<br>`;
+          if (task.users?.length) taskDetails += `<strong>Users:</strong> ${task.users.join(", ")}<br>`;
+          if (task.reward && task.reward !== "0") taskDetails += `<strong>Reward:</strong> ${task.reward} 🍯<br>`;
+        
+          if (completedUsers.length < requiredTimes) {
+            taskDetails += `<strong>Current Turn:</strong> ${currentUser}<br>`;
+            taskDetails += `<strong>Next:</strong> ${nextTurn.length > 0 ? nextTurn.join(" → ") : "-"}<br>`;
+          }
+        
+          if (completedUsers.length > 0) {
+            taskDetails += `
+              <div style="margin-top: 8px;">
+                <strong>Completed by:</strong> ${completedUsers.join(", ")}
+                <button id="editCompletionBtn" style="margin-left: 10px; padding: 4px 8px; font-size: 12px; border-radius: 6px; background: var(--primary-color); color: var(--secondary-color); border: none; cursor: pointer;">Edit</button>
+              </div>
+            `;
+          }
+        
+          taskDetails += `
+            <br>
+            <button id="editTurnBtn" style="
+              padding: 6px 10px;
+              background: var(--primary-color);
+              color: var(--secondary-color);
+              font-weight: bold;
+              border-radius: 6px;
+              border: none;
+              cursor: pointer;">Edit Turn Order</button>
+               
+            <button id="editTaskBtn" style="
+              padding: 6px 10px;
+              background: var(--secondary-color);
+              color: var(--accent-color);
+              font-weight: bold;
+              border-radius: 6px;
+              border: none;
+              cursor: pointer;">Edit Task</button>
+          `;
+        
+          const urlParams = new URLSearchParams(window.location.search);
+          const currentUserName = urlParams.get('user');
+          const today = new Date().toLocaleDateString("sv-SE");
+          const isToday = selectedDate === today;
+          const canFinish = isToday && currentUser === currentUserName && completedUsers.length < requiredTimes;
+        
+          if (canFinish) {
+            taskDetails += `
+            <br><br>
+            <button id="finishTaskBtn" style="
+              padding: 8px 14px;
+              background: green;
+              color: white;
+              font-weight: bold;
+              border-radius: 6px;
+              border: none;
+              cursor: pointer;">Finish Task ✅</button>
+            `;
+          }
+        
+          const modal = document.createElement("div");
+          modal.className = "task-modal";
+          modal.innerHTML = `<div class="modal-content">${taskDetails}</div>`;
+          document.body.appendChild(modal);
+        
+          modal.addEventListener("click", (e) => {
+            if (e.target.classList.contains("task-modal")) {
+              modal.remove();
+            }
+          });
+        
+          document.getElementById("editTurnBtn").addEventListener("click", () => {
+            modal.remove();
+            showEditTurnModal(task);
+          });
+        
+          document.getElementById("editTaskBtn").addEventListener("click", () => {
+            localStorage.setItem("familyApp_editTask", JSON.stringify(task));
+            localStorage.setItem("familyApp_editTask_index", task.title + "-" + task.date);
+            window.location.href = "/BeeMazing-Y1/mobile/3-Tasks/addtasks.html";
+          });
+        
+          const editBtn = document.getElementById("editCompletionBtn");
+          if (editBtn) {
+            editBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              modal.remove();
+              showEditCompletionModal(task, completedUsers, selectedDate, modal);
+            });
+          }
+        
+          const finishBtn = document.getElementById("finishTaskBtn");
+          if (finishBtn) {
+            finishBtn.addEventListener("click", async () => {
+              await finishTask(currentUserName, task, selectedDate);
+              modal.remove();
+            });
+          }
+        }
+        
+        let monthOffset = 0;
+        
+        function generateScrollableDates(monthOffset = 0) {
+          const container = document.getElementById("dayScrollContainer");
+          container.innerHTML = "";
+        
+          const today = new Date();
+          today.setDate(1);
+          today.setMonth(today.getMonth() + monthOffset);
+        
+          const currentMonth = today.getMonth();
+          const currentYear = today.getFullYear();
+          const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        
+          document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
+            month: 'long',
+            year: 'numeric'
+          });
+        
+          const urlParams = new URLSearchParams(window.location.search);
+          const userName = urlParams.get('user');
+        
+          for (let i = 1; i <= daysInMonth; i++) {
+            const date = new Date(currentYear, currentMonth, i);
+            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        
+            const btn = document.createElement("div");
+            btn.className = "day";
+            btn.textContent = i;
+            btn.dataset.date = dateStr;
+        
+            btn.addEventListener("click", () => {
+              document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+              btn.classList.add("selected");
+              loadUserTasks(userName, dateStr);
+            });
+        
+            const now = new Date();
+            const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            if (dateStr === nowStr) {
+              btn.classList.add("selected");
+              loadUserTasks(userName, dateStr);
+            }
+        
+            container.appendChild(btn);
+          }
+        
+          setTimeout(() => {
+            const selected = document.querySelector(".day.selected");
+            if (selected) {
+              selected.scrollIntoView({ behavior: "smooth", inline: "center" });
+            }
+          }, 50);
+        }
+        
+        document.getElementById("prevMonth").addEventListener("click", () => {
+          monthOffset--;
+          generateScrollableDates(monthOffset);
+        });
+        
+        document.getElementById("nextMonth").addEventListener("click", () => {
+          monthOffset++;
+          generateScrollableDates(monthOffset);
+        });
+        
+        document.getElementById("scrollLeft").addEventListener("click", () => {
+          document.getElementById("dayScrollContainer").scrollBy({
+            left: -200,
+            behavior: "smooth"
+          });
+        });
+        
+        document.getElementById("scrollRight").addEventListener("click", () => {
+          document.getElementById("dayScrollContainer").scrollBy({
+            left: 200,
+            behavior: "smooth"
+          });
+        });
+        
+        async function updateLuckyChestProgress(userName, earnedHoney) {
+          const adminEmail = localStorage.getItem("currentAdminEmail");
+          try {
+            const response = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
+            const allChests = data.luckyChests || {};
+            const userChests = allChests[userName] || [];
+        
+            let updated = false;
+        
+            userChests.forEach(chest => {
+              if (chest.progress < chest.requiredPoints) {
+                chest.progress += earnedHoney;
+                if (chest.progress > chest.requiredPoints) {
+                  chest.progress = chest.requiredPoints;
+                }
+                updated = true;
+              }
+            });
+        
+            if (updated) {
+              allChests[userName] = userChests;
+              await fetch("https://beemazing.onrender.com/api/lucky-chests", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ adminEmail, luckyChests: allChests })
+              });
+              loadLuckyChests(userName);
+            }
+          } catch (err) {
+            console.error("Error updating lucky chest progress:", err);
+          }
+        }
+        
+        async function loadLuckyChests(userName) {
+          const container = document.getElementById("luckyChestContainer");
+          const adminEmail = localStorage.getItem("currentAdminEmail");
+          try {
+            const response = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
+            const allChests = data.luckyChests || {};
+            const userChests = allChests[userName] || [];
+        
+            container.innerHTML = "";
+        
+            if (userChests.length === 0) {
+              container.innerHTML = "<p>No Lucky Chests assigned yet.</p>";
+              return;
+            }
+        
+            userChests.forEach((chest, index) => {
+              const isUnlocked = chest.progress >= chest.requiredPoints;
+              const chestImage = isUnlocked
+                ? '/BeeMazing-Y1/mobile/4-Market/LuckyChest/ChestReady.gif'
+                : '/BeeMazing-Y1/mobile/4-Market/LuckyChest/ChestPending.png';
+        
+              const card = document.createElement("div");
+              card.className = "lucky-chest-card";
+              if (!isUnlocked) {
+                card.classList.add("locked");
+              }
+        
+              card.innerHTML = `
+                <img src="${chestImage}" alt="Chest" class="${isUnlocked ? 'pulse' : ''}">
+                <div class="info">
+                  <p>${isUnlocked ? 'CONGRATULATIONS! Chest unlocked!' : 'Unlock to reveal your reward!'}</p>
+                  <div class="lucky-chest-progress">
+                    Progress: ${chest.progress || 0} / ${chest.requiredPoints} 🍯
+                  </div>
+                </div>
+              `;
+        
+              if (isUnlocked) {
+                card.style.cursor = "pointer";
+                card.addEventListener("click", () => revealLuckyChestReward(userName, chest, index, true));
+              }
+        
+              container.appendChild(card);
+            });
+          } catch (err) {
+            console.error("Error loading lucky chests:", err);
+            container.innerHTML = "<p>Failed to load lucky chests.</p>";
+          }
+        }
+        
+        function revealLuckyChestReward(userName, chest, chestIndex, isUserAction = false) {
+          const overlay = document.getElementById("chestVideoOverlay");
+          const video = document.getElementById("chestVideo");
+          const audio = document.getElementById("chestUnlockSound");
+        
+          overlay.style.display = "flex";
+          video.currentTime = 0;
+          video.play();
+        
+          audio.currentTime = 0;
+          audio.play().catch(error => console.log("Audio playback failed:", error));
+        
+          let skipped = false;
+        
+          const skipVideo = () => {
+            if (skipped) return;
+            skipped = true;
+            video.pause();
+            audio.pause();
+            overlay.style.display = "none";
+            showLuckyChestRewardOverlay(userName, chest, chestIndex);
+          };
+        
+          overlay.addEventListener("click", skipVideo, { once: true });
+          video.onended = () => skipVideo();
+          video.onerror = () => skipVideo();
+        }
+        
+        async function showLuckyChestRewardOverlay(userName, chest, chestIndex) {
+          const adminEmail = localStorage.getItem("currentAdminEmail");
+          const flash = document.createElement("div");
+          flash.className = "flash-effect";
+          document.body.appendChild(flash);
+        
+          setTimeout(async () => {
+            flash.remove();
+        
+            const allChestsResponse = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const allChestsData = await allChestsResponse.json();
+            if (!allChestsResponse.ok) throw new Error(allChestsData.error || "Failed to fetch lucky chests");
+            const allChests = allChestsData.luckyChests || {};
+            const userChests = allChests[userName] || [];
+            const currentChest = userChests[chestIndex];
+        
+            let rewardToShow;
+            const hasHoney = currentChest.honey !== undefined && currentChest.honey > 0;
+            const hasCustomReward = !currentChest.onlyHoney;
+        
+            if (hasCustomReward) {
+              rewardToShow = {
+                name: currentChest.name,
+                quote: currentChest.quote || "",
+                effect: currentChest.effect || "",
+                image: currentChest.image || "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png"
+              };
+            } else if (hasHoney) {
+              rewardToShow = {
+                name: `${currentChest.honey} Honey`,
+                quote: currentChest.quote || "",
+                effect: currentChest.effect || "",
+                image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png"
+              };
+            }
+        
+            const rewardOverlay = document.createElement("div");
+            rewardOverlay.className = "reward-overlay";
+        
+            const modal = document.createElement("div");
+            modal.className = "modal-content reward-reveal";
+            modal.innerHTML = `
+              <img src="${rewardToShow.image}" alt="Reward" class="reward-image">
+              <h2 class="reward-title">${rewardToShow.name}</h2>
+              <p class="reward-description">
+                ${rewardToShow.quote ? `<em>"${rewardToShow.quote}"</em><br>` : ""}
+                ${rewardToShow.effect || "You unlocked a surprise!"}
+              </p>
+              <button class="claim-button">Claim Reward</button>
+            `;
+        
+            rewardOverlay.addEventListener("click", (e) => {
+              if (!e.target.closest(".modal-content")) rewardOverlay.remove();
+            });
+        
+            rewardOverlay.appendChild(modal);
+            document.body.appendChild(rewardOverlay);
+        
+            modal.querySelector(".claim-button").addEventListener("click", () => {
+              claimLuckyChest(userName, chestIndex);
+              rewardOverlay.remove();
+            });
+          }, 500);
+        }
+        
+        async function claimLuckyChest(userName, chestIndex) {
+          const adminEmail = localStorage.getItem("currentAdminEmail");
+          try {
+            const allChestsResponse = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const allChestsData = await allChestsResponse.json();
+            if (!allChestsResponse.ok) throw new Error(allChestsData.error || "Failed to fetch lucky chests");
+            const allChests = allChestsData.luckyChests || {};
+        
+            const rewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const rewardsData = await rewardsResponse.json();
+            if (!rewardsResponse.ok) throw new Error(rewardsData.error || "Failed to fetch user rewards");
+            const rewards = rewardsData.userRewards || {};
+        
+            const userChests = allChests[userName] || [];
+            const claimedChest = userChests[chestIndex];
+            if (!claimedChest) return;
+        
+            if (!rewards[userName]) rewards[userName] = [];
+            const now = new Date();
+        
+            const hasHoney = claimedChest.honey !== undefined && claimedChest.honey > 0;
+            const hasCustomReward = !claimedChest.onlyHoney;
+            const isHoneyOnlyName = !hasHoney && claimedChest.name.endsWith(" Honey");
+        
+            if (claimedChest.type === "dice") {
+              rewards[userName].push({
+                name: claimedChest.name,
+                type: "dice",
+                outcomes: claimedChest.outcomes,
+                date: now.toLocaleDateString(),
+                claimedAt: now.toISOString()
+              });
+              userChests.splice(chestIndex, 1);
+            } else if (hasCustomReward && !isHoneyOnlyName) {
+              rewards[userName].push({
+                name: claimedChest.name,
+                quote: claimedChest.quote || "",
+                effect: claimedChest.effect || "",
+                image: claimedChest.image || "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png",
+                date: now.toLocaleDateString(),
+                claimedAt: now.toISOString(),
+                type: "normal"
+              });
+        
+              if (hasHoney) {
+                const updatedChest = {
+                  name: `${claimedChest.honey} Honey`,
+                  quote: claimedChest.quote || "",
+                  effect: claimedChest.effect || "",
+                  honey: claimedChest.honey,
+                  image: claimedChest.image || "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png",
+                  requiredPoints: claimedChest.requiredPoints,
+                  progress: claimedChest.progress,
+                  onlyHoney: true
+                };
+                userChests[chestIndex] = updatedChest;
+              } else {
+                userChests.splice(chestIndex, 1);
+              }
+            } else if (hasHoney || isHoneyOnlyName) {
+              const honeyAmount = hasHoney ? claimedChest.honey : parseInt(claimedChest.name.split(" ")[0]);
+              rewards[userName].push({
+                name: `${honeyAmount} Honey`,
+                type: "Honey",
+                amount: honeyAmount,
+                date: now.toLocaleDateString()
+              });
+              await updateUserReward(userName, honeyAmount);
+              userChests.splice(chestIndex, 1);
+            }
+        
+            allChests[userName] = userChests;
+            await fetch("https://beemazing.onrender.com/api/lucky-chests", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ adminEmail, luckyChests: allChests })
+            });
+        
+            await fetch("https://beemazing.onrender.com/api/user-rewards", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ adminEmail, userRewards: rewards })
+            });
+        
+            loadLuckyChests(userName);
+          } catch (err) {
+            console.error("Error claiming lucky chest:", err);
+            alert("Failed to claim reward. Please try again.");
+          }
+        }
+        
+        function adjustContentTop() {
+          const header = document.querySelector(".date-header");
+          const content = document.querySelector(".content");
+          if (header && content) {
+            const headerHeight = header.getBoundingClientRect().height;
+            content.style.top = `${headerHeight}px`;
+          }
+        }
+        
+        function showAdminControlsIfNeeded() {
+          const urlParams = new URLSearchParams(window.location.search);
+          const currentUser = urlParams.get('user');
+          const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+          const currentAdmin = localStorage.getItem("currentAdminEmail");
+          const userPermissions = allUserData[currentAdmin]?.permissions || {};
+          const isUserAdmin = userPermissions[currentUser] === "Admin";
+          const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+          const changePasswordBtn = document.getElementById("changePasswordBtn");
+        
+          if (isUserAdmin && isLoggedInAsAdmin) {
+            changePasswordBtn.style.display = "inline-block";
+            if (!changePasswordBtn.dataset.listenersAdded) {
+              changePasswordBtn.addEventListener("click", () => {
+                const modal = document.getElementById("changePasswordModal");
+                modal.style.display = "flex";
+                document.getElementById("newAdminPassword").value = "";
+                document.getElementById("newAdminPassword").focus();
+              });
+        
+              document.getElementById("confirmChangePasswordBtn").addEventListener("click", () => {
+                const newPassword = document.getElementById("newAdminPassword").value.trim();
+                if (newPassword.length < 4) {
+                  alert("Password must be at least 4 characters.");
+                  return;
+                }
+                localStorage.setItem("adminPassword", newPassword);
+                alert("Admin password updated!");
+                document.getElementById("changePasswordModal").style.display = "none";
+              });
+        
+              document.getElementById("changePasswordModal").addEventListener("click", (e) => {
+                if (e.target.id === "changePasswordModal") {
+                  document.getElementById("changePasswordModal").style.display = "none";
+                }
+              });
+        
+              changePasswordBtn.dataset.listenersAdded = "true";
+            }
+          } else {
+            if (changePasswordBtn) changePasswordBtn.style.display = "none";
+          }
+        }
+        
+        async function finishTask(currentUser, task, selectedDate) {
+          const today = selectedDate || new Date().toISOString().split("T")[0];
+          const adminEmail = localStorage.getItem("currentAdminEmail");
+        
+          const popup = document.createElement("div");
+          popup.className = "reward-popup";
+          popup.textContent = `Finished! ✅ +${task.reward || 0} 🍯`;
+          document.body.appendChild(popup);
+          setTimeout(() => popup.remove(), 2000);
+        
+          try {
+            const tasksResponse = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const tasksData = await tasksResponse.json();
+            if (!tasksResponse.ok) throw new Error(tasksData.error || "Failed to fetch tasks");
+            const tasks = tasksData.tasks || [];
+            const taskIndex = tasks.findIndex(t => t.title === task.title && t.date === task.date);
+            if (taskIndex === -1) return;
+        
+            if (!tasks[taskIndex].completions) tasks[taskIndex].completions = {};
+            if (!tasks[taskIndex].completions[today]) tasks[taskIndex].completions[today] = [];
+        
+            let requiredTimes = 1;
+            if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+            if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+            if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+        
+            const completedUsers = tasks[taskIndex].completions[today] || [];
+            const totalCompletions = completedUsers.length;
+            if (totalCompletions >= requiredTimes) return;
+        
+            tasks[taskIndex].completions[today].push(currentUser);
+        
+            if (task.repeat === "Daily" && task.timesPerDay > 1) {
+              const totalCompletions = tasks[taskIndex].completions[today].length;
+              if (totalCompletions < requiredTimes) {
+                const userOrder = [...task.users];
+                const currentIndex = userOrder.indexOf(currentUser);
+                const nextUser = userOrder[(currentIndex + 1) % userOrder.length];
+                tasks[taskIndex].tempTurnReplacement = {
+                  original: tasks[taskIndex].tempTurnReplacement?.original || currentUser,
+                  replacement: nextUser,
+                };
+              } else {
+                delete tasks[taskIndex].tempTurnReplacement;
+              }
+            } else if (task.repeat === "Daily" && task.timesPerDay === 1) {
+              delete tasks[taskIndex].tempTurnReplacement;
+            } else {
+              const totalCompletions = tasks[taskIndex].completions[today].length;
+              if (totalCompletions < requiredTimes) {
+                const currentIndex = task.users.indexOf(currentUser);
+                const nextUser = task.users[(currentIndex + 1) % task.users.length];
+                tasks[taskIndex].tempTurnReplacement = {
+                  original: tasks[taskIndex].tempTurnReplacement?.original || currentUser,
+                  replacement: nextUser,
+                };
+              } else {
+                delete tasks[taskIndex].tempTurnReplacement;
+              }
+            }
+        
+            await fetch("https://beemazing.onrender.com/api/tasks", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ adminEmail, task: tasks[taskIndex] })
+            });
+        
+            const rewardAmount = Number(task.reward || 0);
+            await updateUserReward(currentUser, rewardAmount);
+            await saveTaskHistory(currentUser, task);
+            updateLuckyChestProgress(currentUser, rewardAmount);
+            triggerHoneyRain(rewardAmount);
+        
+            setTimeout(() => loadUserReward(currentUser), 100);
+            await loadUserTasks(currentUser, selectedDate);
+          } catch (err) {
+            console.error("Error finishing task:", err);
+            alert("Failed to finish task. Please try again.");
+          }
+        }
+        
+        window.addEventListener("resize", adjustContentTop);
+        window.addEventListener("load", adjustContentTop);
+        window.addEventListener("storage", (event) => {
+          if (event.key === "isAdmin" || event.key === "userPermissions") {
+            showAdminControlsIfNeeded();
+          }
+        });
+        </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="chestVideoOverlay" style="
+    display:none;
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(10, 10, 10, 0.959); /* darkened more */
+backdrop-filter: blur(5px);
+    z-index:2000;
+    justify-content:center;
+    align-items:center;
+    overflow: hidden;
+">
+<video id="chestVideo"
+autoplay
+muted
+playsinline
+style="
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(255, 193, 7, 0.6);
+    background: #1a1a1a;
+    display: block;
+">
+<source src="/BeeMazing-Y1/mobile/4-Market/LuckyChest/Chest_fixed.mp4" type="video/mp4" />
+Your browser does not support the video tag.
+</video>
+<audio id="chestUnlockSound" preload="auto">
+    <source src="/BeeMazing-Y1/mobile/4-Market/LuckyChest/ChestUnlock.mp3" type="audio/mp3" />
+    Your browser does not support the audio element.
+</audio>
+
+
+</div>
+
+
+</body>
+</html>
