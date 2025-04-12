@@ -108,7 +108,34 @@ app.post('/verify-admin-password', async (req, res) => {
 
 
 
+// ✅ CHANGE ADMIN PASSWORD
+app.post('/change-admin-password', async (req, res) => {
+  const { email, currentPassword, newPassword } = req.body;
 
+  if (!email || !currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, message: "Missing email, current password, or new password" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection('admins');
+
+    const admin = await admins.findOne({ email });
+    if (!admin || admin.adminPassword !== currentPassword) {
+      return res.status(401).json({ success: false, message: "Incorrect current password" });
+    }
+
+    await admins.updateOne(
+      { email },
+      { $set: { adminPassword: newPassword } }
+    );
+
+    res.json({ success: true, message: "Admin password changed successfully" });
+  } catch (err) {
+    console.error("🔥 Error in /change-admin-password:", err);
+    res.status(500).json({ success: false, message: "Failed to change admin password" });
+  }
+});
 
 
 
