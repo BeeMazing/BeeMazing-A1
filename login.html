@@ -298,9 +298,9 @@ setPasswordBtn.addEventListener("click", () => {
     const data = await res.json();
 
     if (res.ok && data.success) {
-      localStorage.setItem("isAdmin", "true");
-      localStorage.setItem("currentAdminEmail", "admin@beemazing.app"); // Or prompt for email if needed
-      window.location.href = "mobile/1-Home/home.html";
+  localStorage.setItem("isAdmin", "true");
+  localStorage.setItem("currentAdminEmail", "admin@beemazing.app");
+  window.location.href = targetPage; // 👈 same targetPage used by Child
     } else {
       passwordError.textContent = "❌ Incorrect admin password.";
     }
