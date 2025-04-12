@@ -280,21 +280,18 @@ app.delete("/delete-user", async (req, res) => {
 });
 
 
+
 // ✅ LOGOUT
 app.post('/logout', async (req, res) => {
-  const { email } = req.body;
-
-  if (!email) {
-    return res.status(400).json({ success: false, message: "Missing email" });
-  }
+  const { adminEmail } = req.body;
 
   try {
-    // Optionally clear any server-side state (e.g., cached data) in the future
+    // If you implement server-side sessions later, invalidate them here
     // For now, just acknowledge the logout
     res.json({ success: true, message: "Logout successful" });
   } catch (err) {
     console.error("🔥 Error in /logout:", err);
-    res.status(500).json({ success: false, message: "Failed to logout" });
+    res.status(500).json({ success: false, message: "Server error during logout" });
   }
 });
 

@@ -207,71 +207,86 @@
 
 
 <script>
-  // Immediately hide the "Set Parent Password" button to prevent flash
-  document.getElementById("setPasswordBtn").style.display = "none";
+document.getElementById("setPasswordBtn").style.display = "none";
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const setPasswordBtn = document.getElementById("setPasswordBtn");
-    const adminBtn = document.getElementById("adminBtn");
-    const userBtn = document.getElementById("userBtn");
-    const passwordPrompt = document.getElementById("passwordPrompt");
-    const submitPasswordBtn = document.getElementById("submitPasswordBtn");
-    const adminPasswordInput = document.getElementById("adminPasswordInput");
-    const passwordError = document.getElementById("passwordError");
+document.addEventListener("DOMContentLoaded", () => {
+  // Check for admin email in URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const adminFromURL = urlParams.get("admin");
+  if (adminFromURL) {
+    localStorage.setItem("currentAdminEmail", adminFromURL);
+  }
 
-    const adminModal = document.getElementById("adminModal");
-    const modalTitle = document.getElementById("modalTitle");
-    const setPasswordSection = document.getElementById("setPasswordSection");
-    const setPasswordInput = document.getElementById("setPasswordInput");
-    const confirmSetPasswordInput = document.getElementById("confirmSetPasswordInput");
-    const saveSetPasswordBtn = document.getElementById("saveSetPasswordBtn");
-    const changePasswordSection = document.getElementById("changePasswordSection");
-    const currentPasswordSection = document.getElementById("currentPasswordSection");
-    const currentPasswordInput = document.getElementById("currentPasswordInput");
-    const verifyPasswordBtn = document.getElementById("verifyPasswordBtn");
-    const newPasswordSection = document.getElementById("newPasswordSection");
-    const newPasswordInput = document.getElementById("newPasswordInput");
-    const confirmNewPasswordInput = document.getElementById("confirmNewPasswordInput");
-    const saveChangePasswordBtn = document.getElementById("saveChangePasswordBtn");
-    const modalError = document.getElementById("modalError");
+  // Clear localStorage except for currentAdminEmail if set via URL
+  localStorage.removeItem("isAdmin");
+  localStorage.removeItem("userData");
+  localStorage.removeItem("adminPassword");
+  // Note: currentAdminEmail is preserved if set above
 
-    const targetPage = "mobile/1-Home/home.html";
+  const setPasswordBtn = document.getElementById("setPasswordBtn");
+  const adminBtn = document.getElementById("adminBtn");
+  const userBtn = document.getElementById("userBtn");
+  const passwordPrompt = document.getElementById("passwordPrompt");
+  const submitPasswordBtn = document.getElementById("submitPasswordBtn");
+  const adminPasswordInput = document.getElementById("adminPasswordInput");
+  const passwordError = document.getElementById("passwordError");
 
-    // Retrieve current admin email from localStorage (set during registration)
-    const adminEmail = localStorage.getItem("currentAdminEmail");
+  const adminModal = document.getElementById("adminModal");
+  const modalTitle = document.getElementById("modalTitle");
+  const setPasswordSection = document.getElementById("setPasswordSection");
+  const setPasswordInput = document.getElementById("setPasswordInput");
+  const confirmSetPasswordInput = document.getElementById("confirmSetPasswordInput");
+  const saveSetPasswordBtn = document.getElementById("saveSetPasswordBtn");
+  const changePasswordSection = document.getElementById("changePasswordSection");
+  const currentPasswordSection = document.getElementById("currentPasswordSection");
+  const currentPasswordInput = document.getElementById("currentPasswordInput");
+  const verifyPasswordBtn = document.getElementById("verifyPasswordBtn");
+  const newPasswordSection = document.getElementById("newPasswordSection");
+  const newPasswordInput = document.getElementById("newPasswordInput");
+  const confirmNewPasswordInput = document.getElementById("confirmNewPasswordInput");
+  const saveChangePasswordBtn = document.getElementById("saveChangePasswordBtn");
+  const modalError = document.getElementById("modalError");
 
-    // Check if admin password exists in MongoDB
-    if (adminEmail) {
-      fetch(`https://beemazing.onrender.com/check-admin-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: adminEmail }),
-      })
-        .then(res => res.json())
-        .then(data => {
-          setPasswordBtn.style.display = "block";
-          if (data.success && data.hasPassword) {
-            // Password exists
-            setPasswordBtn.textContent = "Change Parent Password";
-            modalTitle.textContent = "Change Parent Password";
-          } else {
-            // No password set
-            setPasswordBtn.textContent = "Set Parent Password";
-            modalTitle.textContent = "Set Parent Password";
-          }
-        })
-        .catch(() => {
-          // Show button on error to allow setting password
-          setPasswordBtn.style.display = "block";
+  const targetPage = "mobile/1-Home/home.html";
+
+  // Retrieve current admin email from localStorage (set during registration or URL)
+  const adminEmail = localStorage.getItem("currentAdminEmail");
+
+  // Check if admin password exists in MongoDB
+  if (adminEmail) {
+    fetch(`https://beemazing.onrender.com/check-admin-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: adminEmail }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        setPasswordBtn.style.display = "block";
+        if (data.success && data.hasPassword) {
+          // Password exists
+          setPasswordBtn.textContent = "Change Parent Password";
+          modalTitle.textContent = "Change Parent Password";
+        } else {
+          // No password set
           setPasswordBtn.textContent = "Set Parent Password";
           modalTitle.textContent = "Set Parent Password";
-        });
-    } else {
-      // Show button if no email (user needs to register)
-      setPasswordBtn.style.display = "block";
-      setPasswordBtn.textContent = "Set Parent Password";
-      modalTitle.textContent = "Set Parent Password";
-    }
+        }
+      })
+      .catch(() => {
+        // Show button on error to allow setting password
+        setPasswordBtn.style.display = "block";
+        setPasswordBtn.textContent = "Set Parent Password";
+        modalTitle.textContent = "Set Parent Password";
+      });
+  } else {
+    // Redirect to registration if no admin email
+    setPasswordBtn.style.display = "block";
+    setPasswordBtn.textContent = "Register";
+    modalTitle.textContent = "Register Admin";
+    setPasswordBtn.addEventListener("click", () => {
+      window.location.href = "/BeeMazing-Y1/register.html"; // Adjust path as needed
+    });
+  }
 
     // Show modal to set/change admin password
     setPasswordBtn.addEventListener("click", () => {
