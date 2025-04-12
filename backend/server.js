@@ -46,6 +46,69 @@ app.post('/login', async (req, res) => {
   res.json({ success: true, message: "Login successful" });
 });
 
+
+
+// login.html
+
+app.post("/set-admin-password", async (req, res) => {
+  const { password } = req.body;
+
+  if (!password) return res.status(400).json({ success: false, message: "Missing password" });
+
+  try {
+    const db = await connectDB();
+    const config = db.collection("config");
+
+    // Prevent overwriting an existing password
+    const existing = await config.findOne({ key: "adminPassword" });
+    if (existing) {
+      return res.status(400).json({ success: false, message: "Admin password already set" });
+    }
+
+    await config.insertOne({ key: "adminPassword", value: password });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("🔥 Error in /set-admin-password:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
+
+
+app.post("/admin-login", async (req, res) => {
+  const { password } = req.body;
+
+  try {
+    const db = await connectDB();
+    const config = db.collection("config");
+
+    const entry = await config.findOne({ key: "adminPassword" });
+
+    if (password === "__check__") {
+      if (!entry) return res.status(401).json({ success: false });
+      return res.json({ success: true }); // Password exists
+    }
+
+    if (!entry || entry.value !== password) {
+      return res.status(401).json({ success: false, message: "Invalid admin password" });
+    }
+
+    res.json({ success: true, message: "Admin login successful" });
+  } catch (err) {
+    console.error("🔥 Error in /admin-login:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
+
+
+// login.html
+
+
+
+
 // ✅ GET ALL REGISTERED USERS (Not user-added ones)
 app.get('/users', async (req, res) => {
   try {

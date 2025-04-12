@@ -205,11 +205,24 @@
 
   const targetPage = "/BeeMazing-Y1/mobile/1-Home/home.html";
 
-  // Hide "Set Admin Password" if one already exists
-  const existingPassword = localStorage.getItem("adminPassword");
-  if (existingPassword) {
-    setPasswordBtn.style.display = "none";
+
+ // Check with the server if the admin password is already set
+fetch("https://beemazing.onrender.com/admin-login", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ password: "__check__" }),
+})
+.then(res => {
+  if (res.status === 401) {
+    setPasswordBtn.style.display = "block"; // Not set yet
+  } else {
+    setPasswordBtn.style.display = "none"; // Already set
   }
+})
+.catch(() => {
+  setPasswordBtn.style.display = "none"; // Hide on error
+});
+
 
   // Show modal to set admin password
   if (!localStorage.getItem("adminPassword")) {
@@ -228,7 +241,28 @@
   savePasswordBtn.addEventListener("click", () => {
     const newPassword = setPasswordInput.value.trim();
     if (newPassword && !localStorage.getItem("adminPassword")) {
-      localStorage.setItem("adminPassword", newPassword);
+  // Send to server to store securely
+fetch("https://beemazing.onrender.com/set-admin-password", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ password: newPassword }),
+})
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      alert("✅ Admin password set successfully!");
+      adminModal.classList.remove("show");
+      setPasswordBtn.style.display = "none";
+    } else {
+      alert("⚠️ " + data.message);
+      adminModal.classList.remove("show");
+    }
+  })
+  .catch(() => {
+    alert("❌ Server error. Try again.");
+    adminModal.classList.remove("show");
+  });
+
       alert("Admin password set successfully!");
       adminModal.classList.remove("show");
       setPasswordBtn.style.display = "none"; // hide button after setting
@@ -251,17 +285,41 @@
     adminPasswordInput.focus();
   });
 
-  submitPasswordBtn.addEventListener("click", () => {
-    const savedPassword = localStorage.getItem("adminPassword");
-    const enteredPassword = adminPasswordInput.value;
+ 
 
-    if (enteredPassword === savedPassword) {
+
+  submitPasswordBtn.addEventListener("click", async () => {
+  const password = adminPasswordInput.value.trim();
+
+  if (!password) {
+    passwordError.textContent = "Please enter the admin password.";
+    return;
+  }
+
+  try {
+    const res = await fetch("https://beemazing.onrender.com/admin-login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
       localStorage.setItem("isAdmin", "true");
-      window.location.href = targetPage;
+      localStorage.setItem("currentAdminEmail", "admin@beemazing.app"); // Or prompt for email if needed
+      window.location.href = "/BeeMazing-Y1/mobile/1-Home/home.html";
     } else {
-      passwordError.textContent = "Incorrect password. Please try again.";
+      passwordError.textContent = "❌ Incorrect admin password.";
     }
-  });
+  } catch (err) {
+    passwordError.textContent = "❌ Server error. Try again.";
+  }
+});
+
+
+
+
 
   // User login
   userBtn.addEventListener("click", () => {
