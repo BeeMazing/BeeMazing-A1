@@ -224,53 +224,45 @@ fetch("https://beemazing.onrender.com/admin-login", {
 });
 
 
-  // Show modal to set admin password
-  if (!localStorage.getItem("adminPassword")) {
-  setPasswordBtn.style.display = "block";
-  setPasswordBtn.addEventListener("click", () => {
-    adminModal.classList.add("show");
-    setPasswordInput.value = "";
-    setPasswordInput.focus();
-  });
-} else {
-  setPasswordBtn.style.display = "none";
-}
+// Always attach click event (visibility is handled by fetch check)
+setPasswordBtn.addEventListener("click", () => {
+  adminModal.classList.add("show");
+  setPasswordInput.value = "";
+  setPasswordInput.focus();
+});
+
 
 
   // Save new admin password (only if it hasn’t been set)
   savePasswordBtn.addEventListener("click", () => {
-    const newPassword = setPasswordInput.value.trim();
-    if (newPassword && !localStorage.getItem("adminPassword")) {
-  // Send to server to store securely
-fetch("https://beemazing.onrender.com/set-admin-password", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ password: newPassword }),
-})
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      alert("✅ Admin password set successfully!");
-      adminModal.classList.remove("show");
-      setPasswordBtn.style.display = "none";
-    } else {
-      alert("⚠️ " + data.message);
-      adminModal.classList.remove("show");
-    }
-  })
-  .catch(() => {
-    alert("❌ Server error. Try again.");
-    adminModal.classList.remove("show");
-  });
+  const newPassword = setPasswordInput.value.trim();
+  if (!newPassword) {
+    alert("Please enter a password.");
+    return;
+  }
 
-      alert("Admin password set successfully!");
+  fetch("https://beemazing.onrender.com/set-admin-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: newPassword }),
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert("✅ Admin password set successfully!");
+        adminModal.classList.remove("show");
+        setPasswordBtn.style.display = "none";
+      } else {
+        alert("⚠️ " + data.message);
+        adminModal.classList.remove("show");
+      }
+    })
+    .catch(() => {
+      alert("❌ Server error. Try again.");
       adminModal.classList.remove("show");
-      setPasswordBtn.style.display = "none"; // hide button after setting
-    } else {
-      alert("Password already set. Use 'Change Admin Password' in your profile.");
-      adminModal.classList.remove("show");
-    }
-  });
+    });
+});
+
 
   // Close modal if clicked outside
   adminModal.addEventListener("click", (e) => {
