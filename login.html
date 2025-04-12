@@ -163,14 +163,14 @@
 </head>
 <body>
 
-  <div class="top-left" id="setPasswordBtn">Set Admin Password</div>
+  <div class="top-left" id="setPasswordBtn">Set Parent Password</div>
 
   <div class="wrapper">
-    <h1>BeeMazing Q25</h1> <!-- whaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-->
+    <h1>BeeMazing</h1> <!-- whaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-->
 
     <div class="button-container">
-      <button class="login-btn" id="adminBtn">Admin</button>
-      <button class="login-btn" id="userBtn">User</button>
+      <button class="login-btn" id="adminBtn">Parent</button>
+      <button class="login-btn" id="userBtn">Child</button>
     </div>
 
     <div id="passwordPrompt">
@@ -203,7 +203,7 @@
   const setPasswordInput = document.getElementById("setPasswordInput");
   const savePasswordBtn = document.getElementById("savePasswordBtn");
 
-  const targetPage = "/BeeMazing-Y1/mobile/1-Home/home.html";
+  const targetPage = "mobile/1-Home/home.html";
 
 
  // Check with the server if the admin password is already set
@@ -300,7 +300,7 @@ setPasswordBtn.addEventListener("click", () => {
     if (res.ok && data.success) {
       localStorage.setItem("isAdmin", "true");
       localStorage.setItem("currentAdminEmail", "admin@beemazing.app"); // Or prompt for email if needed
-      window.location.href = "/BeeMazing-Y1/mobile/1-Home/home.html";
+      window.location.href = "mobile/1-Home/home.html";
     } else {
       passwordError.textContent = "❌ Incorrect admin password.";
     }
