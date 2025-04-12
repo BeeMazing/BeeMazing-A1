@@ -62,6 +62,11 @@ app.post('/set-admin-password', async (req, res) => {
     const db = await connectDB();
     const admins = db.collection('admins');
 
+    const existingAdmin = await admins.findOne({ email });
+    if (existingAdmin && existingAdmin.adminPassword) {
+      return res.status(403).json({ success: false, message: "Admin password already set" });
+    }
+
     await admins.updateOne(
       { email },
       { $set: { adminPassword: password } },
@@ -99,6 +104,13 @@ app.post('/verify-admin-password', async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to verify admin password" });
   }
 });
+
+
+
+
+
+
+
 
 // login.html
 

@@ -163,14 +163,14 @@
 </head>
 <body>
 
-  <div class="top-left" id="setPasswordBtn">Set Admin Password</div>
+  <div class="top-left" id="setPasswordBtn">Set Parent Password</div>
 
   <div class="wrapper">
     <h1>BeeMazing Q25</h1> <!-- whaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-->
 
     <div class="button-container">
-      <button class="login-btn" id="adminBtn">Admin</button>
-      <button class="login-btn" id="userBtn">User</button>
+      <button class="login-btn" id="adminBtn">Parent</button>
+      <button class="login-btn" id="userBtn">Child</button>
     </div>
 
     <div id="passwordPrompt">
@@ -190,6 +190,9 @@
   </div>
 
   <script>
+    // Immediately hide the "Set Admin Password" button to prevent flash
+    document.getElementById("setPasswordBtn").style.display = "none";
+    
     document.addEventListener("DOMContentLoaded", () => {
       const setPasswordBtn = document.getElementById("setPasswordBtn");
       const adminBtn = document.getElementById("adminBtn");
@@ -217,16 +220,17 @@
         })
           .then(res => res.json())
           .then(data => {
-            if (data.success) {
-              setPasswordBtn.style.display = "none"; // Hide if password exists
-            } else {
-              setPasswordBtn.style.display = "block"; // Show if no password
+            if (!data.success) {
+              // Show button only if no password is set
+              setPasswordBtn.style.display = "block";
             }
           })
           .catch(() => {
-            setPasswordBtn.style.display = "block"; // Show on error
+            // Show button on error to allow setting password
+            setPasswordBtn.style.display = "block";
           });
       } else {
+        // Show button if no email (user needs to register)
         setPasswordBtn.style.display = "block";
       }
     
@@ -256,7 +260,7 @@
             if (res.ok && data.success) {
               alert("Admin password set successfully!");
               adminModal.classList.remove("show");
-              setPasswordBtn.style.display = "none";
+              setPasswordBtn.style.display = "none"; // Permanently hide after setting
             } else {
               alert(data.message || "Failed to set admin password.");
             }
