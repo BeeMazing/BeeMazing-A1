@@ -309,6 +309,32 @@ app.post("/save-permissions", async (req, res) => {
 
 
 
+
+// ✅ Get permission of a specific user for a given admin
+app.get("/get-permission", async (req, res) => {
+  const { adminEmail, username } = req.query;
+
+  if (!adminEmail || !username) {
+    return res.status(400).json({ success: false, message: "Missing adminEmail or username" });
+  }
+
+  try {
+    const db = await connectDB();
+    const adminUsers = db.collection("adminUsers");
+
+    const adminDoc = await adminUsers.findOne({ email: adminEmail });
+    const permission = adminDoc?.permissions?.[username] || "User";
+
+    res.json({ success: true, permission });
+  } catch (err) {
+    console.error("🔥 Error in /get-permission:", err);
+    res.status(500).json({ success: false, message: "Failed to get permission" });
+  }
+});
+
+
+
+
 // home.html ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ✅ GET ALL TASKS FOR ADMIN (used in users.html)

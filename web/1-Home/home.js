@@ -200,10 +200,22 @@ alert(`Send this link to the user: ${inviteLink}`);
             }
     
             // Make the entire user item clickable
-            newUserItem.style.cursor = "pointer";
-            newUserItem.addEventListener("click", function () {
-                window.location.href = `${basePath}/2-UserProfiles/users.html?user=${encodeURIComponent(username)}`;
-            });
+            newUserItem.addEventListener("click", async function () {
+                try {
+                  const res = await fetch(`https://beemazing.onrender.com/get-permission?adminEmail=${encodeURIComponent(currentAdmin)}&username=${encodeURIComponent(username)}`);
+                  const data = await res.json();
+                  if (data.success) {
+                    const page = data.permission === "Admin" ? "userAdmin.html" : "users.html";
+                    window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
+                  } else {
+                    alert("Failed to fetch user permission.");
+                  }
+                } catch (err) {
+                  console.error("Error fetching permission:", err);
+                  alert("Error fetching permission from server.");
+                }
+              });
+              
     
             // Append name container
             newUserItem.appendChild(nameContainer);
