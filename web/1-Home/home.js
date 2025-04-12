@@ -9,7 +9,8 @@ if (adminFromURL) {
 
     // Redirect to login if user not logged in
     if (localStorage.getItem("isAdmin") === null) {
-        window.location.href = "/BeeMazing-Y1/login.html";
+        console.log("No isAdmin found, redirecting to cloud login");
+        window.location.assign("https://g4mechanger.github.io/BeeMazing-Y1/login.html");
         return;
     }
 
@@ -383,30 +384,52 @@ document.getElementById("confirmNoBtn").addEventListener("click", () => {
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
+        console.log("Logout button clicked");
         const currentAdmin = localStorage.getItem("currentAdminEmail");
-        
+
         try {
             // Notify server of logout
             if (currentAdmin) {
-                await fetch("https://beemazing.onrender.com/logout", {
+                console.log("Sending logout request for:", currentAdmin);
+                const response = await fetch("https://beemazing.onrender.com/logout", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email: currentAdmin }),
                 });
+                const result = await response.json();
+                console.log("Logout server response:", result);
             }
-            
-            // Clear client-side data
+
+            // Clear all relevant localStorage keys
+            console.log("Clearing localStorage");
             localStorage.removeItem("isAdmin");
             localStorage.removeItem("currentAdminEmail");
-            
+            localStorage.removeItem("userData");
+            localStorage.removeItem("adminPassword");
+
+            // Clear service worker caches
+            if ('caches' in window) {
+                console.log("Clearing service worker caches");
+                caches.keys().then(cacheNames => {
+                    cacheNames.forEach(cacheName => {
+                        caches.delete(cacheName);
+                    });
+                });
+            }
+
             // Redirect to cloud-hosted login page
-            window.location.href = "https://g4mechanger.github.io/BeeMazing-Y1/login.html";
+            console.log("Redirecting to cloud login");
+            window.location.assign("https://g4mechanger.github.io/BeeMazing-Y1/login.html");
         } catch (err) {
             console.error("❌ Failed to logout:", err);
             // Clear data and redirect even if server call fails
+            console.log("Clearing localStorage after error");
             localStorage.removeItem("isAdmin");
             localStorage.removeItem("currentAdminEmail");
-            window.location.href = "https://g4mechanger.github.io/BeeMazing-Y1/login.html";
+            localStorage.removeItem("userData");
+            localStorage.removeItem("adminPassword");
+            console.log("Redirecting to cloud login after error");
+            window.location.assign("https://g4mechanger.github.io/BeeMazing-Y1/login.html");
         }
     });
 }
