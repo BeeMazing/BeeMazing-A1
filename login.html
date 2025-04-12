@@ -163,7 +163,7 @@
 </head>
 <body>
 
-  <div class="top-left" id="setPasswordBtn">Set Parent Password</div>
+  <div class="top-left" id="setPasswordBtn" style="display: none;">Set Admin Password</div>
 
   <div class="wrapper">
     <h1>BeeMazing Q25</h1> <!-- whaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-->
@@ -183,15 +183,22 @@
 <!-- Modal -->
 <div class="modal" id="adminModal">
   <div class="modal-content">
-    <h3 id="modalTitle">Change Admin Password</h3>
-    <div id="currentPasswordSection">
-      <input type="password" id="currentPasswordInput" placeholder="Enter Current Password" />
-      <button class="login-btn" id="verifyPasswordBtn">Verify</button>
+    <h3 id="modalTitle">Set Admin Password</h3>
+    <div id="setPasswordSection">
+      <input type="password" id="setPasswordInput" placeholder="Enter Password" />
+      <input type="password" id="confirmSetPasswordInput" placeholder="Confirm Password" />
+      <button class="login-btn" id="saveSetPasswordBtn">Save</button>
     </div>
-    <div id="newPasswordSection" style="display: none;">
-      <input type="password" id="newPasswordInput" placeholder="Enter New Password" />
-      <input type="password" id="confirmPasswordInput" placeholder="Confirm New Password" />
-      <button class="login-btn" id="savePasswordBtn">Save</button>
+    <div id="changePasswordSection" style="display: none;">
+      <div id="currentPasswordSection">
+        <input type="password" id="currentPasswordInput" placeholder="Enter Current Password" />
+        <button class="login-btn" id="verifyPasswordBtn">Verify</button>
+      </div>
+      <div id="newPasswordSection" style="display: none;">
+        <input type="password" id="newPasswordInput" placeholder="Enter New Password" />
+        <input type="password" id="confirmNewPasswordInput" placeholder="Confirm New Password" />
+        <button class="login-btn" id="saveChangePasswordBtn">Save</button>
+      </div>
     </div>
     <div class="error" id="modalError"></div>
   </div>
@@ -212,13 +219,18 @@
   
     const adminModal = document.getElementById("adminModal");
     const modalTitle = document.getElementById("modalTitle");
+    const setPasswordSection = document.getElementById("setPasswordSection");
+    const setPasswordInput = document.getElementById("setPasswordInput");
+    const confirmSetPasswordInput = document.getElementById("confirmSetPasswordInput");
+    const saveSetPasswordBtn = document.getElementById("saveSetPasswordBtn");
+    const changePasswordSection = document.getElementById("changePasswordSection");
     const currentPasswordSection = document.getElementById("currentPasswordSection");
     const currentPasswordInput = document.getElementById("currentPasswordInput");
     const verifyPasswordBtn = document.getElementById("verifyPasswordBtn");
     const newPasswordSection = document.getElementById("newPasswordSection");
     const newPasswordInput = document.getElementById("newPasswordInput");
-    const confirmPasswordInput = document.getElementById("confirmPasswordInput");
-    const savePasswordBtn = document.getElementById("savePasswordBtn");
+    const confirmNewPasswordInput = document.getElementById("confirmNewPasswordInput");
+    const saveChangePasswordBtn = document.getElementById("saveChangePasswordBtn");
     const modalError = document.getElementById("modalError");
   
     const targetPage = "mobile/1-Home/home.html";
@@ -262,58 +274,104 @@
     // Show modal to set/change admin password
     setPasswordBtn.addEventListener("click", () => {
       adminModal.classList.add("show");
-      currentPasswordSection.style.display = "block";
-      newPasswordSection.style.display = "none";
-      currentPasswordInput.value = "";
-      newPasswordInput.value = "";
-      confirmPasswordInput.value = "";
       modalError.textContent = "";
-      currentPasswordInput.focus();
+      if (setPasswordBtn.textContent === "Set Admin Password") {
+        setPasswordSection.style.display = "block";
+        changePasswordSection.style.display = "none";
+        setPasswordInput.value = "";
+        confirmSetPasswordInput.value = "";
+        setPasswordInput.focus();
+      } else {
+        setPasswordSection.style.display = "none";
+        changePasswordSection.style.display = "block";
+        currentPasswordSection.style.display = "block";
+        newPasswordSection.style.display = "none";
+        currentPasswordInput.value = "";
+        newPasswordInput.value = "";
+        confirmNewPasswordInput.value = "";
+        currentPasswordInput.focus();
+      }
     });
   
-    // Verify current password or skip for initial set
-    verifyPasswordBtn.addEventListener("click", async () => {
+    // Save initial admin password
+    saveSetPasswordBtn.addEventListener("click", async () => {
+      const password = setPasswordInput.value.trim();
+      const confirmPassword = confirmSetPasswordInput.value.trim();
+  
       if (!adminEmail) {
         modalError.textContent = "No admin email found. Please register first.";
         return;
       }
   
-      const currentPassword = currentPasswordInput.value.trim();
-      const isChangeMode = setPasswordBtn.textContent === "Change Admin Password";
+      if (!password || !confirmPassword) {
+        modalError.textContent = "Please fill in both password fields.";
+        return;
+      }
   
-      if (!isChangeMode) {
-        // Initial set: skip current password, go to new password
-        currentPasswordSection.style.display = "none";
-        newPasswordSection.style.display = "block";
-        newPasswordInput.focus();
-      } else {
-        // Change mode: verify current password
-        try {
-          const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: adminEmail, password: currentPassword }),
-          });
-          const data = await res.json();
-          if (res.ok && data.success) {
-            currentPasswordSection.style.display = "none";
-            newPasswordSection.style.display = "block";
-            modalError.textContent = "";
-            newPasswordInput.focus();
-          } else {
-            modalError.textContent = data.message || "Incorrect current password.";
-          }
-        } catch (err) {
-          modalError.textContent = "Error connecting to server.";
+      if (password !== confirmPassword) {
+        modalError.textContent = "Passwords do not match.";
+        return;
+      }
+  
+      try {
+        const res = await fetch(`https://beemazing.onrender.com/set-admin-password`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: adminEmail, password }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert("Admin password set successfully!");
+          adminModal.classList.remove("show");
+          setPasswordBtn.textContent = "Change Admin Password";
+          modalTitle.textContent = "Change Admin Password";
+        } else {
+          modalError.textContent = data.message || "Failed to set admin password.";
         }
+      } catch (err) {
+        modalError.textContent = "Error connecting to server.";
       }
     });
   
-    // Save new admin password
-    savePasswordBtn.addEventListener("click", async () => {
+    // Verify current password for change
+    verifyPasswordBtn.addEventListener("click", async () => {
+      const currentPassword = currentPasswordInput.value.trim();
+  
+      if (!adminEmail) {
+        modalError.textContent = "No admin email found. Please register first.";
+        return;
+      }
+  
+      if (!currentPassword) {
+        modalError.textContent = "Please enter the current password.";
+        return;
+      }
+  
+      try {
+        const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: adminEmail, password: currentPassword }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          currentPasswordSection.style.display = "none";
+          newPasswordSection.style.display = "block";
+          modalError.textContent = "";
+          newPasswordInput.focus();
+        } else {
+          modalError.textContent = data.message || "Incorrect current password.";
+        }
+      } catch (err) {
+        modalError.textContent = "Error connecting to server.";
+      }
+    });
+  
+    // Save new admin password for change
+    saveChangePasswordBtn.addEventListener("click", async () => {
       const newPassword = newPasswordInput.value.trim();
-      const confirmPassword = confirmPasswordInput.value.trim();
-      const isChangeMode = setPasswordBtn.textContent === "Change Admin Password";
+      const confirmPassword = confirmNewPasswordInput.value.trim();
+      const currentPassword = currentPasswordInput.value.trim();
   
       if (!adminEmail) {
         modalError.textContent = "No admin email found. Please register first.";
@@ -321,7 +379,7 @@
       }
   
       if (!newPassword || !confirmPassword) {
-        modalError.textContent = "Please fill in both password fields.";
+        modalError.textContent = "Please fill in both new password fields.";
         return;
       }
   
@@ -331,28 +389,17 @@
       }
   
       try {
-        const endpoint = isChangeMode
-          ? "change-admin-password"
-          : "set-admin-password";
-        const body = isChangeMode
-          ? { email: adminEmail, currentPassword: currentPasswordInput.value.trim(), newPassword }
-          : { email: adminEmail, password: newPassword };
-  
-        const res = await fetch(`https://beemazing.onrender.com/${endpoint}`, {
+        const res = await fetch(`https://beemazing.onrender.com/change-admin-password`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ email: adminEmail, currentPassword, newPassword }),
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          alert(isChangeMode ? "Admin password changed successfully!" : "Admin password set successfully!");
+          alert("Admin password changed successfully!");
           adminModal.classList.remove("show");
-          if (!isChangeMode) {
-            setPasswordBtn.textContent = "Change Admin Password";
-            modalTitle.textContent = "Change Admin Password";
-          }
         } else {
-          modalError.textContent = data.message || `Failed to ${isChangeMode ? "change" : "set"} admin password.`;
+          modalError.textContent = data.message || "Failed to change admin password.";
         }
       } catch (err) {
         modalError.textContent = "Error connecting to server.";
