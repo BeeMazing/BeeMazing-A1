@@ -955,19 +955,41 @@ app.get("/api/admin-tasks", async (req, res) => {
       let completedUsers = task.completions?.[today] || [];
       let completedTimes = completedUsers.length;
 
+
+
       let currentTurn;
-      if (task.repeat === "Daily" && requiredTimes > 1) {
-        const userOrder = [...taskUsers];
-        const completionIndex = completedTimes % userOrder.length;
-        currentTurn = userOrder[completionIndex];
-      } else if (task.repeat === "Daily") {
-        const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-        const userOrder = [...taskUsers];
-        const currentIndex = diffDays % userOrder.length;
-        currentTurn = userOrder[currentIndex];
+      if (task.repeat === "Daily" && task.timesPerDay === 1) {
+          const dateRange = task.date.split(" to ");
+          const startDateStr = dateRange[0];
+          const startDate = parseLocalDate(startDateStr);
+          const currentDate = parseLocalDate(selectedDate);
+          const userOrder = [...task.users];
+      
+          const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+          let currentIndex = diffDays % userOrder.length;
+          let assumedTurn = userOrder[currentIndex];
+      
+          // Check if yesterday's turn missed their task
+          const prevDate = new Date(currentDate);
+          prevDate.setDate(prevDate.getDate() - 1);
+          const prevDateStr = prevDate.toISOString().split("T")[0];
+          const prevDiff = Math.floor((prevDate - startDate) / (1000 * 60 * 60 * 24));
+          const prevIndex = prevDiff % userOrder.length;
+          const prevTurn = userOrder[prevIndex];
+          const prevCompleted = task.completions?.[prevDateStr] || [];
+      
+          if (!prevCompleted.includes(prevTurn)) {
+              currentTurn = prevTurn;
+          } else {
+              currentTurn = assumedTurn;
+          }
       } else {
-        currentTurn = task.tempTurnReplacement?.replacement || task.turn || taskUsers[0];
+          currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
       }
+      
+
+
+
 
       if (completedTimes < requiredTimes) {
         adminTasks.push({
