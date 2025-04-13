@@ -301,70 +301,64 @@ if (selected) scrollDayIntoView(selected);
     };
 
     async function loadTasks() {
-      adminTasksBody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
+  adminTasksBody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
 
-      try {
-        const res = await fetch(`${SERVER_URL}/api/admin-tasks?adminEmail=${adminEmail}`);
-        const data = await res.json();
-        if (!data.success) throw new Error(data.message);
+  try {
+    const res = await fetch(`${SERVER_URL}/api/admin-tasks?adminEmail=${adminEmail}`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
 
-        const tasks = data.tasks;
-        adminTasksBody.innerHTML = "";
-        let hasAny = false;
+    const tasks = data.tasks;
+    adminTasksBody.innerHTML = "";
+    let hasAny = false;
 
-        tasks.forEach(task => {
-          const users = task.users || [];
-          const completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+    tasks.forEach(task => {
+      const users = task.users || [];
+      const completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
 
-          // Check if selectedDate is in task date range
-          const [fromStr, toStr] = (task.date || "").split(" to ");
-          const from = new Date(fromStr);
-          const to = toStr ? new Date(toStr) : new Date(3000, 0, 1);
-          const selected = new Date(selectedDate);
-          if (selected < from || selected > to) return;
+      // Check if selectedDate is in task date range
+      const [fromStr, toStr] = (task.date || "").split(" to ");
+      const from = new Date(fromStr);
+      const to = toStr ? new Date(toStr) : new Date(3000, 0, 1);
+      const selected = new Date(selectedDate);
+      if (selected < from || selected > to) return;
 
-          // Determine currentTurn for the day (rotating logic)
-          let currentIndex = 0;
-          if (task.repeat === "Daily" && task.timesPerDay === 1) {
-            const diff = Math.floor((selected - from) / (1000 * 60 * 60 * 24));
-            currentIndex = diff % users.length;
-          } else {
-            currentIndex = users.indexOf(task.turn || users[0]);
-          }
+      const times = task.timesPerDay || 1;
+      const completedUsers = completions;
 
-          const currentTurn = users[currentIndex];
+      for (let i = 0; i < times; i++) {
+        const userIndex = (users.indexOf(task.turn || users[0]) + i) % users.length;
+        const currentUser = users[userIndex];
+        const isCompleted = completedUsers.includes(currentUser);
 
-          users.forEach(user => {
-            hasAny = true;
-            const isCompleted = completions.includes(user);
-            const isCurrentTurn = user === currentTurn;
-
-            const row = document.createElement("tr");
-            row.innerHTML = `
-              <td>${task.title}</td>
-              <td>${user}</td>
-              <td class="${isCompleted ? 'status-completed' : 'status-pending'}">
-                ${isCompleted ? "Completed" : isCurrentTurn ? "Pending" : "—"}
-              </td>
-              <td>
-                ${isCompleted
-                  ? `<button class="action-btn accept-btn" onclick="handleAction('${task.title}', '${user}', 'accept')">Accept</button>
-                     <button class="action-btn decline-btn" onclick="handleAction('${task.title}', '${user}', 'decline')">Decline</button>`
-                  : "—"}
-              </td>
-            `;
-            adminTasksBody.appendChild(row);
-          });
-        });
-
-        if (!hasAny) {
-          adminTasksBody.innerHTML = "<tr><td colspan='4'>No tasks for this date</td></tr>";
-        }
-      } catch (err) {
-        console.error("Failed to load tasks:", err);
-        adminTasksBody.innerHTML = `<tr><td colspan='4'>Error loading tasks: ${err.message}</td></tr>`;
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${task.title}</td>
+          <td>${currentUser}</td>
+          <td class="${isCompleted ? 'status-completed' : 'status-pending'}">
+            ${isCompleted ? "Completed" : "Pending"}
+          </td>
+          <td>
+            ${isCompleted
+              ? `<button class="action-btn accept-btn" onclick="handleAction('${task.title}', '${currentUser}', 'accept')">Accept</button>
+                 <button class="action-btn decline-btn" onclick="handleAction('${task.title}', '${currentUser}', 'decline')">Decline</button>`
+              : "—"}
+          </td>
+        `;
+        adminTasksBody.appendChild(row);
+        hasAny = true;
       }
+    });
+
+    if (!hasAny) {
+      adminTasksBody.innerHTML = "<tr><td colspan='4'>No tasks for this date</td></tr>";
     }
+  } catch (err) {
+    console.error("Failed to load tasks:", err);
+    adminTasksBody.innerHTML = `<tr><td colspan='4'>Error loading tasks: ${err.message}</td></tr>`;
+  }
+}
+
 
     async function handleAction(title, user, action) {
       try {
