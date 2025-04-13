@@ -579,51 +579,65 @@ async function loadTasksForDate(selectedDate) {
         return;
     }
 
-    visibleTasks.forEach(task => {
+    visibleTasks.forEach((task, index) => {
         const taskDiv = document.createElement("div");
         taskDiv.className = "task-item";
         taskDiv.dataset.taskTitle = task.title;
         taskDiv.dataset.taskDate = task.date;
 
+        // ✅ Define repeatLimit FIRST
         let repeatLimit = 1;
         if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
         if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
         if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
+        let currentTurn;
         const dateRange = task.date.split(" to ");
         const startDate = parseLocalDate(dateRange[0]);
         const currentDate = parseLocalDate(selectedDate);
         const userOrder = [...task.users];
+
         const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+        const defaultIndex = diffDays % userOrder.length;
+        const assumedTurn = userOrder[defaultIndex];
 
-        const today = new Date().toISOString().split("T")[0];
-        const isPastDate = selectedDate < today;
+        const yesterday = new Date(currentDate);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split("T")[0];
+        const yesterdayCompletions = task.completions?.[yesterdayStr] || [];
 
-        const completionsToday = task.completions?.[selectedDate] || [];
-        const completionsCount = {};
-        completionsToday.forEach(u => completionsCount[u] = (completionsCount[u] || 0) + 1);
+        const yesterdayTurnIndex = (diffDays - 1) % userOrder.length;
+        const yesterdayTurn = userOrder[yesterdayTurnIndex];
+        const yesterdayCompletedCount = yesterdayCompletions.filter(u => u === yesterdayTurn).length;
 
-        let currentTurn;
+        const now = new Date().toISOString().split("T")[0];
+        const isPastDate = selectedDate < now;
 
-        if (task.repeat === "Daily" && repeatLimit === 1) {
-            const yesterday = new Date(currentDate);
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toISOString().split("T")[0];
-            const yCompletions = task.completions?.[yesterdayStr] || [];
+        if (isPastDate) {
+            const thatDayCompletions = task.completions?.[selectedDate] || [];
+            const counts = {};
+            thatDayCompletions.forEach(u => counts[u] = (counts[u] || 0) + 1);
 
-            const yIndex = (diffDays - 1 + userOrder.length) % userOrder.length;
-            const yTurn = userOrder[yIndex];
-
-            if (yCompletions.filter(u => u === yTurn).length < 1) {
-                currentTurn = yTurn;
-            } else {
-                currentTurn = userOrder[diffDays % userOrder.length];
+            for (let i = 0; i < userOrder.length; i++) {
+                if ((counts[userOrder[i]] || 0) < repeatLimit) {
+                    currentTurn = userOrder[i];
+                    break;
+                }
             }
+
+            if (!currentTurn) currentTurn = userOrder[0]; // fallback
         } else {
-            currentTurn = userOrder.find(u => (completionsCount[u] || 0) < repeatLimit) || userOrder[0];
+            if (yesterdayCompletedCount < repeatLimit) {
+                currentTurn = yesterdayTurn;
+            } else {
+                currentTurn = assumedTurn;
+            }
         }
 
-        const completedCount = completionsToday.length;
+        // ✅ Completions & display
+        const today = selectedDate;
+        const completedUsers = Array.isArray(task.completions?.[today]) ? task.completions[today] : [];
+        const completedCount = completedUsers.length;
         const isCompleted = completedCount >= repeatLimit;
 
         taskDiv.innerHTML = `
@@ -634,48 +648,76 @@ async function loadTasksForDate(selectedDate) {
             <button class="delete-btn">Delete</button>
         `;
 
+        // Task interaction logic
         taskDiv.addEventListener("click", (e) => {
             if (!taskDiv.classList.contains("swiped-left") && e.target !== taskDiv.querySelector(".delete-btn")) {
-                showTaskDetails(task, selectedDate);
+                showTaskDetails(task);
             }
         });
 
-        // Swipe handling...
-        let startX = 0, currentX = 0, isSwiping = false;
+        let startX = 0;
+        let currentX = 0;
+        let isSwiping = false;
 
         taskDiv.addEventListener("touchstart", (e) => {
             startX = e.touches[0].clientX;
             isSwiping = true;
         });
+
         taskDiv.addEventListener("touchmove", (e) => {
             if (!isSwiping) return;
             currentX = e.touches[0].clientX;
             const diffX = startX - currentX;
-            if (diffX > 50) taskDiv.classList.add("swiped-left");
-            else if (diffX < -20) taskDiv.classList.remove("swiped-left");
+            if (diffX > 50) {
+                taskDiv.classList.add("swiped-left");
+            } else if (diffX < -20) {
+                taskDiv.classList.remove("swiped-left");
+            }
         });
+
         taskDiv.addEventListener("touchend", () => { isSwiping = false; });
 
         taskDiv.addEventListener("mousedown", (e) => {
             startX = e.clientX;
             isSwiping = true;
         });
+
         taskDiv.addEventListener("mousemove", (e) => {
             if (!isSwiping) return;
             currentX = e.clientX;
             const diffX = startX - currentX;
-            if (diffX > 50) taskDiv.classList.add("swiped-left");
-            else if (diffX < -20) taskDiv.classList.remove("swiped-left");
+            if (diffX > 50) {
+                taskDiv.classList.add("swiped-left");
+            } else if (diffX < -20) {
+                taskDiv.classList.remove("swiped-left");
+            }
         });
+
         taskDiv.addEventListener("mouseup", () => { isSwiping = false; });
         taskDiv.addEventListener("mouseleave", () => { isSwiping = false; });
 
         taskDiv.querySelector(".delete-btn").addEventListener("click", async () => {
             if (confirm(`Are you sure you want to delete "${task.title}"?`)) {
-                await deleteTaskFromBackend(task.title, task.date);
-                taskDiv.remove();
-                if (taskList.children.length === 0) {
-                    taskList.innerHTML = "<p>No tasks for this day.</p>";
+                const loadingDiv = document.createElement("div");
+                loadingDiv.textContent = "Deleting task...";
+                loadingDiv.style.position = "fixed";
+                loadingDiv.style.top = "50%";
+                loadingDiv.style.left = "50%";
+                loadingDiv.style.transform = "translate(-50%, -50%)";
+                loadingDiv.style.background = "rgba(0, 0, 0, 0.8)";
+                loadingDiv.style.color = "white";
+                loadingDiv.style.padding = "20px";
+                loadingDiv.style.borderRadius = "10px";
+                document.body.appendChild(loadingDiv);
+
+                try {
+                    await deleteTaskFromBackend(task.title, task.date);
+                    taskDiv.remove();
+                    if (taskList.children.length === 0) {
+                        taskList.innerHTML = "<p>No tasks for this day.</p>";
+                    }
+                } finally {
+                    loadingDiv.remove();
                 }
             }
         });
@@ -683,6 +725,7 @@ async function loadTasksForDate(selectedDate) {
         taskList.appendChild(taskDiv);
     });
 }
+
 
 
 
@@ -793,82 +836,95 @@ async function saveTaskToBackend(task) {
 
 
 
+async function showTaskDetails(task) {
+    const selectedDate = document.querySelector(".day.selected")?.dataset.date;
+    if (!selectedDate) return;
 
-
-
-async function showTaskDetails(task, selectedDate) {
     function parseLocalDate(dateStr) {
         const [year, month, day] = dateStr.split("-").map(Number);
         return new Date(year, month - 1, day);
     }
 
-    const currentDate = parseLocalDate(selectedDate);
     const dateRange = task.date.split(" to ");
     const startDate = parseLocalDate(dateRange[0]);
+    const currentDate = parseLocalDate(selectedDate);
     const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
     const userOrder = [...task.users];
 
+    // ✅ Determine repeatLimit just like in loadTasksForDate
     let repeatLimit = 1;
     if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
     if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
     if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
-    const completionsToday = task.completions?.[selectedDate] || [];
-    const completionsCount = {};
-    completionsToday.forEach(u => completionsCount[u] = (completionsCount[u] || 0) + 1);
+    const defaultIndex = diffDays % userOrder.length;
+    const assumedTurn = userOrder[defaultIndex];
 
-    let currentIndex;
+    const yesterday = new Date(currentDate);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+    const yesterdayTurnIndex = (diffDays - 1) % userOrder.length;
+    const yesterdayTurn = userOrder[yesterdayTurnIndex];
+    const yesterdayCompletions = task.completions?.[yesterdayStr] || [];
+    const yesterdayCompletedCount = yesterdayCompletions.filter(u => u === yesterdayTurn).length;
 
-    if (task.repeat === "Daily" && repeatLimit === 1) {
-        const yesterday = new Date(currentDate);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split("T")[0];
-        const yCompletions = task.completions?.[yesterdayStr] || [];
+    const todayStr = new Date().toISOString().split("T")[0];
+    const isPastDate = selectedDate < todayStr;
 
-        const yIndex = (diffDays - 1 + userOrder.length) % userOrder.length;
-        const yTurn = userOrder[yIndex];
+    let currentTurn;
 
-        if (yCompletions.filter(u => u === yTurn).length < 1) {
-            currentIndex = yIndex;
-        } else {
-            currentIndex = diffDays % userOrder.length;
+    if (isPastDate) {
+        const thatDayCompletions = task.completions?.[selectedDate] || [];
+        const counts = {};
+        thatDayCompletions.forEach(u => counts[u] = (counts[u] || 0) + 1);
+        for (let i = 0; i < userOrder.length; i++) {
+            if ((counts[userOrder[i]] || 0) < repeatLimit) {
+                currentTurn = userOrder[i];
+                break;
+            }
         }
+        if (!currentTurn) currentTurn = userOrder[0];
     } else {
-        currentIndex = userOrder.findIndex(u => (completionsCount[u] || 0) < repeatLimit);
-        if (currentIndex === -1) currentIndex = 0;
+        currentTurn = (yesterdayCompletedCount < repeatLimit) ? yesterdayTurn : assumedTurn;
     }
 
-    const currentUser = userOrder[currentIndex];
-    const nextUser = userOrder[(currentIndex + 1) % userOrder.length];
+    const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+    const completedCount = completedUsers.length;
 
-    // Build modal
-    const completedUsers = completionsToday;
+    const nextIndex = (userOrder.indexOf(currentTurn) + 1) % userOrder.length;
+    const nextUser = userOrder[nextIndex];
 
-    let taskDetails = `
-        <strong>Title:</strong> ${task.title}<br>
-        ${task.notes ? `<strong>Notes:</strong> ${task.notes}<br>` : ""}
-        ${task.room ? `<strong>Room:</strong> ${task.room}<br>` : ""}
-        <strong>Date:</strong> ${task.date}<br>
-        <strong>Repeat:</strong> ${task.repeat} (${repeatLimit}x)<br>
-        <strong>Users:</strong> ${userOrder.join(", ")}<br>
-        ${task.reward ? `<strong>Reward:</strong> ${task.reward} 🍯<br>` : ""}
-        <strong>Current Turn:</strong> ${currentUser}<br>
-        <strong>Next:</strong> ${nextUser}<br>
-    `;
+    let taskDetails = "";
+    if (task.title) taskDetails += `<strong>Title:</strong> ${task.title}<br>`;
+    if (task.notes) taskDetails += `<strong>Notes:</strong> ${task.notes}<br>`;
+    if (task.room) taskDetails += `<strong>Room:</strong> ${task.room}<br>`;
+    if (task.repeat) {
+        taskDetails += `<strong>Frequency:</strong> ${task.repeat}`;
+        if (task.repeat === "Daily" && task.timesPerDay) taskDetails += ` - ${task.timesPerDay} time(s)/day`;
+        if (task.repeat === "Weekly" && task.timesPerWeek) taskDetails += ` - ${task.timesPerWeek} time(s)/week`;
+        if (task.repeat === "Monthly" && task.timesPerMonth) taskDetails += ` - ${task.timesPerMonth} time(s)/month`;
+        taskDetails += "<br>";
+    }
+    if (task.date) taskDetails += `<strong>Date:</strong> ${task.date}<br>`;
+    if (task.users?.length) taskDetails += `<strong>Users:</strong> ${task.users.join(", ")}<br>`;
+    if (task.reward && task.reward !== "0") taskDetails += `<strong>Reward:</strong> ${task.reward} 🍯<br>`;
+    taskDetails += `<strong>Current Turn:</strong> ${currentTurn}<br>`;
+    taskDetails += `<strong>Next:</strong> ${nextUser}<br>`;
+    taskDetails += `<strong>Completed:</strong> ${completedCount}/${repeatLimit}<br>`;
 
     if (completedUsers.length > 0) {
         taskDetails += `
             <div style="margin-top: 8px;">
                 <strong>Completed by:</strong> ${completedUsers.join(", ")}
-                <button id="editCompletionBtn" style="margin-left: 10px;">Edit</button>
+                <button id="editCompletionBtn" style="margin-left: 10px; padding: 4px 8px; font-size: 12px; border-radius: 6px; background: var(--primary-color); color: var(--secondary-color); border: none; cursor: pointer;">Edit</button>
             </div>
         `;
     }
 
     taskDetails += `
         <br>
-        <button id="editTurnBtn">Edit Turn Order</button>
-        <button id="editTaskBtn">Edit Task</button>
+        <button id="editTurnBtn" style="padding: 6px 10px; background: var(--primary-color); color: var(--secondary-color); font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">Edit Turn Order</button>
+        <button id="editTaskBtn" style="padding: 6px 10px; background: var(--secondary-color); color: var(--accent-color); font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">Edit Task</button>
     `;
 
     const modal = document.createElement("div");
@@ -893,13 +949,13 @@ async function showTaskDetails(task, selectedDate) {
 
     const editBtn = document.getElementById("editCompletionBtn");
     if (editBtn) {
-        editBtn.addEventListener("click", () => {
+        editBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
             modal.remove();
             showEditCompletionModal(task, completedUsers, selectedDate, modal);
         });
     }
 }
-
 
 
 
