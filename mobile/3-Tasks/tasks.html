@@ -542,7 +542,7 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 function getTurnByDate(task, targetDateStr) {
   const completions = task.completions || {};
-  const userOrder = [...task.users];
+  const userOrder = [...(task.users || [])];
   const repeat = task.repeat || "Daily";
   const repeatLimit = repeat === "Daily" ? (task.timesPerDay || 1)
                     : repeat === "Weekly" ? (task.timesPerWeek || 1)
@@ -552,13 +552,17 @@ function getTurnByDate(task, targetDateStr) {
   const parseDate = (str) => new Date(str + "T00:00:00");
   const formatDate = (date) => date.toISOString().split("T")[0];
 
+  if (!userOrder.length) {
+    console.warn("No users in task:", task.title);
+    return "No users";
+  }
+
   const [fromStr] = task.date.split(" to ");
   const startDate = parseDate(fromStr);
   const targetDate = parseDate(targetDateStr);
 
-  // Simulate day by day from startDate to targetDate
   let currentTurnIndex = 0;
-  const tempTurnIndex = {}; // Cache per-day turn
+  const tempTurnIndex = {};
 
   const day = new Date(startDate);
   while (day <= targetDate) {
@@ -570,20 +574,18 @@ function getTurnByDate(task, targetDateStr) {
       counts[user] = (counts[user] || 0) + 1;
     }
 
-    // Count how many times the current turn user completed
     const currentUser = userOrder[currentTurnIndex];
+
     if ((counts[currentUser] || 0) >= repeatLimit) {
-      // Completed → move to next user
       currentTurnIndex = (currentTurnIndex + 1) % userOrder.length;
     }
 
     tempTurnIndex[dayStr] = userOrder[currentTurnIndex];
 
-    // Move to next day
     day.setDate(day.getDate() + 1);
   }
 
-  return tempTurnIndex[targetDateStr];
+  return tempTurnIndex[targetDateStr] || userOrder[0]; // fallback in case of missing
 }
 
 
