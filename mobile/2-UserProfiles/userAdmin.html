@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#FFC107">
-    <title>Admin Task Overview</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeeMazing Admin - User Tasks</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         * {
@@ -32,10 +31,147 @@
             height: 100vh;
             overflow: hidden;
         }
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #FFB300);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: var(--header-height);
+            z-index: 100;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--secondary-color);
+            letter-spacing: 1px;
+        }
+        .content {
+            position: absolute;
+            top: 0;
+            bottom: var(--footer-height);
+            width: 100%;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: var(--light-bg);
+            background-image: url('data:image/svg+xml,%3Csvg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"%3E%3Ccircle cx="20" cy="20" r="2" fill="%23FFC107" fill-opacity="0.1"/%3E%3C/svg%3E');
+            background-repeat: repeat;
+        }
+        .tasks-table {
+            background: var(--card-bg);
+            border: 2px solid var(--border-dark);
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+        .tasks-table h3 {
+            font-size: 22px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: var(--text-color);
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-dark);
+            font-size: 16px;
+        }
+        th {
+            background: var(--secondary-color);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        td {
+            background: var(--card-bg);
+        }
+        .status-completed {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .status-pending {
+            color: #FFB300;
+            font-weight: bold;
+        }
+        .action-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 0 5px;
+            transition: background-color 0.3s ease;
+        }
+        .accept-btn {
+            background: #4CAF50;
+            color: var(--accent-color);
+        }
+        .accept-btn:hover {
+            background: #45a049;
+        }
+        .decline-btn {
+            background: var(--danger-color);
+            color: var(--accent-color);
+        }
+        .decline-btn:hover {
+            background: #B71C1C;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            background: var(--secondary-color);
+            padding: 10px 0;
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            height: var(--footer-height);
+        }
+        .footer a {
+            text-decoration: none;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+        .footer a:hover {
+            transform: scale(1.1);
+        }
+        .footer-icon img {
+            width: 40px;
+            height: 40px;
+            filter: invert(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+        .footer a.active img {
+            filter: invert(77%) sepia(88%) saturate(900%) hue-rotate(0deg)
+                brightness(100%) contrast(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+        }
+        .footer-icon span {
+            font-size: 12px;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+        .footer a.active span {
+            color: var(--primary-color);
+        }
         .date-header {
             background: var(--secondary-color);
             position: fixed;
-            top: 0;
+            top: var(--header-height);
             width: 100%;
             z-index: 50;
             padding: 5px 0;
@@ -113,206 +249,34 @@
             border-radius: 10px;
             margin: 0 5px;
         }
-        .content {
-            position: absolute;
-            top: var(--header-height);
-            bottom: var(--footer-height);
-            width: 100%;
-            padding: 20px;
-            overflow-y: auto;
-            background-color: var(--light-bg);
-            background-image: url('data:image/svg+xml,%3Csvg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"%3E%3Ccircle cx="20" cy="20" r="2" fill="%23FFC107" fill-opacity="0.1"/%3E%3C/svg%3E');
-            background-repeat: repeat;
-        }
-        .profile-card {
-            background: var(--card-bg);
-            border: 2px solid var(--border-dark);
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            text-align: center;
-            width: 100%;
-            max-width: 480px;
-            margin: 0 auto;
-            transition: transform 0.3s ease;
-        }
-        .profile-card:hover {
-            transform: translateY(-10px);
-        }
-        .profile-card h1 {
-            font-size: 32px;
-            font-weight: 600;
-            color: var(--accent-color);
-            margin-bottom: 15px;
-        }
-        .profile-card p {
-            font-size: 18px;
-            color: var(--accent-color);
-            margin-bottom: 20px;
-        }
-        .profile-card h3 {
-            font-size: 20px;
-            color: var(--accent-color);
-            margin-top: 20px;
-            margin-bottom: 10px;
-        }
-        .task-list {
-            margin-top: 20px;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-        }
-        .task-item {
-            background: var(--card-bg);
-            color: var(--text-color);
-            padding: 16px;
-            border: 2px solid var(--border-dark);
-            border-radius: 12px;
-            cursor: pointer;
-            position: relative;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .task-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
-        }
-        .task-details {
-            flex-grow: 1;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        .action-btn {
-            padding: 8px 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .accept-btn {
-            background: var(--primary-color);
-            color: var(--secondary-color);
-        }
-        .accept-btn:hover {
-            background: #FFB300;
-        }
-        .decline-btn {
-            background: var(--danger-color);
-            color: var(--text-color);
-        }
-        .decline-btn:hover {
-            background: #B71C1C;
-        }
-        .footer {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            display: flex;
-            justify-content: space-around;
-            background: var(--secondary-color);
-            padding: 10px 0;
-            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
-            z-index: 100;
-            height: var(--footer-height);
-        }
-        .footer a {
-            text-decoration: none;
-            color: var(--text-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: transform 0.3s ease;
-        }
-        .footer a:hover {
-            transform: scale(1.1);
-        }
-        .footer-icon img {
-            width: 40px;
-            height: 40px;
-            filter: invert(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-        }
-        .footer a.active img {
-            filter: invert(77%) sepia(88%) saturate(900%) hue-rotate(0deg) brightness(100%) contrast(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-        }
-        .footer a.active span {
-            color: var(--primary-color);
-        }
-        .footer-icon span {
-            font-size: 12px;
-            margin-top: 5px;
-            font-weight: 600;
-        }
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--modal-bg);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            animation: fadeIn 0.3s ease-out;
-        }
-        .modal-content {
-            background: var(--card-bg);
-            color: var(--accent-color);
-            padding: 25px;
-            border-radius: 15px;
-            width: 85%;
-            max-width: 400px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-            border: 2px solid var(--primary-color);
-            animation: zoomIn 0.3s ease-out;
-        }
-        .modal-content strong {
-            color: var(--accent-color);
-            font-weight: 600;
-        }
-        @keyframes fadeIn {
-            0% { opacity: 0; }
-            100% { opacity: 1; }
-        }
-        @keyframes zoomIn {
-            0% { transform: scale(0.9); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
         @media (max-width: 600px) {
-            .profile-card {
-                max-width: 100%;
+            .tasks-table {
                 padding: 15px;
+            }
+            th, td {
+                font-size: 14px;
+                padding: 8px;
+            }
+            .action-btn {
+                padding: 6px 10px;
+                font-size: 12px;
             }
             .footer-icon img {
                 width: 35px;
                 height: 35px;
             }
-            .task-item {
-                padding: 12px;
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .action-buttons {
-                margin-top: 10px;
-            }
-            .action-btn {
-                padding: 6px 10px;
-                font-size: 10px;
-            }
         }
     </style>
 </head>
 <body>
+    <div class="header">
+        <h1 class="title">Admin - User Tasks</h1>
+    </div>
+
     <div class="date-header">
         <div class="month-nav">
             <button id="prevMonth"><</button>
-            <span id="monthLabel"></span>
+            <span id="monthLabel">Loading...</span>
             <button id="nextMonth">></button>
         </div>
         <div class="day-scroll-wrapper">
@@ -321,60 +285,64 @@
             <button class="scroll-btn" id="scrollRight">></button>
         </div>
     </div>
+
     <div class="content">
-        <div class="profile-card">
-            <h1>Admin Task Overview</h1>
-            <p>Welcome to the hive of <span id="adminName"></span>.</p>
-            <h3>All Non-Admin Tasks</h3>
-            <div id="adminTasks" class="task-list">
-                <!-- Tasks will be displayed here -->
-            </div>
+        <div class="tasks-table">
+            <h3>User Tasks Overview</h3>
+            <table id="tasksTable">
+                <thead>
+                    <tr>
+                        <th>Task Title</th>
+                        <th>User</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tasksTableBody">
+                    <!-- Tasks will be loaded dynamically -->
+                </tbody>
+            </table>
         </div>
     </div>
+
     <div class="footer">
-        <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
+        <a id="homeFooterLink" class="footer-icon" href="/BeeMazing-Y1/mobile/1-Home/home.html" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
             <span>Home</span>
         </a>
-        <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
-            <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
-            <span>Tasks</span>
+        <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
+            <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
+            <span>Profile</span>
         </a>
-        <a href="/BeeMazing-Y1/mobile/4-Market/market.html" class="footer-icon" aria-label="Market">
+        <a href="#" id="marketButton" class="footer-icon" aria-label="Market">
             <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
             <span>Market</span>
         </a>
-        <a href="/BeeMazing-Y1/mobile/5-Stats/stats.html" class="footer-icon" aria-label="Stats">
-            <img src="/BeeMazing-Y1/mobile/1-Home/StatsBtn.png" alt="Stats" />
-            <span>Stats</span>
+        <a href="#" id="rewardsButton" class="footer-icon" aria-label="Rewards">
+            <img src="/BeeMazing-Y1/mobile/1-Home/RewardsBtn.png" alt="Rewards" />
+            <span>Rewards</span>
         </a>
     </div>
+
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            console.log("[userAdmin.html] DOMContentLoaded");
-
             const urlParams = new URLSearchParams(window.location.search);
-            let adminEmail = urlParams.get('admin') || localStorage.getItem("currentAdminEmail");
+            const adminEmail = urlParams.get('admin') || localStorage.getItem("currentAdminEmail");
 
             if (adminEmail && adminEmail !== "null") {
                 localStorage.setItem("currentAdminEmail", adminEmail);
-            } else {
-                console.log("[userAdmin.html] Missing admin email");
-                document.getElementById("adminTasks").innerHTML = "<p>Error: Missing admin email. Please log in again.</p>";
-                return;
+                const homeLink = document.getElementById("homeFooterLink");
+                if (homeLink) {
+                    homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+                }
+                document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(adminEmail)}`;
+                document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/4-Market/market.html?admin=${encodeURIComponent(adminEmail)}`;
+                document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?admin=${encodeURIComponent(adminEmail)}`;
             }
 
-            // Set admin greeting
-            setAdminGreeting(adminEmail);
-
-            // Update footer links
             document.querySelectorAll('.footer a').forEach(link => {
-                const href = new URL(link.href, window.location.origin);
-                href.searchParams.set('admin', adminEmail);
-                link.href = href.toString();
-
                 const currentPath = window.location.pathname.replace(/\/$/, '');
-                const linkPath = href.pathname.replace(/\/$/, '');
+                const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
                 if (currentPath === linkPath) {
                     link.classList.add('active');
                 } else {
@@ -382,303 +350,288 @@
                 }
             });
 
-            // Initialize UI
             adjustContentTop();
             generateScrollableDates();
-            loadTasksForDate();
+            loadNonAdminUsersAndTasks();
+        });
 
-            function setAdminGreeting(email) {
-                console.log("[userAdmin.html] Setting greeting for:", email);
-                let adminName = email.split('@')[0].split('.').map(part => 
-                    part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
-                ).join(' ') || "Admin";
-                const adminNameElement = document.getElementById("adminName");
-                if (adminNameElement) {
-                    adminNameElement.textContent = adminName;
+        function adjustContentTop() {
+            const header = document.querySelector(".date-header");
+            const content = document.querySelector(".content");
+            if (header && content) {
+                const headerHeight = header.getBoundingClientRect().height + document.querySelector(".header").getBoundingClientRect().height;
+                content.style.top = `${headerHeight}px`;
+            }
+        }
+
+        let monthOffset = 0;
+
+        function generateScrollableDates(monthOffset = 0) {
+            const container = document.getElementById("dayScrollContainer");
+            container.innerHTML = "";
+
+            const today = new Date();
+            today.setDate(1);
+            today.setMonth(today.getMonth() + monthOffset);
+
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+            document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
+                month: 'long',
+                year: 'numeric'
+            });
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                const date = new Date(currentYear, currentMonth, i);
+                const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+                const btn = document.createElement("div");
+                btn.className = "day";
+                btn.textContent = i;
+                btn.dataset.date = dateStr;
+
+                btn.addEventListener("click", () => {
+                    document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+                    btn.classList.add("selected");
+                    loadNonAdminUsersAndTasks(dateStr);
+                });
+
+                const now = new Date();
+                const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                if (dateStr === nowStr) {
+                    btn.classList.add("selected");
+                    loadNonAdminUsersAndTasks(dateStr);
                 }
+
+                container.appendChild(btn);
             }
 
-            function adjustContentTop() {
-                const header = document.querySelector(".date-header");
-                const content = document.querySelector(".content");
-                if (header && content) {
-                    const headerHeight = header.getBoundingClientRect().height;
-                    content.style.top = `${headerHeight}px`;
+            setTimeout(() => {
+                const selected = document.querySelector(".day.selected");
+                if (selected) {
+                    selected.scrollIntoView({ behavior: "smooth", inline: "center" });
                 }
+            }, 50);
+        }
+
+        document.getElementById("prevMonth").addEventListener("click", () => {
+            monthOffset--;
+            generateScrollableDates(monthOffset);
+        });
+
+        document.getElementById("nextMonth").addEventListener("click", () => {
+            monthOffset++;
+            generateScrollableDates(monthOffset);
+        });
+
+        document.getElementById("scrollLeft").addEventListener("click", () => {
+            document.getElementById("dayScrollContainer").scrollBy({
+                left: -200,
+                behavior: "smooth"
+            });
+        });
+
+        document.getElementById("scrollRight").addEventListener("click", () => {
+            document.getElementById("dayScrollContainer").scrollBy({
+                left: 200,
+                behavior: "smooth"
+            });
+        });
+
+        async function loadNonAdminUsersAndTasks(selectedDate = new Date().toLocaleDateString("sv-SE")) {
+            const tasksTableBody = document.getElementById("tasksTableBody");
+            tasksTableBody.innerHTML = "<tr><td colspan='4'>Loading tasks...</td></tr>";
+
+            const adminEmail = localStorage.getItem("currentAdminEmail");
+            let users = [];
+            let tasks = [];
+
+            try {
+                // Fetch users
+                const usersRes = await fetch(`https://beemazing.onrender.com/api/users?adminEmail=${encodeURIComponent(adminEmail)}`);
+                const usersData = await usersRes.json();
+                if (!usersRes.ok) throw new Error(usersData.error || "Failed to fetch users");
+                users = usersData.users || [];
+
+                // Fetch tasks
+                const tasksRes = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+                const tasksData = await tasksRes.json();
+                if (!tasksRes.ok) throw new Error(tasksData.error || "Failed to fetch tasks");
+                tasks = tasksData.tasks || [];
+            } catch (err) {
+                console.error("Error fetching data:", err);
+                tasksTableBody.innerHTML = "<tr><td colspan='4'>Failed to load tasks. Please try again.</td></tr>";
+                return;
             }
 
-            let monthOffset = 0;
+            // Filter non-admin users
+            const userPermissions = JSON.parse(localStorage.getItem("userData"))?.[adminEmail]?.permissions || {};
+            const nonAdminUsers = users.filter(user => userPermissions[user] !== "Admin");
 
-            function generateScrollableDates() {
-                console.log("[userAdmin.html] Running generateScrollableDates");
-                const container = document.getElementById("dayScrollContainer");
-                const monthLabel = document.getElementById("monthLabel");
-
-                if (!container || !monthLabel) {
-                    console.log("[userAdmin.html] Missing dayScrollContainer or monthLabel");
-                    return;
-                }
-
-                container.innerHTML = "";
-                const today = new Date();
-                today.setDate(1);
-                today.setMonth(today.getMonth() + monthOffset);
-
-                const currentMonth = today.getMonth();
-                const currentYear = today.getFullYear();
-                const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-                monthLabel.textContent = today.toLocaleDateString(undefined, {
-                    month: 'long',
-                    year: 'numeric'
-                });
-                console.log("[userAdmin.html] Set monthLabel to:", monthLabel.textContent);
-
-                for (let i = 1; i <= daysInMonth; i++) {
-                    const date = new Date(currentYear, currentMonth, i);
-                    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-
-                    const btn = document.createElement("div");
-                    btn.className = "day";
-                    btn.textContent = i;
-                    btn.dataset.date = dateStr;
-
-                    btn.addEventListener("click", () => {
-                        console.log("[userAdmin.html] Day clicked:", dateStr);
-                        document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-                        btn.classList.add("selected");
-                        loadTasksForDate(dateStr);
-                    });
-
-                    const now = new Date();
-                    const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-                    if (dateStr === nowStr) {
-                        console.log("[userAdmin.html] Selecting today:", dateStr);
-                        btn.classList.add("selected");
-                        loadTasksForDate(dateStr);
-                    }
-
-                    container.appendChild(btn);
-                }
-
-                setTimeout(() => {
-                    const selected = document.querySelector(".day.selected");
-                    if (selected) {
-                        console.log("[userAdmin.html] Scrolling to selected day");
-                        selected.scrollIntoView({ behavior: "smooth", inline: "center" });
-                    }
-                }, 50);
+            if (nonAdminUsers.length === 0) {
+                tasksTableBody.innerHTML = "<tr><td colspan='4'>No non-admin users found.</td></tr>";
+                return;
             }
 
-            document.getElementById("prevMonth").addEventListener("click", () => {
-                console.log("[userAdmin.html] Previous month clicked");
-                monthOffset--;
-                generateScrollableDates();
+            function parseLocalDate(dateStr) {
+                const [year, month, day] = dateStr.split("-").map(Number);
+                return new Date(year, month - 1, day);
+            }
+
+            // Filter tasks for the selected date
+            const filteredTasks = tasks.filter(task => {
+                const dateRange = task.date.split(" to ");
+                const startDateStr = dateRange[0];
+                const startDate = parseLocalDate(startDateStr);
+                const endDateStr = dateRange[1] || "3000-01-01";
+                const endDate = parseLocalDate(endDateStr);
+                const currentDate = parseLocalDate(selectedDate);
+                return currentDate >= startDate && currentDate <= endDate;
             });
 
-            document.getElementById("nextMonth").addEventListener("click", () => {
-                console.log("[userAdmin.html] Next month clicked");
-                monthOffset++;
-                generateScrollableDates();
-            });
+            tasksTableBody.innerHTML = "";
 
-            document.getElementById("scrollLeft").addEventListener("click", () => {
-                console.log("[userAdmin.html] Scroll left clicked");
-                document.getElementById("dayScrollContainer").scrollBy({
-                    left: -200,
-                    behavior: "smooth"
-                });
-            });
+            if (filteredTasks.length === 0) {
+                tasksTableBody.innerHTML = "<tr><td colspan='4'>No tasks for this date.</td></tr>";
+                return;
+            }
 
-            document.getElementById("scrollRight").addEventListener("click", () => {
-                console.log("[userAdmin.html] Scroll right clicked");
-                document.getElementById("dayScrollContainer").scrollBy({
-                    left: 200,
-                    behavior: "smooth"
-                });
-            });
+            filteredTasks.forEach(task => {
+                nonAdminUsers.forEach(user => {
+                    if (!task.users?.includes(user)) return;
 
-            async function loadTasksForDate(selectedDate = new Date().toLocaleDateString("sv-SE")) {
-                console.log("[userAdmin.html] Loading tasks for:", selectedDate);
-                const adminTasksDiv = document.getElementById("adminTasks");
-                adminTasksDiv.innerHTML = "<p>Loading tasks...</p>";
+                    let currentTurn;
+                    let completedUsers = task.completions?.[selectedDate] || [];
+                    completedUsers = Array.isArray(completedUsers) ? completedUsers : [];
 
-                try {
-                    // Fetch non-admin users
-                    const usersRes = await fetch(`https://beemazing.onrender.com/api/users?adminEmail=${encodeURIComponent(adminEmail)}`);
-                    const usersData = await usersRes.json();
-                    const nonAdminUsers = usersData.users
-                        .filter(user => !user.isAdmin)
-                        .map(user => user.name || user.email.split('@')[0]);
+                    let requiredTimes = 1;
+                    if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+                    if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+                    if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-                    if (!nonAdminUsers.length) {
-                        adminTasksDiv.innerHTML = "<p>No non-admin users found.</p>";
-                        return;
+                    const dateRange = task.date.split(" to ");
+                    const startDateStr = dateRange[0];
+                    const startDate = parseLocalDate(startDateStr);
+                    const currentDate = parseLocalDate(selectedDate);
+
+                    if (task.repeat === "Daily" && task.timesPerDay > 1) {
+                        const userOrder = [...task.users];
+                        const totalRequiredCompletions = task.timesPerDay;
+                        const completionIndex = completedUsers.length % userOrder.length;
+                        currentTurn = userOrder[completionIndex];
+                    } else if (task.repeat === "Daily" && task.timesPerDay === 1) {
+                        const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+                        const userOrder = [...task.users];
+                        const currentIndex = diffDays % userOrder.length;
+                        currentTurn = userOrder[currentIndex];
+                    } else {
+                        currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
                     }
 
-                    // Fetch tasks
-                    const tasksRes = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-                    const tasksData = await tasksRes.json();
-                    const tasks = tasksData.tasks || [];
+                    const completedTimes = completedUsers.length;
+                    const isCompleted = completedTimes >= requiredTimes;
+                    const userCompleted = completedUsers.includes(user);
 
-                    if (!tasks.length) {
-                        adminTasksDiv.innerHTML = "<p>No tasks available.</p>";
-                        return;
-                    }
+                    // Only show rows where the user is relevant (their turn or they completed it)
+                    if (currentTurn !== user && !userCompleted) return;
 
-                    function parseLocalDate(dateStr) {
-                        const [year, month, day] = (dateStr || '').split("-").map(Number);
-                        return new Date(year, month - 1, day);
-                    }
-
-                    // Filter tasks for selected date
-                    const visibleTasks = tasks.filter(task => {
-                        if (!task.date) return false;
-                        const range = task.date.split(" to ");
-                        const from = parseLocalDate(range[0]);
-                        const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
-                        const selected = parseLocalDate(selectedDate);
-                        return selected >= from && selected <= to;
-                    });
-
-                    adminTasksDiv.innerHTML = "";
-
-                    if (!visibleTasks.length) {
-                        adminTasksDiv.innerHTML = "<p>No tasks for this day.</p>";
-                        return;
-                    }
-
-                    visibleTasks.forEach(task => {
-                        // Only include tasks with non-admin users
-                        const taskUsers = task.users || [];
-                        if (!taskUsers.some(user => nonAdminUsers.includes(user))) {
-                            return;
-                        }
-
-                        let currentTurn;
-                        if (task.repeat === "Daily" && task.timesPerDay === 1) {
-                            const dateRange = task.date.split(" to ");
-                            const startDateStr = dateRange[0];
-                            const startDate = parseLocalDate(startDateStr);
-                            const currentDate = parseLocalDate(selectedDate);
-                            const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-                            const userOrder = [...task.users];
-                            const currentIndex = diffDays % userOrder.length;
-                            currentTurn = userOrder[currentIndex];
-                        } else {
-                            currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
-                        }
-
-                        let repeatLimit = 1;
-                        if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
-                        if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
-                        if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
-
-                        const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-                        const completedCount = completedUsers.length;
-                        const isCompleted = completedCount >= repeatLimit;
-
-                        const taskDiv = document.createElement("div");
-                        taskDiv.className = "task-item";
-
-                        taskDiv.innerHTML = `
-                            <div class="task-details">
-                                ${task.title} | ${currentTurn} | 
-                                ${isCompleted ? '<span style="color: green; font-weight: bold;">Completed</span>' : 'Pending'}
-                            </div>
-                            ${isCompleted ? `
-                                <div class="action-buttons">
-                                    <button class="action-btn accept-btn" data-task="${task.title}" data-user="${currentTurn}">Accept</button>
-                                    <button class="action-btn decline-btn" data-task="${task.title}" data-user="${currentTurn}">Decline</button>
-                                </div>
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${task.title}</td>
+                        <td>${user}</td>
+                        <td class="${userCompleted ? 'status-completed' : 'status-pending'}">
+                            ${userCompleted ? 'Completed' : 'Pending'}
+                        </td>
+                        <td>
+                            ${userCompleted ? `
+                                <button class="action-btn accept-btn" data-task-title="${task.title}" data-task-date="${task.date}" data-user="${user}">Accept</button>
+                                <button class="action-btn decline-btn" data-task-title="${task.title}" data-task-date="${task.date}" data-user="${user}">Decline</button>
                             ` : ''}
-                        `;
+                        </td>
+                    `;
+                    tasksTableBody.appendChild(row);
+                });
+            });
 
-                        taskDiv.addEventListener("click", (e) => {
-                            if (!e.target.classList.contains("action-btn")) {
-                                showTaskDetails(task);
-                            }
-                        });
-
-                        adminTasksDiv.appendChild(taskDiv);
-                    });
-
-                    // Attach action button listeners
-                    document.querySelectorAll(".accept-btn").forEach(btn => {
-                        btn.addEventListener("click", async () => {
-                            const taskTitle = btn.dataset.task;
-                            const user = btn.dataset.user;
-                            console.log("[userAdmin.html] Accepting task:", taskTitle, "for", user);
-                            await handleTaskAction(taskTitle, user, "accept", selectedDate);
-                        });
-                    });
-
-                    document.querySelectorAll(".decline-btn").forEach(btn => {
-                        btn.addEventListener("click", async () => {
-                            const taskTitle = btn.dataset.task;
-                            const user = btn.dataset.user;
-                            console.log("[userAdmin.html] Declining task:", taskTitle, "for", user);
-                            await handleTaskAction(taskTitle, user, "decline", selectedDate);
-                        });
-                    });
-
-                } catch (err) {
-                    console.log("[userAdmin.html] Error loading tasks:", err.message);
-                    adminTasksDiv.innerHTML = "<p>Error loading tasks.</p>";
-                }
+            if (tasksTableBody.children.length === 0) {
+                tasksTableBody.innerHTML = "<tr><td colspan='4'>No relevant tasks for non-admin users on this date.</td></tr>";
             }
 
-            async function handleTaskAction(taskTitle, user, action, selectedDate) {
-                try {
-                    const res = await fetch("https://beemazing.onrender.com/api/task-action", {
+            // Add event listeners for accept/decline buttons
+            document.querySelectorAll(".accept-btn").forEach(btn => {
+                btn.addEventListener("click", async () => {
+                    const title = btn.dataset.taskTitle;
+                    const date = btn.dataset.taskDate;
+                    const user = btn.dataset.user;
+                    await handleTaskAction(title, date, user, true, selectedDate);
+                });
+            });
+
+            document.querySelectorAll(".decline-btn").forEach(btn => {
+                btn.addEventListener("click", async () => {
+                    const title = btn.dataset.taskTitle;
+                    const date = btn.dataset.taskDate;
+                    const user = btn.dataset.user;
+                    await handleTaskAction(title, date, user, false, selectedDate);
+                });
+            });
+        }
+
+        async function handleTaskAction(title, date, user, accept, selectedDate) {
+            const adminEmail = localStorage.getItem("currentAdminEmail");
+            try {
+                // Fetch tasks
+                const response = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || "Failed to fetch tasks");
+                const tasks = data.tasks || [];
+
+                const task = tasks.find(t => t.title === title && t.date === date);
+                if (!task) throw new Error("Task not found");
+
+                let completedUsers = task.completions?.[selectedDate] || [];
+                completedUsers = Array.isArray(completedUsers) ? completedUsers : [];
+
+                if (accept) {
+                    // Accept: Keep the completion, update rewards
+                    const rewardAmount = Number(task.reward || 0);
+                    if (rewardAmount > 0) {
+                        await fetch("https://beemazing.onrender.com/api/rewards", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ adminEmail, user, amount: rewardAmount })
+                        });
+                    }
+                } else {
+                    // Decline: Remove user from completions
+                    task.completions[selectedDate] = completedUsers.filter(u => u !== user);
+                    const rewardAmount = Number(task.reward || 0);
+                    if (rewardAmount > 0) {
+                        await fetch("https://beemazing.onrender.com/api/rewards", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ adminEmail, user, amount: -rewardAmount })
+                        });
+                    }
+                    await fetch("https://beemazing.onrender.com/api/tasks", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            adminEmail,
-                            taskTitle,
-                            user,
-                            action,
-                            date: selectedDate
-                        })
+                        body: JSON.stringify({ adminEmail, task })
                     });
-
-                    const data = await res.json();
-                    if (!data.success) {
-                        throw new Error(data.error || "Failed to process task action");
-                    }
-
-                    console.log("[userAdmin.html] Task action successful:", action);
-                    loadTasksForDate(selectedDate);
-                } catch (err) {
-                    console.log("[userAdmin.html] Error in task action:", err.message);
-                    alert(`Failed to ${action} task: ${err.message}`);
                 }
+
+                // Reload tasks
+                loadNonAdminUsersAndTasks(selectedDate);
+            } catch (err) {
+                console.error("Error handling task action:", err);
+                alert("Failed to process action. Please try again.");
             }
+        }
 
-            function showTaskDetails(task) {
-                console.log("[userAdmin.html] Showing task details:", task.title);
-                let taskDetails = "";
-                taskDetails += task.title ? `<strong>Title:</strong> ${task.title}<br>` : '';
-                taskDetails += task.users?.length ? `<strong>Users:</strong> ${task.users.join(", ")}<br>` : '';
-                taskDetails += task.date ? `<strong>Date:</strong> ${task.date}<br>` : '';
-                taskDetails += task.repeat ? `<strong>Repeat:</strong> ${task.repeat}<br>` : '';
-                taskDetails += task.reward ? `<strong>Reward:</strong> ${task.reward} 🍯<br>` : '';
-
-                const modal = document.createElement("div");
-                modal.className = "modal";
-                modal.innerHTML = `<div class="modal-content">${taskDetails || "No details available."}</div>`;
-                document.body.appendChild(modal);
-
-                modal.addEventListener("click", (e) => {
-                    if (e.target.classList.contains("modal")) {
-                        console.log("[userAdmin.html] Closing modal");
-                        modal.remove();
-                    }
-                });
-            }
-
-            window.addEventListener("resize", adjustContentTop);
-        });
+        window.addEventListener("resize", adjustContentTop);
+        window.addEventListener("load", adjustContentTop);
     </script>
 </body>
 </html>

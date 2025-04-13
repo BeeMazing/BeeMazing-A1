@@ -56,14 +56,12 @@ if (!isAdmin && footer) {
             if (!allUserData[email]) {
               allUserData[email] = { users: [], permissions: {} };
             }
-          
+      
             allUserData[email].users = data.users || [];
             allUserData[email].permissions = data.permissions || {};
-          
+      
             localStorage.setItem("userData", JSON.stringify(allUserData));
-          
-            // ✅ Now call renderUsers() only after permissions are updated
-            renderUsers(allUserData[email].users, allUserData[email].permissions);
+            renderUsers(); // Refresh UI
           }
         } catch (err) {
           console.error("❌ Failed to fetch user list from server:", err);
@@ -74,7 +72,7 @@ if (!isAdmin && footer) {
       fetchUsersFromServer(currentAdmin); // 🔥 Call it
       
 
-
+    renderUsers();
 
     // Show the modal with a smooth animation when "Add Members" button is clicked
     if (addUserBtn) {
@@ -167,77 +165,82 @@ alert(`Send this link to the user: ${inviteLink}`);
     }
 
     // Function to render users in the main list
-    function renderUsers(usersFromServer, permissionsFromServer) {
-        userList.innerHTML = "";
-      
-        const users = usersFromServer || [];
-        const userPermissions = permissionsFromServer || {};
+    function renderUsers() {
         const isAdmin = localStorage.getItem("isAdmin") === "true";
-      
+        const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+        const users = allUserData[currentAdmin]?.users || [];
+        const userPermissions = allUserData[currentAdmin]?.permissions || {};        
+        userList.innerHTML = "";
         users.forEach((username) => {
-          const newUserItem = document.createElement("li");
-          newUserItem.classList.add("user-list-item");
-      
-          const nameContainer = document.createElement("div");
-          nameContainer.style.display = "flex";
-          nameContainer.style.alignItems = "center";
-          nameContainer.style.gap = "8px";
-      
-          const userNameSpan = document.createElement("span");
-          userNameSpan.textContent = username;
-      
-          if (userPermissions[username] === "Admin") {
-            const checkmark = document.createElement("span");
-            checkmark.textContent = "✓";
-            checkmark.style.color = "#00C4B4";
-            checkmark.style.fontSize = "16px";
-            checkmark.style.fontWeight = "bold";
-            checkmark.title = "Admin";
-            nameContainer.appendChild(userNameSpan);
-            nameContainer.appendChild(checkmark);
-          } else {
-            nameContainer.appendChild(userNameSpan);
-          }
-      
-          newUserItem.addEventListener("click", function () {
-            const page = userPermissions[username] === "Admin" ? "userAdmin.html" : "users.html";
-            window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
-          });
-      
-          newUserItem.appendChild(nameContainer);
-      
-          // Admin-only buttons (mobile)
-          if (isMobile && isAdmin) {
-            const actionsContainer = document.createElement("div");
-            actionsContainer.style.display = "flex";
-            actionsContainer.style.gap = "8px";
-      
-            const removeBtn = document.createElement("button");
-            removeBtn.classList.add("remove-user-btn");
-            removeBtn.textContent = "X";
-            removeBtn.addEventListener("click", function (event) {
-              event.stopPropagation();
-              showConfirmModal(username);
+            const newUserItem = document.createElement("li");
+            newUserItem.classList.add("user-list-item");
+    
+            // Container for username and checkmark
+            const nameContainer = document.createElement("div");
+            nameContainer.style.display = "flex";
+            nameContainer.style.alignItems = "center";
+            nameContainer.style.gap = "8px";
+    
+            // Add user name
+            const userNameSpan = document.createElement("span");
+            userNameSpan.textContent = username;
+    
+            // Add checkmark if user is an admin
+            if (userPermissions[username] === "Admin") {
+                const checkmark = document.createElement("span");
+                checkmark.textContent = "✓";
+                checkmark.style.color = "#00C4B4"; // A nice teal color, you can change this
+                checkmark.style.fontSize = "16px";
+                checkmark.style.fontWeight = "bold";
+                checkmark.title = "Admin";
+                nameContainer.appendChild(userNameSpan);
+                nameContainer.appendChild(checkmark);
+            } else {
+                nameContainer.appendChild(userNameSpan);
+            }
+    
+            // Make the entire user item clickable
+            newUserItem.style.cursor = "pointer";
+            newUserItem.addEventListener("click", function () {
+                window.location.href = `${basePath}/2-UserProfiles/users.html?user=${encodeURIComponent(username)}`;
             });
-      
-            const editBtn = document.createElement("button");
-            editBtn.classList.add("remove-user-btn");
-            editBtn.innerHTML = "⚙️";
-            editBtn.style.fontSize = "16px";
-            editBtn.addEventListener("click", function (event) {
-              event.stopPropagation();
-              showPermissionModal(username);
-            });
-      
-            actionsContainer.appendChild(editBtn);
-            actionsContainer.appendChild(removeBtn);
-            newUserItem.appendChild(actionsContainer);
-          }
-      
-          userList.appendChild(newUserItem);
+    
+            // Append name container
+            newUserItem.appendChild(nameContainer);
+    
+            // Show remove and edit buttons only for mobile AND admin
+            if (isMobile && isAdmin) {
+                const actionsContainer = document.createElement("div");
+                actionsContainer.style.display = "flex";
+                actionsContainer.style.gap = "8px";
+    
+                // Remove button
+                const removeBtn = document.createElement("button");
+                removeBtn.classList.add("remove-user-btn");
+                removeBtn.textContent = "X";
+                removeBtn.addEventListener("click", function (event) {
+                    event.stopPropagation();
+                    showConfirmModal(username);
+                });
+    
+                // Edit button
+                const editBtn = document.createElement("button");
+                editBtn.classList.add("remove-user-btn"); // reusing style
+                editBtn.innerHTML = "⚙️";
+                editBtn.style.fontSize = "16px";
+                editBtn.addEventListener("click", function (event) {
+                    event.stopPropagation();
+                    showPermissionModal(username);
+                });
+    
+                actionsContainer.appendChild(editBtn);
+                actionsContainer.appendChild(removeBtn);
+                newUserItem.appendChild(actionsContainer);
+            }
+    
+            userList.appendChild(newUserItem);
         });
-      }
-      
+    }
     
 
     // Function to render users in the manage members modal
