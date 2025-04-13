@@ -974,6 +974,13 @@ function getTurnByDate(task, selectedDate) {
 
 
 
+
+
+
+
+
+
+
 async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
   const userTasksDiv = document.getElementById("userTasks");
   userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
@@ -1008,30 +1015,26 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     if (currentDate < startDate || currentDate > endDate) return false;
     if (!Array.isArray(task.users) || task.users.length === 0) return false;
 
-    const completedRaw = task.completions?.[selectedDate] || [];
-    const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
-
     const requiredTimes =
       task.repeat === "Daily" ? task.timesPerDay || 1 :
       task.repeat === "Weekly" ? task.timesPerWeek || 1 :
       task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-    const completedTimes = completedUsers.length;
-
-    // Decide turn logic
-    let currentTurn;
-    if (task.repeat === "Daily" && task.timesPerDay > 1) {
-      const userOrder = [...task.users];
-      const completionIndex = completedTimes % userOrder.length;
-      currentTurn = userOrder[completionIndex];
-    } else if (task.repeat === "Daily" && task.timesPerDay === 1) {
-      currentTurn = getTurnByDate(task, selectedDate);
-    } else {
-      currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+    const fullTurnOrder = [];
+    for (let i = 0; i < requiredTimes; i++) {
+      fullTurnOrder.push(task.users[i % task.users.length]);
     }
 
-    // Only show if this user is the currentTurn OR already completed this task
-    return currentTurn === userName || completedUsers.includes(userName);
+    const userTurns = fullTurnOrder
+      .map((user, index) => ({ user, index }))
+      .filter(turn => turn.user === userName);
+
+    const completedRaw = task.completions?.[selectedDate] || [];
+    const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
+
+    const completedCount = completedUsers.filter(u => u === userName).length;
+
+    return userTurns.length > 0 || completedCount > 0;
   });
 
   if (userTasks.length === 0) {
@@ -1054,18 +1057,26 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-      let currentTurn;
-      if (task.repeat === "Daily" && task.timesPerDay > 1) {
-        const userOrder = [...task.users];
-        const completionIndex = completedTimes % userOrder.length;
-        currentTurn = userOrder[completionIndex];
-      } else if (task.repeat === "Daily" && task.timesPerDay === 1) {
-        currentTurn = getTurnByDate(task, selectedDate);
-      } else {
-        currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+      const fullTurnOrder = [];
+      for (let i = 0; i < requiredTimes; i++) {
+        fullTurnOrder.push(task.users[i % task.users.length]);
       }
 
-      let progressText = completedTimes >= requiredTimes
+      const userTurnIndexes = fullTurnOrder
+        .map((user, index) => ({ user, index }))
+        .filter(turn => turn.user === userName)
+        .map(turn => turn.index);
+
+      const completedCount = completedUsers.filter(u => u === userName).length;
+
+      let currentTurn = null;
+      if (task.repeat === "Daily" && task.timesPerDay === 1) {
+        currentTurn = getTurnByDate(task, selectedDate);
+      } else {
+        currentTurn = fullTurnOrder[completedTimes % fullTurnOrder.length];
+      }
+
+      const progressText = completedTimes >= requiredTimes
         ? `<span style="color: green; font-weight: bold;">Completed</span>`
         : `${completedTimes}/${requiredTimes}`;
 
@@ -1079,7 +1090,7 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         Progress: ${progressText}
       `;
 
-      const canFinish = isToday && currentTurn === userName && completedTimes < requiredTimes;
+      const canFinish = isToday && currentTurn === userName && completedCount < userTurnIndexes.length;
 
       if (canFinish) {
         const finishedButton = document.createElement("button");
@@ -1096,19 +1107,6 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
       statusDiv.style.marginTop = "10px";
       statusDiv.style.fontWeight = "bold";
 
-      const fullTurnOrder = [];
-      const userOrder = [...task.users];
-      for (let i = 0; i < requiredTimes; i++) {
-        fullTurnOrder.push(userOrder[i % userOrder.length]);
-      }
-
-      const userTurnIndexes = [];
-      fullTurnOrder.forEach((user, index) => {
-        if (user === userName) userTurnIndexes.push(index);
-      });
-
-      const completedCount = completedUsers.filter(u => u === userName).length;
-
       if (userTurnIndexes.length === 0) {
         statusDiv.innerHTML = "You: Not Assigned";
         statusDiv.style.color = "gray";
@@ -1120,7 +1118,7 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         now.setHours(0, 0, 0, 0);
 
         userTurnIndexes.forEach((turnIndex, i) => {
-          const isCompleted = i < completedCount;
+          const isCompleted = i < completedUsers.filter(u => u === userName).length;
           const turnNumber = turnIndex + 1;
           let emoji, color, statusText;
 
@@ -1152,7 +1150,6 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     });
   }
 }
-
 
 
 
