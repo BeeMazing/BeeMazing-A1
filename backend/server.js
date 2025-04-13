@@ -931,7 +931,7 @@ app.get("/api/admin-tasks", async (req, res) => {
     const nonAdminUsers = users.filter(user => permissions[user] !== "Admin");
 
     // Process tasks for non-admin users
-    const today = new Date().toLocaleDateString("sv-SE");
+    const today = new Date().toISOString().split("T")[0]; // Always "YYYY-MM-DD"
     const adminTasks = [];
 
     tasks.forEach(task => {

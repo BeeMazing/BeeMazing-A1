@@ -276,10 +276,6 @@
   }, 100); // Let layout settle
 }
 
-    // At the end of generateDayButtons()
-const selected = document.querySelector(".day.selected");
-if (selected) scrollDayIntoView(selected);
-
 
     document.getElementById("prevMonth").onclick = () => {
       viewDate.setMonth(viewDate.getMonth() - 1);
@@ -392,8 +388,10 @@ if (selected) scrollDayIntoView(selected);
 
 
 
-
 async function handleAction(title, user, action) {
+  // 🔒 Confirm before declining
+  if (action === 'decline' && !confirm(`Are you sure you want to decline "${title}" for ${user}?`)) return;
+
   try {
     const res = await fetch(`${SERVER_URL}/api/task-action`, {
       method: "POST",
@@ -406,6 +404,7 @@ async function handleAction(title, user, action) {
         date: selectedDate
       })
     });
+
     const data = await res.json();
     if (!data.success) throw new Error(data.message);
 
@@ -416,6 +415,7 @@ async function handleAction(title, user, action) {
     alert("Action failed: " + err.message);
   }
 }
+
 
 
     updateMonthHeader(viewDate);
