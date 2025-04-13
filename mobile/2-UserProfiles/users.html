@@ -951,40 +951,44 @@
   }
 
   const userTasks = tasks.filter(task => {
-    if (!task.users?.includes(userName)) return false;
+  if (!task.users?.includes(userName)) return false;
 
-    const dateRange = task.date.split(" to ");
-    const startDateStr = dateRange[0];
-    const startDate = parseLocalDate(startDateStr);
-    const endDateStr = dateRange[1] || "3000-01-01";
-    const endDate = parseLocalDate(endDateStr);
-    const currentDate = parseLocalDate(selectedDate);
+  const dateRange = task.date.split(" to ");
+  const startDateStr = dateRange[0];
+  const startDate = parseLocalDate(startDateStr);
+  const endDateStr = dateRange[1] || "3000-01-01";
+  const endDate = parseLocalDate(endDateStr);
+  const currentDate = parseLocalDate(selectedDate);
 
-    if (currentDate < startDate || currentDate > endDate) return false;
+  if (currentDate < startDate || currentDate > endDate) return false;
 
-    if (task.repeat === "Daily" && task.timesPerDay > 1) return true;
+  const completedRaw = task.completions?.[selectedDate] || [];
+  const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
 
-    if (task.repeat === "Daily" && task.timesPerDay === 1) {
-      const completions = task.completions || {};
-      const userOrder = [...task.users];
+  if (task.repeat === "Daily" && task.timesPerDay > 1) return true;
 
-      let totalCompletions = 0;
-      Object.entries(completions).forEach(([dateStr, users]) => {
-  const dateObj = parseLocalDate(dateStr);
-  if (dateObj < currentDate && Array.isArray(users)) {
-    totalCompletions += users.length;
+  if (task.repeat === "Daily" && task.timesPerDay === 1) {
+    const completions = task.completions || {};
+    const userOrder = [...task.users];
+
+    let totalCompletions = 0;
+    Object.entries(completions).forEach(([dateStr, users]) => {
+      const dateObj = parseLocalDate(dateStr);
+      if (dateObj < currentDate && Array.isArray(users)) {
+        totalCompletions += users.length;
+      }
+    });
+
+    const currentIndex = totalCompletions % userOrder.length;
+    const currentTurn = userOrder[currentIndex];
+
+    return currentTurn === userName || completedUsers.includes(userName);
   }
+
+  const currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+  return currentTurn === userName || completedUsers.includes(userName);
 });
 
-
-      const currentIndex = totalCompletions % userOrder.length;
-      const currentTurn = userOrder[currentIndex];
-      return currentTurn === userName;
-    }
-
-    const currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
-    return currentTurn === userName;
-  });
 
   if (userTasks.length === 0) {
     userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
