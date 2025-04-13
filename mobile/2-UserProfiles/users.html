@@ -926,6 +926,53 @@
 
 
 
+        function getCurrentTurn(task, selectedDate) {
+  function parseLocalDate(dateStr) {
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  const dateRange = task.date.split(" to ");
+  const startDateStr = dateRange[0];
+  const startDate = parseLocalDate(startDateStr);
+  const currentDate = parseLocalDate(selectedDate);
+  const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+  const userOrder = [...task.users];
+
+  if (task.repeat === "Daily" && task.timesPerDay > 1) {
+    const completionsToday = task.completions?.[selectedDate] || [];
+    const completionIndex = completionsToday.length % userOrder.length;
+    return userOrder[completionIndex];
+  }
+
+  if (task.repeat === "Daily" && task.timesPerDay === 1) {
+    const completions = task.completions || {};
+    let totalCompletions = 0;
+    Object.entries(completions).forEach(([dateStr, users]) => {
+      const dateObj = parseLocalDate(dateStr);
+      if (dateObj < currentDate && Array.isArray(users)) {
+        totalCompletions += users.length;
+      }
+    });
+    const currentIndex = totalCompletions % userOrder.length;
+    return userOrder[currentIndex];
+  }
+
+  return task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
   const userTasksDiv = document.getElementById("userTasks");
@@ -1876,13 +1923,7 @@
             const totalCompletions = completedUsers.length;
             if (totalCompletions >= requiredTimes) return;
         
-            const todayCompletions = tasks[taskIndex].completions[today];
-todayCompletions.push(currentUser);
-
-// Save real-world index of last completed user for today
-const currentTurnIndex = task.users.indexOf(currentUser);
-tasks[taskIndex].lastRealTurnIndex = currentTurnIndex;
-
+            tasks[taskIndex].completions[today].push(currentUser);
         
             if (task.repeat === "Daily" && task.timesPerDay > 1) {
               const totalCompletions = tasks[taskIndex].completions[today].length;

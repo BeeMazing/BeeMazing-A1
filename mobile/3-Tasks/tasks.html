@@ -540,9 +540,9 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-function getTurnByDate(task, targetDateStr, simulate = false) {
+function getTurnByDate(task, targetDateStr) {
   const completions = task.completions || {};
-  const userOrder = [...(task.users || [])];
+  const userOrder = [...task.users];
   const repeat = task.repeat || "Daily";
   const repeatLimit = repeat === "Daily" ? (task.timesPerDay || 1)
                     : repeat === "Weekly" ? (task.timesPerWeek || 1)
@@ -552,46 +552,29 @@ function getTurnByDate(task, targetDateStr, simulate = false) {
   const parseDate = (str) => new Date(str + "T00:00:00");
   const formatDate = (date) => date.toISOString().split("T")[0];
 
-  if (!userOrder.length) return "No users";
-
   const [fromStr] = task.date.split(" to ");
   const startDate = parseDate(fromStr);
   const targetDate = parseDate(targetDateStr);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
 
-  // ✅ Use manually updated turn for today and future
-  if (targetDate >= today && task.turn && userOrder.includes(task.turn)) {
-    return task.turn;
-  }
+  let currentUserIndex = 0;
 
-  // ✅ Simulate from start for past dates
-  let currentTurnIndex = 0;
-  const day = new Date(startDate);
+  for (let d = new Date(startDate); d <= targetDate; d.setDate(d.getDate() + 1)) {
+    const dateStr = formatDate(d);
+    const completedToday = Array.isArray(completions[dateStr]) ? completions[dateStr] : [];
+    const currentUser = userOrder[currentUserIndex];
+    const completedCount = completedToday.filter(u => u === currentUser).length;
 
-  while (day <= targetDate) {
-    const dayStr = formatDate(day);
-    const completed = completions[dayStr] || [];
-    const counts = {};
-
-    for (let user of completed) {
-      counts[user] = (counts[user] || 0) + 1;
+    if (dateStr === targetDateStr) {
+      return currentUser;
     }
 
-    const currentUser = userOrder[currentTurnIndex];
-    if ((counts[currentUser] || 0) >= repeatLimit) {
-      currentTurnIndex = (currentTurnIndex + 1) % userOrder.length;
+    if (completedCount >= repeatLimit) {
+      currentUserIndex = (currentUserIndex + 1) % userOrder.length;
     }
-
-    day.setDate(day.getDate() + 1);
   }
 
-  return userOrder[currentTurnIndex];
+  return userOrder[currentUserIndex];
 }
-
-
-
-
 
 
 
@@ -989,8 +972,7 @@ async function finishTask(userName, task, button, selectedDate) {
 
     const rewardAmount = Number(task.reward) || 0;
     const userList = task.users;
-    const currentTurn = getTurnByDate(task, today);
-
+    const currentTurn = task.tempTurnReplacement?.replacement || task.turn || userList[0];
 
     if (task.tempTurnReplacement && userName === task.tempTurnReplacement.replacement) {
         const originalUser = task.tempTurnReplacement.original;
@@ -1000,36 +982,20 @@ async function finishTask(userName, task, button, selectedDate) {
         delete task.tempTurnReplacement;
         if (task.originalOwner) delete task.originalOwner[userName];
     } else {
+        const userCompletionCounts = {};
+        task.completions[today].forEach(u => {
+            userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
+        });
+        const currentIndex = userList.indexOf(currentTurn);
+        let nextIndex = (currentIndex + 1) % userList.length;
+        let looped = false;
 
+        while ((userCompletionCounts[userList[nextIndex]] || 0) >= repeatLimit && !looped) {
+            nextIndex = (nextIndex + 1) % userList.length;
+            if (nextIndex === currentIndex) looped = true;
+        }
 
-
-        const completedToday = task.completions[today] || [];
-const userCompletionCounts = {};
-for (const user of completedToday) {
-    userCompletionCounts[user] = (userCompletionCounts[user] || 0) + 1;
-}
-
-const completionsForCurrent = userCompletionCounts[currentTurn] || 0;
-
-if (completionsForCurrent >= repeatLimit) {
-    const currentIndex = userList.indexOf(currentTurn);
-    let nextIndex = (currentIndex + 1) % userList.length;
-    let looped = false;
-
-    while ((userCompletionCounts[userList[nextIndex]] || 0) >= repeatLimit && !looped) {
-        nextIndex = (nextIndex + 1) % userList.length;
-        if (nextIndex === currentIndex) looped = true;
-    }
-
-    task.turn = userList[nextIndex];
-}
-
-
-
-// Update per-date turn history
-if (!task.turnHistory) task.turnHistory = {};
-task.turnHistory[today] = newTurn;
-
+        task.turn = looped ? userList[0] : userList[nextIndex];
     }
 
     task.date = selectedDate;
