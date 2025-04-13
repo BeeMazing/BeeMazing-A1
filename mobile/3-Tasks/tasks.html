@@ -540,56 +540,30 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-function getTurnByDate(task, targetDateStr) {
+function getCurrentTurn(task, selectedDate) {
   const completions = task.completions || {};
   const userOrder = [...task.users];
-  const repeat = task.repeat || "Daily";
-  const repeatLimit = repeat === "Daily" ? (task.timesPerDay || 1)
-                    : repeat === "Weekly" ? (task.timesPerWeek || 1)
-                    : repeat === "Monthly" ? (task.timesPerMonth || 1)
-                    : 1;
 
-  const parseDate = (str) => new Date(str + "T00:00:00");
-  const formatDate = (date) => date.toISOString().split("T")[0];
+  // For Daily 1x logic
+  if (task.repeat === "Daily" && task.timesPerDay === 1) {
+    let totalCompletions = 0;
 
-  const [fromStr] = task.date.split(" to ");
-  const startDate = parseDate(fromStr);
-  const targetDate = parseDate(targetDateStr);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // normalize
+    Object.entries(completions).forEach(([dateStr, users]) => {
+      const dateObj = new Date(dateStr + "T00:00:00");
+      const selectedObj = new Date(selectedDate + "T00:00:00");
 
-  let currentUserIndex = 0;
-
-  for (let d = new Date(startDate); d <= targetDate; d.setDate(d.getDate() + 1)) {
-    const dateStr = formatDate(d);
-    const currentUser = userOrder[currentUserIndex];
-    const completedToday = Array.isArray(completions[dateStr]) ? completions[dateStr] : [];
-    const completedCount = completedToday.filter(u => u === currentUser).length;
-
-    const isPastOrToday = d <= today;
-
-    if (isPastOrToday) {
-      // In the past or today: only rotate if the task was completed by the current user
-      if (completedCount >= repeatLimit) {
-        currentUserIndex = (currentUserIndex + 1) % userOrder.length;
+      if (dateObj < selectedObj && Array.isArray(users)) {
+        totalCompletions += users.length;
       }
-    } else {
-      // In the future: assume task was completed and rotate as if everything went fine
-      currentUserIndex = (currentUserIndex + 1) % userOrder.length;
-    }
+    });
 
-    // When we've reached the target day, stop
-    if (dateStr === targetDateStr) {
-      return userOrder[currentUserIndex];
-    }
+    const currentIndex = totalCompletions % userOrder.length;
+    return userOrder[currentIndex];
   }
 
-  return userOrder[currentUserIndex];
+  // Fallback (multi per day or other repeat)
+  return task.tempTurnReplacement?.replacement || task.turn || userOrder[0];
 }
-
-
-
-
 
 
 
@@ -636,9 +610,7 @@ async function loadTasksForDate(selectedDate) {
         taskDiv.dataset.taskDate = task.date;
 
         // Determine whose turn it is
-        let currentTurn = task.turn || getTurnByDate(task, selectedDate);
-
-
+        let currentTurn = getCurrentTurn(task, selectedDate);
 
 
         // Determine repeat limit
@@ -866,8 +838,7 @@ async function showTaskDetails(task) {
     const userOrder = [...task.users];
 
     // For a "Daily" task with 1 time per day, rotate the turn based on the day difference
-    const currentUser = getTurnByDate(task, selectedDate);
-
+    const currentUser = getCurrentTurn(task, selectedDate);
 const currentIndex = userOrder.indexOf(currentUser);
 
 
@@ -1015,16 +986,6 @@ async function finishTask(userName, task, button, selectedDate) {
 
     task.date = selectedDate;
     await saveTaskToBackend(task);
-
-// Refresh and reopen task modal with updated info
-document.querySelectorAll(".task-modal").forEach(m => m.remove());
-    // Reload task modal with updated data
-const allTasks = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(localStorage.getItem("currentAdminEmail"))}`).then(r => r.json());
-const updatedTask = allTasks.tasks.find(t => t.title === task.title && t.date === task.date);
-if (updatedTask) {
-    showTaskDetails(updatedTask);
-}
-
 
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (adminEmail && rewardAmount > 0) {
