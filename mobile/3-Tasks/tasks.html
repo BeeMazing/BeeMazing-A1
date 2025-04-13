@@ -540,58 +540,6 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-function getTurnByDate(task, targetDateStr) {
-  const completions = task.completions || {};
-  const userOrder = [...task.users];
-  const repeat = task.repeat || "Daily";
-  const repeatLimit = repeat === "Daily" ? (task.timesPerDay || 1)
-                    : repeat === "Weekly" ? (task.timesPerWeek || 1)
-                    : repeat === "Monthly" ? (task.timesPerMonth || 1)
-                    : 1;
-
-  const parseDate = (str) => new Date(str + "T00:00:00");
-  const formatDate = (date) => date.toISOString().split("T")[0];
-
-  const [fromStr] = task.date.split(" to ");
-  const startDate = parseDate(fromStr);
-  const targetDate = parseDate(targetDateStr);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // normalize
-
-  let currentUserIndex = 0;
-
-  for (let d = new Date(startDate); d <= targetDate; d.setDate(d.getDate() + 1)) {
-    const dateStr = formatDate(d);
-    const currentUser = userOrder[currentUserIndex];
-    const completedToday = Array.isArray(completions[dateStr]) ? completions[dateStr] : [];
-    const completedCount = completedToday.filter(u => u === currentUser).length;
-
-    const isPastOrToday = d <= today;
-
-    if (isPastOrToday) {
-      // In the past or today: only rotate if the task was completed by the current user
-      if (completedCount >= repeatLimit) {
-        currentUserIndex = (currentUserIndex + 1) % userOrder.length;
-      }
-    } else {
-      // In the future: assume task was completed and rotate as if everything went fine
-      currentUserIndex = (currentUserIndex + 1) % userOrder.length;
-    }
-
-    // When we've reached the target day, stop
-    if (dateStr === targetDateStr) {
-      return userOrder[currentUserIndex];
-    }
-  }
-
-  return userOrder[currentUserIndex];
-}
-
-
-
-
-
-
 
 
 
@@ -617,9 +565,9 @@ async function loadTasksForDate(selectedDate) {
 
     const visibleTasks = tasks.filter(task => {
         if (!task.date) return false;
-        const [fromStr, toStr] = task.date.split(" to ");
-        const from = parseLocalDate(fromStr);
-        const to = toStr ? parseLocalDate(toStr) : new Date(3000, 0, 1);
+        const range = task.date.split(" to ");
+        const from = parseLocalDate(range[0]);
+        const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
         const selected = parseLocalDate(selectedDate);
         return selected >= from && selected <= to;
     });
@@ -629,18 +577,26 @@ async function loadTasksForDate(selectedDate) {
         return;
     }
 
-    visibleTasks.forEach(task => {
+    visibleTasks.forEach((task, index) => {
         const taskDiv = document.createElement("div");
         taskDiv.className = "task-item";
         taskDiv.dataset.taskTitle = task.title;
         taskDiv.dataset.taskDate = task.date;
 
-        // Determine whose turn it is
-        let currentTurn = getTurnByDate(task, selectedDate);
+        let currentTurn;
+        if (task.repeat === "Daily" && task.timesPerDay === 1) {
+    const dateRange = task.date.split(" to ");
+    const startDateStr = dateRange[0];
+    const startDate = parseLocalDate(startDateStr);
+    const currentDate = parseLocalDate(selectedDate);
+    const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+    const userOrder = [...task.users];
+    const currentIndex = diffDays % userOrder.length;
+    currentTurn = userOrder[currentIndex];
+        } else {
+            currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+        }
 
-
-
-        // Determine repeat limit
         let repeatLimit = 1;
         if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
         if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
@@ -665,7 +621,6 @@ async function loadTasksForDate(selectedDate) {
             }
         });
 
-        // Swipe gesture support (touch)
         let startX = 0;
         let currentX = 0;
         let isSwiping = false;
@@ -679,13 +634,17 @@ async function loadTasksForDate(selectedDate) {
             if (!isSwiping) return;
             currentX = e.touches[0].clientX;
             const diffX = startX - currentX;
-            if (diffX > 50) taskDiv.classList.add("swiped-left");
-            if (diffX < -20) taskDiv.classList.remove("swiped-left");
+            if (diffX > 50) {
+                taskDiv.classList.add("swiped-left");
+            } else if (diffX < -20) {
+                taskDiv.classList.remove("swiped-left");
+            }
         });
 
-        taskDiv.addEventListener("touchend", () => isSwiping = false);
+        taskDiv.addEventListener("touchend", () => {
+            isSwiping = false;
+        });
 
-        // Swipe gesture support (mouse)
         taskDiv.addEventListener("mousedown", (e) => {
             startX = e.clientX;
             isSwiping = true;
@@ -695,14 +654,21 @@ async function loadTasksForDate(selectedDate) {
             if (!isSwiping) return;
             currentX = e.clientX;
             const diffX = startX - currentX;
-            if (diffX > 50) taskDiv.classList.add("swiped-left");
-            if (diffX < -20) taskDiv.classList.remove("swiped-left");
+            if (diffX > 50) {
+                taskDiv.classList.add("swiped-left");
+            } else if (diffX < -20) {
+                taskDiv.classList.remove("swiped-left");
+            }
         });
 
-        taskDiv.addEventListener("mouseup", () => isSwiping = false);
-        taskDiv.addEventListener("mouseleave", () => isSwiping = false);
+        taskDiv.addEventListener("mouseup", () => {
+            isSwiping = false;
+        });
 
-        // Delete button
+        taskDiv.addEventListener("mouseleave", () => {
+            isSwiping = false;
+        });
+
         taskDiv.querySelector(".delete-btn").addEventListener("click", async () => {
             if (confirm(`Are you sure you want to delete "${task.title}"?`)) {
                 const loadingDiv = document.createElement("div");
@@ -732,6 +698,7 @@ async function loadTasksForDate(selectedDate) {
         taskList.appendChild(taskDiv);
     });
 }
+
 
 
 
@@ -860,28 +827,25 @@ async function showTaskDetails(task) {
     const startDate = parseLocalDate(startDateStr);
 
     // Calculate the current turn based on the selected date
-    const currentUser = getTurnByDate(task, selectedDate);
-const userOrder = [...task.users];
+    const currentDate = parseLocalDate(selectedDate);
+    const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+    const userOrder = [...task.users];
 
-// completedUsers is already declared earlier in showTaskDetails
-const repeatLimit = task.repeat === "Daily" ? (task.timesPerDay || 1)
-                   : task.repeat === "Weekly" ? (task.timesPerWeek || 1)
-                   : task.repeat === "Monthly" ? (task.timesPerMonth || 1)
-                   : 1;
-
-let nextUser = null;
-for (let i = 0; i < userOrder.length; i++) {
-    const user = userOrder[i];
-    const count = completedUsers.filter(u => u === user).length;
-    if (count < repeatLimit && user !== currentUser) {
-        nextUser = user;
-        break;
+    // For a "Daily" task with 1 time per day, rotate the turn based on the day difference
+    let currentIndex;
+    if (task.repeat === "Daily" && task.timesPerDay === 1) {
+        currentIndex = diffDays % userOrder.length;
+    } else {
+        // Fallback to the stored turn if the task isn't a daily 1-time-per-day task
+        const storedTurn = task.turn || task.users[0];
+        currentIndex = userOrder.indexOf(storedTurn);
     }
-}
-if (!nextUser) {
-    nextUser = userOrder[0]; // fallback
-}
 
+    const currentUser = userOrder[currentIndex];
+
+    // Calculate the next user in the turn order
+    const nextIndex = (currentIndex + 1) % userOrder.length;
+    const nextUser = userOrder[nextIndex];
 
     // Get completions for the selected date
     const completedRaw = task.completions?.[selectedDate] || [];
