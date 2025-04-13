@@ -1005,37 +1005,38 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
   }
 
   const userTasks = tasks.filter(task => {
-    const dateRange = task.date.split(" to ");
-    const startDateStr = dateRange[0];
-    const startDate = parseLocalDate(startDateStr);
-    const endDateStr = dateRange[1] || "3000-01-01";
-    const endDate = parseLocalDate(endDateStr);
-    const currentDate = parseLocalDate(selectedDate);
+  const dateRange = task.date.split(" to ");
+  const startDateStr = dateRange[0];
+  const startDate = parseLocalDate(startDateStr);
+  const endDateStr = dateRange[1] || "3000-01-01";
+  const endDate = parseLocalDate(endDateStr);
+  const currentDate = parseLocalDate(selectedDate);
 
-    if (currentDate < startDate || currentDate > endDate) return false;
-    if (!Array.isArray(task.users) || task.users.length === 0) return false;
+  if (currentDate < startDate || currentDate > endDate) return false;
+  if (!Array.isArray(task.users) || task.users.length === 0) return false;
 
-    const requiredTimes =
-      task.repeat === "Daily" ? task.timesPerDay || 1 :
-      task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-      task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+  const requiredTimes =
+    task.repeat === "Daily" ? task.timesPerDay || 1 :
+    task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+    task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-    const fullTurnOrder = [];
-    for (let i = 0; i < requiredTimes; i++) {
-      fullTurnOrder.push(task.users[i % task.users.length]);
-    }
+  const fullTurnOrder = [];
+  for (let i = 0; i < requiredTimes; i++) {
+    fullTurnOrder.push(task.users[i % task.users.length]);
+  }
 
-    const userTurns = fullTurnOrder
-      .map((user, index) => ({ user, index }))
-      .filter(turn => turn.user === userName);
+  const userTurnIndexes = fullTurnOrder
+    .map((user, index) => ({ user, index }))
+    .filter(turn => turn.user === userName);
 
-    const completedRaw = task.completions?.[selectedDate] || [];
-    const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
+  const completedRaw = task.completions?.[selectedDate] || [];
+  const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
+  const completedCount = completedUsers.filter(u => u === userName).length;
 
-    const completedCount = completedUsers.filter(u => u === userName).length;
+  // ✅ ONLY include if this user has a turn or has already completed something that day
+  return userTurnIndexes.length > 0 || completedCount > 0;
+});
 
-    return userTurns.length > 0 || completedCount > 0;
-  });
 
   if (userTasks.length === 0) {
     userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
