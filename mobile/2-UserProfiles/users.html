@@ -1025,16 +1025,36 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     fullTurnOrder.push(task.users[i % task.users.length]);
   }
 
-  const userTurnIndexes = fullTurnOrder
-    .map((user, index) => ({ user, index }))
-    .filter(turn => turn.user === userName);
-
   const completedRaw = task.completions?.[selectedDate] || [];
   const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
   const completedCount = completedUsers.filter(u => u === userName).length;
 
-  // ✅ ONLY include if this user has a turn or has already completed something that day
-  return userTurnIndexes.length > 0 || completedCount > 0;
+  const isUserTurnToday = (() => {
+    if (task.repeat === "Daily" && task.timesPerDay === 1) {
+      const turnToday = getTurnByDate(task, selectedDate);
+      return turnToday === userName;
+    }
+
+    const fullTurnOrder = [];
+    const requiredTimes =
+      task.repeat === "Daily" ? task.timesPerDay || 1 :
+      task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+      task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+
+    for (let i = 0; i < requiredTimes; i++) {
+      fullTurnOrder.push(task.users[i % task.users.length]);
+    }
+
+    const userTurnIndexes = fullTurnOrder
+      .map((user, index) => ({ user, index }))
+      .filter(turn => turn.user === userName);
+
+    return userTurnIndexes.length > 0;
+  })();
+
+  // ✅ Include only if it's the user's turn today or they completed it already
+  return isUserTurnToday || completedCount > 0;
+
 });
 
 
