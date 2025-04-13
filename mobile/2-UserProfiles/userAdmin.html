@@ -430,32 +430,62 @@ async function loadAdminTasks(selectedDate = new Date().toISOString().split("T")
   const adminEmail = localStorage.getItem("currentAdminEmail");
   if (!adminEmail) return;
 
-  const res = await fetch(`https://beemazing.onrender.com/api/admin-tasks?adminEmail=${adminEmail}`);
+  const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${adminEmail}`);
   const result = await res.json();
   if (!result.success) return;
 
   const tbody = document.getElementById("adminTasksBody");
   tbody.innerHTML = "";
 
+  const parseDate = (str) => {
+    const [y, m, d] = str.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  };
+
   result.tasks.forEach(task => {
-    // Optional: Only show tasks for selectedDate if needed
+    const range = task.date.split(" to ");
+    const from = parseDate(range[0]);
+    const to = range[1] ? parseDate(range[1]) : new Date(3000, 0, 1);
+    const dateObj = parseDate(selectedDate);
+
+    if (dateObj < from || dateObj > to) return;
+
+    let currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+    if (task.repeat === "Daily" && task.timesPerDay === 1) {
+      const diff = Math.floor((dateObj - from) / (1000 * 60 * 60 * 24));
+      const userList = [...task.users];
+      const idx = diff % userList.length;
+      currentTurn = userList[idx];
+    }
+
+    const completions = task.completions?.[selectedDate] || [];
+    const completedBy = Array.isArray(completions) ? completions : [];
+    const requiredTimes = task.timesPerDay || task.timesPerWeek || task.timesPerMonth || 1;
+    const completedCount = completedBy.length;
+
+    // Determine if this task has pending approval
+    const needsApproval = completedCount >= requiredTimes;
 
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${task.title}</td>
-      <td>${task.user}</td>
-      <td class="${task.status === 'Completed' ? 'status-completed' : 'status-pending'}">${task.status}</td>
-      <td>
-        ${task.status === "Completed"
-          ? `<button class="action-btn accept-btn" onclick="handleTaskAction('${adminEmail}', '${task.title}', '${task.user}', 'accept')">Accept</button>
-             <button class="action-btn decline-btn" onclick="handleTaskAction('${adminEmail}', '${task.title}', '${task.user}', 'decline')">Decline</button>`
-          : "-"
-        }
-      </td>
-    `;
+const assignedUser = completedBy[0] || currentTurn;
+
+tr.innerHTML = `
+  <td>${task.title}</td>
+  <td>${needsApproval ? completedBy.join(", ") : currentTurn}</td>
+  <td class="${needsApproval ? "status-completed" : "status-pending"}">${needsApproval ? "Completed" : "Pending"}</td>
+  <td>
+    ${needsApproval
+      ? `<button class="action-btn accept-btn" onclick="handleTaskAction('${adminEmail}', '${task.title}', '${assignedUser}', 'accept')">Accept</button>
+         <button class="action-btn decline-btn" onclick="handleTaskAction('${adminEmail}', '${task.title}', '${assignedUser}', 'decline')">Decline</button>`
+      : "-"
+    }
+  </td>
+`;
+
     tbody.appendChild(tr);
   });
 }
+
 
 window.addEventListener("DOMContentLoaded", () => {
   generateScrollableDates(); // Auto-generate and auto-select today
