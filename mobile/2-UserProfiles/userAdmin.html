@@ -300,68 +300,30 @@ if (selected) scrollDayIntoView(selected);
       dayScrollContainer.scrollBy({ left: 100, behavior: "smooth" });
     };
 
-    async function loadTasks() {
-  adminTasksBody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
+    const rotationIndex = (daysSinceStart) % users.length;
+const currentUser = users[rotationIndex];
 
-  try {
-    const res = await fetch(`${SERVER_URL}/api/admin-tasks?adminEmail=${adminEmail}`);
-    const data = await res.json();
-    if (!data.success) throw new Error(data.message);
+for (let i = 0; i < times; i++) {
+  const isCompleted = completions.includes(currentUser);
 
-    const tasks = data.tasks;
-    adminTasksBody.innerHTML = "";
-    let hasAny = false;
-
-    tasks.forEach(task => {
-  const users = task.users || [];
-  const completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-
-  // Check if selectedDate is in task date range
-  const [fromStr, toStr] = (task.date || "").split(" to ");
-  const from = new Date(fromStr);
-  const to = toStr ? new Date(toStr) : new Date(3000, 0, 1);
-  const selected = new Date(selectedDate);
-  if (selected < from || selected > to) return;
-
-  const times = task.timesPerDay || 1;
-
-  // Determine the first turn index based on days passed
-  const daysSinceStart = Math.floor((selected - from) / (1000 * 60 * 60 * 24));
-  const totalCompleted = completions.length;
-
-  for (let i = 0; i < times; i++) {
-    const rotationIndex = (daysSinceStart * times + i) % users.length;
-    const currentUser = users[rotationIndex];
-    const isCompleted = completions.includes(currentUser);
-
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${task.title}</td>
-      <td>${currentUser}</td>
-      <td class="${isCompleted ? 'status-completed' : 'status-pending'}">
-        ${isCompleted ? "Completed" : "Pending"}
-      </td>
-      <td>
-        ${isCompleted
-          ? `<button class="action-btn accept-btn" onclick="handleAction('${task.title}', '${currentUser}', 'accept')">Accept</button>
-             <button class="action-btn decline-btn" onclick="handleAction('${task.title}', '${currentUser}', 'decline')">Decline</button>`
-          : "—"}
-      </td>
-    `;
-    adminTasksBody.appendChild(row);
-    hasAny = true;
-  }
-});
-
-
-    if (!hasAny) {
-      adminTasksBody.innerHTML = "<tr><td colspan='4'>No tasks for this date</td></tr>";
-    }
-  } catch (err) {
-    console.error("Failed to load tasks:", err);
-    adminTasksBody.innerHTML = `<tr><td colspan='4'>Error loading tasks: ${err.message}</td></tr>`;
-  }
+  const row = document.createElement("tr");
+  row.innerHTML = `
+    <td>${task.title}</td>
+    <td>${currentUser}</td>
+    <td class="${isCompleted ? 'status-completed' : 'status-pending'}">
+      ${isCompleted ? "Completed" : "Pending"}
+    </td>
+    <td>
+      ${isCompleted
+        ? `<button class="action-btn accept-btn" onclick="handleAction('${task.title}', '${currentUser}', 'accept')">Accept</button>
+           <button class="action-btn decline-btn" onclick="handleAction('${task.title}', '${currentUser}', 'decline')">Decline</button>`
+        : "—"}
+    </td>
+  `;
+  adminTasksBody.appendChild(row);
+  hasAny = true;
 }
+
 
 
     async function handleAction(title, user, action) {
