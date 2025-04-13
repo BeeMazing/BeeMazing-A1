@@ -393,22 +393,30 @@ if (selected) scrollDayIntoView(selected);
 
 
 
+async function handleAction(title, user, action) {
+  try {
+    const res = await fetch(`${SERVER_URL}/api/task-action`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        adminEmail,
+        taskTitle: title,
+        user,
+        action,
+        date: selectedDate
+      })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
 
-    async function handleAction(title, user, action) {
-      try {
-        const res = await fetch(`${SERVER_URL}/api/task-action`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ adminEmail, taskTitle: title, user, action, date: selectedDate })
-        });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.message);
-        loadTasks();
-      } catch (err) {
-        console.error("Action failed:", err);
-        alert("Action failed: " + err.message);
-      }
-    }
+    // ✅ Reload the table to reflect the updated status
+    loadTasks();
+  } catch (err) {
+    console.error("Action failed:", err);
+    alert("Action failed: " + err.message);
+  }
+}
+
 
     updateMonthHeader(viewDate);
     generateDayButtons(viewDate);
