@@ -970,11 +970,12 @@
 
       let totalCompletions = 0;
       Object.entries(completions).forEach(([dateStr, users]) => {
-        const dateObj = parseLocalDate(dateStr);
-        if (dateObj <= currentDate && Array.isArray(users)) {
-          totalCompletions += users.length;
-        }
-      });
+  const dateObj = parseLocalDate(dateStr);
+  if (dateObj < currentDate && Array.isArray(users)) {
+    totalCompletions += users.length;
+  }
+});
+
 
       const currentIndex = totalCompletions % userOrder.length;
       const currentTurn = userOrder[currentIndex];
