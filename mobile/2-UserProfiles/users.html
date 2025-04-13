@@ -1040,14 +1040,18 @@
 statusDiv.style.marginTop = "10px";
 statusDiv.style.fontWeight = "bold";
 
-const userTurnIndexes = [];
+const fullTurnOrder = [];
 const userOrder = [...task.users];
-
-for (let i = 0; i < userOrder.length; i++) {
-  if (userOrder[i] === userName) {
-    userTurnIndexes.push(i);
-  }
+for (let i = 0; i < requiredTimes; i++) {
+  fullTurnOrder.push(userOrder[i % userOrder.length]);
 }
+
+// Find all indexes in the full turn order where this user appears
+const userTurnIndexes = [];
+fullTurnOrder.forEach((user, index) => {
+  if (user === userName) userTurnIndexes.push(index);
+});
+
 
 const completedCount = completedUsers.filter(u => u === userName).length;
 
