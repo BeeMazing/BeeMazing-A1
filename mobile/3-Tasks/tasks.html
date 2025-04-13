@@ -560,6 +560,11 @@ function getTurnByDate(task, targetDateStr) {
 
   let currentUserIndex = 0;
 
+  if (task.turnHistory && task.turnHistory[targetDateStr]) {
+  return task.turnHistory[targetDateStr];
+}
+
+
   for (let d = new Date(startDate); d <= targetDate; d.setDate(d.getDate() + 1)) {
     const dateStr = formatDate(d);
     const currentUser = userOrder[currentUserIndex];
@@ -1009,7 +1014,13 @@ async function finishTask(userName, task, button, selectedDate) {
             if (nextIndex === currentIndex) looped = true;
         }
 
-        task.turn = looped ? userList[0] : userList[nextIndex];
+        const newTurn = looped ? userList[0] : userList[nextIndex];
+task.turn = newTurn;
+
+// Update per-date turn history
+if (!task.turnHistory) task.turnHistory = {};
+task.turnHistory[today] = newTurn;
+
     }
 
     task.date = selectedDate;
