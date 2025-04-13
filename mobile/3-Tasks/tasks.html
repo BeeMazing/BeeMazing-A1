@@ -585,14 +585,14 @@ async function loadTasksForDate(selectedDate) {
 
         let currentTurn;
         if (task.repeat === "Daily" && task.timesPerDay === 1) {
-            const dateRange = task.date.split(" to ");
-            const startDateStr = dateRange[0];
-            const startDate = parseLocalDate(startDateStr);
-            const currentDate = parseLocalDate(selectedDate);
-            const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-            const userOrder = [...task.users];
-            const currentIndex = diffDays % userOrder.length;
-            currentTurn = userOrder[currentIndex];
+    const dateRange = task.date.split(" to ");
+    const startDateStr = dateRange[0];
+    const startDate = parseLocalDate(startDateStr);
+    const currentDate = parseLocalDate(selectedDate);
+    const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+    const userOrder = [...task.users];
+    const currentIndex = diffDays % userOrder.length;
+    currentTurn = userOrder[currentIndex];
         } else {
             currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
         }
@@ -811,6 +811,15 @@ async function showTaskDetails(task) {
         const [year, month, day] = dateStr.split("-").map(Number);
         return new Date(year, month - 1, day);
     }
+
+
+    function getPreviousDate(dateStr) {
+    const d = new Date(dateStr);
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().split("T")[0];
+}
+
+
 
     // Get the start date of the task (use task.date's "from" date if it's a range)
     const dateRange = task.date.split(" to ");
