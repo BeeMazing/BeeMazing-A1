@@ -334,13 +334,24 @@
       if (repeat === "Monthly") totalRequired = task.timesPerMonth || 1;
 
       const daysSinceStart = Math.floor((selected - start) / (1000 * 60 * 60 * 24));
-      let rotation = [];
+let rotation = [];
+const alreadyCompleted = completions.slice(); // clone to not modify original
 
-      // Build rotation starting from the current user
-      for (let i = 0; i < totalRequired; i++) {
-        const userIndex = (daysSinceStart + i) % users.length;
-        rotation.push(users[userIndex]);
-      }
+// Build rotation skipping already completed users
+for (let i = 0, u = 0; rotation.length < totalRequired && u < 100; u++) {
+  const userIndex = (daysSinceStart + u) % users.length;
+  const nextUser = users[userIndex];
+  const alreadyDone = alreadyCompleted.includes(nextUser);
+
+  if (!alreadyDone || repeat === "Once") {
+    rotation.push(nextUser);
+    if (alreadyDone) {
+      alreadyCompleted.splice(alreadyCompleted.indexOf(nextUser), 1);
+    }
+  }
+}
+
+
 
       rotation.forEach((user, index) => {
         const completedCount = completions.filter(u => u === user).length;
@@ -405,16 +416,29 @@ async function handleAction(title, user, action) {
       })
     });
 
+    // ✅ NEW: Handle non-2xx responses properly
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || `Server error: ${res.status}`);
+    }
+
     const data = await res.json();
     if (!data.success) throw new Error(data.message);
 
-    // ✅ Reload the table to reflect the updated status
+    // ✅ Refresh task list
     loadTasks();
   } catch (err) {
     console.error("Action failed:", err);
     alert("Action failed: " + err.message);
   }
 }
+
+
+
+
+
+
+
 
 
 
