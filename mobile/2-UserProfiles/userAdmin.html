@@ -28,6 +28,33 @@
       overflow: hidden;
     }
 
+    html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.day-scroll-wrapper {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: 6px 10px;
+}
+
+.day-scroll {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding: 5px;
+  scroll-behavior: smooth;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.day-scroll::-webkit-scrollbar {
+  display: none;
+}
+
     .header {
       background: linear-gradient(135deg, var(--primary-color), #FFB300);
       height: var(--header-height);
@@ -38,21 +65,14 @@
       align-items: center;
       justify-content: center;
       z-index: 100;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     }
-    .title {
-      font-size: 24px;
-      font-weight: 600;
-      color: var(--secondary-color);
-    }
-
+    .title { font-size: 24px; font-weight: 600; color: var(--secondary-color); }
     .date-header {
       position: fixed;
       top: var(--header-height);
       width: 100%;
       background: var(--secondary-color);
       z-index: 90;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
     .month-nav {
       display: flex;
@@ -71,10 +91,6 @@
       border-radius: 8px;
       cursor: pointer;
     }
-    .month-nav button:hover {
-      background: var(--primary-color);
-      color: var(--secondary-color);
-    }
     .day-scroll-wrapper {
       display: flex;
       align-items: center;
@@ -86,10 +102,6 @@
       overflow-x: auto;
       gap: 8px;
       padding: 5px;
-      scroll-behavior: smooth;
-    }
-    .day-scroll::-webkit-scrollbar {
-      display: none;
     }
     .day {
       min-width: 38px;
@@ -101,13 +113,11 @@
       text-align: center;
       font-weight: bold;
       cursor: pointer;
-      flex-shrink: 0;
     }
     .day.selected {
       background: var(--primary-color);
       color: var(--secondary-color);
     }
-
     .scroll-btn {
       background: var(--secondary-color);
       color: var(--accent-color);
@@ -117,7 +127,6 @@
       padding: 5px 10px;
       cursor: pointer;
     }
-
     .tasks-table {
       position: absolute;
       top: calc(var(--header-height) + 100px);
@@ -125,32 +134,20 @@
       width: 100%;
       overflow-y: auto;
       padding: 20px;
-      background-color: var(--light-bg);
-    }
-    .tasks-table h3 {
-      text-align: center;
-      margin-bottom: 15px;
-      color: var(--primary-color);
     }
     table {
       width: 100%;
       border-collapse: collapse;
       background: var(--card-bg);
       border-radius: 12px;
-      overflow: hidden;
     }
     th, td {
       padding: 12px;
       text-align: left;
       border-bottom: 1px solid var(--border-dark);
     }
-    th {
-      background: var(--secondary-color);
-      color: var(--primary-color);
-    }
-    td {
-      background: var(--card-bg);
-    }
+    th { background: var(--secondary-color); color: var(--primary-color); }
+    td { background: var(--card-bg); }
     .status-completed { color: #4CAF50; font-weight: bold; }
     .status-pending { color: #FFB300; font-weight: bold; }
     .action-btn {
@@ -164,7 +161,6 @@
     }
     .accept-btn { background-color: #4CAF50; color: white; }
     .decline-btn { background-color: var(--danger-color); color: white; }
-
     .footer {
       position: fixed;
       bottom: 0;
@@ -174,7 +170,6 @@
       display: flex;
       justify-content: space-around;
       align-items: center;
-      z-index: 100;
     }
     .footer a {
       text-decoration: none;
@@ -183,20 +178,8 @@
       flex-direction: column;
       align-items: center;
     }
-    .footer a img {
-      width: 40px;
-      height: 40px;
-      filter: invert(100%);
-    }
-    .footer a span {
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    @media (max-width: 600px) {
-      th, td { font-size: 14px; }
-      .footer a img { width: 35px; height: 35px; }
-    }
+    .footer a img { width: 40px; height: 40px; filter: invert(100%); }
+    .footer a span { font-size: 12px; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -216,7 +199,6 @@
   </div>
 
   <div class="tasks-table">
-    <h3>Tasks Overview</h3>
     <table>
       <thead>
         <tr>
@@ -242,55 +224,73 @@
   <script>
     const SERVER_URL = "https://beemazing.onrender.com";
     const adminEmail = localStorage.getItem("currentAdminEmail");
+    let viewDate = new Date();
+    let selectedDate = new Date().toISOString().split("T")[0];
 
     const monthLabel = document.getElementById("monthLabel");
     const dayScrollContainer = document.getElementById("dayScrollContainer");
     const adminTasksBody = document.getElementById("adminTasksBody");
 
-    const today = new Date();
-    let selectedDate = today.toISOString().split("T")[0];
-
     function updateMonthHeader(date) {
-      const options = { month: "long", year: "numeric" };
-      monthLabel.textContent = date.toLocaleDateString("en-US", options);
+      monthLabel.textContent = date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
     }
 
     function generateDayButtons(date) {
-      dayScrollContainer.innerHTML = "";
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
+  dayScrollContainer.innerHTML = "";
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dayDate = new Date(year, month, d);
-        const dateStr = dayDate.toISOString().split("T")[0];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dayDate = new Date(year, month, d);
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
-        const dayBtn = document.createElement("div");
-        dayBtn.className = "day";
-        dayBtn.textContent = d;
-        if (dateStr === selectedDate) dayBtn.classList.add("selected");
+    const dayBtn = document.createElement("div");
+    dayBtn.className = "day";
+    dayBtn.textContent = d;
+    if (dateStr === selectedDate) dayBtn.classList.add("selected");
 
-        dayBtn.onclick = () => {
-          selectedDate = dateStr;
-          document.querySelectorAll(".day").forEach(btn => btn.classList.remove("selected"));
-          dayBtn.classList.add("selected");
-          loadTasks();
-        };
+    dayBtn.onclick = () => {
+      selectedDate = dateStr;
+      document.querySelectorAll(".day").forEach(btn => btn.classList.remove("selected"));
+      dayBtn.classList.add("selected");
+      loadTasks();
+      scrollDayIntoView(dayBtn);
+    };
 
-        dayScrollContainer.appendChild(dayBtn);
-      }
+    dayScrollContainer.appendChild(dayBtn);
+  }
+
+  // ✅ Move this HERE, after buttons exist
+  const selected = document.querySelector(".day.selected");
+  if (selected) scrollDayIntoView(selected);
+}
+
+
+
+    function scrollDayIntoView(dayElement) {
+  setTimeout(() => {
+    if (dayElement && typeof dayElement.scrollIntoView === "function") {
+      dayElement.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
     }
+  }, 100); // Let layout settle
+}
+
+    // At the end of generateDayButtons()
+const selected = document.querySelector(".day.selected");
+if (selected) scrollDayIntoView(selected);
+
 
     document.getElementById("prevMonth").onclick = () => {
-      today.setMonth(today.getMonth() - 1);
-      updateMonthHeader(today);
-      generateDayButtons(today);
+      viewDate.setMonth(viewDate.getMonth() - 1);
+      updateMonthHeader(viewDate);
+      generateDayButtons(viewDate);
     };
 
     document.getElementById("nextMonth").onclick = () => {
-      today.setMonth(today.getMonth() + 1);
-      updateMonthHeader(today);
-      generateDayButtons(today);
+      viewDate.setMonth(viewDate.getMonth() + 1);
+      updateMonthHeader(viewDate);
+      generateDayButtons(viewDate);
     };
 
     document.getElementById("scrollLeft").onclick = () => {
@@ -301,71 +301,78 @@
     };
 
     async function loadTasks() {
-  adminTasksBody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
+      adminTasksBody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
 
-  try {
-    const res = await fetch(`${SERVER_URL}/api/admin-tasks?adminEmail=${adminEmail}`);
-    const data = await res.json();
-    if (!data.success) throw new Error(data.message);
+      try {
+        const res = await fetch(`${SERVER_URL}/api/admin-tasks?adminEmail=${adminEmail}`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
 
-    const tasks = data.tasks;
-    adminTasksBody.innerHTML = "";
-    let hasAny = false;
+        const tasks = data.tasks;
+        adminTasksBody.innerHTML = "";
+        let hasAny = false;
 
-    tasks.forEach(task => {
-      const userOrder = task.userOrder || task.users || [];
-      const completions = task.completions?.[selectedDate] || [];
-      const currentTurn = task.turn || userOrder[0]; // fallback just in case
+        tasks.forEach(task => {
+          const users = task.users || [];
+          const completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
 
-      userOrder.forEach(user => {
-        hasAny = true;
-        const isCompleted = completions.includes(user);
-        const isCurrentTurn = user === currentTurn;
+          // Check if selectedDate is in task date range
+          const [fromStr, toStr] = (task.date || "").split(" to ");
+          const from = new Date(fromStr);
+          const to = toStr ? new Date(toStr) : new Date(3000, 0, 1);
+          const selected = new Date(selectedDate);
+          if (selected < from || selected > to) return;
 
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${task.title}</td>
-          <td>${user}</td>
-          <td class="${isCompleted ? 'status-completed' : 'status-pending'}">
-            ${isCompleted ? 'Completed' : isCurrentTurn ? 'Pending' : '—'}
-          </td>
-          <td>
-            ${isCompleted
-              ? `<button class="action-btn accept-btn" onclick="handleAction('${task.title}', '${user}', 'accept')">Accept</button>
-                 <button class="action-btn decline-btn" onclick="handleAction('${task.title}', '${user}', 'decline')">Decline</button>`
-              : '—'}
-          </td>
-        `;
-        adminTasksBody.appendChild(tr);
-      });
-    });
+          // Determine currentTurn for the day (rotating logic)
+          let currentIndex = 0;
+          if (task.repeat === "Daily" && task.timesPerDay === 1) {
+            const diff = Math.floor((selected - from) / (1000 * 60 * 60 * 24));
+            currentIndex = diff % users.length;
+          } else {
+            currentIndex = users.indexOf(task.turn || users[0]);
+          }
 
-    if (!hasAny) {
-      adminTasksBody.innerHTML = "<tr><td colspan='4'>No tasks for this date</td></tr>";
+          const currentTurn = users[currentIndex];
+
+          users.forEach(user => {
+            hasAny = true;
+            const isCompleted = completions.includes(user);
+            const isCurrentTurn = user === currentTurn;
+
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${task.title}</td>
+              <td>${user}</td>
+              <td class="${isCompleted ? 'status-completed' : 'status-pending'}">
+                ${isCompleted ? "Completed" : isCurrentTurn ? "Pending" : "—"}
+              </td>
+              <td>
+                ${isCompleted
+                  ? `<button class="action-btn accept-btn" onclick="handleAction('${task.title}', '${user}', 'accept')">Accept</button>
+                     <button class="action-btn decline-btn" onclick="handleAction('${task.title}', '${user}', 'decline')">Decline</button>`
+                  : "—"}
+              </td>
+            `;
+            adminTasksBody.appendChild(row);
+          });
+        });
+
+        if (!hasAny) {
+          adminTasksBody.innerHTML = "<tr><td colspan='4'>No tasks for this date</td></tr>";
+        }
+      } catch (err) {
+        console.error("Failed to load tasks:", err);
+        adminTasksBody.innerHTML = `<tr><td colspan='4'>Error loading tasks: ${err.message}</td></tr>`;
+      }
     }
-
-  } catch (err) {
-    console.error("Failed to load tasks:", err);
-    adminTasksBody.innerHTML = "<tr><td colspan='4'>Error loading tasks</td></tr>";
-  }
-}
-
-
 
     async function handleAction(title, user, action) {
       try {
         const res = await fetch(`${SERVER_URL}/api/task-action`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            adminEmail,
-            taskTitle: title,
-            user,
-            action,
-            date: selectedDate
-          })
+          body: JSON.stringify({ adminEmail, taskTitle: title, user, action, date: selectedDate })
         });
-
         const data = await res.json();
         if (!data.success) throw new Error(data.message);
         loadTasks();
@@ -375,8 +382,8 @@
       }
     }
 
-    updateMonthHeader(today);
-    generateDayButtons(today);
+    updateMonthHeader(viewDate);
+    generateDayButtons(viewDate);
     loadTasks();
   </script>
 </body>
