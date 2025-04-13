@@ -333,14 +333,39 @@
       if (repeat === "Weekly") totalRequired = task.timesPerWeek || 1;
       if (repeat === "Monthly") totalRequired = task.timesPerMonth || 1;
 
-      const daysSinceStart = Math.floor((selected - start) / (1000 * 60 * 60 * 24));
+
+
       let rotation = [];
 
-      // Build rotation starting from the current user
-      for (let i = 0; i < totalRequired; i++) {
-        const userIndex = (daysSinceStart + i) % users.length;
-        rotation.push(users[userIndex]);
-      }
+// Respect the existing turn and completion order like tasks.html
+let userOrder = [...users];
+
+// Handle delegated user
+if (task.tempTurnReplacement && task.tempTurnReplacement.original && task.tempTurnReplacement.replacement) {
+  const i = userOrder.indexOf(task.tempTurnReplacement.original);
+  if (i !== -1) {
+    userOrder[i] = task.tempTurnReplacement.replacement;
+  }
+}
+
+let completedUsers = completions || [];
+let usedCompletions = [...completedUsers];
+
+// Build the rotation list
+for (let i = 0; i < totalRequired; i++) {
+  // Skip already completed users
+  const remaining = userOrder.filter(u => usedCompletions.indexOf(u) === -1);
+  if (remaining.length === 0) break;
+
+  const nextUser = remaining[0];
+  rotation.push(nextUser);
+  usedCompletions.push(nextUser);
+}
+
+
+
+
+
 
       rotation.forEach((user, index) => {
         const completedCount = completions.filter(u => u === user).length;
