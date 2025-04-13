@@ -343,8 +343,8 @@
       }
 
       rotation.forEach((user, index) => {
-        const completedCount = completions.filter(u => u === user).length;
-        const isCompleted = completedCount > 0;
+        const isCompleted = completions.includes(user);
+
 
         const row = document.createElement("tr");
         row.innerHTML = `
@@ -363,9 +363,7 @@
         adminTasksBody.appendChild(row);
         hasAny = true;
 
-        // Remove this completion from the list so we don't reuse it
-        const completionIndex = completions.indexOf(user);
-        if (completionIndex !== -1) completions.splice(completionIndex, 1);
+        
       });
     });
 
