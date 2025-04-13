@@ -300,28 +300,70 @@ if (selected) scrollDayIntoView(selected);
       dayScrollContainer.scrollBy({ left: 100, behavior: "smooth" });
     };
 
-    const rotationIndex = (daysSinceStart) % users.length;
-const currentUser = users[rotationIndex];
+    async function loadTasks() {
+  if (!adminEmail || !selectedDate) return;
 
-for (let i = 0; i < times; i++) {
-  const isCompleted = completions.includes(currentUser);
+  adminTasksBody.innerHTML = "";
+  let hasAny = false;
 
-  const row = document.createElement("tr");
-  row.innerHTML = `
-    <td>${task.title}</td>
-    <td>${currentUser}</td>
-    <td class="${isCompleted ? 'status-completed' : 'status-pending'}">
-      ${isCompleted ? "Completed" : "Pending"}
-    </td>
-    <td>
-      ${isCompleted
-        ? `<button class="action-btn accept-btn" onclick="handleAction('${task.title}', '${currentUser}', 'accept')">Accept</button>
-           <button class="action-btn decline-btn" onclick="handleAction('${task.title}', '${currentUser}', 'decline')">Decline</button>`
-        : "—"}
-    </td>
-  `;
-  adminTasksBody.appendChild(row);
-  hasAny = true;
+  try {
+    const res = await fetch(`${SERVER_URL}/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const data = await res.json();
+    const tasks = data.tasks || [];
+
+    tasks.forEach(task => {
+      const dateRange = task.date?.split(" to ") || [];
+      const start = new Date(dateRange[0]);
+      const end = dateRange[1] ? new Date(dateRange[1]) : new Date("3000-01-01");
+      const selected = new Date(selectedDate);
+      if (selected < start || selected > end) return;
+
+      const users = task.users || [];
+      const completions = task.completions?.[selectedDate] || [];
+      const repeat = task.repeat || "Once";
+      let times = 1;
+
+      if (repeat === "Daily") times = task.timesPerDay || 1;
+      if (repeat === "Weekly") times = task.timesPerWeek || 1;
+      if (repeat === "Monthly") times = task.timesPerMonth || 1;
+
+      const daysSinceStart = Math.floor((selected - start) / (1000 * 60 * 60 * 24));
+      const rotationIndex = daysSinceStart % users.length;
+      const currentUser = users[rotationIndex];
+
+      for (let i = 0; i < times; i++) {
+        const isCompleted = completions.includes(currentUser);
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${task.title}</td>
+          <td>${currentUser}</td>
+          <td class="${isCompleted ? 'status-completed' : 'status-pending'}">
+            ${isCompleted ? "Completed" : "Pending"}
+          </td>
+          <td>
+            ${isCompleted
+              ? `<button class="action-btn accept-btn" onclick="handleAction('${task.title}', '${currentUser}', 'accept')">Accept</button>
+                 <button class="action-btn decline-btn" onclick="handleAction('${task.title}', '${currentUser}', 'decline')">Decline</button>`
+              : "—"}
+          </td>
+        `;
+        adminTasksBody.appendChild(row);
+        hasAny = true;
+      }
+    });
+
+    if (!hasAny) {
+      const row = document.createElement("tr");
+      row.innerHTML = `<td colspan="4" style="text-align:center;">No tasks for this day.</td>`;
+      adminTasksBody.appendChild(row);
+    }
+  } catch (err) {
+    console.error("Failed to load tasks:", err);
+    const row = document.createElement("tr");
+    row.innerHTML = `<td colspan="4" style="text-align:center;">Failed to load tasks.</td>`;
+    adminTasksBody.appendChild(row);
+  }
 }
 
 
