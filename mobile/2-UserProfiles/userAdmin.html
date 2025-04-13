@@ -200,10 +200,8 @@
   </style>
 </head>
 <body>
-  <!-- Header -->
   <div class="header"><h1 class="title">Admin - User Tasks</h1></div>
 
-  <!-- Date Header -->
   <div class="date-header">
     <div class="month-nav">
       <button id="prevMonth">&lt;</button>
@@ -217,7 +215,6 @@
     </div>
   </div>
 
-  <!-- Tasks Table -->
   <div class="tasks-table">
     <h3>Tasks Overview</h3>
     <table>
@@ -233,7 +230,6 @@
     </table>
   </div>
 
-  <!-- Footer -->
   <div class="footer">
     <a href="/BeeMazing-Y1/mobile/1-Home/home.html">
       <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" /><span>Home</span>
@@ -244,252 +240,133 @@
   </div>
 
   <script>
-    let currentMonth = new Date().getMonth();
-    let currentYear = new Date().getFullYear();
+    const SERVER_URL = "https://beemazing.onrender.com";
+    const adminEmail = localStorage.getItem("currentAdminEmail");
 
-    function updateMonthLabel() {
-      const options = { month: 'long', year: 'numeric' };
-      const date = new Date(currentYear, currentMonth);
-      document.getElementById("monthLabel").textContent = date.toLocaleDateString(undefined, options);
-      generateDays(currentYear, currentMonth);
+    const monthLabel = document.getElementById("monthLabel");
+    const dayScrollContainer = document.getElementById("dayScrollContainer");
+    const adminTasksBody = document.getElementById("adminTasksBody");
+
+    const today = new Date();
+    let selectedDate = today.toISOString().split("T")[0];
+
+    function updateMonthHeader(date) {
+      const options = { month: "long", year: "numeric" };
+      monthLabel.textContent = date.toLocaleDateString("en-US", options);
     }
 
-    function generateDays(year, month) {
-      const container = document.getElementById("dayScrollContainer");
-      container.innerHTML = "";
+    function generateDayButtons(date) {
+      dayScrollContainer.innerHTML = "";
+      const year = date.getFullYear();
+      const month = date.getMonth();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const today = new Date();
 
-      for (let i = 1; i <= daysInMonth; i++) {
-        const day = document.createElement("div");
-        day.className = "day";
-        day.textContent = i;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dayDate = new Date(year, month, d);
+        const dateStr = dayDate.toISOString().split("T")[0];
 
-        if (
-          year === today.getFullYear() &&
-          month === today.getMonth() &&
-          i === today.getDate()
-        ) {
-          day.classList.add("selected");
-        }
+        const dayBtn = document.createElement("div");
+        dayBtn.className = "day";
+        dayBtn.textContent = d;
+        if (dateStr === selectedDate) dayBtn.classList.add("selected");
 
-        day.onclick = () => {
-          document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-          day.classList.add("selected");
+        dayBtn.onclick = () => {
+          selectedDate = dateStr;
+          document.querySelectorAll(".day").forEach(btn => btn.classList.remove("selected"));
+          dayBtn.classList.add("selected");
+          loadTasks();
         };
 
-        container.appendChild(day);
+        dayScrollContainer.appendChild(dayBtn);
       }
     }
 
     document.getElementById("prevMonth").onclick = () => {
-      currentMonth--;
-      if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-      }
-      updateMonthLabel();
+      today.setMonth(today.getMonth() - 1);
+      updateMonthHeader(today);
+      generateDayButtons(today);
     };
 
     document.getElementById("nextMonth").onclick = () => {
-      currentMonth++;
-      if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-      }
-      updateMonthLabel();
+      today.setMonth(today.getMonth() + 1);
+      updateMonthHeader(today);
+      generateDayButtons(today);
     };
 
-    async function loadAdminTasks() {
-      const adminEmail = localStorage.getItem("currentAdminEmail");
-      if (!adminEmail) return;
+    document.getElementById("scrollLeft").onclick = () => {
+      dayScrollContainer.scrollBy({ left: -100, behavior: "smooth" });
+    };
+    document.getElementById("scrollRight").onclick = () => {
+      dayScrollContainer.scrollBy({ left: 100, behavior: "smooth" });
+    };
 
-      const today = new Date().toISOString().split("T")[0];
-      const res = await fetch(`https://beemazing.onrender.com/api/admin-tasks?adminEmail=${adminEmail}`);
-      const result = await res.json();
-      if (!result.success) return;
+    async function loadTasks() {
+      adminTasksBody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
 
-      const tbody = document.getElementById("adminTasksBody");
-      tbody.innerHTML = "";
+      try {
+        const res = await fetch(`${SERVER_URL}/api/admin-tasks?adminEmail=${adminEmail}`);
+        const data = await res.json();
 
-      result.tasks.forEach(task => {
-        const tr = document.createElement("tr");
+        if (!data.success) throw new Error(data.message);
 
-        tr.innerHTML = `
-          <td>${task.title}</td>
-          <td>${task.user}</td>
-          <td class="${task.status === 'Completed' ? 'status-completed' : 'status-pending'}">${task.status}</td>
-          <td>
-            ${task.status === "Completed"
-              ? `<button class="action-btn accept-btn" onclick="handleTaskAction('${adminEmail}', '${task.title}', '${task.user}', 'accept')">Accept</button>
-                 <button class="action-btn decline-btn" onclick="handleTaskAction('${adminEmail}', '${task.title}', '${task.user}', 'decline')">Decline</button>`
-              : "-"
-            }
-          </td>
-        `;
+        const filtered = data.tasks.filter(task => {
+          return new Date(selectedDate).toDateString() === new Date().toDateString();
+        });
 
-        tbody.appendChild(tr);
-      });
+        if (filtered.length === 0) {
+          adminTasksBody.innerHTML = "<tr><td colspan='4'>No tasks for this date</td></tr>";
+          return;
+        }
+
+        adminTasksBody.innerHTML = "";
+
+        filtered.forEach(task => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${task.title}</td>
+            <td>${task.user}</td>
+            <td class="${task.status === 'Completed' ? 'status-completed' : 'status-pending'}">${task.status}</td>
+            <td>
+              ${task.status === 'Pending'
+                ? `<button class="action-btn accept-btn" onclick="handleAction('${task.title}', '${task.user}', 'accept')">Accept</button>
+                   <button class="action-btn decline-btn" onclick="handleAction('${task.title}', '${task.user}', 'decline')">Decline</button>`
+                : '—'}
+            </td>
+          `;
+          adminTasksBody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error("Failed to load tasks:", err);
+        adminTasksBody.innerHTML = "<tr><td colspan='4'>Error loading tasks</td></tr>";
+      }
     }
 
-    async function handleTaskAction(adminEmail, title, user, action) {
-      const today = new Date().toISOString().split("T")[0];
-      const res = await fetch("https://beemazing.onrender.com/api/task-action", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminEmail, taskTitle: title, user, action, date: today })
-      });
+    async function handleAction(title, user, action) {
+      try {
+        const res = await fetch(`${SERVER_URL}/api/task-action`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            adminEmail,
+            taskTitle: title,
+            user,
+            action,
+            date: selectedDate
+          })
+        });
 
-      const data = await res.json();
-      if (data.success) loadAdminTasks();
-      else alert("Error: " + (data.message || "Unable to update task."));
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+        loadTasks();
+      } catch (err) {
+        console.error("Action failed:", err);
+        alert("Action failed: " + err.message);
+      }
     }
 
-    window.addEventListener("DOMContentLoaded", () => {
-      updateMonthLabel();
-      loadAdminTasks();
-    });
-
-
-    let monthOffset = 0;
-
-function generateScrollableDates(monthOffset = 0) {
-  const container = document.getElementById("dayScrollContainer");
-  container.innerHTML = "";
-
-  const today = new Date();
-  today.setDate(1);
-  today.setMonth(today.getMonth() + monthOffset);
-
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-  // Set month label like "April 2025"
-  document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
-    month: 'long',
-    year: 'numeric'
-  });
-
-  const selectedToday = new Date();
-const todayStr = new Date(
-  selectedToday.getFullYear(),
-  selectedToday.getMonth(),
-  selectedToday.getDate()
-).toLocaleDateString("en-CA"); // "YYYY-MM-DD"
-
-
-  for (let i = 1; i <= daysInMonth; i++) {
-    const date = new Date(currentYear, currentMonth, i);
-    const dateStr = date.toLocaleDateString('en-CA'); // YYYY-MM-DD
-
-
-    const dayDiv = document.createElement("div");
-    dayDiv.className = "day";
-    dayDiv.textContent = i;
-    dayDiv.dataset.date = dateStr;
-
-    dayDiv.addEventListener("click", () => {
-      document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-      dayDiv.classList.add("selected");
-      loadAdminTasks(dateStr); // 👈 pass selected date to load
-    });
-
-    if (dateStr === todayStr && monthOffset === 0) {
-      dayDiv.classList.add("selected");
-      loadAdminTasks(dateStr); // 👈 load today's tasks on load
-    }
-
-    container.appendChild(dayDiv);
-  }
-
-  // Scroll selected day into view
-  setTimeout(() => {
-    const selected = document.querySelector(".day.selected");
-    if (selected) selected.scrollIntoView({ behavior: "smooth", inline: "center" });
-  }, 50);
-}
-
-document.getElementById("prevMonth").addEventListener("click", () => {
-  monthOffset--;
-  generateScrollableDates(monthOffset);
-});
-document.getElementById("nextMonth").addEventListener("click", () => {
-  monthOffset++;
-  generateScrollableDates(monthOffset);
-});
-document.getElementById("scrollLeft").addEventListener("click", () => {
-  document.getElementById("dayScrollContainer").scrollBy({ left: -150, behavior: "smooth" });
-});
-document.getElementById("scrollRight").addEventListener("click", () => {
-  document.getElementById("dayScrollContainer").scrollBy({ left: 150, behavior: "smooth" });
-});
-
-// Modify your existing loadAdminTasks to accept a date:
-async function loadAdminTasks(selectedDate = new Date().toISOString().split("T")[0]) {
-  const adminEmail = localStorage.getItem("currentAdminEmail");
-  if (!adminEmail) return;
-
-  const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${adminEmail}`);
-  const result = await res.json();
-  if (!result.success) return;
-
-  const tbody = document.getElementById("adminTasksBody");
-  tbody.innerHTML = "";
-
-  const parseDate = (str) => {
-    const [y, m, d] = str.split("-").map(Number);
-    return new Date(y, m - 1, d);
-  };
-
-  result.tasks.forEach(task => {
-    const range = task.date.split(" to ");
-    const from = parseDate(range[0]);
-    const to = range[1] ? parseDate(range[1]) : new Date(3000, 0, 1);
-    const dateObj = parseDate(selectedDate);
-
-    if (dateObj < from || dateObj > to) return;
-
-    let currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
-    if (task.repeat === "Daily" && task.timesPerDay === 1) {
-      const diff = Math.floor((dateObj - from) / (1000 * 60 * 60 * 24));
-      const userList = [...task.users];
-      const idx = diff % userList.length;
-      currentTurn = userList[idx];
-    }
-
-    const completions = task.completions?.[selectedDate] || [];
-    const completedBy = Array.isArray(completions) ? completions : [];
-    const requiredTimes = task.timesPerDay || task.timesPerWeek || task.timesPerMonth || 1;
-    const completedCount = completedBy.length;
-
-    // Determine if this task has pending approval
-    const needsApproval = completedCount >= requiredTimes;
-
-    const tr = document.createElement("tr");
-const assignedUser = completedBy[0] || currentTurn;
-
-tr.innerHTML = `
-  <td>${task.title}</td>
-  <td>${needsApproval ? completedBy.join(", ") : currentTurn}</td>
-  <td class="${needsApproval ? "status-completed" : "status-pending"}">${needsApproval ? "Completed" : "Pending"}</td>
-  <td>
-    ${needsApproval
-      ? `<button class="action-btn accept-btn" onclick="handleTaskAction('${adminEmail}', '${task.title}', '${assignedUser}', 'accept')">Accept</button>
-         <button class="action-btn decline-btn" onclick="handleTaskAction('${adminEmail}', '${task.title}', '${assignedUser}', 'decline')">Decline</button>`
-      : "-"
-    }
-  </td>
-`;
-
-    tbody.appendChild(tr);
-  });
-}
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  generateScrollableDates(); // Auto-generate and auto-select today
-});
+    updateMonthHeader(today);
+    generateDayButtons(today);
+    loadTasks();
   </script>
 </body>
 </html>
