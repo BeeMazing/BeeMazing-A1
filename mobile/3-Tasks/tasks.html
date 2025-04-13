@@ -555,29 +555,37 @@ function getTurnByDate(task, targetDateStr) {
   const [fromStr] = task.date.split(" to ");
   const startDate = parseDate(fromStr);
   const targetDate = parseDate(targetDateStr);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // normalize
 
-  let currentUserIndex = 0;
+  // Simulate day by day from startDate to targetDate
+  let currentTurnIndex = 0;
+  const tempTurnIndex = {}; // Cache per-day turn
 
-  if (task.turnHistory && task.turnHistory[targetDateStr]) {
-  return task.turnHistory[targetDateStr];
+  const day = new Date(startDate);
+  while (day <= targetDate) {
+    const dayStr = formatDate(day);
+    const completed = completions[dayStr] || [];
+    const counts = {};
+
+    for (let user of completed) {
+      counts[user] = (counts[user] || 0) + 1;
+    }
+
+    // Count how many times the current turn user completed
+    const currentUser = userOrder[currentTurnIndex];
+    if ((counts[currentUser] || 0) >= repeatLimit) {
+      // Completed → move to next user
+      currentTurnIndex = (currentTurnIndex + 1) % userOrder.length;
+    }
+
+    tempTurnIndex[dayStr] = userOrder[currentTurnIndex];
+
+    // Move to next day
+    day.setDate(day.getDate() + 1);
+  }
+
+  return tempTurnIndex[targetDateStr];
 }
 
-
-const isToday = targetDateStr === new Date().toISOString().split("T")[0];
-let currentIndex;
-
-if (isToday && typeof task.lastRealTurnIndex === "number") {
-  const completedCount = Array.isArray(completions[targetDateStr]) ? completions[targetDateStr].length : 0;
-  currentIndex = (task.lastRealTurnIndex + completedCount) % userOrder.length;
-} else {
-  const diffDays = Math.floor((targetDate - startDate) / (1000 * 60 * 60 * 24));
-  currentIndex = diffDays % userOrder.length;
-}
-
-return userOrder[currentIndex];
-}
 
 
 
