@@ -1009,9 +1009,22 @@
                 currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
               }
         
-              let progressText = completedTimes >= requiredTimes
-                ? `<span style="color: green; font-weight: bold;">Completed</span>`
-                : `${completedTimes}/${requiredTimes}`;
+              let statusText = "";
+if (completedTimes >= requiredTimes) {
+  statusText = `<span style="color: green; font-weight: bold;">Completed</span>`;
+} else {
+  const todayStr = new Date().toLocaleDateString("sv-SE");
+  const currentDateStr = selectedDate;
+
+  if (currentDateStr === todayStr) {
+    statusText = `<span style="color: orange; font-weight: bold;">Pending</span>`;
+  } else if (new Date(currentDateStr) < new Date(todayStr)) {
+    statusText = `<span style="color: red; font-weight: bold;">Incomplete</span>`;
+  } else {
+    statusText = `<span style="color: orange; font-weight: bold;">Upcoming</span>`;
+  }
+}
+
         
               const showTurn = completedTimes < requiredTimes;
               const turnText = showTurn ? `Turn: ${currentTurn}<br>` : '';
@@ -1020,7 +1033,8 @@
                 <strong>${task.title}</strong><br>
                 ${turnText}
                 Honey: ${task.reward || "0"} 🍯<br>
-                Progress: ${progressText}
+Status: ${statusText} (${completedTimes}/${requiredTimes})
+
               `;
         
               const canFinish = isToday && currentTurn === userName && completedTimes < requiredTimes;
