@@ -1040,25 +1040,34 @@
 statusDiv.style.marginTop = "10px";
 statusDiv.style.fontWeight = "bold";
 
-const todayStr = new Date().toLocaleDateString("sv-SE");
-const currentDateStr = selectedDate;
-const userHasCompleted = completedUsers.includes(userName);
+const userTurnIndexes = [];
+const userOrder = [...task.users];
 
-if (userHasCompleted) {
-  statusDiv.textContent = "You: Completed ✅";
-  statusDiv.style.color = "green";
-} else if (currentDateStr === todayStr) {
-  statusDiv.textContent = "You: Pending ⏳";
-  statusDiv.style.color = "orange";
-} else if (new Date(currentDateStr) < new Date(todayStr)) {
-  statusDiv.textContent = "You: Incomplete ❌";
-  statusDiv.style.color = "red";
-} else {
-  statusDiv.textContent = "You: Not Started";
+for (let i = 0; i < userOrder.length; i++) {
+  if (userOrder[i] === userName) {
+    userTurnIndexes.push(i);
+  }
+}
+
+const completedCount = completedUsers.filter(u => u === userName).length;
+
+if (userTurnIndexes.length === 0) {
+  statusDiv.innerHTML = "You: Not Assigned";
   statusDiv.style.color = "gray";
+} else {
+  statusDiv.innerHTML = "You:<br>";
+  userTurnIndexes.forEach((turnIndex, i) => {
+    const isCompleted = i < completedCount;
+    const emoji = isCompleted ? "✅" : "⏳";
+    const color = isCompleted ? "green" : "orange";
+    const turnNumber = turnIndex + 1;
+    const line = `<span style="color: ${color}">${emoji} Turn ${turnNumber} - ${isCompleted ? "Completed" : "Pending"}</span><br>`;
+    statusDiv.innerHTML += line;
+  });
 }
 
 taskDiv.appendChild(statusDiv);
+
         
               taskDiv.addEventListener("click", () => showTaskDetails(task));
               userTasksDiv.appendChild(taskDiv);
