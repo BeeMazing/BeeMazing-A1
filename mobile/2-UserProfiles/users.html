@@ -1009,22 +1009,9 @@
                 currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
               }
         
-              let statusText = "";
-if (completedTimes >= requiredTimes) {
-  statusText = `<span style="color: green; font-weight: bold;">Completed</span>`;
-} else {
-  const todayStr = new Date().toLocaleDateString("sv-SE");
-  const currentDateStr = selectedDate;
-
-  if (currentDateStr === todayStr) {
-    statusText = `<span style="color: orange; font-weight: bold;">Pending</span>`;
-  } else if (new Date(currentDateStr) < new Date(todayStr)) {
-    statusText = `<span style="color: red; font-weight: bold;">Incomplete</span>`;
-  } else {
-    statusText = `<span style="color: orange; font-weight: bold;">Upcoming</span>`;
-  }
-}
-
+              let progressText = completedTimes >= requiredTimes
+                ? `<span style="color: green; font-weight: bold;">Completed</span>`
+                : `${completedTimes}/${requiredTimes}`;
         
               const showTurn = completedTimes < requiredTimes;
               const turnText = showTurn ? `Turn: ${currentTurn}<br>` : '';
@@ -1033,8 +1020,7 @@ if (completedTimes >= requiredTimes) {
                 <strong>${task.title}</strong><br>
                 ${turnText}
                 Honey: ${task.reward || "0"} 🍯<br>
-Status: ${statusText} (${completedTimes}/${requiredTimes})
-
+                Progress: ${progressText}
               `;
         
               const canFinish = isToday && currentTurn === userName && completedTimes < requiredTimes;
@@ -1048,14 +1034,31 @@ Status: ${statusText} (${completedTimes}/${requiredTimes})
                   finishTask(userName, task, selectedDate);
                 };
                 taskDiv.appendChild(finishedButton);
-              } else if (completedTimes < requiredTimes && completedUsers.includes(userName) && currentTurn !== userName) {
-                const completedText = document.createElement("div");
-                completedText.style.color = "green";
-                completedText.style.fontWeight = "bold";
-                completedText.style.marginTop = "10px";
-                completedText.textContent = "Completed";
-                taskDiv.appendChild(completedText);
               }
+
+              const statusDiv = document.createElement("div");
+statusDiv.style.marginTop = "10px";
+statusDiv.style.fontWeight = "bold";
+
+const todayStr = new Date().toLocaleDateString("sv-SE");
+const currentDateStr = selectedDate;
+const userHasCompleted = completedUsers.includes(userName);
+
+if (userHasCompleted) {
+  statusDiv.textContent = "You: Completed ✅";
+  statusDiv.style.color = "green";
+} else if (currentDateStr === todayStr) {
+  statusDiv.textContent = "You: Pending ⏳";
+  statusDiv.style.color = "orange";
+} else if (new Date(currentDateStr) < new Date(todayStr)) {
+  statusDiv.textContent = "You: Incomplete ❌";
+  statusDiv.style.color = "red";
+} else {
+  statusDiv.textContent = "You: Not Started";
+  statusDiv.style.color = "gray";
+}
+
+taskDiv.appendChild(statusDiv);
         
               taskDiv.addEventListener("click", () => showTaskDetails(task));
               userTasksDiv.appendChild(taskDiv);
