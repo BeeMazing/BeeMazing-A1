@@ -920,275 +920,189 @@
           showAdminControlsIfNeeded();
         });
         
+        async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
+          const userTasksDiv = document.getElementById("userTasks");
+          userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
+        
+          const adminEmail = localStorage.getItem("currentAdminEmail");
+          let tasks = [];
+        
+          try {
+            const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
+            tasks = data.tasks || [];
+          } catch (err) {
+            console.error("Failed to fetch tasks from server:", err);
+            userTasksDiv.innerHTML = "<p>Failed to load tasks. Please try again later.</p>";
+            return;
+          }
+        
+          function parseLocalDate(dateStr) {
+            const [year, month, day] = dateStr.split("-").map(Number);
+            return new Date(year, month - 1, day);
+          }
+        
+          const userTasks = tasks.filter(task => {
+            if (!task.users?.includes(userName)) return false;
+        
+            const dateRange = task.date.split(" to ");
+            const startDateStr = dateRange[0];
+            const startDate = parseLocalDate(startDateStr);
+            const endDateStr = dateRange[1] || "3000-01-01";
+            const endDate = parseLocalDate(endDateStr);
+            const currentDate = parseLocalDate(selectedDate);
+        
+            if (currentDate < startDate || currentDate > endDate) return false;
+        
+            if (task.repeat === "Daily" && task.timesPerDay > 1) return true;
+        
+            if (task.repeat === "Daily" && task.timesPerDay === 1) {
+              const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+              const userOrder = [...task.users];
+              const currentIndex = diffDays % userOrder.length;
+              const currentTurn = userOrder[currentIndex];
+              return currentTurn === userName;
+            }
+        
+            const currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+            return currentTurn === userName;
+          });
+        
+          if (userTasks.length === 0) {
+            userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
+          } else {
+            userTasksDiv.innerHTML = "";
+            const today = new Date().toLocaleDateString("sv-SE");
+            const isToday = selectedDate === today;
+        
+            userTasks.forEach(task => {
+              const taskDiv = document.createElement("div");
+              taskDiv.className = "task-item";
+        
+              const dateRange = task.date.split(" to ");
+              const startDateStr = dateRange[0];
+              const startDate = parseLocalDate(startDateStr);
+              const currentDate = parseLocalDate(selectedDate);
+              let currentTurn;
+        
+              let requiredTimes = 1;
+              if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+              if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+              if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+        
+              let completedRaw = task.completions?.[selectedDate] || [];
+              let completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
+              let completedTimes = completedUsers.length;
+        
+              if (task.repeat === "Daily" && task.timesPerDay > 1) {
+                const userOrder = [...task.users];
+                const totalRequiredCompletions = task.timesPerDay;
+                const completionIndex = completedTimes % userOrder.length;
+                currentTurn = userOrder[completionIndex];
+              } else if (task.repeat === "Daily" && task.timesPerDay === 1) {
+                const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+                const userOrder = [...task.users];
+                const currentIndex = diffDays % userOrder.length;
+                currentTurn = userOrder[currentIndex];
+              } else {
+                currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+              }
+        
+              let progressText = completedTimes >= requiredTimes
+                ? `<span style="color: green; font-weight: bold;">Completed</span>`
+                : `${completedTimes}/${requiredTimes}`;
+        
+              const showTurn = completedTimes < requiredTimes;
+              const turnText = showTurn ? `Turn: ${currentTurn}<br>` : '';
+        
+              taskDiv.innerHTML = `
+                <strong>${task.title}</strong><br>
+                ${turnText}
+                Honey: ${task.reward || "0"} 🍯<br>
+                Progress: ${progressText}
+              `;
+        
+              const canFinish = isToday && currentTurn === userName && completedTimes < requiredTimes;
+        
+              if (canFinish) {
+                const finishedButton = document.createElement("button");
+                finishedButton.textContent = "Finish Task";
+                finishedButton.className = "finished-btn";
+                finishedButton.onclick = (e) => {
+                  e.stopPropagation();
+                  finishTask(userName, task, selectedDate);
+                };
+                taskDiv.appendChild(finishedButton);
+              }
 
+              const statusDiv = document.createElement("div");
+statusDiv.style.marginTop = "10px";
+statusDiv.style.fontWeight = "bold";
 
-
-
-
-
-        function getCurrentTurn(task, selectedDate) {
-  function parseLocalDate(dateStr) {
-    const [year, month, day] = dateStr.split("-").map(Number);
-    return new Date(year, month - 1, day);
-  }
-
-  const dateRange = task.date.split(" to ");
-  const startDateStr = dateRange[0];
-  const startDate = parseLocalDate(startDateStr);
-  const currentDate = parseLocalDate(selectedDate);
-  const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-  const userOrder = [...task.users];
-
-  if (task.repeat === "Daily" && task.timesPerDay > 1) {
-    const completionsToday = task.completions?.[selectedDate] || [];
-    const completionIndex = completionsToday.length % userOrder.length;
-    return userOrder[completionIndex];
-  }
-
-  if (task.repeat === "Daily" && task.timesPerDay === 1) {
-    const completions = task.completions || {};
-    let totalCompletions = 0;
-    Object.entries(completions).forEach(([dateStr, users]) => {
-      const dateObj = parseLocalDate(dateStr);
-      if (dateObj < currentDate && Array.isArray(users)) {
-        totalCompletions += users.length;
-      }
-    });
-    const currentIndex = totalCompletions % userOrder.length;
-    return userOrder[currentIndex];
-  }
-
-  return task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+const fullTurnOrder = [];
+const userOrder = [...task.users];
+for (let i = 0; i < requiredTimes; i++) {
+  fullTurnOrder.push(userOrder[i % userOrder.length]);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-        async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
-  const userTasksDiv = document.getElementById("userTasks");
-  userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
-
-  const adminEmail = localStorage.getItem("currentAdminEmail");
-  let tasks = [];
-
-  try {
-    const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
-    tasks = data.tasks || [];
-  } catch (err) {
-    console.error("Failed to fetch tasks from server:", err);
-    userTasksDiv.innerHTML = "<p>Failed to load tasks. Please try again later.</p>";
-    return;
-  }
-
-  function parseLocalDate(dateStr) {
-    const [year, month, day] = dateStr.split("-").map(Number);
-    return new Date(year, month - 1, day);
-  }
-
-  const userTasks = tasks.filter(task => {
-  if (!task.users?.includes(userName)) return false;
-
-  const dateRange = task.date.split(" to ");
-  const startDateStr = dateRange[0];
-  const startDate = parseLocalDate(startDateStr);
-  const endDateStr = dateRange[1] || "3000-01-01";
-  const endDate = parseLocalDate(endDateStr);
-  const currentDate = parseLocalDate(selectedDate);
-
-  if (currentDate < startDate || currentDate > endDate) return false;
-
-  const completedRaw = task.completions?.[selectedDate] || [];
-  const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
-
-  if (task.repeat === "Daily" && task.timesPerDay > 1) return true;
-
-  if (task.repeat === "Daily" && task.timesPerDay === 1) {
-    const completions = task.completions || {};
-    const userOrder = [...task.users];
-
-    let totalCompletions = 0;
-    Object.entries(completions).forEach(([dateStr, users]) => {
-      const dateObj = parseLocalDate(dateStr);
-      if (dateObj < currentDate && Array.isArray(users)) {
-        totalCompletions += users.length;
-      }
-    });
-
-    const currentIndex = totalCompletions % userOrder.length;
-    const currentTurn = userOrder[currentIndex];
-
-    return currentTurn === userName || completedUsers.includes(userName);
-  }
-
-  const currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
-  return currentTurn === userName || completedUsers.includes(userName);
+// Find all indexes in the full turn order where this user appears
+const userTurnIndexes = [];
+fullTurnOrder.forEach((user, index) => {
+  if (user === userName) userTurnIndexes.push(index);
 });
 
 
-  if (userTasks.length === 0) {
-    userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
-  } else {
-    userTasksDiv.innerHTML = "";
-    const today = new Date().toLocaleDateString("sv-SE");
-    const isToday = selectedDate === today;
+const completedCount = completedUsers.filter(u => u === userName).length;
 
-    userTasks.forEach(task => {
-      const taskDiv = document.createElement("div");
-      taskDiv.className = "task-item";
+if (userTurnIndexes.length === 0) {
+  statusDiv.innerHTML = "You: Not Assigned";
+  statusDiv.style.color = "gray";
+} else {
+  statusDiv.innerHTML = "You:<br>";
 
-      const dateRange = task.date.split(" to ");
-      const startDateStr = dateRange[0];
-      const startDate = parseLocalDate(startDateStr);
-      const currentDate = parseLocalDate(selectedDate);
-      let currentTurn;
+  // Get today and task date for comparison
+  const taskDate = new Date(selectedDate);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0); // Normalize to midnight for fair comparison
 
-      let requiredTimes = 1;
-      if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-      if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-      if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+  userTurnIndexes.forEach((turnIndex, i) => {
+    const isCompleted = i < completedCount;
+    const turnNumber = turnIndex + 1;
+    let emoji, color, statusText;
 
-      let completedRaw = task.completions?.[selectedDate] || [];
-      let completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
-      let completedTimes = completedUsers.length;
-
-      if (task.repeat === "Daily" && task.timesPerDay > 1) {
-        const userOrder = [...task.users];
-        const completionIndex = completedTimes % userOrder.length;
-        currentTurn = userOrder[completionIndex];
-      } else if (task.repeat === "Daily" && task.timesPerDay === 1) {
-        const userOrder = [...task.users];
-        const completions = task.completions || {};
-
-        let totalCompletions = 0;
-        Object.entries(completions).forEach(([dateStr, users]) => {
-          const dateObj = parseLocalDate(dateStr);
-          if (dateObj <= currentDate && Array.isArray(users)) {
-            totalCompletions += users.length;
-          }
-        });
-
-        const currentIndex = totalCompletions % userOrder.length;
-        currentTurn = userOrder[currentIndex];
+    if (isCompleted) {
+      emoji = "✅";
+      color = "green";
+      statusText = `Turn ${turnNumber} - Completed`;
+    } else {
+      const isPast = taskDate < now;
+      if (isPast) {
+        emoji = "❌";
+        color = "red";
+        statusText = `Turn ${turnNumber} - Incomplete`;
       } else {
-        currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+        emoji = "⏳";
+        color = "orange";
+        statusText = `Turn ${turnNumber} - Pending`;
       }
+    }
 
-      let progressText = completedTimes >= requiredTimes
-        ? `<span style="color: green; font-weight: bold;">Completed</span>`
-        : `${completedTimes}/${requiredTimes}`;
-
-      const showTurn = completedTimes < requiredTimes;
-      const turnText = showTurn ? `Turn: ${currentTurn}<br>` : '';
-
-      taskDiv.innerHTML = `
-        <strong>${task.title}</strong><br>
-        ${turnText}
-        Honey: ${task.reward || "0"} 🍯<br>
-        Progress: ${progressText}
-      `;
-
-      const canFinish = isToday && currentTurn === userName && completedTimes < requiredTimes;
-
-      if (canFinish) {
-        const finishedButton = document.createElement("button");
-        finishedButton.textContent = "Finish Task";
-        finishedButton.className = "finished-btn";
-        finishedButton.onclick = (e) => {
-          e.stopPropagation();
-          finishTask(userName, task, selectedDate);
-        };
-        taskDiv.appendChild(finishedButton);
-      }
-
-      const statusDiv = document.createElement("div");
-      statusDiv.style.marginTop = "10px";
-      statusDiv.style.fontWeight = "bold";
-
-      const fullTurnOrder = [];
-      const userOrder = [...task.users];
-      for (let i = 0; i < requiredTimes; i++) {
-        fullTurnOrder.push(userOrder[i % userOrder.length]);
-      }
-
-      const userTurnIndexes = [];
-      fullTurnOrder.forEach((user, index) => {
-        if (user === userName) userTurnIndexes.push(index);
-      });
-
-      const completedCount = completedUsers.filter(u => u === userName).length;
-
-      if (userTurnIndexes.length === 0) {
-        statusDiv.innerHTML = "You: Not Assigned";
-        statusDiv.style.color = "gray";
-      } else {
-        statusDiv.innerHTML = "You:<br>";
-
-        const taskDate = new Date(selectedDate);
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-
-        userTurnIndexes.forEach((turnIndex, i) => {
-          const isCompleted = i < completedCount;
-          const turnNumber = turnIndex + 1;
-          let emoji, color, statusText;
-
-          if (isCompleted) {
-            emoji = "✅";
-            color = "green";
-            statusText = `Turn ${turnNumber} - Completed`;
-          } else {
-            const isPast = taskDate < now;
-            if (isPast) {
-              emoji = "❌";
-              color = "red";
-              statusText = `Turn ${turnNumber} - Incomplete`;
-            } else {
-              emoji = "⏳";
-              color = "orange";
-              statusText = `Turn ${turnNumber} - Pending`;
-            }
-          }
-
-          const line = `<span style="color: ${color}">${emoji} ${statusText}</span><br>`;
-          statusDiv.innerHTML += line;
-        });
-      }
-
-      taskDiv.appendChild(statusDiv);
-      taskDiv.addEventListener("click", () => showTaskDetails(task));
-      userTasksDiv.appendChild(taskDiv);
-    });
-  }
+    const line = `<span style="color: ${color}">${emoji} ${statusText}</span><br>`;
+    statusDiv.innerHTML += line;
+  });
 }
 
+taskDiv.appendChild(statusDiv);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        
+              taskDiv.addEventListener("click", () => showTaskDetails(task));
+              userTasksDiv.appendChild(taskDiv);
+            });
+          }
+        }
+        
         async function loadUserReward(userName) {
           const adminEmail = localStorage.getItem("currentAdminEmail");
           try {
