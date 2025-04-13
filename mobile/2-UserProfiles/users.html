@@ -965,6 +965,46 @@
 
 
 
+function getTurnByDate(task, selectedDate) {
+  function parseDate(str) {
+    const [y, m, d] = str.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  const completions = task.completions || {};
+  const users = task.users || [];
+  const repeatLimit = task.timesPerDay || 1;
+  const startDate = parseDate(task.date.split(" to ")[0]);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let currentIndex = 0;
+  let d = new Date(startDate);
+
+  while (d <= parseDate(selectedDate)) {
+    const dateStr = d.toISOString().split("T")[0];
+    const currentUser = users[currentIndex];
+    const completedToday = completions[dateStr] || [];
+    const completedCount = completedToday.filter(u => u === currentUser).length;
+
+    const isPastOrToday = d <= today;
+    if (isPastOrToday) {
+      if (completedCount >= repeatLimit) {
+        currentIndex = (currentIndex + 1) % users.length;
+      }
+    } else {
+      currentIndex = (currentIndex + 1) % users.length;
+    }
+
+    if (dateStr === selectedDate) {
+      return users[currentIndex];
+    }
+
+    d.setDate(d.getDate() + 1);
+  }
+
+  return users[currentIndex];
+}
 
 
 
@@ -1068,19 +1108,7 @@
         const completionIndex = completedTimes % userOrder.length;
         currentTurn = userOrder[completionIndex];
       } else if (task.repeat === "Daily" && task.timesPerDay === 1) {
-        const userOrder = [...task.users];
-        const completions = task.completions || {};
-
-        let totalCompletions = 0;
-        Object.entries(completions).forEach(([dateStr, users]) => {
-          const dateObj = parseLocalDate(dateStr);
-          if (dateObj <= currentDate && Array.isArray(users)) {
-            totalCompletions += users.length;
-          }
-        });
-
-        const currentIndex = totalCompletions % userOrder.length;
-        currentTurn = userOrder[currentIndex];
+  currentTurn = getTurnByDate(task, selectedDate);
       } else {
         currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
       }
