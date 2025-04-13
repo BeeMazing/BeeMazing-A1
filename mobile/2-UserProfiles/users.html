@@ -1060,17 +1060,41 @@ if (userTurnIndexes.length === 0) {
   statusDiv.style.color = "gray";
 } else {
   statusDiv.innerHTML = "You:<br>";
+
+  // Get today and task date for comparison
+  const taskDate = new Date(selectedDate);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0); // Normalize to midnight for fair comparison
+
   userTurnIndexes.forEach((turnIndex, i) => {
     const isCompleted = i < completedCount;
-    const emoji = isCompleted ? "✅" : "⏳";
-    const color = isCompleted ? "green" : "orange";
     const turnNumber = turnIndex + 1;
-    const line = `<span style="color: ${color}">${emoji} Turn ${turnNumber} - ${isCompleted ? "Completed" : "Pending"}</span><br>`;
+    let emoji, color, statusText;
+
+    if (isCompleted) {
+      emoji = "✅";
+      color = "green";
+      statusText = `Turn ${turnNumber} - Completed`;
+    } else {
+      const isPast = taskDate < now;
+      if (isPast) {
+        emoji = "❌";
+        color = "red";
+        statusText = `Turn ${turnNumber} - Incomplete`;
+      } else {
+        emoji = "⏳";
+        color = "orange";
+        statusText = `Turn ${turnNumber} - Pending`;
+      }
+    }
+
+    const line = `<span style="color: ${color}">${emoji} ${statusText}</span><br>`;
     statusDiv.innerHTML += line;
   });
 }
 
 taskDiv.appendChild(statusDiv);
+
 
         
               taskDiv.addEventListener("click", () => showTaskDetails(task));
