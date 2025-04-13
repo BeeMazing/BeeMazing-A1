@@ -614,25 +614,26 @@ async function loadTasksForDate(selectedDate) {
         const isPastDate = selectedDate < now;
 
         if (isPastDate) {
-            const thatDayCompletions = task.completions?.[selectedDate] || [];
-            const counts = {};
-            thatDayCompletions.forEach(u => counts[u] = (counts[u] || 0) + 1);
+    const thatDayCompletions = task.completions?.[selectedDate] || [];
+    const counts = {};
+    thatDayCompletions.forEach(u => counts[u] = (counts[u] || 0) + 1);
 
-            for (let i = 0; i < userOrder.length; i++) {
-                if ((counts[userOrder[i]] || 0) < repeatLimit) {
-                    currentTurn = userOrder[i];
-                    break;
-                }
-            }
-
-            if (!currentTurn) currentTurn = userOrder[0]; // fallback
-        } else {
-            if (yesterdayCompletedCount < repeatLimit) {
-                currentTurn = yesterdayTurn;
-            } else {
-                currentTurn = assumedTurn;
-            }
+    for (let i = 0; i < userOrder.length; i++) {
+        if ((counts[userOrder[i]] || 0) < repeatLimit) {
+            currentTurn = userOrder[i];
+            break;
         }
+    }
+
+    if (!currentTurn) currentTurn = userOrder[0];
+} else {
+    if (task.repeat === "Daily" && repeatLimit === 1 && yesterdayCompletedCount < 1) {
+        currentTurn = yesterdayTurn; // carry over
+    } else {
+        currentTurn = assumedTurn;
+    }
+}
+
 
         // ✅ Completions & display
         const today = selectedDate;
@@ -874,19 +875,27 @@ async function showTaskDetails(task) {
     let currentTurn;
 
     if (isPastDate) {
-        const thatDayCompletions = task.completions?.[selectedDate] || [];
-        const counts = {};
-        thatDayCompletions.forEach(u => counts[u] = (counts[u] || 0) + 1);
-        for (let i = 0; i < userOrder.length; i++) {
-            if ((counts[userOrder[i]] || 0) < repeatLimit) {
-                currentTurn = userOrder[i];
-                break;
-            }
+
+
+        if (isPastDate) {
+    const thatDayCompletions = task.completions?.[selectedDate] || [];
+    const counts = {};
+    thatDayCompletions.forEach(u => counts[u] = (counts[u] || 0) + 1);
+    for (let i = 0; i < userOrder.length; i++) {
+        if ((counts[userOrder[i]] || 0) < repeatLimit) {
+            currentTurn = userOrder[i];
+            break;
         }
-        if (!currentTurn) currentTurn = userOrder[0];
-    } else {
-        currentTurn = (yesterdayCompletedCount < repeatLimit) ? yesterdayTurn : assumedTurn;
     }
+    if (!currentTurn) currentTurn = userOrder[0];
+} else {
+    if (task.repeat === "Daily" && repeatLimit === 1 && yesterdayCompletedCount < 1) {
+        currentTurn = yesterdayTurn; // carry over yesterday's user
+    } else {
+        currentTurn = assumedTurn;
+    }
+}
+
 
     const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
     const completedCount = completedUsers.length;
