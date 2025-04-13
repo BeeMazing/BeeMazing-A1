@@ -931,7 +931,7 @@ app.get("/api/admin-tasks", async (req, res) => {
     const nonAdminUsers = users.filter(user => permissions[user] !== "Admin");
 
     // Process tasks for non-admin users
-    const today = new Date().toISOString().split("T")[0]; // Always "YYYY-MM-DD"
+    const today = new Date().toLocaleDateString("sv-SE");
     const adminTasks = [];
 
     tasks.forEach(task => {
@@ -1015,17 +1015,7 @@ app.post("/api/task-action", async (req, res) => {
     }
 
     const tasks = admin.tasks || [];
-    const taskIndex = tasks.findIndex(t => {
-      if (t.title !== taskTitle) return false;
-    
-      const [startStr, endStr] = t.date.split(" to ");
-      const taskStart = new Date(startStr);
-      const taskEnd = endStr ? new Date(endStr) : new Date("3000-01-01");
-      const selected = new Date(date);
-    
-      return selected >= taskStart && selected <= taskEnd;
-    });
-    
+    const taskIndex = tasks.findIndex(t => t.title === taskTitle && t.date.includes(date.split("-").join("-")));
     if (taskIndex === -1) {
       return res.status(404).json({ error: "Task not found" });
     }
