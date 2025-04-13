@@ -636,7 +636,8 @@ async function loadTasksForDate(selectedDate) {
         taskDiv.dataset.taskDate = task.date;
 
         // Determine whose turn it is
-        let currentTurn = getTurnByDate(task, selectedDate);
+        let currentTurn = task.turn || getTurnByDate(task, selectedDate);
+
 
 
 
