@@ -565,9 +565,9 @@ async function loadTasksForDate(selectedDate) {
 
     const visibleTasks = tasks.filter(task => {
         if (!task.date) return false;
-        const range = task.date.split(" to ");
-        const from = parseLocalDate(range[0]);
-        const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
+        const [fromStr, toStr] = task.date.split(" to ");
+        const from = parseLocalDate(fromStr);
+        const to = toStr ? parseLocalDate(toStr) : new Date(3000, 0, 1);
         const selected = parseLocalDate(selectedDate);
         return selected >= from && selected <= to;
     });
@@ -577,26 +577,27 @@ async function loadTasksForDate(selectedDate) {
         return;
     }
 
-    visibleTasks.forEach((task, index) => {
+    visibleTasks.forEach(task => {
         const taskDiv = document.createElement("div");
         taskDiv.className = "task-item";
         taskDiv.dataset.taskTitle = task.title;
         taskDiv.dataset.taskDate = task.date;
 
+        // Determine whose turn it is
         let currentTurn;
         if (task.repeat === "Daily" && task.timesPerDay === 1) {
-    const dateRange = task.date.split(" to ");
-    const startDateStr = dateRange[0];
-    const startDate = parseLocalDate(startDateStr);
-    const currentDate = parseLocalDate(selectedDate);
-    const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-    const userOrder = [...task.users];
-    const currentIndex = diffDays % userOrder.length;
-    currentTurn = userOrder[currentIndex];
+            const [fromStr] = task.date.split(" to ");
+            const fromDate = parseLocalDate(fromStr);
+            const selected = parseLocalDate(selectedDate);
+            const diffDays = Math.floor((selected - fromDate) / (1000 * 60 * 60 * 24));
+            const userOrder = [...task.users];
+            const currentIndex = diffDays % userOrder.length;
+            currentTurn = userOrder[currentIndex];
         } else {
             currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
         }
 
+        // Determine repeat limit
         let repeatLimit = 1;
         if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
         if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
@@ -621,6 +622,7 @@ async function loadTasksForDate(selectedDate) {
             }
         });
 
+        // Swipe gesture support (touch)
         let startX = 0;
         let currentX = 0;
         let isSwiping = false;
@@ -634,17 +636,13 @@ async function loadTasksForDate(selectedDate) {
             if (!isSwiping) return;
             currentX = e.touches[0].clientX;
             const diffX = startX - currentX;
-            if (diffX > 50) {
-                taskDiv.classList.add("swiped-left");
-            } else if (diffX < -20) {
-                taskDiv.classList.remove("swiped-left");
-            }
+            if (diffX > 50) taskDiv.classList.add("swiped-left");
+            if (diffX < -20) taskDiv.classList.remove("swiped-left");
         });
 
-        taskDiv.addEventListener("touchend", () => {
-            isSwiping = false;
-        });
+        taskDiv.addEventListener("touchend", () => isSwiping = false);
 
+        // Swipe gesture support (mouse)
         taskDiv.addEventListener("mousedown", (e) => {
             startX = e.clientX;
             isSwiping = true;
@@ -654,21 +652,14 @@ async function loadTasksForDate(selectedDate) {
             if (!isSwiping) return;
             currentX = e.clientX;
             const diffX = startX - currentX;
-            if (diffX > 50) {
-                taskDiv.classList.add("swiped-left");
-            } else if (diffX < -20) {
-                taskDiv.classList.remove("swiped-left");
-            }
+            if (diffX > 50) taskDiv.classList.add("swiped-left");
+            if (diffX < -20) taskDiv.classList.remove("swiped-left");
         });
 
-        taskDiv.addEventListener("mouseup", () => {
-            isSwiping = false;
-        });
+        taskDiv.addEventListener("mouseup", () => isSwiping = false);
+        taskDiv.addEventListener("mouseleave", () => isSwiping = false);
 
-        taskDiv.addEventListener("mouseleave", () => {
-            isSwiping = false;
-        });
-
+        // Delete button
         taskDiv.querySelector(".delete-btn").addEventListener("click", async () => {
             if (confirm(`Are you sure you want to delete "${task.title}"?`)) {
                 const loadingDiv = document.createElement("div");
@@ -698,7 +689,6 @@ async function loadTasksForDate(selectedDate) {
         taskList.appendChild(taskDiv);
     });
 }
-
 
 
 
