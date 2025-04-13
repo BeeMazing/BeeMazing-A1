@@ -564,19 +564,20 @@ function getTurnByDate(task, targetDateStr) {
     const currentUser = userOrder[currentUserIndex];
     const completedCount = completedToday.filter(u => u === currentUser).length;
 
-    if (dateStr === targetDateStr) {
-      // This is the day we’re calculating the turn for.
-      return currentUser;
+    // 🔁 Only rotate if the current user actually completed the task
+    if (completedCount >= repeatLimit) {
+      currentUserIndex = (currentUserIndex + 1) % userOrder.length;
     }
 
-    // 👇 Assume turn rotated if the current user completed OR if this is a simulated day (in the past) and they *should* have done it
-    if (completedCount >= repeatLimit || completedToday.length === 0) {
-      currentUserIndex = (currentUserIndex + 1) % userOrder.length;
+    // 🛑 If this is the target day, return the current user
+    if (dateStr === targetDateStr) {
+      return userOrder[currentUserIndex];
     }
   }
 
   return userOrder[currentUserIndex];
 }
+
 
 
 
