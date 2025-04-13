@@ -540,6 +540,27 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
+function getCurrentTurn(task, selectedDate) {
+    const [fromStr] = task.date.split(" to ");
+    const fromDate = new Date(fromStr);
+    const userOrder = [...task.users];
+    const completions = task.completions?.[selectedDate] || [];
+
+    const diffDays = Math.floor((new Date(selectedDate) - fromDate) / (1000 * 60 * 60 * 24));
+    let index = diffDays % userOrder.length;
+
+    // If the expected user already completed, try to find another
+    if (completions.includes(userOrder[index])) {
+        for (let i = 1; i < userOrder.length; i++) {
+            const nextIndex = (index + i) % userOrder.length;
+            if (!completions.includes(userOrder[nextIndex])) {
+                return userOrder[nextIndex];
+            }
+        }
+    }
+
+    return userOrder[index]; // fallback
+}
 
 
 
@@ -584,18 +605,8 @@ async function loadTasksForDate(selectedDate) {
         taskDiv.dataset.taskDate = task.date;
 
         // Determine whose turn it is
-        let currentTurn;
-        if (task.repeat === "Daily" && task.timesPerDay === 1) {
-            const [fromStr] = task.date.split(" to ");
-            const fromDate = parseLocalDate(fromStr);
-            const selected = parseLocalDate(selectedDate);
-            const diffDays = Math.floor((selected - fromDate) / (1000 * 60 * 60 * 24));
-            const userOrder = [...task.users];
-            const currentIndex = diffDays % userOrder.length;
-            currentTurn = userOrder[currentIndex];
-        } else {
-            currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
-        }
+        let currentTurn = getCurrentTurn(task, selectedDate);
+
 
         // Determine repeat limit
         let repeatLimit = 1;
@@ -822,16 +833,9 @@ async function showTaskDetails(task) {
     const userOrder = [...task.users];
 
     // For a "Daily" task with 1 time per day, rotate the turn based on the day difference
-    let currentIndex;
-    if (task.repeat === "Daily" && task.timesPerDay === 1) {
-        currentIndex = diffDays % userOrder.length;
-    } else {
-        // Fallback to the stored turn if the task isn't a daily 1-time-per-day task
-        const storedTurn = task.turn || task.users[0];
-        currentIndex = userOrder.indexOf(storedTurn);
-    }
+    const currentUser = getCurrentTurn(task, selectedDate);
+const currentIndex = userOrder.indexOf(currentUser);
 
-    const currentUser = userOrder[currentIndex];
 
     // Calculate the next user in the turn order
     const nextIndex = (currentIndex + 1) % userOrder.length;
