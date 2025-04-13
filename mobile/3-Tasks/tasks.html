@@ -565,31 +565,18 @@ function getTurnByDate(task, targetDateStr) {
 }
 
 
-  for (let d = new Date(startDate); d <= targetDate; d.setDate(d.getDate() + 1)) {
-    const dateStr = formatDate(d);
-    const currentUser = userOrder[currentUserIndex];
-    const completedToday = Array.isArray(completions[dateStr]) ? completions[dateStr] : [];
-    const completedCount = completedToday.filter(u => u === currentUser).length;
+const isToday = targetDateStr === new Date().toISOString().split("T")[0];
+let currentIndex;
 
-    const isPastOrToday = d <= today;
+if (isToday && typeof task.lastRealTurnIndex === "number") {
+  const completedCount = Array.isArray(completions[targetDateStr]) ? completions[targetDateStr].length : 0;
+  currentIndex = (task.lastRealTurnIndex + completedCount) % userOrder.length;
+} else {
+  const diffDays = Math.floor((targetDate - startDate) / (1000 * 60 * 60 * 24));
+  currentIndex = diffDays % userOrder.length;
+}
 
-    if (isPastOrToday) {
-      // In the past or today: only rotate if the task was completed by the current user
-      if (completedCount >= repeatLimit) {
-        currentUserIndex = (currentUserIndex + 1) % userOrder.length;
-      }
-    } else {
-      // In the future: assume task was completed and rotate as if everything went fine
-      currentUserIndex = (currentUserIndex + 1) % userOrder.length;
-    }
-
-    // When we've reached the target day, stop
-    if (dateStr === targetDateStr) {
-      return userOrder[currentUserIndex];
-    }
-  }
-
-  return userOrder[currentUserIndex];
+return userOrder[currentIndex];
 }
 
 

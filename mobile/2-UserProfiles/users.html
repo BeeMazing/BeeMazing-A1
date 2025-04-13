@@ -1876,7 +1876,13 @@
             const totalCompletions = completedUsers.length;
             if (totalCompletions >= requiredTimes) return;
         
-            tasks[taskIndex].completions[today].push(currentUser);
+            const todayCompletions = tasks[taskIndex].completions[today];
+todayCompletions.push(currentUser);
+
+// Save real-world index of last completed user for today
+const currentTurnIndex = task.users.indexOf(currentUser);
+tasks[taskIndex].lastRealTurnIndex = currentTurnIndex;
+
         
             if (task.repeat === "Daily" && task.timesPerDay > 1) {
               const totalCompletions = tasks[taskIndex].completions[today].length;
