@@ -541,50 +541,30 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 function getCurrentTurn(task, selectedDate) {
-    const [fromStr] = task.date.split(" to ");
-    const userOrder = [...task.users];
-    const completions = task.completions || {};
-    const repeat = task.repeat || "Daily";
-    const repeatLimit = repeat === "Daily" ? (task.timesPerDay || 1)
-                        : repeat === "Weekly" ? (task.timesPerWeek || 1)
-                        : repeat === "Monthly" ? (task.timesPerMonth || 1)
-                        : 1;
+  const completions = task.completions || {};
+  const userOrder = [...task.users];
 
-    const parseDate = (dateStr) => new Date(dateStr + "T00:00:00");
-    const formatDate = (dateObj) => dateObj.toISOString().split("T")[0];
+  // For Daily 1x logic
+  if (task.repeat === "Daily" && task.timesPerDay === 1) {
+    let totalCompletions = 0;
 
-    const fromDate = parseDate(fromStr);
-    const toDate = parseDate(selectedDate);
+    Object.entries(completions).forEach(([dateStr, users]) => {
+      const dateObj = new Date(dateStr + "T00:00:00");
+      const selectedObj = new Date(selectedDate + "T00:00:00");
 
-    let userIndex = 0;
-    const completionCounts = {};
+      if (dateObj < selectedObj && Array.isArray(users)) {
+        totalCompletions += users.length;
+      }
+    });
 
-    // Simulate from start date to selected date (inclusive)
-    for (let d = new Date(fromDate); d <= toDate; d.setDate(d.getDate() + 1)) {
-        const dayStr = formatDate(d);
-        const completedToday = completions[dayStr] || [];
-        
-        const currentUser = userOrder[userIndex];
-        const completedCount = completedToday.filter(u => u === currentUser).length;
+    const currentIndex = totalCompletions % userOrder.length;
+    return userOrder[currentIndex];
+  }
 
-        if (formatDate(d) === selectedDate) {
-            // This is the selected date — if the user hasn't completed, it's still their turn
-            if (completedCount < repeatLimit) {
-                return currentUser;
-            }
-        } else {
-            // Only advance the turn if the user completed their task
-            if (completedCount >= repeatLimit) {
-                userIndex = (userIndex + 1) % userOrder.length;
-            } else {
-                // Missed day — they stay on turn until completed
-                return currentUser;
-            }
-        }
-    }
-
-    return userOrder[userIndex];
+  // Fallback (multi per day or other repeat)
+  return task.tempTurnReplacement?.replacement || task.turn || userOrder[0];
 }
+
 
 
 
