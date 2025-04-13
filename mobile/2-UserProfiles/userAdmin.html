@@ -222,6 +222,10 @@
   </div>
 
   <script>
+
+
+
+
     const SERVER_URL = "https://beemazing.onrender.com";
     const adminEmail = localStorage.getItem("currentAdminEmail");
     let viewDate = new Date();
@@ -303,6 +307,60 @@
 
 
 
+    function getTurnByDate(task, targetDateStr) {
+  const completions = task.completions || {};
+  const userOrder = [...task.users];
+  const repeat = task.repeat || "Daily";
+  const repeatLimit = repeat === "Daily" ? (task.timesPerDay || 1)
+                    : repeat === "Weekly" ? (task.timesPerWeek || 1)
+                    : repeat === "Monthly" ? (task.timesPerMonth || 1)
+                    : 1;
+
+  const parseDate = (str) => new Date(str + "T00:00:00");
+  const formatDate = (date) => date.toISOString().split("T")[0];
+
+  const [fromStr] = task.date.split(" to ");
+  const startDate = parseDate(fromStr);
+  const targetDate = parseDate(targetDateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let currentUserIndex = 0;
+
+  for (let d = new Date(startDate); d <= targetDate; d.setDate(d.getDate() + 1)) {
+    const dateStr = formatDate(d);
+    const currentUser = userOrder[currentUserIndex];
+    const completedToday = Array.isArray(completions[dateStr]) ? completions[dateStr] : [];
+    const completedCount = completedToday.filter(u => u === currentUser).length;
+
+    const isPastOrToday = d <= today;
+
+    if (isPastOrToday) {
+      if (completedCount >= repeatLimit) {
+        currentUserIndex = (currentUserIndex + 1) % userOrder.length;
+      }
+    } else {
+      currentUserIndex = (currentUserIndex + 1) % userOrder.length;
+    }
+
+    if (dateStr === targetDateStr) {
+      return userOrder[currentUserIndex];
+    }
+  }
+
+  return userOrder[currentUserIndex];
+}
+
+
+
+
+
+
+
+
+
+
+
 
     async function loadTasks() {
   if (!adminEmail || !selectedDate) return;
@@ -322,10 +380,7 @@
       const selected = new Date(selectedDate);
       if (selected < start || selected > end) return;
 
-      const users = task.users || [];
-      if (!users.length) return;
-
-      const completions = task.completions?.[selectedDate] || [];
+      const completions = Array.isArray(task.completions?.[selectedDate]) ? [...task.completions[selectedDate]] : [];
       const repeat = task.repeat || "Once";
 
       let totalRequired = 1;
@@ -333,65 +388,48 @@
       if (repeat === "Weekly") totalRequired = task.timesPerWeek || 1;
       if (repeat === "Monthly") totalRequired = task.timesPerMonth || 1;
 
+      const userOrder = [...task.users];
+      const originalTurn = getTurnByDate(task, selectedDate);
 
+      // Handle delegation
+      const delegatedTurn = task.tempTurnReplacement?.original === originalTurn
+        ? task.tempTurnReplacement.replacement
+        : originalTurn;
 
-      let rotation = [];
+      // Build rotation from delegatedTurn forward
+      const rotation = [];
+      let currentIndex = userOrder.indexOf(originalTurn);
 
-// Respect the existing turn and completion order like tasks.html
-let userOrder = [...users];
+      for (let i = 0; i < totalRequired; i++) {
+        let user = userOrder[(currentIndex + i) % userOrder.length];
+        if (task.tempTurnReplacement?.original === user) {
+          user = task.tempTurnReplacement.replacement;
+        }
+        rotation.push(user);
+      }
 
-// Handle delegated user
-if (task.tempTurnReplacement && task.tempTurnReplacement.original && task.tempTurnReplacement.replacement) {
-  const i = userOrder.indexOf(task.tempTurnReplacement.original);
-  if (i !== -1) {
-    userOrder[i] = task.tempTurnReplacement.replacement;
-  }
-}
-
-let completedUsers = completions || [];
-let usedCompletions = [...completedUsers];
-
-// Build the rotation list
-for (let i = 0; i < totalRequired; i++) {
-  // Skip already completed users
-  const remaining = userOrder.filter(u => usedCompletions.indexOf(u) === -1);
-  if (remaining.length === 0) break;
-
-  const nextUser = remaining[0];
-  rotation.push(nextUser);
-  usedCompletions.push(nextUser);
-}
-
-
-
-
-
-
-      rotation.forEach((user, index) => {
+      // Build table rows
+      rotation.forEach(user => {
         const completedCount = completions.filter(u => u === user).length;
         const isCompleted = completedCount > 0;
 
         const row = document.createElement("tr");
         row.innerHTML = `
-  <td>${task.title}</td>
-  <td>${user}</td>
-  <td class="${isCompleted ? 'status-completed' : 'status-pending'}">
-    ${isCompleted ? "Completed" : "Pending"}
-  </td>
-  <td>
-    ${isCompleted
-      ? `<button class="action-btn accept-btn" onclick="handleAction(\`${task.title}\`, \`${user}\`, 'accept', \`${task.date}\`)">Accept</button>
-         <button class="action-btn decline-btn" onclick="handleAction(\`${task.title}\`, \`${user}\`, 'decline', \`${task.date}\`)">Decline</button>`
-      : "—"}
-  </td>
-`;
+          <td>${task.title}</td>
+          <td>${user}</td>
+          <td class="${isCompleted ? 'status-completed' : 'status-pending'}">
+            ${isCompleted ? "Completed" : "Pending"}
+          </td>
+          <td>
+            ${isCompleted
+              ? `<button class="action-btn accept-btn" onclick="handleAction(\`${task.title}\`, \`${user}\`, 'accept', \`${task.date}\`)">Accept</button>
+                 <button class="action-btn decline-btn" onclick="handleAction(\`${task.title}\`, \`${user}\`, 'decline', \`${task.date}\`)">Decline</button>`
+              : "—"}
+          </td>
+        `;
 
         adminTasksBody.appendChild(row);
         hasAny = true;
-
-        // Remove this completion from the list so we don't reuse it
-        const completionIndex = completions.indexOf(user);
-        if (completionIndex !== -1) completions.splice(completionIndex, 1);
       });
     });
 
@@ -407,6 +445,11 @@ for (let i = 0; i < totalRequired; i++) {
     adminTasksBody.appendChild(row);
   }
 }
+
+
+
+
+
 
 
 
