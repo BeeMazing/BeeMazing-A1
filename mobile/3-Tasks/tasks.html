@@ -989,7 +989,8 @@ async function finishTask(userName, task, button, selectedDate) {
 
     const rewardAmount = Number(task.reward) || 0;
     const userList = task.users;
-    const currentTurn = task.tempTurnReplacement?.replacement || task.turn || userList[0];
+    const currentTurn = getTurnByDate(task, today);
+
 
     if (task.tempTurnReplacement && userName === task.tempTurnReplacement.replacement) {
         const originalUser = task.tempTurnReplacement.original;
@@ -999,21 +1000,31 @@ async function finishTask(userName, task, button, selectedDate) {
         delete task.tempTurnReplacement;
         if (task.originalOwner) delete task.originalOwner[userName];
     } else {
-        const userCompletionCounts = {};
-        task.completions[today].forEach(u => {
-            userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
-        });
-        const currentIndex = userList.indexOf(currentTurn);
-        let nextIndex = (currentIndex + 1) % userList.length;
-        let looped = false;
 
-        while ((userCompletionCounts[userList[nextIndex]] || 0) >= repeatLimit && !looped) {
-            nextIndex = (nextIndex + 1) % userList.length;
-            if (nextIndex === currentIndex) looped = true;
-        }
 
-        const newTurn = looped ? userList[0] : userList[nextIndex];
-task.turn = newTurn;
+
+        const completedToday = task.completions[today] || [];
+const userCompletionCounts = {};
+for (const user of completedToday) {
+    userCompletionCounts[user] = (userCompletionCounts[user] || 0) + 1;
+}
+
+const completionsForCurrent = userCompletionCounts[currentTurn] || 0;
+
+if (completionsForCurrent >= repeatLimit) {
+    const currentIndex = userList.indexOf(currentTurn);
+    let nextIndex = (currentIndex + 1) % userList.length;
+    let looped = false;
+
+    while ((userCompletionCounts[userList[nextIndex]] || 0) >= repeatLimit && !looped) {
+        nextIndex = (nextIndex + 1) % userList.length;
+        if (nextIndex === currentIndex) looped = true;
+    }
+
+    task.turn = userList[nextIndex];
+}
+
+
 
 // Update per-date turn history
 if (!task.turnHistory) task.turnHistory = {};
