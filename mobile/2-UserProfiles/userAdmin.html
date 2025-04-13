@@ -301,45 +301,56 @@
     };
 
     async function loadTasks() {
-      adminTasksBody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
+  adminTasksBody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
 
-      try {
-        const res = await fetch(`${SERVER_URL}/api/admin-tasks?adminEmail=${adminEmail}`);
-        const data = await res.json();
+  try {
+    const res = await fetch(`${SERVER_URL}/api/admin-tasks?adminEmail=${adminEmail}`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
 
-        if (!data.success) throw new Error(data.message);
+    const tasks = data.tasks;
+    adminTasksBody.innerHTML = "";
+    let hasAny = false;
 
-        const filtered = data.tasks.filter(task => {
-          return new Date(selectedDate).toDateString() === new Date().toDateString();
-        });
+    tasks.forEach(task => {
+      const userOrder = task.userOrder || task.users || [];
+      const completions = task.completions?.[selectedDate] || [];
+      const currentTurn = task.turn || userOrder[0]; // fallback just in case
 
-        if (filtered.length === 0) {
-          adminTasksBody.innerHTML = "<tr><td colspan='4'>No tasks for this date</td></tr>";
-          return;
-        }
+      userOrder.forEach(user => {
+        hasAny = true;
+        const isCompleted = completions.includes(user);
+        const isCurrentTurn = user === currentTurn;
 
-        adminTasksBody.innerHTML = "";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${task.title}</td>
+          <td>${user}</td>
+          <td class="${isCompleted ? 'status-completed' : 'status-pending'}">
+            ${isCompleted ? 'Completed' : isCurrentTurn ? 'Pending' : '—'}
+          </td>
+          <td>
+            ${isCompleted
+              ? `<button class="action-btn accept-btn" onclick="handleAction('${task.title}', '${user}', 'accept')">Accept</button>
+                 <button class="action-btn decline-btn" onclick="handleAction('${task.title}', '${user}', 'decline')">Decline</button>`
+              : '—'}
+          </td>
+        `;
+        adminTasksBody.appendChild(tr);
+      });
+    });
 
-        filtered.forEach(task => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${task.title}</td>
-            <td>${task.user}</td>
-            <td class="${task.status === 'Completed' ? 'status-completed' : 'status-pending'}">${task.status}</td>
-            <td>
-              ${task.status === 'Pending'
-                ? `<button class="action-btn accept-btn" onclick="handleAction('${task.title}', '${task.user}', 'accept')">Accept</button>
-                   <button class="action-btn decline-btn" onclick="handleAction('${task.title}', '${task.user}', 'decline')">Decline</button>`
-                : '—'}
-            </td>
-          `;
-          adminTasksBody.appendChild(tr);
-        });
-      } catch (err) {
-        console.error("Failed to load tasks:", err);
-        adminTasksBody.innerHTML = "<tr><td colspan='4'>Error loading tasks</td></tr>";
-      }
+    if (!hasAny) {
+      adminTasksBody.innerHTML = "<tr><td colspan='4'>No tasks for this date</td></tr>";
     }
+
+  } catch (err) {
+    console.error("Failed to load tasks:", err);
+    adminTasksBody.innerHTML = "<tr><td colspan='4'>Error loading tasks</td></tr>";
+  }
+}
+
+
 
     async function handleAction(title, user, action) {
       try {
