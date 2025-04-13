@@ -300,6 +300,10 @@ if (selected) scrollDayIntoView(selected);
       dayScrollContainer.scrollBy({ left: 100, behavior: "smooth" });
     };
 
+
+
+
+
     async function loadTasks() {
   if (!adminEmail || !selectedDate) return;
 
@@ -321,36 +325,37 @@ if (selected) scrollDayIntoView(selected);
       const users = task.users || [];
       const completions = task.completions?.[selectedDate] || [];
       const repeat = task.repeat || "Once";
-      let times = 1;
 
+      let times = 1;
       if (repeat === "Daily") times = task.timesPerDay || 1;
       if (repeat === "Weekly") times = task.timesPerWeek || 1;
       if (repeat === "Monthly") times = task.timesPerMonth || 1;
 
-      const daysSinceStart = Math.floor((selected - start) / (1000 * 60 * 60 * 24));
-      const rotationIndex = daysSinceStart % users.length;
-      const currentUser = users[rotationIndex];
+      users.forEach(user => {
+        // Count how many times this user has completed
+        const completedCount = completions.filter(u => u === user).length;
 
-      for (let i = 0; i < times; i++) {
-        const isCompleted = completions.includes(currentUser);
+        for (let i = 0; i < times; i++) {
+          const isCompleted = i < completedCount;
 
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${task.title}</td>
-          <td>${currentUser}</td>
-          <td class="${isCompleted ? 'status-completed' : 'status-pending'}">
-            ${isCompleted ? "Completed" : "Pending"}
-          </td>
-          <td>
-            ${isCompleted
-              ? `<button class="action-btn accept-btn" onclick="handleAction('${task.title}', '${currentUser}', 'accept')">Accept</button>
-                 <button class="action-btn decline-btn" onclick="handleAction('${task.title}', '${currentUser}', 'decline')">Decline</button>`
-              : "—"}
-          </td>
-        `;
-        adminTasksBody.appendChild(row);
-        hasAny = true;
-      }
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${task.title}</td>
+            <td>${user}</td>
+            <td class="${isCompleted ? 'status-completed' : 'status-pending'}">
+              ${isCompleted ? "Completed" : "Pending"}
+            </td>
+            <td>
+              ${isCompleted
+                ? `<button class="action-btn accept-btn" onclick="handleAction('${task.title}', '${user}', 'accept')">Accept</button>
+                   <button class="action-btn decline-btn" onclick="handleAction('${task.title}', '${user}', 'decline')">Decline</button>`
+                : "—"}
+            </td>
+          `;
+          adminTasksBody.appendChild(row);
+          hasAny = true;
+        }
+      });
     });
 
     if (!hasAny) {
@@ -365,6 +370,10 @@ if (selected) scrollDayIntoView(selected);
     adminTasksBody.appendChild(row);
   }
 }
+
+
+
+
 
 
 
