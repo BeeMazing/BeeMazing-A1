@@ -115,7 +115,7 @@
         }
         .content {
             position: absolute;
-            top: 0;
+            top: var(--header-height);
             bottom: var(--footer-height);
             width: 100%;
             padding: 20px;
@@ -171,10 +171,20 @@
             cursor: pointer;
             position: relative;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .task-item:hover {
             transform: translateY(-5px);
             box-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
+        }
+        .task-details {
+            flex-grow: 1;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
         }
         .action-btn {
             padding: 8px 12px;
@@ -184,7 +194,6 @@
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.3s ease;
-            margin: 5px;
         }
         .accept-btn {
             background: var(--primary-color);
@@ -286,6 +295,11 @@
             }
             .task-item {
                 padding: 12px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .action-buttons {
+                margin-top: 10px;
             }
             .action-btn {
                 padding: 6px 10px;
@@ -298,7 +312,7 @@
     <div class="date-header">
         <div class="month-nav">
             <button id="prevMonth"><</button>
-            <span id="monthLabel">Loading...</span>
+            <span id="monthLabel"></span>
             <button id="nextMonth">></button>
         </div>
         <div class="day-scroll-wrapper">
@@ -336,13 +350,8 @@
         </a>
     </div>
     <script>
-        // Debug helper to log execution
-        function debugLog(message) {
-            console.log(`[userAdmin.html] ${message}`);
-        }
-
         document.addEventListener("DOMContentLoaded", () => {
-            debugLog("DOMContentLoaded fired");
+            console.log("[userAdmin.html] DOMContentLoaded");
 
             const urlParams = new URLSearchParams(window.location.search);
             let adminEmail = urlParams.get('admin') || localStorage.getItem("currentAdminEmail");
@@ -350,7 +359,7 @@
             if (adminEmail && adminEmail !== "null") {
                 localStorage.setItem("currentAdminEmail", adminEmail);
             } else {
-                debugLog("Missing admin email");
+                console.log("[userAdmin.html] Missing admin email");
                 document.getElementById("adminTasks").innerHTML = "<p>Error: Missing admin email. Please log in again.</p>";
                 return;
             }
@@ -375,20 +384,17 @@
 
             // Initialize UI
             adjustContentTop();
-            debugLog("Calling initializeDates");
-            initializeDates();
-            loadAdminTasks();
+            generateScrollableDates();
+            loadTasksForDate();
 
             function setAdminGreeting(email) {
-                debugLog(`Setting greeting for email: ${email}`);
+                console.log("[userAdmin.html] Setting greeting for:", email);
                 let adminName = email.split('@')[0].split('.').map(part => 
                     part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
                 ).join(' ') || "Admin";
                 const adminNameElement = document.getElementById("adminName");
                 if (adminNameElement) {
                     adminNameElement.textContent = adminName;
-                } else {
-                    debugLog("adminName element not found");
                 }
             }
 
@@ -398,36 +404,19 @@
                 if (header && content) {
                     const headerHeight = header.getBoundingClientRect().height;
                     content.style.top = `${headerHeight}px`;
-                } else {
-                    debugLog("Header or content element missing");
                 }
             }
 
             let monthOffset = 0;
 
-            function initializeDates() {
-                debugLog("Initializing dates");
-                // Delay to ensure DOM is fully ready
-                setTimeout(() => {
-                    try {
-                        generateScrollableDates();
-                    } catch (err) {
-                        debugLog(`Error in initializeDates: ${err.message}`);
-                        const monthLabel = document.getElementById("monthLabel");
-                        if (monthLabel) {
-                            monthLabel.textContent = "Error";
-                        }
-                    }
-                }, 100);
-            }
-
             function generateScrollableDates() {
-                debugLog("Running generateScrollableDates");
+                console.log("[userAdmin.html] Running generateScrollableDates");
                 const container = document.getElementById("dayScrollContainer");
                 const monthLabel = document.getElementById("monthLabel");
+
                 if (!container || !monthLabel) {
-                    debugLog("Missing dayScrollContainer or monthLabel");
-                    throw new Error("Required DOM elements not found");
+                    console.log("[userAdmin.html] Missing dayScrollContainer or monthLabel");
+                    return;
                 }
 
                 container.innerHTML = "";
@@ -439,11 +428,11 @@
                 const currentYear = today.getFullYear();
                 const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-                debugLog(`Setting monthLabel to ${today.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}`);
                 monthLabel.textContent = today.toLocaleDateString(undefined, {
                     month: 'long',
                     year: 'numeric'
                 });
+                console.log("[userAdmin.html] Set monthLabel to:", monthLabel.textContent);
 
                 for (let i = 1; i <= daysInMonth; i++) {
                     const date = new Date(currentYear, currentMonth, i);
@@ -455,18 +444,18 @@
                     btn.dataset.date = dateStr;
 
                     btn.addEventListener("click", () => {
-                        debugLog(`Day clicked: ${dateStr}`);
+                        console.log("[userAdmin.html] Day clicked:", dateStr);
                         document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
                         btn.classList.add("selected");
-                        loadAdminTasks(dateStr);
+                        loadTasksForDate(dateStr);
                     });
 
                     const now = new Date();
                     const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
                     if (dateStr === nowStr) {
-                        debugLog(`Selecting today: ${dateStr}`);
+                        console.log("[userAdmin.html] Selecting today:", dateStr);
                         btn.classList.add("selected");
-                        loadAdminTasks(dateStr);
+                        loadTasksForDate(dateStr);
                     }
 
                     container.appendChild(btn);
@@ -475,163 +464,135 @@
                 setTimeout(() => {
                     const selected = document.querySelector(".day.selected");
                     if (selected) {
-                        debugLog("Scrolling to selected day");
+                        console.log("[userAdmin.html] Scrolling to selected day");
                         selected.scrollIntoView({ behavior: "smooth", inline: "center" });
-                    } else {
-                        debugLog("No selected day found");
                     }
                 }, 50);
             }
 
-            // Navigation event listeners
-            const prevMonthBtn = document.getElementById("prevMonth");
-            const nextMonthBtn = document.getElementById("nextMonth");
-            if (prevMonthBtn) {
-                prevMonthBtn.addEventListener("click", () => {
-                    debugLog("Previous month clicked");
-                    monthOffset--;
-                    try {
-                        generateScrollableDates();
-                    } catch (err) {
-                        debugLog(`Error navigating to previous month: ${err.message}`);
-                        const monthLabel = document.getElementById("monthLabel");
-                        if (monthLabel) {
-                            monthLabel.textContent = "Error";
-                        }
-                    }
-                });
-            } else {
-                debugLog("prevMonth button not found");
-            }
+            document.getElementById("prevMonth").addEventListener("click", () => {
+                console.log("[userAdmin.html] Previous month clicked");
+                monthOffset--;
+                generateScrollableDates();
+            });
 
-            if (nextMonthBtn) {
-                nextMonthBtn.addEventListener("click", () => {
-                    debugLog("Next month clicked");
-                    monthOffset++;
-                    try {
-                        generateScrollableDates();
-                    } catch (err) {
-                        debugLog(`Error navigating to next month: ${err.message}`);
-                        const monthLabel = document.getElementById("monthLabel");
-                        if (monthLabel) {
-                            monthLabel.textContent = "Error";
-                        }
-                    }
-                });
-            } else {
-                debugLog("nextMonth button not found");
-            }
+            document.getElementById("nextMonth").addEventListener("click", () => {
+                console.log("[userAdmin.html] Next month clicked");
+                monthOffset++;
+                generateScrollableDates();
+            });
 
-            const scrollLeftBtn = document.getElementById("scrollLeft");
-            const scrollRightBtn = document.getElementById("scrollRight");
-            if (scrollLeftBtn) {
-                scrollLeftBtn.addEventListener("click", () => {
-                    debugLog("Scroll left clicked");
-                    document.getElementById("dayScrollContainer").scrollBy({
-                        left: -200,
-                        behavior: "smooth"
-                    });
+            document.getElementById("scrollLeft").addEventListener("click", () => {
+                console.log("[userAdmin.html] Scroll left clicked");
+                document.getElementById("dayScrollContainer").scrollBy({
+                    left: -200,
+                    behavior: "smooth"
                 });
-            } else {
-                debugLog("scrollLeft button not found");
-            }
+            });
 
-            if (scrollRightBtn) {
-                scrollRightBtn.addEventListener("click", () => {
-                    debugLog("Scroll right clicked");
-                    document.getElementById("dayScrollContainer").scrollBy({
-                        left: 200,
-                        behavior: "smooth"
-                    });
+            document.getElementById("scrollRight").addEventListener("click", () => {
+                console.log("[userAdmin.html] Scroll right clicked");
+                document.getElementById("dayScrollContainer").scrollBy({
+                    left: 200,
+                    behavior: "smooth"
                 });
-            } else {
-                debugLog("scrollRight button not found");
-            }
+            });
 
-            async function loadAdminTasks(selectedDate = new Date().toLocaleDateString("sv-SE")) {
-                debugLog(`Loading tasks for date: ${selectedDate}`);
+            async function loadTasksForDate(selectedDate = new Date().toLocaleDateString("sv-SE")) {
+                console.log("[userAdmin.html] Loading tasks for:", selectedDate);
                 const adminTasksDiv = document.getElementById("adminTasks");
-                if (!adminTasksDiv) {
-                    debugLog("adminTasks div not found");
-                    return;
-                }
                 adminTasksDiv.innerHTML = "<p>Loading tasks...</p>";
 
                 try {
-                    const res = await fetch(`https://beemazing.onrender.com/api/admin-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-                    const data = await res.json();
+                    // Fetch non-admin users
+                    const usersRes = await fetch(`https://beemazing.onrender.com/api/users?adminEmail=${encodeURIComponent(adminEmail)}`);
+                    const usersData = await usersRes.json();
+                    const nonAdminUsers = usersData.users
+                        .filter(user => !user.isAdmin)
+                        .map(user => user.name || user.email.split('@')[0]);
 
-                    if (!data.success || !Array.isArray(data.tasks)) {
-                        throw new Error(data.message || "Invalid task data received");
+                    if (!nonAdminUsers.length) {
+                        adminTasksDiv.innerHTML = "<p>No non-admin users found.</p>";
+                        return;
                     }
 
-                    let tasks = data.tasks;
-                    adminTasksDiv.innerHTML = "";
+                    // Fetch tasks
+                    const tasksRes = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+                    const tasksData = await tasksRes.json();
+                    const tasks = tasksData.tasks || [];
 
-                    if (tasks.length === 0) {
-                        debugLog("No tasks found");
-                        adminTasksDiv.innerHTML = "<p>No tasks assigned to non-admin users.</p>";
+                    if (!tasks.length) {
+                        adminTasksDiv.innerHTML = "<p>No tasks available.</p>";
                         return;
                     }
 
                     function parseLocalDate(dateStr) {
-                        try {
-                            const [year, month, day] = (dateStr || '').split("-").map(Number);
-                            if (!year || !month || !day) throw new Error("Invalid date format");
-                            return new Date(year, month - 1, day);
-                        } catch {
-                            debugLog(`Invalid date format: ${dateStr}`);
-                            return new Date();
-                        }
+                        const [year, month, day] = (dateStr || '').split("-").map(Number);
+                        return new Date(year, month - 1, day);
                     }
 
-                    tasks = tasks.filter(task => {
-                        if (!task || !task.date) return false;
-                        const taskDate = parseLocalDate(task.date);
+                    // Filter tasks for selected date
+                    const visibleTasks = tasks.filter(task => {
+                        if (!task.date) return false;
+                        const range = task.date.split(" to ");
+                        const from = parseLocalDate(range[0]);
+                        const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
                         const selected = parseLocalDate(selectedDate);
-                        return taskDate.toLocaleDateString("sv-SE") === selected.toLocaleDateString("sv-SE");
+                        return selected >= from && selected <= to;
                     });
 
-                    tasks.forEach(task => {
-                        if (!task || !task.title || !task.user) {
-                            debugLog("Skipping invalid task");
+                    adminTasksDiv.innerHTML = "";
+
+                    if (!visibleTasks.length) {
+                        adminTasksDiv.innerHTML = "<p>No tasks for this day.</p>";
+                        return;
+                    }
+
+                    visibleTasks.forEach(task => {
+                        // Only include tasks with non-admin users
+                        const taskUsers = task.users || [];
+                        if (!taskUsers.some(user => nonAdminUsers.includes(user))) {
                             return;
                         }
+
+                        let currentTurn;
+                        if (task.repeat === "Daily" && task.timesPerDay === 1) {
+                            const dateRange = task.date.split(" to ");
+                            const startDateStr = dateRange[0];
+                            const startDate = parseLocalDate(startDateStr);
+                            const currentDate = parseLocalDate(selectedDate);
+                            const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+                            const userOrder = [...task.users];
+                            const currentIndex = diffDays % userOrder.length;
+                            currentTurn = userOrder[currentIndex];
+                        } else {
+                            currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+                        }
+
+                        let repeatLimit = 1;
+                        if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
+                        if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
+                        if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
+
+                        const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+                        const completedCount = completedUsers.length;
+                        const isCompleted = completedCount >= repeatLimit;
 
                         const taskDiv = document.createElement("div");
                         taskDiv.className = "task-item";
 
-                        const statusText = task.status === "Completed"
-                            ? `<span style="color: green; font-weight: bold;">Completed</span>`
-                            : `Pending`;
-
                         taskDiv.innerHTML = `
-                            <strong>${task.title}</strong><br>
-                            User: ${task.user}<br>
-                            Status: ${statusText}<br>
-                            Honey: ${task.reward || 0} 🍯
+                            <div class="task-details">
+                                ${task.title} | ${currentTurn} | 
+                                ${isCompleted ? '<span style="color: green; font-weight: bold;">Completed</span>' : 'Pending'}
+                            </div>
+                            ${isCompleted ? `
+                                <div class="action-buttons">
+                                    <button class="action-btn accept-btn" data-task="${task.title}" data-user="${currentTurn}">Accept</button>
+                                    <button class="action-btn decline-btn" data-task="${task.title}" data-user="${currentTurn}">Decline</button>
+                                </div>
+                            ` : ''}
                         `;
-
-                        if (task.status === "Completed") {
-                            const actionContainer = document.createElement("div");
-                            actionContainer.style.marginTop = "10px";
-
-                            const acceptBtn = document.createElement("button");
-                            acceptBtn.className = "action-btn accept-btn";
-                            acceptBtn.textContent = "Accept";
-                            acceptBtn.dataset.task = task.title;
-                            acceptBtn.dataset.user = task.user;
-
-                            const declineBtn = document.createElement("button");
-                            declineBtn.className = "action-btn decline-btn";
-                            declineBtn.textContent = "Decline";
-                            declineBtn.dataset.task = task.title;
-                            declineBtn.dataset.user = task.user;
-
-                            actionContainer.appendChild(acceptBtn);
-                            actionContainer.appendChild(declineBtn);
-                            taskDiv.appendChild(actionContainer);
-                        }
 
                         taskDiv.addEventListener("click", (e) => {
                             if (!e.target.classList.contains("action-btn")) {
@@ -642,50 +603,38 @@
                         adminTasksDiv.appendChild(taskDiv);
                     });
 
+                    // Attach action button listeners
                     document.querySelectorAll(".accept-btn").forEach(btn => {
                         btn.addEventListener("click", async () => {
-                            const taskTitle = btn.dataset.task || '';
-                            const user = btn.dataset.user || '';
-                            if (taskTitle && user) {
-                                debugLog(`Accepting task: ${taskTitle} for ${user}`);
-                                await handleTaskAction(taskTitle, user, "accept", selectedDate);
-                            } else {
-                                debugLog("Missing task or user data for accept");
-                            }
+                            const taskTitle = btn.dataset.task;
+                            const user = btn.dataset.user;
+                            console.log("[userAdmin.html] Accepting task:", taskTitle, "for", user);
+                            await handleTaskAction(taskTitle, user, "accept", selectedDate);
                         });
                     });
 
                     document.querySelectorAll(".decline-btn").forEach(btn => {
                         btn.addEventListener("click", async () => {
-                            const taskTitle = btn.dataset.task || '';
-                            const user = btn.dataset.user || '';
-                            if (taskTitle && user) {
-                                debugLog(`Declining task: ${taskTitle} for ${user}`);
-                                await handleTaskAction(taskTitle, user, "decline", selectedDate);
-                            } else {
-                                debugLog("Missing task or user data for decline");
-                            }
+                            const taskTitle = btn.dataset.task;
+                            const user = btn.dataset.user;
+                            console.log("[userAdmin.html] Declining task:", taskTitle, "for", user);
+                            await handleTaskAction(taskTitle, user, "decline", selectedDate);
                         });
                     });
+
                 } catch (err) {
-                    debugLog(`Failed to load tasks: ${err.message}`);
+                    console.log("[userAdmin.html] Error loading tasks:", err.message);
                     adminTasksDiv.innerHTML = "<p>Error loading tasks.</p>";
                 }
             }
 
             async function handleTaskAction(taskTitle, user, action, selectedDate) {
-                if (!taskTitle || !user || !selectedDate) {
-                    debugLog("Missing parameters for task action");
-                    alert(`Failed to ${action} task: Missing details.`);
-                    return;
-                }
-
                 try {
                     const res = await fetch("https://beemazing.onrender.com/api/task-action", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                            adminEmail: adminEmail,
+                            adminEmail,
                             taskTitle,
                             user,
                             action,
@@ -698,25 +647,21 @@
                         throw new Error(data.error || "Failed to process task action");
                     }
 
-                    debugLog(`Task action ${action} successful`);
-                    loadAdminTasks(selectedDate);
+                    console.log("[userAdmin.html] Task action successful:", action);
+                    loadTasksForDate(selectedDate);
                 } catch (err) {
-                    debugLog(`Failed to ${action} task: ${err.message}`);
+                    console.log("[userAdmin.html] Error in task action:", err.message);
                     alert(`Failed to ${action} task: ${err.message}`);
                 }
             }
 
             function showTaskDetails(task) {
-                if (!task) {
-                    debugLog("No task provided for details");
-                    return;
-                }
-
-                debugLog(`Showing details for task: ${task.title}`);
+                console.log("[userAdmin.html] Showing task details:", task.title);
                 let taskDetails = "";
                 taskDetails += task.title ? `<strong>Title:</strong> ${task.title}<br>` : '';
-                taskDetails += task.user ? `<strong>User:</strong> ${task.user}<br>` : '';
-                taskDetails += task.status ? `<strong>Status:</strong> ${task.status}<br>` : '';
+                taskDetails += task.users?.length ? `<strong>Users:</strong> ${task.users.join(", ")}<br>` : '';
+                taskDetails += task.date ? `<strong>Date:</strong> ${task.date}<br>` : '';
+                taskDetails += task.repeat ? `<strong>Repeat:</strong> ${task.repeat}<br>` : '';
                 taskDetails += task.reward ? `<strong>Reward:</strong> ${task.reward} 🍯<br>` : '';
 
                 const modal = document.createElement("div");
@@ -726,18 +671,13 @@
 
                 modal.addEventListener("click", (e) => {
                     if (e.target.classList.contains("modal")) {
-                        debugLog("Closing task details modal");
+                        console.log("[userAdmin.html] Closing modal");
                         modal.remove();
                     }
                 });
             }
 
             window.addEventListener("resize", adjustContentTop);
-            window.addEventListener("load", () => {
-                debugLog("Window load event");
-                adjustContentTop();
-                initializeDates();
-            });
         });
     </script>
 </body>
