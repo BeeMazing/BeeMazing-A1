@@ -1015,6 +1015,16 @@ async function finishTask(userName, task, button, selectedDate) {
     task.date = selectedDate;
     await saveTaskToBackend(task);
 
+// Refresh and reopen task modal with updated info
+document.querySelectorAll(".task-modal").forEach(m => m.remove());
+    // Reload task modal with updated data
+const allTasks = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(localStorage.getItem("currentAdminEmail"))}`).then(r => r.json());
+const updatedTask = allTasks.tasks.find(t => t.title === task.title && t.date === task.date);
+if (updatedTask) {
+    showTaskDetails(updatedTask);
+}
+
+
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (adminEmail && rewardAmount > 0) {
         await fetch("https://beemazing.onrender.com/api/rewards", {
