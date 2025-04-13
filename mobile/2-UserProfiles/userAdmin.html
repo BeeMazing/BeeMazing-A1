@@ -334,24 +334,13 @@
       if (repeat === "Monthly") totalRequired = task.timesPerMonth || 1;
 
       const daysSinceStart = Math.floor((selected - start) / (1000 * 60 * 60 * 24));
-let rotation = [];
-const alreadyCompleted = completions.slice(); // clone to not modify original
+      let rotation = [];
 
-// Build rotation skipping already completed users
-for (let i = 0, u = 0; rotation.length < totalRequired && u < 100; u++) {
-  const userIndex = (daysSinceStart + u) % users.length;
-  const nextUser = users[userIndex];
-  const alreadyDone = alreadyCompleted.includes(nextUser);
-
-  if (!alreadyDone || repeat === "Once") {
-    rotation.push(nextUser);
-    if (alreadyDone) {
-      alreadyCompleted.splice(alreadyCompleted.indexOf(nextUser), 1);
-    }
-  }
-}
-
-
+      // Build rotation starting from the current user
+      for (let i = 0; i < totalRequired; i++) {
+        const userIndex = (daysSinceStart + i) % users.length;
+        rotation.push(users[userIndex]);
+      }
 
       rotation.forEach((user, index) => {
         const completedCount = completions.filter(u => u === user).length;
@@ -359,18 +348,19 @@ for (let i = 0, u = 0; rotation.length < totalRequired && u < 100; u++) {
 
         const row = document.createElement("tr");
         row.innerHTML = `
-          <td>${task.title}</td>
-          <td>${user}</td>
-          <td class="${isCompleted ? 'status-completed' : 'status-pending'}">
-            ${isCompleted ? "Completed" : "Pending"}
-          </td>
-          <td>
-            ${isCompleted
-              ? `<button class="action-btn accept-btn" onclick="handleAction('${task.title}', '${user}', 'accept')">Accept</button>
-                 <button class="action-btn decline-btn" onclick="handleAction('${task.title}', '${user}', 'decline')">Decline</button>`
-              : "—"}
-          </td>
-        `;
+  <td>${task.title}</td>
+  <td>${user}</td>
+  <td class="${isCompleted ? 'status-completed' : 'status-pending'}">
+    ${isCompleted ? "Completed" : "Pending"}
+  </td>
+  <td>
+    ${isCompleted
+      ? `<button class="action-btn accept-btn" onclick="handleAction(\`${task.title}\`, \`${user}\`, 'accept', \`${task.date}\`)">Accept</button>
+         <button class="action-btn decline-btn" onclick="handleAction(\`${task.title}\`, \`${user}\`, 'decline', \`${task.date}\`)">Decline</button>`
+      : "—"}
+  </td>
+`;
+
         adminTasksBody.appendChild(row);
         hasAny = true;
 
@@ -397,45 +387,31 @@ for (let i = 0, u = 0; rotation.length < totalRequired && u < 100; u++) {
 
 
 
-
-
-async function handleAction(title, user, action) {
-  // 🔒 Confirm before declining
+function handleAction(title, user, action, dateRange) {
   if (action === 'decline' && !confirm(`Are you sure you want to decline "${title}" for ${user}?`)) return;
 
-  try {
-    const res = await fetch(`${SERVER_URL}/api/task-action`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        adminEmail,
-        taskTitle: title,
-        user,
-        action,
-        date: selectedDate
-      })
-    });
-
-    // ✅ NEW: Handle non-2xx responses properly
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.message || `Server error: ${res.status}`);
-    }
-
-    const data = await res.json();
+  fetch(`${SERVER_URL}/api/task-action`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      adminEmail,
+      taskTitle: title,
+      user,
+      action,
+      date: selectedDate,
+      dateRange // ✅ send full range
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
     if (!data.success) throw new Error(data.message);
-
-    // ✅ Refresh task list
     loadTasks();
-  } catch (err) {
+  })
+  .catch(err => {
     console.error("Action failed:", err);
     alert("Action failed: " + err.message);
-  }
+  });
 }
-
-
-
-
 
 
 

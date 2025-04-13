@@ -1015,7 +1015,17 @@ app.post("/api/task-action", async (req, res) => {
     }
 
     const tasks = admin.tasks || [];
-    const taskIndex = tasks.findIndex(t => t.title === taskTitle && t.date.includes(date.split("-").join("-")));
+    const taskIndex = tasks.findIndex(t => {
+      if (t.title !== taskTitle) return false;
+    
+      const [startStr, endStr] = t.date.split(" to ");
+      const taskStart = new Date(startStr);
+      const taskEnd = endStr ? new Date(endStr) : new Date("3000-01-01");
+      const selected = new Date(date);
+    
+      return selected >= taskStart && selected <= taskEnd;
+    });
+    
     if (taskIndex === -1) {
       return res.status(404).json({ error: "Task not found" });
     }
