@@ -546,7 +546,6 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-
 function getTurnForDate(task, selectedDateStr) {
     const todayStr = new Date().toISOString().split("T")[0];
     const selectedStr = new Date(selectedDateStr).toISOString().split("T")[0];
@@ -557,11 +556,12 @@ function getTurnForDate(task, selectedDateStr) {
     }
 
     if (selectedStr > todayStr) {
-        return getTurnForTomorrow(task);
+        return getTurnForFutureDate(task, selectedStr);
     }
 
     return getTurnForPastOrToday(task, selectedStr);
 }
+
 
 
 
@@ -634,6 +634,39 @@ function getTurnForTomorrow(task) {
     // Simulate perfect completions
     for (let i = 0; i < repeatLimit; i++) {
         currentIndex = (currentIndex + 1) % userOrder.length;
+    }
+
+    return userOrder[currentIndex];
+}
+
+
+
+
+
+
+function getTurnForFutureDate(task, futureStr) {
+    const formatDate = (d) => d.toISOString().split("T")[0];
+    const userOrder = [...task.users];
+    const completions = task.completions || {};
+    const turnByDate = task.turnByDate || {};
+
+    const today = new Date();
+    const futureDate = new Date(futureStr);
+    const startDate = new Date(today);
+
+    const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
+                        task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+                        task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+
+    let currentIndex = userOrder.indexOf(getTurnForYesterday(task));
+    if (currentIndex === -1) currentIndex = 0;
+
+    const d = new Date(startDate);
+    while (d <= futureDate) {
+        for (let i = 0; i < repeatLimit; i++) {
+            currentIndex = (currentIndex + 1) % userOrder.length;
+        }
+        d.setDate(d.getDate() + 1);
     }
 
     return userOrder[currentIndex];
