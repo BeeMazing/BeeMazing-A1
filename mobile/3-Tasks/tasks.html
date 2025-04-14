@@ -645,14 +645,10 @@ function getTurnForTomorrow(task) {
 
 
 
-
 function getTurnForFutureDate(task, futureStr) {
-    const todayStr = new Date().toISOString().split("T")[0];
-
-    if (futureStr === todayStr) {
-        // 🟡 If user selects TODAY (future became today), use real data
-        const yesterdayTurn = getTurnForYesterday(task);
-        return getTurnForPastOrToday(task, futureStr, yesterdayTurn);
+    // ✅ If a turn was explicitly set for this future date, use it directly
+    if (task.turnByDate?.[futureStr]) {
+        return task.turnByDate[futureStr];
     }
 
     const formatDate = (d) => d.toISOString().split("T")[0];
@@ -667,17 +663,25 @@ function getTurnForFutureDate(task, futureStr) {
     const today = new Date();
     const target = new Date(futureStr);
     const d = new Date(today);
-    d.setDate(d.getDate() + 1); // start simulating from tomorrow
+    d.setDate(d.getDate() + 1); // Start from tomorrow
 
     while (d <= target) {
-        for (let i = 0; i < repeatLimit; i++) {
-            currentIndex = (currentIndex + 1) % userOrder.length;
+        const dStr = formatDate(d);
+
+        if (task.turnByDate?.[dStr]) {
+            currentIndex = userOrder.indexOf(task.turnByDate[dStr]);
+        } else {
+            for (let i = 0; i < repeatLimit; i++) {
+                currentIndex = (currentIndex + 1) % userOrder.length;
+            }
         }
+
         d.setDate(d.getDate() + 1);
     }
 
     return userOrder[currentIndex];
 }
+
 
 
 
