@@ -3,192 +3,109 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>BeeMazing Admin - User Tasks</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <title>Admin Task Review</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --primary-color: #FFC107;
-      --secondary-color: #212121;
-      --accent-color: #FFFFFF;
-      --light-bg: #1E1F26;
-      --text-color: #FFFFFF;
-      --danger-color: #D32F2F;
-      --modal-bg: rgba(33, 33, 33, 0.7);
-      --header-height: 68px;
-      --footer-height: 70px;
-      --border-dark: #444754;
-      --card-bg: #2A2B32;
-    }
     body {
       font-family: 'Poppins', sans-serif;
-      background-color: var(--light-bg);
-      color: var(--text-color);
-      height: 100vh;
-      overflow: hidden;
+      background-color: #1E1F26;
+      color: #FFFFFF;
+      margin: 0;
+      padding: 0;
     }
-
-    html, body {
-  overflow-x: hidden;
-  width: 100%;
-}
-
-.day-scroll-wrapper {
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  padding: 6px 10px;
-}
-
-.day-scroll {
-  display: flex;
-  overflow-x: auto;
-  gap: 8px;
-  padding: 5px;
-  scroll-behavior: smooth;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.day-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-    .header {
-      background: linear-gradient(135deg, var(--primary-color), #FFB300);
-      height: var(--header-height);
-      position: fixed;
-      width: 100%;
-      top: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-    .title { font-size: 24px; font-weight: 600; color: var(--secondary-color); }
     .date-header {
-      position: fixed;
-      top: var(--header-height);
-      width: 100%;
-      background: var(--secondary-color);
-      z-index: 90;
+      background: #212121;
+      padding: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
     }
     .month-nav {
       display: flex;
       justify-content: center;
       align-items: center;
       font-size: 18px;
-      padding: 5px;
-      color: var(--accent-color);
+      font-weight: bold;
     }
     .month-nav button {
-      background: var(--secondary-color);
-      color: var(--accent-color);
+      margin: 0 10px;
+      background: #FFC107;
+      color: #212121;
       border: none;
-      font-size: 18px;
-      padding: 4px 10px;
-      border-radius: 8px;
+      padding: 5px 10px;
+      border-radius: 6px;
       cursor: pointer;
     }
     .day-scroll-wrapper {
       display: flex;
       align-items: center;
+      padding: 5px 0;
       overflow: hidden;
-      padding: 6px 10px;
+    }
+    .scroll-btn {
+      background: #212121;
+      color: #fff;
+      border: none;
+      font-size: 20px;
+      padding: 5px 10px;
+      cursor: pointer;
     }
     .day-scroll {
       display: flex;
       overflow-x: auto;
       gap: 8px;
-      padding: 5px;
+      padding: 5px 10px;
     }
     .day {
       min-width: 38px;
       height: 38px;
       line-height: 38px;
-      border-radius: 50%;
-      background: var(--secondary-color);
-      color: var(--accent-color);
       text-align: center;
+      border-radius: 50%;
+      background: #333;
+      color: #fff;
       font-weight: bold;
       cursor: pointer;
     }
     .day.selected {
-      background: var(--primary-color);
-      color: var(--secondary-color);
+      background: #FFC107;
+      color: #212121;
     }
-    .scroll-btn {
-      background: var(--secondary-color);
-      color: var(--accent-color);
-      border: none;
-      font-size: 20px;
-      border-radius: 10px;
-      padding: 5px 10px;
-      cursor: pointer;
-    }
-    .tasks-table {
-      position: absolute;
-      top: calc(var(--header-height) + 100px);
-      bottom: var(--footer-height);
-      width: 100%;
-      overflow-y: auto;
-      padding: 20px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: var(--card-bg);
+    .task-entry {
+      background: #2A2B32;
+      border: 2px solid #444754;
       border-radius: 12px;
+      padding: 16px;
+      margin: 15px;
     }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--border-dark);
+    .task-entry p {
+      margin: 5px 0;
     }
-    th { background: var(--secondary-color); color: var(--primary-color); }
-    td { background: var(--card-bg); }
-    .status-completed { color: #4CAF50; font-weight: bold; }
-    .status-pending { color: #FFB300; font-weight: bold; }
-    .action-btn {
-      padding: 6px 12px;
-      font-size: 14px;
+    .accept-btn, .decline-btn {
+      margin-top: 10px;
+      padding: 8px 14px;
       font-weight: bold;
+      border-radius: 6px;
       border: none;
-      border-radius: 8px;
       cursor: pointer;
-      margin-right: 6px;
     }
-    .accept-btn { background-color: #4CAF50; color: white; }
-    .decline-btn { background-color: var(--danger-color); color: white; }
-    .footer {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      height: var(--footer-height);
-      background: var(--secondary-color);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-    }
-    .footer a {
-      text-decoration: none;
+    .accept-btn {
+      background-color: #4CAF50;
       color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      margin-right: 10px;
     }
-    .footer a img { width: 40px; height: 40px; filter: invert(100%); }
-    .footer a span { font-size: 12px; font-weight: bold; }
+    .decline-btn {
+      background-color: #D32F2F;
+      color: white;
+    }
   </style>
 </head>
 <body>
-  <div class="header"><h1 class="title">Admin - User Tasks</h1></div>
 
   <div class="date-header">
     <div class="month-nav">
       <button id="prevMonth">&lt;</button>
-      <span id="monthLabel">Loading...</span>
+      <span id="monthLabel">Month</span>
       <button id="nextMonth">&gt;</button>
     </div>
     <div class="day-scroll-wrapper">
@@ -198,296 +115,126 @@
     </div>
   </div>
 
-  <div class="tasks-table">
-    <table>
-      <thead>
-        <tr>
-          <th>Task Title</th>
-          <th>Assigned To</th>
-          <th>Status</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="adminTasksBody"></tbody>
-    </table>
-  </div>
-
-  <div class="footer">
-    <a href="/BeeMazing-Y1/mobile/1-Home/home.html">
-      <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" /><span>Home</span>
-    </a>
-    <a href="#"><img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" /><span>Profile</span></a>
-    <a href="#"><img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" /><span>Market</span></a>
-    <a href="#"><img src="/BeeMazing-Y1/mobile/1-Home/RewardsBtn.png" alt="Rewards" /><span>Rewards</span></a>
-  </div>
+  <div id="taskContainer">Loading tasks...</div>
 
   <script>
-
-
-
-
-    const SERVER_URL = "https://beemazing.onrender.com";
     const adminEmail = localStorage.getItem("currentAdminEmail");
-    let viewDate = new Date();
     let selectedDate = new Date().toISOString().split("T")[0];
+    let currentMonth = new Date();
 
-    const monthLabel = document.getElementById("monthLabel");
-    const dayScrollContainer = document.getElementById("dayScrollContainer");
-    const adminTasksBody = document.getElementById("adminTasksBody");
-
-    function updateMonthHeader(date) {
-      monthLabel.textContent = date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    function updateMonthLabel(date) {
+      const label = document.getElementById("monthLabel");
+      const options = { month: 'long', year: 'numeric' };
+      label.textContent = date.toLocaleDateString("en-US", options);
     }
 
-    function generateDayButtons(date) {
-  dayScrollContainer.innerHTML = "";
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
+    function generateDayPicker(baseDate = new Date()) {
+      const container = document.getElementById("dayScrollContainer");
+      container.innerHTML = "";
+      const daysInMonth = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0).getDate();
+      updateMonthLabel(baseDate);
 
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dayDate = new Date(year, month, d);
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-
-    const dayBtn = document.createElement("div");
-    dayBtn.className = "day";
-    dayBtn.textContent = d;
-    if (dateStr === selectedDate) dayBtn.classList.add("selected");
-
-    dayBtn.onclick = () => {
-      selectedDate = dateStr;
-      document.querySelectorAll(".day").forEach(btn => btn.classList.remove("selected"));
-      dayBtn.classList.add("selected");
-      loadTasks();
-      scrollDayIntoView(dayBtn);
-    };
-
-    dayScrollContainer.appendChild(dayBtn);
-  }
-
-  // ✅ Move this HERE, after buttons exist
-  const selected = document.querySelector(".day.selected");
-  if (selected) scrollDayIntoView(selected);
-}
-
-
-
-    function scrollDayIntoView(dayElement) {
-  setTimeout(() => {
-    if (dayElement && typeof dayElement.scrollIntoView === "function") {
-      dayElement.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      for (let d = 1; d <= daysInMonth; d++) {
+        const day = String(d).padStart(2, '0');
+        const dateStr = `${baseDate.getFullYear()}-${String(baseDate.getMonth() + 1).padStart(2, '0')}-${day}`;
+        const div = document.createElement("div");
+        div.className = "day";
+        if (dateStr === selectedDate) div.classList.add("selected");
+        div.textContent = day;
+        div.dataset.date = dateStr;
+        div.onclick = () => {
+          selectedDate = dateStr;
+          document.querySelectorAll(".day").forEach(el => el.classList.remove("selected"));
+          div.classList.add("selected");
+          loadTasks();
+        };
+        container.appendChild(div);
+      }
     }
-  }, 100); // Let layout settle
-}
-
 
     document.getElementById("prevMonth").onclick = () => {
-      viewDate.setMonth(viewDate.getMonth() - 1);
-      updateMonthHeader(viewDate);
-      generateDayButtons(viewDate);
+      currentMonth.setMonth(currentMonth.getMonth() - 1);
+      generateDayPicker(currentMonth);
     };
-
     document.getElementById("nextMonth").onclick = () => {
-      viewDate.setMonth(viewDate.getMonth() + 1);
-      updateMonthHeader(viewDate);
-      generateDayButtons(viewDate);
+      currentMonth.setMonth(currentMonth.getMonth() + 1);
+      generateDayPicker(currentMonth);
     };
-
     document.getElementById("scrollLeft").onclick = () => {
-      dayScrollContainer.scrollBy({ left: -100, behavior: "smooth" });
+      document.getElementById("dayScrollContainer").scrollBy({ left: -100, behavior: "smooth" });
     };
     document.getElementById("scrollRight").onclick = () => {
-      dayScrollContainer.scrollBy({ left: 100, behavior: "smooth" });
+      document.getElementById("dayScrollContainer").scrollBy({ left: 100, behavior: "smooth" });
     };
 
-
-
-
-
-
-
-
-    function getTurnByDate(task, targetDateStr) {
-  const completions = task.completions || {};
-  const userOrder = [...task.users];
-  const repeat = task.repeat || "Daily";
-  const repeatLimit = repeat === "Daily" ? (task.timesPerDay || 1)
-                    : repeat === "Weekly" ? (task.timesPerWeek || 1)
-                    : repeat === "Monthly" ? (task.timesPerMonth || 1)
-                    : 1;
-
-  const parseDate = (str) => new Date(str + "T00:00:00");
-  const formatDate = (date) => date.toISOString().split("T")[0];
-
-  const [fromStr] = task.date.split(" to ");
-  const startDate = parseDate(fromStr);
-  const targetDate = parseDate(targetDateStr);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  let currentUserIndex = 0;
-
-  for (let d = new Date(startDate); d <= targetDate; d.setDate(d.getDate() + 1)) {
-    const dateStr = formatDate(d);
-    const currentUser = userOrder[currentUserIndex];
-    const completedToday = Array.isArray(completions[dateStr]) ? completions[dateStr] : [];
-    const completedCount = completedToday.filter(u => u === currentUser).length;
-
-    const isPastOrToday = d <= today;
-
-    if (isPastOrToday) {
-      if (completedCount >= repeatLimit) {
-        currentUserIndex = (currentUserIndex + 1) % userOrder.length;
-      }
-    } else {
-      currentUserIndex = (currentUserIndex + 1) % userOrder.length;
-    }
-
-    if (dateStr === targetDateStr) {
-      return userOrder[currentUserIndex];
-    }
-  }
-
-  return userOrder[currentUserIndex];
-}
-
-
-
-
-
-
-
-
-
-
-
-
     async function loadTasks() {
-  if (!adminEmail || !selectedDate) return;
+      const res = await fetch(`/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+      const { tasks } = await res.json();
+      const container = document.getElementById("taskContainer");
+      container.innerHTML = "";
 
-  adminTasksBody.innerHTML = "";
-  let hasAny = false;
+      tasks.forEach(task => {
+        const completions = task.completions?.[selectedDate] || [];
+        const userOrder = task.users || [];
+        const repeat = task.repeat || "Daily";
+        let requiredTimes = 1;
+        if (repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+        if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+        if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-  try {
-    const res = await fetch(`${SERVER_URL}/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-    const data = await res.json();
-    const tasks = data.tasks || [];
-
-    tasks.forEach(task => {
-      const dateRange = task.date?.split(" to ") || [];
-      const start = new Date(dateRange[0]);
-      const end = dateRange[1] ? new Date(dateRange[1]) : new Date("3000-01-01");
-      const selected = new Date(selectedDate);
-      if (selected < start || selected > end) return;
-
-      const completions = Array.isArray(task.completions?.[selectedDate]) ? [...task.completions[selectedDate]] : [];
-      const repeat = task.repeat || "Once";
-
-      let totalRequired = 1;
-      if (repeat === "Daily") totalRequired = task.timesPerDay || 1;
-      if (repeat === "Weekly") totalRequired = task.timesPerWeek || 1;
-      if (repeat === "Monthly") totalRequired = task.timesPerMonth || 1;
-
-      const userOrder = [...task.users];
-      const originalTurn = getTurnByDate(task, selectedDate);
-
-      // Handle delegation
-      const delegatedTurn = task.tempTurnReplacement?.original === originalTurn
-        ? task.tempTurnReplacement.replacement
-        : originalTurn;
-
-      // Build rotation from delegatedTurn forward
-      const rotation = [];
-      let currentIndex = userOrder.indexOf(originalTurn);
-
-      for (let i = 0; i < totalRequired; i++) {
-        let user = userOrder[(currentIndex + i) % userOrder.length];
-        if (task.tempTurnReplacement?.original === user) {
-          user = task.tempTurnReplacement.replacement;
+        const fullTurn = [];
+        for (let i = 0; i < requiredTimes; i++) {
+          fullTurn.push(userOrder[i % userOrder.length]);
         }
-        rotation.push(user);
-      }
 
-      // Build table rows
-      rotation.forEach(user => {
-        const completedCount = completions.filter(u => u === user).length;
-        const isCompleted = completedCount > 0;
-
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${task.title}</td>
-          <td>${user}</td>
-          <td class="${isCompleted ? 'status-completed' : 'status-pending'}">
-            ${isCompleted ? "Completed" : "Pending"}
-          </td>
-          <td>
-            ${isCompleted
-              ? `<button class="action-btn accept-btn" onclick="handleAction(\`${task.title}\`, \`${user}\`, 'accept', \`${task.date}\`)">Accept</button>
-                 <button class="action-btn decline-btn" onclick="handleAction(\`${task.title}\`, \`${user}\`, 'decline', \`${task.date}\`)">Decline</button>`
-              : "—"}
-          </td>
-        `;
-
-        adminTasksBody.appendChild(row);
-        hasAny = true;
+        fullTurn.forEach((user, index) => {
+          const isCompleted = completions[index] === user;
+          const isWaiting = completions.length > index && completions[index] === user;
+          const div = document.createElement("div");
+          div.className = "task-entry";
+          div.innerHTML = `
+            <p><strong>${task.title}</strong> - ${user}</p>
+            <p>Status: ${isWaiting ? 'Accept/Decline' : 'Pending'}</p>
+            ${isWaiting ? `
+              <button class="accept-btn" onclick="acceptTask('${task.title}', '${task.date}', ${index})">Accept</button>
+              <button class="decline-btn" onclick="declineTask('${task.title}', '${task.date}', ${index}, '${user}')">Decline</button>
+            ` : ''}
+          `;
+          container.appendChild(div);
+        });
       });
-    });
-
-    if (!hasAny) {
-      const row = document.createElement("tr");
-      row.innerHTML = `<td colspan="4" style="text-align:center;">No tasks for this day.</td>`;
-      adminTasksBody.appendChild(row);
     }
-  } catch (err) {
-    console.error("Failed to load tasks:", err);
-    const row = document.createElement("tr");
-    row.innerHTML = `<td colspan="4" style="text-align:center;">Failed to load tasks.</td>`;
-    adminTasksBody.appendChild(row);
-  }
-}
 
+    async function acceptTask(title, date, index) {
+      const res = await fetch(`/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+      const { tasks } = await res.json();
+      const task = tasks.find(t => t.title === title && t.date === date);
+      if (!task) return;
 
+      // Do nothing; acceptance means keeping current completion
+      loadTasks();
+    }
 
+    async function declineTask(title, date, index, user) {
+      const res = await fetch(`/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+      const { tasks } = await res.json();
+      const task = tasks.find(t => t.title === title && t.date === date);
+      if (!task) return;
 
+      const completions = task.completions?.[selectedDate] || [];
+      completions.splice(index, 1); // remove declined completion
+      task.completions[selectedDate] = completions;
 
+      await fetch("/update-task", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail, task })
+      });
 
+      loadTasks();
+    }
 
-
-
-
-function handleAction(title, user, action, dateRange) {
-  if (action === 'decline' && !confirm(`Are you sure you want to decline "${title}" for ${user}?`)) return;
-
-  fetch(`${SERVER_URL}/api/task-action`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      adminEmail,
-      taskTitle: title,
-      user,
-      action,
-      date: selectedDate,
-      dateRange // ✅ send full range
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (!data.success) throw new Error(data.message);
-    loadTasks();
-  })
-  .catch(err => {
-    console.error("Action failed:", err);
-    alert("Action failed: " + err.message);
-  });
-}
-
-
-
-
-
-
-    updateMonthHeader(viewDate);
-    generateDayButtons(viewDate);
+    generateDayPicker(new Date());
     loadTasks();
   </script>
 </body>
