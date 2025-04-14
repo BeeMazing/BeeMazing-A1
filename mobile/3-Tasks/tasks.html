@@ -713,6 +713,39 @@ function getTurnForFutureDate(task, futureStr, startingTurn = null) {
 
 
 
+function getSimulatedTurnForFutureDate(task, futureStr) {
+    const formatDate = (d) => d.toISOString().split("T")[0];
+    const futureDate = new Date(futureStr);
+    const today = new Date();
+    const todayStr = formatDate(today);
+
+    const userOrder = [...task.users];
+    const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
+                        task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+                        task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+
+    // Use today's real current turn as baseline
+    const todayTurn = getTurnForPastOrToday(task, todayStr);
+    let currentIndex = userOrder.indexOf(todayTurn);
+    if (currentIndex === -1) currentIndex = 0;
+
+    // Simulate day-by-day perfect completions (starting from tomorrow)
+    const d = new Date(today);
+    d.setDate(d.getDate() + 1);
+
+    while (formatDate(d) <= futureStr) {
+        for (let i = 0; i < repeatLimit; i++) {
+            currentIndex = (currentIndex + 1) % userOrder.length;
+        }
+        d.setDate(d.getDate() + 1);
+    }
+
+    return userOrder[currentIndex];
+}
+
+
+
+
 
 
 
@@ -731,6 +764,9 @@ async function loadTasksForDate(selectedDate) {
         const [year, month, day] = dateStr.split("-").map(Number);
         return new Date(year, month - 1, day);
     }
+
+    const formatDate = (d) => d.toISOString().split("T")[0];
+    const todayStr = formatDate(new Date());
 
     const visibleTasks = tasks.filter(task => {
         if (!task.date) return false;
@@ -758,10 +794,16 @@ async function loadTasksForDate(selectedDate) {
         if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
         const userOrder = [...task.users];
-        const currentTurn = getTurnForDate(task, selectedDate);
-        const currentIndex = userOrder.indexOf(currentTurn);
-const nextUser = userOrder[(currentIndex + 1) % userOrder.length];
 
+        let currentTurn;
+        if (selectedDate > todayStr) {
+            currentTurn = getSimulatedTurnForFutureDate(task, selectedDate);
+        } else {
+            currentTurn = getTurnForDate(task, selectedDate);
+        }
+
+        const currentIndex = userOrder.indexOf(currentTurn);
+        const nextUser = userOrder[(currentIndex + 1) % userOrder.length];
 
         const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
         const completedCount = completedUsers.length;
@@ -795,6 +837,12 @@ const nextUser = userOrder[(currentIndex + 1) % userOrder.length];
         taskList.appendChild(taskDiv);
     });
 }
+
+
+
+
+
+
 
 
 
