@@ -642,17 +642,17 @@ function getTurnForTomorrow(task) {
 
 
 
-
 function getTurnForFutureDate(task, futureStr) {
+    const todayStr = new Date().toISOString().split("T")[0];
+
+    if (futureStr === todayStr) {
+        // 🟡 If user selects TODAY (future became today), use real data
+        const yesterdayTurn = getTurnForYesterday(task);
+        return getTurnForPastOrToday(task, futureStr, yesterdayTurn);
+    }
+
     const formatDate = (d) => d.toISOString().split("T")[0];
     const userOrder = [...task.users];
-    const completions = task.completions || {};
-    const turnByDate = task.turnByDate || {};
-
-    const today = new Date();
-    const futureDate = new Date(futureStr);
-    const startDate = new Date(today);
-
     const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
                         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
@@ -660,8 +660,12 @@ function getTurnForFutureDate(task, futureStr) {
     let currentIndex = userOrder.indexOf(getTurnForYesterday(task));
     if (currentIndex === -1) currentIndex = 0;
 
-    const d = new Date(startDate);
-    while (d <= futureDate) {
+    const today = new Date();
+    const target = new Date(futureStr);
+    const d = new Date(today);
+    d.setDate(d.getDate() + 1); // start simulating from tomorrow
+
+    while (d <= target) {
         for (let i = 0; i < repeatLimit; i++) {
             currentIndex = (currentIndex + 1) % userOrder.length;
         }
@@ -1322,10 +1326,7 @@ document.getElementById("nextMonth").addEventListener("click", () => {
     generateScrollableDates(monthOffset);
 });
 
-handleDailyTurnReset().then(() => {
-    generateScrollableDates();
-});
-
+generateScrollableDates();
 
 document.getElementById("scrollLeft").addEventListener("click", () => {
     document.getElementById("dayScrollContainer").scrollBy({
@@ -1340,37 +1341,6 @@ document.getElementById("scrollRight").addEventListener("click", () => {
         behavior: "smooth"
     });
 });
-
-
-
-
-async function handleDailyTurnReset() {
-    const todayStr = new Date().toISOString().split("T")[0];
-    const lastDate = localStorage.getItem("lastActiveDate");
-
-    if (todayStr === lastDate) return; // nothing to do
-
-    const adminEmail = localStorage.getItem("currentAdminEmail");
-    if (!adminEmail) return;
-
-    const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-    const result = await response.json();
-    const tasks = result.tasks || [];
-
-    for (const task of tasks) {
-        const yesterdayTurn = getTurnForYesterday(task);
-        const today = todayStr;
-
-        // Only set turn for today if not manually set already
-        if (!task.turnByDate) task.turnByDate = {};
-        if (!task.turnByDate[today]) {
-            task.turnByDate[today] = yesterdayTurn;
-            await saveTaskToBackend(task);
-        }
-    }
-
-    localStorage.setItem("lastActiveDate", todayStr);
-}
 
     </script>
 </body>
