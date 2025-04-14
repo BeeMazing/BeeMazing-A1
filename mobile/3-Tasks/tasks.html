@@ -556,11 +556,12 @@ function getTurnForDate(task, selectedDateStr) {
     }
 
     if (selectedStr > todayStr) {
-        return getTurnForFutureDate(task, selectedStr);
+        return getTurnForTomorrow(task);
     }
 
     return getTurnForPastOrToday(task, selectedStr);
 }
+
 
 
 
@@ -607,6 +608,7 @@ function getTurnForPastOrToday(task, selectedStr, initialTurn = null) {
 
 
 
+
 function getTurnForYesterday(task) {
     const formatDate = (d) => d.toISOString().split("T")[0];
     const yesterday = new Date();
@@ -615,6 +617,7 @@ function getTurnForYesterday(task) {
 
     return getTurnForPastOrToday(task, yesterdayStr);
 }
+
 
 
 
