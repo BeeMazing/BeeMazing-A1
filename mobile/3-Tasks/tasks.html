@@ -553,29 +553,28 @@ function getTurnForDate(task, selectedDateStr) {
     const userOrder = [...task.users];
     const selectedDate = new Date(selectedDateStr);
     const startDate = new Date(task.date.split(" to ")[0]);
+    const formatDate = d => d.toISOString().split("T")[0];
+    const todayStr = formatDate(new Date());
 
     let repeatLimit = 1;
     if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
     else if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
     else if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
-    const formatDate = d => d.toISOString().split("T")[0];
-    const todayStr = formatDate(new Date());
-
-    // ✅ Priority: If a turn override was set for today, use it directly
-    if (task.turnByDate?.[selectedDateStr]) {
-        return task.turnByDate[selectedDateStr];
+    // ✅ If it's today and task.turnByDate exists, return it
+    if (selectedDateStr === todayStr && task.turnByDate?.[todayStr]) {
+        return task.turnByDate[todayStr];
     }
 
-    // ✅ Fallback: simulate rotation history from start
-    let currentTurn = task.turn || task.users[0];
+    // 🧠 Otherwise simulate history to find current turn
+    let currentTurn = task.turn || userOrder[0];
     let currentIndex = userOrder.indexOf(currentTurn);
     if (currentIndex === -1) currentIndex = 0;
 
     const completions = task.completions || {};
     let d = new Date(startDate);
 
-    while (d <= selectedDate) {
+    while (formatDate(d) < selectedDateStr) {
         const dateStr = formatDate(d);
         const completedUsers = Array.isArray(completions[dateStr]) ? completions[dateStr] : [];
 
@@ -588,6 +587,7 @@ function getTurnForDate(task, selectedDateStr) {
 
     return userOrder[currentIndex];
 }
+
 
 
 
