@@ -545,10 +545,14 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-
 function getTurnForDate(task, selectedDateStr) {
     const todayStr = new Date().toISOString().split("T")[0];
     const selectedStr = new Date(selectedDateStr).toISOString().split("T")[0];
+
+    // ✅ First priority: use explicitly saved turn for the day
+    if (task.turnByDate?.[selectedStr]) {
+        return task.turnByDate[selectedStr];
+    }
 
     if (selectedStr === todayStr) {
         const yesterdayTurn = getTurnForYesterday(task);
