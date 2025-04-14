@@ -545,6 +545,10 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
+
+
+
+
 function getTurnForDate(task, selectedDateStr) {
     const userOrder = [...task.users];
     const selectedDate = new Date(selectedDateStr);
@@ -555,24 +559,27 @@ function getTurnForDate(task, selectedDateStr) {
     else if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
     else if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
-    // Helper to format date as YYYY-MM-DD
     const formatDate = d => d.toISOString().split("T")[0];
+    const todayStr = formatDate(new Date());
 
-    let currentTurn = task.users[0]; // fallback
-    if (task.turn) currentTurn = task.turn;
+    // ✅ Priority: If a turn override was set for today, use it directly
+    if (task.turnByDate?.[selectedDateStr]) {
+        return task.turnByDate[selectedDateStr];
+    }
 
+    // ✅ Fallback: simulate rotation history from start
+    let currentTurn = task.turn || task.users[0];
     let currentIndex = userOrder.indexOf(currentTurn);
     if (currentIndex === -1) currentIndex = 0;
 
     const completions = task.completions || {};
-
     let d = new Date(startDate);
+
     while (d <= selectedDate) {
         const dateStr = formatDate(d);
         const completedUsers = Array.isArray(completions[dateStr]) ? completions[dateStr] : [];
 
         if (completedUsers.length >= repeatLimit) {
-            // Rotate turn forward
             currentIndex = (currentIndex + 1) % userOrder.length;
         }
 
@@ -581,6 +588,7 @@ function getTurnForDate(task, selectedDateStr) {
 
     return userOrder[currentIndex];
 }
+
 
 
 
