@@ -126,126 +126,152 @@
 
   <div id="taskContainer">Loading tasks...</div>
 
-  <script>
-    const adminEmail = localStorage.getItem("currentAdminEmail");
-    let selectedDate = new Date().toISOString().split("T")[0];
-    let currentMonth = new Date();
 
-    function updateMonthLabel(date) {
-      const label = document.getElementById("monthLabel");
-      const options = { month: 'long', year: 'numeric' };
-      label.textContent = date.toLocaleDateString("en-US", options);
-    }
 
-    function generateDayPicker(baseDate = new Date()) {
-      const container = document.getElementById("dayScrollContainer");
-      container.innerHTML = "";
-      const daysInMonth = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0).getDate();
-      updateMonthLabel(baseDate);
 
-      for (let d = 1; d <= daysInMonth; d++) {
-        const day = String(d).padStart(2, '0');
-        const dateStr = `${baseDate.getFullYear()}-${String(baseDate.getMonth() + 1).padStart(2, '0')}-${day}`;
-        const div = document.createElement("div");
-        div.className = "day";
-        if (dateStr === selectedDate) div.classList.add("selected");
-        div.textContent = day;
-        div.dataset.date = dateStr;
-        div.onclick = () => {
-          selectedDate = dateStr;
-          document.querySelectorAll(".day").forEach(el => el.classList.remove("selected"));
-          div.classList.add("selected");
+
+
+
+    <script>
+        const adminEmail = localStorage.getItem("currentAdminEmail");
+        let selectedDate = new Date().toISOString().split("T")[0];
+      
+        async function handleDecision(title, date, index, decision) {
+          const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+          const { tasks } = await res.json();
+          const task = tasks.find(t => t.title === title && t.date === date);
+          if (!task) return;
+      
+          const completions = task.completions?.[selectedDate] || [];
+      
+          if (decision === "decline") {
+            completions.splice(index, 1);
+            task.completions[selectedDate] = completions;
+      
+            await fetch("https://beemazing.onrender.com/update-task", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ adminEmail, task }),
+            });
+          }
+      
           loadTasks();
-        };
-        container.appendChild(div);
-      }
-    }
-
-    document.getElementById("prevMonth").onclick = () => {
-      currentMonth.setMonth(currentMonth.getMonth() - 1);
-      generateDayPicker(currentMonth);
-    };
-    document.getElementById("nextMonth").onclick = () => {
-      currentMonth.setMonth(currentMonth.getMonth() + 1);
-      generateDayPicker(currentMonth);
-    };
-    document.getElementById("scrollLeft").onclick = () => {
-      document.getElementById("dayScrollContainer").scrollBy({ left: -100, behavior: "smooth" });
-    };
-    document.getElementById("scrollRight").onclick = () => {
-      document.getElementById("dayScrollContainer").scrollBy({ left: 100, behavior: "smooth" });
-    };
-
-    async function loadTasks() {
-        const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-
-      const { tasks } = await res.json();
-      const container = document.getElementById("taskContainer");
-      container.innerHTML = "";
-
-      tasks.forEach(task => {
-        const completions = task.completions?.[selectedDate] || [];
-        const userOrder = task.users || [];
-        const repeat = task.repeat || "Daily";
-        let requiredTimes = 1;
-        if (repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-        if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-        if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-
-        const fullTurn = [];
-        for (let i = 0; i < requiredTimes; i++) {
-          fullTurn.push(userOrder[i % userOrder.length]);
         }
-
-        fullTurn.forEach((user, index) => {
-          const isCompleted = completions[index] === user;
-          const isWaiting = completions.length > index && completions[index] === user;
-          const div = document.createElement("div");
-          div.className = "task-entry";
-          div.innerHTML = `
-            <p><strong>${task.title}</strong> - ${user}</p>
-            <p>Status: ${isWaiting ? 'Accept/Decline' : 'Pending'}</p>
-            ${isWaiting ? `
-              <button class="accept-btn" onclick="acceptTask('${task.title}', '${task.date}', ${index})">Accept</button>
-              <button class="decline-btn" onclick="declineTask('${task.title}', '${task.date}', ${index}, '${user}')">Decline</button>
-            ` : ''}
-          `;
-          container.appendChild(div);
+      
+        async function loadTasks() {
+          const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+          const { tasks } = await res.json();
+          const container = document.getElementById("taskContainer");
+          container.innerHTML = "";
+      
+          tasks.forEach(task => {
+            const completions = task.completions?.[selectedDate] || [];
+            const userOrder = task.users || [];
+            const repeat = task.repeat || "Daily";
+            let requiredTimes = task.timesPerDay || 1;
+            if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+            if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+      
+            const fullTurn = [];
+            for (let i = 0; i < requiredTimes; i++) {
+              fullTurn.push(userOrder[i % userOrder.length]);
+            }
+      
+            fullTurn.forEach((user, index) => {
+              const isWaiting = completions.length > index && completions[index] === user;
+              const div = document.createElement("div");
+              div.className = "task-entry";
+              div.innerHTML = `
+                <p><strong>${task.title}</strong> - ${user}</p>
+                <p>Status: ${isWaiting ? 'Accept/Decline' : 'Pending'}</p>
+                ${isWaiting ? `
+                  <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'accept')">Accept</button>
+                  <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'decline')">Decline</button>
+                ` : ''}
+              `;
+              container.appendChild(div);
+            });
+          });
+        }
+      
+        function generateScrollableDates(monthOffset = 0) {
+          const container = document.getElementById("dayScrollContainer");
+          container.innerHTML = "";
+      
+          const today = new Date();
+          today.setDate(1);
+          today.setMonth(today.getMonth() + monthOffset);
+      
+          const currentMonth = today.getMonth();
+          const currentYear = today.getFullYear();
+          const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      
+          document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
+            month: 'long',
+            year: 'numeric',
+          });
+      
+          for (let i = 1; i <= daysInMonth; i++) {
+            const date = new Date(currentYear, currentMonth, i);
+            const btn = document.createElement("div");
+            btn.className = "day";
+            btn.textContent = i;
+            btn.dataset.date = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      
+            btn.addEventListener("click", () => {
+              document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+              btn.classList.add("selected");
+              selectedDate = btn.dataset.date;
+              loadTasks();
+            });
+      
+            const todayStr = new Date().toISOString().split("T")[0];
+            if (btn.dataset.date === todayStr) {
+              btn.classList.add("selected");
+              selectedDate = btn.dataset.date;
+              loadTasks();
+            }
+      
+            container.appendChild(btn);
+          }
+      
+          setTimeout(() => {
+            const selected = document.querySelector(".day.selected");
+            if (selected) {
+              selected.scrollIntoView({ behavior: "smooth", inline: "center" });
+            }
+          }, 50);
+        }
+      
+        let monthOffset = 0;
+        document.getElementById("prevMonth").addEventListener("click", () => {
+          monthOffset--;
+          generateScrollableDates(monthOffset);
         });
-      });
-    }
+        document.getElementById("nextMonth").addEventListener("click", () => {
+          monthOffset++;
+          generateScrollableDates(monthOffset);
+        });
+        document.getElementById("scrollLeft").addEventListener("click", () => {
+          document.getElementById("dayScrollContainer").scrollBy({
+            left: -200,
+            behavior: "smooth",
+          });
+        });
+        document.getElementById("scrollRight").addEventListener("click", () => {
+          document.getElementById("dayScrollContainer").scrollBy({
+            left: 200,
+            behavior: "smooth",
+          });
+        });
+      
+        generateScrollableDates();
+      </script>
+      
 
-    async function acceptTask(title, date, index) {
-      const res = await fetch(`/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-      const { tasks } = await res.json();
-      const task = tasks.find(t => t.title === title && t.date === date);
-      if (!task) return;
 
-      // Do nothing; acceptance means keeping current completion
-      loadTasks();
-    }
 
-    async function declineTask(title, date, index, user) {
-      const res = await fetch(`/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-      const { tasks } = await res.json();
-      const task = tasks.find(t => t.title === title && t.date === date);
-      if (!task) return;
 
-      const completions = task.completions?.[selectedDate] || [];
-      completions.splice(index, 1); // remove declined completion
-      task.completions[selectedDate] = completions;
 
-      await fetch("https://beemazing.onrender.com/update-task", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ adminEmail, task })
-});
-
-      loadTasks();
-    }
-
-    generateDayPicker(new Date());
-    loadTasks();
-  </script>
 </body>
 </html>
