@@ -560,13 +560,14 @@ function getTurnForDate(task, selectedDateStr) {
     const startDate = new Date(task.date.split(" to ")[0]);
     const selectedDate = new Date(selectedDateStr);
 
+    const todayStr = formatDate(new Date());
+    const selectedStr = formatDate(selectedDate);
+
     let currentIndex = task.users.indexOf(task.turn || task.users[0]);
     if (currentIndex === -1) currentIndex = 0;
 
     const d = new Date(startDate);
-    let previousTurn = currentIndex;
-    let activeDayTurn = currentIndex;
-    let activeDayStr = null;
+    let activeDayTurnFinal = null;
 
     while (d <= selectedDate) {
         const dStr = formatDate(d);
@@ -576,32 +577,20 @@ function getTurnForDate(task, selectedDateStr) {
         } else {
             const completionsToday = Array.isArray(completions[dStr]) ? completions[dStr] : [];
 
-            if (dStr < selectedDateStr) {
-                // Simulate normal past day rotation
-                for (const user of completionsToday) {
-                    if (userOrder.includes(user)) {
-                        currentIndex = (currentIndex + 1) % userOrder.length;
-                    }
+            for (const user of completionsToday) {
+                if (userOrder.includes(user)) {
+                    currentIndex = (currentIndex + 1) % userOrder.length;
                 }
-                previousTurn = currentIndex;
-            } else if (dStr === selectedDateStr) {
-                // 🔥 Handle Active Day
-                const isToday = dStr === formatDate(new Date());
+            }
 
-                if (completionsToday.length === 0 && !isToday) {
-                    // No completions and not today (future): use Active Day final turn
-                    return userOrder[activeDayTurn];
-                }
+            // ✅ Save final turn of Active Day
+            if (dStr === todayStr) {
+                activeDayTurnFinal = currentIndex;
+            }
 
-                for (const user of completionsToday) {
-                    if (userOrder.includes(user)) {
-                        currentIndex = (currentIndex + 1) % userOrder.length;
-                    }
-                }
-
-                // Remember Active Day result
-                activeDayTurn = currentIndex;
-                activeDayStr = dStr;
+            // ✅ Freeze future (e.g. tomorrow) to Active Day outcome
+            if (dStr > todayStr) {
+                return userOrder[activeDayTurnFinal ?? currentIndex];
             }
         }
 
@@ -610,6 +599,7 @@ function getTurnForDate(task, selectedDateStr) {
 
     return userOrder[currentIndex];
 }
+
 
 
 
