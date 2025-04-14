@@ -547,14 +547,29 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 function getTurnForDate(task, selectedDateStr) {
     const formatDate = (d) => d.toISOString().split("T")[0];
-    const selectedStr = formatDate(new Date(selectedDateStr));
-    const todayStr = formatDate(new Date());
+    const userOrder = [...task.users];
+    const completions = task.completions || {};
+    const turnByDate = task.turnByDate || {};
 
-    if (selectedStr > todayStr) {
-        return getSimulatedTurnForFutureDate(task, selectedStr);
-    }
+    const startDate = new Date(task.date.split(" to ")[0]);
+    const selectedDate = new Date(selectedDateStr);
+    const selectedStr = formatDate(selectedDate);
 
-    return getTurnForPastOrToday(task, selectedStr);
+    if (!userOrder.length) return ""; // ⛔ Avoid crashing if no users
+
+    // Start with turn from the day before selectedDate
+    const dayBefore = new Date(selectedDate);
+    dayBefore.setDate(dayBefore.getDate() - 1);
+    const dayBeforeStr = formatDate(dayBefore);
+    let currentTurn = getTurnForPastOrToday(task, dayBeforeStr, task.turn || userOrder[0]);
+
+    const tempTask = {
+        ...task,
+        turn: currentTurn
+    };
+
+    // Use getTurnForPastOrToday to re-simulate the selected day using yesterday's result
+    return getTurnForPastOrToday(tempTask, selectedStr, currentTurn);
 }
 
 
@@ -752,14 +767,7 @@ async function loadTasksForDate(selectedDate) {
         if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
         const userOrder = [...task.users];
-
-        let currentTurn;
-        if (selectedDate > todayStr) {
-            currentTurn = getSimulatedTurnForFutureDate(task, selectedDate);
-        } else {
-            currentTurn = getTurnForDate(task, selectedDate);
-        }
-
+        const currentTurn = getTurnForDate(task, selectedDate);
         const currentIndex = userOrder.indexOf(currentTurn);
         const nextUser = userOrder[(currentIndex + 1) % userOrder.length];
 
@@ -795,7 +803,6 @@ async function loadTasksForDate(selectedDate) {
         taskList.appendChild(taskDiv);
     });
 }
-
 
 
 
