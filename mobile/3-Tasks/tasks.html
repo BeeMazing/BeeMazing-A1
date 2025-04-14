@@ -551,8 +551,6 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-
-
 async function loadTasksForDate(selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (!adminEmail) return;
@@ -627,25 +625,60 @@ async function loadTasksForDate(selectedDate) {
             }
             if (!currentTurn) currentTurn = userOrder[0]; // fallback
         } else {
-            const yesterdayTurnCompletedCount = yesterdayCompletions.filter(u => u === yesterdayTurn).length;
-            currentTurn = (yesterdayTurnCompletedCount < repeatLimit) ? yesterdayTurn : assumedTurn;
+            // Check if yesterday's turn was completed
+            const yesterdayCompletedCount = yesterdayCompletions.filter(u => u === yesterdayTurn).length;
+            // If yesterday's user didn't complete their task, they remain the current turn
+            currentTurn = (yesterdayCompletedCount < repeatLimit && yesterdayTurn) ? yesterdayTurn : assumedTurn;
         }
 
         const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
         const completedCount = completedUsers.length;
         const isCompleted = completedCount >= repeatLimit;
 
+        const nextIndex = (userOrder.indexOf(currentTurn) + 1) % userOrder.length;
+        const nextUser = userOrder[nextIndex];
+
         taskDiv.innerHTML = `
             <strong>${task.title}</strong><br>
             Turn: ${currentTurn}<br>
+            Next: ${nextUser}<br>
             Completed: ${completedCount}/${repeatLimit}<br>
             ${isCompleted ? `<span style="color: green; font-weight: bold;">Completed</span><br>` : ""}
             <button class="delete-btn">Delete</button>
         `;
 
-        // Swipe/delete logic remains unchanged...
-        // You already have this part fully implemented below
-        // So keep your existing swipe-to-delete logic as-is here
+        taskDiv.addEventListener("click", async (e) => {
+            if (!e.target.classList.contains("delete-btn")) {
+                const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+                const result = await response.json();
+                const latestTask = result.tasks.find(t => t.title === task.title && t.date === task.date);
+                if (latestTask) showTaskDetails(latestTask);
+            }
+        });
+
+        // Swipe-to-delete logic
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        taskDiv.addEventListener("touchstart", (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        taskDiv.addEventListener("touchend", (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            if (touchStartX - touchEndX > 50) {
+                taskDiv.classList.add("swiped-left");
+            } else if (touchEndX - touchStartX > 50) {
+                taskDiv.classList.remove("swiped-left");
+            }
+        });
+
+        taskDiv.querySelector(".delete-btn").addEventListener("click", async () => {
+            if (confirm("Are you sure you want to delete this task?")) {
+                await deleteTaskFromBackend(task.title, task.date);
+                loadTasksForDate(selectedDate);
+            }
+        });
 
         taskList.appendChild(taskDiv);
     });
