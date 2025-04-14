@@ -548,53 +548,54 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-
-// Replace this function:
 function getTurnForDate(task, selectedDateStr) {
     const userOrder = [...task.users];
     const selectedDate = new Date(selectedDateStr);
+    selectedDate.setHours(0, 0, 0, 0);
     
     let repeatLimit = 1;
     if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
     if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
     if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
-    const completions = task.completions || {};
-    const formatDate = (d) => d.toISOString().split("T")[0];
-    const startDate = new Date(task.date.split(" to ")[0]);
-    const todayStr = formatDate(new Date());
+    const taskStartDate = new Date(task.date.split(" to ")[0]);
+    taskStartDate.setHours(0, 0, 0, 0);
 
-    let currentIndex = task.users.indexOf(task.turn || task.users[0]);
-    if (currentIndex === -1) currentIndex = 0;
+    let currentTurn = userOrder[0]; // Start with first user
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    let d = new Date(startDate);
+    // Sort completion dates
+    const dateKeys = Object.keys(task.completions || {}).sort();
+    
+    // Process each day up to selected date
+    let d = new Date(taskStartDate);
+    d.setHours(0, 0, 0, 0);
+
     while (d <= selectedDate) {
-        const dateStr = formatDate(d);
+        const dateKey = d.toISOString().split("T")[0];
 
-        // Check if a fixed override turn was stored (e.g. from a delegation or correction)
-        if (task.turnByDate && task.turnByDate[dateStr]) {
-            currentIndex = task.users.indexOf(task.turnByDate[dateStr]);
-            if (currentIndex === -1) currentIndex = 0;
+        if (task.completions?.[dateKey]) {
+            const completions = task.completions[dateKey];
+            // Process each completion in order
+            for (const user of completions) {
+                if (userOrder.includes(user)) {
+                    const currentIndex = userOrder.indexOf(currentTurn);
+                    currentTurn = userOrder[(currentIndex + 1) % userOrder.length];
+                }
+            }
         }
 
-        // Only simulate completions for days before the selected one
-        if (dateStr < selectedDateStr) {
-            const completedUsers = Array.isArray(completions[dateStr]) ? completions[dateStr] : [];
-            const realCompletions = completedUsers.length;
-            const rotations = Math.floor(realCompletions / repeatLimit);
-            currentIndex = (currentIndex + rotations) % task.users.length;
+        // For the active day or future days, predict one completion
+        if (d >= today && d <= selectedDate) {
+            const currentIndex = userOrder.indexOf(currentTurn);
+            currentTurn = userOrder[(currentIndex + 1) % userOrder.length];
         }
 
         d.setDate(d.getDate() + 1);
     }
 
-    // For the selected date: respect turnByDate if set
-    if (task.turnByDate && task.turnByDate[selectedDateStr]) {
-        return task.turnByDate[selectedDateStr];
-    }
-
-    // Otherwise, simulate current day's turn based on previous date
-    return task.users[currentIndex];
+    return currentTurn;
 }
 
 
