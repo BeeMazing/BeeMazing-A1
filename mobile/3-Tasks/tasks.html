@@ -649,34 +649,26 @@ function getTurnForFutureDate(task, futureStr) {
     const completions = task.completions || {};
     const turnByDate = task.turnByDate || {};
 
-    const startDate = new Date(task.date.split(" to ")[0]);
     const futureDate = new Date(futureStr);
+    const prevDate = new Date(futureDate);
+    prevDate.setDate(prevDate.getDate() - 1);
 
     const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
                         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-    let currentIndex = userOrder.indexOf(task.turn || userOrder[0]);
+    // Start from the previous day's turn
+    let currentIndex = userOrder.indexOf(getTurnForDate(task, formatDate(prevDate)));
     if (currentIndex === -1) currentIndex = 0;
 
-    const d = new Date(startDate);
-    while (d <= futureDate) {
-        const dStr = formatDate(d);
-        if (turnByDate[dStr]) {
-            currentIndex = userOrder.indexOf(turnByDate[dStr]);
-        } else {
-            const completionsToday = Array.isArray(completions[dStr]) ? completions[dStr] : [];
-            for (const user of completionsToday) {
-                if (userOrder.includes(user)) {
-                    currentIndex = (currentIndex + 1) % userOrder.length;
-                }
-            }
-        }
-        d.setDate(d.getDate() + 1);
+    // Simulate a "perfect" day with all completions done
+    for (let i = 0; i < repeatLimit; i++) {
+        currentIndex = (currentIndex + 1) % userOrder.length;
     }
 
     return userOrder[currentIndex];
 }
+
 
 
 
