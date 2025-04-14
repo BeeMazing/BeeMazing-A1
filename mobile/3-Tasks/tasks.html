@@ -542,30 +542,30 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 function getTurnForDate(task, selectedDateStr) {
-    if (task.turnByDate?.[selectedDateStr]) {
-        return task.turnByDate[selectedDateStr];
-    }
-
     const userOrder = [...task.users];
-    const selectedDate = new Date(selectedDateStr);
+    const completions = task.completions?.[selectedDateStr] || [];
 
-    // Search backwards up to 30 days to find the last date with a turnByDate
-    for (let i = 1; i <= 30; i++) {
-        const prevDate = new Date(selectedDate);
-        prevDate.setDate(prevDate.getDate() - i);
-        const prevStr = prevDate.toISOString().split("T")[0];
-        const prevTurn = task.turnByDate?.[prevStr];
-        if (prevTurn) {
-            // Rotate from previous turn
-            const prevIndex = userOrder.indexOf(prevTurn);
-            const nextIndex = (prevIndex + 1) % userOrder.length;
-            return userOrder[nextIndex];
-        }
+    // Check how many completions already happened today
+    const totalCompletionsToday = completions.length;
+
+    // If task is Daily and has multiple completions per day
+    let repeatLimit = 1;
+    if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
+    if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
+    if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
+
+    if (totalCompletionsToday >= repeatLimit) {
+        // If completed fully, rotate to next starting user for tomorrow
+        const lastUser = completions[completions.length - 1];
+        const lastIndex = userOrder.indexOf(lastUser);
+        return userOrder[(lastIndex + 1) % userOrder.length];
+    } else {
+        // In-progress: assign based on completion index
+        const index = totalCompletionsToday % userOrder.length;
+        return userOrder[index];
     }
-
-    // Fallback
-    return userOrder[0];
 }
+
 
 
 
