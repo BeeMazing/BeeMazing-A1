@@ -726,38 +726,43 @@ async function showTaskDetails(task) {
 async function finishTask(userName, task, button, selectedDate) {
     const today = selectedDate;
 
+    // Setup completions for this day
+    if (!task.completions) task.completions = {};
+    if (!Array.isArray(task.completions[today])) task.completions[today] = [];
+
     const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
                         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-    if (!task.completions) task.completions = {};
-    if (!Array.isArray(task.completions[today])) task.completions[today] = [];
+    const completionsToday = task.completions[today];
+    const currentTurn = (task.turnByDate?.[today]) || task.turn || task.users[0];
 
-    const userCompletions = task.completions[today].filter(u => u === userName).length;
-    if (userCompletions >= repeatLimit) return;
+    // ✅ Prevent double-finish by same user
+    const userCount = completionsToday.filter(u => u === userName).length;
+    if (userCount >= repeatLimit) return;
 
-    task.completions[today].push(userName);
+    // ✅ Add user completion
+    completionsToday.push(userName);
 
-    const rewardAmount = Number(task.reward) || 0;
-    const userList = task.users;
-    let currentTurn = task.turnByDate?.[today] || task.turn || userList[0];
-
-    // Ensure turnByDate exists
-    if (!task.turnByDate) task.turnByDate = {};
-
-    // Update turn only if the current turn has completed enough times
-    const todayCompletions = task.completions[today].filter(u => u === currentTurn).length;
-    if (todayCompletions >= repeatLimit) {
-        const currentIndex = userList.indexOf(currentTurn);
-        const nextIndex = (currentIndex + 1) % userList.length;
-        task.turnByDate[today] = userList[nextIndex];
+    // ✅ Check if currentTurn has completed enough times
+    const currentTurnCount = completionsToday.filter(u => u === currentTurn).length;
+    if (currentTurnCount >= repeatLimit) {
+        const currentIndex = task.users.indexOf(currentTurn);
+        const nextIndex = (currentIndex + 1) % task.users.length;
+        const nextTurn = task.users[nextIndex];
+        if (!task.turnByDate) task.turnByDate = {};
+        task.turnByDate[today] = nextTurn;
     } else {
+        // Even if not rotating, save currentTurn in case it wasn't there before
+        if (!task.turnByDate) task.turnByDate = {};
         task.turnByDate[today] = currentTurn;
     }
 
-    task.date = task.date; // Keep date range unchanged
+    // Save to backend
     await saveTaskToBackend(task);
 
+    // ✅ Give reward
+    const rewardAmount = Number(task.reward) || 0;
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (adminEmail && rewardAmount > 0) {
         await fetch("https://beemazing.onrender.com/api/rewards", {
@@ -767,12 +772,14 @@ async function finishTask(userName, task, button, selectedDate) {
         });
     }
 
+    // ✅ Visual feedback and reload
     if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
-    if (typeof loadTasksForDate === 'function') loadTasksForDate(selectedDate);
-    if (typeof loadUserTasks === 'function') loadUserTasks(userName, selectedDate);
+
+    // ✅ Reload task list (this is the fix for your case!)
+    if (typeof loadTasksForDate === 'function') loadTasksForDate(today);
+    if (typeof loadUserTasks === 'function') loadUserTasks(userName, today);
     if (typeof loadUserReward === 'function') loadUserReward(userName);
 }
-
 
 
 
