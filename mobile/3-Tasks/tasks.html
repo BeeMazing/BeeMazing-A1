@@ -545,21 +545,23 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-
 function getTurnForDate(task, selectedDateStr) {
     const todayStr = new Date().toISOString().split("T")[0];
     const selectedStr = new Date(selectedDateStr).toISOString().split("T")[0];
 
-    if (selectedStr === todayStr || selectedStr > todayStr) {
-    const yesterdayTurn = getTurnForYesterday(task);
-    return getTurnForPastOrToday(task, selectedStr, yesterdayTurn);
-}
-
-    if (selectedStr > todayStr) {
-        return getTurnForFutureDate(task, selectedStr);
+    if (selectedStr < todayStr) {
+        // Past date: use actual completions
+        return getTurnForPastOrToday(task, selectedStr);
     }
 
-    return getTurnForPastOrToday(task, selectedStr);
+    if (selectedStr === todayStr) {
+        // Today: simulate based on real completions up to today
+        const yesterdayTurn = getTurnForYesterday(task);
+        return getTurnForPastOrToday(task, selectedStr, yesterdayTurn);
+    }
+
+    // Future: simulate ideal completions from yesterday's turn
+    return getTurnForFutureDate(task, selectedStr);
 }
 
 
