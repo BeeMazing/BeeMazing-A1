@@ -600,7 +600,6 @@ function getTurnForDate(task, selectedDateStr) {
 
 
 
-
 function getTurnForPastOrToday(task, selectedStr, initialTurn = null) {
     const formatDate = (d) => d.toISOString().split("T")[0];
     const userOrder = [...task.users];
@@ -609,6 +608,7 @@ function getTurnForPastOrToday(task, selectedStr, initialTurn = null) {
 
     const startDate = new Date(task.date.split(" to ")[0]);
     const selectedDate = new Date(selectedStr);
+
     let currentIndex = initialTurn !== null
         ? userOrder.indexOf(initialTurn)
         : userOrder.indexOf(task.turn || userOrder[0]);
@@ -620,8 +620,10 @@ function getTurnForPastOrToday(task, selectedStr, initialTurn = null) {
         const dStr = formatDate(d);
 
         if (turnByDate[dStr]) {
+            // Manual override (e.g. from editTurn or delegation)
             currentIndex = userOrder.indexOf(turnByDate[dStr]);
         } else {
+            // Rotate turn based on real completions
             const completionsToday = Array.isArray(completions[dStr]) ? completions[dStr] : [];
 
             for (const user of completionsToday) {
@@ -636,6 +638,11 @@ function getTurnForPastOrToday(task, selectedStr, initialTurn = null) {
 
     return userOrder[currentIndex];
 }
+
+
+
+
+
 
 
 
