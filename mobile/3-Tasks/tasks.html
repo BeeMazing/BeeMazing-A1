@@ -544,25 +544,40 @@ document.querySelectorAll('.footer a').forEach(link => {
 function getTurnForDate(task, selectedDateStr) {
     const userOrder = [...task.users];
     const selectedDate = new Date(selectedDateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize time
+
     let repeatLimit = 1;
     if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
     if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
     if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
-    // Count all completions from the task start date up to selectedDate (inclusive)
+    const startDate = new Date(task.date.split(" to ")[0]);
+    startDate.setHours(0, 0, 0, 0);
+
     let totalCompletions = 0;
-    if (task.completions) {
-        for (const [dateStr, users] of Object.entries(task.completions)) {
-            const d = new Date(dateStr);
-            if (d <= selectedDate) {
-                totalCompletions += Array.isArray(users) ? users.length : 0;
+    let d = new Date(startDate);
+
+    while (d <= selectedDate) {
+        const dateKey = d.toISOString().split("T")[0];
+
+        if (d <= today) {
+            // ✅ Use real completions up to and including today
+            if (Array.isArray(task.completions?.[dateKey])) {
+                totalCompletions += task.completions[dateKey].length;
             }
+        } else {
+            // 🔮 Future date — simulate full completions
+            totalCompletions += repeatLimit;
         }
+
+        d.setDate(d.getDate() + 1);
     }
 
     const index = totalCompletions % userOrder.length;
     return userOrder[index];
 }
+
 
 
 
