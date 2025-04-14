@@ -541,6 +541,31 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
+function getTurnForDate(task, selectedDateStr) {
+    if (task.turnByDate?.[selectedDateStr]) {
+        return task.turnByDate[selectedDateStr];
+    }
+
+    const userOrder = [...task.users];
+    const selectedDate = new Date(selectedDateStr);
+
+    // Search backwards up to 30 days to find the last date with a turnByDate
+    for (let i = 1; i <= 30; i++) {
+        const prevDate = new Date(selectedDate);
+        prevDate.setDate(prevDate.getDate() - i);
+        const prevStr = prevDate.toISOString().split("T")[0];
+        const prevTurn = task.turnByDate?.[prevStr];
+        if (prevTurn) {
+            // Rotate from previous turn
+            const prevIndex = userOrder.indexOf(prevTurn);
+            const nextIndex = (prevIndex + 1) % userOrder.length;
+            return userOrder[nextIndex];
+        }
+    }
+
+    // Fallback
+    return userOrder[0];
+}
 
 
 
@@ -594,7 +619,7 @@ async function loadTasksForDate(selectedDate) {
         if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
         const userOrder = [...task.users];
-        const currentTurn = task.turnByDate?.[selectedDate] || userOrder[0];
+        const currentTurn = getTurnForDate(task, selectedDate);
         const nextIndex = (userOrder.indexOf(currentTurn) + 1) % userOrder.length;
         const nextUser = userOrder[nextIndex];
 
@@ -648,7 +673,7 @@ async function showTaskDetails(task) {
     if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
     if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
-    const currentTurn = task.turnByDate?.[selectedDate] || userOrder[0];
+    const currentTurn = getTurnForDate(task, selectedDate);
     const nextIndex = (userOrder.indexOf(currentTurn) + 1) % userOrder.length;
     const nextUser = userOrder[nextIndex];
 
