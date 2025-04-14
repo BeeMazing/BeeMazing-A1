@@ -541,44 +541,46 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
+
+
 function getTurnForDate(task, selectedDateStr) {
     const userOrder = [...task.users];
     const selectedDate = new Date(selectedDateStr);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize time
+    selectedDate.setHours(0, 0, 0, 0);
 
-    let repeatLimit = 1;
-    if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
-    if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
-    if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
+    const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
+                        task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+                        task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
     const startDate = new Date(task.date.split(" to ")[0]);
     startDate.setHours(0, 0, 0, 0);
 
-    let totalCompletions = 0;
+    let currentTurnIndex = 0; // Default to first user
+    let lastKnownDate = null;
+
+    const dateStrList = Object.keys(task.completions || {}).sort();
+    const completionsMap = task.completions || {};
+
     let d = new Date(startDate);
 
     while (d <= selectedDate) {
         const dateKey = d.toISOString().split("T")[0];
+        const completionsToday = completionsMap[dateKey] || [];
 
-        if (d <= today) {
-            // ✅ Use real completions up to and including today
-            if (Array.isArray(task.completions?.[dateKey])) {
-                totalCompletions += task.completions[dateKey].length;
-            }
-        } else {
-            // 🔮 Future date — simulate full completions
-            totalCompletions += repeatLimit;
-        }
+        // If it's the current selected date, stop before processing
+        if (d.getTime() === selectedDate.getTime()) break;
 
+        // Count how many completions and rotate per completion
+        completionsToday.forEach(() => {
+            currentTurnIndex = (currentTurnIndex + 1) % userOrder.length;
+        });
+
+        lastKnownDate = new Date(d);
         d.setDate(d.getDate() + 1);
     }
 
-    const index = totalCompletions % userOrder.length;
-    return userOrder[index];
+    return userOrder[currentTurnIndex];
 }
-
-
 
 
 
