@@ -551,6 +551,10 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
+
+
+
+
 async function loadTasksForDate(selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (!adminEmail) return;
@@ -695,10 +699,6 @@ async function loadTasksForDate(selectedDate) {
 
 
 
-
-
-
-
 async function deleteTaskFromBackend(title, date) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     console.log("Deleting task with:", { adminEmail, title, date });
@@ -799,8 +799,6 @@ async function saveTaskToBackend(task) {
 
 
 
-
-
 async function showTaskDetails(task) {
     const selectedDate = document.querySelector(".day.selected")?.dataset.date;
     if (!selectedDate) return;
@@ -849,7 +847,8 @@ async function showTaskDetails(task) {
         }
         if (!currentTurn) currentTurn = userOrder[0];
     } else {
-        currentTurn = (yesterdayCompletedCount < repeatLimit) ? yesterdayTurn : assumedTurn;
+        // If yesterday's user didn't complete their task, they remain the current turn
+        currentTurn = (yesterdayCompletedCount < repeatLimit && yesterdayTurn) ? yesterdayTurn : assumedTurn;
     }
 
     const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
@@ -920,6 +919,7 @@ async function showTaskDetails(task) {
         });
     }
 }
+
 
 
 
