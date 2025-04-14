@@ -548,7 +548,6 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-
 function getTurnForDate(task, selectedDateStr) {
     const formatDate = (d) => d.toISOString().split("T")[0];
     const userOrder = [...task.users];
@@ -565,23 +564,49 @@ function getTurnForDate(task, selectedDateStr) {
     if (currentIndex === -1) currentIndex = 0;
 
     const d = new Date(startDate);
+
+    let previousDateStr = null;
+
     while (d <= selectedDate) {
         const dStr = formatDate(d);
 
+        // Check if a fixed turn is already stored
         if (turnByDate[dStr]) {
             currentIndex = task.users.indexOf(turnByDate[dStr]);
-        } else if (d < selectedDate) {
-            const completionsToday = completions[dStr] || [];
-            for (const user of completionsToday) {
-                if (userOrder.includes(user)) {
-                    currentIndex = (currentIndex + 1) % userOrder.length;
+        } else {
+            const completionsToday = Array.isArray(completions[dStr]) ? completions[dStr] : [];
+
+            if (dStr < selectedDateStr) {
+                // 💡 For days BEFORE selected day: simulate rotation
+                for (const user of completionsToday) {
+                    if (userOrder.includes(user)) {
+                        currentIndex = (currentIndex + 1) % userOrder.length;
+                    }
+                }
+            } else if (dStr === selectedDateStr) {
+                // 💡 This is the selected day (Active Day)
+                if (completionsToday.length === 0 && previousDateStr) {
+                    // No completions yet — use YESTERDAY’S turn
+                    if (turnByDate[previousDateStr]) {
+                        currentIndex = userOrder.indexOf(turnByDate[previousDateStr]);
+                    }
+                } else {
+                    // Simulate rotation for today so far
+                    for (const user of completionsToday) {
+                        if (userOrder.includes(user)) {
+                            currentIndex = (currentIndex + 1) % userOrder.length;
+                        }
+                    }
                 }
             }
         }
 
+        previousDateStr = dStr;
         d.setDate(d.getDate() + 1);
     }
 
+    // 🔒 Lock in the final result (for Date 15+)
+    const finalDateStr = formatDate(selectedDate);
     return userOrder[currentIndex];
 }
 
