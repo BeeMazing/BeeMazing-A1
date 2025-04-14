@@ -579,23 +579,22 @@ async function loadTasksForDate(selectedDate) {
         return;
     }
 
-    visibleTasks.forEach((task, index) => {
+    visibleTasks.forEach((task) => {
         const taskDiv = document.createElement("div");
         taskDiv.className = "task-item";
         taskDiv.dataset.taskTitle = task.title;
         taskDiv.dataset.taskDate = task.date;
 
-        // ✅ Define repeatLimit FIRST
+        // Repeat limit logic
         let repeatLimit = 1;
         if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
         if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
         if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
-        let currentTurn;
+        const userOrder = [...task.users];
         const dateRange = task.date.split(" to ");
         const startDate = parseLocalDate(dateRange[0]);
         const currentDate = parseLocalDate(selectedDate);
-        const userOrder = [...task.users];
 
         const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
         const defaultIndex = diffDays % userOrder.length;
@@ -604,39 +603,39 @@ async function loadTasksForDate(selectedDate) {
         const yesterday = new Date(currentDate);
         yesterday.setDate(yesterday.getDate() - 1);
         const yesterdayStr = yesterday.toISOString().split("T")[0];
-        const yesterdayCompletions = task.completions?.[yesterdayStr] || [];
-
         const yesterdayTurnIndex = (diffDays - 1) % userOrder.length;
         const yesterdayTurn = userOrder[yesterdayTurnIndex];
-        const yesterdayCompletedCount = yesterdayCompletions.filter(u => u === yesterdayTurn).length;
 
-        const now = new Date().toISOString().split("T")[0];
-        const isPastDate = selectedDate < now;
+        const yesterdayCompletions = task.completions?.[yesterdayStr] || [];
+        const yesterdayTotalCompleted = yesterdayCompletions.length;
+
+        const nowStr = new Date().toISOString().split("T")[0];
+        const isPastDate = selectedDate < nowStr;
+
+        let currentTurn;
 
         if (isPastDate) {
             const thatDayCompletions = task.completions?.[selectedDate] || [];
             const counts = {};
             thatDayCompletions.forEach(u => counts[u] = (counts[u] || 0) + 1);
-
             for (let i = 0; i < userOrder.length; i++) {
                 if ((counts[userOrder[i]] || 0) < repeatLimit) {
                     currentTurn = userOrder[i];
                     break;
                 }
             }
-
             if (!currentTurn) currentTurn = userOrder[0]; // fallback
         } else {
-            if (yesterdayCompletedCount < repeatLimit) {
+            // ✅ FIX: Base today's turn on whether yesterday was fully completed
+            if (yesterdayTotalCompleted < repeatLimit) {
                 currentTurn = yesterdayTurn;
             } else {
                 currentTurn = assumedTurn;
             }
         }
 
-        // ✅ Completions & display
-        const today = selectedDate;
-        const completedUsers = Array.isArray(task.completions?.[today]) ? task.completions[today] : [];
+        // Get completions for selected date
+        const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
         const completedCount = completedUsers.length;
         const isCompleted = completedCount >= repeatLimit;
 
@@ -648,13 +647,14 @@ async function loadTasksForDate(selectedDate) {
             <button class="delete-btn">Delete</button>
         `;
 
-        // Task interaction logic
+        // Show task details
         taskDiv.addEventListener("click", (e) => {
             if (!taskDiv.classList.contains("swiped-left") && e.target !== taskDiv.querySelector(".delete-btn")) {
                 showTaskDetails(task);
             }
         });
 
+        // Swipe to delete
         let startX = 0;
         let currentX = 0;
         let isSwiping = false;
@@ -725,7 +725,6 @@ async function loadTasksForDate(selectedDate) {
         taskList.appendChild(taskDiv);
     });
 }
-
 
 
 
