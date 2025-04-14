@@ -541,38 +541,56 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-
-
-
 function getTurnForDate(task, selectedDateStr) {
     const userOrder = [...task.users];
     const selectedDate = new Date(selectedDateStr);
-    selectedDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
                         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
     const startDate = new Date(task.date.split(" to ")[0]);
-    startDate.setHours(0, 0, 0, 0);
-
     let currentTurnIndex = 0;
-    const completionsMap = task.completions || {};
-    const d = new Date(startDate);
+
+    let d = new Date(startDate);
 
     while (d <= selectedDate) {
         const dateKey = d.toISOString().split("T")[0];
-        const completions = completionsMap[dateKey] || [];
+        const isPastOrToday = d <= today;
 
-        completions.forEach(() => {
-            currentTurnIndex = (currentTurnIndex + 1) % userOrder.length;
-        });
+        const completions = task.completions?.[dateKey] || [];
+
+        if (d.getTime() === selectedDate.getTime()) {
+            // For selected date, return the currentTurnIndex user
+            return userOrder[currentTurnIndex];
+        }
+
+        if (isPastOrToday) {
+            // Real days — only advance if actually completed
+            if (completions.length >= repeatLimit) {
+                currentTurnIndex = (currentTurnIndex + 1) % userOrder.length;
+            }
+        } else {
+            // Future simulation — advance turn only if yesterday was fully completed
+            const prevDate = new Date(d);
+            prevDate.setDate(prevDate.getDate() - 1);
+            const prevKey = prevDate.toISOString().split("T")[0];
+            const prevCompletions = task.completions?.[prevKey] || [];
+
+            if (prevCompletions.length >= repeatLimit) {
+                currentTurnIndex = (currentTurnIndex + 1) % userOrder.length;
+            }
+        }
 
         d.setDate(d.getDate() + 1);
     }
 
+    // fallback
     return userOrder[currentTurnIndex];
 }
+
 
 
 
