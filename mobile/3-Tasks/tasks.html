@@ -627,11 +627,15 @@ async function loadTasksForDate(selectedDate) {
             if (!currentTurn) currentTurn = userOrder[0]; // fallback
         } else {
             // ✅ FIX: Base today's turn on whether yesterday was fully completed
-            if (yesterdayTotalCompleted < repeatLimit) {
-                currentTurn = yesterdayTurn;
-            } else {
-                currentTurn = assumedTurn;
-            }
+// ✅ Better check: Was yesterdayTurn completed enough times?
+const yesterdayTurnCompletedCount = yesterdayCompletions.filter(u => u === yesterdayTurn).length;
+
+if (yesterdayTurnCompletedCount < repeatLimit) {
+    currentTurn = yesterdayTurn;
+} else {
+    currentTurn = assumedTurn;
+}
+
         }
 
         // Get completions for selected date
