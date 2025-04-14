@@ -568,11 +568,14 @@ function getTurnForDate(task, selectedDateStr) {
     // Sort completion dates
     const dateKeys = Object.keys(task.completions || {}).sort();
     
-    // Process each day up to selected date
+    // Process each day up to yesterday (for active day) or selected date (for future/past)
     let d = new Date(taskStartDate);
     d.setHours(0, 0, 0, 0);
 
-    while (d <= selectedDate) {
+    // For active day, stop at yesterday; for future days, include yesterday's turn
+    const stopDate = selectedDate.getTime() === today.getTime() ? new Date(today.getTime() - 86400000) : selectedDate;
+    
+    while (d <= stopDate) {
         const dateKey = d.toISOString().split("T")[0];
 
         if (task.completions?.[dateKey]) {
@@ -586,19 +589,17 @@ function getTurnForDate(task, selectedDateStr) {
             }
         }
 
-        // For the active day or future days, predict one completion
-        if (d >= today && d <= selectedDate) {
-            const currentIndex = userOrder.indexOf(currentTurn);
-            currentTurn = userOrder[(currentIndex + 1) % userOrder.length];
-        }
-
         d.setDate(d.getDate() + 1);
+    }
+
+    // For future days, assume one completion from the last turn
+    if (selectedDate > today) {
+        const currentIndex = userOrder.indexOf(currentTurn);
+        currentTurn = userOrder[(currentIndex + 1) % userOrder.length];
     }
 
     return currentTurn;
 }
-
-
 
 
 
