@@ -555,6 +555,17 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 async function loadTasksForDate(selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (!adminEmail) return;
@@ -586,6 +597,7 @@ async function loadTasksForDate(selectedDate) {
     }
 
     visibleTasks.forEach((task) => {
+        console.log('Raw task:', JSON.stringify(task, null, 2)); // Debug log
         const taskDiv = document.createElement("div");
         taskDiv.className = "task-item";
         taskDiv.dataset.taskTitle = task.title;
@@ -606,35 +618,45 @@ async function loadTasksForDate(selectedDate) {
         const yesterdayStr = yesterday.toISOString().split("T")[0];
         const nowStr = new Date().toISOString().split("T")[0];
         const isPastDate = selectedDate < nowStr;
+        const isFutureDate = selectedDate > nowStr;
 
         // Calculate current turn
         let currentTurn = task.turn || userOrder[0]; // Use stored turn or default to first user
-        const yesterdayCompletions = task.completions?.[yesterdayStr] || [];
-        const yesterdayCompletedCount = yesterdayCompletions.filter(u => u === currentTurn).length;
+        let yesterdayCompletedCount = 0;
 
-        console.log(`Task: ${task.title}, Date: ${selectedDate}, CurrentTurn: ${currentTurn}, Yesterday: ${yesterdayStr}, YesterdayCompletions: ${yesterdayCompletedCount}/${repeatLimit}`);
-
-        if (!isPastDate && yesterdayCompletedCount < repeatLimit) {
-            // If yesterday's turn wasn't completed, keep the same user
-            currentTurn = currentTurn;
-        } else if (!isPastDate) {
-            // Advance turn only if yesterday was completed
-            const currentIndex = userOrder.indexOf(currentTurn);
-            const nextIndex = (currentIndex + 1) % userOrder.length;
-            currentTurn = userOrder[nextIndex];
-        } else {
-            // For past dates, use completions on that day
-            const thatDayCompletions = task.completions?.[selectedDate] || [];
-            const counts = {};
-            thatDayCompletions.forEach(u => counts[u] = (counts[u] || 0) + 1);
-            for (let i = 0; i < userOrder.length; i++) {
-                if ((counts[userOrder[i]] || 0) < repeatLimit) {
-                    currentTurn = userOrder[i];
-                    break;
+        if (!isFutureDate) {
+            // For past or today, check actual completions
+            const yesterdayCompletions = task.completions?.[yesterdayStr] || [];
+            yesterdayCompletedCount = yesterdayCompletions.filter(u => u === currentTurn).length;
+            if (!isPastDate && yesterdayCompletedCount < repeatLimit) {
+                // If yesterday's turn wasn't completed, keep the same user (for today)
+                currentTurn = currentTurn;
+            } else if (!isPastDate) {
+                // Advance turn for today if yesterday was completed
+                const currentIndex = userOrder.indexOf(currentTurn);
+                const nextIndex = (currentIndex + 1) % userOrder.length;
+                currentTurn = userOrder[nextIndex];
+            } else {
+                // For past dates, use completions on that day
+                const thatDayCompletions = task.completions?.[selectedDate] || [];
+                const counts = {};
+                thatDayCompletions.forEach(u => counts[u] = (counts[u] || 0) + 1);
+                for (let i = 0; i < userOrder.length; i++) {
+                    if ((counts[userOrder[i]] || 0) < repeatLimit) {
+                        currentTurn = userOrder[i];
+                        break;
+                    }
                 }
+                if (!currentTurn) currentTurn = userOrder[0];
             }
-            if (!currentTurn) currentTurn = userOrder[0];
+        } else {
+            // For future dates, assume all prior days (up to today) are completed
+            const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+            const defaultIndex = diffDays % userOrder.length;
+            currentTurn = userOrder[defaultIndex];
         }
+
+        console.log(`Task: ${task.title}, Date: ${selectedDate}, CurrentTurn: ${currentTurn}, Yesterday: ${yesterdayStr}, YesterdayCompletions: ${yesterdayCompletedCount}/${repeatLimit}, IsFuture: ${isFutureDate}`);
 
         const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
         const completedCount = completedUsers.length;
@@ -713,35 +735,45 @@ async function showTaskDetails(task) {
     const yesterdayStr = yesterday.toISOString().split("T")[0];
     const nowStr = new Date().toISOString().split("T")[0];
     const isPastDate = selectedDate < nowStr;
+    const isFutureDate = selectedDate > nowStr;
 
     // Calculate current turn
     let currentTurn = task.turn || userOrder[0]; // Use stored turn or default
-    const yesterdayCompletions = task.completions?.[yesterdayStr] || [];
-    const yesterdayCompletedCount = yesterdayCompletions.filter(u => u === currentTurn).length;
+    let yesterdayCompletedCount = 0;
 
-    console.log(`Modal - Task: ${task.title}, Date: ${selectedDate}, CurrentTurn: ${currentTurn}, Yesterday: ${yesterdayStr}, YesterdayCompletions: ${yesterdayCompletedCount}/${repeatLimit}`);
-
-    if (!isPastDate && yesterdayCompletedCount < repeatLimit) {
-        // If yesterday's turn wasn't completed, keep the same user
-        currentTurn = currentTurn;
-    } else if (!isPastDate) {
-        // Advance turn only if yesterday was completed
-        const currentIndex = userOrder.indexOf(currentTurn);
-        const nextIndex = (currentIndex + 1) % userOrder.length;
-        currentTurn = userOrder[nextIndex];
-    } else {
-        // For past dates, use completions on that day
-        const thatDayCompletions = task.completions?.[selectedDate] || [];
-        const counts = {};
-        thatDayCompletions.forEach(u => counts[u] = (counts[u] || 0) + 1);
-        for (let i = 0; i < userOrder.length; i++) {
-            if ((counts[userOrder[i]] || 0) < repeatLimit) {
-                currentTurn = userOrder[i];
-                break;
+    if (!isFutureDate) {
+        // For past or today, check actual completions
+        const yesterdayCompletions = task.completions?.[yesterdayStr] || [];
+        yesterdayCompletedCount = yesterdayCompletions.filter(u => u === currentTurn).length;
+        if (!isPastDate && yesterdayCompletedCount < repeatLimit) {
+            // If yesterday's turn wasn't completed, keep the same user (for today)
+            currentTurn = currentTurn;
+        } else if (!isPastDate) {
+            // Advance turn for today if yesterday was completed
+            const currentIndex = userOrder.indexOf(currentTurn);
+            const nextIndex = (currentIndex + 1) % userOrder.length;
+            currentTurn = userOrder[nextIndex];
+        } else {
+            // For past dates, use completions on that day
+            const thatDayCompletions = task.completions?.[selectedDate] || [];
+            const counts = {};
+            thatDayCompletions.forEach(u => counts[u] = (counts[u] || 0) + 1);
+            for (let i = 0; i < userOrder.length; i++) {
+                if ((counts[userOrder[i]] || 0) < repeatLimit) {
+                    currentTurn = userOrder[i];
+                    break;
+                }
             }
+            if (!currentTurn) currentTurn = userOrder[0];
         }
-        if (!currentTurn) currentTurn = userOrder[0];
+    } else {
+        // For future dates, assume all prior days (up to today) are completed
+        const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+        const defaultIndex = diffDays % userOrder.length;
+        currentTurn = userOrder[defaultIndex];
     }
+
+    console.log(`Modal - Task: ${task.title}, Date: ${selectedDate}, CurrentTurn: ${currentTurn}, Yesterday: ${yesterdayStr}, YesterdayCompletions: ${yesterdayCompletedCount}/${repeatLimit}, IsFuture: ${isFutureDate}`);
 
     const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
     const completedCount = completedUsers.length;
@@ -811,6 +843,19 @@ async function showTaskDetails(task) {
         });
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 async function finishTask(userName, task, button, selectedDate) {
     const today = selectedDate;
