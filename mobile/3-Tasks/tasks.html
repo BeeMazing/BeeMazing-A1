@@ -545,22 +545,22 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-
 function getTurnForDate(task, selectedDateStr) {
     const todayStr = new Date().toISOString().split("T")[0];
     const selectedStr = new Date(selectedDateStr).toISOString().split("T")[0];
 
     if (selectedStr === todayStr) {
         const yesterdayTurn = getTurnForYesterday(task);
-        return getTurnForPastOrToday(task, selectedStr, yesterdayTurn);
+        return getTurnForPastOrToday(task, selectedStr, yesterdayTurn); // ✅ only here
     }
 
     if (selectedStr > todayStr) {
         return getTurnForFutureDate(task, selectedStr);
     }
 
-    return getTurnForPastOrToday(task, selectedStr);
+    return getTurnForPastOrToday(task, selectedStr); // ✅ no initialTurn here!
 }
+
 
 
 
