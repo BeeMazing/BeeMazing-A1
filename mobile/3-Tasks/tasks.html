@@ -547,50 +547,14 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 function getTurnForDate(task, selectedDateStr) {
     const formatDate = (d) => d.toISOString().split("T")[0];
-    const selectedDate = new Date(selectedDateStr);
+    const selectedStr = formatDate(new Date(selectedDateStr));
     const todayStr = formatDate(new Date());
-    const selectedStr = formatDate(selectedDate);
 
-    const userOrder = [...task.users];
-    const completions = task.completions || {};
-    const turnByDate = task.turnByDate || {};
-    const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                        task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                        task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-
-    // Start from task start date
-    const startDate = new Date(task.date.split(" to ")[0]);
-    let currentTurnIndex = userOrder.indexOf(task.turn || userOrder[0]);
-    if (currentTurnIndex === -1) currentTurnIndex = 0;
-
-    const d = new Date(startDate);
-    while (formatDate(d) <= selectedStr) {
-        const dStr = formatDate(d);
-
-        // If there's a manual override for the day
-        if (turnByDate[dStr]) {
-            currentTurnIndex = userOrder.indexOf(turnByDate[dStr]);
-        } else {
-            // Count completions
-            const completedUsers = completions[dStr] || [];
-            let completionsCount = 0;
-
-            for (const user of completedUsers) {
-                if (userOrder.includes(user)) {
-                    completionsCount++;
-                }
-            }
-
-            // Rotate turn for each valid completion
-            for (let i = 0; i < completionsCount; i++) {
-                currentTurnIndex = (currentTurnIndex + 1) % userOrder.length;
-            }
-        }
-
-        d.setDate(d.getDate() + 1);
+    if (selectedStr > todayStr) {
+        return getSimulatedTurnForFutureDate(task, selectedStr);
     }
 
-    return userOrder[currentTurnIndex];
+    return getTurnForPastOrToday(task, selectedStr);
 }
 
 
@@ -599,41 +563,28 @@ function getTurnForDate(task, selectedDateStr) {
 
 
 
-
-function getTurnForPastOrToday(task, selectedStr, initialTurn = null) {
+function getTurnForPastOrToday(task, selectedStr) {
     const formatDate = (d) => d.toISOString().split("T")[0];
+    const selectedDate = new Date(selectedStr);
+    const yesterday = new Date(selectedDate);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = formatDate(yesterday);
+
     const userOrder = [...task.users];
     const completions = task.completions || {};
     const turnByDate = task.turnByDate || {};
 
-    const startDate = new Date(task.date.split(" to ")[0]);
-    const selectedDate = new Date(selectedStr);
-
-    let currentIndex = initialTurn !== null
-        ? userOrder.indexOf(initialTurn)
-        : userOrder.indexOf(task.turn || userOrder[0]);
+    // Step 1: Get yesterday’s final turn
+    let currentIndex = userOrder.indexOf(getTurnForPastOrToday(task, yesterdayStr));
     if (currentIndex === -1) currentIndex = 0;
 
-    const d = new Date(startDate);
+    // Step 2: Apply today's completions (if any)
+    const todayCompletions = completions[selectedStr] || [];
 
-    while (d <= selectedDate) {
-        const dStr = formatDate(d);
-
-        if (turnByDate[dStr]) {
-            // Manual override (e.g. from editTurn or delegation)
-            currentIndex = userOrder.indexOf(turnByDate[dStr]);
-        } else {
-            // Rotate turn based on real completions
-            const completionsToday = Array.isArray(completions[dStr]) ? completions[dStr] : [];
-
-            for (const user of completionsToday) {
-                if (userOrder.includes(user)) {
-                    currentIndex = (currentIndex + 1) % userOrder.length;
-                }
-            }
+    for (const user of todayCompletions) {
+        if (userOrder.includes(user)) {
+            currentIndex = (currentIndex + 1) % userOrder.length;
         }
-
-        d.setDate(d.getDate() + 1);
     }
 
     return userOrder[currentIndex];
