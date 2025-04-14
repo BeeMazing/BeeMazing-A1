@@ -547,19 +547,52 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 function getTurnForDate(task, selectedDateStr) {
     const formatDate = (d) => d.toISOString().split("T")[0];
+    const selectedDate = new Date(selectedDateStr);
     const todayStr = formatDate(new Date());
-    const selectedStr = formatDate(new Date(selectedDateStr));
+    const selectedStr = formatDate(selectedDate);
 
-    // Past or today: use actual completions
-    if (selectedStr <= todayStr) {
-        return getTurnForPastOrToday(task, selectedStr);
+    const userOrder = [...task.users];
+    const completions = task.completions || {};
+    const turnByDate = task.turnByDate || {};
+    const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
+                        task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+                        task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+
+    // Start from task start date
+    const startDate = new Date(task.date.split(" to ")[0]);
+    let currentTurnIndex = userOrder.indexOf(task.turn || userOrder[0]);
+    if (currentTurnIndex === -1) currentTurnIndex = 0;
+
+    const d = new Date(startDate);
+    while (formatDate(d) <= selectedStr) {
+        const dStr = formatDate(d);
+
+        // If there's a manual override for the day
+        if (turnByDate[dStr]) {
+            currentTurnIndex = userOrder.indexOf(turnByDate[dStr]);
+        } else {
+            // Count completions
+            const completedUsers = completions[dStr] || [];
+            let completionsCount = 0;
+
+            for (const user of completedUsers) {
+                if (userOrder.includes(user)) {
+                    completionsCount++;
+                }
+            }
+
+            // Rotate turn for each valid completion
+            for (let i = 0; i < completionsCount; i++) {
+                currentTurnIndex = (currentTurnIndex + 1) % userOrder.length;
+            }
+        }
+
+        d.setDate(d.getDate() + 1);
     }
 
-    // Future: simulate perfect completions from yesterday
-    const yesterdayStr = formatDate(new Date(Date.now() - 86400000)); // 1 day in ms
-    const yesterdayTurn = getTurnForPastOrToday(task, yesterdayStr);
-    return getTurnForFutureDate(task, selectedStr, yesterdayTurn);
+    return userOrder[currentTurnIndex];
 }
+
 
 
 
