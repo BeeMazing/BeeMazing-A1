@@ -568,12 +568,13 @@ function getTurnForDate(task, selectedDateStr) {
     // Sort completion dates
     const dateKeys = Object.keys(task.completions || {}).sort();
     
-    // Process each day up to yesterday (for active day) or selected date (for future/past)
+    // Process each day up to yesterday or selected date
     let d = new Date(taskStartDate);
     d.setHours(0, 0, 0, 0);
 
-    // For active day, stop at yesterday; for future days, include yesterday's turn
-    const stopDate = selectedDate.getTime() === today.getTime() ? new Date(today.getTime() - 86400000) : selectedDate;
+    // For active day, process up to yesterday initially
+    const isActiveDay = selectedDate.getTime() === today.getTime();
+    let stopDate = isActiveDay ? new Date(today.getTime() - 86400000) : selectedDate;
     
     while (d <= stopDate) {
         const dateKey = d.toISOString().split("T")[0];
@@ -592,10 +593,28 @@ function getTurnForDate(task, selectedDateStr) {
         d.setDate(d.getDate() + 1);
     }
 
-    // For future days, assume one completion from the last turn
+    // For active day, check if there are completions today
+    if (isActiveDay) {
+        const todayKey = today.toISOString().split("T")[0];
+        if (task.completions?.[todayKey]) {
+            const completions = task.completions[todayKey];
+            // Process today's completions
+            for (const user of completions) {
+                if (userOrder.includes(user)) {
+                    const currentIndex = userOrder.indexOf(currentTurn);
+                    currentTurn = userOrder[(currentIndex + 1) % userOrder.length];
+                }
+            }
+        }
+    }
+
+    // For future days, assume one full cycle of completions (repeatLimit) from yesterday's turn
     if (selectedDate > today) {
-        const currentIndex = userOrder.indexOf(currentTurn);
-        currentTurn = userOrder[(currentIndex + 1) % userOrder.length];
+        // Simulate repeatLimit completions
+        for (let i = 0; i < repeatLimit; i++) {
+            const currentIndex = userOrder.indexOf(currentTurn);
+            currentTurn = userOrder[(currentIndex + 1) % userOrder.length];
+        }
     }
 
     return currentTurn;
