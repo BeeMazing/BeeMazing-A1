@@ -98,6 +98,15 @@
       background-color: #D32F2F;
       color: white;
     }
+
+    .day-scroll::-webkit-scrollbar {
+  display: none;
+}
+.day-scroll {
+  -ms-overflow-style: none;  /* IE/Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
   </style>
 </head>
 <body>
@@ -168,7 +177,8 @@
     };
 
     async function loadTasks() {
-      const res = await fetch(`/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+
       const { tasks } = await res.json();
       const container = document.getElementById("taskContainer");
       container.innerHTML = "";
@@ -225,11 +235,11 @@
       completions.splice(index, 1); // remove declined completion
       task.completions[selectedDate] = completions;
 
-      await fetch("/update-task", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminEmail, task })
-      });
+      await fetch("https://beemazing.onrender.com/update-task", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ adminEmail, task })
+});
 
       loadTasks();
     }
