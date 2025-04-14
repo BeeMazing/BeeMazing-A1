@@ -887,6 +887,14 @@ async function finishTask(userName, task, button, selectedDate) {
 
 
 
+
+
+
+
+
+
+
+
 async function deleteTaskFromBackend(title, date) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     console.log("Deleting task with:", { adminEmail, title, date });
@@ -987,126 +995,6 @@ async function saveTaskToBackend(task) {
 
 
 
-async function showTaskDetails(task) {
-    const selectedDate = document.querySelector(".day.selected")?.dataset.date;
-    if (!selectedDate) return;
-
-    function parseLocalDate(dateStr) {
-        const [year, month, day] = dateStr.split("-").map(Number);
-        return new Date(year, month - 1, day);
-    }
-
-    const dateRange = task.date.split(" to ");
-    const startDate = parseLocalDate(dateRange[0]);
-    const currentDate = parseLocalDate(selectedDate);
-    const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-    const userOrder = [...task.users];
-
-    let repeatLimit = 1;
-    if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
-    if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
-    if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
-
-    const defaultIndex = diffDays % userOrder.length;
-    const assumedTurn = userOrder[defaultIndex];
-
-    const yesterday = new Date(currentDate);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split("T")[0];
-    const yesterdayTurnIndex = (defaultIndex - 1 + userOrder.length) % userOrder.length;
-    const yesterdayTurn = userOrder[yesterdayTurnIndex];
-    const yesterdayCompletions = task.completions?.[yesterdayStr] || [];
-    const yesterdayCompletedCount = yesterdayCompletions.filter(u => u === yesterdayTurn).length;
-
-    const todayStr = new Date().toISOString().split("T")[0];
-    const isPastDate = selectedDate < todayStr;
-
-    let currentTurn;
-
-    if (isPastDate) {
-        const thatDayCompletions = task.completions?.[selectedDate] || [];
-        const counts = {};
-        thatDayCompletions.forEach(u => counts[u] = (counts[u] || 0) + 1);
-        for (let i = 0; i < userOrder.length; i++) {
-            if ((counts[userOrder[i]] || 0) < repeatLimit) {
-                currentTurn = userOrder[i];
-                break;
-            }
-        }
-        if (!currentTurn) currentTurn = userOrder[0];
-    } else {
-        // If yesterday's user didn't complete their task, they remain the current turn
-        currentTurn = (yesterdayCompletedCount < repeatLimit && yesterdayTurn) ? yesterdayTurn : assumedTurn;
-    }
-
-    const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-    const completedCount = completedUsers.length;
-
-    const nextIndex = (userOrder.indexOf(currentTurn) + 1) % userOrder.length;
-    const nextUser = userOrder[nextIndex];
-
-    let taskDetails = "";
-    if (task.title) taskDetails += `<strong>Title:</strong> ${task.title}<br>`;
-    if (task.notes) taskDetails += `<strong>Notes:</strong> ${task.notes}<br>`;
-    if (task.room) taskDetails += `<strong>Room:</strong> ${task.room}<br>`;
-    if (task.repeat) {
-        taskDetails += `<strong>Frequency:</strong> ${task.repeat}`;
-        if (task.repeat === "Daily" && task.timesPerDay) taskDetails += ` - ${task.timesPerDay} time(s)/day`;
-        if (task.repeat === "Weekly" && task.timesPerWeek) taskDetails += ` - ${task.timesPerWeek} time(s)/week`;
-        if (task.repeat === "Monthly" && task.timesPerMonth) taskDetails += ` - ${task.timesPerMonth} time(s)/month`;
-        taskDetails += "<br>";
-    }
-    if (task.date) taskDetails += `<strong>Date:</strong> ${task.date}<br>`;
-    if (task.users?.length) taskDetails += `<strong>Users:</strong> ${task.users.join(", ")}<br>`;
-    if (task.reward && task.reward !== "0") taskDetails += `<strong>Reward:</strong> ${task.reward} 🍯<br>`;
-    taskDetails += `<strong>Current Turn:</strong> ${currentTurn}<br>`;
-    taskDetails += `<strong>Next:</strong> ${nextUser}<br>`;
-    taskDetails += `<strong>Completed:</strong> ${completedCount}/${repeatLimit}<br>`;
-
-    if (completedUsers.length > 0) {
-        taskDetails += `
-            <div style="margin-top: 8px;">
-                <strong>Completed by:</strong> ${completedUsers.join(", ")}
-                <button id="editCompletionBtn" style="margin-left: 10px; padding: 4px 8px; font-size: 12px; border-radius: 6px; background: var(--primary-color); color: var(--secondary-color); border: none; cursor: pointer;">Edit</button>
-            </div>
-        `;
-    }
-
-    taskDetails += `
-        <br>
-        <button id="editTurnBtn" style="padding: 6px 10px; background: var(--primary-color); color: var(--secondary-color); font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">Edit Turn Order</button>
-        <button id="editTaskBtn" style="padding: 6px 10px; background: var(--secondary-color); color: var(--accent-color); font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">Edit Task</button>
-    `;
-
-    const modal = document.createElement("div");
-    modal.className = "task-modal";
-    modal.innerHTML = `<div class="modal-content">${taskDetails}</div>`;
-    document.body.appendChild(modal);
-
-    modal.addEventListener("click", (e) => {
-        if (e.target.classList.contains("task-modal")) modal.remove();
-    });
-
-    document.getElementById("editTurnBtn").addEventListener("click", () => {
-        modal.remove();
-        showEditTurnModal(task);
-    });
-
-    document.getElementById("editTaskBtn").addEventListener("click", () => {
-        localStorage.setItem("familyApp_editTask", JSON.stringify(task));
-        localStorage.setItem("familyApp_editTask_index", task.title + "-" + task.date);
-        window.location.href = "/BeeMazing-Y1/mobile/3-Tasks/addtasks.html";
-    });
-
-    const editBtn = document.getElementById("editCompletionBtn");
-    if (editBtn) {
-        editBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            modal.remove();
-            showEditCompletionModal(task, completedUsers, selectedDate, modal);
-        });
-    }
-}
 
 
 
@@ -1134,66 +1022,8 @@ async function showTaskDetails(task) {
 
 
 
-async function finishTask(userName, task, button, selectedDate) {
-    const today = selectedDate;
 
-    const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                        task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                        task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-    if (!task.completions) task.completions = {};
-    if (!Array.isArray(task.completions[today])) task.completions[today] = [];
-
-    const userCompletions = task.completions[today].filter(u => u === userName).length;
-    if (userCompletions >= repeatLimit) return;
-
-    task.completions[today].push(userName);
-
-    const rewardAmount = Number(task.reward) || 0;
-    const userList = task.users;
-    const currentTurn = task.tempTurnReplacement?.replacement || task.turn || userList[0];
-
-    if (task.tempTurnReplacement && userName === task.tempTurnReplacement.replacement) {
-        const originalUser = task.tempTurnReplacement.original;
-        const originalIndex = userList.indexOf(originalUser);
-        const nextIndex = (originalIndex + 1) % userList.length;
-        task.turn = userList[nextIndex];
-        delete task.tempTurnReplacement;
-        if (task.originalOwner) delete task.originalOwner[userName];
-    } else {
-        const userCompletionCounts = {};
-        task.completions[today].forEach(u => {
-            userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
-        });
-        const currentIndex = userList.indexOf(currentTurn);
-        let nextIndex = (currentIndex + 1) % userList.length;
-        let looped = false;
-
-        while ((userCompletionCounts[userList[nextIndex]] || 0) >= repeatLimit && !looped) {
-            nextIndex = (nextIndex + 1) % userList.length;
-            if (nextIndex === currentIndex) looped = true;
-        }
-
-        task.turn = looped ? userList[0] : userList[nextIndex];
-    }
-
-    task.date = selectedDate;
-    await saveTaskToBackend(task);
-
-    const adminEmail = localStorage.getItem("currentAdminEmail");
-    if (adminEmail && rewardAmount > 0) {
-        await fetch("https://beemazing.onrender.com/api/rewards", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ adminEmail, user: userName, amount: rewardAmount })
-        });
-    }
-
-    if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
-    if (typeof loadTasksForDate === 'function') loadTasksForDate(selectedDate);
-    if (typeof loadUserTasks === 'function') loadUserTasks(userName, selectedDate);
-    if (typeof loadUserReward === 'function') loadUserReward(userName);
-}
 
 async function showEditCompletionModal(task, completedUsers, today, parentModal) {
     const modal = document.createElement("div");
