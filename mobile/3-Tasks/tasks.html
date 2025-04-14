@@ -551,6 +551,7 @@ function getTurnForDate(task, selectedDateStr) {
     const selectedStr = new Date(selectedDateStr).toISOString().split("T")[0];
 
     if (selectedStr === todayStr) {
+        // For today, use yesterday's turn as the base if no completions exist
         const yesterdayTurn = getTurnForYesterday(task);
         return getTurnForPastOrToday(task, selectedStr, yesterdayTurn);
     }
@@ -562,6 +563,51 @@ function getTurnForDate(task, selectedDateStr) {
     return getTurnForPastOrToday(task, selectedStr);
 }
 
+function getTurnForPastOrToday(task, selectedStr, initialTurn = null) {
+    const formatDate = (d) => d.toISOString().split("T")[0];
+    const userOrder = [...task.users];
+    const completions = task.completions || {};
+    const turnByDate = task.turnByDate || {};
+
+    const selectedDate = new Date(selectedStr);
+
+    // If there's an explicit turn for the selected date, use it
+    if (turnByDate[selectedStr]) {
+        return turnByDate[selectedStr];
+    }
+
+    // If no completions and no turnByDate, use initialTurn or task.turn
+    if (!completions[selectedStr] || completions[selectedStr].length === 0) {
+        if (initialTurn && userOrder.includes(initialTurn)) {
+            return initialTurn;
+        }
+        return task.turn || userOrder[0];
+    }
+
+    // Process completions for the selected date
+    let currentIndex = initialTurn && userOrder.includes(initialTurn)
+        ? userOrder.indexOf(initialTurn)
+        : userOrder.indexOf(task.turn || userOrder[0]);
+    if (currentIndex === -1) currentIndex = 0;
+
+    const completionsToday = Array.isArray(completions[selectedStr]) ? completions[selectedStr] : [];
+    for (const user of completionsToday) {
+        if (userOrder.includes(user)) {
+            currentIndex = (currentIndex + 1) % userOrder.length;
+        }
+    }
+
+    return userOrder[currentIndex];
+}
+
+function getTurnForYesterday(task) {
+    const formatDate = (d) => d.toISOString().split("T")[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = formatDate(yesterday);
+
+    return getTurnForPastOrToday(task, yesterdayStr);
+}
 
 
 
@@ -638,6 +684,7 @@ function getTurnForTomorrow(task) {
 
     return userOrder[currentIndex];
 }
+
 
 
 
@@ -1337,28 +1384,6 @@ document.getElementById("scrollRight").addEventListener("click", () => {
         behavior: "smooth"
     });
 });
-
-
-// 🔁 Auto-refresh task list at midnight
-function refreshAtMidnight() {
-    const now = new Date();
-    const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1) - now;
-    setTimeout(() => {
-        const todayStr = new Date().toISOString().split("T")[0];
-        document.querySelectorAll(".day").forEach(day => {
-            if (day.dataset.date === todayStr) {
-                day.classList.add("selected");
-                loadTasksForDate(todayStr);
-            } else {
-                day.classList.remove("selected");
-            }
-        });
-        refreshAtMidnight(); // Set again for the next midnight
-    }, msUntilMidnight);
-}
-
-refreshAtMidnight();
-
 
     </script>
 </body>
