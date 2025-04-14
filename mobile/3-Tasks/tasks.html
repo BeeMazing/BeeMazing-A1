@@ -543,6 +543,7 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
+
 function getTurnForDate(task, selectedDateStr) {
     const userOrder = [...task.users];
     const selectedDate = new Date(selectedDateStr);
@@ -555,32 +556,25 @@ function getTurnForDate(task, selectedDateStr) {
     const startDate = new Date(task.date.split(" to ")[0]);
     startDate.setHours(0, 0, 0, 0);
 
-    let currentTurnIndex = 0; // Default to first user
-    let lastKnownDate = null;
-
-    const dateStrList = Object.keys(task.completions || {}).sort();
+    let currentTurnIndex = 0;
     const completionsMap = task.completions || {};
-
-    let d = new Date(startDate);
+    const d = new Date(startDate);
 
     while (d <= selectedDate) {
         const dateKey = d.toISOString().split("T")[0];
-        const completionsToday = completionsMap[dateKey] || [];
+        const completions = completionsMap[dateKey] || [];
 
-        // If it's the current selected date, stop before processing
-        if (d.getTime() === selectedDate.getTime()) break;
-
-        // Count how many completions and rotate per completion
-        completionsToday.forEach(() => {
+        completions.forEach(() => {
             currentTurnIndex = (currentTurnIndex + 1) % userOrder.length;
         });
 
-        lastKnownDate = new Date(d);
         d.setDate(d.getDate() + 1);
     }
 
     return userOrder[currentTurnIndex];
 }
+
+
 
 
 
