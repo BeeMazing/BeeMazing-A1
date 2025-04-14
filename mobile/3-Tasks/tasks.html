@@ -556,12 +556,11 @@ function getTurnForDate(task, selectedDateStr) {
     }
 
     if (selectedStr > todayStr) {
-        return getTurnForTomorrow(task);
+        return getTurnForFutureDate(task, selectedStr);
     }
 
     return getTurnForPastOrToday(task, selectedStr);
 }
-
 
 
 
@@ -608,7 +607,6 @@ function getTurnForPastOrToday(task, selectedStr, initialTurn = null) {
 
 
 
-
 function getTurnForYesterday(task) {
     const formatDate = (d) => d.toISOString().split("T")[0];
     const yesterday = new Date();
@@ -623,34 +621,23 @@ function getTurnForYesterday(task) {
 
 
 
-
 function getTurnForTomorrow(task) {
-    const formatDate = (d) => d.toISOString().split("T")[0];
     const userOrder = [...task.users];
+    const yesterdayTurn = getTurnForYesterday(task);
+    let currentIndex = userOrder.indexOf(yesterdayTurn);
+    if (currentIndex === -1) currentIndex = 0;
 
-    const today = new Date();
-    const todayStr = formatDate(today);
-
-    // Determine current turn and completions for today
-    const todayTurn = getTurnForPastOrToday(task, todayStr);
-    const completionsToday = Array.isArray(task.completions?.[todayStr]) ? task.completions[todayStr] : [];
     const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
                         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-    let currentIndex = userOrder.indexOf(todayTurn);
-    if (currentIndex === -1) currentIndex = 0;
-
-    // Simulate tomorrow's turn by applying today's progress
-    const simulatedCompletions = repeatLimit;
-
-    for (let i = 0; i < simulatedCompletions; i++) {
+    // Simulate perfect completions
+    for (let i = 0; i < repeatLimit; i++) {
         currentIndex = (currentIndex + 1) % userOrder.length;
     }
 
     return userOrder[currentIndex];
 }
-
 
 
 
