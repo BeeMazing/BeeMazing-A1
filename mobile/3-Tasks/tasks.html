@@ -545,14 +545,10 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
+
 function getTurnForDate(task, selectedDateStr) {
     const todayStr = new Date().toISOString().split("T")[0];
     const selectedStr = new Date(selectedDateStr).toISOString().split("T")[0];
-
-    // ✅ First priority: use explicitly saved turn for the day
-    if (task.turnByDate?.[selectedStr]) {
-        return task.turnByDate[selectedStr];
-    }
 
     if (selectedStr === todayStr) {
         const yesterdayTurn = getTurnForYesterday(task);
@@ -645,14 +641,18 @@ function getTurnForTomorrow(task) {
 
 
 
-function getTurnForFutureDate(task, futureStr) {
-    // ✅ If a turn was explicitly set for this future date, use it directly
-    if (task.turnByDate?.[futureStr]) {
-        return task.turnByDate[futureStr];
-    }
 
+
+function getTurnForFutureDate(task, futureStr) {
     const formatDate = (d) => d.toISOString().split("T")[0];
     const userOrder = [...task.users];
+    const completions = task.completions || {};
+    const turnByDate = task.turnByDate || {};
+
+    const today = new Date();
+    const futureDate = new Date(futureStr);
+    const startDate = new Date(today);
+
     const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
                         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
@@ -660,28 +660,16 @@ function getTurnForFutureDate(task, futureStr) {
     let currentIndex = userOrder.indexOf(getTurnForYesterday(task));
     if (currentIndex === -1) currentIndex = 0;
 
-    const today = new Date();
-    const target = new Date(futureStr);
-    const d = new Date(today);
-    d.setDate(d.getDate() + 1); // Start from tomorrow
-
-    while (d <= target) {
-        const dStr = formatDate(d);
-
-        if (task.turnByDate?.[dStr]) {
-            currentIndex = userOrder.indexOf(task.turnByDate[dStr]);
-        } else {
-            for (let i = 0; i < repeatLimit; i++) {
-                currentIndex = (currentIndex + 1) % userOrder.length;
-            }
+    const d = new Date(startDate);
+    while (d <= futureDate) {
+        for (let i = 0; i < repeatLimit; i++) {
+            currentIndex = (currentIndex + 1) % userOrder.length;
         }
-
         d.setDate(d.getDate() + 1);
     }
 
     return userOrder[currentIndex];
 }
-
 
 
 
@@ -1351,8 +1339,6 @@ document.getElementById("scrollRight").addEventListener("click", () => {
 });
 
 
-
-
 // 🔁 Auto-refresh task list at midnight
 function refreshAtMidnight() {
     const now = new Date();
@@ -1372,6 +1358,7 @@ function refreshAtMidnight() {
 }
 
 refreshAtMidnight();
+
 
     </script>
 </body>
