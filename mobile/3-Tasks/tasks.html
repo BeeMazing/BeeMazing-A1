@@ -1342,6 +1342,29 @@ document.getElementById("scrollRight").addEventListener("click", () => {
     });
 });
 
+
+
+
+// 🔁 Auto-refresh task list at midnight
+function refreshAtMidnight() {
+    const now = new Date();
+    const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1) - now;
+    setTimeout(() => {
+        const todayStr = new Date().toISOString().split("T")[0];
+        document.querySelectorAll(".day").forEach(day => {
+            if (day.dataset.date === todayStr) {
+                day.classList.add("selected");
+                loadTasksForDate(todayStr);
+            } else {
+                day.classList.remove("selected");
+            }
+        });
+        refreshAtMidnight(); // Set again for the next midnight
+    }, msUntilMidnight);
+}
+
+refreshAtMidnight();
+
     </script>
 </body>
 </html>
