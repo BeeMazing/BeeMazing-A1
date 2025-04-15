@@ -648,6 +648,8 @@ async function loadTasksForDate(selectedDate) {
 
 
 // Determine whose turn it is for a specific date based on task history
+
+
 function determineTurnForDate(task, dateStr) {
     if (!task || !task.users || task.users.length === 0) {
         return "Unknown";
@@ -662,19 +664,19 @@ function determineTurnForDate(task, dateStr) {
     const diffDays = Math.floor((targetDate - today) / (1000 * 60 * 60 * 24));
 
     // For today or past dates, use completion history
-    if (diffDays <= 0) {
-        // Check for completions on the current day
+    if (diffDays < 0) {
+        // Check for completions on the target day
         const currentDayCompletions = task.completions && task.completions[dateStr]
             ? task.completions[dateStr].length
             : 0;
 
-        // If there are completions on the current day, the turn is for the next user
+        // If there are completions on the target day, the turn is for the next user
         if (currentDayCompletions > 0) {
             const lastCompletedUserIndex = userOrder.indexOf(task.completions[dateStr][currentDayCompletions - 1]);
             return userOrder[(lastCompletedUserIndex + 1) % userOrder.length];
         }
 
-        // If no completions today, find the most recent day
+        // If no completions on target day, find the most recent day
         const dateNumbers = {}; // For sorting dates
         const allDates = [];
 
@@ -739,9 +741,6 @@ function determineTurnForDate(task, dateStr) {
         return calculateFutureTurn(task, dateStr);
     }
 }
-
-
-
 
 
 
