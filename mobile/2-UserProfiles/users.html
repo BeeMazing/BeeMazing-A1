@@ -1807,87 +1807,53 @@ taskDiv.appendChild(statusDiv);
           }
         }
         
+        
+
+
+
+
+
+
+
         async function finishTask(currentUser, task, selectedDate) {
-          const today = selectedDate || new Date().toISOString().split("T")[0];
-          const adminEmail = localStorage.getItem("currentAdminEmail");
-        
-          const popup = document.createElement("div");
-          popup.className = "reward-popup";
-          popup.textContent = `Finished! ✅ +${task.reward || 0} 🍯`;
-          document.body.appendChild(popup);
-          setTimeout(() => popup.remove(), 2000);
-        
-          try {
-            const tasksResponse = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-            const tasksData = await tasksResponse.json();
-            if (!tasksResponse.ok) throw new Error(tasksData.error || "Failed to fetch tasks");
-            const tasks = tasksData.tasks || [];
-            const taskIndex = tasks.findIndex(t => t.title === task.title && t.date === task.date);
-            if (taskIndex === -1) return;
-        
-            if (!tasks[taskIndex].completions) tasks[taskIndex].completions = {};
-            if (!tasks[taskIndex].completions[today]) tasks[taskIndex].completions[today] = [];
-        
-            let requiredTimes = 1;
-            if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-            if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-            if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-        
-            const completedUsers = tasks[taskIndex].completions[today] || [];
-            const totalCompletions = completedUsers.length;
-            if (totalCompletions >= requiredTimes) return;
-        
-            tasks[taskIndex].completions[today].push(currentUser);
-        
-            if (task.repeat === "Daily" && task.timesPerDay > 1) {
-              const totalCompletions = tasks[taskIndex].completions[today].length;
-              if (totalCompletions < requiredTimes) {
-                const userOrder = [...task.users];
-                const currentIndex = userOrder.indexOf(currentUser);
-                const nextUser = userOrder[(currentIndex + 1) % userOrder.length];
-                tasks[taskIndex].tempTurnReplacement = {
-                  original: tasks[taskIndex].tempTurnReplacement?.original || currentUser,
-                  replacement: nextUser,
-                };
-              } else {
-                delete tasks[taskIndex].tempTurnReplacement;
-              }
-            } else if (task.repeat === "Daily" && task.timesPerDay === 1) {
-              delete tasks[taskIndex].tempTurnReplacement;
-            } else {
-              const totalCompletions = tasks[taskIndex].completions[today].length;
-              if (totalCompletions < requiredTimes) {
-                const currentIndex = task.users.indexOf(currentUser);
-                const nextUser = task.users[(currentIndex + 1) % task.users.length];
-                tasks[taskIndex].tempTurnReplacement = {
-                  original: tasks[taskIndex].tempTurnReplacement?.original || currentUser,
-                  replacement: nextUser,
-                };
-              } else {
-                delete tasks[taskIndex].tempTurnReplacement;
-              }
-            }
-        
-            await fetch("https://beemazing.onrender.com/api/tasks", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ adminEmail, task: tasks[taskIndex] })
-            });
-        
-            const rewardAmount = Number(task.reward || 0);
-            await updateUserReward(currentUser, rewardAmount);
-            await saveTaskHistory(currentUser, task);
-            updateLuckyChestProgress(currentUser, rewardAmount);
-            triggerHoneyRain(rewardAmount);
-        
-            setTimeout(() => loadUserReward(currentUser), 100);
-            await loadUserTasks(currentUser, selectedDate);
-          } catch (err) {
-            console.error("Error finishing task:", err);
-            alert("Failed to finish task. Please try again.");
-          }
-        }
-        
+  const adminEmail = localStorage.getItem("currentAdminEmail");
+  const date = selectedDate || new Date().toISOString().split("T")[0];
+
+  try {
+    const res = await fetch("https://beemazing.onrender.com/api/complete-task", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        adminEmail,
+        taskTitle: task.title,
+        user: currentUser,
+        date
+      })
+    });
+
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || "Failed to complete task");
+
+    const rewardAmount = result.updatedTask.reward || 0;
+
+    triggerHoneyRain(rewardAmount);
+    updateLuckyChestProgress(currentUser, rewardAmount);
+    setTimeout(() => loadUserReward(currentUser), 100);
+    await loadUserTasks(currentUser, date);
+  } catch (err) {
+    console.error("Error finishing task:", err);
+    alert("Failed to finish task. Please try again.");
+  }
+}
+
+
+
+
+
+
+
+
+
         window.addEventListener("resize", adjustContentTop);
         window.addEventListener("load", adjustContentTop);
         window.addEventListener("storage", (event) => {

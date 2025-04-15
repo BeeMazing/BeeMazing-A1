@@ -796,55 +796,50 @@ function getNextUser(task, selectedDate) {
 
 
 
+
+
+
         // Handle task completion and turn advancement
         async function finishTask(userName, task, button, selectedDate) {
-            const today = selectedDate;
-            const todayStr = formatDate(new Date(today));
-        
-            // Define repeat limit
-            const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                                task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                                task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-        
-            // Initialize completions array
-            if (!task.completions) task.completions = {};
-            if (!Array.isArray(task.completions[todayStr])) task.completions[todayStr] = [];
-        
-            const completionsToday = task.completions[todayStr];
-            const userCount = completionsToday.filter(u => u === userName).length;
-            if (userCount >= repeatLimit) return; // Prevent exceeding repeat limit
-        
-            // Add the completion
-            completionsToday.push(userName);
-        
-            // Update the turn for today only
-            if (!task.turnByDate) task.turnByDate = {};
-            const userOrder = [...task.users];
-            const currentTurn = getTurnForDate(task, todayStr); // Recalculate turn after completion
-            const currentIndex = userOrder.indexOf(currentTurn);
-            task.turnByDate[todayStr] = userOrder[currentIndex];
-        
-            // Save to backend
-            await saveTaskToBackend(task);
-        
-            // Reward logic
-            const rewardAmount = Number(task.reward) || 0;
-            const adminEmail = localStorage.getItem("currentAdminEmail");
-            if (adminEmail && rewardAmount > 0) {
-                await fetch("https://beemazing.onrender.com/api/rewards", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ adminEmail, user: userName, amount: rewardAmount })
-                });
-            }
-        
-            // Trigger UI updates
-            if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
-            if (typeof loadTasksForDate === 'function') loadTasksForDate(todayStr);
-            if (typeof loadUserTasks === 'function') loadUserTasks(userName, todayStr);
-            if (typeof loadUserReward === 'function') loadUserReward(userName);
-        }
-        
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    const todayStr = selectedDate || new Date().toISOString().split("T")[0];
+
+    try {
+        const res = await fetch("https://beemazing.onrender.com/api/complete-task", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                adminEmail,
+                taskTitle: task.title,
+                user: userName,
+                date: todayStr
+            })
+        });
+
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || "Failed to complete task");
+
+        const rewardAmount = result.updatedTask.reward || 0;
+
+        // Trigger UI updates
+        if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
+        if (typeof loadTasksForDate === 'function') loadTasksForDate(todayStr);
+        if (typeof loadUserTasks === 'function') loadUserTasks(userName, todayStr);
+        if (typeof loadUserReward === 'function') loadUserReward(userName);
+    } catch (err) {
+        console.error("❌ Error completing task:", err);
+        alert("Failed to finish task. Please try again.");
+    }
+}
+
+
+
+
+
+
+
+
+
         // Delete a task from the backend
         async function deleteTaskFromBackend(title, date) {
             const adminEmail = localStorage.getItem("currentAdminEmail");

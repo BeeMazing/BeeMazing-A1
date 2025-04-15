@@ -1020,77 +1020,6 @@ app.get("/api/admin-tasks", async (req, res) => {
 });
 
 // ✅ Handle task accept/decline actions
-app.post("/api/task-action", async (req, res) => {
-  const { adminEmail, taskTitle, user, action, date } = req.body;
-
-  if (!adminEmail || !taskTitle || !user || !action || !date) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
-
-  try {
-    const db = await connectDB();
-    const admins = db.collection("admins");
-
-    const admin = await admins.findOne({ email: adminEmail });
-    if (!admin) {
-      return res.status(404).json({ error: "Admin not found" });
-    }
-
-    const tasks = admin.tasks || [];
-    const taskIndex = tasks.findIndex(t => t.title === taskTitle && t.date.includes(date.split("-").join("-")));
-    if (taskIndex === -1) {
-      return res.status(404).json({ error: "Task not found" });
-    }
-
-    if (action === "accept") {
-      // Award honey
-      const reward = Number(tasks[taskIndex].reward || 0);
-      const rewards = admin.rewards || {};
-      rewards[user] = (rewards[user] || 0) + reward;
-
-      await admins.updateOne(
-        { email: adminEmail },
-        { $set: { rewards } }
-      );
-
-      // Log to history
-      const history = admin.history || {};
-      const month = new Date().toLocaleString("default", { month: "long" });
-      const day = new Date().getDate();
-      if (!history[month]) history[month] = {};
-      if (!history[month][day]) history[month][day] = [];
-      history[month][day].push({
-        title: taskTitle,
-        user,
-        timestamp: new Date().toISOString(),
-        action: "accepted"
-      });
-
-      await admins.updateOne(
-        { email: adminEmail },
-        { $set: { history } }
-      );
-    } else if (action === "decline") {
-      // Remove user from completions for this date
-      const completions = tasks[taskIndex].completions || {};
-      if (completions[date]) {
-        completions[date] = completions[date].filter(u => u !== user);
-      }
-
-      tasks[taskIndex].completions = completions;
-
-      await admins.updateOne(
-        { email: adminEmail },
-        { $set: { tasks } }
-      );
-    }
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Error in /api/task-action:", err);
-    res.status(500).json({ error: "Failed to process task action" });
-  }
-});
 
 
 
@@ -1105,3 +1034,77 @@ app.post("/api/task-action", async (req, res) => {
 
 
 // userAdmin.html ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+// users.html and tasks.html task details //
+
+
+app.post("/api/complete-task", async (req, res) => {
+  const { adminEmail, taskTitle, user, date } = req.body;
+
+  if (!adminEmail || !taskTitle || !user || !date) {
+    return res.status(400).json({ error: "Missing data" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) return res.status(404).json({ error: "Admin not found" });
+
+    const tasks = admin.tasks || [];
+    const taskIndex = tasks.findIndex(t => t.title === taskTitle && t.date.includes(date));
+    if (taskIndex === -1) return res.status(404).json({ error: "Task not found" });
+
+    const task = tasks[taskIndex];
+
+    // Ensure completions object exists
+    if (!task.completions) task.completions = {};
+    if (!task.completions[date]) task.completions[date] = [];
+
+    // Add user to completions if not already there
+    if (!task.completions[date].includes(user)) {
+      task.completions[date].push(user);
+    }
+
+    // Update tasks array
+    tasks[taskIndex] = task;
+
+    // Update rewards
+    const rewards = admin.rewards || {};
+    rewards[user] = (rewards[user] || 0) + (task.reward || 0);
+
+    // Update history
+    const history = admin.history || {};
+    const month = new Date(date).toLocaleString("default", { month: "long" });
+    const day = new Date(date).getDate();
+    if (!history[month]) history[month] = {};
+    if (!history[month][day]) history[month][day] = [];
+    history[month][day].push({
+      title: taskTitle,
+      user,
+      timestamp: new Date().toISOString(),
+      action: "completed"
+    });
+
+    // Save everything
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { tasks, rewards, history } }
+    );
+
+    res.json({ success: true, updatedTask: task });
+  } catch (err) {
+    console.error("🔥 Error in /api/complete-task:", err);
+    res.status(500).json({ error: "Failed to complete task" });
+  }
+});
+
+
+
+
+// users.html and tasks.html task details //
