@@ -983,154 +983,88 @@ async function finishTask(userName, task, button, selectedDate) {
         
         // Show modal to edit task completions
         async function showEditCompletionModal(task, completedUsers, today, parentModal) {
-    const modal = document.createElement("div");
-    modal.className = "task-modal";
-
-    const checkboxes = task.users.map(user => `
-        <label style="display:block;margin-bottom:8px;">
-            <input type="checkbox" value="${user}" ${completedUsers.includes(user) ? "checked" : ""}>
-            ${user}
-        </label>
-    `).join("");
-
-    modal.innerHTML = `
-        <div class="modal-content">
-            <strong>Edit Completed By:</strong><br><br>
-            ${checkboxes}
-            <button id="saveCompletionBtn" style="margin-top: 10px; padding: 8px 12px; background: var(--primary-color); color: var(--secondary-color); border: none; font-weight: bold; border-radius: 6px; cursor: pointer;">
-                Save
-            </button>
-        </div>
-    `;
-    document.body.appendChild(modal);
-
-    modal.addEventListener("click", (e) => {
-        if (e.target === modal) {
-            modal.remove();
-        }
-    });
-
-    document.getElementById("saveCompletionBtn").addEventListener("click", async () => {
-        const checkboxes = modal.querySelectorAll("input[type='checkbox']");
-        const newCompleted = [];
-        const removedUsers = [];
-        const addedUsers = [];
-
-        // Collect new completions and track changes
-        checkboxes.forEach(box => {
-            const user = box.value;
-            if (box.checked) {
-                newCompleted.push(user);
-                if (!completedUsers.includes(user)) {
-                    addedUsers.push(user);
+            const modal = document.createElement("div");
+            modal.className = "task-modal";
+        
+            const checkboxes = task.users.map(user => `
+                <label style="display:block;margin-bottom:8px;">
+                    <input type="checkbox" value="${user}" ${completedUsers.includes(user) ? "checked" : ""}>
+                    ${user}
+                </label>
+            `).join("");
+        
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <strong>Edit Completed By:</strong><br><br>
+                    ${checkboxes}
+                    <button id="saveCompletionBtn" style="margin-top: 10px; padding: 8px 12px; background: var(--primary-color); color: var(--secondary-color); border: none; font-weight: bold; border-radius: 6px; cursor: pointer;">
+                        Save
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        
+            modal.addEventListener("click", (e) => {
+                if (e.target === modal) {
+                    modal.remove();
                 }
-            } else if (completedUsers.includes(user)) {
-                removedUsers.push(user);
-            }
-        });
-
-        // Update completions
-        if (!task.completions) task.completions = {};
-        task.completions[today] = newCompleted;
-
-        // Determine repeat limit
-        let repeatLimit = 1;
-        if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
-        if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
-        if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
-
-        // Calculate the new turn using determineTurnForDate logic
-        const userOrder = [...task.users];
-        let newTurn;
-
-        if (newCompleted.length > 0) {
-            // If there are completions, set turn to the next user after the last completion
-            const lastCompletedUser = newCompleted[newCompleted.length - 1];
-            const lastIndex = userOrder.indexOf(lastCompletedUser);
-            newTurn = userOrder[(lastIndex + 1) % userOrder.length];
-        } else {
-            // If no completions, mimic determineTurnForDate's fallback
-            const dateNumbers = {};
-            const allDates = [];
-
-            if (task.completions) {
-                Object.keys(task.completions).forEach(date => {
-                    if (date < today) {
-                        const [year, month, day] = date.split('-').map(Number);
-                        dateNumbers[date] = year * 10000 + month * 100 + day;
-                        allDates.push(date);
+            });
+        
+            document.getElementById("saveCompletionBtn").addEventListener("click", async () => {
+                const checkboxes = modal.querySelectorAll("input[type='checkbox']");
+                const newCompleted = [];
+                const removedUsers = [];
+        
+                checkboxes.forEach(box => {
+                    const user = box.value;
+                    if (box.checked) {
+                        newCompleted.push(user);
+                    } else if (completedUsers.includes(user)) {
+                        removedUsers.push(user);
                     }
                 });
-            }
-
-            allDates.sort((a, b) => dateNumbers[b] - dateNumbers[a]);
-
-            let lastCompletedUser = null;
-            for (const date of allDates) {
-                const completions = task.completions[date];
-                if (completions && completions.length > 0) {
-                    lastCompletedUser = completions[completions.length - 1];
-                    break;
+        
+                if (!task.completions) task.completions = {};
+                task.completions[today] = newCompleted;
+        
+                let newTurn = null;
+                for (const removed of removedUsers) {
+                    if (task.users.includes(removed)) {
+                        newTurn = removed;
+                        break;
+                    }
                 }
-            }
-
-            if (lastCompletedUser) {
-                const lastIndex = userOrder.indexOf(lastCompletedUser);
-                newTurn = userOrder[(lastIndex + 1) % userOrder.length];
-            } else {
-                newTurn = userOrder[0]; // Default to first user
-            }
+        
+                if (!newTurn) {
+                    const completedSet = new Set(newCompleted);
+                    newTurn = task.users.find(u => !completedSet.has(u)) || task.users[0];
+                }
+        
+                task.turn = newTurn;
+        
+                const adminEmail = localStorage.getItem("currentAdminEmail");
+                const rewardAmount = Number(task.reward) || 0;
+                if (adminEmail && removedUsers.length > 0) {
+                    for (const user of removedUsers) {
+                        await fetch("https://beemazing.onrender.com/api/rewards", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ adminEmail, user, amount: -rewardAmount })
+                        });
+                    }
+                }
+        
+                await saveTaskToBackend(task);
+        
+                modal.remove();
+                parentModal.remove();
+        
+                const selectedDate = document.querySelector(".day.selected")?.dataset.date;
+                if (selectedDate) loadTasksForDate(selectedDate);
+                showTaskDetails(task);
+            });
         }
-
-        // Only advance turn if repeat limit is met
-        if (newCompleted.length < repeatLimit) {
-            // Keep turn at the next user unless completions are incomplete
-            task.turn = newTurn;
-        } else {
-            // If repeat limit is met, advance turn
-            task.turn = newTurn;
-        }
-
-        // Adjust rewards for added/removed users
-        const adminEmail = localStorage.getItem("currentAdminEmail");
-        const rewardAmount = Number(task.reward) || 0;
-
-        if (adminEmail) {
-            // Remove rewards for users no longer completed
-            for (const user of removedUsers) {
-                await fetch("https://beemazing.onrender.com/api/rewards", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ adminEmail, user, amount: -rewardAmount })
-                });
-            }
-
-            // Add rewards for newly completed users
-            for (const user of addedUsers) {
-                await fetch("https://beemazing.onrender.com/api/rewards", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ adminEmail, user, amount: rewardAmount })
-                });
-            }
-        }
-
-        // Save updated task to backend
-        await saveTaskToBackend(task);
-
-        modal.remove();
-        parentModal.remove();
-
-        // Reload tasks and show updated details
-        const selectedDate = document.querySelector(".day.selected")?.dataset.date;
-        if (selectedDate) loadTasksForDate(selectedDate);
-        showTaskDetails(task);
-    });
-}
-
-
-
-
+        
         // Show modal to edit turn order
         async function showEditTurnModal(task) {
             const modal = document.createElement("div");
