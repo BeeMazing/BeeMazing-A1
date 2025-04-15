@@ -549,6 +549,59 @@ body {
 
 
 
+        function getUserTurnForDate(task, selectedDateStr) {
+  const users = task.users || [];
+  const completions = task.completions || {};
+  const repeatsPerDay = task.timesPerDay || 1;
+
+  const parseDate = str => new Date(str);
+  const formatDate = d => d.toISOString().split("T")[0];
+
+  const selectedDate = parseDate(selectedDateStr);
+  const fromDate = parseDate(task.date.split(" to ")[0]);
+
+  if (selectedDate < fromDate) return { currentTurn: "-", nextTurn: "-", completedCount: 0 };
+
+  // Count ALL completed users from task start to the day before selected date
+  let virtualCompletions = [];
+
+  const allPastDates = Object.keys(completions)
+    .filter(dateStr => parseDate(dateStr) < selectedDate)
+    .sort();
+
+  for (const dateStr of allPastDates) {
+    virtualCompletions.push(...(completions[dateStr] || []));
+  }
+
+  // Now simulate remaining completions up to the current selectedDate
+  const daysSinceStart = Math.floor((selectedDate - fromDate) / (1000 * 60 * 60 * 24));
+  const idealTotalCompletions = daysSinceStart * repeatsPerDay;
+
+  let simulatedCompletionsNeeded = idealTotalCompletions - virtualCompletions.length;
+
+  let simIndex = users.indexOf(virtualCompletions[virtualCompletions.length - 1] || users[0]);
+  simIndex = simIndex === -1 ? 0 : (simIndex + 1) % users.length;
+
+  for (let i = 0; i < simulatedCompletionsNeeded; i++) {
+    virtualCompletions.push(users[simIndex]);
+    simIndex = (simIndex + 1) % users.length;
+  }
+
+  // Now get today’s completions (real ones)
+  const todayCompletions = completions[selectedDateStr] || [];
+  const todaySet = new Set(todayCompletions);
+
+  // Determine current + next turn
+  const currentIndex = virtualCompletions.length % users.length;
+  const currentTurn = users[currentIndex];
+  const nextTurn = users[(currentIndex + 1) % users.length];
+
+  return {
+    currentTurn,
+    nextTurn,
+    completedCount: todayCompletions.length
+  };
+}
 
 
 
@@ -557,7 +610,7 @@ body {
 
 
 
-        async function loadTasksForDate(selectedDate) {
+async function loadTasksForDate(selectedDate) {
   const adminEmail = localStorage.getItem("currentAdminEmail");
   if (!adminEmail) return;
 
@@ -570,70 +623,6 @@ body {
 
   const parseDate = str => new Date(str);
   const formatDate = d => d.toISOString().split("T")[0];
-  const addDays = (date, days) => {
-    const newDate = new Date(date);
-    newDate.setDate(newDate.getDate() + days);
-    return newDate;
-  };
-
-  function getVirtualTurn(task, targetDateStr) {
-    const completions = task.completions || {};
-    const users = task.users || [];
-    const repeats = task.timesPerDay || 1;
-
-    const startDate = parseDate(task.date.split(" to ")[0]);
-    const targetDate = parseDate(targetDateStr);
-
-    if (targetDate < startDate) return { currentTurn: "—", nextTurn: "—", completedCount: 0 };
-
-    // Collect all actual completions before today
-    let allCompletedUsers = [];
-    const dateKeys = Object.keys(completions).sort();
-
-    for (const date of dateKeys) {
-      const dateObj = parseDate(date);
-      if (dateObj < targetDate) {
-        allCompletedUsers.push(...(completions[date] || []));
-      }
-    }
-
-    // Determine starting index from last actual completion
-    let index = 0;
-    if (allCompletedUsers.length > 0) {
-      const lastUser = allCompletedUsers[allCompletedUsers.length - 1];
-      const lastIndex = users.indexOf(lastUser);
-      index = (lastIndex + 1) % users.length;
-    }
-
-    // Simulate completions day-by-day from (startDate or last completion) up to targetDate
-    const daysToSimulate = Math.floor((targetDate - startDate) / (1000 * 60 * 60 * 24));
-    for (let i = 0; i < daysToSimulate; i++) {
-      const simDate = formatDate(addDays(startDate, i));
-      const actuals = completions[simDate] || [];
-
-      if (actuals.length) {
-        // Use real completions
-        index = (index + actuals.length) % users.length;
-      } else {
-        // Simulate ideal completions
-        index = (index + repeats) % users.length;
-      }
-    }
-
-    // Determine today's real or simulated completions
-    const todayCompletions = completions[targetDateStr] || [];
-    const todaySet = new Set(todayCompletions);
-
-    let completedCount = todayCompletions.length;
-    let currentTurn = users[index % users.length];
-    let nextTurn = users[(index + 1) % users.length];
-
-    return {
-      currentTurn,
-      nextTurn,
-      completedCount
-    };
-  }
 
   const visibleTasks = tasks.filter(task => {
     if (!task.date) return false;
@@ -659,7 +648,7 @@ body {
                         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-    const { currentTurn, nextTurn, completedCount } = getVirtualTurn(task, selectedDate);
+    const { currentTurn, nextTurn, completedCount } = getUserTurnForDate(task, selectedDate);
     const isCompleted = completedCount >= repeatLimit;
 
     taskDiv.innerHTML = `
@@ -690,6 +679,11 @@ body {
     enableSwipeToDelete(taskDiv);
   }
 }
+
+
+
+
+
 
 
 
