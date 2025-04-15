@@ -548,7 +548,6 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-
 function getTurnForDate(task, selectedStr) {
     const formatDate = (d) => d.toISOString().split("T")[0];
     const selectedDate = new Date(selectedStr);
@@ -564,11 +563,13 @@ function getTurnForDate(task, selectedStr) {
     if (currentTurnIndex === -1) currentTurnIndex = 0;
 
     const d = new Date(taskStart);
+    let lastRealDate = null;
 
     while (d <= selectedDate) {
         const dStr = formatDate(d);
+        const isPastOrToday = d <= today;
+        const isActiveDay = dStr === selectedStr;
 
-        // If we already calculated turn for this date, use it
         if (turnByDate[dStr]) {
             currentTurnIndex = userOrder.indexOf(turnByDate[dStr]);
         } else {
@@ -580,9 +581,9 @@ function getTurnForDate(task, selectedStr) {
                 }
             }
 
-            // Save simulated turn only for past or current day
-            if (d < today || dStr === todayStr) {
+            if (isPastOrToday) {
                 turnByDate[dStr] = userOrder[currentTurnIndex];
+                lastRealDate = dStr;
             }
         }
 
@@ -591,7 +592,6 @@ function getTurnForDate(task, selectedStr) {
 
     return userOrder[currentTurnIndex];
 }
-
 
 
 
