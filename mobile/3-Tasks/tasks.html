@@ -612,20 +612,21 @@ async function loadTasksForDate(selectedDate) {
             <button class="delete-btn">Delete</button>
         `;
 
-        // Swipe-to-delete logic
-        let touchStartX = 0;
-        let touchEndX = 0;
-        let isSwiping = false;
+        // Swipe-to-delete logic for touch and mouse
+        let startX = 0;
+        let endX = 0;
+        let isInteracting = false;
 
+        // Touch events for mobile
         taskDiv.addEventListener("touchstart", (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-            isSwiping = true;
+            startX = e.changedTouches[0].screenX;
+            isInteracting = true;
         });
 
         taskDiv.addEventListener("touchmove", (e) => {
-            if (!isSwiping) return;
-            touchEndX = e.changedTouches[0].screenX;
-            const diff = touchStartX - touchEndX;
+            if (!isInteracting) return;
+            endX = e.changedTouches[0].screenX;
+            const diff = startX - endX;
             if (diff > 50) {
                 taskDiv.classList.add("swiped-left");
             } else if (diff < -50) {
@@ -634,9 +635,9 @@ async function loadTasksForDate(selectedDate) {
         });
 
         taskDiv.addEventListener("touchend", (e) => {
-            isSwiping = false;
-            touchEndX = e.changedTouches[0].screenX;
-            const diff = touchStartX - touchEndX;
+            isInteracting = false;
+            endX = e.changedTouches[0].screenX;
+            const diff = startX - endX;
             if (diff > 50) {
                 taskDiv.classList.add("swiped-left");
             } else if (diff < -50 || Math.abs(diff) < 50) {
@@ -644,9 +645,50 @@ async function loadTasksForDate(selectedDate) {
             }
         });
 
-        // Prevent click event when swiping
+        // Mouse events for desktop
+        taskDiv.addEventListener("mousedown", (e) => {
+            startX = e.screenX;
+            isInteracting = true;
+            e.preventDefault(); // Prevent text selection
+        });
+
+        taskDiv.addEventListener("mousemove", (e) => {
+            if (!isInteracting) return;
+            endX = e.screenX;
+            const diff = startX - endX;
+            if (diff > 50) {
+                taskDiv.classList.add("swiped-left");
+            } else if (diff < -50) {
+                taskDiv.classList.remove("swiped-left");
+            }
+        });
+
+        taskDiv.addEventListener("mouseup", (e) => {
+            isInteracting = false;
+            endX = e.screenX;
+            const diff = startX - endX;
+            if (diff > 50) {
+                taskDiv.classList.add("swiped-left");
+            } else if (diff < -50 || Math.abs(diff) < 50) {
+                taskDiv.classList.remove("swiped-left");
+            }
+        });
+
+        taskDiv.addEventListener("mouseleave", () => {
+            if (isInteracting) {
+                isInteracting = false;
+                const diff = startX - endX;
+                if (diff > 50) {
+                    taskDiv.classList.add("swiped-left");
+                } else {
+                    taskDiv.classList.remove("swiped-left");
+                }
+            }
+        });
+
+        // Prevent click event when swiping/dragging
         taskDiv.addEventListener("click", async (e) => {
-            if (taskDiv.classList.contains("swiped-left") || Math.abs(touchStartX - touchEndX) > 50) {
+            if (taskDiv.classList.contains("swiped-left") || Math.abs(startX - endX) > 50) {
                 e.preventDefault();
                 return;
             }
@@ -658,18 +700,25 @@ async function loadTasksForDate(selectedDate) {
             }
         });
 
-        taskDiv.querySelector(".delete-btn").addEventListener("click", async () => {
+        // Delete button logic with enhanced error handling
+        taskDiv.querySelector(".delete-btn").addEventListener("click", async (e) => {
+            e.stopPropagation(); // Prevent triggering the taskDiv click event
             if (confirm("Are you sure you want to delete this task?")) {
-                await deleteTaskFromBackend(task.title, task.date);
-                loadTasksForDate(selectedDate);
+                try {
+                    console.log("Attempting to delete task:", { title: task.title, date: task.date });
+                    await deleteTaskFromBackend(task.title, task.date);
+                    console.log("Task deleted successfully, refreshing tasks for:", selectedDate);
+                    await loadTasksForDate(selectedDate);
+                } catch (error) {
+                    console.error("Error deleting task:", error);
+                    alert("Failed to delete task. Please try again.");
+                }
             }
         });
 
         taskList.appendChild(taskDiv);
     });
 }
-
-
 
 
 
