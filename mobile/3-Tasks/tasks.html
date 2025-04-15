@@ -551,16 +551,20 @@ function calculateCurrentTurn(task, selectedDate) {
     const userOrder = [...task.users];
     if (!userOrder.length) return "None";
 
+    // Use task.turn if set for the active day
+    const today = new Date().toISOString().split("T")[0];
+    if (selectedDate === today && task.turn) {
+        return task.turn;
+    }
+
     // Parse selected date
     const selected = new Date(selectedDate);
     selected.setHours(0, 0, 0, 0);
 
     // Find the most recent previous day with completions
     let lastCompletedUser = null;
-    let lastCompletedDate = null;
-
     if (task.completions) {
-        const completionDates = Object.keys(task.completions)
+        const completionDates = Object.keys(task.completsions)
             .filter(date => {
                 const d = new Date(date);
                 d.setHours(0, 0, 0, 0);
@@ -569,7 +573,7 @@ function calculateCurrentTurn(task, selectedDate) {
             .sort((a, b) => new Date(b) - new Date(a));
 
         if (completionDates.length > 0) {
-            lastCompletedDate = completionDates[0];
+            const lastCompletedDate = completionDates[0];
             const completions = task.completions[lastCompletedDate];
             if (Array.isArray(completions) && completions.length > 0) {
                 lastCompletedUser = completions[completions.length - 1];
@@ -583,13 +587,9 @@ function calculateCurrentTurn(task, selectedDate) {
         return userOrder[(lastIndex + 1) % userOrder.length];
     }
 
-    // If no prior completions, use the first user or task.turn if set
+    // Fallback to task.turn or first user
     return task.turn || userOrder[0];
 }
-
-
-
-
 
 
 
@@ -683,9 +683,9 @@ function calculateCurrentTurn(task, selectedDate) {
 
 
 
-
-
         // Show task details in a modal
+
+
         async function showTaskDetails(task) {
     const selectedDate = document.querySelector(".day.selected")?.dataset.date;
     if (!selectedDate) return;
@@ -768,6 +768,12 @@ function calculateCurrentTurn(task, selectedDate) {
 
 
 
+
+
+
+
+
+
         // Calculate the current turn for a given date
 
 
@@ -783,6 +789,7 @@ function calculateCurrentTurn(task, selectedDate) {
     const todayStr = selectedDate || new Date().toISOString().split("T")[0];
 
     try {
+        // Complete the task
         const res = await fetch("https://beemazing.onrender.com/api/complete-task", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -810,7 +817,7 @@ function calculateCurrentTurn(task, selectedDate) {
 
         // Trigger UI updates
         if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
-        if (typeof loadTasksForDate === 'function') loadTasksForDate(todayStr);
+        await loadTasksForDate(todayStr); // Ensure full refresh
         if (typeof loadUserTasks === 'function') loadUserTasks(userName, todayStr);
         if (typeof loadUserReward === 'function') loadUserReward(userName);
     } catch (err) {
@@ -818,8 +825,6 @@ function calculateCurrentTurn(task, selectedDate) {
         alert("Failed to finish task. Please try again.");
     }
 }
-
-
 
 
 
