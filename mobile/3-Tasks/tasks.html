@@ -545,34 +545,58 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
+
+
+
+
 function getTurnForDate(task, selectedDateStr) {
-    const selectedStr = new Date(selectedDateStr).toISOString().split("T")[0];
+    const formatDate = (d) => d.toISOString().split("T")[0];
+    const todayStr = formatDate(new Date());
+    const selectedStr = formatDate(new Date(selectedDateStr));
+    const completions = task.completions || {};
     const userOrder = [...task.users];
+    const turnByDate = task.turnByDate || {};
+    const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
+                        task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+                        task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-    if (!task.completions) task.completions = {};
-    const completionsToday = Array.isArray(task.completions[selectedStr]) ? task.completions[selectedStr] : [];
-
-    // If task.turnByDate override exists, trust it
-    if (task.turnByDate?.[selectedStr]) return task.turnByDate[selectedStr];
-
-    // If everyone completed, keep last one
-    if (completionsToday.length >= userOrder.length) {
-        return completionsToday[completionsToday.length - 1];
+    // 1. If override turn is saved for that date, use it.
+    if (turnByDate[selectedStr]) {
+        return turnByDate[selectedStr];
     }
 
-    // Find first user who hasn't completed yet
-    for (const user of userOrder) {
-        const count = completionsToday.filter(u => u === user).length;
-        if (count === 0) return user;
+    // 2. Determine base starting turn = turnByDate of the *previous day*
+    let startDate = new Date(task.date.split(" to ")[0]);
+    let prevDay = new Date(selectedStr);
+    prevDay.setDate(prevDay.getDate() - 1);
+    let currentTurn = turnByDate[formatDate(startDate)] || task.turn || userOrder[0];
+
+    let d = new Date(startDate);
+    while (formatDate(d) <= selectedStr) {
+        const dStr = formatDate(d);
+        const dailyCompletions = completions[dStr] || [];
+
+        // Rotate turn for each valid user who completed (up to repeatLimit)
+        let count = 0;
+        for (let user of dailyCompletions) {
+            if (userOrder.includes(user)) {
+                count++;
+                if (count <= repeatLimit) {
+                    let index = userOrder.indexOf(currentTurn);
+                    currentTurn = userOrder[(index + 1) % userOrder.length];
+                }
+            }
+        }
+
+        // Store turn result for this date
+        turnByDate[dStr] = currentTurn;
+
+        d.setDate(d.getDate() + 1);
     }
 
-    // Fallback
-    return userOrder[0];
+    task.turnByDate = turnByDate; // update memory for future reference
+    return turnByDate[selectedStr];
 }
-
-
-
-
 
 
 
