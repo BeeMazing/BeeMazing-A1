@@ -603,27 +603,21 @@ body {
             // Use today’s completions to determine turn
             currentTurn = userOrder[completedCount % userOrder.length];
         } else {
-            // No completions today → check yesterday
+            // No completions today → check yesterday’s intended turn
             const prevDate = getPreviousDate(selectedDate);
             const prevCompletions = Array.isArray(task.completions?.[prevDate]) ? task.completions[prevDate] : [];
 
-            if (prevCompletions.length === 0) {
-                // No one completed yesterday → use first user
-                currentTurn = userOrder[0];
+            if (prevCompletions.length > 0) {
+                const prevCompletedCount = prevCompletions.length;
+                const yesterdayTurn = userOrder[prevCompletedCount % userOrder.length];
+
+                const didComplete = prevCompletions.includes(yesterdayTurn);
+                currentTurn = didComplete
+                    ? userOrder[(userOrder.indexOf(yesterdayTurn) + 1) % userOrder.length]
+                    : yesterdayTurn;
             } else {
-                const lastUser = prevCompletions[prevCompletions.length - 1];
-                const lastUserIndex = userOrder.indexOf(lastUser);
-
-                // Count how many times each user completed yesterday
-                const completedSet = new Set(prevCompletions);
-
-                if (completedSet.has(lastUser)) {
-                    // Last user did complete yesterday → move to next user
-                    currentTurn = userOrder[(lastUserIndex + 1) % userOrder.length];
-                } else {
-                    // Last user didn’t complete → keep the same turn
-                    currentTurn = lastUser;
-                }
+                // No completions yesterday either → start from user 0
+                currentTurn = userOrder[0];
             }
         }
 
@@ -662,7 +656,6 @@ body {
 
 
 
-
         // Show task details in a modal
         async function showTaskDetails(task) {
     const selectedDate = document.querySelector(".day.selected")?.dataset.date;
@@ -678,8 +671,34 @@ body {
     const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
     const completedCount = completedUsers.length;
 
-    const currentTurn = userOrder[completedCount % userOrder.length];
-    const nextUser = userOrder[(completedCount + 1) % userOrder.length];
+    function getPreviousDate(dateStr) {
+        const [year, month, day] = dateStr.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+        date.setDate(date.getDate() - 1);
+        return date.toISOString().split("T")[0];
+    }
+
+    let currentTurn;
+    if (completedCount > 0) {
+        currentTurn = userOrder[completedCount % userOrder.length];
+    } else {
+        const prevDate = getPreviousDate(selectedDate);
+        const prevCompletions = Array.isArray(task.completions?.[prevDate]) ? task.completions[prevDate] : [];
+
+        if (prevCompletions.length > 0) {
+            const prevCompletedCount = prevCompletions.length;
+            const yesterdayTurn = userOrder[prevCompletedCount % userOrder.length];
+
+            const didComplete = prevCompletions.includes(yesterdayTurn);
+            currentTurn = didComplete
+                ? userOrder[(userOrder.indexOf(yesterdayTurn) + 1) % userOrder.length]
+                : yesterdayTurn;
+        } else {
+            currentTurn = userOrder[0];
+        }
+    }
+
+    const nextUser = userOrder[(userOrder.indexOf(currentTurn) + 1) % userOrder.length];
 
     let taskDetails = "";
     if (task.title) taskDetails += `<strong>Title:</strong> ${task.title}<br>`;
@@ -743,7 +762,6 @@ body {
         });
     }
 }
-
 
 
 
