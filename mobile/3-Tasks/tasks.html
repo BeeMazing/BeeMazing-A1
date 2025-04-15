@@ -655,12 +655,13 @@ function determineTurnForDate(task, dateStr) {
     const targetDate = new Date(dateStr);
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Normalize to start of day
+    targetDate.setHours(0, 0, 0, 0);
 
     // Calculate days difference
     const diffDays = Math.floor((targetDate - today) / (1000 * 60 * 60 * 24));
 
-    // For today or past dates, use completion history
-    if (diffDays <= 1) {
+    // For today, use completion history to reflect real-time updates
+    if (diffDays === 0) {
         // Check for completions on the current day
         const currentDayCompletions = task.completions && task.completions[dateStr]
             ? task.completions[dateStr].length
@@ -692,7 +693,7 @@ function determineTurnForDate(task, dateStr) {
         for (const date of allDates) {
             const dateObj = new Date(date);
             dateObj.setHours(0, 0, 0, 0);
-            // Only consider dates before the target date
+            // Only consider dates before today
             if (dateObj < targetDate) {
                 mostRecentDate = date;
                 break;
@@ -733,12 +734,10 @@ function determineTurnForDate(task, dateStr) {
         // If no history at all, start with the first user
         return userOrder[0];
     } else {
-        // For future dates beyond tomorrow, project the turn
+        // For tomorrow and future dates, project the turn
         return projectTurnForFutureDate(task, dateStr);
     }
 }
-
-
 
 
 // Project the turn for a future date based on repeat settings
