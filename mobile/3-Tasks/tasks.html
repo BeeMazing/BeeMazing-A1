@@ -647,9 +647,8 @@ async function loadTasksForDate(selectedDate) {
 
 
 
+
 // Determine whose turn it is for a specific date based on task history
-
-
 function determineTurnForDate(task, dateStr) {
     if (!task || !task.users || task.users.length === 0) {
         return "Unknown";
@@ -664,19 +663,19 @@ function determineTurnForDate(task, dateStr) {
     const diffDays = Math.floor((targetDate - today) / (1000 * 60 * 60 * 24));
 
     // For today or past dates, use completion history
-    if (diffDays < 0) {
-        // Check for completions on the target day
+    if (diffDays <= 1) {
+        // Check for completions on the current day
         const currentDayCompletions = task.completions && task.completions[dateStr]
             ? task.completions[dateStr].length
             : 0;
 
-        // If there are completions on the target day, the turn is for the next user
+        // If there are completions on the current day, the turn is for the next user
         if (currentDayCompletions > 0) {
             const lastCompletedUserIndex = userOrder.indexOf(task.completions[dateStr][currentDayCompletions - 1]);
             return userOrder[(lastCompletedUserIndex + 1) % userOrder.length];
         }
 
-        // If no completions on target day, find the most recent day
+        // If no completions today, find the most recent day
         const dateNumbers = {}; // For sorting dates
         const allDates = [];
 
@@ -737,21 +736,13 @@ function determineTurnForDate(task, dateStr) {
         // If no history at all, start with the first user
         return userOrder[0];
     } else {
-        // For tomorrow and future dates, calculate expected turn
-        return calculateFutureTurn(task, dateStr);
+        // For future dates beyond tomorrow, project the turn
+        return projectTurnForFutureDate(task, dateStr);
     }
 }
 
-
-
-
-
-
-
-
 // Project the turn for a future date based on repeat settings
-
-function calculateFutureTurn(task, dateStr) {
+function projectTurnForFutureDate(task, dateStr) {
     if (!task || !task.users || task.users.length === 0) {
         return "Unknown";
     }
@@ -771,34 +762,97 @@ function calculateFutureTurn(task, dateStr) {
     }
 
     let repeatLimit = 1;
+    let cycles = 0;
+
     if (task.repeat === "Daily") {
         repeatLimit = task.timesPerDay || 1;
+        cycles = diffDays * repeatLimit; // Each day requires repeatLimit completions
     } else if (task.repeat === "Weekly") {
         repeatLimit = task.timesPerWeek || 1;
+        const weeks = Math.floor(diffDays / 7);
+        cycles = weeks * repeatLimit; // Each week requires repeatLimit completions
     } else if (task.repeat === "Monthly") {
         repeatLimit = task.timesPerMonth || 1;
-    }
-
-    // Calculate total completions assuming full cycles each day
-    let totalCompletions = 0;
-    if (task.repeat === "Daily") {
-        totalCompletions = diffDays * repeatLimit;
-    } else if (task.repeat === "Weekly") {
-        const weeks = Math.floor(diffDays / 7);
-        totalCompletions = weeks * repeatLimit;
-    } else if (task.repeat === "Monthly") {
-        const months = Math.floor(diffDays / 30);
-        totalCompletions = months * repeatLimit;
+        const months = Math.floor(diffDays / 30); // Approximate months
+        cycles = months * repeatLimit; // Each month requires repeatLimit completions
     } else {
-        totalCompletions = diffDays;
+        // One-time task
+        cycles = diffDays;
     }
 
-    // Find the user by rotating through the user order
-    const totalTurns = totalCompletions % userOrder.length;
-    const finalIndex = totalTurns % userOrder.length;
+    // Find the most recent completion date before targetDate
+    let lastCompletedUser = null;
+    let lastCompletionDate = null;
+    const dateNumbers = {};
+    const allDates = [];
+
+    if (task.completions) {
+        Object.keys(task.completions).forEach(date => {
+            const dateObj = new Date(date);
+            dateObj.setHours(0, 0, 0, 0);
+            if (dateObj < targetDate) {
+                const [year, month, day] = date.split('-').map(Number);
+                dateNumbers[date] = year * 10000 + month * 100 + day;
+                allDates.push(date);
+            }
+        });
+
+        allDates.sort((a, b) => dateNumbers[b] - dateNumbers[a]);
+
+        for (const date of allDates) {
+            const completions = task.completions[date];
+            if (completions && completions.length > 0) {
+                lastCompletedUser = completions[completions.length - 1];
+                lastCompletionDate = new Date(date);
+                lastCompletionDate.setHours(0, 0, 0, 0);
+                break;
+            }
+        }
+    }
+
+    let startingIndex = 0;
+    if (lastCompletedUser && lastCompletionDate) {
+        startingIndex = userOrder.indexOf(lastCompletedUser);
+
+        // Calculate additional cycles since last completion
+        const timeSinceLast = targetDate - lastCompletionDate;
+        const daysSinceLast = Math.floor(timeSinceLast / (1000 * 60 * 60 * 24));
+
+        if (task.repeat === "Daily") {
+            cycles = daysSinceLast * repeatLimit;
+        } else if (task.repeat === "Weekly") {
+            const weeksSinceLast = Math.floor(daysSinceLast / 7);
+            cycles = weeksSinceLast * repeatLimit;
+        } else if (task.repeat === "Monthly") {
+            const monthsSinceLast = Math.floor(daysSinceLast / 30);
+            cycles = monthsSinceLast * repeatLimit;
+        } else {
+            cycles = daysSinceLast;
+        }
+    }
+
+    // Calculate the user index based on cycles
+    const totalTurns = cycles % userOrder.length;
+    const finalIndex = (startingIndex + totalTurns) % userOrder.length;
 
     return userOrder[finalIndex];
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
