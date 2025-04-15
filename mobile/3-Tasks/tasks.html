@@ -577,55 +577,58 @@ body {
   };
 
   function forecastTurns(task, selectedDateStr) {
-    const selected = parseDate(selectedDateStr);
-    const fromDate = parseDate(task.date.split(" to ")[0]);
-    const daysAhead = Math.max(0, Math.floor((selected - fromDate) / (1000 * 60 * 60 * 24)));
-
-    const completions = task.completions || {};
     const users = task.users || [];
-    const repeats = task.timesPerDay || 1;
+    const completions = task.completions || {};
+    const repeatsPerDay = task.timesPerDay || 1;
 
-    // Flatten past completions
+    const selectedDate = parseDate(selectedDateStr);
+    const fromDate = parseDate(task.date.split(" to ")[0]);
+
+    // Build full historical completion list before selectedDate
     let allCompletions = [];
     Object.keys(completions)
-      .filter(d => parseDate(d) < selected)
+      .filter(d => parseDate(d) < selectedDate)
       .sort()
-      .forEach(date => {
-        allCompletions.push(...(completions[date] || []));
+      .forEach(d => {
+        allCompletions.push(...(completions[d] || []));
       });
 
-    let index = 0;
+    let currentIndex = 0;
     if (allCompletions.length) {
-      const last = allCompletions[allCompletions.length - 1];
-      index = (users.indexOf(last) + 1) % users.length;
+      const lastUser = allCompletions[allCompletions.length - 1];
+      currentIndex = (users.indexOf(lastUser) + 1) % users.length;
     }
 
-    let virtualCompletions = [];
-    let virtualIndex = index;
+    // Simulate ideal completions from start to selectedDate
+    const totalDays = Math.max(0, Math.floor((selectedDate - fromDate) / (1000 * 60 * 60 * 24)));
 
-    for (let i = 0; i < daysAhead; i++) {
-      for (let r = 0; r < repeats; r++) {
-        virtualCompletions.push(users[virtualIndex]);
-        virtualIndex = (virtualIndex + 1) % users.length;
+    for (let i = 0; i < totalDays; i++) {
+      for (let r = 0; r < repeatsPerDay; r++) {
+        currentIndex = (currentIndex + 1) % users.length;
       }
     }
 
     const todayCompletions = Array.isArray(completions[selectedDateStr]) ? completions[selectedDateStr] : [];
-    const todaySet = new Set(todayCompletions);
-    let currentTurn = users.find(u => !todaySet.has(u)) || "All done!";
-    let nextTurn = users.find(u => !todaySet.has(u) && u !== currentTurn) || "—";
+    const completedCount = todayCompletions.length;
+    const remaining = Math.max(0, repeatsPerDay - completedCount);
 
-    // If today is still in future, simulate ideal outcome
-    if (!todayCompletions.length && daysAhead >= 0) {
-      let tempIndex = virtualIndex;
-      currentTurn = users[tempIndex % users.length];
-      nextTurn = users[(tempIndex + 1) % users.length];
+    let currentTurn = "All done!";
+    let nextTurn = "—";
+
+    if (remaining > 0) {
+      let todayForecast = [];
+      for (let r = 0; r < repeatsPerDay; r++) {
+        todayForecast.push(users[(currentIndex + r) % users.length]);
+      }
+
+      currentTurn = todayForecast[completedCount] || "All done!";
+      nextTurn = todayForecast[completedCount + 1] || "—";
     }
 
     return {
       currentTurn,
       nextTurn,
-      completedCount: todayCompletions.length
+      completedCount
     };
   }
 
@@ -654,7 +657,6 @@ body {
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
     const { currentTurn, nextTurn, completedCount } = forecastTurns(task, selectedDate);
-
     const isCompleted = completedCount >= repeatLimit;
 
     taskDiv.innerHTML = `
@@ -685,7 +687,6 @@ body {
     enableSwipeToDelete(taskDiv);
   }
 }
-
 
 
 
