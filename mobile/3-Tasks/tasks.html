@@ -963,9 +963,6 @@ async function showTaskDetails(task) {
 
 
 
-
-
-
 async function finishTask(userName, task, button, selectedDate) {
     const today = selectedDate;
 
@@ -985,28 +982,32 @@ async function finishTask(userName, task, button, selectedDate) {
     const userList = task.users;
     const currentTurn = task.tempTurnReplacement?.replacement || task.turn || userList[0];
 
+    // Update turn logic
+    const userCompletionCounts = {};
+    task.completions[today].forEach(u => {
+        userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
+    });
+
+    const currentIndex = userList.indexOf(currentTurn);
+    let nextIndex = (currentIndex + 1) % userList.length;
+    let looped = false;
+
+    // Find the next user who hasn't reached their completion limit
+    while ((userCompletionCounts[userList[nextIndex]] || 0) >= repeatLimit && !looped) {
+        nextIndex = (nextIndex + 1) % userList.length;
+        if (nextIndex === currentIndex) looped = true;
+    }
+
+    // Update turn, handling temp replacement if present
     if (task.tempTurnReplacement && userName === task.tempTurnReplacement.replacement) {
         const originalUser = task.tempTurnReplacement.original;
         const originalIndex = userList.indexOf(originalUser);
-        const nextIndex = (originalIndex + 1) % userList.length;
+        nextIndex = (originalIndex + 1) % userList.length;
         task.turn = userList[nextIndex];
         delete task.tempTurnReplacement;
         if (task.originalOwner) delete task.originalOwner[userName];
     } else {
-        const userCompletionCounts = {};
-        task.completions[today].forEach(u => {
-            userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
-        });
-        const currentIndex = userList.indexOf(currentTurn);
-        let nextIndex = (currentIndex + 1) % userList.length;
-        let looped = false;
-
-        while ((userCompletionCounts[userList[nextIndex]] || 0) >= repeatLimit && !looped) {
-            nextIndex = (nextIndex + 1) % userList.length;
-            if (nextIndex === currentIndex) looped = true;
-        }
-
-        task.turn = looped ? userList[0] : userList[nextIndex];
+        task.turn = userList[nextIndex];
     }
 
     task.date = selectedDate;
@@ -1026,6 +1027,14 @@ async function finishTask(userName, task, button, selectedDate) {
     if (typeof loadUserTasks === 'function') loadUserTasks(userName, selectedDate);
     if (typeof loadUserReward === 'function') loadUserReward(userName);
 }
+
+
+
+
+
+
+
+
 
 async function showEditCompletionModal(task, completedUsers, today, parentModal) {
     const modal = document.createElement("div");
