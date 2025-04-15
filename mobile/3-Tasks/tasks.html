@@ -547,6 +547,9 @@ body {
 
 
 // Load tasks for a specific date
+
+
+// Load tasks for a specific date
 async function loadTasksForDate(selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (!adminEmail) return;
@@ -578,12 +581,6 @@ async function loadTasksForDate(selectedDate) {
         return;
     }
 
-    // Find the initial turn for each task based on task history
-    for (const task of visibleTasks) {
-        // Determine current turn based on history
-        task.currentTurn = determineTurnForDate(task, selectedDate);
-    }
-
     visibleTasks.forEach((task) => {
         const taskDiv = document.createElement("div");
         taskDiv.className = "task-item";
@@ -595,13 +592,16 @@ async function loadTasksForDate(selectedDate) {
         if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
         if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
+        // Determine whose turn it is for this task on the selected date
+        const currentTurn = determineTurnForDate(task, selectedDate);
+        
         const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
         const completedCount = completedUsers.length;
-
-        // Use the calculated currentTurn instead of just the index-based approach
-        const currentTurn = task.currentTurn;
-        const currentTurnIndex = task.users.indexOf(currentTurn);
-        const nextUser = task.users[(currentTurnIndex + 1) % task.users.length];
+        
+        // Find the next user based on current turn
+        const currentUserIndex = task.users.indexOf(currentTurn);
+        const nextUser = task.users[(currentUserIndex + 1) % task.users.length];
+        
         const isCompleted = completedCount >= repeatLimit;
 
         taskDiv.innerHTML = `
@@ -618,11 +618,7 @@ async function loadTasksForDate(selectedDate) {
                 const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
                 const result = await response.json();
                 const latestTask = result.tasks.find(t => t.title === task.title && t.date === task.date);
-                if (latestTask) {
-                    // Update the current turn before showing details
-                    latestTask.currentTurn = determineTurnForDate(latestTask, selectedDate);
-                    showTaskDetails(latestTask);
-                }
+                if (latestTask) showTaskDetails(latestTask);
             }
         });
 
@@ -637,82 +633,90 @@ async function loadTasksForDate(selectedDate) {
     });
 }
 
-// Determine whose turn it is for a specific date based on task history
+
+
+
+
+
+
+
 // Determine whose turn it is for a specific date based on task history
 function determineTurnForDate(task, dateStr) {
     if (!task || !task.users || task.users.length === 0) {
         return "Unknown";
     }
 
-    // Parse the target date
-    const targetDate = new Date(dateStr);
-    targetDate.setHours(0, 0, 0, 0);
-    
-    // Prepare to check previous days
     const userOrder = [...task.users];
-    const daysBefore = [];
+    const targetDate = new Date(dateStr);
     
-    // Get dates leading up to the target date
-    for (let i = 1; i <= 30; i++) { // Look back up to 30 days
-        const prevDate = new Date(targetDate);
-        prevDate.setDate(prevDate.getDate() - i);
-        daysBefore.push(prevDate.toISOString().split("T")[0]);
-    }
-    
-    // First check if there are completions on the current day
+    // Check for completions on the current day
     const currentDayCompletions = task.completions && task.completions[dateStr] 
         ? task.completions[dateStr].length 
         : 0;
     
-    // If there are completions on the current day, we can determine the turn
+    // If there are completions on the current day, the turn is for the next user
     if (currentDayCompletions > 0) {
-        // Return the next user in the rotation after the last completed
         const lastCompletedUserIndex = userOrder.indexOf(task.completions[dateStr][currentDayCompletions - 1]);
         return userOrder[(lastCompletedUserIndex + 1) % userOrder.length];
     }
     
-    // If no completions today, check previous days in order
-    let prevDayTurn = null;
-    let incompleteUserTurn = null;
+    // If no completions today, find the most recent day
+    const dateNumbers = {}; // For sorting dates
+    const allDates = [];
     
-    for (const day of daysBefore) {
-        // If we find a previous day with completions
-        if (task.completions && task.completions[day]) {
-            const dayCompletions = task.completions[day].length;
-            if (dayCompletions > 0) {
-                // How many users were supposed to complete tasks on this day?
-                let repeatLimit = 1;
-                if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
-                if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
-                if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
-                
-                // If completions are less than the repeat limit, we have an incomplete user
-                if (dayCompletions < repeatLimit) {
-                    // The turn should be with the user right after the last completed user
-                    const lastCompletedUserIndex = userOrder.indexOf(task.completions[day][dayCompletions - 1]);
-                    incompleteUserTurn = userOrder[(lastCompletedUserIndex + 1) % userOrder.length];
-                    break; // We found our incomplete user
-                } else {
-                    // All completions done, the turn goes to the next user after the last completed
-                    const lastCompletedUserIndex = userOrder.indexOf(task.completions[day][dayCompletions - 1]);
-                    prevDayTurn = userOrder[(lastCompletedUserIndex + 1) % userOrder.length];
-                    break; // We found our next turn
-                }
-            }
+    if (task.completions) {
+        Object.keys(task.completions).forEach(date => {
+            const [year, month, day] = date.split('-').map(Number);
+            dateNumbers[date] = year * 10000 + month * 100 + day;
+            allDates.push(date);
+        });
+    }
+    
+    // Sort dates in descending order (newest first)
+    allDates.sort((a, b) => dateNumbers[b] - dateNumbers[a]);
+    
+    // Find the most recent day with task data
+    let mostRecentDate = null;
+    for (const date of allDates) {
+        const dateObj = new Date(date);
+        // Only consider dates before the target date
+        if (dateObj < targetDate) {
+            mostRecentDate = date;
+            break;
         }
     }
     
-    // If we found an incomplete user from previous days, they should still have the turn
-    if (incompleteUserTurn) {
-        return incompleteUserTurn;
+    // If we found a recent date with completions
+    if (mostRecentDate && task.completions[mostRecentDate]) {
+        const completions = task.completions[mostRecentDate];
+        // How many completions were required on that day?
+        let repeatLimit = 1;
+        if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
+        if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
+        if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
+        
+        // If completions were less than required, the same user should continue
+        if (completions.length < repeatLimit) {
+            // Find who should have done it next
+            const lastCompletedUser = completions.length > 0 ? 
+                completions[completions.length - 1] : null;
+            
+            if (lastCompletedUser) {
+                const lastIndex = userOrder.indexOf(lastCompletedUser);
+                return userOrder[(lastIndex + 1) % userOrder.length];
+            }
+            
+            // If no completions on that day, use the first user
+            return userOrder[0];
+        } else {
+            // All required completions were done, move to next user
+            const lastCompletedUser = completions[completions.length - 1];
+            const lastIndex = userOrder.indexOf(lastCompletedUser);
+            return userOrder[(lastIndex + 1) % userOrder.length];
+        }
     }
     
-    // If we found a previous day with completions, return the next person in rotation
-    if (prevDayTurn) {
-        return prevDayTurn;
-    }
-    
-    // If no history at all, default to first user
+    // If no history at all, start with the first user
     return userOrder[0];
 }
 
@@ -722,6 +726,8 @@ function determineTurnForDate(task, dateStr) {
 
 
 
+
+// Show task details in a modal
 
 
 
@@ -737,13 +743,15 @@ async function showTaskDetails(task) {
     if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
     if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
+    // Determine whose turn it is for this task on the selected date
+    const currentTurn = determineTurnForDate(task, selectedDate);
+    
     const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
     const completedCount = completedUsers.length;
-
-    // Use determineTurnForDate instead of simple rotation
-    const currentTurn = task.currentTurn || determineTurnForDate(task, selectedDate);
-    const currentTurnIndex = userOrder.indexOf(currentTurn);
-    const nextUser = userOrder[(currentTurnIndex + 1) % userOrder.length];
+    
+    // Find the next user based on current turn
+    const currentUserIndex = task.users.indexOf(currentTurn);
+    const nextUser = task.users[(currentUserIndex + 1) % task.users.length];
 
     let taskDetails = "";
     if (task.title) taskDetails += `<strong>Title:</strong> ${task.title}<br>`;
@@ -807,6 +815,18 @@ async function showTaskDetails(task) {
         });
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Handle task completion and turn advancement
 async function finishTask(userName, task, button, selectedDate) {
