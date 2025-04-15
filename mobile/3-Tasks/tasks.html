@@ -549,9 +549,10 @@ body {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (!adminEmail) return;
 
-    const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
     const result = await response.json();
     const tasks = result.tasks || [];
+    console.log("Fetched tasks for", selectedDate, JSON.stringify(tasks)); // Debug log
 
     const taskList = document.getElementById("taskList");
     taskList.innerHTML = "";
@@ -604,7 +605,7 @@ body {
 
         taskDiv.addEventListener("click", async (e) => {
             if (!e.target.classList.contains("delete-btn")) {
-                const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+                const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
                 const result = await response.json();
                 const latestTask = result.tasks.find(t => t.title === task.title && t.date === task.date);
                 if (latestTask) showTaskDetails(latestTask);
@@ -621,8 +622,6 @@ body {
         taskList.appendChild(taskDiv);
     });
 }
-
-
 
 
 
@@ -711,20 +710,11 @@ body {
 
 
 function getNextUser(task, selectedDate) {
-  const userOrder = [...task.users];
-  const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-  const currentTurn = getTurnForDate(task, selectedDate);
-
-  if (task.repeat === "Daily" && task.timesPerDay > 1) {
-    const used = completedUsers;
-    const remaining = userOrder.filter(u => used.filter(name => name === u).length < task.timesPerDay);
+    const userOrder = [...task.users];
+    const currentTurn = getTurnForDate(task, selectedDate);
     const currentIndex = userOrder.indexOf(currentTurn);
     const nextIndex = (currentIndex + 1) % userOrder.length;
-    return remaining.find(u => userOrder.indexOf(u) >= nextIndex) || remaining[0] || userOrder[nextIndex];
-  } else {
-    const currentIndex = userOrder.indexOf(currentTurn);
-    return userOrder[(currentIndex + 1) % userOrder.length];
-  }
+    return userOrder[nextIndex];
 }
 
 
