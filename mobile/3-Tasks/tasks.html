@@ -549,7 +549,6 @@ body {
 // Load tasks for a specific date
 
 
-// Load tasks for a specific date
 async function loadTasksForDate(selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (!adminEmail) return;
@@ -613,29 +612,49 @@ async function loadTasksForDate(selectedDate) {
             <button class="delete-btn">Delete</button>
         `;
 
+        // Swipe-to-delete logic
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let isSwiping = false;
+
+        taskDiv.addEventListener("touchstart", (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            isSwiping = true;
+        });
+
+        taskDiv.addEventListener("touchmove", (e) => {
+            if (!isSwiping) return;
+            touchEndX = e.changedTouches[0].screenX;
+            const diff = touchStartX - touchEndX;
+            if (diff > 50) {
+                taskDiv.classList.add("swiped-left");
+            } else if (diff < -50) {
+                taskDiv.classList.remove("swiped-left");
+            }
+        });
+
+        taskDiv.addEventListener("touchend", (e) => {
+            isSwiping = false;
+            touchEndX = e.changedTouches[0].screenX;
+            const diff = touchStartX - touchEndX;
+            if (diff > 50) {
+                taskDiv.classList.add("swiped-left");
+            } else if (diff < -50 || Math.abs(diff) < 50) {
+                taskDiv.classList.remove("swiped-left");
+            }
+        });
+
+        // Prevent click event when swiping
         taskDiv.addEventListener("click", async (e) => {
+            if (taskDiv.classList.contains("swiped-left") || Math.abs(touchStartX - touchEndX) > 50) {
+                e.preventDefault();
+                return;
+            }
             if (!e.target.classList.contains("delete-btn")) {
                 const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
                 const result = await response.json();
                 const latestTask = result.tasks.find(t => t.title === task.title && t.date === task.date);
                 if (latestTask) showTaskDetails(latestTask);
-            }
-        });
-
-          // Swipe-to-delete logic
-          let touchStartX = 0;
-        let touchEndX = 0;
-
-        taskDiv.addEventListener("touchstart", (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-        });
-
-        taskDiv.addEventListener("touchend", (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            if (touchStartX - touchEndX > 50) {
-                taskDiv.classList.add("swiped-left");
-            } else if (touchEndX - touchStartX > 50) {
-                taskDiv.classList.remove("swiped-left");
             }
         });
 
@@ -649,9 +668,6 @@ async function loadTasksForDate(selectedDate) {
         taskList.appendChild(taskDiv);
     });
 }
-
-
-
 
 
 
