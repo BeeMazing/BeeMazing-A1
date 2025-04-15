@@ -1285,6 +1285,7 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         }
         
 
+
         async function finishTask(currentUser, task, selectedDate) {
     const today = selectedDate || new Date().toISOString().split("T")[0];
     const adminEmail = localStorage.getItem("currentAdminEmail");
@@ -1305,9 +1306,11 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
             if (!tasksResponse.ok) throw new Error(tasksData.error || "Failed to fetch tasks");
             const tasks = tasksData.tasks || [];
 
+            // Log all tasks for debugging
             console.log("All tasks from backend:", JSON.stringify(tasks));
 
-            const taskDate = task.date.split(" to ")[0];
+            // Normalize task.date for comparison
+            const taskDate = task.date.split(" to ")[0]; // Use start date for matching
             const taskIndex = tasks.findIndex(t => t.title === task.title && t.date.startsWith(taskDate));
             if (taskIndex === -1) {
                 console.error("Task not found in backend. Task to match:", { title: task.title, date: task.date });
@@ -1352,16 +1355,13 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
             triggerHoneyRain(rewardAmount);
 
             setTimeout(() => loadUserReward(currentUser), 100);
-            // Force reload tasks from backend to ensure UI reflects backend state
             await loadUserTasks(currentUser, selectedDate);
-            break;
+            break; // Success, exit retry loop
         } catch (err) {
             attempt++;
             if (attempt > maxRetries) {
                 console.error("Error finishing task after retries:", err);
                 alert("Failed to finish task. Please try again.");
-                // Reload tasks to reset local state
-                await loadUserTasks(currentUser, selectedDate);
                 return;
             }
             console.log(`Retrying task finish (${attempt}/${maxRetries})...`);
@@ -1369,6 +1369,7 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         }
     }
 }
+
 
 function showTaskDetails(task) {
     const selectedDate = document.querySelector(".day.selected")?.dataset.date;
