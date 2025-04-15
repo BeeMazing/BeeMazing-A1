@@ -674,11 +674,8 @@ function determineTurnForDate(task, targetDateStr) {
 
         if (dateStr === targetDateStr) break;
 
-        if (dayCompletions.length >= repeatLimit) {
-            const lastUser = dayCompletions[dayCompletions.length - 1];
-            const lastIndex = users.indexOf(lastUser);
-            currentTurn = users[(lastIndex + 1) % users.length];
-        } else if (dayCompletions.length > 0) {
+        // ✅ Always advance turn after any completions
+        if (dayCompletions.length > 0) {
             const lastUser = dayCompletions[dayCompletions.length - 1];
             const lastIndex = users.indexOf(lastUser);
             currentTurn = users[(lastIndex + 1) % users.length];
@@ -687,8 +684,6 @@ function determineTurnForDate(task, targetDateStr) {
 
     return currentTurn;
 }
-
-
 
 
 
