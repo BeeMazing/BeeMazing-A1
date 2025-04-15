@@ -1269,12 +1269,21 @@ taskDiv.appendChild(statusDiv);
 
         completedUsers.push(currentUser);
 
-        // Update turn
+        // Update turn for the specific date
         const userList = tasks[taskIndex].users;
-        const currentTurn = tasks[taskIndex].turn || userList[0];
-        const currentIndex = userList.indexOf(currentTurn);
-        const nextIndex = (currentIndex + 1) % userList.length;
-        tasks[taskIndex].turn = userList[nextIndex];
+        if (!tasks[taskIndex].turnByDate) tasks[taskIndex].turnByDate = {};
+
+        // Calculate the current turn based on completions
+        let currentIndex = userList.indexOf(tasks[taskIndex].turn || userList[0]);
+        const advanceCount = completedUsers.length; // Number of completions after adding the current one
+        currentIndex = (currentIndex + advanceCount) % userList.length;
+        tasks[taskIndex].turnByDate[today] = userList[currentIndex];
+
+        // Update the global turn to the next user after the last completion on this date
+        if (completedUsers.length === requiredTimes) {
+            const nextIndex = (currentIndex + 1) % userList.length;
+            tasks[taskIndex].turn = userList[nextIndex];
+        }
 
         await fetch("https://beemazing.onrender.com/api/tasks", {
             method: "POST",
@@ -1295,8 +1304,6 @@ taskDiv.appendChild(statusDiv);
         alert("Failed to finish task. Please try again.");
     }
 }
-
-
 
         function showTaskDetails(task) {
     const selectedDate = document.querySelector(".day.selected")?.dataset.date;
