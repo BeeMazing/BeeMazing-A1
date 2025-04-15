@@ -638,6 +638,7 @@ async function loadTasksForDate(selectedDate) {
 }
 
 // Determine whose turn it is for a specific date based on task history
+// Determine whose turn it is for a specific date based on task history
 function determineTurnForDate(task, dateStr) {
     if (!task || !task.users || task.users.length === 0) {
         return "Unknown";
@@ -658,39 +659,71 @@ function determineTurnForDate(task, dateStr) {
         daysBefore.push(prevDate.toISOString().split("T")[0]);
     }
     
-    // Find the most recent day with completion data
-    let mostRecentCompletion = null;
-    let mostRecentCompletedUser = null;
-    
-    for (const day of daysBefore) {
-        if (task.completions && task.completions[day] && task.completions[day].length > 0) {
-            mostRecentCompletion = day;
-            mostRecentCompletedUser = task.completions[day][task.completions[day].length - 1];
-            break;
-        }
-    }
-    
-    // Check if there are completions on the current day
+    // First check if there are completions on the current day
     const currentDayCompletions = task.completions && task.completions[dateStr] 
         ? task.completions[dateStr].length 
         : 0;
     
-    // If there are completions on the current day
+    // If there are completions on the current day, we can determine the turn
     if (currentDayCompletions > 0) {
         // Return the next user in the rotation after the last completed
         const lastCompletedUserIndex = userOrder.indexOf(task.completions[dateStr][currentDayCompletions - 1]);
         return userOrder[(lastCompletedUserIndex + 1) % userOrder.length];
     }
     
-    // If we found a previous completion, return the next person in rotation
-    if (mostRecentCompletedUser) {
-        const lastUserIndex = userOrder.indexOf(mostRecentCompletedUser);
-        return userOrder[(lastUserIndex + 1) % userOrder.length];
+    // If no completions today, check previous days in order
+    let prevDayTurn = null;
+    let incompleteUserTurn = null;
+    
+    for (const day of daysBefore) {
+        // If we find a previous day with completions
+        if (task.completions && task.completions[day]) {
+            const dayCompletions = task.completions[day].length;
+            if (dayCompletions > 0) {
+                // How many users were supposed to complete tasks on this day?
+                let repeatLimit = 1;
+                if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
+                if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
+                if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
+                
+                // If completions are less than the repeat limit, we have an incomplete user
+                if (dayCompletions < repeatLimit) {
+                    // The turn should be with the user right after the last completed user
+                    const lastCompletedUserIndex = userOrder.indexOf(task.completions[day][dayCompletions - 1]);
+                    incompleteUserTurn = userOrder[(lastCompletedUserIndex + 1) % userOrder.length];
+                    break; // We found our incomplete user
+                } else {
+                    // All completions done, the turn goes to the next user after the last completed
+                    const lastCompletedUserIndex = userOrder.indexOf(task.completions[day][dayCompletions - 1]);
+                    prevDayTurn = userOrder[(lastCompletedUserIndex + 1) % userOrder.length];
+                    break; // We found our next turn
+                }
+            }
+        }
+    }
+    
+    // If we found an incomplete user from previous days, they should still have the turn
+    if (incompleteUserTurn) {
+        return incompleteUserTurn;
+    }
+    
+    // If we found a previous day with completions, return the next person in rotation
+    if (prevDayTurn) {
+        return prevDayTurn;
     }
     
     // If no history at all, default to first user
     return userOrder[0];
 }
+
+
+
+
+
+
+
+
+
 
 // Show task details in a modal
 async function showTaskDetails(task) {
