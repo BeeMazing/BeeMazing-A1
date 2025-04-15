@@ -552,7 +552,6 @@ body {
     const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
     const result = await response.json();
     const tasks = result.tasks || [];
-    console.log("Fetched tasks for", selectedDate, JSON.stringify(tasks));
 
     const taskList = document.getElementById("taskList");
     taskList.innerHTML = "";
@@ -583,35 +582,49 @@ body {
         return;
     }
 
-    visibleTasks.forEach((task) => {
+    visibleTasks.forEach(task => {
         const taskDiv = document.createElement("div");
         taskDiv.className = "task-item";
         taskDiv.dataset.taskTitle = task.title;
         taskDiv.dataset.taskDate = task.date;
 
+        const userOrder = [...task.users];
         let repeatLimit = 1;
         if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
         if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
         if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
-        const userOrder = [...task.users];
-        const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-        const completedCount = completedUsers.length;
+        const completedToday = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+        const completedCount = completedToday.length;
 
         let currentTurn;
 
         if (completedCount > 0) {
-            // Normal logic: turn is based on today's completions
+            // Use today’s completions to determine turn
             currentTurn = userOrder[completedCount % userOrder.length];
-        } else if (!task.completions?.[selectedDate]) {
-            // No completions yet AND not initialized — use previous day's turn
-            const previousDate = getPreviousDate(selectedDate);
-            const prevCompletions = Array.isArray(task.completions?.[previousDate]) ? task.completions[previousDate] : [];
-            const prevTurnIndex = prevCompletions.length % userOrder.length;
-            currentTurn = userOrder[prevTurnIndex];
         } else {
-            // No completions, but already initialized — fallback to default
-            currentTurn = userOrder[0];
+            // No completions today → check yesterday
+            const prevDate = getPreviousDate(selectedDate);
+            const prevCompletions = Array.isArray(task.completions?.[prevDate]) ? task.completions[prevDate] : [];
+
+            if (prevCompletions.length === 0) {
+                // No one completed yesterday → use first user
+                currentTurn = userOrder[0];
+            } else {
+                const lastUser = prevCompletions[prevCompletions.length - 1];
+                const lastUserIndex = userOrder.indexOf(lastUser);
+
+                // Count how many times each user completed yesterday
+                const completedSet = new Set(prevCompletions);
+
+                if (completedSet.has(lastUser)) {
+                    // Last user did complete yesterday → move to next user
+                    currentTurn = userOrder[(lastUserIndex + 1) % userOrder.length];
+                } else {
+                    // Last user didn’t complete → keep the same turn
+                    currentTurn = lastUser;
+                }
+            }
         }
 
         const nextUser = userOrder[(userOrder.indexOf(currentTurn) + 1) % userOrder.length];
@@ -645,7 +658,6 @@ body {
         taskList.appendChild(taskDiv);
     });
 }
-
 
 
 
