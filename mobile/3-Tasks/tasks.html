@@ -545,7 +545,8 @@ body {
 
 
         // Load tasks for a specific date
-        async function loadTasksForDate(selectedDate) {
+// Load tasks for a specific date
+async function loadTasksForDate(selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (!adminEmail) return;
 
@@ -560,6 +561,13 @@ body {
     function parseLocalDate(dateStr) {
         const [year, month, day] = dateStr.split("-").map(Number);
         return new Date(year, month - 1, day);
+    }
+
+    function getPreviousDate(dateStr) {
+        const [year, month, day] = dateStr.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+        date.setDate(date.getDate() - 1);
+        return date.toISOString().split("T")[0];
     }
 
     const visibleTasks = tasks.filter(task => {
@@ -587,14 +595,22 @@ body {
         if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
         if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
-        const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-const completedCount = completedUsers.length;
-const userOrder = [...task.users];
+        const userOrder = [...task.users];
+        let completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+        let completedCount = completedUsers.length;
 
-const currentTurn = userOrder[completedCount % userOrder.length];
-const nextUser = userOrder[(completedCount + 1) % userOrder.length];
-const isCompleted = completedCount >= repeatLimit;
+        // Fallback: use previous day's turn if no completions today
+        if (completedCount === 0) {
+            const previousDate = getPreviousDate(selectedDate);
+            const prevCompletions = Array.isArray(task.completions?.[previousDate]) ? task.completions[previousDate] : [];
+            const prevCount = prevCompletions.length;
+            const turnFromPrevious = userOrder[prevCount % userOrder.length];
+            task.turn = turnFromPrevious; // optional: save turn for reference
+        }
 
+        const currentTurn = task.turn || userOrder[completedCount % userOrder.length];
+        const nextUser = userOrder[(userOrder.indexOf(currentTurn) + 1) % userOrder.length];
+        const isCompleted = completedCount >= repeatLimit;
 
         taskDiv.innerHTML = `
             <strong>${task.title}</strong><br>
@@ -624,6 +640,10 @@ const isCompleted = completedCount >= repeatLimit;
         taskList.appendChild(taskDiv);
     });
 }
+
+
+
+
 
 
         // Show task details in a modal
