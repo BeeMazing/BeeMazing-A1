@@ -984,8 +984,6 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     const userTasksDiv = document.getElementById("userTasks");
     userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
 
-    console.log("Selected date in loadUserTasks:", selectedDate); // Debug log
-
     const adminEmail = localStorage.getItem("currentAdminEmail");
     let tasks = [];
 
@@ -994,7 +992,7 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
         tasks = data.tasks || [];
-        console.log("Fetched tasks for", selectedDate, JSON.stringify(tasks));
+        console.log("Fetched tasks for", selectedDate, JSON.stringify(tasks)); // Debug log
     } catch (err) {
         console.error("Failed to fetch tasks from server:", err);
         userTasksDiv.innerHTML = "<p>Failed to load tasks. Please try again later.</p>";
@@ -1040,8 +1038,6 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
             let completedRaw = task.completions?.[selectedDate] || [];
             let completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
             let completedTimes = completedUsers.length;
-
-            console.log(`Task: ${task.title}, Completions for ${selectedDate}:`, completedRaw); // Debug log
 
             const currentTurn = getTurnForDate(task, selectedDate);
             const userOrder = [...task.users];
@@ -1135,6 +1131,8 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         });
     }
 }
+
+
 
 
         async function loadUserReward(userName) {
