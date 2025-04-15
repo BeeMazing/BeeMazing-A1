@@ -1496,28 +1496,13 @@ function showTaskDetails(task) {
     const finishBtn = document.getElementById("finishTaskBtn");
     if (finishBtn) {
         finishBtn.addEventListener("click", async () => {
-            // Fetch the latest task data before finishing
-            const adminEmail = localStorage.getItem("currentAdminEmail");
-            const response = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
-            const data = await response.json();
-            if (!response.ok) {
-                alert("Failed to fetch latest task data. Please try again.");
-                modal.remove();
-                return;
-            }
-            const tasks = data.tasks || [];
-            const taskDate = task.date.split(" to ")[0];
-            const latestTask = tasks.find(t => t.title === task.title && t.date.startsWith(taskDate));
-            if (!latestTask) {
-                alert("Task not found. Please try again.");
-                modal.remove();
-                return;
-            }
-            await finishTask(currentUserName, latestTask, selectedDate);
+            await finishTask(currentUserName, task, selectedDate);
             modal.remove();
         });
     }
 }
+
+
 
 
         let monthOffset = 0;
