@@ -641,46 +641,101 @@ async function loadTasksForDate(selectedDate) {
 
 
 // Determine whose turn it is for a specific date based on task history
-function determineTurnForDate(task, targetDateStr) {
-    if (!task || !task.users || task.users.length === 0) return "Unknown";
+function determineTurnForDate(task, dateStr) {
+    if (!task || !task.users || task.users.length === 0) {
+        return "Unknown";
+    }
 
-    const users = [...task.users];
-    const completions = task.completions || {};
+    const userOrder = [...task.users];
+    const targetDate = new Date(dateStr);
+    targetDate.setHours(0, 0, 0, 0); // Normalize to start of day
 
-    const repeatLimit = task.repeat === "Daily" ? (task.timesPerDay || 1)
-                      : task.repeat === "Weekly" ? (task.timesPerWeek || 1)
-                      : task.repeat === "Monthly" ? (task.timesPerMonth || 1)
-                      : 1;
+    // Get repeat settings
+    let repeatLimit = 1;
+    if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
+    if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
+    if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
-    // Helper to parse YYYY-MM-DD
-    const parseDate = (d) => {
-        const [y, m, day] = d.split("-").map(Number);
-        return new Date(y, m - 1, day);
-    };
+    // Check completions for the target date
+    const currentDayCompletions = task.completions && task.completions[dateStr] 
+        ? task.completions[dateStr].length 
+        : 0;
 
-    const formatDate = (d) => d.toISOString().split("T")[0];
+    // If there are completions on the target date, return the next user
+    if (currentDayCompletions > 0 && currentDayCompletions >= repeatLimit) {
+        const lastCompletedUser = task.completions[dateStr][currentDayCompletions - 1];
+        const lastIndex = userOrder.indexOf(lastCompletedUser);
+        return userOrder[(lastIndex + 1) % userOrder.length];
+    } else if (currentDayCompletions > 0) {
+        const lastCompletedUser = task.completions[dateStr][currentDayCompletions - 1];
+        return lastCompletedUser; // Same user continues until repeat limit
+    }
 
-    const startDate = parseDate(task.date.split(" to ")[0]);
-    const endDate = parseDate(targetDateStr);
+    // Find the most recent date with completions before the target date
+    let mostRecentDate = null;
+    let mostRecentCompletions = [];
+    if (task.completions) {
+        const allDates = Object.keys(task.completions)
+            .map(date => ({ date, dateObj: new Date(date) }))
+            .filter(({ dateObj }) => dateObj < targetDate)
+            .sort((a, b) => b.dateObj - a.dateObj);
 
-    let turnIndex = 0;
-
-    for (
-        let d = new Date(startDate);
-        d <= endDate;
-        d.setDate(d.getDate() + 1)
-    ) {
-        const dateStr = formatDate(d);
-        const dayCompletions = completions[dateStr] || [];
-
-        // 🔁 For each completion on that day, advance turn
-        for (let i = 0; i < dayCompletions.length; i++) {
-            turnIndex = (turnIndex + 1) % users.length;
+        if (allDates.length > 0) {
+            mostRecentDate = allDates[0].date;
+            mostRecentCompletions = task.completions[mostRecentDate] || [];
         }
     }
 
-    return users[turnIndex];
+    // If no completions exist, use the task's start date
+    if (!mostRecentDate) {
+        const range = task.date.split(" to ");
+        mostRecentDate = range[0];
+        mostRecentCompletions = [];
+    }
+
+    const mostRecentDateObj = new Date(mostRecentDate);
+    mostRecentDateObj.setHours(0, 0, 0, 0);
+
+    // Calculate days between most recent date and target date
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    let daysDifference = Math.floor((targetDate - mostRecentDateObj) / oneDayMs);
+
+    // Adjust days difference based on repeat type
+    let totalCompletionsExpected = 0;
+    if (task.repeat === "Daily") {
+        totalCompletionsExpected = daysDifference * repeatLimit;
+    } else if (task.repeat === "Weekly") {
+        const weeksDifference = Math.floor(daysDifference / 7);
+        totalCompletionsExpected = weeksDifference * repeatLimit;
+        // For partial weeks, assume tasks are spread evenly
+        const remainingDays = daysDifference % 7;
+        totalCompletionsExpected += Math.floor((remainingDays / 7) * repeatLimit);
+    } else if (task.repeat === "Monthly") {
+        const monthsDifference = Math.floor(daysDifference / 30); // Approximate
+        totalCompletionsExpected = monthsDifference * repeatLimit;
+    } else {
+        totalCompletionsExpected = daysDifference * repeatLimit; // One-time or other
+    }
+
+    // Get the last user from the most recent completions
+    let lastUserIndex = -1;
+    if (mostRecentCompletions.length > 0) {
+        const lastCompletedUser = mostRecentCompletions[mostRecentCompletions.length - 1];
+        lastUserIndex = userOrder.indexOf(lastCompletedUser);
+    } else {
+        lastUserIndex = -1; // Start from the beginning
+    }
+
+    // Calculate the next user based on total completions expected
+    const completionsSoFar = mostRecentCompletions.length;
+    const remainingCompletions = Math.max(0, totalCompletionsExpected - completionsSoFar);
+    const nextUserIndex = (lastUserIndex + 1 + remainingCompletions) % userOrder.length;
+
+    return userOrder[nextUserIndex];
 }
+
+
+
 
 
 
@@ -786,7 +841,6 @@ async function showTaskDetails(task) {
 
 
 // Handle task completion and turn advancement
-
 async function finishTask(userName, task, button, selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     const todayStr = selectedDate || new Date().toISOString().split("T")[0];
@@ -806,14 +860,12 @@ async function finishTask(userName, task, button, selectedDate) {
         const result = await res.json();
         if (!res.ok) throw new Error(result.error || "Failed to complete task");
 
-        const updatedTask = result.updatedTask;
-        const rewardAmount = updatedTask.reward || 0;
+        const rewardAmount = result.updatedTask.reward || 0;
 
-        // ✅ Recalculate currentTurn after completion
-        const newTurn = determineTurnForDate(updatedTask, todayStr);
-        updatedTask.currentTurn = newTurn;
+        // Update task's currentTurn after completion
+        task.currentTurn = determineTurnForDate(result.updatedTask, todayStr);
 
-        // ✅ Trigger UI updates with new turn
+        // Trigger UI updates
         if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
         if (typeof loadTasksForDate === 'function') loadTasksForDate(todayStr);
         if (typeof loadUserTasks === 'function') loadUserTasks(userName, todayStr);
@@ -823,6 +875,8 @@ async function finishTask(userName, task, button, selectedDate) {
         alert("Failed to finish task. Please try again.");
     }
 }
+
+
 
 
 
