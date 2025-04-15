@@ -572,8 +572,6 @@ function getTurnForDate(task, selectedDateStr) {
 
 
 
-
-
 function getTurnForPastOrToday(task, selectedStr, initialTurn = null) {
     const formatDate = (d) => d.toISOString().split("T")[0];
     const userOrder = [...task.users];
@@ -602,6 +600,11 @@ function getTurnForPastOrToday(task, selectedStr, initialTurn = null) {
                     currentIndex = (currentIndex + 1) % userOrder.length;
                 }
             }
+
+            // ✅ Save the simulated result to turnByDate for consistency
+            if (!turnByDate[dStr]) {
+                turnByDate[dStr] = userOrder[currentIndex];
+            }
         }
 
         d.setDate(d.getDate() + 1);
@@ -609,6 +612,17 @@ function getTurnForPastOrToday(task, selectedStr, initialTurn = null) {
 
     return userOrder[currentIndex];
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
