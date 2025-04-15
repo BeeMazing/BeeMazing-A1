@@ -552,6 +552,7 @@ body {
     const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
     const result = await response.json();
     const tasks = result.tasks || [];
+    console.log("Fetched tasks for", selectedDate, JSON.stringify(tasks));
 
     const taskList = document.getElementById("taskList");
     taskList.innerHTML = "";
@@ -559,13 +560,6 @@ body {
     function parseLocalDate(dateStr) {
         const [year, month, day] = dateStr.split("-").map(Number);
         return new Date(year, month - 1, day);
-    }
-
-    function getPreviousDate(dateStr) {
-        const [year, month, day] = dateStr.split("-").map(Number);
-        const date = new Date(year, month - 1, day);
-        date.setDate(date.getDate() - 1);
-        return date.toISOString().split("T")[0];
     }
 
     const visibleTasks = tasks.filter(task => {
@@ -582,47 +576,25 @@ body {
         return;
     }
 
-    visibleTasks.forEach(task => {
+    visibleTasks.forEach((task) => {
         const taskDiv = document.createElement("div");
         taskDiv.className = "task-item";
         taskDiv.dataset.taskTitle = task.title;
         taskDiv.dataset.taskDate = task.date;
 
-        const userOrder = [...task.users];
         let repeatLimit = 1;
         if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
         if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
         if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
-        const completedToday = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-        const completedCount = completedToday.length;
+        const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+const completedCount = completedUsers.length;
+const userOrder = [...task.users];
 
-        let currentTurn;
+const currentTurn = userOrder[completedCount % userOrder.length];
+const nextUser = userOrder[(completedCount + 1) % userOrder.length];
+const isCompleted = completedCount >= repeatLimit;
 
-        if (completedCount > 0) {
-            // Use today’s completions to determine turn
-            currentTurn = userOrder[completedCount % userOrder.length];
-        } else {
-            // No completions today → check yesterday’s intended turn
-            const prevDate = getPreviousDate(selectedDate);
-            const prevCompletions = Array.isArray(task.completions?.[prevDate]) ? task.completions[prevDate] : [];
-
-            if (prevCompletions.length > 0) {
-                const prevCompletedCount = prevCompletions.length;
-                const yesterdayTurn = userOrder[prevCompletedCount % userOrder.length];
-
-                const didComplete = prevCompletions.includes(yesterdayTurn);
-                currentTurn = didComplete
-                    ? userOrder[(userOrder.indexOf(yesterdayTurn) + 1) % userOrder.length]
-                    : yesterdayTurn;
-            } else {
-                // No completions yesterday either → start from user 0
-                currentTurn = userOrder[0];
-            }
-        }
-
-        const nextUser = userOrder[(userOrder.indexOf(currentTurn) + 1) % userOrder.length];
-        const isCompleted = completedCount >= repeatLimit;
 
         taskDiv.innerHTML = `
             <strong>${task.title}</strong><br>
@@ -654,8 +626,6 @@ body {
 }
 
 
-
-
         // Show task details in a modal
         async function showTaskDetails(task) {
     const selectedDate = document.querySelector(".day.selected")?.dataset.date;
@@ -671,34 +641,8 @@ body {
     const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
     const completedCount = completedUsers.length;
 
-    function getPreviousDate(dateStr) {
-        const [year, month, day] = dateStr.split("-").map(Number);
-        const date = new Date(year, month - 1, day);
-        date.setDate(date.getDate() - 1);
-        return date.toISOString().split("T")[0];
-    }
-
-    let currentTurn;
-    if (completedCount > 0) {
-        currentTurn = userOrder[completedCount % userOrder.length];
-    } else {
-        const prevDate = getPreviousDate(selectedDate);
-        const prevCompletions = Array.isArray(task.completions?.[prevDate]) ? task.completions[prevDate] : [];
-
-        if (prevCompletions.length > 0) {
-            const prevCompletedCount = prevCompletions.length;
-            const yesterdayTurn = userOrder[prevCompletedCount % userOrder.length];
-
-            const didComplete = prevCompletions.includes(yesterdayTurn);
-            currentTurn = didComplete
-                ? userOrder[(userOrder.indexOf(yesterdayTurn) + 1) % userOrder.length]
-                : yesterdayTurn;
-        } else {
-            currentTurn = userOrder[0];
-        }
-    }
-
-    const nextUser = userOrder[(userOrder.indexOf(currentTurn) + 1) % userOrder.length];
+    const currentTurn = userOrder[completedCount % userOrder.length];
+    const nextUser = userOrder[(completedCount + 1) % userOrder.length];
 
     let taskDetails = "";
     if (task.title) taskDetails += `<strong>Title:</strong> ${task.title}<br>`;
@@ -762,6 +706,7 @@ body {
         });
     }
 }
+
 
 
 
