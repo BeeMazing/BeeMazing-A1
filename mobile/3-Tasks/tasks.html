@@ -576,54 +576,57 @@ body {
     return newDate;
   };
 
-  function forecastTurns(task, selectedDateStr) {
-    const users = task.users || [];
+  function getVirtualTurn(task, targetDateStr) {
     const completions = task.completions || {};
-    const repeatsPerDay = task.timesPerDay || 1;
+    const users = task.users || [];
+    const repeats = task.timesPerDay || 1;
 
-    const selectedDate = parseDate(selectedDateStr);
-    const fromDate = parseDate(task.date.split(" to ")[0]);
+    const startDate = parseDate(task.date.split(" to ")[0]);
+    const targetDate = parseDate(targetDateStr);
 
-    // Build full historical completion list before selectedDate
-    let allCompletions = [];
-    Object.keys(completions)
-      .filter(d => parseDate(d) < selectedDate)
-      .sort()
-      .forEach(d => {
-        allCompletions.push(...(completions[d] || []));
-      });
+    if (targetDate < startDate) return { currentTurn: "—", nextTurn: "—", completedCount: 0 };
 
-    let currentIndex = 0;
-    if (allCompletions.length) {
-      const lastUser = allCompletions[allCompletions.length - 1];
-      currentIndex = (users.indexOf(lastUser) + 1) % users.length;
-    }
+    // Collect all actual completions before today
+    let allCompletedUsers = [];
+    const dateKeys = Object.keys(completions).sort();
 
-    // Simulate ideal completions from start to selectedDate
-    const totalDays = Math.max(0, Math.floor((selectedDate - fromDate) / (1000 * 60 * 60 * 24)));
-
-    for (let i = 0; i < totalDays; i++) {
-      for (let r = 0; r < repeatsPerDay; r++) {
-        currentIndex = (currentIndex + 1) % users.length;
+    for (const date of dateKeys) {
+      const dateObj = parseDate(date);
+      if (dateObj < targetDate) {
+        allCompletedUsers.push(...(completions[date] || []));
       }
     }
 
-    const todayCompletions = Array.isArray(completions[selectedDateStr]) ? completions[selectedDateStr] : [];
-    const completedCount = todayCompletions.length;
-    const remaining = Math.max(0, repeatsPerDay - completedCount);
-
-    let currentTurn = "All done!";
-    let nextTurn = "—";
-
-    if (remaining > 0) {
-      let todayForecast = [];
-      for (let r = 0; r < repeatsPerDay; r++) {
-        todayForecast.push(users[(currentIndex + r) % users.length]);
-      }
-
-      currentTurn = todayForecast[completedCount] || "All done!";
-      nextTurn = todayForecast[completedCount + 1] || "—";
+    // Determine starting index from last actual completion
+    let index = 0;
+    if (allCompletedUsers.length > 0) {
+      const lastUser = allCompletedUsers[allCompletedUsers.length - 1];
+      const lastIndex = users.indexOf(lastUser);
+      index = (lastIndex + 1) % users.length;
     }
+
+    // Simulate completions day-by-day from (startDate or last completion) up to targetDate
+    const daysToSimulate = Math.floor((targetDate - startDate) / (1000 * 60 * 60 * 24));
+    for (let i = 0; i < daysToSimulate; i++) {
+      const simDate = formatDate(addDays(startDate, i));
+      const actuals = completions[simDate] || [];
+
+      if (actuals.length) {
+        // Use real completions
+        index = (index + actuals.length) % users.length;
+      } else {
+        // Simulate ideal completions
+        index = (index + repeats) % users.length;
+      }
+    }
+
+    // Determine today's real or simulated completions
+    const todayCompletions = completions[targetDateStr] || [];
+    const todaySet = new Set(todayCompletions);
+
+    let completedCount = todayCompletions.length;
+    let currentTurn = users[index % users.length];
+    let nextTurn = users[(index + 1) % users.length];
 
     return {
       currentTurn,
@@ -656,7 +659,7 @@ body {
                         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-    const { currentTurn, nextTurn, completedCount } = forecastTurns(task, selectedDate);
+    const { currentTurn, nextTurn, completedCount } = getVirtualTurn(task, selectedDate);
     const isCompleted = completedCount >= repeatLimit;
 
     taskDiv.innerHTML = `
@@ -687,7 +690,6 @@ body {
     enableSwipeToDelete(taskDiv);
   }
 }
-
 
 
 
