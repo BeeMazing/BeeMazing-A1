@@ -643,7 +643,7 @@ async function loadTasksForDate(selectedDate) {
 // Determine whose turn it is for a specific date based on task history
 
 
-// Determine whose turn it is for a specific date based on task history
+
 function determineTurnForDate(task, dateStr) {
     if (!task || !task.users || task.users.length === 0) {
         return "Unknown";
@@ -651,100 +651,96 @@ function determineTurnForDate(task, dateStr) {
 
     const userOrder = [...task.users];
     const targetDate = new Date(dateStr);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize to start of day
+    targetDate.setHours(0, 0, 0, 0); // Normalize to start of day
 
-    // Calculate days difference
-    const diffDays = Math.floor((targetDate - today) / (1000 * 60 * 60 * 24));
+    // Determine repeat limit
+    let repeatLimit = 1;
+    if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
+    if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
+    if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
-    // For today or tomorrow, respect task.turn if set
-    if (diffDays <= 1) {
-        // Check if task.turn is set and valid
-        if (task.turn && userOrder.includes(task.turn)) {
-            const currentDayCompletions = task.completions && task.completions[dateStr]
-                ? task.completions[dateStr].length
-                : 0;
+    // Check for completions on the target date
+    const currentDayCompletions = task.completions && task.completions[dateStr] 
+        ? task.completions[dateStr].length 
+        : 0;
 
-            let repeatLimit = 1;
-            if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
-            if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
-            if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
-
-            // If completions are less than repeat limit, return current turn
-            if (currentDayCompletions < repeatLimit) {
-                return task.turn;
-            } else {
-                // Move to next user after current turn
-                const currentIndex = userOrder.indexOf(task.turn);
-                return userOrder[(currentIndex + 1) % userOrder.length];
-            }
-        }
-
-        // Fallback to completion-based logic
-        const currentDayCompletions = task.completions && task.completions[dateStr]
-            ? task.completions[dateStr].length
-            : 0;
-
-        if (currentDayCompletions > 0) {
-            const lastCompletedUserIndex = userOrder.indexOf(task.completions[dateStr][currentDayCompletions - 1]);
-            return userOrder[(lastCompletedUserIndex + 1) % userOrder.length];
-        }
-
-        // Find the most recent day with completions
-        const dateNumbers = {};
-        const allDates = [];
-
-        if (task.completions) {
-            Object.keys(task.completions).forEach(date => {
-                const [year, month, day] = date.split('-').map(Number);
-                dateNumbers[date] = year * 10000 + month * 100 + day;
-                allDates.push(date);
-            });
-        }
-
-        allDates.sort((a, b) => dateNumbers[b] - dateNumbers[a]);
-
-        let mostRecentDate = null;
-        for (const date of allDates) {
-            const dateObj = new Date(date);
-            dateObj.setHours(0, 0, 0, 0);
-            if (dateObj < targetDate) {
-                mostRecentDate = date;
-                break;
-            }
-        }
-
-        if (mostRecentDate && task.completions[mostRecentDate]) {
-            const completions = task.completions[mostRecentDate];
-            let repeatLimit = 1;
-            if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
-            if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
-            if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
-
-            if (completions.length < repeatLimit) {
-                const lastCompletedUser = completions.length > 0
-                    ? completions[completions.length - 1]
-                    : null;
-
-                if (lastCompletedUser) {
-                    const lastIndex = userOrder.indexOf(lastCompletedUser);
-                    return userOrder[(lastIndex + 1) % userOrder.length];
-                }
-
-                return userOrder[0];
-            } else {
-                const lastCompletedUser = completions[completions.length - 1];
-                const lastIndex = userOrder.indexOf(lastCompletedUser);
-                return userOrder[(lastIndex + 1) % userOrder.length];
-            }
-        }
-
-        return userOrder[0];
-    } else {
-        // For future dates beyond tomorrow, project the turn
-        return projectTurnForFutureDate(task, dateStr);
+    // If there are completions on the target date, advance to the next user
+    if (currentDayCompletions > 0) {
+        const lastCompletedUserIndex = userOrder.indexOf(task.completions[dateStr][currentDayCompletions - 1]);
+        return userOrder[(lastCompletedUserIndex + 1) % userOrder.length];
     }
+
+    // Find the most recent date with completions before the target date
+    const dateNumbers = {};
+    const allDates = [];
+
+    if (task.completions) {
+        Object.keys(task.completions).forEach(date => {
+            const [year, month, day] = date.split('-').map(Number);
+            dateNumbers[date] = year * 10000 + month * 100 + day;
+            allDates.push(date);
+        });
+    }
+
+    // Sort dates in descending order
+    allDates.sort((a, b) => dateNumbers[b] - dateNumbers[a]);
+
+    let mostRecentDate = null;
+    let mostRecentDateObj = null;
+    for (const date of allDates) {
+        const dateObj = new Date(date);
+        dateObj.setHours(0, 0, 0, 0);
+        if (dateObj < targetDate) {
+            mostRecentDate = date;
+            mostRecentDateObj = dateObj;
+            break;
+        }
+    }
+
+    // Calculate turns for future dates
+    if (mostRecentDate && task.completions[mostRecentDate]) {
+        const completions = task.completions[mostRecentDate];
+        let lastUserIndex = 0;
+
+        // Determine the last user from the most recent completions
+        if (completions.length > 0) {
+            const lastCompletedUser = completions[completions.length - 1];
+            lastUserIndex = userOrder.indexOf(lastCompletedUser);
+        }
+
+        // Calculate how many turns should have occurred
+        let totalTurns = 0;
+        if (task.repeat === "Daily") {
+            // Calculate days between most recent date and target date
+            const daysDiff = Math.floor((targetDate - mostRecentDateObj) / (1000 * 60 * 60 * 24));
+            totalTurns = daysDiff * repeatLimit;
+        } else if (task.repeat === "Weekly") {
+            // Calculate weeks between dates
+            const weeksDiff = Math.floor((targetDate - mostRecentDateObj) / (1000 * 60 * 60 * 24 * 7));
+            totalTurns = weeksDiff * repeatLimit;
+        } else if (task.repeat === "Monthly") {
+            // Calculate months between dates
+            const monthsDiff = (targetDate.getFullYear() - mostRecentDateObj.getFullYear()) * 12 +
+                               (targetDate.getMonth() - mostRecentDateObj.getMonth());
+            totalTurns = monthsDiff * repeatLimit;
+        }
+
+        // If completions on the most recent date were incomplete, adjust the starting point
+        if (completions.length < repeatLimit) {
+            totalTurns += repeatLimit - completions.length;
+        } else {
+            totalTurns += 1; // Move to next user after full completions
+        }
+
+        // Calculate the final user
+        const finalIndex = (lastUserIndex + totalTurns) % userOrder.length;
+        return userOrder[finalIndex];
+    }
+
+    // If no completion history, start with the first user
+    return userOrder[0];
 }
+
 
 
 // Show task details in a modal
@@ -986,9 +982,7 @@ async function finishTask(userName, task, button, selectedDate) {
         }
         
         // Show modal to edit task completions
-
-// Show modal to edit task completions
-async function showEditCompletionModal(task, completedUsers, today, parentModal) {
+        async function showEditCompletionModal(task, completedUsers, today, parentModal) {
     const modal = document.createElement("div");
     modal.className = "task-modal";
 
@@ -1039,27 +1033,23 @@ async function showEditCompletionModal(task, completedUsers, today, parentModal)
         if (!task.completions) task.completions = {};
         task.completions[today] = newCompleted;
 
-        // Determine the new turn based on completions and repeat settings
+        // Determine repeat limit
         let repeatLimit = 1;
         if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
         if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
         if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
+        // Calculate the new turn using determineTurnForDate logic
         const userOrder = [...task.users];
         let newTurn;
 
-        if (newCompleted.length >= repeatLimit) {
-            // If repeat limit is met, move to the next user after the last completion
-            const lastCompletedUser = newCompleted[newCompleted.length - 1];
-            const lastIndex = userOrder.indexOf(lastCompletedUser);
-            newTurn = userOrder[(lastIndex + 1) % userOrder.length];
-        } else if (newCompleted.length > 0) {
-            // If partial completions, the next turn is the user after the last completion
+        if (newCompleted.length > 0) {
+            // If there are completions, set turn to the next user after the last completion
             const lastCompletedUser = newCompleted[newCompleted.length - 1];
             const lastIndex = userOrder.indexOf(lastCompletedUser);
             newTurn = userOrder[(lastIndex + 1) % userOrder.length];
         } else {
-            // If no completions, check previous days for the last completion
+            // If no completions, mimic determineTurnForDate's fallback
             const dateNumbers = {};
             const allDates = [];
 
@@ -1088,13 +1078,18 @@ async function showEditCompletionModal(task, completedUsers, today, parentModal)
                 const lastIndex = userOrder.indexOf(lastCompletedUser);
                 newTurn = userOrder[(lastIndex + 1) % userOrder.length];
             } else {
-                // No prior completions, use first user
-                newTurn = userOrder[0];
+                newTurn = userOrder[0]; // Default to first user
             }
         }
 
-        // Update task turn
-        task.turn = newTurn;
+        // Only advance turn if repeat limit is met
+        if (newCompleted.length < repeatLimit) {
+            // Keep turn at the next user unless completions are incomplete
+            task.turn = newTurn;
+        } else {
+            // If repeat limit is met, advance turn
+            task.turn = newTurn;
+        }
 
         // Adjust rewards for added/removed users
         const adminEmail = localStorage.getItem("currentAdminEmail");
@@ -1132,7 +1127,6 @@ async function showEditCompletionModal(task, completedUsers, today, parentModal)
         showTaskDetails(task);
     });
 }
-
 
 
 
