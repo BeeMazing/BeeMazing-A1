@@ -656,85 +656,75 @@ function determineTurnForDate(task, dateStr) {
     if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
     if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
-    // Check completions for the target date
-    const currentDayCompletions = task.completions && task.completions[dateStr] 
-        ? task.completions[dateStr].length 
-        : 0;
+    // Parse task start date
+    const range = task.date.split(" to ");
+    const taskStartDate = new Date(range[0]);
+    taskStartDate.setHours(0, 0, 0, 0);
 
-    // If there are completions on the target date, return the next user
-    if (currentDayCompletions > 0 && currentDayCompletions >= repeatLimit) {
-        const lastCompletedUser = task.completions[dateStr][currentDayCompletions - 1];
-        const lastIndex = userOrder.indexOf(lastCompletedUser);
-        return userOrder[(lastIndex + 1) % userOrder.length];
-    } else if (currentDayCompletions > 0) {
-        const lastCompletedUser = task.completions[dateStr][currentDayCompletions - 1];
-        return lastCompletedUser; // Same user continues until repeat limit
-    }
+    // Find the most recent completion date before or on the target date
+    let lastCompletionDate = taskStartDate;
+    let lastCompletionUsers = [];
+    let lastUserIndex = -1;
 
-    // Find the most recent date with completions before the target date
-    let mostRecentDate = null;
-    let mostRecentCompletions = [];
     if (task.completions) {
         const allDates = Object.keys(task.completions)
             .map(date => ({ date, dateObj: new Date(date) }))
-            .filter(({ dateObj }) => dateObj < targetDate)
+            .filter(({ dateObj }) => dateObj <= targetDate)
             .sort((a, b) => b.dateObj - a.dateObj);
 
         if (allDates.length > 0) {
-            mostRecentDate = allDates[0].date;
-            mostRecentCompletions = task.completions[mostRecentDate] || [];
+            lastCompletionDate = new Date(allDates[0].date);
+            lastCompletionDate.setHours(0, 0, 0, 0);
+            lastCompletionUsers = task.completions[allDates[0].date] || [];
+            if (lastCompletionUsers.length > 0) {
+                const lastCompletedUser = lastCompletionUsers[lastCompletionUsers.length - 1];
+                lastUserIndex = userOrder.indexOf(lastCompletedUser);
+            }
         }
     }
 
-    // If no completions exist, use the task's start date
-    if (!mostRecentDate) {
-        const range = task.date.split(" to ");
-        mostRecentDate = range[0];
-        mostRecentCompletions = [];
-    }
+    // Start from the last user or the first user if no completions
+    let currentUserIndex = lastUserIndex >= 0 ? lastUserIndex : 0;
 
-    const mostRecentDateObj = new Date(mostRecentDate);
-    mostRecentDateObj.setHours(0, 0, 0, 0);
-
-    // Calculate days between most recent date and target date
+    // Simulate day by day from last completion date to target date
     const oneDayMs = 24 * 60 * 60 * 1000;
-    let daysDifference = Math.floor((targetDate - mostRecentDateObj) / oneDayMs);
+    let currentDate = new Date(lastCompletionDate);
+    currentDate.setDate(currentDate.getDate() + 1); // Start checking the next day
 
-    // Adjust days difference based on repeat type
-    let totalCompletionsExpected = 0;
-    if (task.repeat === "Daily") {
-        totalCompletionsExpected = daysDifference * repeatLimit;
-    } else if (task.repeat === "Weekly") {
-        const weeksDifference = Math.floor(daysDifference / 7);
-        totalCompletionsExpected = weeksDifference * repeatLimit;
-        // For partial weeks, assume tasks are spread evenly
-        const remainingDays = daysDifference % 7;
-        totalCompletionsExpected += Math.floor((remainingDays / 7) * repeatLimit);
-    } else if (task.repeat === "Monthly") {
-        const monthsDifference = Math.floor(daysDifference / 30); // Approximate
-        totalCompletionsExpected = monthsDifference * repeatLimit;
-    } else {
-        totalCompletionsExpected = daysDifference * repeatLimit; // One-time or other
+    while (currentDate <= targetDate) {
+        const currentDateStr = formatDate(currentDate);
+        let completionsToday = task.completions && task.completions[currentDateStr] 
+            ? task.completions[currentDateStr].length 
+            : 0;
+
+        // Handle repeat settings
+        let expectedCompletions = repeatLimit;
+        if (task.repeat === "Weekly") {
+            // For weekly tasks, only count completions on specific days (e.g., once per week)
+            const daysSinceStart = Math.floor((currentDate - taskStartDate) / oneDayMs);
+            const weekNumber = Math.floor(daysSinceStart / 7);
+            if (daysSinceStart % 7 !== 0) {
+                expectedCompletions = 0; // No task expected on non-task days
+            }
+        } else if (task.repeat === "Monthly") {
+            // For monthly tasks, only count completions on specific days (e.g., once per month)
+            const daysSinceStart = Math.floor((currentDate - taskStartDate) / oneDayMs);
+            if (daysSinceStart % 30 !== 0) {
+                expectedCompletions = 0; // Approximate monthly tasks
+            }
+        }
+
+        // If fewer completions than expected, the current user remains assigned
+        if (completionsToday >= expectedCompletions && expectedCompletions > 0) {
+            // Advance to the next user based on the number of completions
+            currentUserIndex = (currentUserIndex + completionsToday) % userOrder.length;
+        }
+
+        currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // Get the last user from the most recent completions
-    let lastUserIndex = -1;
-    if (mostRecentCompletions.length > 0) {
-        const lastCompletedUser = mostRecentCompletions[mostRecentCompletions.length - 1];
-        lastUserIndex = userOrder.indexOf(lastCompletedUser);
-    } else {
-        lastUserIndex = -1; // Start from the beginning
-    }
-
-    // Calculate the next user based on total completions expected
-    const completionsSoFar = mostRecentCompletions.length;
-    const remainingCompletions = Math.max(0, totalCompletionsExpected - completionsSoFar);
-    const nextUserIndex = (lastUserIndex + 1 + remainingCompletions) % userOrder.length;
-
-    return userOrder[nextUserIndex];
+    return userOrder[currentUserIndex];
 }
-
-
 
 
 
