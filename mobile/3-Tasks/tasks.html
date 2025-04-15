@@ -593,29 +593,21 @@ body {
     const completedCount = completedUsers.length;
     const completedSet = new Set(completedUsers);
 
-    // ✅ Dynamically determine current and next user based on who hasn't completed
-    let currentTurn = null;
-    let nextUser = null;
+    // ✅ Use backend-defined currentTurnIndex
+    let currentIndex = typeof task.currentTurnIndex === "number" ? task.currentTurnIndex : 0;
+    if (currentIndex < 0 || currentIndex >= userOrder.length) currentIndex = 0;
 
-    for (let i = 0; i < userOrder.length; i++) {
-      if (!completedSet.has(userOrder[i])) {
-        currentTurn = userOrder[i];
+    let currentTurn = userOrder[currentIndex];
+
+    // ✅ Find next uncompleted user
+    let nextUser = "—";
+    for (let i = 1; i <= userOrder.length; i++) {
+      const idx = (currentIndex + i) % userOrder.length;
+      if (!completedSet.has(userOrder[idx])) {
+        nextUser = userOrder[idx];
         break;
       }
     }
-
-    if (currentTurn) {
-      const currentIndex = userOrder.indexOf(currentTurn);
-      for (let i = currentIndex + 1; i < userOrder.length; i++) {
-        if (!completedSet.has(userOrder[i])) {
-          nextUser = userOrder[i];
-          break;
-        }
-      }
-    }
-
-    currentTurn = currentTurn || "All done!";
-    nextUser = nextUser || "—";
 
     const isCompleted = completedCount >= repeatLimit;
 
@@ -647,7 +639,6 @@ body {
     enableSwipeToDelete(taskDiv);
   });
 }
-
 
 
 
