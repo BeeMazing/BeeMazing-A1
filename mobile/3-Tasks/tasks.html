@@ -698,10 +698,9 @@ function calculateCurrentTurn(task, selectedDate) {
     if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
     const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-    const completedCount = completedUsers.length;
-
-    const currentTurn = userOrder[completedCount % userOrder.length];
-    const nextUser = userOrder[(completedCount + 1) % userOrder.length];
+    const currentTurn = calculateCurrentTurn(task, selectedDate);
+    const currentIndex = userOrder.indexOf(currentTurn);
+    const nextUser = userOrder[(currentIndex + 1) % userOrder.length] || userOrder[0];
 
     let taskDetails = "";
     if (task.title) taskDetails += `<strong>Title:</strong> ${task.title}<br>`;
@@ -719,7 +718,7 @@ function calculateCurrentTurn(task, selectedDate) {
     if (task.reward && task.reward !== "0") taskDetails += `<strong>Reward:</strong> ${task.reward} 🍯<br>`;
     taskDetails += `<strong>Current Turn:</strong> ${currentTurn}<br>`;
     taskDetails += `<strong>Next:</strong> ${nextUser}<br>`;
-    taskDetails += `<strong>Completed:</strong> ${completedCount}/${repeatLimit}<br>`;
+    taskDetails += `<strong>Completed:</strong> ${completedUsers.length}/${repeatLimit}<br>`;
 
     if (completedUsers.length > 0) {
         taskDetails += `
@@ -765,8 +764,6 @@ function calculateCurrentTurn(task, selectedDate) {
         });
     }
 }
-
-
 
 
 
