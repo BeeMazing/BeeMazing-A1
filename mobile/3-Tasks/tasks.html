@@ -545,8 +545,7 @@ body {
 
 
         // Load tasks for a specific date
-// Load tasks for a specific date
-async function loadTasksForDate(selectedDate) {
+        async function loadTasksForDate(selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (!adminEmail) return;
 
@@ -596,19 +595,25 @@ async function loadTasksForDate(selectedDate) {
         if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
 
         const userOrder = [...task.users];
-        let completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-        let completedCount = completedUsers.length;
+        const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+        const completedCount = completedUsers.length;
 
-        // Fallback: use previous day's turn if no completions today
-        if (completedCount === 0) {
+        let currentTurn;
+
+        if (completedCount > 0) {
+            // Normal logic: turn is based on today's completions
+            currentTurn = userOrder[completedCount % userOrder.length];
+        } else if (!task.completions?.[selectedDate]) {
+            // No completions yet AND not initialized — use previous day's turn
             const previousDate = getPreviousDate(selectedDate);
             const prevCompletions = Array.isArray(task.completions?.[previousDate]) ? task.completions[previousDate] : [];
-            const prevCount = prevCompletions.length;
-            const turnFromPrevious = userOrder[prevCount % userOrder.length];
-            task.turn = turnFromPrevious; // optional: save turn for reference
+            const prevTurnIndex = prevCompletions.length % userOrder.length;
+            currentTurn = userOrder[prevTurnIndex];
+        } else {
+            // No completions, but already initialized — fallback to default
+            currentTurn = userOrder[0];
         }
 
-        const currentTurn = task.turn || userOrder[completedCount % userOrder.length];
         const nextUser = userOrder[(userOrder.indexOf(currentTurn) + 1) % userOrder.length];
         const isCompleted = completedCount >= repeatLimit;
 
