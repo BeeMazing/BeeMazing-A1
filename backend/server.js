@@ -1068,12 +1068,15 @@ app.post("/api/complete-task", async (req, res) => {
     if (!task.completions[date].includes(user)) {
       task.completions[date].push(user);
 
-      // Determine next user turn globally, skipping users who already completed today
       const userList = task.users || [];
-      if (!task.currentTurnIndex && task.currentTurnIndex !== 0) {
-        task.currentTurnIndex = 0;
+
+      // ✅ Initialize turn index if missing
+      if (typeof task.currentTurnIndex !== "number") {
+        task.currentTurnIndex = userList.indexOf(user);
+        if (task.currentTurnIndex === -1) task.currentTurnIndex = 0;
       }
 
+      // ✅ Advance turn to next available user
       for (let i = 1; i <= userList.length; i++) {
         const nextIndex = (task.currentTurnIndex + i) % userList.length;
         const nextUser = userList[nextIndex];
@@ -1084,14 +1087,14 @@ app.post("/api/complete-task", async (req, res) => {
       }
     }
 
-    // Update tasks array
+    // Update task array
     tasks[taskIndex] = task;
 
-    // Update rewards
+    // ✅ Update rewards
     const rewards = admin.rewards || {};
     rewards[user] = (rewards[user] || 0) + (task.reward || 0);
 
-    // Update history
+    // ✅ Update history
     const history = admin.history || {};
     const month = new Date(date).toLocaleString("default", { month: "long" });
     const day = new Date(date).getDate();

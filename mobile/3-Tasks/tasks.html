@@ -592,12 +592,14 @@ body {
     const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
     const completedCount = completedUsers.length;
 
-    let currentTurn = task.currentTurnIndex !== undefined ? userOrder[task.currentTurnIndex] : userOrder[0];
+    // ✅ Safer turn logic
+    const currentIndex = typeof task.currentTurnIndex === "number" ? task.currentTurnIndex : 0;
+    const currentTurn = userOrder[currentIndex];
     let nextUser = currentTurn;
 
     const completedSet = new Set(completedUsers);
     for (let i = 1; i <= userOrder.length; i++) {
-      const index = (task.currentTurnIndex + i) % userOrder.length;
+      const index = (currentIndex + i) % userOrder.length;
       if (!completedSet.has(userOrder[index])) {
         nextUser = userOrder[index];
         break;
@@ -617,8 +619,8 @@ body {
 
     taskDiv.addEventListener("click", async (e) => {
       if (!e.target.classList.contains("delete-btn")) {
-        const result = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
-        const latestTask = (await result.json()).tasks.find(t => t.title === task.title && t.date === task.date);
+        const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+        const latestTask = (await latest.json()).tasks.find(t => t.title === task.title && t.date === task.date);
         if (latestTask) showTaskDetails(latestTask);
       }
     });
@@ -645,8 +647,6 @@ body {
 
 
 
-
-
 async function showTaskDetails(task) {
   const selectedDate = document.querySelector(".day.selected")?.dataset.date;
   if (!selectedDate) return;
@@ -660,12 +660,14 @@ async function showTaskDetails(task) {
   const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
   const completedCount = completedUsers.length;
 
-  let currentTurn = task.currentTurnIndex !== undefined ? userOrder[task.currentTurnIndex] : userOrder[0];
+  // ✅ Safer currentTurn logic
+  const currentIndex = typeof task.currentTurnIndex === "number" ? task.currentTurnIndex : 0;
+  const currentTurn = userOrder[currentIndex];
   let nextUser = currentTurn;
 
   const completedSet = new Set(completedUsers);
   for (let i = 1; i <= userOrder.length; i++) {
-    const index = (task.currentTurnIndex + i) % userOrder.length;
+    const index = (currentIndex + i) % userOrder.length;
     if (!completedSet.has(userOrder[index])) {
       nextUser = userOrder[index];
       break;
@@ -733,8 +735,6 @@ async function showTaskDetails(task) {
     });
   }
 }
-
-
 
 
 
