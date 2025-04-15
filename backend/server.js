@@ -1061,14 +1061,27 @@ app.post("/api/complete-task", async (req, res) => {
     if (taskIndex === -1) return res.status(404).json({ error: "Task not found" });
 
     const task = tasks[taskIndex];
-
-    // Ensure completions object exists
     if (!task.completions) task.completions = {};
     if (!task.completions[date]) task.completions[date] = [];
 
-    // Add user to completions if not already there
+    // Add user if not already in completions
     if (!task.completions[date].includes(user)) {
       task.completions[date].push(user);
+
+      // Determine next user turn globally, skipping users who already completed today
+      const userList = task.users || [];
+      if (!task.currentTurnIndex && task.currentTurnIndex !== 0) {
+        task.currentTurnIndex = 0;
+      }
+
+      for (let i = 1; i <= userList.length; i++) {
+        const nextIndex = (task.currentTurnIndex + i) % userList.length;
+        const nextUser = userList[nextIndex];
+        if (!task.completions[date].includes(nextUser)) {
+          task.currentTurnIndex = nextIndex;
+          break;
+        }
+      }
     }
 
     // Update tasks array
@@ -1091,7 +1104,6 @@ app.post("/api/complete-task", async (req, res) => {
       action: "completed"
     });
 
-    // Save everything
     await admins.updateOne(
       { email: adminEmail },
       { $set: { tasks, rewards, history } }
