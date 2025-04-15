@@ -544,6 +544,59 @@ body {
 
 
 
+
+
+// Calculate current turn based on previous completions
+function calculateCurrentTurn(task, selectedDate) {
+    const userOrder = [...task.users];
+    if (!userOrder.length) return "None";
+
+    // Parse selected date
+    const selected = new Date(selectedDate);
+    selected.setHours(0, 0, 0, 0);
+
+    // Find the most recent previous day with completions
+    let lastCompletedUser = null;
+    let lastCompletedDate = null;
+
+    if (task.completions) {
+        const completionDates = Object.keys(task.completions)
+            .filter(date => {
+                const d = new Date(date);
+                d.setHours(0, 0, 0, 0);
+                return d < selected;
+            })
+            .sort((a, b) => new Date(b) - new Date(a));
+
+        if (completionDates.length > 0) {
+            lastCompletedDate = completionDates[0];
+            const completions = task.completions[lastCompletedDate];
+            if (Array.isArray(completions) && completions.length > 0) {
+                lastCompletedUser = completions[completions.length - 1];
+            }
+        }
+    }
+
+    // Determine current turn
+    if (lastCompletedUser) {
+        const lastIndex = userOrder.indexOf(lastCompletedUser);
+        return userOrder[(lastIndex + 1) % userOrder.length];
+    }
+
+    // If no prior completions, use the first user or task.turn if set
+    return task.turn || userOrder[0];
+}
+
+
+
+
+
+
+
+
+
+
+
         // Load tasks for a specific date
         async function loadTasksForDate(selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
@@ -582,25 +635,23 @@ body {
         taskDiv.dataset.taskTitle = task.title;
         taskDiv.dataset.taskDate = task.date;
 
-        let repeatLimit = 1;
-        if (task.repeat === "Daily") repeatLimit = task.timesPerDay || 1;
-        if (task.repeat === "Weekly") repeatLimit = task.timesPerWeek || 1;
-        if (task.repeat === "Monthly") repeatLimit = task.timesPerMonth || 1;
+        const userOrder = [...task.users];
+        const currentTurn = calculateCurrentTurn(task, selectedDate);
+        const currentIndex = userOrder.indexOf(currentTurn);
+        const nextUser = userOrder[(currentIndex + 1) % userOrder.length] || userOrder[0];
+
+        const repeatLimit = task.repeat === "Daily" ? (task.timesPerDay || 1) :
+                           task.repeat === "Weekly" ? (task.timesPerWeek || 1) :
+                           task.repeat === "Monthly" ? (task.timesPerMonth || 1) : 1;
 
         const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-const completedCount = completedUsers.length;
-const userOrder = [...task.users];
-
-const currentTurn = userOrder[completedCount % userOrder.length];
-const nextUser = userOrder[(completedCount + 1) % userOrder.length];
-const isCompleted = completedCount >= repeatLimit;
-
+        const isCompleted = completedUsers.length >= repeatLimit;
 
         taskDiv.innerHTML = `
             <strong>${task.title}</strong><br>
             Turn: ${currentTurn}<br>
             Next: ${nextUser}<br>
-            Completed: ${completedCount}/${repeatLimit}<br>
+            Completed: ${completedUsers.length}/${repeatLimit}<br>
             ${isCompleted ? `<span style="color: green; font-weight: bold;">Completed</span><br>` : ""}
             <button class="delete-btn">Delete</button>
         `;
@@ -624,6 +675,14 @@ const isCompleted = completedCount >= repeatLimit;
         taskList.appendChild(taskDiv);
     });
 }
+
+
+
+
+
+
+
+
 
 
         // Show task details in a modal
@@ -741,6 +800,15 @@ const isCompleted = completedCount >= repeatLimit;
         const result = await res.json();
         if (!res.ok) throw new Error(result.error || "Failed to complete task");
 
+        // Update the task's turn
+        const userOrder = [...task.users];
+        const currentIndex = userOrder.indexOf(userName);
+        const nextTurn = userOrder[(currentIndex + 1) % userOrder.length] || userOrder[0];
+        task.turn = nextTurn;
+
+        // Save updated task to backend
+        await saveTaskToBackend(task);
+
         const rewardAmount = result.updatedTask.reward || 0;
 
         // Trigger UI updates
@@ -753,8 +821,6 @@ const isCompleted = completedCount >= repeatLimit;
         alert("Failed to finish task. Please try again.");
     }
 }
-
-
 
 
 
