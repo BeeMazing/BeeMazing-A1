@@ -549,17 +549,23 @@ function getTurnForDate(task, selectedDateStr) {
     const todayStr = new Date().toISOString().split("T")[0];
     const selectedStr = new Date(selectedDateStr).toISOString().split("T")[0];
 
+    // ✅ If explicit override exists, trust it
+    if (task.turnByDate?.[selectedStr]) {
+        return task.turnByDate[selectedStr];
+    }
+
     if (selectedStr === todayStr) {
         const yesterdayTurn = getTurnForYesterday(task);
-        return getTurnForPastOrToday(task, selectedStr, yesterdayTurn); // ✅ only here
+        return getTurnForPastOrToday(task, selectedStr, yesterdayTurn);
     }
 
     if (selectedStr > todayStr) {
         return getTurnForFutureDate(task, selectedStr);
     }
 
-    return getTurnForPastOrToday(task, selectedStr); // ✅ no initialTurn here!
+    return getTurnForPastOrToday(task, selectedStr);
 }
+
 
 
 
