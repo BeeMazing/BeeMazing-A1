@@ -1236,174 +1236,201 @@ taskDiv.appendChild(statusDiv);
           }, 1000);
         }
         
+
+
+        async function finishTask(currentUser, task, selectedDate) {
+    const today = selectedDate || new Date().toISOString().split("T")[0];
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+
+    const popup = document.createElement("div");
+    popup.className = "reward-popup";
+    popup.textContent = `Finished! ✅ +${task.reward || 0} 🍯`;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 2000);
+
+    try {
+        const tasksResponse = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const tasksData = await tasksResponse.json();
+        if (!tasksResponse.ok) throw new Error(tasksData.error || "Failed to fetch tasks");
+        const tasks = tasksData.tasks || [];
+        const taskIndex = tasks.findIndex(t => t.title === task.title && t.date === task.date);
+        if (taskIndex === -1) return;
+
+        if (!tasks[taskIndex].completions) tasks[taskIndex].completions = {};
+        if (!Array.isArray(tasks[taskIndex].completions[today])) tasks[taskIndex].completions[today] = [];
+
+        let requiredTimes = 1;
+        if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+        if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+        if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+
+        const completedUsers = tasks[taskIndex].completions[today];
+        if (completedUsers.length >= requiredTimes) return;
+
+        completedUsers.push(currentUser);
+
+        // Update turn
+        const userList = tasks[taskIndex].users;
+        const currentTurn = tasks[taskIndex].turn || userList[0];
+        const currentIndex = userList.indexOf(currentTurn);
+        const nextIndex = (currentIndex + 1) % userList.length;
+        tasks[taskIndex].turn = userList[nextIndex];
+
+        await fetch("https://beemazing.onrender.com/api/tasks", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ adminEmail, task: tasks[taskIndex] })
+        });
+
+        const rewardAmount = Number(task.reward || 0);
+        await updateUserReward(currentUser, rewardAmount);
+        await saveTaskHistory(currentUser, task);
+        await updateLuckyChestProgress(currentUser, rewardAmount);
+        triggerHoneyRain(rewardAmount);
+
+        setTimeout(() => loadUserReward(currentUser), 100);
+        await loadUserTasks(currentUser, selectedDate);
+    } catch (err) {
+        console.error("Error finishing task:", err);
+        alert("Failed to finish task. Please try again.");
+    }
+}
+
+
+
         function showTaskDetails(task) {
-          const selectedDate = document.querySelector(".day.selected")?.dataset.date;
-          if (!selectedDate) return;
-        
-          function parseLocalDate(dateStr) {
-            const [year, month, day] = dateStr.split("-").map(Number);
-            return new Date(year, month - 1, day);
-          }
-        
-          const dateRange = task.date.split(" to ");
-          const startDateStr = dateRange[0];
-          const startDate = parseLocalDate(startDateStr);
-          const currentDate = parseLocalDate(selectedDate);
-          const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-          const userOrder = [...task.users];
-          let currentUser;
-          let nextTurn = [];
-        
-          const isDailyMoreThanOnce = task.repeat === "Daily" && task.timesPerDay > 1;
-        
-          const completedRaw = task.completions?.[selectedDate] || [];
-          const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
-        
-          let requiredTimes = 1;
-          if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-          if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-          if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-        
-          if (isDailyMoreThanOnce) {
-            const totalRequiredCompletions = task.timesPerDay;
-            const completionIndex = completedUsers.length % userOrder.length;
-            currentUser = userOrder[completionIndex];
-            let index = completionIndex;
-            for (let i = 1; i < userOrder.length; i++) {
-              index = (completionIndex + i) % userOrder.length;
-              nextTurn.push(userOrder[index]);
-            }
-          } else {
-            let currentIndex;
-            if (task.repeat === "Daily" && task.timesPerDay === 1) {
-              currentIndex = diffDays % userOrder.length;
-            } else {
-              const storedTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
-              currentIndex = userOrder.indexOf(storedTurn);
-            }
-            currentUser = userOrder[currentIndex];
-            let index = currentIndex;
-            for (let i = 1; i < task.users.length; i++) {
-              index = (currentIndex + i) % task.users.length;
-              nextTurn.push(userOrder[index]);
-            }
-          }
-        
-          let taskDetails = "";
-          if (task.title) taskDetails += `<strong>Title:</strong> ${task.title}<br>`;
-          if (task.notes) taskDetails += `<strong>Notes:</strong> ${task.notes}<br>`;
-          if (task.room) taskDetails += `<strong>Room:</strong> ${task.room}<br>`;
-          if (task.repeat) {
-            taskDetails += `<strong>Frequency:</strong> ${task.repeat}`;
-            if (task.repeat === "Daily" && task.timesPerDay)
-              taskDetails += ` - ${task.timesPerDay} time(s) per day`;
-            if (task.repeat === "Weekly" && task.timesPerWeek)
-              taskDetails += ` - ${task.timesPerWeek} time(s) per week`;
-            if (task.repeat === "Monthly" && task.timesPerMonth)
-              taskDetails += ` - ${task.timesPerMonth} time(s) per month`;
-            taskDetails += "<br>";
-          }
-          if (task.settings) taskDetails += `<strong>Settings:</strong> ${task.settings}<br>`;
-          if (task.date) taskDetails += `<strong>Date:</strong> ${task.date}<br>`;
-          if (task.reminder) taskDetails += `<strong>Reminder:</strong> Yes<br>`;
-          if (task.users?.length) taskDetails += `<strong>Users:</strong> ${task.users.join(", ")}<br>`;
-          if (task.reward && task.reward !== "0") taskDetails += `<strong>Reward:</strong> ${task.reward} 🍯<br>`;
-        
-          if (completedUsers.length < requiredTimes) {
-            taskDetails += `<strong>Current Turn:</strong> ${currentUser}<br>`;
-            taskDetails += `<strong>Next:</strong> ${nextTurn.length > 0 ? nextTurn.join(" → ") : "-"}<br>`;
-          }
-        
-          if (completedUsers.length > 0) {
-            taskDetails += `
-              <div style="margin-top: 8px;">
+    const selectedDate = document.querySelector(".day.selected")?.dataset.date;
+    if (!selectedDate) return;
+
+    let requiredTimes = 1;
+    if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+    if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+    if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+
+    const completedRaw = task.completions?.[selectedDate] || [];
+    const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
+
+    const currentTurn = task.turn || task.users[0];
+    const userOrder = [...task.users];
+    const nextIndex = (userOrder.indexOf(currentTurn) + 1) % userOrder.length;
+    const nextUser = userOrder[nextIndex];
+
+    let taskDetails = "";
+    if (task.title) taskDetails += `<strong>Title:</strong> ${task.title}<br>`;
+    if (task.notes) taskDetails += `<strong>Notes:</strong> ${task.notes}<br>`;
+    if (task.room) taskDetails += `<strong>Room:</strong> ${task.room}<br>`;
+    if (task.repeat) {
+        taskDetails += `<strong>Frequency:</strong> ${task.repeat}`;
+        if (task.repeat === "Daily" && task.timesPerDay)
+            taskDetails += ` - ${task.timesPerDay} time(s) per day`;
+        if (task.repeat === "Weekly" && task.timesPerWeek)
+            taskDetails += ` - ${task.timesPerWeek} time(s) per week`;
+        if (task.repeat === "Monthly" && task.timesPerMonth)
+            taskDetails += ` - ${task.timesPerMonth} time(s) per month`;
+        taskDetails += "<br>";
+    }
+    if (task.settings) taskDetails += `<strong>Settings:</strong> ${task.settings}<br>`;
+    if (task.date) taskDetails += `<strong>Date:</strong> ${task.date}<br>`;
+    if (task.reminder) taskDetails += `<strong>Reminder:</strong> Yes<br>`;
+    if (task.users?.length) taskDetails += `<strong>Users:</strong> ${task.users.join(", ")}<br>`;
+    if (task.reward && task.reward !== "0") taskDetails += `<strong>Reward:</strong> ${task.reward} 🍯<br>`;
+
+    if (completedUsers.length < requiredTimes) {
+        taskDetails += `<strong>Current Turn:</strong> ${currentTurn}<br>`;
+        taskDetails += `<strong>Next:</strong> ${nextUser}<br>`;
+    }
+
+    if (completedUsers.length > 0) {
+        taskDetails += `
+            <div style="margin-top: 8px;">
                 <strong>Completed by:</strong> ${completedUsers.join(", ")}
                 <button id="editCompletionBtn" style="margin-left: 10px; padding: 4px 8px; font-size: 12px; border-radius: 6px; background: var(--primary-color); color: var(--secondary-color); border: none; cursor: pointer;">Edit</button>
-              </div>
-            `;
-          }
-        
-          taskDetails += `
-            <br>
-            <button id="editTurnBtn" style="
-              padding: 6px 10px;
-              background: var(--primary-color);
-              color: var(--secondary-color);
-              font-weight: bold;
-              border-radius: 6px;
-              border: none;
-              cursor: pointer;">Edit Turn Order</button>
-               
-            <button id="editTaskBtn" style="
-              padding: 6px 10px;
-              background: var(--secondary-color);
-              color: var(--accent-color);
-              font-weight: bold;
-              border-radius: 6px;
-              border: none;
-              cursor: pointer;">Edit Task</button>
-          `;
-        
-          const urlParams = new URLSearchParams(window.location.search);
-          const currentUserName = urlParams.get('user');
-          const today = new Date().toLocaleDateString("sv-SE");
-          const isToday = selectedDate === today;
-          const canFinish = isToday && currentUser === currentUserName && completedUsers.length < requiredTimes;
-        
-          if (canFinish) {
-            taskDetails += `
+            </div>
+        `;
+    }
+
+    taskDetails += `
+        <br>
+        <button id="editTurnBtn" style="
+            padding: 6px 10px;
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            font-weight: bold;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;">Edit Turn Order</button>
+         
+        <button id="editTaskBtn" style="
+            padding: 6px 10px;
+            background: var(--secondary-color);
+            color: var(--accent-color);
+            font-weight: bold;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;">Edit Task</button>
+    `;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentUserName = urlParams.get('user');
+    const today = new Date().toLocaleDateString("sv-SE");
+    const isToday = selectedDate === today;
+    const canFinish = isToday && currentTurn === currentUserName && completedUsers.length < requiredTimes;
+
+    if (canFinish) {
+        taskDetails += `
             <br><br>
             <button id="finishTaskBtn" style="
-              padding: 8px 14px;
-              background: green;
-              color: white;
-              font-weight: bold;
-              border-radius: 6px;
-              border: none;
-              cursor: pointer;">Finish Task ✅</button>
-            `;
-          }
-        
-          const modal = document.createElement("div");
-          modal.className = "task-modal";
-          modal.innerHTML = `<div class="modal-content">${taskDetails}</div>`;
-          document.body.appendChild(modal);
-        
-          modal.addEventListener("click", (e) => {
-            if (e.target.classList.contains("task-modal")) {
-              modal.remove();
-            }
-          });
-        
-          document.getElementById("editTurnBtn").addEventListener("click", () => {
+                padding: 8px 14px;
+                background: green;
+                color: white;
+                font-weight: bold;
+                border-radius: 6px;
+                border: none;
+                cursor: pointer;">Finish Task ✅</button>
+        `;
+    }
+
+    const modal = document.createElement("div");
+    modal.className = "task-modal";
+    modal.innerHTML = `<div class="modal-content">${taskDetails}</div>`;
+    document.body.appendChild(modal);
+
+    modal.addEventListener("click", (e) => {
+        if (e.target.classList.contains("task-modal")) modal.remove();
+    });
+
+    document.getElementById("editTurnBtn").addEventListener("click", () => {
+        modal.remove();
+        showEditTurnModal(task);
+    });
+
+    document.getElementById("editTaskBtn").addEventListener("click", () => {
+        localStorage.setItem("familyApp_editTask", JSON.stringify(task));
+        localStorage.setItem("familyApp_editTask_index", task.title + "-" + task.date);
+        window.location.href = "/BeeMazing-Y1/mobile/3-Tasks/addtasks.html";
+    });
+
+    const editBtn = document.getElementById("editCompletionBtn");
+    if (editBtn) {
+        editBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
             modal.remove();
-            showEditTurnModal(task);
-          });
-        
-          document.getElementById("editTaskBtn").addEventListener("click", () => {
-            localStorage.setItem("familyApp_editTask", JSON.stringify(task));
-            localStorage.setItem("familyApp_editTask_index", task.title + "-" + task.date);
-            window.location.href = "/BeeMazing-Y1/mobile/3-Tasks/addtasks.html";
-          });
-        
-          const editBtn = document.getElementById("editCompletionBtn");
-          if (editBtn) {
-            editBtn.addEventListener("click", (e) => {
-              e.stopPropagation();
-              modal.remove();
-              showEditCompletionModal(task, completedUsers, selectedDate, modal);
-            });
-          }
-        
-          const finishBtn = document.getElementById("finishTaskBtn");
-          if (finishBtn) {
-            finishBtn.addEventListener("click", async () => {
-              await finishTask(currentUserName, task, selectedDate);
-              modal.remove();
-            });
-          }
-        }
-        
+            showEditCompletionModal(task, completedUsers, selectedDate, modal);
+        });
+    }
+
+    const finishBtn = document.getElementById("finishTaskBtn");
+    if (finishBtn) {
+        finishBtn.addEventListener("click", async () => {
+            await finishTask(currentUserName, task, selectedDate);
+            modal.remove();
+        });
+    }
+}
+
+
+
+
         let monthOffset = 0;
         
         function generateScrollableDates(monthOffset = 0) {
@@ -1807,87 +1834,15 @@ taskDiv.appendChild(statusDiv);
           }
         }
         
-        async function finishTask(currentUser, task, selectedDate) {
-          const today = selectedDate || new Date().toISOString().split("T")[0];
-          const adminEmail = localStorage.getItem("currentAdminEmail");
-        
-          const popup = document.createElement("div");
-          popup.className = "reward-popup";
-          popup.textContent = `Finished! ✅ +${task.reward || 0} 🍯`;
-          document.body.appendChild(popup);
-          setTimeout(() => popup.remove(), 2000);
-        
-          try {
-            const tasksResponse = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-            const tasksData = await tasksResponse.json();
-            if (!tasksResponse.ok) throw new Error(tasksData.error || "Failed to fetch tasks");
-            const tasks = tasksData.tasks || [];
-            const taskIndex = tasks.findIndex(t => t.title === task.title && t.date === task.date);
-            if (taskIndex === -1) return;
-        
-            if (!tasks[taskIndex].completions) tasks[taskIndex].completions = {};
-            if (!tasks[taskIndex].completions[today]) tasks[taskIndex].completions[today] = [];
-        
-            let requiredTimes = 1;
-            if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-            if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-            if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-        
-            const completedUsers = tasks[taskIndex].completions[today] || [];
-            const totalCompletions = completedUsers.length;
-            if (totalCompletions >= requiredTimes) return;
-        
-            tasks[taskIndex].completions[today].push(currentUser);
-        
-            if (task.repeat === "Daily" && task.timesPerDay > 1) {
-              const totalCompletions = tasks[taskIndex].completions[today].length;
-              if (totalCompletions < requiredTimes) {
-                const userOrder = [...task.users];
-                const currentIndex = userOrder.indexOf(currentUser);
-                const nextUser = userOrder[(currentIndex + 1) % userOrder.length];
-                tasks[taskIndex].tempTurnReplacement = {
-                  original: tasks[taskIndex].tempTurnReplacement?.original || currentUser,
-                  replacement: nextUser,
-                };
-              } else {
-                delete tasks[taskIndex].tempTurnReplacement;
-              }
-            } else if (task.repeat === "Daily" && task.timesPerDay === 1) {
-              delete tasks[taskIndex].tempTurnReplacement;
-            } else {
-              const totalCompletions = tasks[taskIndex].completions[today].length;
-              if (totalCompletions < requiredTimes) {
-                const currentIndex = task.users.indexOf(currentUser);
-                const nextUser = task.users[(currentIndex + 1) % task.users.length];
-                tasks[taskIndex].tempTurnReplacement = {
-                  original: tasks[taskIndex].tempTurnReplacement?.original || currentUser,
-                  replacement: nextUser,
-                };
-              } else {
-                delete tasks[taskIndex].tempTurnReplacement;
-              }
-            }
-        
-            await fetch("https://beemazing.onrender.com/api/tasks", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ adminEmail, task: tasks[taskIndex] })
-            });
-        
-            const rewardAmount = Number(task.reward || 0);
-            await updateUserReward(currentUser, rewardAmount);
-            await saveTaskHistory(currentUser, task);
-            updateLuckyChestProgress(currentUser, rewardAmount);
-            triggerHoneyRain(rewardAmount);
-        
-            setTimeout(() => loadUserReward(currentUser), 100);
-            await loadUserTasks(currentUser, selectedDate);
-          } catch (err) {
-            console.error("Error finishing task:", err);
-            alert("Failed to finish task. Please try again.");
-          }
-        }
-        
+
+
+
+
+
+
+
+
+
         window.addEventListener("resize", adjustContentTop);
         window.addEventListener("load", adjustContentTop);
         window.addEventListener("storage", (event) => {
