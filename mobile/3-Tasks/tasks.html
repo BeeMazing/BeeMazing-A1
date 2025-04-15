@@ -571,25 +571,32 @@ function getTurnForDate(task, selectedDateStr) {
 
 
 
-
 function getTurnForPastOrToday(task, selectedStr, initialTurn = null) {
     const formatDate = (d) => d.toISOString().split("T")[0];
     const userOrder = [...task.users];
     const completions = task.completions || {};
-    const turnByDate = task.turnByDate || {};
+    
+    // Use original or default to first user
+    if (!task.turnByDate) task.turnByDate = {};
 
+    const turnByDate = task.turnByDate;
     const startDate = new Date(task.date.split(" to ")[0]);
     const selectedDate = new Date(selectedStr);
+
+    // Start simulating from the startDate
     let currentIndex = initialTurn !== null
         ? userOrder.indexOf(initialTurn)
-        : userOrder.indexOf(task.turn || userOrder[0]);
+        : userOrder.indexOf(turnByDate[formatDate(startDate)]) >= 0
+            ? userOrder.indexOf(turnByDate[formatDate(startDate)])
+            : userOrder.indexOf(task.turn || userOrder[0]);
+
     if (currentIndex === -1) currentIndex = 0;
 
     const d = new Date(startDate);
-
     while (d <= selectedDate) {
         const dStr = formatDate(d);
 
+        // Use override if available
         if (turnByDate[dStr]) {
             currentIndex = userOrder.indexOf(turnByDate[dStr]);
         } else {
@@ -601,16 +608,14 @@ function getTurnForPastOrToday(task, selectedStr, initialTurn = null) {
                 }
             }
 
-            // ✅ Save the simulated result to turnByDate for consistency
-            if (!turnByDate[dStr]) {
-                turnByDate[dStr] = userOrder[currentIndex];
-            }
+            // Save the result of today
+            turnByDate[dStr] = userOrder[currentIndex];
         }
 
         d.setDate(d.getDate() + 1);
     }
 
-    return userOrder[currentIndex];
+    return turnByDate[formatDate(selectedDate)];
 }
 
 
