@@ -725,29 +725,50 @@ body {
             const startDate = new Date(task.date.split(" to ")[0]);
             const d = new Date(startDate);
         
-            while (d <= selectedDate) {
+            // For past days (before today), use actual completions
+            while (d < new Date(todayStr)) {
                 const dStr = formatDate(d);
-        
-                // Use persisted turn if available
                 if (turnByDate[dStr]) {
                     currentIndex = userOrder.indexOf(turnByDate[dStr]);
                 } else {
-                    // Advance turn based on completions for this day
                     const completedUsers = Array.isArray(completions[dStr]) ? completions[dStr] : [];
                     const advanceCount = Math.min(completedUsers.length, repeatLimit);
                     currentIndex = (currentIndex + advanceCount) % userOrder.length;
                 }
-        
                 d.setDate(d.getDate() + 1);
             }
         
-            // For future dates, assume perfect completions from today onward
-            if (selectedStr > todayStr) {
-                const daysDiff = Math.floor((selectedDate - new Date(todayStr)) / (1000 * 60 * 60 * 24));
-                const totalAdvances = daysDiff * repeatLimit;
-                currentIndex = (currentIndex + totalAdvances) % userOrder.length;
+            // For today (active day), use actual completions
+            if (selectedStr === todayStr) {
+                const dStr = todayStr;
+                if (turnByDate[dStr]) {
+                    currentIndex = userOrder.indexOf(turnByDate[dStr]);
+                } else {
+                    const completedUsers = Array.isArray(completions[dStr]) ? completions[dStr] : [];
+                    const advanceCount = Math.min(completedUsers.length, repeatLimit);
+                    currentIndex = (currentIndex + advanceCount) % userOrder.length;
+                }
+                return userOrder[currentIndex];
             }
         
+            // For future days (including tomorrow), assume perfect completions up to today
+            if (selectedStr > todayStr) {
+                // First, assume perfect completions for today
+                const todayAdvance = repeatLimit; // Assume full completions for today
+                currentIndex = (currentIndex + todayAdvance) % userOrder.length;
+        
+                // Then calculate advances for days between tomorrow and selected date
+                const tomorrow = new Date(todayStr);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const tomorrowStr = formatDate(tomorrow);
+                const daysDiffFromTomorrow = Math.floor((selectedDate - new Date(tomorrowStr)) / (1000 * 60 * 60 * 24));
+                const totalAdvances = daysDiffFromTomorrow * repeatLimit;
+                currentIndex = (currentIndex + totalAdvances) % userOrder.length;
+        
+                return userOrder[currentIndex];
+            }
+        
+            // For past days, we've already calculated the turn
             return userOrder[currentIndex];
         }
         
@@ -772,7 +793,7 @@ body {
             // Add the completion
             completionsToday.push(userName);
         
-            // Update the turn for today
+            // Update the turn for today only
             if (!task.turnByDate) task.turnByDate = {};
             const userOrder = [...task.users];
             const currentTurn = getTurnForDate(task, todayStr); // Recalculate turn after completion
@@ -1161,7 +1182,6 @@ body {
             });
         });
         </script>
-
 
 
 
