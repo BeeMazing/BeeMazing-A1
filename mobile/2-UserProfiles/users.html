@@ -1270,11 +1270,18 @@ taskDiv.appendChild(statusDiv);
         completedUsers.push(currentUser);
 
         // Update turn
-        const userList = tasks[taskIndex].users;
-        const currentTurn = tasks[taskIndex].turn || userList[0];
-        const currentIndex = userList.indexOf(currentTurn);
-        const nextIndex = (currentIndex + 1) % userList.length;
-        tasks[taskIndex].turn = userList[nextIndex];
+// Update turnByDate for this specific date (to match tasks.html logic)
+if (!tasks[taskIndex].turnByDate) tasks[taskIndex].turnByDate = {};
+
+const completionsToday = tasks[taskIndex].completions[today] || [];
+const userOrder = [...tasks[taskIndex].users];
+let currentIndex = userOrder.indexOf(tasks[taskIndex].turn || userOrder[0]);
+if (currentIndex === -1) currentIndex = 0;
+
+const advanceCount = Math.min(completionsToday.length, requiredTimes);
+const newTurnIndex = (currentIndex + advanceCount) % userOrder.length;
+tasks[taskIndex].turnByDate[today] = userOrder[newTurnIndex];
+
 
         await fetch("https://beemazing.onrender.com/api/tasks", {
             method: "POST",
