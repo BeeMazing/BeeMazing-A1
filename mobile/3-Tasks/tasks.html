@@ -578,7 +578,7 @@ body {
     return;
   }
 
-  visibleTasks.forEach((task) => {
+  for (const task of visibleTasks) {
     const taskDiv = document.createElement("div");
     taskDiv.className = "task-item";
     taskDiv.dataset.taskTitle = task.title;
@@ -590,27 +590,45 @@ body {
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
     const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-    const completedCount = completedUsers.length;
     const completedSet = new Set(completedUsers);
+    const completedCount = completedUsers.length;
 
-    // ✅ Dynamically determine current and next user based on who hasn't completed
+    // ✅ Get the last person who completed this task before the selected date
+    function getLastCompletedUserBeforeDate(task, dateStr) {
+      const allDates = Object.keys(task.completions || {}).filter(d => d < dateStr).sort();
+      for (let i = allDates.length - 1; i >= 0; i--) {
+        const users = task.completions[allDates[i]];
+        if (Array.isArray(users) && users.length > 0) {
+          return users[users.length - 1];
+        }
+      }
+      return null;
+    }
+
+    // ✅ Determine current turn based on last completed user
     let currentTurn = null;
     let nextUser = null;
 
-    for (let i = 0; i < userOrder.length; i++) {
-      if (!completedSet.has(userOrder[i])) {
-        currentTurn = userOrder[i];
-        break;
-      }
-    }
-
-    if (currentTurn) {
-      const currentIndex = userOrder.indexOf(currentTurn);
-      for (let i = currentIndex + 1; i < userOrder.length; i++) {
-        if (!completedSet.has(userOrder[i])) {
-          nextUser = userOrder[i];
+    const lastUser = getLastCompletedUserBeforeDate(task, selectedDate);
+    if (lastUser && userOrder.includes(lastUser)) {
+      const startIndex = (userOrder.indexOf(lastUser) + 1) % userOrder.length;
+      for (let i = 0; i < userOrder.length; i++) {
+        const index = (startIndex + i) % userOrder.length;
+        if (!completedSet.has(userOrder[index])) {
+          currentTurn = userOrder[index];
           break;
         }
+      }
+    } else {
+      // If no previous completions, start from first uncompleted user
+      currentTurn = userOrder.find(u => !completedSet.has(u)) || "All done!";
+    }
+
+    const currentIndex = userOrder.indexOf(currentTurn);
+    for (let i = currentIndex + 1; i < userOrder.length; i++) {
+      if (!completedSet.has(userOrder[i])) {
+        nextUser = userOrder[i];
+        break;
       }
     }
 
@@ -645,9 +663,8 @@ body {
 
     taskList.appendChild(taskDiv);
     enableSwipeToDelete(taskDiv);
-  });
+  }
 }
-
 
 
 
