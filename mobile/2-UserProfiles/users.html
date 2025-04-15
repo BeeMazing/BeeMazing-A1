@@ -922,8 +922,6 @@
 
 
         function getTurnForDate(task, selectedDateStr) {
-    console.log(`Calculating turn for task: ${task.title}, date: ${selectedDateStr}`); // Debug log
-
     const todayStr = new Date().toISOString().split("T")[0];
     const selectedDate = new Date(selectedDateStr);
     const selectedStr = selectedDateStr;
@@ -931,23 +929,16 @@
     const completions = task.completions || {};
     const turnByDate = task.turnByDate || {};
 
-    console.log("User order:", userOrder);
-    console.log("Completions:", JSON.stringify(completions));
-    console.log("Turn by date:", JSON.stringify(turnByDate));
-
     if (turnByDate[selectedStr]) {
-        console.log(`Using turnByDate for ${selectedStr}: ${turnByDate[selectedStr]}`);
         return turnByDate[selectedStr];
     }
 
     let currentIndex = userOrder.indexOf(task.turn || userOrder[0]);
     if (currentIndex === -1) currentIndex = 0;
-    console.log(`Initial turn index: ${currentIndex}, user: ${userOrder[currentIndex]}`);
 
     const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
                         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-    console.log(`Repeat limit: ${repeatLimit}`);
 
     const startDate = new Date(task.date.split(" to ")[0]);
     const d = new Date(startDate);
@@ -956,12 +947,10 @@
         const dStr = d.toISOString().split("T")[0];
         if (turnByDate[dStr]) {
             currentIndex = userOrder.indexOf(turnByDate[dStr]);
-            console.log(`Turn overridden by turnByDate on ${dStr}: ${userOrder[currentIndex]}`);
         } else {
             const completedUsers = Array.isArray(completions[dStr]) ? completions[dStr] : [];
             const advanceCount = Math.min(completedUsers.length, repeatLimit);
             currentIndex = (currentIndex + advanceCount) % userOrder.length;
-            console.log(`Advancing turn on ${dStr}: completions=${completedUsers.length}, advanceCount=${advanceCount}, new index=${currentIndex}, new user=${userOrder[currentIndex]}`);
         }
         d.setDate(d.getDate() + 1);
     }
@@ -971,25 +960,22 @@
         const completedUsers = Array.isArray(completions[dStr]) ? completions[dStr] : [];
         const advanceCount = Math.min(completedUsers.length, repeatLimit);
         currentIndex = (currentIndex + advanceCount) % userOrder.length;
-        console.log(`Today (${dStr}): completions=${completedUsers.length}, advanceCount=${advanceCount}, final index=${currentIndex}, final user=${userOrder[currentIndex]}`);
         return userOrder[currentIndex];
     }
 
     if (selectedStr > todayStr) {
         const todayAdvance = repeatLimit;
         currentIndex = (currentIndex + todayAdvance) % userOrder.length;
-        console.log(`Future date, today advance: ${todayAdvance}, new index=${currentIndex}`);
 
         const tomorrow = new Date(todayStr);
         tomorrow.setDate(tomorrow.getDate() + 1);
         const daysDiffFromTomorrow = Math.floor((selectedDate - tomorrow) / (1000 * 60 * 60 * 24));
         const totalAdvances = daysDiffFromTomorrow * repeatLimit;
         currentIndex = (currentIndex + totalAdvances) % userOrder.length;
-        console.log(`Future date (${selectedStr}): daysDiff=${daysDiffFromTomorrow}, totalAdvances=${totalAdvances}, final index=${currentIndex}, final user=${userOrder[currentIndex]}`);
+
         return userOrder[currentIndex];
     }
 
-    console.log(`Final turn for ${selectedStr}: ${userOrder[currentIndex]}`);
     return userOrder[currentIndex];
 }
         
