@@ -922,6 +922,8 @@
 
 
         function getTurnForDate(task, selectedDateStr) {
+    console.log(`Calculating turn for task: ${task.title}, date: ${selectedDateStr}`); // Debug log
+
     const todayStr = new Date().toISOString().split("T")[0];
     const selectedDate = new Date(selectedDateStr);
     const selectedStr = selectedDateStr;
@@ -929,16 +931,23 @@
     const completions = task.completions || {};
     const turnByDate = task.turnByDate || {};
 
+    console.log("User order:", userOrder);
+    console.log("Completions:", JSON.stringify(completions));
+    console.log("Turn by date:", JSON.stringify(turnByDate));
+
     if (turnByDate[selectedStr]) {
+        console.log(`Using turnByDate for ${selectedStr}: ${turnByDate[selectedStr]}`);
         return turnByDate[selectedStr];
     }
 
     let currentIndex = userOrder.indexOf(task.turn || userOrder[0]);
     if (currentIndex === -1) currentIndex = 0;
+    console.log(`Initial turn index: ${currentIndex}, user: ${userOrder[currentIndex]}`);
 
     const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
                         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+    console.log(`Repeat limit: ${repeatLimit}`);
 
     const startDate = new Date(task.date.split(" to ")[0]);
     const d = new Date(startDate);
@@ -947,10 +956,12 @@
         const dStr = d.toISOString().split("T")[0];
         if (turnByDate[dStr]) {
             currentIndex = userOrder.indexOf(turnByDate[dStr]);
+            console.log(`Turn overridden by turnByDate on ${dStr}: ${userOrder[currentIndex]}`);
         } else {
             const completedUsers = Array.isArray(completions[dStr]) ? completions[dStr] : [];
             const advanceCount = Math.min(completedUsers.length, repeatLimit);
             currentIndex = (currentIndex + advanceCount) % userOrder.length;
+            console.log(`Advancing turn on ${dStr}: completions=${completedUsers.length}, advanceCount=${advanceCount}, new index=${currentIndex}, new user=${userOrder[currentIndex]}`);
         }
         d.setDate(d.getDate() + 1);
     }
@@ -960,22 +971,25 @@
         const completedUsers = Array.isArray(completions[dStr]) ? completions[dStr] : [];
         const advanceCount = Math.min(completedUsers.length, repeatLimit);
         currentIndex = (currentIndex + advanceCount) % userOrder.length;
+        console.log(`Today (${dStr}): completions=${completedUsers.length}, advanceCount=${advanceCount}, final index=${currentIndex}, final user=${userOrder[currentIndex]}`);
         return userOrder[currentIndex];
     }
 
     if (selectedStr > todayStr) {
         const todayAdvance = repeatLimit;
         currentIndex = (currentIndex + todayAdvance) % userOrder.length;
+        console.log(`Future date, today advance: ${todayAdvance}, new index=${currentIndex}`);
 
         const tomorrow = new Date(todayStr);
         tomorrow.setDate(tomorrow.getDate() + 1);
         const daysDiffFromTomorrow = Math.floor((selectedDate - tomorrow) / (1000 * 60 * 60 * 24));
         const totalAdvances = daysDiffFromTomorrow * repeatLimit;
         currentIndex = (currentIndex + totalAdvances) % userOrder.length;
-
+        console.log(`Future date (${selectedStr}): daysDiff=${daysDiffFromTomorrow}, totalAdvances=${totalAdvances}, final index=${currentIndex}, final user=${userOrder[currentIndex]}`);
         return userOrder[currentIndex];
     }
 
+    console.log(`Final turn for ${selectedStr}: ${userOrder[currentIndex]}`);
     return userOrder[currentIndex];
 }
         
@@ -983,6 +997,8 @@
 async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
     const userTasksDiv = document.getElementById("userTasks");
     userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
+
+    console.log("Selected date in loadUserTasks:", selectedDate); // Debug log
 
     const adminEmail = localStorage.getItem("currentAdminEmail");
     let tasks = [];
@@ -992,7 +1008,7 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
         tasks = data.tasks || [];
-        console.log("Fetched tasks for", selectedDate, JSON.stringify(tasks)); // Debug log
+        console.log("Fetched tasks for", selectedDate, JSON.stringify(tasks));
     } catch (err) {
         console.error("Failed to fetch tasks from server:", err);
         userTasksDiv.innerHTML = "<p>Failed to load tasks. Please try again later.</p>";
@@ -1038,6 +1054,8 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
             let completedRaw = task.completions?.[selectedDate] || [];
             let completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
             let completedTimes = completedUsers.length;
+
+            console.log(`Task: ${task.title}, Completions for ${selectedDate}:`, completedRaw); // Debug log
 
             const currentTurn = getTurnForDate(task, selectedDate);
             const userOrder = [...task.users];
@@ -1131,8 +1149,6 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         });
     }
 }
-
-
 
 
         async function loadUserReward(userName) {
@@ -1269,7 +1285,6 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         }
         
 
-
         async function finishTask(currentUser, task, selectedDate) {
     const today = selectedDate || new Date().toISOString().split("T")[0];
     const adminEmail = localStorage.getItem("currentAdminEmail");
@@ -1289,10 +1304,17 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
             const tasksData = await tasksResponse.json();
             if (!tasksResponse.ok) throw new Error(tasksData.error || "Failed to fetch tasks");
             const tasks = tasksData.tasks || [];
-            const taskIndex = tasks.findIndex(t => t.title === task.title && t.date === task.date);
-            if (taskIndex === -1) throw new Error("Task not found");
 
-            console.log("Before update:", JSON.stringify(tasks[taskIndex])); // Debug log
+            console.log("All tasks from backend:", JSON.stringify(tasks));
+
+            const taskDate = task.date.split(" to ")[0];
+            const taskIndex = tasks.findIndex(t => t.title === task.title && t.date.startsWith(taskDate));
+            if (taskIndex === -1) {
+                console.error("Task not found in backend. Task to match:", { title: task.title, date: task.date });
+                throw new Error("Task not found in backend");
+            }
+
+            console.log("Before update:", JSON.stringify(tasks[taskIndex]));
 
             if (!tasks[taskIndex].completions) tasks[taskIndex].completions = {};
             if (!Array.isArray(tasks[taskIndex].completions[today])) tasks[taskIndex].completions[today] = [];
@@ -1321,7 +1343,7 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
 
             if (!response.ok) throw new Error("Failed to save task");
 
-            console.log("After update:", JSON.stringify(tasks[taskIndex])); // Debug log
+            console.log("After update:", JSON.stringify(tasks[taskIndex]));
 
             const rewardAmount = Number(task.reward || 0);
             await updateUserReward(currentUser, rewardAmount);
@@ -1330,13 +1352,16 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
             triggerHoneyRain(rewardAmount);
 
             setTimeout(() => loadUserReward(currentUser), 100);
+            // Force reload tasks from backend to ensure UI reflects backend state
             await loadUserTasks(currentUser, selectedDate);
-            break; // Success, exit retry loop
+            break;
         } catch (err) {
             attempt++;
             if (attempt > maxRetries) {
                 console.error("Error finishing task after retries:", err);
                 alert("Failed to finish task. Please try again.");
+                // Reload tasks to reset local state
+                await loadUserTasks(currentUser, selectedDate);
                 return;
             }
             console.log(`Retrying task finish (${attempt}/${maxRetries})...`);
@@ -1344,9 +1369,6 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         }
     }
 }
-
-
-
 
 function showTaskDetails(task) {
     const selectedDate = document.querySelector(".day.selected")?.dataset.date;
@@ -1473,13 +1495,28 @@ function showTaskDetails(task) {
     const finishBtn = document.getElementById("finishTaskBtn");
     if (finishBtn) {
         finishBtn.addEventListener("click", async () => {
-            await finishTask(currentUserName, task, selectedDate);
+            // Fetch the latest task data before finishing
+            const adminEmail = localStorage.getItem("currentAdminEmail");
+            const response = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+            const data = await response.json();
+            if (!response.ok) {
+                alert("Failed to fetch latest task data. Please try again.");
+                modal.remove();
+                return;
+            }
+            const tasks = data.tasks || [];
+            const taskDate = task.date.split(" to ")[0];
+            const latestTask = tasks.find(t => t.title === task.title && t.date.startsWith(taskDate));
+            if (!latestTask) {
+                alert("Task not found. Please try again.");
+                modal.remove();
+                return;
+            }
+            await finishTask(currentUserName, latestTask, selectedDate);
             modal.remove();
         });
     }
 }
-
-
 
 
         let monthOffset = 0;
