@@ -734,73 +734,69 @@ function getNextUser(task, selectedDate) {
 
         // Calculate the current turn for a given date
         function getTurnForDate(task, selectedDateStr) {
-            const todayStr = formatDate(new Date());
-            const selectedDate = new Date(selectedDateStr);
-            const selectedStr = formatDate(selectedDate);
-            const userOrder = [...task.users];
-            const completions = task.completions || {};
-            const turnByDate = task.turnByDate || {};
-        
-            // Start with the initial turn
-            let currentIndex = userOrder.indexOf(task.turn || userOrder[0]);
-            if (currentIndex === -1) currentIndex = 0;
-        
-            // Define repeat limit based on task frequency
-            const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                                task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                                task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-        
-            // Iterate from start date to selected date
-            const startDate = new Date(task.date.split(" to ")[0]);
-            const d = new Date(startDate);
-        
-            // For past days (before today), use actual completions
-            while (d < new Date(todayStr)) {
-                const dStr = formatDate(d);
-                if (turnByDate[dStr]) {
-                    currentIndex = userOrder.indexOf(turnByDate[dStr]);
-                } else {
-                    const completedUsers = Array.isArray(completions[dStr]) ? completions[dStr] : [];
-                    const advanceCount = Math.min(completedUsers.length, repeatLimit);
-                    currentIndex = (currentIndex + advanceCount) % userOrder.length;
-                }
-                d.setDate(d.getDate() + 1);
-            }
-        
-            // For today (active day), use actual completions
-            if (selectedStr === todayStr) {
-                const dStr = todayStr;
-                if (turnByDate[dStr]) {
-                    currentIndex = userOrder.indexOf(turnByDate[dStr]);
-                } else {
-                    const completedUsers = Array.isArray(completions[dStr]) ? completions[dStr] : [];
-                    const advanceCount = Math.min(completedUsers.length, repeatLimit);
-                    currentIndex = (currentIndex + advanceCount) % userOrder.length;
-                }
-                return userOrder[currentIndex];
-            }
-        
-            // For future days (including tomorrow), assume perfect completions up to today
-            if (selectedStr > todayStr) {
-                // First, assume perfect completions for today
-                const todayAdvance = repeatLimit; // Assume full completions for today
-                currentIndex = (currentIndex + todayAdvance) % userOrder.length;
-        
-                // Then calculate advances for days between tomorrow and selected date
-                const tomorrow = new Date(todayStr);
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                const tomorrowStr = formatDate(tomorrow);
-                const daysDiffFromTomorrow = Math.floor((selectedDate - new Date(tomorrowStr)) / (1000 * 60 * 60 * 24));
-                const totalAdvances = daysDiffFromTomorrow * repeatLimit;
-                currentIndex = (currentIndex + totalAdvances) % userOrder.length;
-        
-                return userOrder[currentIndex];
-            }
-        
-            // For past days, we've already calculated the turn
-            return userOrder[currentIndex];
+    const todayStr = formatDate(new Date());
+    const selectedDate = new Date(selectedDateStr);
+    const selectedStr = formatDate(selectedDate);
+    const userOrder = [...task.users];
+    const completions = task.completions || {};
+    const turnByDate = task.turnByDate || {};
+
+    // Use manually set turn if it exists
+    if (turnByDate[selectedStr]) {
+        return turnByDate[selectedStr];
+    }
+
+    let currentIndex = userOrder.indexOf(task.turn || userOrder[0]);
+    if (currentIndex === -1) currentIndex = 0;
+
+    const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
+                        task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+                        task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+
+    const startDate = new Date(task.date.split(" to ")[0]);
+    const d = new Date(startDate);
+
+    while (d < new Date(todayStr)) {
+        const dStr = formatDate(d);
+        if (turnByDate[dStr]) {
+            currentIndex = userOrder.indexOf(turnByDate[dStr]);
+        } else {
+            const completedUsers = Array.isArray(completions[dStr]) ? completions[dStr] : [];
+            const advanceCount = Math.min(completedUsers.length, repeatLimit);
+            currentIndex = (currentIndex + advanceCount) % userOrder.length;
         }
-        
+        d.setDate(d.getDate() + 1);
+    }
+
+    if (selectedStr === todayStr) {
+        const dStr = todayStr;
+        const completedUsers = Array.isArray(completions[dStr]) ? completions[dStr] : [];
+        const advanceCount = Math.min(completedUsers.length, repeatLimit);
+        currentIndex = (currentIndex + advanceCount) % userOrder.length;
+        return userOrder[currentIndex];
+    }
+
+    if (selectedStr > todayStr) {
+        const todayAdvance = repeatLimit;
+        currentIndex = (currentIndex + todayAdvance) % userOrder.length;
+
+        const tomorrow = new Date(todayStr);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const daysDiffFromTomorrow = Math.floor((selectedDate - tomorrow) / (1000 * 60 * 60 * 24));
+        const totalAdvances = daysDiffFromTomorrow * repeatLimit;
+        currentIndex = (currentIndex + totalAdvances) % userOrder.length;
+
+        return userOrder[currentIndex];
+    }
+
+    return userOrder[currentIndex];
+}
+
+
+
+
+
+
         // Handle task completion and turn advancement
         async function finishTask(userName, task, button, selectedDate) {
             const today = selectedDate;
