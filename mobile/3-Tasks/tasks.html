@@ -586,7 +586,7 @@ body {
     taskDiv.dataset.taskTitle = task.title;
     taskDiv.dataset.taskDate = task.date;
 
-    const userOrder = [...task.users];
+    const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
     const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
                         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
@@ -600,14 +600,14 @@ body {
     const completedSet = new Set(completedUsers);
     completedCount = completedUsers.length;
 
-    // Determine the last known turn
+    // Determine the last known turn (before active day for future predictions)
     let lastTurnUser = task.turn || (userOrder.length > 0 ? userOrder[0] : null);
     let lastTurnDate = parseLocalDate(task.date ? task.date.split(" to ")[0] : null);
 
-    // Find the most recent day with completions before selected date
+    // Find the most recent day with completions strictly before today
     if (task.completions) {
       const completionDates = Object.keys(task.completions)
-        .filter(date => parseLocalDate(date) < selected)
+        .filter(date => parseLocalDate(date) < today)
         .sort((a, b) => parseLocalDate(b) - parseLocalDate(a));
       if (completionDates.length > 0) {
         lastTurnDate = parseLocalDate(completionDates[0]);
@@ -642,13 +642,12 @@ body {
       }
     } else if (selected.getTime() === today.getTime()) {
       // Active day: Use actual completions with predicted sequence
-      // Start from the predicted turn based on last known turn
       const totalCompletionsSoFar = daysDiff * repeatLimit;
       let predictedIndex = (currentIndex + totalCompletionsSoFar) % userOrder.length;
-      
+
       // Adjust for actual completions
-      let completionsCounted = completedCount;
       let tempIndex = predictedIndex;
+      let completionsCounted = completedCount;
       while (completionsCounted > 0 && userOrder.length > 0) {
         if (completedSet.has(userOrder[tempIndex])) {
           completionsCounted--;
@@ -656,12 +655,13 @@ body {
         tempIndex = (tempIndex + 1) % userOrder.length;
       }
 
-      // Current turn is the first non-completed user in the sequence
       currentTurn = userOrder[tempIndex];
 
-      // Next user is the next in sequence, ignoring completions
-      if (currentTurn) {
+      // Set next user based on sequence, or "—" if fully completed
+      if (currentTurn && completedCount < repeatLimit) {
         nextUser = userOrder[(tempIndex + 1) % userOrder.length];
+      } else {
+        nextUser = "—";
       }
     } else {
       // Future days: Predict fixed turns
@@ -669,7 +669,7 @@ body {
       currentIndex = (currentIndex + totalCompletions) % userOrder.length;
       currentTurn = userOrder[currentIndex];
       nextUser = userOrder[(currentIndex + 1) % userOrder.length];
-      completedCount = 0; // No actual completions for future dates
+      completedCount = 0;
     }
 
     currentTurn = currentTurn || "All done!";
@@ -688,7 +688,8 @@ body {
     taskDiv.addEventListener("click", async (e) => {
       if (!e.target.classList.contains("delete-btn")) {
         const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
-        const latestTask = (await latest.json()).tasks.find(t => t.title === task.title && t.date === task.date);
+        const latestResult = await latest.json();
+        const latestTask = latestResult.tasks.find(t => t.title === task.title && t.date === task.date);
         if (latestTask) showTaskDetails(latestTask);
       }
     });
@@ -704,6 +705,12 @@ body {
     enableSwipeToDelete(taskDiv);
   });
 }
+
+
+
+
+
+
 
 async function showTaskDetails(task) {
   const selectedDate = document.querySelector(".day.selected")?.dataset.date;
