@@ -1179,14 +1179,11 @@ async function finishTask(userName, task, button, selectedDate) {
 
 
         function enableSwipeToDelete(taskElement) {
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    if (!isTouchDevice) return; // Prevent swipe on desktop if desired
-
     let startX = 0;
     let currentX = 0;
     let isSwiping = false;
 
-    const threshold = 100; // More distance required
+    const threshold = 100; // Requires stronger swipe
 
     const onStart = (x) => {
         startX = x;
@@ -1217,12 +1214,12 @@ async function finishTask(userName, task, button, selectedDate) {
         }
     };
 
-    // Touch events
+    // Touch support
     taskElement.addEventListener('touchstart', e => onStart(e.touches[0].clientX));
     taskElement.addEventListener('touchmove', e => onMove(e.touches[0].clientX));
     taskElement.addEventListener('touchend', onEnd);
 
-    // Mouse events (optional)
+    // Mouse support
     taskElement.addEventListener('mousedown', e => onStart(e.clientX));
     taskElement.addEventListener('mousemove', e => {
         if (e.buttons === 1 && Math.abs(e.clientX - startX) > 5) {
@@ -1230,12 +1227,10 @@ async function finishTask(userName, task, button, selectedDate) {
         }
     });
     taskElement.addEventListener('mouseup', onEnd);
-
     taskElement.addEventListener('mouseleave', () => {
         if (isSwiping) onEnd();
     });
 }
-
 
 
 
