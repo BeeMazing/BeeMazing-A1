@@ -1129,51 +1129,52 @@ app.post("/api/complete-task", async (req, res) => {
     }
 
     const tasks = admin.tasks || [];
-    const submittedDate = date.split("T")[0]; // Normalize to YYYY-MM-DD
+    console.log(`Searching for task: title="${taskTitle}", date includes "${date}"`);
 
-    // Find task by title and date range
+    // Normalize date to YYYY-MM-DD
+    const normalizedDate = date.split("T")[0];
+
+    // Check if normalizedDate falls within task's date range
     const taskIndex = tasks.findIndex(t => {
       if (t.title !== taskTitle) return false;
-      const dateRange = t.date.split(" to ");
-      const startDate = dateRange[0];
-      const endDate = dateRange[1] || startDate; // If no end date, assume same as start
-      return submittedDate >= startDate && submittedDate <= endDate;
+      const [startDateStr, endDateStr] = t.date.split(" to ");
+      const startDate = new Date(startDateStr);
+      const endDate = new Date(endDateStr || "3000-01-01");
+      const currentDate = new Date(normalizedDate);
+      return currentDate >= startDate && currentDate <= endDate;
     });
 
     if (taskIndex === -1) {
+      console.log(`Task not found: title="${taskTitle}", date="${normalizedDate}", available tasks:`, tasks.map(t => ({ title: t.title, date: t.date })));
       return res.status(404).json({ error: "Task not found" });
     }
 
     const task = tasks[taskIndex];
     task.pendingCompletions = task.pendingCompletions || {};
-    task.pendingCompletions[date] = task.pendingCompletions[date] || [];
+    task.pendingCompletions[normalizedDate] = task.pendingCompletions[normalizedDate] || [];
     task.completions = task.completions || {};
-    task.completions[date] = task.completions[date] || [];
+    task.completions[normalizedDate] = task.completions[normalizedDate] || [];
 
-    // Check if user is already in pending or completed
-    if (task.pendingCompletions[date].includes(user) || task.completions[date].includes(user)) {
+    if (task.pendingCompletions[normalizedDate].includes(user) || task.completions[normalizedDate].includes(user)) {
       return res.status(400).json({ error: "Task already submitted or completed by this user" });
     }
-
-    // Add user to pending completions
-    task.pendingCompletions[date].push(user);
 
     const userList = task.users || [];
     if (!userList.includes(user)) {
       return res.status(400).json({ error: "User not assigned to this task" });
     }
 
-    // Update turn index
+    task.pendingCompletions[normalizedDate].push(user);
+
     if (typeof task.currentTurnIndex !== "number") {
       task.currentTurnIndex = userList.indexOf(user);
       if (task.currentTurnIndex === -1) task.currentTurnIndex = 0;
     }
 
-    // Advance turn to next available user
     for (let i = 1; i <= userList.length; i++) {
       const nextIndex = (task.currentTurnIndex + i) % userList.length;
       const nextUser = userList[nextIndex];
-      if (!task.pendingCompletions[date].includes(nextUser) && !task.completions[date].includes(nextUser)) {
+      if (!task.pendingCompletions[normalizedDate].includes(nextUser) && !task.completions[normalizedDate].includes(nextUser)) {
         task.currentTurnIndex = nextIndex;
         break;
       }
@@ -1181,10 +1182,9 @@ app.post("/api/complete-task", async (req, res) => {
 
     tasks[taskIndex] = task;
 
-    // Update history
     const history = admin.history || {};
-    const month = new Date(date).toLocaleString("default", { month: "long" });
-    const day = new Date(date).getDate();
+    const month = new Date(normalizedDate).toLocaleString("default", { month: "long" });
+    const day = new Date(normalizedDate).getDate();
     if (!history[month]) history[month] = {};
     if (!history[month][day]) history[month][day] = [];
     history[month][day].push({
@@ -1205,6 +1205,7 @@ app.post("/api/complete-task", async (req, res) => {
     res.status(500).json({ error: `Server error: ${err.message}` });
   }
 });
+
 
 
 

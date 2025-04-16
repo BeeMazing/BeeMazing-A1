@@ -925,6 +925,8 @@
 
 
 
+
+
         async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
   const userTasksDiv = document.getElementById("userTasks");
   userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
@@ -937,6 +939,7 @@
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
     tasks = data.tasks || [];
+    console.log(`Loaded tasks for ${userName} on ${selectedDate}:`, tasks.map(t => ({ title: t.title, date: t.date })));
   } catch (err) {
     console.error("Failed to fetch tasks from server:", err);
     userTasksDiv.innerHTML = "<p>Failed to load tasks. Please try again later.</p>";
@@ -946,11 +949,14 @@
   function parseLocalDate(dateStr) {
     if (!dateStr || typeof dateStr !== "string") return new Date();
     const [year, month, day] = dateStr.split("-").map(Number);
-    return new Date(year, month - 1, day);
+    return isNaN(year) || isNaN(month) || isNaN(day) ? new Date() : new Date(year, month - 1, day);
   }
 
   const userTasks = tasks.filter(task => {
-    if (!task || !task.users || !task.date) return false;
+    if (!task || !task.users || !task.title || !task.date) {
+      console.warn("Skipping invalid task:", task);
+      return false;
+    }
     if (!task.users.includes(userName)) return false;
 
     const dateRange = task.date.split(" to ");
@@ -960,7 +966,10 @@
     const endDate = parseLocalDate(endDateStr);
     const currentDate = parseLocalDate(selectedDate);
 
-    if (isNaN(startDate) || isNaN(endDate) || isNaN(currentDate)) return false;
+    if (isNaN(startDate) || isNaN(endDate) || isNaN(currentDate)) {
+      console.warn("Invalid dates in task:", task);
+      return false;
+    }
     if (currentDate < startDate || currentDate > endDate) return false;
 
     if (task.repeat === "Daily" && task.timesPerDay > 1) return true;
@@ -969,7 +978,7 @@
       const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
       const userOrder = [...task.users];
       const currentIndex = diffDays % userOrder.length;
-      const currentTurn = userOrder[currentIndex];
+      const currentTurn = userOrder[currentIndex] || "";
       return currentTurn === userName;
     }
 
@@ -1108,10 +1117,6 @@
     userTasksDiv.appendChild(taskDiv);
   });
 }
-
-
-
-
 
 
 
@@ -1837,7 +1842,7 @@
   const today = selectedDate || new Date().toISOString().split("T")[0];
   const adminEmail = localStorage.getItem("currentAdminEmail");
   const button = event.target;
-  button.disabled = true; // Prevent multiple clicks
+  button.disabled = true;
 
   const popup = document.createElement("div");
   popup.className = "reward-popup";
@@ -1845,12 +1850,13 @@
   document.body.appendChild(popup);
 
   try {
+    console.log(`Submitting task: title="${task.title}", user="${currentUser}", date="${today}", adminEmail="${adminEmail}"`);
     const response = await fetch("https://beemazing.onrender.com/api/complete-task", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         adminEmail,
-        taskTitle: task.title,
+        taskTitle: task.title.trim(),
         user: currentUser,
         date: today
       })
@@ -1858,6 +1864,7 @@
 
     const data = await response.json();
     if (!response.ok) {
+      console.error("Server response:", data);
       throw new Error(data.error || `HTTP error ${response.status}`);
     }
 
@@ -1870,11 +1877,9 @@
     popup.textContent = `Error: ${err.message}`;
     popup.style.color = "red";
     setTimeout(() => popup.remove(), 3000);
-    button.disabled = false; // Re-enable on error
+    button.disabled = false;
   }
 }
-
-
 
 
 
