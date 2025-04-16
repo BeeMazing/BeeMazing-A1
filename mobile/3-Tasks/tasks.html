@@ -544,15 +544,11 @@ body {
 
 
 
-     
+        // Load tasks for a specific date
 
 
 
-
-
-
-// Replace the loadTasksForDate function with this corrected version:
-async function loadTasksForDate(selectedDate) {
+        async function loadTasksForDate(selectedDate) {
   const adminEmail = localStorage.getItem("currentAdminEmail");
   if (!adminEmail) return;
 
@@ -568,24 +564,13 @@ async function loadTasksForDate(selectedDate) {
     return new Date(year, month - 1, day);
   }
 
-  // Get today's date for comparison
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const selectedDateObj = parseLocalDate(selectedDate);
-  
-  // Sort tasks by date for consistent processing
-  tasks.sort((a, b) => {
-    if (!a.date) return 1;
-    if (!b.date) return -1;
-    return parseLocalDate(a.date.split(" to ")[0]) - parseLocalDate(b.date.split(" to ")[0]);
-  });
-
   const visibleTasks = tasks.filter(task => {
     if (!task.date) return false;
     const range = task.date.split(" to ");
     const from = parseLocalDate(range[0]);
     const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
-    return selectedDateObj >= from && selectedDateObj <= to;
+    const selected = parseLocalDate(selectedDate);
+    return selected >= from && selected <= to;
   });
 
   if (visibleTasks.length === 0) {
@@ -593,7 +578,6 @@ async function loadTasksForDate(selectedDate) {
     return;
   }
 
-  // Process each visible task
   visibleTasks.forEach((task) => {
     const taskDiv = document.createElement("div");
     taskDiv.className = "task-item";
@@ -605,15 +589,34 @@ async function loadTasksForDate(selectedDate) {
                         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-    // Calculate the expected turn for the selected date
-    const allDates = getAllDatesForTask(task);
-    const completionsMap = buildCompletionsMap(task, allDates, selectedDate, userOrder);
-    const turnsForDate = calculateTurnsForDate(selectedDate, task, completionsMap, userOrder, repeatLimit);
-    
-    const currentTurn = turnsForDate.currentTurn;
-    const nextUser = turnsForDate.nextUser;
-    const completedCount = turnsForDate.completedCount;
-    
+    const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+    const completedCount = completedUsers.length;
+    const completedSet = new Set(completedUsers);
+
+    // ✅ Dynamically determine current and next user based on who hasn't completed
+    let currentTurn = null;
+    let nextUser = null;
+
+    for (let i = 0; i < userOrder.length; i++) {
+      if (!completedSet.has(userOrder[i])) {
+        currentTurn = userOrder[i];
+        break;
+      }
+    }
+
+    if (currentTurn) {
+      const currentIndex = userOrder.indexOf(currentTurn);
+      for (let i = currentIndex + 1; i < userOrder.length; i++) {
+        if (!completedSet.has(userOrder[i])) {
+          nextUser = userOrder[i];
+          break;
+        }
+      }
+    }
+
+    currentTurn = currentTurn || "All done!";
+    nextUser = nextUser || "—";
+
     const isCompleted = completedCount >= repeatLimit;
 
     taskDiv.innerHTML = `
@@ -645,179 +648,40 @@ async function loadTasksForDate(selectedDate) {
   });
 }
 
-// Helper function to get all dates between task start and selected date
-function getAllDatesForTask(task) {
-  if (!task.date) return [];
-  
-  const startDateStr = task.date.split(" to ")[0];
-  const [startYear, startMonth, startDay] = startDateStr.split("-").map(Number);
-  const startDate = new Date(startYear, startMonth - 1, startDay);
-  
-  const endDateStr = document.querySelector(".day.selected")?.dataset.date;
-  if (!endDateStr) return [];
-  
-  const [endYear, endMonth, endDay] = endDateStr.split("-").map(Number);
-  const endDate = new Date(endYear, endMonth - 1, endDay);
-  
-  const dates = [];
-  const currentDate = new Date(startDate);
-  
-  while (currentDate <= endDate) {
-    dates.push(currentDate.toISOString().split("T")[0]);
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-  
-  return dates;
-}
 
-// Build a map of completed tasks for all dates up to the selected date
-function buildCompletionsMap(task, allDates, selectedDate, userOrder) {
-  const completionsMap = {};
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  // First add actual completions from task data
-  const taskCompletions = task.completions || {};
-  Object.keys(taskCompletions).forEach(date => {
-    completionsMap[date] = [...taskCompletions[date]];
-  });
-  
-  // For future dates, we simulate completions based on turn rotation
-  const selectedDateObj = new Date(selectedDate);
-  selectedDateObj.setHours(0, 0, 0, 0);
-  
-  // Calculate expected turns for each date
-  let lastProcessedDate = null;
-  let currentTurnIndex = 0;
-  
-  allDates.forEach(date => {
-    const dateObj = new Date(date);
-    dateObj.setHours(0, 0, 0, 0);
-    
-    // For future dates (after today), we simulate completions based on expected turn order
-    if (dateObj > today && date !== selectedDate) {
-      // If there's completion data for this date, use it as is
-      if (completionsMap[date]) return;
-      
-      // Otherwise simulate completions based on expected turn order
-      const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                          task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                          task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-      
-      // Find last processed date
-      if (!lastProcessedDate) {
-        for (let i = allDates.indexOf(date) - 1; i >= 0; i--) {
-          if (completionsMap[allDates[i]]) {
-            lastProcessedDate = allDates[i];
-            break;
-          }
-        }
-      }
-      
-      // If we have a last processed date, calculate who should be next
-      if (lastProcessedDate) {
-        const lastCompletions = completionsMap[lastProcessedDate] || [];
-        currentTurnIndex = lastCompletions.length % userOrder.length;
-      }
-      
-      // Simulate completions for this date
-      completionsMap[date] = [];
-      for (let i = 0; i < repeatLimit; i++) {
-        completionsMap[date].push(userOrder[currentTurnIndex]);
-        currentTurnIndex = (currentTurnIndex + 1) % userOrder.length;
-      }
-    }
-  });
-  
-  return completionsMap;
-}
 
-// Calculate turns for a specific date
-function calculateTurnsForDate(selectedDate, task, completionsMap, userOrder, repeatLimit) {
-  const completedUsers = completionsMap[selectedDate] || [];
-  const completedCount = completedUsers.length;
-  const completedSet = new Set(completedUsers);
-  
-  // Determine who's next based on the rotation
-  let currentTurn = "All done!";
-  let nextUser = "—";
-  
-  // Find who hasn't completed the task yet
-  for (let i = 0; i < userOrder.length; i++) {
-    const user = userOrder[i];
-    if (!completedSet.has(user)) {
-      currentTurn = user;
-      break;
-    }
-  }
-  
-  // If we found a current turn, find the next user
-  if (currentTurn !== "All done!") {
-    const currentIndex = userOrder.indexOf(currentTurn);
-    for (let i = 1; i < userOrder.length; i++) {
-      const checkIndex = (currentIndex + i) % userOrder.length;
-      if (!completedSet.has(userOrder[checkIndex])) {
-        nextUser = userOrder[checkIndex];
-        break;
-      }
-    }
-  }
-  
-  // For future dates, ensure logical turn progression if no completions yet
-  const selectedDateObj = new Date(selectedDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  selectedDateObj.setHours(0, 0, 0, 0);
-  
-  if (selectedDateObj > today && completedCount === 0) {
-    // Find the latest completed date before the selected date
-    const allDates = getAllDatesForTask(task);
-    const selectedIndex = allDates.indexOf(selectedDate);
-    let latestCompletedDate = null;
-    
-    for (let i = selectedIndex - 1; i >= 0; i--) {
-      const date = allDates[i];
-      if (completionsMap[date] && completionsMap[date].length > 0) {
-        latestCompletedDate = date;
-        break;
-      }
-    }
-    
-    if (latestCompletedDate) {
-      const latestCompletions = completionsMap[latestCompletedDate];
-      const lastUser = latestCompletions[latestCompletions.length - 1];
-      const lastUserIndex = userOrder.indexOf(lastUser);
-      const nextUserIndex = (lastUserIndex + 1) % userOrder.length;
-      
-      currentTurn = userOrder[nextUserIndex];
-      nextUser = userOrder[(nextUserIndex + 1) % userOrder.length];
-    } else {
-      // If no completion data, default to first user
-      currentTurn = userOrder[0];
-      nextUser = userOrder[1 % userOrder.length];
-    }
-  }
-  
-  return { currentTurn, nextUser, completedCount };
-}
 
-// Update showTaskDetails to use the same turn calculation logic
+
+
+
+
+
 async function showTaskDetails(task) {
   const selectedDate = document.querySelector(".day.selected")?.dataset.date;
   if (!selectedDate) return;
 
   const userOrder = [...task.users];
+
   const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
                       task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                       task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-  // Use the same turn calculation logic as in loadTasksForDate
-  const allDates = getAllDatesForTask(task);
-  const completionsMap = buildCompletionsMap(task, allDates, selectedDate, userOrder);
-  const { currentTurn, nextUser, completedCount } = calculateTurnsForDate(selectedDate, task, completionsMap, userOrder, repeatLimit);
-  
-  // Get actual completions for the selected date
   const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+  const completedCount = completedUsers.length;
+
+  // ✅ Safer currentTurn logic
+  const currentIndex = typeof task.currentTurnIndex === "number" ? task.currentTurnIndex : 0;
+  const currentTurn = userOrder[currentIndex];
+  let nextUser = currentTurn;
+
+  const completedSet = new Set(completedUsers);
+  for (let i = 1; i <= userOrder.length; i++) {
+    const index = (currentIndex + i) % userOrder.length;
+    if (!completedSet.has(userOrder[index])) {
+      nextUser = userOrder[index];
+      break;
+    }
+  }
 
   let taskDetails = `
     <strong>Title:</strong> ${task.title}<br>
@@ -880,6 +744,7 @@ async function showTaskDetails(task) {
     });
   }
 }
+
 
 
 
@@ -1317,7 +1182,7 @@ async function finishTask(userName, task, button, selectedDate) {
     let currentX = 0;
     let isSwiping = false;
 
-    const threshold = 50; // Minimum distance to trigger swipe
+    const threshold = 100; // Minimum distance to trigger swipe
 
     const onStart = (x) => {
         startX = x;
@@ -1356,7 +1221,9 @@ async function finishTask(userName, task, button, selectedDate) {
     // Mouse events
     taskElement.addEventListener('mousedown', e => onStart(e.clientX));
     taskElement.addEventListener('mousemove', e => {
-        if (e.buttons === 1) onMove(e.clientX);
+        if (e.buttons === 1 && Math.abs(e.clientX - startX) > 5) {
+    onMove(e.clientX);
+}
     });
     taskElement.addEventListener('mouseup', onEnd);
 
