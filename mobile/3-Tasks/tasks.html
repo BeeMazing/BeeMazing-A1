@@ -592,14 +592,19 @@ body {
     const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
     const completedCount = completedUsers.length;
 
-    let currentTurn = task.currentTurnIndex !== undefined ? userOrder[task.currentTurnIndex] : userOrder[0];
-    let nextUser = currentTurn;
+    // ✅ Safer currentTurn logic
+    let currentIndex = typeof task.currentTurnIndex === "number" ? task.currentTurnIndex : 0;
+    if (currentIndex < 0 || currentIndex >= userOrder.length) currentIndex = 0;
 
+    const currentTurn = userOrder[currentIndex];
+
+    // ✅ Determine next user in rotation who hasn't completed
+    let nextUser = currentTurn;
     const completedSet = new Set(completedUsers);
     for (let i = 1; i <= userOrder.length; i++) {
-      const index = (task.currentTurnIndex + i) % userOrder.length;
-      if (!completedSet.has(userOrder[index])) {
-        nextUser = userOrder[index];
+      const idx = (currentIndex + i) % userOrder.length;
+      if (!completedSet.has(userOrder[idx])) {
+        nextUser = userOrder[idx];
         break;
       }
     }
@@ -617,8 +622,8 @@ body {
 
     taskDiv.addEventListener("click", async (e) => {
       if (!e.target.classList.contains("delete-btn")) {
-        const result = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
-        const latestTask = (await result.json()).tasks.find(t => t.title === task.title && t.date === task.date);
+        const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+        const latestTask = (await latest.json()).tasks.find(t => t.title === task.title && t.date === task.date);
         if (latestTask) showTaskDetails(latestTask);
       }
     });
@@ -644,9 +649,6 @@ body {
 
 
 
-
-
-
 async function showTaskDetails(task) {
   const selectedDate = document.querySelector(".day.selected")?.dataset.date;
   if (!selectedDate) return;
@@ -660,12 +662,14 @@ async function showTaskDetails(task) {
   const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
   const completedCount = completedUsers.length;
 
-  let currentTurn = task.currentTurnIndex !== undefined ? userOrder[task.currentTurnIndex] : userOrder[0];
+  // ✅ Safer currentTurn logic
+  const currentIndex = typeof task.currentTurnIndex === "number" ? task.currentTurnIndex : 0;
+  const currentTurn = userOrder[currentIndex];
   let nextUser = currentTurn;
 
   const completedSet = new Set(completedUsers);
   for (let i = 1; i <= userOrder.length; i++) {
-    const index = (task.currentTurnIndex + i) % userOrder.length;
+    const index = (currentIndex + i) % userOrder.length;
     if (!completedSet.has(userOrder[index])) {
       nextUser = userOrder[index];
       break;
@@ -753,10 +757,9 @@ async function showTaskDetails(task) {
 
 
 
-
-
         // Handle task completion and turn advancement
-        async function finishTask(userName, task, button, selectedDate) {
+// ✅ Handle task completion and turn advancement
+async function finishTask(userName, task, button, selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     const todayStr = selectedDate || new Date().toISOString().split("T")[0];
 
@@ -777,18 +780,21 @@ async function showTaskDetails(task) {
 
         const rewardAmount = result.updatedTask.reward || 0;
 
-        // Trigger UI updates
+        // ✅ Trigger reward animation if available
         if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
-        if (typeof loadTasksForDate === 'function') loadTasksForDate(todayStr);
+
+        // ✅ Refresh task and user data after slight delay to allow DB sync
+        if (typeof loadTasksForDate === 'function') {
+            setTimeout(() => loadTasksForDate(todayStr), 150);
+        }
         if (typeof loadUserTasks === 'function') loadUserTasks(userName, todayStr);
         if (typeof loadUserReward === 'function') loadUserReward(userName);
+
     } catch (err) {
         console.error("❌ Error completing task:", err);
         alert("Failed to finish task. Please try again.");
     }
 }
-
-
 
 
 
