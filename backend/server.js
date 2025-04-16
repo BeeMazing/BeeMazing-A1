@@ -920,96 +920,39 @@ app.get("/api/admin-tasks", async (req, res) => {
     const admins = db.collection("admins");
     const adminUsers = db.collection("adminUsers");
 
-    // Fetch admin data
     const admin = await admins.findOne({ email: adminEmail });
     const tasks = admin?.tasks || [];
 
-    // Fetch non-admin users
     const adminDoc = await adminUsers.findOne({ email: adminEmail });
     const users = adminDoc?.users || [];
     const permissions = adminDoc?.permissions || {};
     const nonAdminUsers = users.filter(user => permissions[user] !== "Admin");
 
-    // Process tasks for non-admin users
-    const today = new Date().toLocaleDateString("sv-SE");
+    const today = new Date().toISOString().split("T")[0];
     const adminTasks = [];
 
     tasks.forEach(task => {
       const dateRange = task.date.split(" to ");
-      const startDateStr = dateRange[0];
-      const endDateStr = dateRange[1] || "3000-01-01";
-      const startDate = new Date(startDateStr);
-      const endDate = new Date(endDateStr);
-      const currentDate = new Date(today);
+      const startDate = new Date(dateRange[0]);
+      const endDate = dateRange[1] ? new Date(dateRange[1]) : new Date("3000-01-01");
+      const now = new Date(today);
+      if (now < startDate || now > endDate) return;
 
-      if (currentDate < startDate || currentDate > endDate) return;
-
-      const taskUsers = task.users?.filter(user => nonAdminUsers.includes(user)) || [];
+      const taskUsers = task.users?.filter(u => nonAdminUsers.includes(u)) || [];
       if (taskUsers.length === 0) return;
 
-      let requiredTimes = 1;
-      if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-      if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-      if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+      const completions = task.completions?.[today] || [];
 
-      let completedUsers = task.completions?.[today] || [];
-      let completedTimes = completedUsers.length;
-
-
-
-      let currentTurn;
-      if (task.repeat === "Daily" && task.timesPerDay === 1) {
-          const dateRange = task.date.split(" to ");
-          const startDateStr = dateRange[0];
-          const startDate = parseLocalDate(startDateStr);
-          const currentDate = parseLocalDate(selectedDate);
-          const userOrder = [...task.users];
-      
-          const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-          let currentIndex = diffDays % userOrder.length;
-          let assumedTurn = userOrder[currentIndex];
-      
-          // Check if yesterday's turn missed their task
-          const prevDate = new Date(currentDate);
-          prevDate.setDate(prevDate.getDate() - 1);
-          const prevDateStr = prevDate.toISOString().split("T")[0];
-          const prevDiff = Math.floor((prevDate - startDate) / (1000 * 60 * 60 * 24));
-          const prevIndex = prevDiff % userOrder.length;
-          const prevTurn = userOrder[prevIndex];
-          const prevCompleted = task.completions?.[prevDateStr] || [];
-      
-          if (!prevCompleted.includes(prevTurn)) {
-              currentTurn = prevTurn;
-          } else {
-              currentTurn = assumedTurn;
-          }
-      } else {
-          currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
-      }
-      
-
-
-
-
-      if (completedTimes < requiredTimes) {
-        adminTasks.push({
-          title: task.title,
-          user: currentTurn,
-          status: "Pending",
-          reward: task.reward || 0
-        });
-      } else {
-        taskUsers.forEach(user => {
-          if (completedUsers.includes(user)) {
-            adminTasks.push({
-              title: task.title,
-              user,
-              status: "Completed",
-              reward: task.reward || 0
-            });
-          }
-        });
-      }
+      completions.forEach(entry => {
+        if (entry.status === "pending" && taskUsers.includes(entry.user)) {
+          adminTasks.push({
+            title: task.title,
+            user: entry.user,
+            status: "Pending",
+            reward: task.reward || 0
+          });
+        }
+      });
     });
 
     res.json({ success: true, tasks: adminTasks });
