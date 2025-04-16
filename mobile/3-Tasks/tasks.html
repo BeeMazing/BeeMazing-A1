@@ -564,15 +564,12 @@ body {
     return new Date(year, month - 1, day);
   }
 
-  const selected = parseLocalDate(selectedDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
   const visibleTasks = tasks.filter(task => {
     if (!task.date) return false;
     const range = task.date.split(" to ");
     const from = parseLocalDate(range[0]);
     const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
+    const selected = parseLocalDate(selectedDate);
     return selected >= from && selected <= to;
   });
 
@@ -592,109 +589,34 @@ body {
                         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-    // Determine the last known state
-    let lastKnownDate = parseLocalDate(task.date.split(" to ")[0]);
-    let lastKnownTurnIndex = 0;
-    let lastKnownCompletions = {};
+    const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+    const completedCount = completedUsers.length;
+    const completedSet = new Set(completedUsers);
 
-    // Find the most recent day with completions before the selected date
-    if (task.completions) {
-      const completionDates = Object.keys(task.completions)
-        .filter(date => parseLocalDate(date) < selected)
-        .sort((a, b) => parseLocalDate(b) - parseLocalDate(a));
-      if (completionDates.length > 0) {
-        lastKnownDate = parseLocalDate(completionDates[0]);
-        lastKnownCompletions = { [completionDates[0]]: task.completions[completionDates[0]] };
+    // ✅ Dynamically determine current and next user based on who hasn't completed
+    let currentTurn = null;
+    let nextUser = null;
+
+    for (let i = 0; i < userOrder.length; i++) {
+      if (!completedSet.has(userOrder[i])) {
+        currentTurn = userOrder[i];
+        break;
       }
     }
 
-    // Calculate current and next turn for the selected date
-    let currentTurn = null;
-    let nextUser = null;
-    let completedCount = 0;
-    let completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-    let completedSet = new Set(completedUsers);
-
-    if (selected < today) {
-      // Past days: Use actual completions
-      completedCount = completedUsers.length;
-      for (let i = 0; i < userOrder.length; i++) {
+    if (currentTurn) {
+      const currentIndex = userOrder.indexOf(currentTurn);
+      for (let i = currentIndex + 1; i < userOrder.length; i++) {
         if (!completedSet.has(userOrder[i])) {
-          currentTurn = userOrder[i];
+          nextUser = userOrder[i];
           break;
         }
-      }
-      if (currentTurn) {
-        const currentIndex = userOrder.indexOf(currentTurn);
-        for (let i = currentIndex + 1; i < userOrder.length; i++) {
-          if (!completedSet.has(userOrder[i])) {
-            nextUser = userOrder[i];
-            break;
-          }
-        }
-      }
-    } else {
-      // Present or future days: Predict turns
-      let currentIndex = lastKnownTurnIndex;
-      let tempCompletions = { ...lastKnownCompletions };
-
-      // Simulate turns from last known date to selected date
-      let currentDate = new Date(lastKnownDate);
-      while (currentDate <= selected) {
-        const dateStr = formatDate(currentDate);
-        let dailyCompletions = Array.isArray(tempCompletions[dateStr]) ? tempCompletions[dateStr] : [];
-        let dailyCompletedSet = new Set(dailyCompletions);
-
-        if (currentDate < selected) {
-          // Assume full completions for previous days
-          let completionsNeeded = repeatLimit - dailyCompletions.length;
-          while (completionsNeeded > 0 && userOrder.length > 0) {
-            let user = userOrder[currentIndex % userOrder.length];
-            if (!dailyCompletedSet.has(user)) {
-              dailyCompletions.push(user);
-              dailyCompletedSet.add(user);
-              currentIndex++;
-              completionsNeeded--;
-            } else {
-              currentIndex++;
-            }
-          }
-          tempCompletions[dateStr] = dailyCompletions;
-        } else {
-          // For the selected date, use actual completions if available
-          dailyCompletions = Array.isArray(task.completions?.[dateStr]) ? task.completions[dateStr] : [];
-          dailyCompletedSet = new Set(dailyCompletions);
-          completedCount = dailyCompletions.length;
-
-          // Determine current turn
-          for (let i = 0; i < userOrder.length; i++) {
-            let user = userOrder[currentIndex % userOrder.length];
-            if (!dailyCompletedSet.has(user)) {
-              currentTurn = user;
-              break;
-            }
-            currentIndex++;
-          }
-
-          // Determine next user
-          if (currentTurn) {
-            let nextIndex = currentIndex + 1;
-            for (let i = 0; i < userOrder.length; i++) {
-              let user = userOrder[nextIndex % userOrder.length];
-              if (!dailyCompletedSet.has(user)) {
-                nextUser = user;
-                break;
-              }
-              nextIndex++;
-            }
-          }
-        }
-        currentDate.setDate(currentDate.getDate() + 1);
       }
     }
 
     currentTurn = currentTurn || "All done!";
     nextUser = nextUser || "—";
+
     const isCompleted = completedCount >= repeatLimit;
 
     taskDiv.innerHTML = `
@@ -725,6 +647,8 @@ body {
     enableSwipeToDelete(taskDiv);
   });
 }
+
+
 
 
 
