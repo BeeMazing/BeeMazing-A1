@@ -1112,7 +1112,6 @@ app.post('/api/review-task', async (req, res) => {
 
 
 
-
 app.post("/api/complete-task", async (req, res) => {
   const { adminEmail, taskTitle, user, date } = req.body;
 
@@ -1130,7 +1129,17 @@ app.post("/api/complete-task", async (req, res) => {
     }
 
     const tasks = admin.tasks || [];
-    const taskIndex = tasks.findIndex(t => t.title === taskTitle && t.date.includes(date.split("T")[0]));
+    const submittedDate = date.split("T")[0]; // Normalize to YYYY-MM-DD
+
+    // Find task by title and date range
+    const taskIndex = tasks.findIndex(t => {
+      if (t.title !== taskTitle) return false;
+      const dateRange = t.date.split(" to ");
+      const startDate = dateRange[0];
+      const endDate = dateRange[1] || startDate; // If no end date, assume same as start
+      return submittedDate >= startDate && submittedDate <= endDate;
+    });
+
     if (taskIndex === -1) {
       return res.status(404).json({ error: "Task not found" });
     }
@@ -1196,7 +1205,6 @@ app.post("/api/complete-task", async (req, res) => {
     res.status(500).json({ error: `Server error: ${err.message}` });
   }
 });
-
 
 
 
