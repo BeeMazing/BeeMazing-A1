@@ -1047,34 +1047,75 @@ app.post('/api/review-task', async (req, res) => {
       return res.status(404).json({ error: 'Task not found' });
     }
 
+    task.pendingCompletions = task.pendingCompletions || {};
+    task.pendingCompletions[selectedDate] = task.pendingCompletions[selectedDate] || [];
     task.completions = task.completions || {};
     task.completions[selectedDate] = task.completions[selectedDate] || [];
 
-    const completions = task.completions[selectedDate];
-    const completionIndex = completions.indexOf(user);
+    const pendingIndex = task.pendingCompletions[selectedDate].indexOf(user);
 
-    if (completionIndex === -1 && decision === 'decline') {
-      return res.status(400).json({ error: 'User has not completed this task' });
+    if (pendingIndex === -1) {
+      return res.status(400).json({ error: 'User has no pending completion for this task' });
     }
 
-    if (decision === 'decline') {
-      // Remove the completion
-      completions.splice(completionIndex, 1);
+    if (decision === 'accept') {
+      // Move from pending to confirmed completion
+      task.pendingCompletions[selectedDate].splice(pendingIndex, 1);
+      if (!task.completions[selectedDate].includes(user)) {
+        task.completions[selectedDate].push(user);
+      }
 
-      // Reverse the reward
+      // Grant reward
       const rewardAmount = Number(task.reward || 0);
       if (rewardAmount > 0) {
         const rewards = admin.rewards || {};
-        rewards[user] = (rewards[user] || 0) - rewardAmount;
-        if (rewards[user] < 0) rewards[user] = 0;
+        rewards[user] = (rewards[user] || 0) + rewardAmount;
 
         await admins.updateOne(
           { email: adminEmail },
           { $set: { rewards } }
         );
       }
+
+      // Update history
+      const history = admin.history || {};
+      const month = new Date(selectedDate).toLocaleString("default", { month: "long" });
+      const day = new Date(selectedDate).getDate();
+      if (!history[month]) history[month] = {};
+      if (!history[month][day]) history[month][day] = [];
+      history[month][day].push({
+        title,
+        user,
+        timestamp: new Date().toISOString(),
+        action: "accepted"
+      });
+
+      await admins.updateOne(
+        { email: adminEmail },
+        { $set: { history } }
+      );
+    } else if (decision === 'decline') {
+      // Remove pending completion
+      task.pendingCompletions[selectedDate].splice(pendingIndex, 1);
+
+      // Update history
+      const history = admin.history || {};
+      const month = new Date(selectedDate).toLocaleString("default", { month: "long" });
+      const day = new Date(selectedDate).getDate();
+      if (!history[month]) history[month] = {};
+      if (!history[month][day]) history[month][day] = [];
+      history[month][day].push({
+        title,
+        user,
+        timestamp: new Date().toISOString(),
+        action: "declined"
+      });
+
+      await admins.updateOne(
+        { email: adminEmail },
+        { $set: { history } }
+      );
     }
-    // For 'accept', no changes to completions (already recorded)
 
     await admins.updateOne(
       { email: adminEmail },
@@ -1087,8 +1128,6 @@ app.post('/api/review-task', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-
 
 
 
@@ -1121,26 +1160,26 @@ app.post("/api/complete-task", async (req, res) => {
     if (taskIndex === -1) return res.status(404).json({ error: "Task not found" });
 
     const task = tasks[taskIndex];
-    if (!task.completions) task.completions = {};
-    if (!task.completions[date]) task.completions[date] = [];
+    if (!task.pendingCompletions) task.pendingCompletions = {};
+    if (!task.pendingCompletions[date]) task.pendingCompletions[date] = [];
 
-    // Add user if not already in completions
-    if (!task.completions[date].includes(user)) {
-      task.completions[date].push(user);
+    // Add user if not already in pending completions
+    if (!task.pendingCompletions[date].includes(user)) {
+      task.pendingCompletions[date].push(user);
 
       const userList = task.users || [];
 
-      // ✅ Initialize turn index if missing
+      // Initialize turn index if missing
       if (typeof task.currentTurnIndex !== "number") {
         task.currentTurnIndex = userList.indexOf(user);
         if (task.currentTurnIndex === -1) task.currentTurnIndex = 0;
       }
 
-      // ✅ Advance turn to next available user
+      // Advance turn to next available user
       for (let i = 1; i <= userList.length; i++) {
         const nextIndex = (task.currentTurnIndex + i) % userList.length;
         const nextUser = userList[nextIndex];
-        if (!task.completions[date].includes(nextUser)) {
+        if (!task.pendingCompletions[date]?.includes(nextUser) && !task.completions?.[date]?.includes(nextUser)) {
           task.currentTurnIndex = nextIndex;
           break;
         }
@@ -1150,11 +1189,7 @@ app.post("/api/complete-task", async (req, res) => {
     // Update task array
     tasks[taskIndex] = task;
 
-    // ✅ Update rewards
-    const rewards = admin.rewards || {};
-    rewards[user] = (rewards[user] || 0) + (task.reward || 0);
-
-    // ✅ Update history
+    // Update history
     const history = admin.history || {};
     const month = new Date(date).toLocaleString("default", { month: "long" });
     const day = new Date(date).getDate();
@@ -1164,12 +1199,12 @@ app.post("/api/complete-task", async (req, res) => {
       title: taskTitle,
       user,
       timestamp: new Date().toISOString(),
-      action: "completed"
+      action: "pending"
     });
 
     await admins.updateOne(
       { email: adminEmail },
-      { $set: { tasks, rewards, history } }
+      { $set: { tasks, history } }
     );
 
     res.json({ success: true, updatedTask: task });
@@ -1178,8 +1213,5 @@ app.post("/api/complete-task", async (req, res) => {
     res.status(500).json({ error: "Failed to complete task" });
   }
 });
-
-
-
 
 // users.html and tasks.html task details //
