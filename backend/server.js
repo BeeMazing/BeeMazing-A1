@@ -1024,7 +1024,64 @@ app.get("/api/admin-tasks", async (req, res) => {
 
 
 
+app.post('/api/review-task', async (req, res) => {
+  const { adminEmail, title, date, selectedDate, user, decision } = req.body;
 
+  try {
+    if (!adminEmail || !title || !date || !selectedDate || !user || !decision) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const db = client.db('BeeMazing');
+    const tasksCollection = db.collection('tasks');
+    const task = await tasksCollection.findOne({ adminEmail, title, date });
+
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    task.completions = task.completions || {};
+    task.completions[selectedDate] = task.completions[selectedDate] || [];
+
+    const completions = task.completions[selectedDate];
+    const completionIndex = completions.indexOf(user);
+
+    if (completionIndex === -1 && decision === 'decline') {
+      return res.status(400).json({ error: 'User has not completed this task' });
+    }
+
+    if (decision === 'decline') {
+      // Remove the completion
+      completions.splice(completionIndex, 1);
+
+      // Reverse the reward
+      const rewardAmount = Number(task.reward || 0);
+      if (rewardAmount > 0) {
+        const rewardsCollection = db.collection('rewards');
+        let rewards = await rewardsCollection.findOne({ adminEmail }) || { rewards: {} };
+        rewards.rewards[user] = (rewards.rewards[user] || 0) - rewardAmount;
+        if (rewards.rewards[user] < 0) rewards.rewards[user] = 0;
+
+        await rewardsCollection.updateOne(
+          { adminEmail },
+          { $set: { rewards: rewards.rewards } },
+          { upsert: true }
+        );
+      }
+    }
+    // For 'accept', no changes to completions (already recorded)
+
+    await tasksCollection.updateOne(
+      { adminEmail, title, date },
+      { $set: { completions: task.completions } }
+    );
+
+    res.json({ message: `Task ${decision}d successfully` });
+  } catch (err) {
+    console.error('Error reviewing task:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 
 
