@@ -1066,7 +1066,8 @@ app.post("/api/complete-task", async (req, res) => {
 
     // Add user if not already in completions
     if (!task.completions[date].includes(user)) {
-      task.completions[date].push(user);
+      task.completions[date].push({ user, status: "pending" });
+
 
       const userList = task.users || [];
 

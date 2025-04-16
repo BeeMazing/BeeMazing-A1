@@ -136,63 +136,83 @@
         const adminEmail = localStorage.getItem("currentAdminEmail");
         let selectedDate = new Date().toISOString().split("T")[0];
       
-        async function handleDecision(title, date, index, decision) {
-          const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-          const { tasks } = await res.json();
-          const task = tasks.find(t => t.title === title && t.date === date);
-          if (!task) return;
-      
-          const completions = task.completions?.[selectedDate] || [];
-      
-          if (decision === "decline") {
-            completions.splice(index, 1);
-            task.completions[selectedDate] = completions;
-      
-            await fetch("https://beemazing.onrender.com/update-task", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ adminEmail, task }),
-            });
-          }
-      
-          loadTasks();
-        }
+        async function handleDecision(title, date, userName, decision) {
+  const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+  const { tasks } = await res.json();
+  const task = tasks.find(t => t.title === title && t.date === date);
+  if (!task) return;
+
+  const completions = task.completions?.[selectedDate] || [];
+
+  const completionIndex = completions.findIndex(c => c.user === userName && c.status === "pending");
+  if (completionIndex === -1) return;
+
+  if (decision === "accept") {
+    // ✅ Approve and reward
+    completions[completionIndex].status = "approved";
+
+    const rewardAmount = Number(task.reward) || 0;
+    await fetch("https://beemazing.onrender.com/api/rewards", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminEmail, user: userName, amount: rewardAmount })
+    });
+
+  } else if (decision === "decline") {
+    // ❌ Remove the completion so the user can redo the task
+    completions.splice(completionIndex, 1);
+  }
+
+  task.completions[selectedDate] = completions;
+
+  await fetch("https://beemazing.onrender.com/update-task", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ adminEmail, task }),
+  });
+
+  loadTasks();
+}
+
       
         async function loadTasks() {
-          const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-          const { tasks } = await res.json();
-          const container = document.getElementById("taskContainer");
-          container.innerHTML = "";
-      
-          tasks.forEach(task => {
-            const completions = task.completions?.[selectedDate] || [];
-            const userOrder = task.users || [];
-            const repeat = task.repeat || "Daily";
-            let requiredTimes = task.timesPerDay || 1;
-            if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-            if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-      
-            const fullTurn = [];
-            for (let i = 0; i < requiredTimes; i++) {
-              fullTurn.push(userOrder[i % userOrder.length]);
-            }
-      
-            fullTurn.forEach((user, index) => {
-              const isWaiting = completions.length > index && completions[index] === user;
-              const div = document.createElement("div");
-              div.className = "task-entry";
-              div.innerHTML = `
-                <p><strong>${task.title}</strong> - ${user}</p>
-                <p>Status: ${isWaiting ? 'Accept/Decline' : 'Pending'}</p>
-                ${isWaiting ? `
-                  <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'accept')">Accept</button>
-                  <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'decline')">Decline</button>
-                ` : ''}
-              `;
-              container.appendChild(div);
-            });
-          });
-        }
+  const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+  const { tasks } = await res.json();
+  const container = document.getElementById("taskContainer");
+  container.innerHTML = "";
+
+  tasks.forEach(task => {
+    const completions = task.completions?.[selectedDate] || [];
+    const pendingCompletions = completions.filter(c => c.status === "pending");
+    const userOrder = task.users || [];
+    const repeat = task.repeat || "Daily";
+
+    let requiredTimes = task.timesPerDay || 1;
+    if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+    if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+
+    const fullTurn = [];
+    for (let i = 0; i < requiredTimes; i++) {
+      fullTurn.push(userOrder[i % userOrder.length]);
+    }
+
+    fullTurn.forEach(user => {
+      const isWaiting = pendingCompletions.some(c => c.user === user);
+      const div = document.createElement("div");
+      div.className = "task-entry";
+      div.innerHTML = `
+        <p><strong>${task.title}</strong> - ${user}</p>
+        <p>Status: ${isWaiting ? 'Awaiting Approval' : 'Pending'}</p>
+        ${isWaiting ? `
+          <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', '${user}', 'accept')">Accept</button>
+          <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', '${user}', 'decline')">Decline</button>
+        ` : ''}
+      `;
+      container.appendChild(div);
+    });
+  });
+}
+
       
         function generateScrollableDates(monthOffset = 0) {
           const container = document.getElementById("dayScrollContainer");
