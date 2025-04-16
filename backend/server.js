@@ -1047,75 +1047,34 @@ app.post('/api/review-task', async (req, res) => {
       return res.status(404).json({ error: 'Task not found' });
     }
 
-    task.pendingCompletions = task.pendingCompletions || {};
-    task.pendingCompletions[selectedDate] = task.pendingCompletions[selectedDate] || [];
     task.completions = task.completions || {};
     task.completions[selectedDate] = task.completions[selectedDate] || [];
 
-    const pendingIndex = task.pendingCompletions[selectedDate].indexOf(user);
+    const completions = task.completions[selectedDate];
+    const completionIndex = completions.indexOf(user);
 
-    if (pendingIndex === -1) {
-      return res.status(400).json({ error: 'User has no pending completion for this task' });
+    if (completionIndex === -1 && decision === 'decline') {
+      return res.status(400).json({ error: 'User has not completed this task' });
     }
 
-    if (decision === 'accept') {
-      // Move from pending to confirmed completion
-      task.pendingCompletions[selectedDate].splice(pendingIndex, 1);
-      if (!task.completions[selectedDate].includes(user)) {
-        task.completions[selectedDate].push(user);
-      }
+    if (decision === 'decline') {
+      // Remove the completion
+      completions.splice(completionIndex, 1);
 
-      // Grant reward
+      // Reverse the reward
       const rewardAmount = Number(task.reward || 0);
       if (rewardAmount > 0) {
         const rewards = admin.rewards || {};
-        rewards[user] = (rewards[user] || 0) + rewardAmount;
+        rewards[user] = (rewards[user] || 0) - rewardAmount;
+        if (rewards[user] < 0) rewards[user] = 0;
 
         await admins.updateOne(
           { email: adminEmail },
           { $set: { rewards } }
         );
       }
-
-      // Update history
-      const history = admin.history || {};
-      const month = new Date(selectedDate).toLocaleString("default", { month: "long" });
-      const day = new Date(selectedDate).getDate();
-      if (!history[month]) history[month] = {};
-      if (!history[month][day]) history[month][day] = [];
-      history[month][day].push({
-        title,
-        user,
-        timestamp: new Date().toISOString(),
-        action: "accepted"
-      });
-
-      await admins.updateOne(
-        { email: adminEmail },
-        { $set: { history } }
-      );
-    } else if (decision === 'decline') {
-      // Remove pending completion
-      task.pendingCompletions[selectedDate].splice(pendingIndex, 1);
-
-      // Update history
-      const history = admin.history || {};
-      const month = new Date(selectedDate).toLocaleString("default", { month: "long" });
-      const day = new Date(selectedDate).getDate();
-      if (!history[month]) history[month] = {};
-      if (!history[month][day]) history[month][day] = [];
-      history[month][day].push({
-        title,
-        user,
-        timestamp: new Date().toISOString(),
-        action: "declined"
-      });
-
-      await admins.updateOne(
-        { email: adminEmail },
-        { $set: { history } }
-      );
     }
+    // For 'accept', no changes to completions (already recorded)
 
     await admins.updateOne(
       { email: adminEmail },
@@ -1130,6 +1089,10 @@ app.post('/api/review-task', async (req, res) => {
 });
 
 
+
+
+
+
 // userAdmin.html ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1137,7 +1100,6 @@ app.post('/api/review-task', async (req, res) => {
 
 
 // users.html and tasks.html task details //
-
 
 
 app.post("/api/complete-task", async (req, res) => {
@@ -1159,28 +1121,26 @@ app.post("/api/complete-task", async (req, res) => {
     if (taskIndex === -1) return res.status(404).json({ error: "Task not found" });
 
     const task = tasks[taskIndex];
-    if (!task.pendingCompletions) task.pendingCompletions = {};
-    if (!task.pendingCompletions[date]) task.pendingCompletions[date] = [];
     if (!task.completions) task.completions = {};
     if (!task.completions[date]) task.completions[date] = [];
 
-    // Add user to pending completions if not already completed or pending
-    if (!task.pendingCompletions[date].includes(user) && !task.completions[date].includes(user)) {
-      task.pendingCompletions[date].push(user);
+    // Add user if not already in completions
+    if (!task.completions[date].includes(user)) {
+      task.completions[date].push(user);
 
       const userList = task.users || [];
 
-      // Initialize turn index if missing
+      // ✅ Initialize turn index if missing
       if (typeof task.currentTurnIndex !== "number") {
         task.currentTurnIndex = userList.indexOf(user);
         if (task.currentTurnIndex === -1) task.currentTurnIndex = 0;
       }
 
-      // Advance turn to next available user
+      // ✅ Advance turn to next available user
       for (let i = 1; i <= userList.length; i++) {
         const nextIndex = (task.currentTurnIndex + i) % userList.length;
         const nextUser = userList[nextIndex];
-        if (!task.pendingCompletions[date]?.includes(nextUser) && !task.completions[date]?.includes(nextUser)) {
+        if (!task.completions[date].includes(nextUser)) {
           task.currentTurnIndex = nextIndex;
           break;
         }
@@ -1190,7 +1150,11 @@ app.post("/api/complete-task", async (req, res) => {
     // Update task array
     tasks[taskIndex] = task;
 
-    // Update history
+    // ✅ Update rewards
+    const rewards = admin.rewards || {};
+    rewards[user] = (rewards[user] || 0) + (task.reward || 0);
+
+    // ✅ Update history
     const history = admin.history || {};
     const month = new Date(date).toLocaleString("default", { month: "long" });
     const day = new Date(date).getDate();
@@ -1200,12 +1164,12 @@ app.post("/api/complete-task", async (req, res) => {
       title: taskTitle,
       user,
       timestamp: new Date().toISOString(),
-      action: "pending"
+      action: "completed"
     });
 
     await admins.updateOne(
       { email: adminEmail },
-      { $set: { tasks, history } }
+      { $set: { tasks, rewards, history } }
     );
 
     res.json({ success: true, updatedTask: task });
@@ -1214,6 +1178,8 @@ app.post("/api/complete-task", async (req, res) => {
     res.status(500).json({ error: "Failed to complete task" });
   }
 });
+
+
 
 
 // users.html and tasks.html task details //

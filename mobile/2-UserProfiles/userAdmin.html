@@ -138,11 +138,10 @@
       
 
 
-
-
         async function handleDecision(title, date, index, decision, user, event) {
   const container = document.getElementById("taskContainer");
   try {
+    // Disable the clicked button and its sibling
     const button = event.target;
     const taskEntry = button.closest(".task-entry");
     const buttons = taskEntry.querySelectorAll("button");
@@ -167,9 +166,11 @@
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to process decision");
 
+    // Update status text
     const status = taskEntry.querySelector("p:nth-child(2)");
     status.textContent = `Status: ${decision === "accept" ? "Accepted" : "Declined"}`;
 
+    // Refresh tasks
     setTimeout(() => loadTasks(), 500);
   } catch (err) {
     console.error("Error processing decision:", err);
@@ -177,15 +178,13 @@
     errorDiv.style.color = "red";
     errorDiv.textContent = `Error: ${err.message}`;
     taskEntry.appendChild(errorDiv);
+    // Re-enable buttons on error
     taskEntry.querySelectorAll("button").forEach(btn => {
       btn.disabled = false;
       btn.style.opacity = "1";
     });
   }
 }
-
-
-
 
 
 
@@ -197,7 +196,6 @@ async function loadTasks() {
   container.innerHTML = "";
 
   tasks.forEach(task => {
-    const pendingCompletions = task.pendingCompletions?.[selectedDate] || [];
     const completions = task.completions?.[selectedDate] || [];
     const userOrder = task.users || [];
     const repeat = task.repeat || "Daily";
@@ -211,18 +209,17 @@ async function loadTasks() {
     }
 
     fullTurn.forEach((user, index) => {
-      const isPending = pendingCompletions.includes(user);
-      const isCompleted = completions.includes(user);
+      const isWaiting = completions.length > index && completions[index] === user;
       const div = document.createElement("div");
       div.className = "task-entry";
       div.innerHTML = `
-        <p><strong>${task.title}</strong> - ${user}</p>
-        <p>Status: ${isPending && !isCompleted ? 'Waiting for Review' : isCompleted ? 'Accepted' : 'Pending'}</p>
-        ${isPending && !isCompleted ? `
-          <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'accept', '${user}', event)">Accept</button>
-          <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'decline', '${user}', event)">Decline</button>
-        ` : ''}
-      `;
+  <p><strong>${task.title}</strong> - ${user}</p>
+  <p>Status: ${isWaiting ? 'Waiting for Review' : 'Pending'}</p>
+  ${isWaiting ? `
+    <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'accept', '${user}', event)">Accept</button>
+    <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'decline', '${user}', event)">Decline</button>
+  ` : ''}
+`;
       container.appendChild(div);
     });
   });
@@ -231,9 +228,6 @@ async function loadTasks() {
     container.innerHTML = "<p>No tasks for this date.</p>";
   }
 }
-
-
-
 
 
 
