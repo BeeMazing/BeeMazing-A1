@@ -1024,6 +1024,7 @@ app.get("/api/admin-tasks", async (req, res) => {
 
 
 
+
 app.post('/api/review-task', async (req, res) => {
   const { adminEmail, title, date, selectedDate, user, decision } = req.body;
 
@@ -1032,10 +1033,16 @@ app.post('/api/review-task', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const db = client.db('BeeMazing');
-    const tasksCollection = db.collection('tasks');
-    const task = await tasksCollection.findOne({ adminEmail, title, date });
+    const db = await connectDB();
+    const admins = db.collection('admins');
+    const admin = await admins.findOne({ email: adminEmail });
 
+    if (!admin) {
+      return res.status(404).json({ error: 'Admin not found' });
+    }
+
+    const tasks = admin.tasks || [];
+    const task = tasks.find(t => t.title === title && t.date === date);
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
     }
@@ -1057,23 +1064,21 @@ app.post('/api/review-task', async (req, res) => {
       // Reverse the reward
       const rewardAmount = Number(task.reward || 0);
       if (rewardAmount > 0) {
-        const rewardsCollection = db.collection('rewards');
-        let rewards = await rewardsCollection.findOne({ adminEmail }) || { rewards: {} };
-        rewards.rewards[user] = (rewards.rewards[user] || 0) - rewardAmount;
-        if (rewards.rewards[user] < 0) rewards.rewards[user] = 0;
+        const rewards = admin.rewards || {};
+        rewards[user] = (rewards[user] || 0) - rewardAmount;
+        if (rewards[user] < 0) rewards[user] = 0;
 
-        await rewardsCollection.updateOne(
-          { adminEmail },
-          { $set: { rewards: rewards.rewards } },
-          { upsert: true }
+        await admins.updateOne(
+          { email: adminEmail },
+          { $set: { rewards } }
         );
       }
     }
     // For 'accept', no changes to completions (already recorded)
 
-    await tasksCollection.updateOne(
-      { adminEmail, title, date },
-      { $set: { completions: task.completions } }
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { tasks } }
     );
 
     res.json({ message: `Task ${decision}d successfully` });
@@ -1082,8 +1087,6 @@ app.post('/api/review-task', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-
 
 
 

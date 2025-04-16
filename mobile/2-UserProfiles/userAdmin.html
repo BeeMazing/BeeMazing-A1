@@ -138,11 +138,12 @@
       
 
 
-        async function handleDecision(title, date, index, decision, user, task) {
+        async function handleDecision(title, date, index, decision, user, event) {
   const container = document.getElementById("taskContainer");
   try {
-    // Disable buttons to prevent multiple clicks
-    const taskEntry = container.querySelector(`.task-entry:nth-child(${index + 1})`);
+    // Disable the clicked button and its sibling
+    const button = event.target;
+    const taskEntry = button.closest(".task-entry");
     const buttons = taskEntry.querySelectorAll("button");
     buttons.forEach(btn => {
       btn.disabled = true;
@@ -169,15 +170,21 @@
     const status = taskEntry.querySelector("p:nth-child(2)");
     status.textContent = `Status: ${decision === "accept" ? "Accepted" : "Declined"}`;
 
-    // Re-enable buttons after a delay (optional, for UX)
+    // Refresh tasks
     setTimeout(() => loadTasks(), 500);
   } catch (err) {
     console.error("Error processing decision:", err);
-    container.innerHTML = "<p>Error processing decision. Please try again.</p>";
+    const errorDiv = document.createElement("div");
+    errorDiv.style.color = "red";
+    errorDiv.textContent = `Error: ${err.message}`;
+    taskEntry.appendChild(errorDiv);
+    // Re-enable buttons on error
+    taskEntry.querySelectorAll("button").forEach(btn => {
+      btn.disabled = false;
+      btn.style.opacity = "1";
+    });
   }
 }
-
-
 
 
 
@@ -206,13 +213,13 @@ async function loadTasks() {
       const div = document.createElement("div");
       div.className = "task-entry";
       div.innerHTML = `
-        <p><strong>${task.title}</strong> - ${user}</p>
-        <p>Status: ${isWaiting ? 'Waiting for Review' : 'Pending'}</p>
-        ${isWaiting ? `
-          <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'accept', '${user}', ${JSON.stringify(task)})">Accept</button>
-          <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'decline', '${user}', ${JSON.stringify(task)})">Decline</button>
-        ` : ''}
-      `;
+  <p><strong>${task.title}</strong> - ${user}</p>
+  <p>Status: ${isWaiting ? 'Waiting for Review' : 'Pending'}</p>
+  ${isWaiting ? `
+    <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'accept', '${user}', event)">Accept</button>
+    <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'decline', '${user}', event)">Decline</button>
+  ` : ''}
+`;
       container.appendChild(div);
     });
   });
