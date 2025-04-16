@@ -548,7 +548,8 @@ body {
 
 
 
-        async function loadTasksForDate(selectedDate) {
+// Replace the loadTasksForDate function with this updated version:
+async function loadTasksForDate(selectedDate) {
   const adminEmail = localStorage.getItem("currentAdminEmail");
   if (!adminEmail) return;
 
@@ -578,6 +579,12 @@ body {
     return;
   }
 
+  // Get today's date for comparison
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const selectedDateObj = parseLocalDate(selectedDate);
+  const isFutureDate = selectedDateObj > today;
+
   visibleTasks.forEach((task) => {
     const taskDiv = document.createElement("div");
     taskDiv.className = "task-item";
@@ -589,33 +596,89 @@ body {
                         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-    const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-    const completedCount = completedUsers.length;
-    const completedSet = new Set(completedUsers);
-
-    // ✅ Dynamically determine current and next user based on who hasn't completed
+    // Handle future date predictions
     let currentTurn = null;
     let nextUser = null;
-
-    for (let i = 0; i < userOrder.length; i++) {
-      if (!completedSet.has(userOrder[i])) {
-        currentTurn = userOrder[i];
-        break;
+    let completedCount = 0;
+    let completedUsers = [];
+    
+    if (isFutureDate) {
+      // For future dates, we need to predict who's turn it will be
+      const daysFromToday = Math.floor((selectedDateObj - today) / (1000 * 60 * 60 * 24));
+      
+      // Get the most recent past date where we have completions data
+      const completionDates = Object.keys(task.completions || {})
+        .filter(date => parseLocalDate(date) <= today)
+        .sort((a, b) => parseLocalDate(b) - parseLocalDate(a));
+      
+      let predictedTurn = null;
+      
+      if (completionDates.length > 0) {
+        const latestDate = completionDates[0];
+        const latestCompletions = task.completions[latestDate] || [];
+        
+        // Get the next user in the rotation who hasn't completed the task
+        const completedSet = new Set(latestCompletions);
+        
+        // Find the first user who hasn't completed the task yet
+        for (let i = 0; i < userOrder.length; i++) {
+          if (!completedSet.has(userOrder[i])) {
+            predictedTurn = userOrder[i];
+            break;
+          }
+        }
+        
+        // If all users completed or we couldn't find next user, start with the first user
+        if (!predictedTurn) {
+          predictedTurn = userOrder[0];
+        }
+        
+        // Now advance the turn by daysFromToday
+        // For simplicity, we assume one full rotation of users per day
+        const rotationsPerDay = Math.min(repeatLimit, userOrder.length);
+        const totalRotations = daysFromToday * rotationsPerDay;
+        const currentUserIndex = userOrder.indexOf(predictedTurn);
+        const predictedIndex = (currentUserIndex + totalRotations) % userOrder.length;
+        
+        currentTurn = userOrder[predictedIndex];
+        nextUser = userOrder[(predictedIndex + 1) % userOrder.length];
+      } else {
+        // If no past completion data, just use the first user
+        currentTurn = userOrder[0];
+        nextUser = userOrder[1 % userOrder.length];
       }
-    }
-
-    if (currentTurn) {
-      const currentIndex = userOrder.indexOf(currentTurn);
-      for (let i = currentIndex + 1; i < userOrder.length; i++) {
+      
+      // For future dates, show predicted completions (default to 0)
+      completedCount = 0;
+    } else {
+      // For today or past dates, use actual completion data
+      completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+      completedCount = completedUsers.length;
+      const completedSet = new Set(completedUsers);
+      
+      // Determine current turn based on who hasn't completed task
+      for (let i = 0; i < userOrder.length; i++) {
         if (!completedSet.has(userOrder[i])) {
-          nextUser = userOrder[i];
+          currentTurn = userOrder[i];
           break;
         }
       }
+      
+      // Find next user who hasn't completed
+      if (currentTurn) {
+        const currentIndex = userOrder.indexOf(currentTurn);
+        for (let i = 1; i < userOrder.length; i++) {
+          const nextIndex = (currentIndex + i) % userOrder.length;
+          if (!completedSet.has(userOrder[nextIndex])) {
+            nextUser = userOrder[nextIndex];
+            break;
+          }
+        }
+      }
+      
+      currentTurn = currentTurn || "All done!";
+      nextUser = nextUser || "—";
     }
-
-    currentTurn = currentTurn || "All done!";
-    nextUser = nextUser || "—";
 
     const isCompleted = completedCount >= repeatLimit;
 
@@ -625,6 +688,7 @@ body {
       Next: ${nextUser}<br>
       Completed: ${completedCount}/${repeatLimit}<br>
       ${isCompleted ? `<span style="color: green; font-weight: bold;">Completed</span><br>` : ""}
+      ${isFutureDate ? `<span style="color: #999; font-style: italic;">Predicted</span><br>` : ""}
       <button class="delete-btn">Delete</button>
     `;
 
@@ -632,7 +696,7 @@ body {
       if (!e.target.classList.contains("delete-btn")) {
         const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
         const latestTask = (await latest.json()).tasks.find(t => t.title === task.title && t.date === task.date);
-        if (latestTask) showTaskDetails(latestTask);
+        if (latestTask) showTaskDetails(latestTask, isFutureDate);
       }
     });
 
@@ -654,9 +718,8 @@ body {
 
 
 
-
-
-async function showTaskDetails(task) {
+// Update showTaskDetails to handle future dates:
+async function showTaskDetails(task, isFutureDate = false) {
   const selectedDate = document.querySelector(".day.selected")?.dataset.date;
   if (!selectedDate) return;
 
@@ -666,20 +729,41 @@ async function showTaskDetails(task) {
                       task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                       task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-  const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-  const completedCount = completedUsers.length;
-
-  // ✅ Safer currentTurn logic
-  const currentIndex = typeof task.currentTurnIndex === "number" ? task.currentTurnIndex : 0;
-  const currentTurn = userOrder[currentIndex];
-  let nextUser = currentTurn;
-
-  const completedSet = new Set(completedUsers);
-  for (let i = 1; i <= userOrder.length; i++) {
-    const index = (currentIndex + i) % userOrder.length;
-    if (!completedSet.has(userOrder[index])) {
-      nextUser = userOrder[index];
-      break;
+  let currentTurn, nextUser, completedUsers = [], completedCount = 0;
+  
+  if (isFutureDate) {
+    // For future dates, show predicted turns
+    // This is a simplified version - for full implementation, 
+    // we would use the same logic as in loadTasksForDate
+    const currentIndex = typeof task.currentTurnIndex === "number" ? task.currentTurnIndex : 0;
+    currentTurn = userOrder[currentIndex];
+    nextUser = userOrder[(currentIndex + 1) % userOrder.length];
+    completedCount = 0;
+  } else {
+    // Use actual completion data for today or past dates
+    completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+    completedCount = completedUsers.length;
+    
+    // ✅ Safer currentTurn logic
+    const currentIndex = typeof task.currentTurnIndex === "number" ? task.currentTurnIndex : 0;
+    currentTurn = userOrder[currentIndex];
+    
+    const completedSet = new Set(completedUsers);
+    for (let i = 0; i < userOrder.length; i++) {
+      const index = (currentIndex + i) % userOrder.length;
+      if (!completedSet.has(userOrder[index])) {
+        currentTurn = userOrder[index];
+        break;
+      }
+    }
+    
+    nextUser = currentTurn;
+    for (let i = 1; i <= userOrder.length; i++) {
+      const index = (userOrder.indexOf(currentTurn) + i) % userOrder.length;
+      if (!completedSet.has(userOrder[index])) {
+        nextUser = userOrder[index];
+        break;
+      }
     }
   }
 
@@ -698,9 +782,10 @@ async function showTaskDetails(task) {
     <strong>Current Turn:</strong> ${currentTurn}<br>
     <strong>Next:</strong> ${nextUser}<br>
     <strong>Completed:</strong> ${completedCount}/${repeatLimit}<br>
+    ${isFutureDate ? `<div style="margin-top: 8px; font-style: italic; color: #999;">This is a prediction for a future date</div>` : ""}
   `;
 
-  if (completedUsers.length > 0) {
+  if (completedUsers.length > 0 && !isFutureDate) {
     taskDetails += `
       <div style="margin-top: 8px;">
         <strong>Completed by:</strong> ${completedUsers.join(", ")}
@@ -744,8 +829,6 @@ async function showTaskDetails(task) {
     });
   }
 }
-
-
 
 
 
