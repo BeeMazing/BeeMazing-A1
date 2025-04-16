@@ -1182,11 +1182,15 @@ async function finishTask(userName, task, button, selectedDate) {
     let startX = 0;
     let currentX = 0;
     let isSwiping = false;
+    let startTime = 0;
 
-    const threshold = 100; // Requires stronger swipe
+    const threshold = 100; // Increased threshold for swipe detection
+    const minSwipeDuration = 200; // Minimum duration in milliseconds
+    const deadZone = 10; // Ignore movements smaller than this (pixels)
 
     const onStart = (x) => {
         startX = x;
+        startTime = Date.now();
         isSwiping = true;
         taskElement.style.transition = 'none';
     };
@@ -1195,17 +1199,28 @@ async function finishTask(userName, task, button, selectedDate) {
         if (!isSwiping) return;
         currentX = x;
         const deltaX = currentX - startX;
+        const absDeltaX = Math.abs(deltaX);
+
+        // Ignore small movements within the dead zone
+        if (absDeltaX < deadZone) {
+            taskElement.style.transform = 'translateX(0)';
+            return;
+        }
+
         if (deltaX < 0) {
             taskElement.style.transform = `translateX(${deltaX}px)`;
         }
     };
 
     const onEnd = () => {
+        if (!isSwiping) return;
         isSwiping = false;
         const deltaX = currentX - startX;
+        const swipeDuration = Date.now() - startTime;
         taskElement.style.transition = 'transform 0.3s ease';
 
-        if (deltaX < -threshold) {
+        // Only trigger swipe if threshold is met and duration is sufficient
+        if (deltaX < -threshold && swipeDuration >= minSwipeDuration) {
             taskElement.classList.add('swiped-left');
             taskElement.style.transform = 'translateX(-100px)';
         } else {
@@ -1214,26 +1229,29 @@ async function finishTask(userName, task, button, selectedDate) {
         }
     };
 
-    // Touch support
-    taskElement.addEventListener('touchstart', e => onStart(e.touches[0].clientX));
+    // Touch events
+    taskElement.addEventListener('touchstart', e => {
+        e.preventDefault(); // Prevent scrolling while swiping
+        onStart(e.touches[0].clientX);
+    });
     taskElement.addEventListener('touchmove', e => onMove(e.touches[0].clientX));
     taskElement.addEventListener('touchend', onEnd);
 
-    // Mouse support
-    taskElement.addEventListener('mousedown', e => onStart(e.clientX));
+    // Mouse events
+    taskElement.addEventListener('mousedown', e => {
+        e.preventDefault(); // Prevent text selection
+        onStart(e.clientX);
+    });
     taskElement.addEventListener('mousemove', e => {
-        if (e.buttons === 1 && Math.abs(e.clientX - startX) > 5) {
-            onMove(e.clientX);
-        }
+        if (e.buttons === 1) onMove(e.clientX);
     });
     taskElement.addEventListener('mouseup', onEnd);
+
+    // Reset swipe if clicking elsewhere
     taskElement.addEventListener('mouseleave', () => {
         if (isSwiping) onEnd();
     });
 }
-
-
-
 
 
 
