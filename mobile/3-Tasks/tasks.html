@@ -591,23 +591,31 @@ body {
 
     const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
     const completedCount = completedUsers.length;
-
-    // ✅ Safer currentTurn logic
-    let currentIndex = typeof task.currentTurnIndex === "number" ? task.currentTurnIndex : 0;
-    if (currentIndex < 0 || currentIndex >= userOrder.length) currentIndex = 0;
-
-    const currentTurn = userOrder[currentIndex];
-
-    // ✅ Determine next user in rotation who hasn't completed
-    let nextUser = currentTurn;
     const completedSet = new Set(completedUsers);
-    for (let i = 1; i <= userOrder.length; i++) {
-      const idx = (currentIndex + i) % userOrder.length;
-      if (!completedSet.has(userOrder[idx])) {
-        nextUser = userOrder[idx];
+
+    // ✅ Dynamically determine current and next user based on who hasn't completed
+    let currentTurn = null;
+    let nextUser = null;
+
+    for (let i = 0; i < userOrder.length; i++) {
+      if (!completedSet.has(userOrder[i])) {
+        currentTurn = userOrder[i];
         break;
       }
     }
+
+    if (currentTurn) {
+      const currentIndex = userOrder.indexOf(currentTurn);
+      for (let i = currentIndex + 1; i < userOrder.length; i++) {
+        if (!completedSet.has(userOrder[i])) {
+          nextUser = userOrder[i];
+          break;
+        }
+      }
+    }
+
+    currentTurn = currentTurn || "All done!";
+    nextUser = nextUser || "—";
 
     const isCompleted = completedCount >= repeatLimit;
 
@@ -639,7 +647,6 @@ body {
     enableSwipeToDelete(taskDiv);
   });
 }
-
 
 
 
