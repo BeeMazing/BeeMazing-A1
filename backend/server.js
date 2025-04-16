@@ -905,6 +905,111 @@ app.get("/api/custom-chests", async (req, res) => {
 // userAdmin.html ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+app.post("/api/replace-user", async (req, res) => {
+  const { adminEmail, title, date, selectedDate, index, originalUser, newUser } = req.body;
+
+  try {
+    if (!adminEmail || !title || !date || !selectedDate || index === undefined || !originalUser || !newUser) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const db = await connectDB();
+    const admins = db.collection("admins");
+    const admin = await admins.findOne({ email: adminEmail });
+
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const tasks = admin.tasks || [];
+    const taskIndex = tasks.findIndex(t => t.title === title && t.date === date);
+    if (taskIndex === -1) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    const task = tasks[taskIndex];
+    task.tempTurnReplacement = task.tempTurnReplacement || {};
+    task.tempTurnReplacement[selectedDate] = task.tempTurnReplacement[selectedDate] || {};
+    task.tempTurnReplacement[selectedDate][index] = newUser;
+
+    tasks[taskIndex] = task;
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { tasks } }
+    );
+
+    res.json({ success: true, message: "User replaced successfully" });
+  } catch (err) {
+    console.error("Error replacing user:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+
+
+
+
+
+
+app.post("/api/revert-decision", async (req, res) => {
+  const { adminEmail, title, date, selectedDate, user } = req.body;
+
+  try {
+    if (!adminEmail || !title || !date || !selectedDate || !user) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const db = await connectDB();
+    const admins = db.collection("admins");
+    const admin = await admins.findOne({ email: adminEmail });
+
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const tasks = admin.tasks || [];
+    const taskIndex = tasks.findIndex(t => t.title === title && t.date === date);
+    if (taskIndex === -1) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    const task = tasks[taskIndex];
+    task.pendingCompletions = task.pendingCompletions || {};
+    task.pendingCompletions[selectedDate] = task.pendingCompletions[selectedDate] || [];
+    task.completions = task.completions || {};
+    task.completions[selectedDate] = task.completions[selectedDate] || [];
+
+    const pending = task.pendingCompletions[selectedDate];
+    const completions = task.completions[selectedDate];
+
+    if (!completions.includes(user)) {
+      return res.status(400).json({ error: "User has no completed task to revert" });
+    }
+
+    completions.splice(completions.indexOf(user), 1);
+    if (!pending.includes(user)) {
+      pending.push(user);
+    }
+
+    tasks[taskIndex] = task;
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { tasks } }
+    );
+
+    res.json({ success: true, message: "Decision reverted successfully" });
+  } catch (err) {
+    console.error("Error reverting decision:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+
+
+
+
 
 
 // ✅ Get all tasks for non-admin users (for userAdmin.html)
