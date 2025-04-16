@@ -1177,12 +1177,16 @@ async function finishTask(userName, task, button, selectedDate) {
 
 
 
+
         function enableSwipeToDelete(taskElement) {
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (!isTouchDevice) return; // Prevent swipe on desktop if desired
+
     let startX = 0;
     let currentX = 0;
     let isSwiping = false;
 
-    const threshold = 100; // Minimum distance to trigger swipe
+    const threshold = 100; // More distance required
 
     const onStart = (x) => {
         startX = x;
@@ -1218,22 +1222,19 @@ async function finishTask(userName, task, button, selectedDate) {
     taskElement.addEventListener('touchmove', e => onMove(e.touches[0].clientX));
     taskElement.addEventListener('touchend', onEnd);
 
-    // Mouse events
+    // Mouse events (optional)
     taskElement.addEventListener('mousedown', e => onStart(e.clientX));
     taskElement.addEventListener('mousemove', e => {
         if (e.buttons === 1 && Math.abs(e.clientX - startX) > 5) {
-    onMove(e.clientX);
-}
+            onMove(e.clientX);
+        }
     });
     taskElement.addEventListener('mouseup', onEnd);
 
-    // Optional: reset swipe if clicking elsewhere
     taskElement.addEventListener('mouseleave', () => {
         if (isSwiping) onEnd();
     });
 }
-
-
 
 
 
