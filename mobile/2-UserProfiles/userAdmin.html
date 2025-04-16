@@ -196,6 +196,7 @@ async function loadTasks() {
   container.innerHTML = "";
 
   tasks.forEach(task => {
+    const pendingCompletions = task.pendingCompletions?.[selectedDate] || [];
     const completions = task.completions?.[selectedDate] || [];
     const userOrder = task.users || [];
     const repeat = task.repeat || "Daily";
@@ -209,17 +210,18 @@ async function loadTasks() {
     }
 
     fullTurn.forEach((user, index) => {
-      const isWaiting = completions.length > index && completions[index] === user;
+      const isPending = pendingCompletions.includes(user);
+      const isCompleted = completions.includes(user);
       const div = document.createElement("div");
       div.className = "task-entry";
       div.innerHTML = `
-  <p><strong>${task.title}</strong> - ${user}</p>
-  <p>Status: ${isWaiting ? 'Waiting for Review' : 'Pending'}</p>
-  ${isWaiting ? `
-    <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'accept', '${user}', event)">Accept</button>
-    <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'decline', '${user}', event)">Decline</button>
-  ` : ''}
-`;
+        <p><strong>${task.title}</strong> - ${user}</p>
+        <p>Status: ${isCompleted ? 'Accepted' : isPending ? 'Waiting for Review' : 'Pending'}</p>
+        ${isPending && !isCompleted ? `
+          <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'accept', '${user}', event)">Accept</button>
+          <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'decline', '${user}', event)">Decline</button>
+        ` : ''}
+      `;
       container.appendChild(div);
     });
   });
@@ -228,9 +230,6 @@ async function loadTasks() {
     container.innerHTML = "<p>No tasks for this date.</p>";
   }
 }
-
-
-
 
 
 
