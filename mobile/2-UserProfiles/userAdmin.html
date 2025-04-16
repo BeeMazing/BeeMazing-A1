@@ -185,7 +185,8 @@
      
 
 async function loadTasks() {
-  const res = await fetch(`https://beemazing.onrender.com/api/admin-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const res = await fetch(`https://beemazing.onrender.com/api/admin-tasks?adminEmail=${encodeURIComponent(adminEmail)}&date=${selectedDate}`);
+
   const { tasks } = await res.json();
   const container = document.getElementById("taskContainer");
   container.innerHTML = "";
