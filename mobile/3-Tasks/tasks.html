@@ -641,33 +641,39 @@ body {
         }
       }
     } else if (selected.getTime() === today.getTime()) {
-      // Active day: Use actual completions
+      // Active day: Use actual completions with predicted sequence
+      // Find current turn by skipping completed users
       for (let i = 0; i < userOrder.length; i++) {
         if (!completedSet.has(userOrder[(currentIndex + i) % userOrder.length])) {
           currentTurn = userOrder[(currentIndex + i) % userOrder.length];
+          currentIndex = (currentIndex + i) % userOrder.length;
           break;
         }
       }
       if (currentTurn) {
-        const currentIndex = userOrder.indexOf(currentTurn);
-        for (let i = currentIndex + 1; i < userOrder.length; i++) {
-          if (!completedSet.has(userOrder[i])) {
-            nextUser = userOrder[i];
-            break;
+        // Simulate the remaining completions for the day
+        let tempIndex = currentIndex;
+        let tempCompletions = [...completedUsers];
+        let tempCompletedSet = new Set(tempCompletions);
+        // Complete up to repeatLimit
+        while (tempCompletions.length < repeatLimit && userOrder.length > 0) {
+          tempIndex++;
+          let user = userOrder[tempIndex % userOrder.length];
+          if (!tempCompletedSet.has(user)) {
+            tempCompletions.push(user);
+            tempCompletedSet.add(user);
           }
         }
-        if (!nextUser) {
-          for (let i = 0; i < userOrder.length; i++) {
-            if (!completedSet.has(userOrder[i])) {
-              nextUser = userOrder[i];
-              break;
-            }
-          }
+        // Next user is the one after the current turn in the simulated sequence
+        if (tempCompletions.length > completedCount) {
+          nextUser = tempCompletions[completedCount];
+        } else {
+          // If no more completions, cycle back
+          nextUser = userOrder[(currentIndex + 1) % userOrder.length];
         }
       }
     } else {
       // Future days: Predict fixed turns
-      // Simulate repeatLimit completions per day
       const totalCompletions = daysDiff * repeatLimit;
       currentIndex = (currentIndex + totalCompletions) % userOrder.length;
       currentTurn = userOrder[currentIndex];
@@ -707,8 +713,6 @@ body {
     enableSwipeToDelete(taskDiv);
   });
 }
-
-
 
 
 
