@@ -548,69 +548,7 @@ body {
 
 
 
-
-        function getUserTurnForDate(task, selectedDateStr) {
-  const users = task.users || [];
-  const completions = task.completions || {};
-  const repeatsPerDay = task.timesPerDay || 1;
-
-  const parseDate = str => new Date(str);
-  const formatDate = d => d.toISOString().split("T")[0];
-
-  const selectedDate = parseDate(selectedDateStr);
-  const fromDate = parseDate(task.date.split(" to ")[0]);
-
-  if (selectedDate < fromDate) return { currentTurn: "-", nextTurn: "-", completedCount: 0 };
-
-  // Count ALL completed users from task start to the day before selected date
-  let virtualCompletions = [];
-
-  const allPastDates = Object.keys(completions)
-    .filter(dateStr => parseDate(dateStr) < selectedDate)
-    .sort();
-
-  for (const dateStr of allPastDates) {
-    virtualCompletions.push(...(completions[dateStr] || []));
-  }
-
-  // Now simulate remaining completions up to the current selectedDate
-  const daysSinceStart = Math.floor((selectedDate - fromDate) / (1000 * 60 * 60 * 24));
-  const idealTotalCompletions = daysSinceStart * repeatsPerDay;
-
-  let simulatedCompletionsNeeded = idealTotalCompletions - virtualCompletions.length;
-
-  let simIndex = users.indexOf(virtualCompletions[virtualCompletions.length - 1] || users[0]);
-  simIndex = simIndex === -1 ? 0 : (simIndex + 1) % users.length;
-
-  for (let i = 0; i < simulatedCompletionsNeeded; i++) {
-    virtualCompletions.push(users[simIndex]);
-    simIndex = (simIndex + 1) % users.length;
-  }
-
-  // Now get today’s completions (real ones)
-  const todayCompletions = completions[selectedDateStr] || [];
-  const todaySet = new Set(todayCompletions);
-
-  // Determine current + next turn
-  const currentIndex = virtualCompletions.length % users.length;
-  const currentTurn = users[currentIndex];
-  const nextTurn = users[(currentIndex + 1) % users.length];
-
-  return {
-    currentTurn,
-    nextTurn,
-    completedCount: todayCompletions.length
-  };
-}
-
-
-
-
-
-
-
-
-async function loadTasksForDate(selectedDate) {
+        async function loadTasksForDate(selectedDate) {
   const adminEmail = localStorage.getItem("currentAdminEmail");
   if (!adminEmail) return;
 
@@ -621,15 +559,17 @@ async function loadTasksForDate(selectedDate) {
   const taskList = document.getElementById("taskList");
   taskList.innerHTML = "";
 
-  const parseDate = str => new Date(str);
-  const formatDate = d => d.toISOString().split("T")[0];
+  function parseLocalDate(dateStr) {
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
 
   const visibleTasks = tasks.filter(task => {
     if (!task.date) return false;
-    const [fromStr, toStr] = task.date.split(" to ");
-    const from = parseDate(fromStr);
-    const to = toStr ? parseDate(toStr) : new Date(3000, 0, 1);
-    const selected = parseDate(selectedDate);
+    const range = task.date.split(" to ");
+    const from = parseLocalDate(range[0]);
+    const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
+    const selected = parseLocalDate(selectedDate);
     return selected >= from && selected <= to;
   });
 
@@ -638,23 +578,38 @@ async function loadTasksForDate(selectedDate) {
     return;
   }
 
-  for (const task of visibleTasks) {
+  visibleTasks.forEach((task) => {
     const taskDiv = document.createElement("div");
     taskDiv.className = "task-item";
     taskDiv.dataset.taskTitle = task.title;
     taskDiv.dataset.taskDate = task.date;
 
+    const userOrder = [...task.users];
     const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
                         task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                         task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-    const { currentTurn, nextTurn, completedCount } = getUserTurnForDate(task, selectedDate);
+    const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+    const completedCount = completedUsers.length;
+
+    let currentTurn = task.currentTurnIndex !== undefined ? userOrder[task.currentTurnIndex] : userOrder[0];
+    let nextUser = currentTurn;
+
+    const completedSet = new Set(completedUsers);
+    for (let i = 1; i <= userOrder.length; i++) {
+      const index = (task.currentTurnIndex + i) % userOrder.length;
+      if (!completedSet.has(userOrder[index])) {
+        nextUser = userOrder[index];
+        break;
+      }
+    }
+
     const isCompleted = completedCount >= repeatLimit;
 
     taskDiv.innerHTML = `
       <strong>${task.title}</strong><br>
       Turn: ${currentTurn}<br>
-      Next: ${nextTurn}<br>
+      Next: ${nextUser}<br>
       Completed: ${completedCount}/${repeatLimit}<br>
       ${isCompleted ? `<span style="color: green; font-weight: bold;">Completed</span><br>` : ""}
       <button class="delete-btn">Delete</button>
@@ -662,8 +617,8 @@ async function loadTasksForDate(selectedDate) {
 
     taskDiv.addEventListener("click", async (e) => {
       if (!e.target.classList.contains("delete-btn")) {
-        const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
-        const latestTask = (await latest.json()).tasks.find(t => t.title === task.title && t.date === task.date);
+        const result = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+        const latestTask = (await result.json()).tasks.find(t => t.title === task.title && t.date === task.date);
         if (latestTask) showTaskDetails(latestTask);
       }
     });
@@ -677,13 +632,8 @@ async function loadTasksForDate(selectedDate) {
 
     taskList.appendChild(taskDiv);
     enableSwipeToDelete(taskDiv);
-  }
+  });
 }
-
-
-
-
-
 
 
 
@@ -710,14 +660,12 @@ async function showTaskDetails(task) {
   const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
   const completedCount = completedUsers.length;
 
-  // ✅ Safer currentTurn logic
-  const currentIndex = typeof task.currentTurnIndex === "number" ? task.currentTurnIndex : 0;
-  const currentTurn = userOrder[currentIndex];
+  let currentTurn = task.currentTurnIndex !== undefined ? userOrder[task.currentTurnIndex] : userOrder[0];
   let nextUser = currentTurn;
 
   const completedSet = new Set(completedUsers);
   for (let i = 1; i <= userOrder.length; i++) {
-    const index = (currentIndex + i) % userOrder.length;
+    const index = (task.currentTurnIndex + i) % userOrder.length;
     if (!completedSet.has(userOrder[index])) {
       nextUser = userOrder[index];
       break;
@@ -805,9 +753,10 @@ async function showTaskDetails(task) {
 
 
 
+
+
         // Handle task completion and turn advancement
-// ✅ Handle task completion and turn advancement
-async function finishTask(userName, task, button, selectedDate) {
+        async function finishTask(userName, task, button, selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     const todayStr = selectedDate || new Date().toISOString().split("T")[0];
 
@@ -828,21 +777,18 @@ async function finishTask(userName, task, button, selectedDate) {
 
         const rewardAmount = result.updatedTask.reward || 0;
 
-        // ✅ Trigger reward animation if available
+        // Trigger UI updates
         if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
-
-        // ✅ Refresh task and user data after slight delay to allow DB sync
-        if (typeof loadTasksForDate === 'function') {
-            setTimeout(() => loadTasksForDate(todayStr), 150);
-        }
+        if (typeof loadTasksForDate === 'function') loadTasksForDate(todayStr);
         if (typeof loadUserTasks === 'function') loadUserTasks(userName, todayStr);
         if (typeof loadUserReward === 'function') loadUserReward(userName);
-
     } catch (err) {
         console.error("❌ Error completing task:", err);
         alert("Failed to finish task. Please try again.");
     }
 }
+
+
 
 
 
