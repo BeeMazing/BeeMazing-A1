@@ -921,6 +921,10 @@
         });
         
 
+
+
+
+
         async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
   const userTasksDiv = document.getElementById("userTasks");
   userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
@@ -940,12 +944,14 @@
   }
 
   function parseLocalDate(dateStr) {
+    if (!dateStr || typeof dateStr !== "string") return new Date();
     const [year, month, day] = dateStr.split("-").map(Number);
     return new Date(year, month - 1, day);
   }
 
   const userTasks = tasks.filter(task => {
-    if (!task.users?.includes(userName)) return false;
+    if (!task || !task.users || !task.date) return false;
+    if (!task.users.includes(userName)) return false;
 
     const dateRange = task.date.split(" to ");
     const startDateStr = dateRange[0];
@@ -954,6 +960,7 @@
     const endDate = parseLocalDate(endDateStr);
     const currentDate = parseLocalDate(selectedDate);
 
+    if (isNaN(startDate) || isNaN(endDate) || isNaN(currentDate)) return false;
     if (currentDate < startDate || currentDate > endDate) return false;
 
     if (task.repeat === "Daily" && task.timesPerDay > 1) return true;
@@ -966,141 +973,153 @@
       return currentTurn === userName;
     }
 
-    const currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+    const currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0] || "";
     return currentTurn === userName;
   });
 
+  userTasksDiv.innerHTML = "";
   if (userTasks.length === 0) {
     userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
-  } else {
-    userTasksDiv.innerHTML = "";
-    const today = new Date().toLocaleDateString("sv-SE");
-    const isToday = selectedDate === today;
+    return;
+  }
 
-    userTasks.forEach(task => {
-      const taskDiv = document.createElement("div");
-      taskDiv.className = "task-item";
+  const today = new Date().toLocaleDateString("sv-SE");
+  const isToday = selectedDate === today;
 
-      const dateRange = task.date.split(" to ");
-      const startDateStr = dateRange[0];
-      const startDate = parseLocalDate(startDateStr);
-      const currentDate = parseLocalDate(selectedDate);
-      let currentTurn;
+  userTasks.forEach(task => {
+    const taskDiv = document.createElement("div");
+    taskDiv.className = "task-item";
 
-      let requiredTimes = 1;
-      if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-      if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-      if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+    const dateRange = task.date.split(" to ");
+    const startDateStr = dateRange[0];
+    const startDate = parseLocalDate(startDateStr);
+    const currentDate = parseLocalDate(selectedDate);
+    let currentTurn;
 
-      let pendingUsers = task.pendingCompletions?.[selectedDate] || [];
-      let completedUsers = task.completions?.[selectedDate] || [];
-      let completedTimes = completedUsers.length;
+    let requiredTimes = task.timesPerDay || task.timesPerWeek || task.timesPerMonth || 1;
+    if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+    if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-      if (task.repeat === "Daily" && task.timesPerDay > 1) {
-        const userOrder = [...task.users];
-        const totalRequiredCompletions = task.timesPerDay;
-        const completionIndex = (pendingUsers.length + completedTimes) % userOrder.length;
-        currentTurn = userOrder[completionIndex];
-      } else if (task.repeat === "Daily" && task.timesPerDay === 1) {
-        const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-        const userOrder = [...task.users];
-        const currentIndex = diffDays % userOrder.length;
-        currentTurn = userOrder[currentIndex];
-      } else {
-        currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
-      }
+    let pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
+    let completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+    let completedTimes = completedUsers.length;
 
-      let progressText = completedTimes >= requiredTimes
-        ? `<span style="color: green; font-weight: bold;">Completed</span>`
-        : `${completedTimes}/${requiredTimes}`;
-
-      const showTurn = completedTimes < requiredTimes;
-      const turnText = showTurn ? `Turn: ${currentTurn}<br>` : '';
-
-      taskDiv.innerHTML = `
-        <strong>${task.title}</strong><br>
-        ${turnText}
-        Honey: ${task.reward || "0"} 🍯<br>
-        Progress: ${progressText}
-      `;
-
-      const canFinish = isToday && currentTurn === userName && completedTimes < requiredTimes && !pendingUsers.includes(userName) && !completedUsers.includes(userName);
-
-      if (canFinish) {
-        const finishedButton = document.createElement("button");
-        finishedButton.textContent = "Finish Task";
-        finishedButton.className = "finished-btn";
-        finishedButton.onclick = (e) => {
-          e.stopPropagation();
-          finishTask(userName, task, selectedDate);
-        };
-        taskDiv.appendChild(finishedButton);
-      }
-
-      const statusDiv = document.createElement("div");
-      statusDiv.style.marginTop = "10px";
-      statusDiv.style.fontWeight = "bold";
-
-      const fullTurnOrder = [];
+    if (task.repeat === "Daily" && task.timesPerDay > 1) {
       const userOrder = [...task.users];
-      for (let i = 0; i < requiredTimes; i++) {
-        fullTurnOrder.push(userOrder[i % userOrder.length]);
-      }
+      const totalRequiredCompletions = task.timesPerDay;
+      const completionIndex = (pendingUsers.length + completedTimes) % userOrder.length;
+      currentTurn = userOrder[completionIndex] || userOrder[0];
+    } else if (task.repeat === "Daily" && task.timesPerDay === 1) {
+      const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+      const userOrder = [...task.users];
+      const currentIndex = diffDays % userOrder.length;
+      currentTurn = userOrder[currentIndex] || userOrder[0];
+    } else {
+      currentTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0] || "";
+    }
 
-      const userTurnIndexes = [];
-      fullTurnOrder.forEach((user, index) => {
-        if (user === userName) userTurnIndexes.push(index);
-      });
+    let progressText = completedTimes >= requiredTimes
+      ? `<span style="color: green; font-weight: bold;">Completed</span>`
+      : `${completedTimes}/${requiredTimes}`;
 
-      const isPending = pendingUsers.includes(userName);
-      const isCompleted = completedUsers.includes(userName);
+    const showTurn = completedTimes < requiredTimes;
+    const turnText = showTurn ? `Turn: ${currentTurn}<br>` : '';
 
-      if (userTurnIndexes.length === 0) {
-        statusDiv.innerHTML = "You: Not Assigned";
-        statusDiv.style.color = "gray";
-      } else {
-        statusDiv.innerHTML = "You:<br>";
+    taskDiv.innerHTML = `
+      <strong>${task.title || "Untitled Task"}</strong><br>
+      ${turnText}
+      Honey: ${task.reward || "0"} 🍯<br>
+      Progress: ${progressText}
+    `;
 
-        const taskDate = new Date(selectedDate);
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
+    const canFinish = isToday && currentTurn === userName && completedTimes < requiredTimes && !pendingUsers.includes(userName) && !completedUsers.includes(userName);
 
-        userTurnIndexes.forEach((turnIndex, i) => {
-          let emoji, color, statusText;
+    if (canFinish) {
+      const finishedButton = document.createElement("button");
+      finishedButton.textContent = "Finish Task";
+      finishedButton.className = "finished-btn";
+      finishedButton.onclick = (e) => {
+        e.stopPropagation();
+        finishTask(userName, task, selectedDate);
+      };
+      taskDiv.appendChild(finishedButton);
+    }
 
-          if (isCompleted) {
-            emoji = "✅";
-            color = "green";
-            statusText = `Turn ${turnIndex + 1} - Accepted`;
-          } else if (isPending) {
+    const statusDiv = document.createElement("div");
+    statusDiv.style.marginTop = "10px";
+    statusDiv.style.fontWeight = "bold";
+
+    const fullTurnOrder = [];
+    const userOrder = [...task.users];
+    for (let i = 0; i < requiredTimes; i++) {
+      fullTurnOrder.push(userOrder[i % userOrder.length] || "");
+    }
+
+    const userTurnIndexes = [];
+    fullTurnOrder.forEach((user, index) => {
+      if (user === userName) userTurnIndexes.push(index);
+    });
+
+    const isPending = pendingUsers.includes(userName);
+    const isCompleted = completedUsers.includes(userName);
+
+    if (userTurnIndexes.length === 0) {
+      statusDiv.innerHTML = "You: Not Assigned";
+      statusDiv.style.color = "gray";
+    } else {
+      statusDiv.innerHTML = "You:<br>";
+
+      const taskDate = new Date(selectedDate);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      userTurnIndexes.forEach((turnIndex, i) => {
+        let emoji, color, statusText;
+
+        if (isCompleted) {
+          emoji = "✅";
+          color = "green";
+          statusText = `Turn ${turnIndex + 1} - Accepted`;
+        } else if (isPending) {
+          emoji = "⏳";
+          color = "orange";
+          statusText = `Turn ${turnIndex + 1} - Pending Review`;
+        } else {
+          const isPast = taskDate < now;
+          if (isPast) {
+            emoji = "❌";
+            color = "red";
+            statusText = `Turn ${turnIndex + 1} - Incomplete`;
+          } else {
             emoji = "⏳";
             color = "orange";
-            statusText = `Turn ${turnIndex + 1} - Pending Review`;
-          } else {
-            const isPast = taskDate < now;
-            if (isPast) {
-              emoji = "❌";
-              color = "red";
-              statusText = `Turn ${turnIndex + 1} - Incomplete`;
-            } else {
-              emoji = "⏳";
-              color = "orange";
-              statusText = `Turn ${turnIndex + 1} - Pending`;
-            }
+            statusText = `Turn ${turnIndex + 1} - Pending`;
           }
+        }
 
-          const line = `<span style="color: ${color}">${emoji} ${statusText}</span><br>`;
-          statusDiv.innerHTML += line;
-        });
-      }
+        const line = `<span style="color: ${color}">${emoji} ${statusText}</span><br>`;
+        statusDiv.innerHTML += line;
+      });
+    }
 
-      taskDiv.appendChild(statusDiv);
+    taskDiv.appendChild(statusDiv);
 
-      taskDiv.addEventListener("click", () => showTaskDetails(task));
-      userTasksDiv.appendChild(taskDiv);
-    });
-  }
+    taskDiv.addEventListener("click", () => showTaskDetails(task));
+    userTasksDiv.appendChild(taskDiv);
+  });
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1817,12 +1836,13 @@
         async function finishTask(currentUser, task, selectedDate) {
   const today = selectedDate || new Date().toISOString().split("T")[0];
   const adminEmail = localStorage.getItem("currentAdminEmail");
+  const button = event.target;
+  button.disabled = true; // Prevent multiple clicks
 
   const popup = document.createElement("div");
   popup.className = "reward-popup";
-  popup.textContent = `Task Submitted! Waiting for Admin Review`;
+  popup.textContent = `Submitting Task...`;
   document.body.appendChild(popup);
-  setTimeout(() => popup.remove(), 2000);
 
   try {
     const response = await fetch("https://beemazing.onrender.com/api/complete-task", {
@@ -1837,14 +1857,26 @@
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to submit task");
+    if (!response.ok) {
+      throw new Error(data.error || `HTTP error ${response.status}`);
+    }
+
+    popup.textContent = `Task Submitted! Waiting for Admin Review`;
+    setTimeout(() => popup.remove(), 2000);
 
     await loadUserTasks(currentUser, selectedDate);
   } catch (err) {
     console.error("Error submitting task:", err);
-    alert("Failed to submit task. Please try again.");
+    popup.textContent = `Error: ${err.message}`;
+    popup.style.color = "red";
+    setTimeout(() => popup.remove(), 3000);
+    button.disabled = false; // Re-enable on error
   }
 }
+
+
+
+
 
 
 

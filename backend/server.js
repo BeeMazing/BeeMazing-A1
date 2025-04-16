@@ -1111,48 +1111,62 @@ app.post('/api/review-task', async (req, res) => {
 // users.html and tasks.html task details //
 
 
+
+
 app.post("/api/complete-task", async (req, res) => {
   const { adminEmail, taskTitle, user, date } = req.body;
 
-  if (!adminEmail || !taskTitle || !user || !date) {
-    return res.status(400).json({ error: "Missing data" });
-  }
-
   try {
+    if (!adminEmail || !taskTitle || !user || !date) {
+      return res.status(400).json({ error: "Missing required fields: adminEmail, taskTitle, user, or date" });
+    }
+
     const db = await connectDB();
     const admins = db.collection("admins");
 
     const admin = await admins.findOne({ email: adminEmail });
-    if (!admin) return res.status(404).json({ error: "Admin not found" });
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
 
     const tasks = admin.tasks || [];
-    const taskIndex = tasks.findIndex(t => t.title === taskTitle && t.date.includes(date));
-    if (taskIndex === -1) return res.status(404).json({ error: "Task not found" });
+    const taskIndex = tasks.findIndex(t => t.title === taskTitle && t.date.includes(date.split("T")[0]));
+    if (taskIndex === -1) {
+      return res.status(404).json({ error: "Task not found" });
+    }
 
     const task = tasks[taskIndex];
     task.pendingCompletions = task.pendingCompletions || {};
     task.pendingCompletions[date] = task.pendingCompletions[date] || [];
+    task.completions = task.completions || {};
+    task.completions[date] = task.completions[date] || [];
 
-    // Add user to pending completions if not already there
-    if (!task.pendingCompletions[date].includes(user)) {
-      task.pendingCompletions[date].push(user);
+    // Check if user is already in pending or completed
+    if (task.pendingCompletions[date].includes(user) || task.completions[date].includes(user)) {
+      return res.status(400).json({ error: "Task already submitted or completed by this user" });
+    }
 
-      const userList = task.users || [];
+    // Add user to pending completions
+    task.pendingCompletions[date].push(user);
 
-      // Initialize turn index if missing
-      if (typeof task.currentTurnIndex !== "number") {
-        task.currentTurnIndex = userList.indexOf(user);
-        if (task.currentTurnIndex === -1) task.currentTurnIndex = 0;
-      }
+    const userList = task.users || [];
+    if (!userList.includes(user)) {
+      return res.status(400).json({ error: "User not assigned to this task" });
+    }
 
-      // Advance turn to next available user
-      for (let i = 1; i <= userList.length; i++) {
-        const nextIndex = (task.currentTurnIndex + i) % userList.length;
-        const nextUser = userList[nextIndex];
-        if (!task.pendingCompletions[date].includes(nextUser) && !task.completions?.[date]?.includes(nextUser)) {
-          task.currentTurnIndex = nextIndex;
-          break;
-        }
+    // Update turn index
+    if (typeof task.currentTurnIndex !== "number") {
+      task.currentTurnIndex = userList.indexOf(user);
+      if (task.currentTurnIndex === -1) task.currentTurnIndex = 0;
+    }
+
+    // Advance turn to next available user
+    for (let i = 1; i <= userList.length; i++) {
+      const nextIndex = (task.currentTurnIndex + i) % userList.length;
+      const nextUser = userList[nextIndex];
+      if (!task.pendingCompletions[date].includes(nextUser) && !task.completions[date].includes(nextUser)) {
+        task.currentTurnIndex = nextIndex;
+        break;
       }
     }
 
@@ -1176,11 +1190,14 @@ app.post("/api/complete-task", async (req, res) => {
       { $set: { tasks, history } }
     );
 
-    res.json({ success: true, updatedTask: task });
+    res.status(200).json({ success: true, message: "Task submitted for review" });
   } catch (err) {
-    console.error("🔥 Error in /api/complete-task:", err);
-    res.status(500).json({ error: "Failed to submit task" });
+    console.error("Error in /api/complete-task:", err);
+    res.status(500).json({ error: `Server error: ${err.message}` });
   }
 });
+
+
+
 
 // users.html and tasks.html task details //
