@@ -190,9 +190,6 @@
 
 
 
-
-
-
 async function loadTasks() {
   const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
   const { tasks } = await res.json();
@@ -220,8 +217,8 @@ async function loadTasks() {
       div.className = "task-entry";
       div.innerHTML = `
         <p><strong>${task.title}</strong> - ${user}</p>
-        <p>Status: ${isPending ? 'Waiting for Review' : isCompleted ? 'Accepted' : 'Pending'}</p>
-        ${isPending ? `
+        <p>Status: ${isPending && !isCompleted ? 'Waiting for Review' : isCompleted ? 'Accepted' : 'Pending'}</p>
+        ${isPending && !isCompleted ? `
           <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'accept', '${user}', event)">Accept</button>
           <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', ${index}, 'decline', '${user}', event)">Decline</button>
         ` : ''}

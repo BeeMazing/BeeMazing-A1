@@ -1130,8 +1130,6 @@ app.post('/api/review-task', async (req, res) => {
 });
 
 
-
-
 // userAdmin.html ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1139,6 +1137,7 @@ app.post('/api/review-task', async (req, res) => {
 
 
 // users.html and tasks.html task details //
+
 
 
 app.post("/api/complete-task", async (req, res) => {
@@ -1162,9 +1161,11 @@ app.post("/api/complete-task", async (req, res) => {
     const task = tasks[taskIndex];
     if (!task.pendingCompletions) task.pendingCompletions = {};
     if (!task.pendingCompletions[date]) task.pendingCompletions[date] = [];
+    if (!task.completions) task.completions = {};
+    if (!task.completions[date]) task.completions[date] = [];
 
-    // Add user if not already in pending completions
-    if (!task.pendingCompletions[date].includes(user)) {
+    // Add user to pending completions if not already completed or pending
+    if (!task.pendingCompletions[date].includes(user) && !task.completions[date].includes(user)) {
       task.pendingCompletions[date].push(user);
 
       const userList = task.users || [];
@@ -1179,7 +1180,7 @@ app.post("/api/complete-task", async (req, res) => {
       for (let i = 1; i <= userList.length; i++) {
         const nextIndex = (task.currentTurnIndex + i) % userList.length;
         const nextUser = userList[nextIndex];
-        if (!task.pendingCompletions[date]?.includes(nextUser) && !task.completions?.[date]?.includes(nextUser)) {
+        if (!task.pendingCompletions[date]?.includes(nextUser) && !task.completions[date]?.includes(nextUser)) {
           task.currentTurnIndex = nextIndex;
           break;
         }
@@ -1213,5 +1214,6 @@ app.post("/api/complete-task", async (req, res) => {
     res.status(500).json({ error: "Failed to complete task" });
   }
 });
+
 
 // users.html and tasks.html task details //
