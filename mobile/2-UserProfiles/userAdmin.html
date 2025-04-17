@@ -39,10 +39,6 @@
       padding: 5px 10px;
       border-radius: 6px;
       cursor: pointer;
-      transition: transform 0.1s ease;
-    }
-    .month-nav button:hover {
-      transform: scale(1.05);
     }
     .day-scroll-wrapper {
       display: flex;
@@ -124,19 +120,15 @@
       position: relative;
     }
     .turn-entry.dragging {
-      opacity: 0.9;
-      transform: scale(1.15) translateY(-2px);
-      box-shadow: 0 8px 20px rgba(255, 193, 7, 0.5), 0 0 10px rgba(255, 193, 7, 0.3);
+      opacity: 0.7;
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       z-index: 100;
-      border: 2px solid #FFC107;
     }
     .turn-entry.drag-over {
       border: 2px dashed #FFC107;
       background: #4A4B54;
-      transform: translateY(6px);
-    }
-    .turn-entry.reordered {
-      animation: slide 0.4s ease;
+      transform: translateY(2px);
     }
     .turn-entry p {
       margin: 5px 0;
@@ -187,13 +179,13 @@
       scrollbar-width: none;
     }
     @keyframes slide {
-      from { transform: translateY(15px); opacity: 0.6; }
+      from { transform: translateY(10px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
+    .turn-entry {
+      animation: slide 0.3s ease;
+    }
   </style>
-
-
-
 
 
 
@@ -272,7 +264,6 @@
           btn.disabled = false;
           btn.style.opacity = "1";
         });
-        setTimeout(() => errorDiv.remove(), 3000);
       }
     }
   
@@ -280,14 +271,7 @@
       const taskEntry = event.target.closest(".task-entry");
       const select = taskEntry.querySelector(`#replace-select-${index}`);
       const newUser = select.value;
-      if (!newUser || newUser === originalUser) {
-        const errorDiv = document.createElement("div");
-        errorDiv.style.color = "red";
-        errorDiv.textContent = "Please select a different user.";
-        taskEntry.appendChild(errorDiv);
-        setTimeout(() => errorDiv.remove(), 3000);
-        return;
-      }
+      if (!newUser) return;
   
       try {
         const response = await fetch("https://beemazing.onrender.com/api/replace-user", {
@@ -314,7 +298,6 @@
         errorDiv.style.color = "red";
         errorDiv.textContent = `Error: ${err.message}`;
         taskEntry.appendChild(errorDiv);
-        setTimeout(() => errorDiv.remove(), 3000);
       }
     }
   
@@ -354,7 +337,6 @@
           btn.disabled = false;
           btn.style.opacity = "1";
         });
-        setTimeout(() => errorDiv.remove(), 3000);
       }
     }
   
@@ -381,7 +363,6 @@
         errorDiv.style.color = "red";
         errorDiv.textContent = `Error: ${err.message}`;
         document.getElementById("taskContainer").appendChild(errorDiv);
-        setTimeout(() => errorDiv.remove(), 3000);
       }
     }
   
@@ -399,7 +380,7 @@
         const tasksByTitle = {};
         tasks.forEach(task => {
           if (!tasksByTitle[task.title]) {
-            tasksByTitle[task.title] = { turns: [], pendingCount: 0, date: task.date, userOrder: task.users || [] };
+            tasksByTitle[task.title] = { turns: [], pendingCount: 0, date: task.date };
           }
           const pendingCompletions = task.pendingCompletions?.[selectedDate] || [];
           const completions = task.completions?.[selectedDate] || [];
@@ -429,14 +410,14 @@
         });
   
         Object.keys(tasksByTitle).sort().forEach(title => {
-          const { turns, pendingCount, date, userOrder } = tasksByTitle[title];
+          const { turns, pendingCount, date } = tasksByTitle[title];
           const div = document.createElement("div");
           div.className = "task-entry";
           div.innerHTML = `
             <h3 class="task-title">${title}${pendingCount > 0 ? `<span class="notification-bubble">${pendingCount}</span>` : ''}</h3>
             <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
               ${turns.map(turn => `
-                <div class="turn-entry" draggable="true" data-index="${turn.index}" data-user="${turn.user}">
+                <div class="turn-entry" draggable="true" data-index="${turn.index}">
                   <p>Turn ${turn.index + 1}: ${turn.user} - ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
                   ${turn.isPending && !turn.isCompleted ? `
                     <button class="accept-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
@@ -470,10 +451,7 @@
           turnEntries.forEach(turn => {
             turn.addEventListener("dragstart", (e) => {
               turn.classList.add("dragging");
-              e.dataTransfer.setData("text/plain", JSON.stringify({
-                index: turn.dataset.index,
-                user: turn.dataset.user
-              }));
+              e.dataTransfer.setData("text/plain", turn.dataset.index);
             });
   
             turn.addEventListener("dragend", () => {
@@ -493,16 +471,16 @@
             turn.addEventListener("drop", (e) => {
               e.preventDefault();
               turn.classList.remove("drag-over");
-              const draggedData = JSON.parse(e.dataTransfer.getData("text/plain"));
-              const draggedIndex = parseInt(draggedData.index);
+              const draggedIndex = parseInt(e.dataTransfer.getData("text/plain"));
               const droppedIndex = parseInt(turn.dataset.index);
   
               if (draggedIndex !== droppedIndex) {
                 const newTurns = [...turns];
-                // Swap users at draggedIndex and droppedIndex
-                [newTurns[draggedIndex].user, newTurns[droppedIndex].user] = [newTurns[droppedIndex].user, newTurns[draggedIndex].user];
+                // Swap the turns at draggedIndex and droppedIndex
+                [newTurns[draggedIndex], newTurns[droppedIndex]] = [newTurns[droppedIndex], newTurns[draggedIndex]];
+                // Update indices to reflect new order
+                newTurns.forEach((t, i) => t.index = i);
                 const newUserOrder = newTurns.map(t => t.user);
-                turnEntries.forEach(t => t.classList.add("reordered"));
                 handleReorder(title, date, newUserOrder);
               }
             });
@@ -591,6 +569,9 @@
   
     fetchUsers().then(() => generateScrollableDates());
   </script>
+
+
+
 
 
 
