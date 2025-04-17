@@ -175,6 +175,73 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+
+
+    .footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    background: var(--secondary-color); /* Changed to black */
+    padding: 10px 0;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    height: var(--footer-height);
+}
+.footer a {
+    text-decoration: none;
+    color: var(--light-text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.3s ease;
+}
+        .footer a:hover {
+            transform: scale(1.1);
+        }
+
+
+
+
+
+
+
+
+
+        .footer-icon img {
+    width: 40px;
+    height: 40px;
+    filter: invert(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)); /* Default: white */
+}
+
+.footer a.active img {
+    filter: none;
+    filter: invert(77%) sepia(88%) saturate(900%) hue-rotate(0deg) brightness(100%) contrast(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+}
+
+
+
+
+.footer a.active span {
+    color: var(--primary-color);
+}
+
+
+
+
+
+
+
+        .footer-icon span {
+            font-size: 12px;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+
+
+
   </style>
 
 
@@ -202,7 +269,25 @@
 
 
 
-
+  <a href="#" class="add-user-btn" id="addUserBtn" aria-label="Add User">+</a>
+  <div class="footer" id="footer">
+      <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon active" aria-label="Home">
+          <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
+          <span>Home</span>
+      </a>
+      <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
+          <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
+          <span>Tasks</span>
+      </a>
+      <a href="/BeeMazing-Y1/mobile/4-Market/market.html" class="footer-icon" aria-label="Market">
+          <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
+          <span>Market</span>
+      </a>
+      <a href="/BeeMazing-Y1/mobile/5-Stats/stats.html" class="footer-icon" aria-label="Stats">
+          <img src="/BeeMazing-Y1/mobile/1-Home/StatsBtn.png" alt="Stats" />
+          <span>Stats</span>
+      </a>
+  </div>
 
 
 
