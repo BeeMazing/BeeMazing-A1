@@ -466,7 +466,7 @@ async function loadTasks() {
     });
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     const { tasks } = await res.json();
-    console.log("All tasks received:", tasks.map(t => ({ title: t.title, users: t.users, date: t.date }))); // Debug
+    console.log("All tasks received:", tasks.map(t => ({ title: t.title, users: t.users, date: t.date, currentTurnIndex: t.currentTurnIndex }))); // Debug
 
     const container = document.getElementById("taskContainer");
     container.innerHTML = ""; // Clear UI
@@ -483,9 +483,11 @@ async function loadTasks() {
         return;
       }
 
-      // Handle duplicate titles: keep the task with the latest startDate
-      if (!tasksByTitle[task.title] || new Date(tasksByTitle[task.title].startDate) < startDate) {
-        tasksByTitle[task.title] = {
+      // Unique key by title and date, prioritize latest startDate
+      const taskKey = `${task.title}|${task.date}`;
+      if (!tasksByTitle[taskKey] || new Date(tasksByTitle[taskKey].startDate) < startDate) {
+        tasksByTitle[taskKey] = {
+          title: task.title,
           turns: [],
           pendingCount: 0,
           date: task.date,
@@ -493,31 +495,32 @@ async function loadTasks() {
           startDate: startDate
         };
       } else {
-        console.warn(`Duplicate task title: ${task.title}, date: ${task.date}, keeping date: ${tasksByTitle[task.title].date}`); // Debug
+        console.warn(`Duplicate task: title=${task.title}, date=${task.date}, keeping startDate=${tasksByTitle[taskKey].startDate.toISOString()}`); // Debug
         return;
       }
 
       const pendingCompletions = task.pendingCompletions?.[selectedDate] || [];
       const completions = task.completions?.[selectedDate] || [];
       const userOrder = task.users || [];
-      console.log(`Selected task ${task.title}: userOrder=${userOrder}, date=${task.date}, pending=${pendingCompletions}, completed=${completions}`); // Debug
+      console.log(`Selected task ${task.title}: date=${task.date}, userOrder=${userOrder}, pending=${pendingCompletions}, completed=${completions}, currentTurnIndex=${task.currentTurnIndex}`); // Debug
 
       const repeat = task.repeat || "Daily";
       let requiredTimes = task.timesPerDay || 1;
       if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
       if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-      tasksByTitle[task.title].pendingCount += pendingCompletions.length;
+      tasksByTitle[taskKey].pendingCount += pendingCompletions.length;
 
       const fullTurn = [];
+      const tempTurnReplacement = task.tempTurnReplacement?.[selectedDate] || {};
       for (let i = 0; i < requiredTimes; i++) {
-        const user = userOrder[i % userOrder.length]; // Cycle through task.users
+        const user = tempTurnReplacement[i] || userOrder[i % userOrder.length];
         fullTurn.push(user);
       }
       console.log(`Task ${task.title}: fullTurn=${fullTurn}`); // Debug
 
       fullTurn.forEach((user, index) => {
-        tasksByTitle[task.title].turns.push({
+        tasksByTitle[taskKey].turns.push({
           user,
           index,
           date: task.date,
@@ -527,8 +530,8 @@ async function loadTasks() {
       });
     });
 
-    Object.keys(tasksByTitle).sort().forEach(title => {
-      const { turns, pendingCount, date, userOrder } = tasksByTitle[title];
+    Object.values(tasksByTitle).sort((a, b) => a.title.localeCompare(b.title)).forEach(taskData => {
+      const { title, turns, pendingCount, date, userOrder } = taskData;
       const div = document.createElement("div");
       div.className = "task-entry";
       div.dataset.title = title;
@@ -706,6 +709,7 @@ document.getElementById("scrollRight").addEventListener("click", () => {
 });
 
 fetchUsers().then(() => generateScrollableDates());
+
   </script>
 
 
