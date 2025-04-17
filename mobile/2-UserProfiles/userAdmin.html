@@ -203,6 +203,9 @@
 
 
 
+
+
+
   <script>
     const adminEmail = localStorage.getItem("currentAdminEmail");
     let selectedDate = new Date().toLocaleDateString("sv-SE");
@@ -417,9 +420,11 @@
         });
   
         Object.keys(tasksByTitle).sort().forEach(title => {
-          const { turns, pendingCount, date } = tasksByTitle[title];
+          const { turns, pendingCount, date, userOrder } = tasksByTitle[title];
           const div = document.createElement("div");
           div.className = "task-entry";
+          div.dataset.title = title;
+          div.dataset.date = date;
           div.innerHTML = `
             <h3 class="task-title">${title}${pendingCount > 0 ? `<span class="notification-bubble">${pendingCount}</span>` : ''}</h3>
             <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
@@ -458,7 +463,11 @@
           turnEntries.forEach(turn => {
             turn.addEventListener("dragstart", (e) => {
               turn.classList.add("dragging");
-              e.dataTransfer.setData("text/plain", turn.dataset.index);
+              e.dataTransfer.setData("text/plain", JSON.stringify({
+                index: parseInt(turn.dataset.index),
+                title,
+                date
+              }));
             });
   
             turn.addEventListener("dragend", () => {
@@ -481,25 +490,30 @@
             turn.addEventListener("drop", async (e) => {
               e.preventDefault();
               turn.classList.remove("drag-over");
-              const draggedIndex = parseInt(e.dataTransfer.getData("text/plain"));
+              const dragData = JSON.parse(e.dataTransfer.getData("text/plain"));
+              const draggedIndex = dragData.index;
               const droppedIndex = parseInt(turn.dataset.index);
   
-              if (draggedIndex !== droppedIndex) {
-                const newTurns = [...turns];
+              if (draggedIndex !== droppedIndex && dragData.title === title && dragData.date === date) {
+                // Get current user order
+                const currentUsers = userOrder.slice();
                 // Swap users
-                const tempUser = newTurns[draggedIndex].user;
-                newTurns[draggedIndex].user = newTurns[droppedIndex].user;
-                newTurns[droppedIndex].user = tempUser;
+                const temp = currentUsers[draggedIndex % currentUsers.length];
+                currentUsers[draggedIndex % currentUsers.length] = currentUsers[droppedIndex % currentUsers.length];
+                currentUsers[droppedIndex % currentUsers.length] = temp;
                 // Update UI
                 const draggedTurn = turnEntries[draggedIndex];
                 const droppedTurn = turnEntries[droppedIndex];
-                draggedTurn.querySelector("p").textContent = `Turn ${draggedIndex + 1}: ${newTurns[draggedIndex].user} - ${newTurns[draggedIndex].isCompleted ? 'Accepted' : newTurns[draggedIndex].isPending ? 'Waiting for Review' : 'Pending'}`;
-                droppedTurn.querySelector("p").textContent = `Turn ${droppedIndex + 1}: ${newTurns[droppedIndex].user} - ${newTurns[droppedIndex].isCompleted ? 'Accepted' : newTurns[droppedIndex].isPending ? 'Waiting for Review' : 'Pending'}`;
-                draggedTurn.dataset.user = newTurns[draggedIndex].user;
-                droppedTurn.dataset.user = newTurns[droppedIndex].user;
+                const draggedUser = currentUsers[draggedIndex % currentUsers.length];
+                const droppedUser = currentUsers[droppedIndex % currentUsers.length];
+                const draggedStatus = turns[draggedIndex].isCompleted ? 'Accepted' : turns[draggedIndex].isPending ? 'Waiting for Review' : 'Pending';
+                const droppedStatus = turns[droppedIndex].isCompleted ? 'Accepted' : turns[droppedIndex].isPending ? 'Waiting for Review' : 'Pending';
+                draggedTurn.querySelector("p").textContent = `Turn ${draggedIndex + 1}: ${draggedUser} - ${draggedStatus}`;
+                droppedTurn.querySelector("p").textContent = `Turn ${droppedIndex + 1}: ${droppedUser} - ${droppedStatus}`;
+                draggedTurn.dataset.user = draggedUser;
+                droppedTurn.dataset.user = droppedUser;
                 // Send to server
-                const newUserOrder = newTurns.map(t => t.user);
-                await handleReorder(title, date, newUserOrder);
+                await handleReorder(title, date, currentUsers);
               }
             });
           });
@@ -587,6 +601,11 @@
   
     fetchUsers().then(() => generateScrollableDates());
   </script>
+
+
+
+
+
 
 
 

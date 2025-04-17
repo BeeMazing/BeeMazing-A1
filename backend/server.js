@@ -1262,6 +1262,7 @@ app.post('/api/review-task', async (req, res) => {
 
 
 
+
 app.post("/api/complete-task", async (req, res) => {
   const { adminEmail, taskTitle, user, date } = req.body;
 
@@ -1309,21 +1310,26 @@ app.post("/api/complete-task", async (req, res) => {
       return res.status(400).json({ error: "Task already submitted or completed by this user" });
     }
 
+    // Check if user is assigned (in task.users or tempTurnReplacement)
     const userList = task.users || [];
-    if (!userList.includes(user)) {
+    const tempTurnReplacement = task.tempTurnReplacement?.[normalizedDate] || {};
+    const isAssigned = userList.includes(user) || Object.values(tempTurnReplacement).includes(user);
+    if (!isAssigned) {
       return res.status(400).json({ error: "User not assigned to this task" });
     }
 
     task.pendingCompletions[normalizedDate].push(user);
 
+    // Update currentTurnIndex based on assigned users (including tempTurnReplacement)
+    const assignedUsers = [...new Set([...userList, ...Object.values(tempTurnReplacement)])];
     if (typeof task.currentTurnIndex !== "number") {
-      task.currentTurnIndex = userList.indexOf(user);
+      task.currentTurnIndex = assignedUsers.indexOf(user);
       if (task.currentTurnIndex === -1) task.currentTurnIndex = 0;
     }
 
-    for (let i = 1; i <= userList.length; i++) {
-      const nextIndex = (task.currentTurnIndex + i) % userList.length;
-      const nextUser = userList[nextIndex];
+    for (let i = 1; i <= assignedUsers.length; i++) {
+      const nextIndex = (task.currentTurnIndex + i) % assignedUsers.length;
+      const nextUser = assignedUsers[nextIndex];
       if (!task.pendingCompletions[normalizedDate].includes(nextUser) && !task.completions[normalizedDate].includes(nextUser)) {
         task.currentTurnIndex = nextIndex;
         break;
@@ -1355,7 +1361,6 @@ app.post("/api/complete-task", async (req, res) => {
     res.status(500).json({ error: `Server error: ${err.message}` });
   }
 });
-
 
 
 
