@@ -351,6 +351,7 @@ app.get('/get-tasks', async (req, res) => {
 
     const admin = await admins.findOne({ email: adminEmail });
     const tasks = admin?.tasks || [];
+    console.log(`Fetched tasks for ${adminEmail}:`, tasks.map(t => ({ title: t.title, users: t.users, date: t.date }))); // Debug
 
     res.json({ success: true, tasks });
   } catch (err) {
@@ -358,7 +359,6 @@ app.get('/get-tasks', async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to fetch tasks" });
   }
 });
-
 
 
 
@@ -947,8 +947,6 @@ app.post("/api/replace-user", async (req, res) => {
 
 
 
-
-
 app.post("/api/reorder-turns", async (req, res) => {
   const { adminEmail, title, date, users, resetTempReplacement, selectedDate } = req.body;
 
@@ -972,10 +970,12 @@ app.post("/api/reorder-turns", async (req, res) => {
     }
 
     const task = tasks[taskIndex];
+    console.log(`Before reorder: Task ${title}, users=${task.users}, tempTurnReplacement[${selectedDate}]=${JSON.stringify(task.tempTurnReplacement?.[selectedDate])}`); // Debug
     task.users = users;
     if (resetTempReplacement && task.tempTurnReplacement?.[selectedDate]) {
       delete task.tempTurnReplacement[selectedDate];
     }
+    console.log(`After reorder: Task ${title}, users=${task.users}, tempTurnReplacement[${selectedDate}]=${JSON.stringify(task.tempTurnReplacement?.[selectedDate])}`); // Debug
 
     tasks[taskIndex] = task;
     await admins.updateOne(
@@ -983,14 +983,12 @@ app.post("/api/reorder-turns", async (req, res) => {
       { $set: { tasks } }
     );
 
-    res.json({ success: true }); // No message field
+    res.json({ success: true });
   } catch (err) {
     console.error("Error reordering turns:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
-
 
 
 app.post("/api/revert-decision", async (req, res) => {
