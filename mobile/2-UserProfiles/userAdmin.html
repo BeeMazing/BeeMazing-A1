@@ -383,7 +383,7 @@ async function handleReplace(title, date, index, originalUser, event) {
     turnEntry.querySelector("p").textContent = `Turn ${parseInt(index) + 1}: ${newUser} - Pending`;
     turnEntry.querySelector("select").value = "";
     turnEntry.dataset.user = newUser;
-    setTimeout(() => loadTasks(), 500);
+    setTimeout(() => loadTasks(true), 1000); // Increased delay, force retry
   } catch (err) {
     console.error("Error replacing user:", err);
     const errorDiv = document.createElement("div");
@@ -458,20 +458,26 @@ async function handleReorder(title, date, newUserOrder) {
   }
 }
 
-async function loadTasks() {
+async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
   try {
-    console.log("Loading tasks for date:", selectedDate); // Debug
+    console.log(`Loading tasks for date: ${selectedDate}, attempt: ${attempt}`); // Debug
     const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
       cache: "no-store"
     });
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     const { tasks } = await res.json();
-    console.log("All tasks received:", tasks.map(t => ({ title: t.title, users: t.users, date: t.date, tempTurnReplacement: t.tempTurnReplacement }))); // Debug
+    console.log("All tasks received:", tasks.map(t => ({
+      title: t.title,
+      users: t.users,
+      date: t.date,
+      tempTurnReplacement: t.tempTurnReplacement
+    }))); // Debug
 
     const container = document.getElementById("taskContainer");
     container.innerHTML = ""; // Clear UI
 
     const tasksByTitle = {};
+    const duplicateTasks = {}; // Track duplicates
     tasks.forEach(task => {
       // Filter by date range
       const [startDateStr, endDateStr] = task.date.split(" to ");
@@ -483,17 +489,44 @@ async function loadTasks() {
         return;
       }
 
-      // Handle duplicate titles: keep the task with the latest startDate
-      if (!tasksByTitle[task.title] || new Date(tasksByTitle[task.title].startDate) < startDate) {
+      // Track all tasks with same title
+      if (!duplicateTasks[task.title]) duplicateTasks[task.title] = [];
+      duplicateTasks[task.title].push({
+        date: task.date,
+        users: task.users,
+        tempTurnReplacement: task.tempTurnReplacement?.[selectedDate] || {},
+        startDate
+      });
+
+      // Select task with exact date range match if available, else latest startDate
+      const existingTask = tasksByTitle[task.title];
+      const currentDateRange = task.date;
+      const existingDateRange = existingTask?.date;
+      let shouldReplace = false;
+
+      if (!existingTask) {
+        shouldReplace = true;
+      } else {
+        // Prefer task with exact date range from handleReplace
+        const taskEntry = document.querySelector(`.task-entry[data-title="${task.title}"]`);
+        const replaceDateRange = taskEntry?.dataset.date;
+        if (replaceDateRange && currentDateRange === replaceDateRange) {
+          shouldReplace = true;
+        } else if (new Date(existingTask.startDate) < startDate) {
+          shouldReplace = true;
+        }
+      }
+
+      if (shouldReplace) {
         tasksByTitle[task.title] = {
           turns: [],
           pendingCount: 0,
           date: task.date,
           userOrder: task.users || [],
-          startDate: startDate
+          startDate
         };
       } else {
-        console.warn(`Duplicate task title: ${task.title}, date: ${task.date}, keeping date: ${tasksByTitle[task.title].date}`); // Debug
+        console.warn(`Duplicate task title: ${task.title}, date: ${task.date}, keeping date: ${existingTask.date}`); // Debug
         return;
       }
 
@@ -513,7 +546,6 @@ async function loadTasks() {
       const fullTurn = [];
       for (let i = 0; i < requiredTimes; i++) {
         const userIndex = i % userOrder.length;
-        // Use tempTurnReplacement if available, else fall back to userOrder
         const user = tempTurnReplacement[i] || userOrder[userIndex];
         fullTurn.push(user);
       }
@@ -529,6 +561,25 @@ async function loadTasks() {
         });
       });
     });
+
+    // Log all duplicates
+    Object.keys(duplicateTasks).forEach(title => {
+      if (duplicateTasks[title].length > 1) {
+        console.log(`Duplicate tasks for ${title}:`, duplicateTasks[title]);
+      }
+    });
+
+    // Retry if tempTurnReplacement is missing for replaced task
+    if (retry && attempt < maxAttempts) {
+      const hasReplacement = Object.values(tasksByTitle).some(task =>
+        task.turns.some(turn => turn.user !== task.userOrder[turn.index % task.userOrder.length])
+      );
+      if (!hasReplacement) {
+        console.warn(`Retry ${attempt}: No tempTurnReplacement found, retrying...`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return loadTasks(true, attempt + 1, maxAttempts);
+      }
+    }
 
     Object.keys(tasksByTitle).sort().forEach(title => {
       const { turns, pendingCount, date, userOrder } = tasksByTitle[title];
