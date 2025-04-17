@@ -351,6 +351,7 @@
   
 
 
+
     async function handleReorder(title, date, newUserOrder) {
   try {
     const response = await fetch("https://beemazing.onrender.com/api/reorder-turns", {
@@ -363,17 +364,18 @@
         users: newUserOrder
       })
     });
-
     if (!response.ok) {
       const data = await response.json();
       throw new Error(data.error || "Failed to reorder turns");
     }
-
-    setTimeout(() => loadTasks(), 4000); // Increased delay for server sync
+    setTimeout(() => loadTasks(), 4000); // Delay for server sync
   } catch (err) {
-    console.error("Error reordering turns:", err); // Keep for debugging, not shown in UI
+    console.error("Error reordering turns:", err); // Debug only, no UI
   }
 }
+
+
+
 
 async function loadTasks() {
   try {
@@ -382,39 +384,155 @@ async function loadTasks() {
     });
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     const { tasks } = await res.json();
-    // ... rest of loadTasks remains unchanged ...
+
+    const container = document.getElementById("taskContainer");
+    container.innerHTML = "";
+
+    const tasksByTitle = {};
+    tasks.forEach(task => {
+      if (!tasksByTitle[task.title]) {
+        tasksByTitle[task.title] = { turns: [], pendingCount: 0, date: task.date, userOrder: task.users || [] };
+      }
+      const pendingCompletions = task.pendingCompletions?.[selectedDate] || [];
+      const completions = task.completions?.[selectedDate] || [];
+      const userOrder = task.users || [];
+      const repeat = task.repeat || "Daily";
+      let requiredTimes = task.timesPerDay || 1;
+      if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+      if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+
+      tasksByTitle[task.title].pendingCount += pendingCompletions.length;
+
+      const fullTurn = [];
+      for (let i = 0; i < requiredTimes; i++) {
+        const user = task.tempTurnReplacement?.[selectedDate]?.[i] || userOrder[i % userOrder.length];
+        fullTurn.push(user);
+      }
+
+      fullTurn.forEach((user, index) => {
+        tasksByTitle[task.title].turns.push({
+          user,
+          index,
+          date: task.date,
+          isPending: pendingCompletions.includes(user),
+          isCompleted: completions.includes(user)
+        });
+      });
+    });
+
+    Object.keys(tasksByTitle).sort().forEach(title => {
+      const { turns, pendingCount, date, userOrder } = tasksByTitle[title];
+      const div = document.createElement("div");
+      div.className = "task-entry";
+      div.dataset.title = title;
+      div.dataset.date = date;
+      div.innerHTML = `
+        <h3 class="task-title">${title}${pendingCount > 0 ? `<span class="notification-bubble">${pendingCount}</span>` : ''}</h3>
+        <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
+          ${turns.map(turn => `
+            <div class="turn-entry" draggable="true" data-index="${turn.index}" data-user="${turn.user}">
+              <p>Turn ${turn.index + 1}: ${turn.user} - ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
+              ${turn.isPending && !turn.isCompleted ? `
+                <button class="accept-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
+                <button class="decline-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
+              ` : turn.isCompleted ? `
+                <button class="revert-btn" onclick="handleRevert('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
+              ` : `
+                <select id="replace-select-${turn.index}">
+                  <option value="">Select User</option>
+                  ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
+                </select>
+                <button class="replace-btn" onclick="handleReplace('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
+              `}
+            </div>
+          `).join('')}
+        </div>
+      `;
+      container.appendChild(div);
+
+      div.querySelector(".task-title").addEventListener("click", () => {
+        const details = div.querySelector(".task-details");
+        details.classList.toggle("show");
+        if (details.classList.contains("show")) {
+          expandedTasks.add(title);
+        } else {
+          expandedTasks.delete(title);
+        }
+      });
+
+      const turnEntries = div.querySelectorAll(".turn-entry");
+      turnEntries.forEach(turn => {
+        turn.addEventListener("dragstart", (e) => {
+          turn.classList.add("dragging");
+          e.dataTransfer.setData("text/plain", JSON.stringify({
+            index: parseInt(turn.dataset.index),
+            title,
+            date
+          }));
+        });
+
+        turn.addEventListener("dragend", () => {
+          turn.classList.remove("dragging");
+          turnEntries.forEach(t => t.classList.remove("drag-over"));
+        });
+
+        turn.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          const dragging = document.querySelector(".dragging");
+          if (dragging !== turn) {
+            turn.classList.add("drag-over");
+          }
+        });
+
+        turn.addEventListener("dragleave", () => {
+          turn.classList.remove("drag-over");
+        });
+
+        turn.addEventListener("drop", async (e) => {
+          e.preventDefault();
+          turn.classList.remove("drag-over");
+          const dragData = JSON.parse(e.dataTransfer.getData("text/plain"));
+          const draggedIndex = dragData.index;
+          const droppedIndex = parseInt(turn.dataset.index);
+
+          if (draggedIndex !== droppedIndex && dragData.title === title && dragData.date === date) {
+            const currentUsers = userOrder.slice();
+            // Swap users at exact indices
+            [currentUsers[draggedIndex], currentUsers[droppedIndex]] = [currentUsers[droppedIndex], currentUsers[draggedIndex]];
+            // Update UI
+            const draggedTurn = turnEntries[draggedIndex];
+            const droppedTurn = turnEntries[droppedIndex];
+            const draggedUser = currentUsers[draggedIndex];
+            const droppedUser = currentUsers[droppedIndex];
+            const draggedStatus = turns[draggedIndex].isCompleted ? 'Accepted' : turns[draggedIndex].isPending ? 'Waiting for Review' : 'Pending';
+            const droppedStatus = turns[droppedIndex].isCompleted ? 'Accepted' : turns[droppedIndex].isPending ? 'Waiting for Review' : 'Pending';
+            draggedTurn.querySelector("p").textContent = `Turn ${draggedIndex + 1}: ${draggedUser} - ${draggedStatus}`;
+            droppedTurn.querySelector("p").textContent = `Turn ${droppedIndex + 1}: ${droppedUser} - ${droppedStatus}`;
+            draggedTurn.dataset.user = draggedUser;
+            droppedTurn.dataset.user = droppedUser;
+            // Send to server
+            await handleReorder(title, date, currentUsers);
+          }
+        });
+      });
+    });
+
+    if (!container.innerHTML) {
+      container.innerHTML = "<p>No tasks for this date.</p>";
+    }
   } catch (err) {
     console.error("Error loading tasks:", err);
     document.getElementById("taskContainer").innerHTML = "<p>Error loading tasks. Please try again.</p>";
   }
 }
 
-// Inside loadTasks, within turns.forEach loop
-turnElement.addEventListener("drop", (e) => {
-  e.preventDefault();
-  const droppedTurn = e.target.closest(".turn");
-  if (!droppedTurn || droppedTurn === draggedTurn) return;
-
-  const draggedIndex = Array.from(turnsContainer.children).indexOf(draggedTurn);
-  const droppedIndex = Array.from(turnsContainer.children).indexOf(droppedTurn);
-
-  // Swap users in currentUsers
-  const newUsers = [...currentUsers];
-  [newUsers[draggedIndex], newUsers[droppedIndex]] = [newUsers[droppedIndex], newUsers[draggedIndex]];
-
-  // Update UI
-  draggedTurn.querySelector("strong").textContent = `Turn ${draggedIndex + 1}: ${newUsers[draggedIndex]}`;
-  droppedTurn.querySelector("strong").textContent = `Turn ${droppedIndex + 1}: ${newUsers[droppedIndex]}`;
-  currentUsers = newUsers; // Persist new order
-
-  draggedTurn.classList.remove("dragging");
-  handleReorder(task.title, task.date, newUsers);
-});
 
 
 
 
 
+
+    
     function generateScrollableDates(monthOffset = 0) {
       const container = document.getElementById("dayScrollContainer");
       container.innerHTML = "";
