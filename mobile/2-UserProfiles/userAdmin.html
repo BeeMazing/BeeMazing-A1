@@ -349,33 +349,42 @@
       }
     }
   
+
+
     async function handleReorder(title, date, newUserOrder) {
-      try {
-        const response = await fetch("https://beemazing.onrender.com/api/reorder-turns", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            adminEmail,
-            title,
-            date,
-            users: newUserOrder
-          })
-        });
-  
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Failed to reorder turns");
-  
-        setTimeout(() => loadTasks(), 500);
-      } catch (err) {
-        console.error("Error reordering turns:", err);
-        const errorDiv = document.createElement("div");
-        errorDiv.style.color = "red";
-        errorDiv.textContent = `Error: ${err.message}`;
-        document.getElementById("taskContainer").appendChild(errorDiv);
-        setTimeout(() => errorDiv.remove(), 3000);
-      }
-    }
-  
+  try {
+    const response = await fetch("https://beemazing.onrender.com/api/reorder-turns", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        adminEmail,
+        title,
+        date,
+        users: newUserOrder
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to reorder turns");
+
+    console.log("Reorder successful, new order:", newUserOrder);
+    setTimeout(() => {
+      console.log("Refreshing tasks after reorder");
+      loadTasks();
+    }, 1500); // Increased delay
+  } catch (err) {
+    console.error("Error reordering turns:", err);
+    const errorDiv = document.createElement("div");
+    errorDiv.style.color = "red";
+    errorDiv.textContent = `Error: ${err.message}`;
+    document.getElementById("taskContainer").appendChild(errorDiv);
+    setTimeout(() => errorDiv.remove(), 3000);
+  }
+}
+
+
+
+
     async function loadTasks() {
       try {
         const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
