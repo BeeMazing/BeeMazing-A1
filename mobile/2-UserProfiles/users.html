@@ -959,6 +959,7 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
       console.warn("Skipping invalid task:", task);
       return false;
     }
+    if (!task.users.includes(userName)) return false;
 
     const dateRange = task.date.split(" to ");
     const startDateStr = dateRange[0];
@@ -973,19 +974,7 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     }
     if (currentDate < startDate || currentDate > endDate) return false;
 
-    const repeat = task.repeat || "Daily";
-    let requiredTimes = task.timesPerDay || 1;
-    if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-    if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-
-    const userOrder = [...task.users];
-    const fullTurnOrder = [];
-    for (let i = 0; i < requiredTimes; i++) {
-      const user = task.tempTurnReplacement?.[selectedDate]?.[i] || userOrder[i % userOrder.length];
-      fullTurnOrder.push(user);
-    }
-
-    return fullTurnOrder.includes(userName);
+    return true;
   });
 
   userTasksDiv.innerHTML = "";
@@ -1013,8 +1002,9 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
 
     const userOrder = [...task.users];
     const fullTurnOrder = [];
+    const replacements = task.tempTurnReplacement?.[selectedDate] || {};
     for (let i = 0; i < requiredTimes; i++) {
-      const user = task.tempTurnReplacement?.[selectedDate]?.[i] || userOrder[i % userOrder.length];
+      const user = replacements[i] || userOrder[i % userOrder.length];
       fullTurnOrder.push(user);
     }
 
@@ -1027,8 +1017,13 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
       : `${completedTimes}/${requiredTimes}`;
 
     const userTurnIndexes = [];
+    const replacedIndexes = [];
     fullTurnOrder.forEach((user, index) => {
-      if (user === userName) userTurnIndexes.push(index);
+      if (user === userName) {
+        userTurnIndexes.push(index);
+      } else if (userOrder[index % userOrder.length] === userName && replacements[index]) {
+        replacedIndexes.push({ index, replacedBy: user });
+      }
     });
 
     const isPending = pendingUsers.includes(userName);
@@ -1063,7 +1058,7 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     statusDiv.style.marginTop = "10px";
     statusDiv.style.fontWeight = "bold";
 
-    if (userTurnIndexes.length === 0) {
+    if (userTurnIndexes.length === 0 && replacedIndexes.length === 0) {
       statusDiv.innerHTML = "You: Not Assigned";
       statusDiv.style.color = "gray";
     } else {
@@ -1096,6 +1091,14 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
           }
         }
 
+        const line = `<span style="color: ${color}">${emoji} ${statusText}</span><br>`;
+        statusDiv.innerHTML += line;
+      });
+
+      replacedIndexes.forEach(({ index, replacedBy }) => {
+        const emoji = "🔄";
+        const color = "gray";
+        const statusText = `Turn ${index + 1} - Replaced by ${replacedBy}`;
         const line = `<span style="color: ${color}">${emoji} ${statusText}</span><br>`;
         statusDiv.innerHTML += line;
       });
