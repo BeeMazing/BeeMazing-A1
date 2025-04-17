@@ -954,59 +954,6 @@ app.post("/api/replace-user", async (req, res) => {
 
 
 
-app.get('/api/tasks', async (req, res) => {
-  const { adminEmail, userEmail, selectedDate } = req.query;
-
-  if (!adminEmail) {
-    return res.status(400).json({ error: "Missing adminEmail" });
-  }
-
-  try {
-    const db = await connectDB();
-    const admins = db.collection("admins");
-
-    const admin = await admins.findOne({ email: adminEmail });
-    const tasks = admin?.tasks || [];
-    console.log(`Fetched tasks for ${adminEmail}, selectedDate=${selectedDate}:`, tasks.map(t => ({ title: t.title, users: t.users, date: t.date, currentTurnIndex: t.currentTurnIndex }))); // Debug
-
-    // Filter tasks for user and date
-    const filteredTasks = tasks.filter(task => {
-      const [startDateStr, endDateStr] = task.date.split(" to ");
-      const startDate = new Date(startDateStr);
-      const endDate = new Date(endDateStr || "3000-01-01");
-      const currentDate = new Date(selectedDate);
-      if (currentDate < startDate || currentDate > endDate) return false;
-      return userEmail ? task.users.includes(userEmail) : true;
-    });
-
-    res.json({ tasks: filteredTasks });
-  } catch (err) {
-    console.error("Error fetching tasks:", err);
-    res.status(500).json({ error: "Failed to fetch tasks" });
-  }
-});
-
-app.get('/get-tasks', async (req, res) => {
-  const { adminEmail } = req.query;
-
-  if (!adminEmail) {
-    return res.status(400).json({ success: false, message: "Missing adminEmail" });
-  }
-
-  try {
-    const db = await connectDB();
-    const admins = db.collection("admins");
-
-    const admin = await admins.findOne({ email: adminEmail });
-    const tasks = admin?.tasks || [];
-    console.log(`Fetched tasks for ${adminEmail}:`, tasks.map(t => ({ title: t.title, users: t.users, date: t.date, pendingCompletions: t.pendingCompletions, completions: t.completions }))); // Debug
-
-    res.json({ success: true, tasks });
-  } catch (err) {
-    console.error("🔥 Error in /get-tasks:", err);
-    res.status(500).json({ success: false, message: "Failed to fetch tasks" });
-  }
-});
 
 app.post("/api/reorder-turns", async (req, res) => {
   const { adminEmail, title, date, users, resetTempReplacement, selectedDate } = req.body;
@@ -1051,7 +998,6 @@ app.post("/api/reorder-turns", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
 
 
 
