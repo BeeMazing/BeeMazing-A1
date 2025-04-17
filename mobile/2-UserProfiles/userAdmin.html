@@ -466,7 +466,7 @@ async function loadTasks() {
     });
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     const { tasks } = await res.json();
-    console.log("All tasks received:", tasks.map(t => ({ title: t.title, users: t.users, date: t.date }))); // Debug
+    console.log("All tasks received:", tasks.map(t => ({ title: t.title, users: t.users, date: t.date, tempTurnReplacement: t.tempTurnReplacement }))); // Debug
 
     const container = document.getElementById("taskContainer");
     container.innerHTML = ""; // Clear UI
@@ -500,7 +500,8 @@ async function loadTasks() {
       const pendingCompletions = task.pendingCompletions?.[selectedDate] || [];
       const completions = task.completions?.[selectedDate] || [];
       const userOrder = task.users || [];
-      console.log(`Selected task ${task.title}: userOrder=${userOrder}, date=${task.date}, pending=${pendingCompletions}, completed=${completions}`); // Debug
+      const tempTurnReplacement = task.tempTurnReplacement?.[selectedDate] || {};
+      console.log(`Selected task ${task.title}: userOrder=${userOrder}, date=${task.date}, tempTurnReplacement[${selectedDate}]=${JSON.stringify(tempTurnReplacement)}, pending=${pendingCompletions}, completed=${completions}`); // Debug
 
       const repeat = task.repeat || "Daily";
       let requiredTimes = task.timesPerDay || 1;
@@ -511,7 +512,9 @@ async function loadTasks() {
 
       const fullTurn = [];
       for (let i = 0; i < requiredTimes; i++) {
-        const user = userOrder[i % userOrder.length]; // Cycle through task.users
+        const userIndex = i % userOrder.length;
+        // Use tempTurnReplacement if available, else fall back to userOrder
+        const user = tempTurnReplacement[i] || userOrder[userIndex];
         fullTurn.push(user);
       }
       console.log(`Task ${task.title}: fullTurn=${fullTurn}`); // Debug
@@ -706,6 +709,8 @@ document.getElementById("scrollRight").addEventListener("click", () => {
 });
 
 fetchUsers().then(() => generateScrollableDates());
+
+
   </script>
 
 
