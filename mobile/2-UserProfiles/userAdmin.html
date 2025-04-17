@@ -466,7 +466,7 @@ async function loadTasks() {
     });
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     const { tasks } = await res.json();
-    console.log("Tasks received:", tasks.map(t => ({ title: t.title, users: t.users, date: t.date }))); // Debug
+    console.log("All tasks received:", tasks.map(t => ({ title: t.title, users: t.users, date: t.date }))); // Debug
 
     const container = document.getElementById("taskContainer");
     container.innerHTML = ""; // Clear UI
@@ -478,18 +478,29 @@ async function loadTasks() {
       const startDate = new Date(startDateStr);
       const endDate = new Date(endDateStr || "3000-01-01");
       const currentDate = new Date(selectedDate);
-      if (currentDate < startDate || currentDate > endDate) return;
+      if (currentDate < startDate || currentDate > endDate) {
+        console.log(`Skipping task ${task.title}: ${task.date} does not include ${selectedDate}`); // Debug
+        return;
+      }
 
-      if (!tasksByTitle[task.title]) {
-        tasksByTitle[task.title] = { turns: [], pendingCount: 0, date: task.date, userOrder: task.users || [] };
+      // Handle duplicate titles: keep the task with the latest startDate
+      if (!tasksByTitle[task.title] || new Date(tasksByTitle[task.title].startDate) < startDate) {
+        tasksByTitle[task.title] = {
+          turns: [],
+          pendingCount: 0,
+          date: task.date,
+          userOrder: task.users || [],
+          startDate: startDate
+        };
       } else {
-        console.warn(`Duplicate task title: ${task.title}, date: ${task.date}`); // Debug duplicates
+        console.warn(`Duplicate task title: ${task.title}, date: ${task.date}, keeping date: ${tasksByTitle[task.title].date}`); // Debug
+        return;
       }
 
       const pendingCompletions = task.pendingCompletions?.[selectedDate] || [];
       const completions = task.completions?.[selectedDate] || [];
       const userOrder = task.users || [];
-      console.log(`Task ${task.title}: userOrder=${userOrder}, date=${task.date}, pending=${pendingCompletions}, completed=${completions}`); // Debug
+      console.log(`Selected task ${task.title}: userOrder=${userOrder}, date=${task.date}, pending=${pendingCompletions}, completed=${completions}`); // Debug
 
       const repeat = task.repeat || "Daily";
       let requiredTimes = task.timesPerDay || 1;
@@ -500,7 +511,7 @@ async function loadTasks() {
 
       const fullTurn = [];
       for (let i = 0; i < requiredTimes; i++) {
-        const user = userOrder[i % userOrder.length]; // Ignore tempTurnReplacement
+        const user = userOrder[i % userOrder.length]; // Cycle through task.users
         fullTurn.push(user);
       }
       console.log(`Task ${task.title}: fullTurn=${fullTurn}`); // Debug

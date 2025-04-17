@@ -338,6 +338,10 @@ app.get("/get-permission", async (req, res) => {
 // home.html ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ✅ GET ALL TASKS FOR ADMIN (used in users.html)
+
+
+
+
 app.get('/get-tasks', async (req, res) => {
   const { adminEmail } = req.query;
 
@@ -351,7 +355,7 @@ app.get('/get-tasks', async (req, res) => {
 
     const admin = await admins.findOne({ email: adminEmail });
     const tasks = admin?.tasks || [];
-    console.log(`Fetched tasks for ${adminEmail}:`, tasks.map(t => ({ title: t.title, users: t.users, date: t.date }))); // Debug
+    console.log(`Fetched tasks for ${adminEmail}:`, tasks.map(t => ({ title: t.title, users: t.users, date: t.date, pendingCompletions: t.pendingCompletions, completions: t.completions }))); // Debug
 
     res.json({ success: true, tasks });
   } catch (err) {
@@ -359,6 +363,7 @@ app.get('/get-tasks', async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to fetch tasks" });
   }
 });
+
 
 
 
@@ -947,6 +952,9 @@ app.post("/api/replace-user", async (req, res) => {
 
 
 
+
+
+
 app.post("/api/reorder-turns", async (req, res) => {
   const { adminEmail, title, date, users, resetTempReplacement, selectedDate } = req.body;
 
@@ -970,18 +978,19 @@ app.post("/api/reorder-turns", async (req, res) => {
     }
 
     const task = tasks[taskIndex];
-    console.log(`Before reorder: Task ${title}, users=${task.users}, tempTurnReplacement[${selectedDate}]=${JSON.stringify(task.tempTurnReplacement?.[selectedDate])}`); // Debug
+    console.log(`Before reorder: Task ${title}, date=${date}, users=${JSON.stringify(task.users)}, tempTurnReplacement[${selectedDate}]=${JSON.stringify(task.tempTurnReplacement?.[selectedDate])}`); // Debug
     task.users = users;
     if (resetTempReplacement && task.tempTurnReplacement?.[selectedDate]) {
       delete task.tempTurnReplacement[selectedDate];
     }
-    console.log(`After reorder: Task ${title}, users=${task.users}, tempTurnReplacement[${selectedDate}]=${JSON.stringify(task.tempTurnReplacement?.[selectedDate])}`); // Debug
+    console.log(`After reorder: Task ${title}, date=${date}, users=${JSON.stringify(task.users)}, tempTurnReplacement[${selectedDate}]=${JSON.stringify(task.tempTurnReplacement?.[selectedDate])}`); // Debug
 
     tasks[taskIndex] = task;
-    await admins.updateOne(
+    const updateResult = await admins.updateOne(
       { email: adminEmail },
       { $set: { tasks } }
     );
+    console.log(`MongoDB update result: matched=${updateResult.matchedCount}, modified=${updateResult.modifiedCount}`); // Debug
 
     res.json({ success: true });
   } catch (err) {
@@ -989,6 +998,9 @@ app.post("/api/reorder-turns", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+
+
 
 
 app.post("/api/revert-decision", async (req, res) => {
