@@ -116,14 +116,19 @@
       padding: 10px;
       margin: 5px 0;
       cursor: move;
-      transition: background 0.2s;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      position: relative;
     }
     .turn-entry.dragging {
-      opacity: 0.5;
-      background: #555;
+      opacity: 0.7;
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      z-index: 100;
     }
     .turn-entry.drag-over {
       border: 2px dashed #FFC107;
+      background: #4A4B54;
+      transform: translateY(2px);
     }
     .turn-entry p {
       margin: 5px 0;
@@ -135,6 +140,10 @@
       border-radius: 6px;
       border: none;
       cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+    .accept-btn:hover, .decline-btn:hover, .replace-btn:hover, .revert-btn:hover {
+      transform: scale(1.05);
     }
     .accept-btn {
       background-color: #4CAF50;
@@ -169,9 +178,14 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+    @keyframes slide {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .turn-entry {
+      animation: slide 0.3s ease;
+    }
   </style>
-
-
 
 
 
@@ -462,9 +476,10 @@
   
               if (draggedIndex !== droppedIndex) {
                 const newTurns = [...turns];
-                const [draggedTurn] = newTurns.splice(draggedIndex, 1);
-                newTurns.splice(droppedIndex, 0, draggedTurn);
-  
+                // Swap the turns at draggedIndex and droppedIndex
+                [newTurns[draggedIndex], newTurns[droppedIndex]] = [newTurns[droppedIndex], newTurns[draggedIndex]];
+                // Update indices to reflect new order
+                newTurns.forEach((t, i) => t.index = i);
                 const newUserOrder = newTurns.map(t => t.user);
                 handleReorder(title, date, newUserOrder);
               }
@@ -554,6 +569,12 @@
   
     fetchUsers().then(() => generateScrollableDates());
   </script>
+
+
+
+
+
+
 
 
 </body>
