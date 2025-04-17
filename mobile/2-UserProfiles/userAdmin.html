@@ -87,6 +87,19 @@
     .task-title {
       margin: 0;
       font-weight: bold;
+      display: flex;
+      align-items: center;
+    }
+    .notification-bubble {
+      background: #D32F2F;
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
+      text-align: center;
+      font-size: 12px;
+      margin-left: 10px;
     }
     .task-details {
       display: none;
@@ -149,7 +162,6 @@
 
 
 
-
 </head>
 <body>
 
@@ -176,6 +188,7 @@
     const adminEmail = localStorage.getItem("currentAdminEmail");
     let selectedDate = new Date().toLocaleDateString("sv-SE");
     let allUsers = [];
+    const expandedTasks = new Set();
   
     async function fetchUsers() {
       try {
@@ -314,7 +327,7 @@
         const tasksByTitle = {};
         tasks.forEach(task => {
           if (!tasksByTitle[task.title]) {
-            tasksByTitle[task.title] = [];
+            tasksByTitle[task.title] = { turns: [], pendingCount: 0, date: task.date };
           }
           const pendingCompletions = task.pendingCompletions?.[selectedDate] || [];
           const completions = task.completions?.[selectedDate] || [];
@@ -324,6 +337,8 @@
           if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
           if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
   
+          tasksByTitle[task.title].pendingCount += pendingCompletions.length;
+  
           const fullTurn = [];
           for (let i = 0; i < requiredTimes; i++) {
             const user = task.tempTurnReplacement?.[selectedDate]?.[i] || userOrder[i % userOrder.length];
@@ -331,7 +346,7 @@
           }
   
           fullTurn.forEach((user, index) => {
-            tasksByTitle[task.title].push({
+            tasksByTitle[task.title].turns.push({
               user,
               index,
               date: task.date,
@@ -341,13 +356,13 @@
           });
         });
   
-        Object.keys(tasksByTitle).forEach(title => {
-          const turns = tasksByTitle[title];
+        Object.keys(tasksByTitle).sort().forEach(title => {
+          const { turns, pendingCount, date } = tasksByTitle[title];
           const div = document.createElement("div");
           div.className = "task-entry";
           div.innerHTML = `
-            <h3 class="task-title">${title}</h3>
-            <div class="task-details">
+            <h3 class="task-title">${title}${pendingCount > 0 ? `<span class="notification-bubble">${pendingCount}</span>` : ''}</h3>
+            <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
               ${turns.map(turn => `
                 <div class="turn-entry">
                   <p>Turn ${turn.index + 1}: ${turn.user} - ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
@@ -372,6 +387,11 @@
           div.querySelector(".task-title").addEventListener("click", () => {
             const details = div.querySelector(".task-details");
             details.classList.toggle("show");
+            if (details.classList.contains("show")) {
+              expandedTasks.add(title);
+            } else {
+              expandedTasks.delete(title);
+            }
           });
         });
   
@@ -457,8 +477,6 @@
   
     fetchUsers().then(() => generateScrollableDates());
   </script>
-
-
 
 
 

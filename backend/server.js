@@ -975,21 +975,26 @@ app.post("/api/revert-decision", async (req, res) => {
     }
 
     const task = tasks[taskIndex];
-    task.pendingCompletions = task.pendingCompletions || {};
-    task.pendingCompletions[selectedDate] = task.pendingCompletions[selectedDate] || [];
     task.completions = task.completions || {};
     task.completions[selectedDate] = task.completions[selectedDate] || [];
 
-    const pending = task.pendingCompletions[selectedDate];
     const completions = task.completions[selectedDate];
-
     if (!completions.includes(user)) {
       return res.status(400).json({ error: "User has no completed task to revert" });
     }
 
+    // Remove from completions
     completions.splice(completions.indexOf(user), 1);
-    if (!pending.includes(user)) {
-      pending.push(user);
+
+    // Deduct reward
+    const rewardAmount = Number(task.reward || 0);
+    if (rewardAmount > 0) {
+      const rewards = admin.rewards || {};
+      rewards[user] = Math.max(0, (rewards[user] || 0) - rewardAmount);
+      await admins.updateOne(
+        { email: adminEmail },
+        { $set: { rewards } }
+      );
     }
 
     tasks[taskIndex] = task;
@@ -1004,7 +1009,6 @@ app.post("/api/revert-decision", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
 
 
 
