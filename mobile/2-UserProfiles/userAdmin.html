@@ -352,6 +352,9 @@
 
 
 
+
+
+
     async function handleReorder(title, date, newUserOrder) {
   try {
     const response = await fetch("https://beemazing.onrender.com/api/reorder-turns", {
@@ -361,7 +364,9 @@
         adminEmail,
         title,
         date,
-        users: newUserOrder
+        users: newUserOrder,
+        resetTempReplacement: true,
+        selectedDate
       })
     });
     if (!response.ok) {
@@ -373,9 +378,6 @@
     console.error("Error reordering turns:", err); // Debug only, no UI
   }
 }
-
-
-
 
 async function loadTasks() {
   try {
@@ -405,7 +407,7 @@ async function loadTasks() {
 
       const fullTurn = [];
       for (let i = 0; i < requiredTimes; i++) {
-        const user = task.tempTurnReplacement?.[selectedDate]?.[i] || userOrder[i % userOrder.length];
+        const user = userOrder[i % userOrder.length]; // Ignore tempTurnReplacement
         fullTurn.push(user);
       }
 
@@ -497,8 +499,13 @@ async function loadTasks() {
 
           if (draggedIndex !== droppedIndex && dragData.title === title && dragData.date === date) {
             const currentUsers = userOrder.slice();
-            // Swap users at exact indices
+            // Swap users
             [currentUsers[draggedIndex], currentUsers[droppedIndex]] = [currentUsers[droppedIndex], currentUsers[draggedIndex]];
+            // Update turns array
+            const draggedTurnData = turns[draggedIndex];
+            const droppedTurnData = turns[droppedIndex];
+            turns[draggedIndex] = { ...droppedTurnData, user: currentUsers[draggedIndex], index: draggedIndex };
+            turns[droppedIndex] = { ...draggedTurnData, user: currentUsers[droppedIndex], index: droppedIndex };
             // Update UI
             const draggedTurn = turnEntries[draggedIndex];
             const droppedTurn = turnEntries[droppedIndex];
@@ -525,7 +532,6 @@ async function loadTasks() {
     document.getElementById("taskContainer").innerHTML = "<p>Error loading tasks. Please try again.</p>";
   }
 }
-
 
 
 

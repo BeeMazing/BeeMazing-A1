@@ -949,12 +949,11 @@ app.post("/api/replace-user", async (req, res) => {
 
 
 
-
 app.post("/api/reorder-turns", async (req, res) => {
-  const { adminEmail, title, date, users } = req.body;
+  const { adminEmail, title, date, users, resetTempReplacement, selectedDate } = req.body;
 
   try {
-    if (!adminEmail || !title || !date || !Array.isArray(users)) {
+    if (!adminEmail || !title || !date || !Array.isArray(users) || !selectedDate) {
       return res.status(400).json({ error: "Missing or invalid required fields" });
     }
 
@@ -974,6 +973,9 @@ app.post("/api/reorder-turns", async (req, res) => {
 
     const task = tasks[taskIndex];
     task.users = users;
+    if (resetTempReplacement && task.tempTurnReplacement?.[selectedDate]) {
+      delete task.tempTurnReplacement[selectedDate];
+    }
 
     tasks[taskIndex] = task;
     await admins.updateOne(
@@ -981,14 +983,12 @@ app.post("/api/reorder-turns", async (req, res) => {
       { $set: { tasks } }
     );
 
-    res.json({ success: true, message: "Turns reordered successfully" });
+    res.json({ success: true }); // No message field
   } catch (err) {
     console.error("Error reordering turns:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
-
 
 
 
