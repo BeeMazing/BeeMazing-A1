@@ -181,7 +181,6 @@
 
 
 
-
 </head>
 <body>
 
@@ -295,6 +294,7 @@
         const turnEntry = taskEntry.querySelector(`.turn-entry[data-index="${index}"]`);
         turnEntry.querySelector("p").textContent = `Turn ${parseInt(index) + 1}: ${newUser} - Pending`;
         turnEntry.querySelector("select").value = "";
+        turnEntry.dataset.user = newUser;
         setTimeout(() => loadTasks(), 500);
       } catch (err) {
         console.error("Error replacing user:", err);
@@ -417,7 +417,7 @@
         });
   
         Object.keys(tasksByTitle).sort().forEach(title => {
-          const { turns, pendingCount, date, userOrder } = tasksByTitle[title];
+          const { turns, pendingCount, date } = tasksByTitle[title];
           const div = document.createElement("div");
           div.className = "task-entry";
           div.innerHTML = `
@@ -455,25 +455,21 @@
           });
   
           const turnEntries = div.querySelectorAll(".turn-entry");
-          let draggedIndex = null;
-  
           turnEntries.forEach(turn => {
             turn.addEventListener("dragstart", (e) => {
               turn.classList.add("dragging");
-              draggedIndex = parseInt(turn.dataset.index);
-              e.dataTransfer.setData("text/plain", draggedIndex);
+              e.dataTransfer.setData("text/plain", turn.dataset.index);
             });
   
             turn.addEventListener("dragend", () => {
               turn.classList.remove("dragging");
               turnEntries.forEach(t => t.classList.remove("drag-over"));
-              draggedIndex = null;
             });
   
             turn.addEventListener("dragover", (e) => {
               e.preventDefault();
-              const dropIndex = parseInt(turn.dataset.index);
-              if (draggedIndex !== null && draggedIndex !== dropIndex) {
+              const dragging = document.querySelector(".dragging");
+              if (dragging !== turn) {
                 turn.classList.add("drag-over");
               }
             });
@@ -485,18 +481,22 @@
             turn.addEventListener("drop", async (e) => {
               e.preventDefault();
               turn.classList.remove("drag-over");
-              const dropIndex = parseInt(turn.dataset.index);
-              if (draggedIndex !== null && draggedIndex !== dropIndex) {
+              const draggedIndex = parseInt(e.dataTransfer.getData("text/plain"));
+              const droppedIndex = parseInt(turn.dataset.index);
+  
+              if (draggedIndex !== droppedIndex) {
                 const newTurns = [...turns];
                 // Swap users
-                [newTurns[draggedIndex].user, newTurns[dropIndex].user] = [newTurns[dropIndex].user, newTurns[draggedIndex].user];
-                // Update UI immediately
+                const tempUser = newTurns[draggedIndex].user;
+                newTurns[draggedIndex].user = newTurns[droppedIndex].user;
+                newTurns[droppedIndex].user = tempUser;
+                // Update UI
                 const draggedTurn = turnEntries[draggedIndex];
-                const droppedTurn = turnEntries[dropIndex];
+                const droppedTurn = turnEntries[droppedIndex];
                 draggedTurn.querySelector("p").textContent = `Turn ${draggedIndex + 1}: ${newTurns[draggedIndex].user} - ${newTurns[draggedIndex].isCompleted ? 'Accepted' : newTurns[draggedIndex].isPending ? 'Waiting for Review' : 'Pending'}`;
-                droppedTurn.querySelector("p").textContent = `Turn ${dropIndex + 1}: ${newTurns[dropIndex].user} - ${newTurns[dropIndex].isCompleted ? 'Accepted' : newTurns[dropIndex].isPending ? 'Waiting for Review' : 'Pending'}`;
+                droppedTurn.querySelector("p").textContent = `Turn ${droppedIndex + 1}: ${newTurns[droppedIndex].user} - ${newTurns[droppedIndex].isCompleted ? 'Accepted' : newTurns[droppedIndex].isPending ? 'Waiting for Review' : 'Pending'}`;
                 draggedTurn.dataset.user = newTurns[draggedIndex].user;
-                droppedTurn.dataset.user = newTurns[dropIndex].user;
+                droppedTurn.dataset.user = newTurns[droppedIndex].user;
                 // Send to server
                 const newUserOrder = newTurns.map(t => t.user);
                 await handleReorder(title, date, newUserOrder);
@@ -587,7 +587,6 @@
   
     fetchUsers().then(() => generateScrollableDates());
   </script>
-
 
 
 
