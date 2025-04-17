@@ -950,47 +950,6 @@ app.post("/api/replace-user", async (req, res) => {
 
 
 
-app.post("/api/reorder-turns", async (req, res) => {
-  const { adminEmail, title, date, users } = req.body;
-
-  try {
-    if (!adminEmail || !title || !date || !Array.isArray(users)) {
-      return res.status(400).json({ error: "Missing or invalid required fields" });
-    }
-
-    const db = await connectDB();
-    const admins = db.collection("admins");
-    const admin = await admins.findOne({ email: adminEmail });
-
-    if (!admin) {
-      return res.status(404).json({ error: "Admin not found" });
-    }
-
-    const tasks = admin.tasks || [];
-    const taskIndex = tasks.findIndex(t => t.title === title && t.date === date);
-    if (taskIndex === -1) {
-      return res.status(404).json({ error: "Task not found" });
-    }
-
-    const task = tasks[taskIndex];
-    task.users = users;
-
-    tasks[taskIndex] = task;
-    await admins.updateOne(
-      { email: adminEmail },
-      { $set: { tasks } }
-    );
-
-    res.json({ success: true, message: "Turns reordered successfully" });
-  } catch (err) {
-    console.error("Error reordering turns:", err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-
-
-
 
 
 app.post("/api/revert-decision", async (req, res) => {
