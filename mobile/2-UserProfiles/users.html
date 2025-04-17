@@ -926,8 +926,7 @@
 
 
 
-
-async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
+        async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
   const userTasksDiv = document.getElementById("userTasks");
   userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
 
@@ -1018,7 +1017,8 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
 
     let pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
     let completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-    let completedTimes = completedUsers.length;
+    // Count both completed and pending completions to advance the turn
+    let completedTimes = completedUsers.length + pendingUsers.length;
 
     let progressText = completedTimes >= requiredTimes
       ? `<span style="color: green; font-weight: bold;">Completed</span>`
@@ -1121,7 +1121,6 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     userTasksDiv.appendChild(taskDiv);
   });
 }
-
 
 
 
