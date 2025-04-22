@@ -370,6 +370,25 @@ body {
     cursor: pointer;
 }
 
+
+
+.manage-members-item .delete-btn {
+    padding: 8px 12px;
+    background: var(--danger-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+.manage-members-item .delete-btn:hover {
+    background: #B71C1C;
+    transform: scale(1.05);
+}
+
+
     </style>
 </head>
 <body>
@@ -390,7 +409,7 @@ body {
         <select id="userDropdown" style="width: 90%; max-width: 500px; padding: 10px; font-size: 16px; border-radius: 8px; background: #2A2B32; color: var(--text-color); border: 2px solid var(--border-dark);">
             <option value="" disabled selected>Select User</option>
         </select>
-        <button id="managePermissionsBtn" class="action-btn" style="display: none; width: 90%; max-width: 500px; padding: 10px; margin-top: 15px; font-size: 16px; border-radius: 8px; background: var(--primary-color); color: var(--secondary-color); border: 2px solid var(--border-dark); font-weight: 600;">Manage Permissions</button>
+        <button id="userManagementBtn" class="action-btn" style="display: none; width: 90%; max-width: 500px; padding: 10px; margin-top: 15px; font-size: 16px; border-radius: 8px; background: var(--primary-color); color: var(--secondary-color); border: 2px solid var(--border-dark); font-weight: 600;">User Management</button>
     </div>
 
     <div class="modal" id="addUserModal">
@@ -415,14 +434,14 @@ body {
 
 
 
-  <!-- Modal for Managing Permissions -->
-<div class="modal" id="managePermissionsModal">
+<!-- Modal for User Management -->
+<div class="modal" id="userManagementModal">
     <div class="modal-content">
-        <h3>Manage Permissions</h3>
-        <ul class="manage-members-list" id="managePermissionsList">
-            <!-- Permissions will be loaded here dynamically -->
+        <h3>User Management</h3>
+        <ul class="manage-members-list" id="userManagementList">
+            <!-- Users and permissions will be loaded here dynamically -->
         </ul>
-        <button class="action-btn" onclick="document.getElementById('managePermissionsModal').classList.remove('show')">Close</button>
+        <button class="action-btn" onclick="document.getElementById('userManagementModal').classList.remove('show')">Close</button>
     </div>
 </div>
   

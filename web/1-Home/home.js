@@ -71,13 +71,13 @@ if (!isAdmin && footer) {
       
       fetchUsersFromServer(currentAdmin); // 🔥 Call it
       
-      const managePermissionsBtn = document.getElementById("managePermissionsBtn");
-      const managePermissionsModal = document.getElementById("managePermissionsModal");
-      if (isAdmin && managePermissionsBtn) {
-          managePermissionsBtn.style.display = "block";
-          managePermissionsBtn.addEventListener("click", function () {
-              renderManagePermissions();
-              managePermissionsModal.classList.add("show");
+      const userManagementBtn = document.getElementById("userManagementBtn");
+      const userManagementModal = document.getElementById("userManagementModal");
+      if (isAdmin && userManagementBtn) {
+          userManagementBtn.style.display = "block";
+          userManagementBtn.addEventListener("click", function () {
+              renderUserManagement();
+              userManagementModal.classList.add("show");
           });
       }
 
@@ -172,6 +172,10 @@ alert(`Send this link to the user: ${inviteLink}`);
         });
     }
 
+
+
+
+
     // Function to render users in the main list
     function renderUsers(usersFromServer, permissionsFromServer) {
       const userDropdown = document.getElementById("userDropdown");
@@ -195,7 +199,10 @@ alert(`Send this link to the user: ${inviteLink}`);
           users.forEach((username) => {
               const option = document.createElement("option");
               option.value = username;
-              option.textContent = currentPermissions[username] === "Admin" ? `${username} (Admin)` : username;
+              option.textContent = currentPermissions[username] === "Admin" ? `${username} ✓` : username;
+              if (currentPermissions[username] === "Admin") {
+                  option.classList.add("admin-checkmark");
+              }
               userDropdown.appendChild(option);
           });
       }
@@ -213,6 +220,10 @@ alert(`Send this link to the user: ${inviteLink}`);
           }
       });
   }
+
+
+
+
 
     // Function to render users in the manage members modal
     function renderManageMembers() {
@@ -266,11 +277,11 @@ alert(`Send this link to the user: ${inviteLink}`);
 
 
 
-    function renderManagePermissions() {
-      const managePermissionsList = document.getElementById("managePermissionsList");
-      if (!managePermissionsList) return;
+    function renderUserManagement() {
+      const userManagementList = document.getElementById("userManagementList");
+      if (!userManagementList) return;
   
-      managePermissionsList.innerHTML = "";
+      userManagementList.innerHTML = "";
       const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
       const users = allUserData[currentAdmin]?.users || [];
   
@@ -289,7 +300,7 @@ alert(`Send this link to the user: ${inviteLink}`);
           select.value = currentPermissions[username] || "User";
           select.addEventListener("change", async () => {
               allUserData[currentAdmin].permissions[username] = select.value;
-              currentPermissions[username] = select.value; // Update global permissions
+              currentPermissions[username] = select.value;
               localStorage.setItem("userData", JSON.stringify(allUserData));
   
               try {
@@ -305,7 +316,6 @@ alert(`Send this link to the user: ${inviteLink}`);
                   if (!result.success) {
                       console.warn("Failed to save permissions to cloud");
                   }
-                  // Re-render dropdown with updated permissions
                   renderUsers(allUserData[currentAdmin].users, allUserData[currentAdmin].permissions);
               } catch (err) {
                   console.error("Error saving permissions to server:", err);
@@ -313,18 +323,26 @@ alert(`Send this link to the user: ${inviteLink}`);
               }
           });
   
+          const deleteBtn = document.createElement("button");
+          deleteBtn.classList.add("delete-btn");
+          deleteBtn.textContent = "Delete";
+          deleteBtn.addEventListener("click", () => {
+              showConfirmModal(username);
+          });
+  
           manageItem.appendChild(label);
           manageItem.appendChild(select);
-          managePermissionsList.appendChild(manageItem);
+          manageItem.appendChild(deleteBtn);
+          userManagementList.appendChild(manageItem);
       });
   
       if (users.length === 0) {
-          managePermissionsList.innerHTML = "<p>No members to manage permissions for.</p>";
+          userManagementList.innerHTML = "<p>No users to manage.</p>";
       }
   
-      managePermissionsModal.addEventListener("click", function (e) {
-          if (e.target === managePermissionsModal) {
-              managePermissionsModal.classList.remove("show");
+      userManagementModal.addEventListener("click", function (e) {
+          if (e.target === userManagementModal) {
+              userManagementModal.classList.remove("show");
           }
       }, { once: true });
   }
@@ -333,40 +351,37 @@ alert(`Send this link to the user: ${inviteLink}`);
 
 
 
-
     
 // Helper function to delete a user from the server
 async function deleteUserFromServer(username) {
-    try {
-        const res = await fetch(
-            `https://beemazing.onrender.com/delete-user?adminEmail=${encodeURIComponent(currentAdmin)}&username=${encodeURIComponent(username)}`,
-            {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-            }
-        );
+  try {
+      const res = await fetch(
+          `https://beemazing.onrender.com/delete-user?adminEmail=${encodeURIComponent(currentAdmin)}&username=${encodeURIComponent(username)}`,
+          {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+          }
+      );
 
-        const result = await res.json();
-        if (result.success) {
-            // Update localStorage after successful server deletion
-            const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-            let users = allUserData[currentAdmin]?.users || [];
-            users = users.filter(user => user !== username);
-            allUserData[currentAdmin].users = users;
-            localStorage.setItem("userData", JSON.stringify(allUserData));
-
-            renderUsers();
-            renderManageMembers();
-        } else {
-            alert("Failed to delete user from server: " + result.message);
-        }
-    } catch (err) {
-        console.error("Failed to delete user:", err);
-        alert("Error deleting user. Please try again.");
-    }
+      const result = await res.json();
+      if (result.success) {
+          const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+          let users = allUserData[currentAdmin]?.users || [];
+          users = users.filter(user => user !== username);
+          allUserData[currentAdmin].users = users;
+          delete allUserData[currentAdmin].permissions[username]; // Remove permissions
+          delete currentPermissions[username]; // Update global permissions
+          localStorage.setItem("userData", JSON.stringify(allUserData));
+          renderUsers(allUserData[currentAdmin].users, allUserData[currentAdmin].permissions);
+          renderUserManagement();
+      } else {
+          alert("Failed to delete user from server: " + result.message);
+      }
+  } catch (err) {
+      console.error("Failed to delete user:", err);
+      alert("Error deleting user. Please try again.");
+  }
 }
-
-
 
 
 
@@ -381,38 +396,12 @@ function showConfirmModal(username) {
 }
 
 document.getElementById("confirmYesBtn").addEventListener("click", async () => {
-    if (userToRemove) {
-      try {
-        // Call the server to delete the user
-        const res = await fetch(
-          `https://beemazing.onrender.com/delete-user?adminEmail=${encodeURIComponent(currentAdmin)}&username=${encodeURIComponent(userToRemove)}`,
-          {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-  
-        const result = await res.json();
-        if (result.success) {
-          // Update localStorage after successful server deletion
-          const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-          let users = allUserData[currentAdmin]?.users || [];
-          users = users.filter(user => user !== userToRemove);
-          allUserData[currentAdmin].users = users;
-          localStorage.setItem("userData", JSON.stringify(allUserData));
-  
-          userToRemove = null;
-          document.getElementById("confirmModal").classList.remove("show");
-          location.reload(); // Reload to re-render the user list
-        } else {
-          alert("Failed to delete user from server: " + result.message);
-        }
-      } catch (err) {
-        console.error("Failed to delete user:", err);
-        alert("Error deleting user. Please try again.");
-      }
-    }
-  });
+  if (userToRemove) {
+      await deleteUserFromServer(userToRemove);
+      userToRemove = null;
+      document.getElementById("confirmModal").classList.remove("show");
+  }
+});
 
 document.getElementById("confirmNoBtn").addEventListener("click", () => {
     userToRemove = null;
