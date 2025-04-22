@@ -346,7 +346,7 @@ body {
 }
 .manage-members-item {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr; /* Username, dropdown, delete button */
+    grid-template-columns: 2fr 1.2fr 1fr; /* Slightly more space for dropdown */
     align-items: center;
     gap: 15px;
     padding: 15px;
@@ -361,7 +361,7 @@ body {
     text-align: left;
 }
 .manage-members-item select {
-    padding: 10px;
+    padding: 10px 12px;
     border: 1px solid var(--border-dark);
     border-radius: 5px;
     font-size: 14px;
@@ -369,6 +369,7 @@ body {
     color: var(--text-color);
     cursor: pointer;
     width: 100%;
+    min-width: 80px; /* Ensure enough space for "Admin" */
 }
 .manage-members-item .delete-btn {
     padding: 10px;
