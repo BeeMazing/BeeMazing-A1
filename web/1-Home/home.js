@@ -92,6 +92,7 @@ if (!isAdmin && footer) {
     // Add user when "Add" button is clicked
     if (submitUserBtn) {
       submitUserBtn.addEventListener("click", async function () {
+          console.log("submitUserBtn clicked - running updated code without inviteLink"); // Debug
           const username = usernameInput.value.trim();
           const errorMessage = document.getElementById("errorMessage");
   
