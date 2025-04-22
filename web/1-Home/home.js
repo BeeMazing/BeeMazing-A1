@@ -38,9 +38,6 @@ if (!isAdmin && footer) {
 
     const usernameInput = document.getElementById("usernameInput");
     const userList = document.getElementById("userList");
-    const manageMembersBtn = document.getElementById("manageMembersBtn");
-    const manageMembersModal = document.getElementById("manageMembersModal");
-    const manageMembersList = document.getElementById("manageMembersList");
 
     // Determine the base path (mobile or web) based on the current URL
     const isMobile = window.location.pathname.includes("/BeeMazing-Y1/mobile/");
@@ -114,10 +111,7 @@ if (!isAdmin && footer) {
             
                         // Reload from server to sync
                         fetchUsersFromServer(currentAdmin);
-            
-                        if (manageMembersModal && manageMembersModal.classList.contains("show")) {
-                            renderManageMembers();
-                        }
+          
             
                         const encodedAdmin = encodeURIComponent(currentAdmin);
                         const encodedUser = encodeURIComponent(username);
@@ -152,23 +146,6 @@ alert(`Send this link to the user: ${inviteLink}`);
             if (e.target === addUserModal) {
                 addUserModal.classList.remove("show");
             }
-        });
-    }
-
-    // Close manage members modal when clicking outside
-    if (manageMembersModal) {
-        manageMembersModal.addEventListener("click", function (e) {
-            if (e.target === manageMembersModal) {
-                manageMembersModal.classList.remove("show");
-            }
-        });
-    }
-
-    // Show the manage members modal when "Manage Members" button is clicked
-    if (manageMembersBtn) {
-        manageMembersBtn.addEventListener("click", function () {
-            renderManageMembers();
-            manageMembersModal.classList.add("show");
         });
     }
 
@@ -224,59 +201,6 @@ alert(`Send this link to the user: ${inviteLink}`);
 
 
 
-
-    // Function to render users in the manage members modal
-    function renderManageMembers() {
-        if (!manageMembersList) return; // Skip if not in web version
-    
-        manageMembersList.innerHTML = "";
-        const updatedUserData = JSON.parse(localStorage.getItem("userData")) || {};
-        const updatedUsers = updatedUserData[currentAdmin]?.users || [];
-    
-        updatedUsers.forEach((username, index) => {
-            const manageItem = document.createElement("li");
-            manageItem.classList.add("manage-members-item");
-    
-            // Input field for editing the username
-            const input = document.createElement("input");
-            input.type = "text";
-            input.value = username;
-            input.addEventListener("change", async function () {
-                const newName = input.value.trim();
-                if (newName !== "") {
-                    updatedUsers[index] = newName;
-                    updatedUserData[currentAdmin].users = updatedUsers;
-                    localStorage.setItem("userData", JSON.stringify(updatedUserData));
-                    renderUsers();
-                    renderManageMembers();
-                } else {
-                    // If the input is empty, treat it as a deletion
-                    await deleteUserFromServer(username);
-                }
-            });
-    
-            // Delete button
-            const deleteBtn = document.createElement("button");
-            deleteBtn.classList.add("delete-btn");
-            deleteBtn.textContent = "Delete";
-            deleteBtn.addEventListener("click", async function () {
-                await deleteUserFromServer(username);
-            });
-    
-            manageItem.appendChild(input);
-            manageItem.appendChild(deleteBtn);
-            manageMembersList.appendChild(manageItem);
-        });
-    
-        // Show a message if no users exist
-        if (updatedUsers.length === 0) {
-            manageMembersList.innerHTML = "<p>No members to manage.</p>";
-        }
-    }
-
-
-
-
     function renderUserManagement() {
       const userManagementList = document.getElementById("userManagementList");
       if (!userManagementList) return;
@@ -327,8 +251,9 @@ alert(`Send this link to the user: ${inviteLink}`);
           deleteBtn.classList.add("delete-btn");
           deleteBtn.textContent = "Delete";
           deleteBtn.addEventListener("click", () => {
-              showConfirmModal(username);
-          });
+            userManagementModal.classList.remove("show");
+            showConfirmModal(username);
+        });
   
           manageItem.appendChild(label);
           manageItem.appendChild(select);

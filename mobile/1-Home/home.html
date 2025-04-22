@@ -163,17 +163,17 @@ body {
             font-weight: 600;
         }
         .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--modal-bg);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--modal-bg);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Default for other modals */
+}
         .modal.show {
             display: flex;
             animation: fadeIn 0.3s ease-out;
@@ -337,43 +337,41 @@ body {
 
 
 
-
 .manage-members-list {
     list-style: none;
     padding: 0;
     max-height: 300px;
     overflow-y: auto;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 .manage-members-item {
-    display: flex;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr; /* Username, dropdown, delete button */
     align-items: center;
-    justify-content: space-between;
-    padding: 10px;
-    margin: 5px 0;
+    gap: 15px;
+    padding: 15px;
+    margin: 8px 0;
     background: var(--accent-color);
     border: 1px solid var(--border-dark);
     border-radius: 8px;
 }
 .manage-members-item span {
-    flex: 1;
-    margin-right: 10px;
-    font-size: 14px;
+    font-size: 16px;
+    font-weight: 500;
+    text-align: left;
 }
 .manage-members-item select {
-    padding: 8px;
+    padding: 10px;
     border: 1px solid var(--border-dark);
     border-radius: 5px;
     font-size: 14px;
     background: var(--accent-color);
     color: var(--text-color);
     cursor: pointer;
+    width: 100%;
 }
-
-
-
 .manage-members-item .delete-btn {
-    padding: 8px 12px;
+    padding: 10px;
     background: var(--danger-color);
     color: var(--text-color);
     border: none;
@@ -382,6 +380,7 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
+    width: 100%;
 }
 .manage-members-item .delete-btn:hover {
     background: #B71C1C;
@@ -389,6 +388,12 @@ body {
 }
 
 
+
+
+
+#confirmModal {
+    z-index: 1100; /* Higher than other modals (1000) */
+}
     </style>
 </head>
 <body>
