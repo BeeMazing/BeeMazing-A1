@@ -559,7 +559,7 @@ body {
     const result = await response.json();
     const tasks = result.tasks || [];
 
-    console.log("Fetched tasks, users for Task1:", tasks.find(t => t.title === "Task1")?.users);
+    console.log("Fetched tasks, users for Task1:", tasks.find(t => t.title === "Task1")?.users); // Debug
 
     const taskList = document.getElementById("taskList");
     taskList.innerHTML = "";
@@ -618,7 +618,7 @@ body {
 
       if (task.completions) {
         const completionDates = Object.keys(task.completions)
-          .filter(date => parseLocalDate(date) < today)
+          .filter(date => parseLocalDate(date) < selected) // Use selected, not today
           .sort((a, b) => parseLocalDate(b) - parseLocalDate(a));
         if (completionDates.length > 0) {
           lastTurnDate = parseLocalDate(completionDates[0]);
@@ -629,7 +629,8 @@ body {
         }
       }
 
-      const daysDiff = Math.floor((selected - lastTurnDate) / (1000 * 60 * 60 * 24));
+      console.log(`Task ${task.title}: userOrder=${userOrder}, lastTurnUser=${lastTurnUser}, lastTurnDate=${lastTurnDate}, selectedDate=${selectedDate}, completedUsers=${allCompletedUsers}`); // Debug
+
       let currentIndex = assignedUsers.indexOf(lastTurnUser);
       if (currentIndex === -1) currentIndex = 0;
 
@@ -649,36 +650,38 @@ body {
             }
           }
         }
-      } else if (selected.getTime() === today.getTime()) {
-        const totalCompletionsSoFar = daysDiff * repeatLimit;
-        let predictedIndex = (currentIndex + totalCompletionsSoFar) % assignedUsers.length;
-
-        let tempIndex = predictedIndex;
-        let completionsCounted = completedCount;
-        while (completionsCounted > 0 && assignedUsers.length > 0) {
-          if (completedSet.has(assignedUsers[tempIndex])) {
-            completionsCounted--;
-          }
-          tempIndex = (tempIndex + 1) % assignedUsers.length;
-        }
-
-        currentTurn = assignedUsers[tempIndex];
-
-        if (currentTurn && completedCount < repeatLimit) {
-          nextUser = assignedUsers[(tempIndex + 1) % assignedUsers.length];
-        } else {
-          nextUser = "—";
-        }
       } else {
-        const totalCompletions = daysDiff * repeatLimit;
-        currentIndex = (currentIndex + totalCompletions) % assignedUsers.length;
-        currentTurn = assignedUsers[currentIndex];
-        nextUser = assignedUsers[(currentIndex + 1) % assignedUsers.length];
+        // Align with showTaskDetails: Find next non-completed user
+        for (let i = 0; i < assignedUsers.length; i++) {
+          if (!completedSet.has(assignedUsers[(currentIndex + i) % assignedUsers.length])) {
+            currentTurn = assignedUsers[(currentIndex + i) % assignedUsers.length];
+            break;
+          }
+        }
+        if (currentTurn) {
+          const currentIndex = assignedUsers.indexOf(currentTurn);
+          for (let i = currentIndex + 1; i < assignedUsers.length; i++) {
+            if (!completedSet.has(assignedUsers[i])) {
+              nextUser = assignedUsers[i];
+              break;
+            }
+          }
+          if (!nextUser && completedCount < repeatLimit) {
+            for (let i = 0; i < assignedUsers.length; i++) {
+              if (!completedSet.has(assignedUsers[i])) {
+                nextUser = assignedUsers[i];
+                break;
+              }
+            }
+          }
+        }
       }
 
       currentTurn = currentTurn || "All done!";
       nextUser = nextUser || "—";
       const isCompleted = completedCount >= repeatLimit;
+
+      console.log(`Task ${task.title}: currentTurn=${currentTurn}, nextUser=${nextUser}, completedCount=${completedCount}/${repeatLimit}`); // Debug
 
       taskDiv.innerHTML = `
         <strong>${task.title}</strong><br>
@@ -713,8 +716,6 @@ body {
     document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">Error loading tasks: ${err.message}</div>`;
   }
 }
-
-
 
 
 
