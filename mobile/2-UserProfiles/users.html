@@ -803,7 +803,9 @@
               </div>
 
               
-            <h1 id="profileName">Bee Name</h1>
+              <select id="userDropdown" style="width: 100%; max-width: 300px; padding: 10px; font-size: 18px; border-radius: 8px; background: #2A2B32; color: var(--text-color); border: 2px solid var(--border-dark); margin-bottom: 15px;">
+                <option value="" disabled>Select User</option>
+            </select>
             <p>Welcome to the hive of <span id="userName"></span>.</p>
 
                    <!-- 🎁 Lucky Chest Section -->
@@ -828,10 +830,7 @@
 
 
     <div class="footer">
-        <a id="homeFooterLink" class="footer-icon" href="/BeeMazing-Y1/mobile/1-Home/home.html" aria-label="Home">
 
-            <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>Home</span>
         </a>
         <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
             <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -869,60 +868,103 @@
 
 
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-          const urlParams = new URLSearchParams(window.location.search);
-          let adminEmail = urlParams.get('admin') || localStorage.getItem("currentAdminEmail");
-          const userName = urlParams.get('user');
-          const addPoints = Number(urlParams.get('addPoints')) || 0;
-        
-          if (adminEmail && adminEmail !== "null") {
-            localStorage.setItem("currentAdminEmail", adminEmail);
-            const homeLink = document.getElementById("homeFooterLink");
-            if (homeLink) {
-              homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
-            }
-          }
-        
-          if (userName && adminEmail) {
-            document.getElementById('profileName').textContent = userName;
-            document.getElementById('userName').textContent = userName;
-            document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
-            document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
-            document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
-        
-            loadUserTasks(userName);
-            loadUserReward(userName);
-            loadLuckyChests(userName);
-        
-            if (addPoints > 0) {
-              setTimeout(async () => {
+document.addEventListener("DOMContentLoaded", () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    let adminEmail = urlParams.get('admin') || localStorage.getItem("currentAdminEmail");
+    const userName = urlParams.get('user');
+    const addPoints = Number(urlParams.get('addPoints')) || 0;
+
+    if (adminEmail && adminEmail !== "null") {
+        localStorage.setItem("currentAdminEmail", adminEmail);
+        const homeLink = document.getElementById("homeFooterLink");
+        if (homeLink) {
+            homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+        }
+    }
+
+    if (userName && adminEmail) {
+        populateUserDropdown(userName);
+        document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+        document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+        document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+
+        loadUserTasks(userName);
+        loadUserReward(userName);
+        loadLuckyChests(userName);
+
+        if (addPoints > 0) {
+            setTimeout(async () => {
                 await updateUserReward(userName, addPoints);
                 triggerHoneyRain(addPoints);
                 loadUserReward(userName);
-              }, 500);
+            }, 500);
+        }
+    } else {
+        document.getElementById('userTasks').innerHTML = "<p>Error: Missing user or admin email. Please log in again.</p>";
+        document.getElementById('userName').textContent = "Error";
+    }
+
+    document.querySelectorAll('.footer a').forEach(link => {
+        const currentPath = window.location.pathname.replace(/\/$/, '');
+        const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
+        if (currentPath === linkPath) {
+            link.classList.add('active');
+        } else {
+            link.classList.remove('active');
+        }
+    });
+
+    adjustContentTop();
+    generateScrollableDates();
+    showAdminControlsIfNeeded();
+});
+
+async function populateUserDropdown(currentUser) {
+    const userDropdown = document.getElementById("userDropdown");
+    const userNameSpan = document.getElementById("userName");
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    const isMobile = window.location.pathname.includes("/BeeMazing-Y1/mobile/");
+    const basePath = isMobile ? "/BeeMazing-Y1/mobile" : "/web";
+
+    try {
+        const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to fetch users");
+
+        const users = data.users || [];
+        const permissions = data.permissions || {};
+
+        // Clear dropdown except default option
+        userDropdown.innerHTML = '<option value="" disabled>Select User</option>';
+
+        // Populate dropdown
+        users.forEach((user) => {
+            const option = document.createElement("option");
+            option.value = user;
+            option.textContent = permissions[user] === "Admin" ? `${user} (Admin)` : user;
+            if (user === currentUser) {
+                option.selected = true;
             }
-          } else {
-            document.getElementById('userTasks').innerHTML = "<p>Error: Missing user or admin email. Please log in again.</p>";
-          }
-        
-          document.querySelectorAll('.footer a').forEach(link => {
-            const currentPath = window.location.pathname.replace(/\/$/, '');
-            const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
-            if (currentPath === linkPath) {
-              link.classList.add('active');
-            } else {
-              link.classList.remove('active');
-            }
-          });
-        
-          adjustContentTop();
-          generateScrollableDates();
-          showAdminControlsIfNeeded();
+            userDropdown.appendChild(option);
         });
-        
 
+        // Update welcome message
+        userNameSpan.textContent = currentUser || "Bee";
 
-
+        // Handle selection
+        userDropdown.addEventListener("change", () => {
+            const selectedUser = userDropdown.value;
+            if (selectedUser) {
+                const page = permissions[selectedUser] === "Admin" ? "userAdmin.html" : "users.html";
+                window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(selectedUser)}`;
+            }
+        });
+    } catch (err) {
+        console.error("Failed to populate user dropdown:", err);
+        userDropdown.innerHTML = '<option value="" disabled>Error loading users</option>';
+        userNameSpan.textContent = "Error";
+    }
+}
 
 
 
