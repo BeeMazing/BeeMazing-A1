@@ -1,5 +1,8 @@
 document.addEventListener("DOMContentLoaded", function () {
 
+
+  let currentPermissions = {};
+
     const urlParams = new URLSearchParams(window.location.search);
 const adminFromURL = urlParams.get("admin");
 if (adminFromURL) {
@@ -47,29 +50,24 @@ if (!isAdmin && footer) {
     const currentAdmin = localStorage.getItem("currentAdminEmail");
 
     async function fetchUsersFromServer(email) {
-        try {
+      try {
           const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(email)}`);
           const data = await res.json();
-      
           if (data.success) {
-            const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-            if (!allUserData[email]) {
-              allUserData[email] = { users: [], permissions: {} };
-            }
-          
-            allUserData[email].users = data.users || [];
-            allUserData[email].permissions = data.permissions || {};
-          
-            localStorage.setItem("userData", JSON.stringify(allUserData));
-          
-            // ✅ Now call renderUsers() only after permissions are updated
-            renderUsers(allUserData[email].users, allUserData[email].permissions);
+              const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+              if (!allUserData[email]) {
+                  allUserData[email] = { users: [], permissions: {} };
+              }
+              allUserData[email].users = data.users || [];
+              allUserData[email].permissions = data.permissions || {};
+              localStorage.setItem("userData", JSON.stringify(allUserData));
+              currentPermissions = { ...allUserData[email].permissions }; // Update global permissions
+              renderUsers(allUserData[email].users, allUserData[email].permissions);
           }
-        } catch (err) {
-          console.error("❌ Failed to fetch user list from server:", err);
-        }
+      } catch (err) {
+          console.error("Failed to fetch user list from server:", err);
       }
-      
+  }      
       
       fetchUsersFromServer(currentAdmin); // 🔥 Call it
       
@@ -179,18 +177,14 @@ alert(`Send this link to the user: ${inviteLink}`);
       const userDropdown = document.getElementById("userDropdown");
       const noUsersMessage = document.getElementById("noUsersMessage");
       const users = usersFromServer || [];
-      const userPermissions = permissionsFromServer || {};
       const isMobile = window.location.pathname.includes("/BeeMazing-Y1/mobile/");
       const basePath = isMobile ? "/BeeMazing-Y1/mobile" : "/web";
       const currentAdmin = localStorage.getItem("currentAdminEmail");
   
-      // Debug: Log permissions to verify
-      console.log("Rendering users with permissions:", userPermissions);
+      console.log("Rendering users with permissions:", currentPermissions);
   
-      // Clear existing options except the default
       userDropdown.innerHTML = '<option value="" disabled selected>Select User</option>';
   
-      // Show/hide no users message
       if (users.length === 0) {
           noUsersMessage.style.display = "block";
           userDropdown.style.display = "none";
@@ -198,28 +192,23 @@ alert(`Send this link to the user: ${inviteLink}`);
           noUsersMessage.style.display = "none";
           userDropdown.style.display = "block";
   
-          // Populate dropdown
           users.forEach((username) => {
               const option = document.createElement("option");
               option.value = username;
-              option.textContent = userPermissions[username] === "Admin" ? `${username} (Admin)` : username;
+              option.textContent = currentPermissions[username] === "Admin" ? `${username} (Admin)` : username;
               userDropdown.appendChild(option);
           });
       }
   
-      // Remove existing listeners to prevent duplicates
       const newDropdown = userDropdown.cloneNode(true);
       userDropdown.parentNode.replaceChild(newDropdown, userDropdown);
   
-      // Handle selection
       newDropdown.addEventListener("change", function () {
           const selectedUser = newDropdown.value;
           if (selectedUser) {
-              // Debug: Log the permission for the selected user
-              console.log(`Selected user: ${selectedUser}, Permission: ${userPermissions[selectedUser]}`);
-              const page = userPermissions[selectedUser] === "Admin" ? "userAdmin.html" : "users.html";
+              console.log(`Selected user: ${selectedUser}, Permission: ${currentPermissions[selectedUser]}`);
+              const page = currentPermissions[selectedUser] === "Admin" ? "userAdmin.html" : "users.html";
               window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(selectedUser)}`;
-              // Reset dropdown to default
               newDropdown.value = "";
           }
       });
@@ -284,25 +273,23 @@ alert(`Send this link to the user: ${inviteLink}`);
       managePermissionsList.innerHTML = "";
       const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
       const users = allUserData[currentAdmin]?.users || [];
-      const permissions = allUserData[currentAdmin]?.permissions || {};
   
       users.forEach((username) => {
           const manageItem = document.createElement("li");
           manageItem.classList.add("manage-members-item");
   
-          // Username label
           const label = document.createElement("span");
           label.textContent = username;
   
-          // Permission dropdown
           const select = document.createElement("select");
           select.innerHTML = `
               <option value="User">User</option>
               <option value="Admin">Admin</option>
           `;
-          select.value = permissions[username] || "User";
+          select.value = currentPermissions[username] || "User";
           select.addEventListener("change", async () => {
               allUserData[currentAdmin].permissions[username] = select.value;
+              currentPermissions[username] = select.value; // Update global permissions
               localStorage.setItem("userData", JSON.stringify(allUserData));
   
               try {
@@ -318,8 +305,8 @@ alert(`Send this link to the user: ${inviteLink}`);
                   if (!result.success) {
                       console.warn("Failed to save permissions to cloud");
                   }
-                  // Refresh dropdown with latest server data
-                  await fetchUsersFromServer(currentAdmin);
+                  // Re-render dropdown with updated permissions
+                  renderUsers(allUserData[currentAdmin].users, allUserData[currentAdmin].permissions);
               } catch (err) {
                   console.error("Error saving permissions to server:", err);
                   alert("Failed to save permissions. Please try again.");
@@ -331,19 +318,16 @@ alert(`Send this link to the user: ${inviteLink}`);
           managePermissionsList.appendChild(manageItem);
       });
   
-      // Show a message if no users exist
       if (users.length === 0) {
           managePermissionsList.innerHTML = "<p>No members to manage permissions for.</p>";
       }
   
-      // Close modal on outside click
       managePermissionsModal.addEventListener("click", function (e) {
           if (e.target === managePermissionsModal) {
               managePermissionsModal.classList.remove("show");
           }
       }, { once: true });
   }
-
 
 
 
