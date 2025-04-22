@@ -73,7 +73,15 @@ if (!isAdmin && footer) {
       
       fetchUsersFromServer(currentAdmin); // 🔥 Call it
       
-
+      const managePermissionsBtn = document.getElementById("managePermissionsBtn");
+      const managePermissionsModal = document.getElementById("managePermissionsModal");
+      if (isAdmin && managePermissionsBtn) {
+          managePermissionsBtn.style.display = "block";
+          managePermissionsBtn.addEventListener("click", function () {
+              renderManagePermissions();
+              managePermissionsModal.classList.add("show");
+          });
+      }
 
 
     // Show the modal with a smooth animation when "Add Members" button is clicked
@@ -257,6 +265,84 @@ alert(`Send this link to the user: ${inviteLink}`);
             manageMembersList.innerHTML = "<p>No members to manage.</p>";
         }
     }
+
+
+
+
+    function renderManagePermissions() {
+      const managePermissionsList = document.getElementById("managePermissionsList");
+      if (!managePermissionsList) return;
+  
+      managePermissionsList.innerHTML = "";
+      const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+      const users = allUserData[currentAdmin]?.users || [];
+      const permissions = allUserData[currentAdmin]?.permissions || {};
+  
+      users.forEach((username) => {
+          const manageItem = document.createElement("li");
+          manageItem.classList.add("manage-members-item");
+  
+          // Username label
+          const label = document.createElement("span");
+          label.textContent = username;
+  
+          // Permission dropdown
+          const select = document.createElement("select");
+          select.innerHTML = `
+              <option value="User">User</option>
+              <option value="Admin">Admin</option>
+          `;
+          select.value = permissions[username] || "User";
+          select.addEventListener("change", async () => {
+              allUserData[currentAdmin].permissions[username] = select.value;
+              localStorage.setItem("userData", JSON.stringify(allUserData));
+  
+              try {
+                  const res = await fetch("https://beemazing.onrender.com/save-permissions", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                          adminEmail: currentAdmin,
+                          permissions: allUserData[currentAdmin].permissions
+                      })
+                  });
+                  const result = await res.json();
+                  if (!result.success) {
+                      console.warn("Failed to save permissions to cloud");
+                  }
+                  // Refresh dropdown to reflect updated permissions
+                  fetchUsersFromServer(currentAdmin);
+              } catch (err) {
+                  console.error("Error saving permissions to server:", err);
+                  alert("Failed to save permissions. Please try again.");
+              }
+          });
+  
+          manageItem.appendChild(label);
+          manageItem.appendChild(select);
+          managePermissionsList.appendChild(manageItem);
+      });
+  
+      // Show a message if no users exist
+      if (users.length === 0) {
+          managePermissionsList.innerHTML = "<p>No members to manage permissions for.</p>";
+      }
+  
+      // Close modal on outside click
+      managePermissionsModal.addEventListener("click", function (e) {
+          if (e.target === managePermissionsModal) {
+              managePermissionsModal.classList.remove("show");
+          }
+      }, { once: true });
+  }
+
+
+
+
+
+
+
+
     
 // Helper function to delete a user from the server
 async function deleteUserFromServer(username) {
@@ -357,68 +443,7 @@ logoutBtn.addEventListener("click", () => {
 });
 
 
-
-
-
-const permissionModal = document.getElementById("permissionModal");
-const permissionModalUser = document.getElementById("permissionModalUser");
-const permissionSelect = document.getElementById("permissionSelect");
-const savePermissionBtn = document.getElementById("savePermissionBtn");
-
-let selectedUserForPermission = null;
-
-function showPermissionModal(username) {
-    selectedUserForPermission = username;
-    permissionModalUser.textContent = `Permissions for ${username}`;
-
-    const allUserData = JSON.parse(localStorage.getItem("userData")) || {}; // ✅ NOW it's fresh
-    const userPermissions = allUserData[currentAdmin]?.permissions || {};
-    permissionSelect.value = userPermissions[username] || "User";
-
-    permissionModal.classList.add("show");
-}
-
-
-savePermissionBtn.addEventListener("click", async () => {
-    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-    if (!allUserData[currentAdmin].permissions) {
-      allUserData[currentAdmin].permissions = {};
-    }
   
-    if (selectedUserForPermission) {
-      allUserData[currentAdmin].permissions[selectedUserForPermission] = permissionSelect.value;
-      localStorage.setItem("userData", JSON.stringify(allUserData));
-  
-      // 🔥 Save to server
-      try {
-        const res = await fetch("https://beemazing.onrender.com/save-permissions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            adminEmail: currentAdmin,
-            permissions: allUserData[currentAdmin].permissions
-          })
-        });
-        const result = await res.json();
-        if (!result.success) {
-          console.warn("❌ Failed to save permissions to cloud");
-        }
-      } catch (err) {
-        console.error("Error saving permissions to server:", err);
-      }
-    }
-  
-    permissionModal.classList.remove("show");
-  });
-  
-  
-
-permissionModal.addEventListener("click", (e) => {
-    if (e.target === permissionModal) {
-        permissionModal.classList.remove("show");
-    }
-});
-
 
 
 
