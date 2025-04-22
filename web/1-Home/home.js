@@ -91,54 +91,39 @@ if (!isAdmin && footer) {
 
     // Add user when "Add" button is clicked
     if (submitUserBtn) {
-        submitUserBtn.addEventListener("click", async function () {
-            const username = usernameInput.value.trim();
-            const errorMessage = document.getElementById("errorMessage");
-
-            if (username) {
-                try {
-                    const res = await fetch("https://beemazing.onrender.com/add-user", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ adminEmail: currentAdmin, newUser: username })
-                    });
-            
-                    const result = await res.json();
-                    if (result.success) {
-                        usernameInput.value = "";
-                        addUserModal.classList.remove("show");
-                        errorMessage.style.display = "none";
-            
-                        // Reload from server to sync
-                        fetchUsersFromServer(currentAdmin);
-          
-            
-                        const encodedAdmin = encodeURIComponent(currentAdmin);
-                        const encodedUser = encodeURIComponent(username);
-                        const inviteLink = `${window.location.origin}/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodedAdmin}&user=${encodedUser}`;
-                        alert(`Send this link to the user: ${inviteLink}`);
-                    } else {
-                        errorMessage.textContent = "Failed to add user.";
-                        errorMessage.style.display = "block";
-                    }
-                } catch (err) {
-                    console.error("Failed to add user:", err);
-                    errorMessage.textContent = "Server error. Please try again.";
-                    errorMessage.style.display = "block";
-                }
-            } else {
-                errorMessage.textContent = "Please enter a valid user name.";
-                errorMessage.style.display = "block";
-            }
-            
-
-            const encodedAdmin = encodeURIComponent(currentAdmin);
-const encodedUser = encodeURIComponent(username);
-const inviteLink = `${window.location.origin}/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodedAdmin}&user=${encodedUser}`;
-alert(`Send this link to the user: ${inviteLink}`);
-
-        });
-    }
+      submitUserBtn.addEventListener("click", async function () {
+          const username = usernameInput.value.trim();
+          const errorMessage = document.getElementById("errorMessage");
+  
+          if (username) {
+              try {
+                  const res = await fetch("https://beemazing.onrender.com/add-user", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ adminEmail: currentAdmin, newUser: username })
+                  });
+  
+                  const result = await res.json();
+                  if (result.success) {
+                      usernameInput.value = "";
+                      addUserModal.classList.remove("show");
+                      errorMessage.style.display = "none";
+                      fetchUsersFromServer(currentAdmin); // Reload from server to sync
+                  } else {
+                      errorMessage.textContent = "Failed to add user.";
+                      errorMessage.style.display = "block";
+                  }
+              } catch (err) {
+                  console.error("Failed to add user:", err);
+                  errorMessage.textContent = "Server error. Please try again.";
+                  errorMessage.style.display = "block";
+              }
+          } else {
+              errorMessage.textContent = "Please enter a valid user name.";
+              errorMessage.style.display = "block";
+          }
+      });
+  }
 
     // Close modal when clicking outside the modal content
     if (addUserModal) {
