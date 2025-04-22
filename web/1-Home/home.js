@@ -168,76 +168,45 @@ alert(`Send this link to the user: ${inviteLink}`);
 
     // Function to render users in the main list
     function renderUsers(usersFromServer, permissionsFromServer) {
-        userList.innerHTML = "";
-      
-        const users = usersFromServer || [];
-        const userPermissions = permissionsFromServer || {};
-        const isAdmin = localStorage.getItem("isAdmin") === "true";
-      
-        users.forEach((username) => {
-          const newUserItem = document.createElement("li");
-          newUserItem.classList.add("user-list-item");
-      
-          const nameContainer = document.createElement("div");
-          nameContainer.style.display = "flex";
-          nameContainer.style.alignItems = "center";
-          nameContainer.style.gap = "8px";
-      
-          const userNameSpan = document.createElement("span");
-          userNameSpan.textContent = username;
-      
-          if (userPermissions[username] === "Admin") {
-            const checkmark = document.createElement("span");
-            checkmark.textContent = "✓";
-            checkmark.style.color = "#00C4B4";
-            checkmark.style.fontSize = "16px";
-            checkmark.style.fontWeight = "bold";
-            checkmark.title = "Admin";
-            nameContainer.appendChild(userNameSpan);
-            nameContainer.appendChild(checkmark);
-          } else {
-            nameContainer.appendChild(userNameSpan);
-          }
-      
-          newUserItem.addEventListener("click", function () {
-            const page = userPermissions[username] === "Admin" ? "userAdmin.html" : "users.html";
-            window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
+      const userDropdown = document.getElementById("userDropdown");
+      const noUsersMessage = document.getElementById("noUsersMessage");
+      const users = usersFromServer || [];
+      const userPermissions = permissionsFromServer || {};
+      const isMobile = window.location.pathname.includes("/BeeMazing-Y1/mobile/");
+      const basePath = isMobile ? "/BeeMazing-Y1/mobile" : "/web";
+      const currentAdmin = localStorage.getItem("currentAdminEmail");
+  
+      // Clear existing options except the default
+      userDropdown.innerHTML = '<option value="" disabled selected>Select User</option>';
+  
+      // Show/hide no users message
+      if (users.length === 0) {
+          noUsersMessage.style.display = "block";
+          userDropdown.style.display = "none";
+      } else {
+          noUsersMessage.style.display = "none";
+          userDropdown.style.display = "block";
+  
+          // Populate dropdown
+          users.forEach((username) => {
+              const option = document.createElement("option");
+              option.value = username;
+              option.textContent = userPermissions[username] === "Admin" ? `${username} (Admin)` : username;
+              userDropdown.appendChild(option);
           });
-      
-          newUserItem.appendChild(nameContainer);
-      
-          // Admin-only buttons (mobile)
-          if (isMobile && isAdmin) {
-            const actionsContainer = document.createElement("div");
-            actionsContainer.style.display = "flex";
-            actionsContainer.style.gap = "8px";
-      
-            const removeBtn = document.createElement("button");
-            removeBtn.classList.add("remove-user-btn");
-            removeBtn.textContent = "X";
-            removeBtn.addEventListener("click", function (event) {
-              event.stopPropagation();
-              showConfirmModal(username);
-            });
-      
-            const editBtn = document.createElement("button");
-            editBtn.classList.add("remove-user-btn");
-            editBtn.innerHTML = "⚙️";
-            editBtn.style.fontSize = "16px";
-            editBtn.addEventListener("click", function (event) {
-              event.stopPropagation();
-              showPermissionModal(username);
-            });
-      
-            actionsContainer.appendChild(editBtn);
-            actionsContainer.appendChild(removeBtn);
-            newUserItem.appendChild(actionsContainer);
-          }
-      
-          userList.appendChild(newUserItem);
-        });
       }
-      
+  
+      // Handle selection
+      userDropdown.addEventListener("change", function () {
+          const selectedUser = userDropdown.value;
+          if (selectedUser) {
+              const page = userPermissions[selectedUser] === "Admin" ? "userAdmin.html" : "users.html";
+              window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(selectedUser)}`;
+              // Reset dropdown to default
+              userDropdown.value = "";
+          }
+      });
+  }
     
 
     // Function to render users in the manage members modal
