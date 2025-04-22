@@ -184,6 +184,9 @@ alert(`Send this link to the user: ${inviteLink}`);
       const basePath = isMobile ? "/BeeMazing-Y1/mobile" : "/web";
       const currentAdmin = localStorage.getItem("currentAdminEmail");
   
+      // Debug: Log permissions to verify
+      console.log("Rendering users with permissions:", userPermissions);
+  
       // Clear existing options except the default
       userDropdown.innerHTML = '<option value="" disabled selected>Select User</option>';
   
@@ -204,18 +207,23 @@ alert(`Send this link to the user: ${inviteLink}`);
           });
       }
   
+      // Remove existing listeners to prevent duplicates
+      const newDropdown = userDropdown.cloneNode(true);
+      userDropdown.parentNode.replaceChild(newDropdown, userDropdown);
+  
       // Handle selection
-      userDropdown.addEventListener("change", function () {
-          const selectedUser = userDropdown.value;
+      newDropdown.addEventListener("change", function () {
+          const selectedUser = newDropdown.value;
           if (selectedUser) {
+              // Debug: Log the permission for the selected user
+              console.log(`Selected user: ${selectedUser}, Permission: ${userPermissions[selectedUser]}`);
               const page = userPermissions[selectedUser] === "Admin" ? "userAdmin.html" : "users.html";
               window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(selectedUser)}`;
               // Reset dropdown to default
-              userDropdown.value = "";
+              newDropdown.value = "";
           }
       });
   }
-    
 
     // Function to render users in the manage members modal
     function renderManageMembers() {
@@ -310,8 +318,8 @@ alert(`Send this link to the user: ${inviteLink}`);
                   if (!result.success) {
                       console.warn("Failed to save permissions to cloud");
                   }
-                  // Refresh dropdown to reflect updated permissions
-                  fetchUsersFromServer(currentAdmin);
+                  // Refresh dropdown with latest server data
+                  await fetchUsersFromServer(currentAdmin);
               } catch (err) {
                   console.error("Error saving permissions to server:", err);
                   alert("Failed to save permissions. Please try again.");
@@ -335,7 +343,6 @@ alert(`Send this link to the user: ${inviteLink}`);
           }
       }, { once: true });
   }
-
 
 
 
