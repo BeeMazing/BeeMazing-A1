@@ -214,7 +214,7 @@
 </head>
 <body>
     <div class="header bg-[var(--secondary-color)] h-[var(--header-height)] p-4 flex items-center justify-center shadow-md fixed top-0 w-full z-10">
-      <div class="title text-2xl font-semibold text-[var(--primary-color)]">Rewards<span id="userName"></span> (<span id="honeyBalance">0</span> 🍯)</div>
+      <div class="title text-2xl font-semibold text-[var(--primary-color)]">Rewards for <span id="userName"></span> (<span id="honeyBalance">0</span> 🍯)</div>
     </div>
 
     <div class="container mx-auto p-4 pt-[calc(var(--header-height)+1rem)]">
@@ -268,11 +268,6 @@
             <p class="text-lg text-[var(--text-color)]">You got <span id="claimedRewardName"></span>!</p>
         </div>
     </div>
-
-
-
-
-
 
     <script>
       let keyTransferData = null;
@@ -373,7 +368,7 @@
               const marketData = await marketResponse.json();
               if (!marketResponse.ok) throw new Error(marketData.error || "Failed to fetch market rewards");
               const availableRewards = marketData.rewards || [];
-              console.log('market-rewards:', availableRewards);
+              console.log('market-rewards raw response:', marketData);
   
               // Fetch user rewards
               const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
@@ -398,8 +393,9 @@
                       const isTheKey = reward.name === "The Key";
                       const isDiceChest = reward.type === "dice";
                       const isHoney = reward.type === "Honey";
-                      const canAfford = userHoney >= (reward.honey || 0);
-                      console.log(`Reward: ${reward.name}, cost=${reward.honey}, canAfford=${canAfford} (userHoney=${userHoney})`);
+                      const rewardCost = reward.honey || reward.diamonds || 0;
+                      const canAfford = userHoney >= rewardCost;
+                      console.log(`Reward: ${reward.name}, cost=${rewardCost} (honey=${reward.honey}, diamonds=${reward.diamonds}), canAfford=${canAfford} (userHoney=${userHoney})`);
                       const card = document.createElement("div");
                       card.className = "reward-card";
                       card.dataset.reward = reward.name;
@@ -409,14 +405,14 @@
                               <div class="reward-card-front text-center">
                                   <span class="purchase-indicator" data-count="${count}"></span>
                                   <h3 class="text-lg font-semibold">${reward.name}</h3>
-                                  <p class="text-[var(--text-color)]">Honey: ${reward.honey || 0} 🍯</p>
+                                  <p class="text-[var(--text-color)]">Honey: ${rewardCost} 🍯</p>
                                   <button class="mt-2 px-3 py-1 rounded font-semibold ${canAfford ? 'btn-primary' : 'btn-disabled'}" 
                                           ${canAfford ? '' : 'disabled'} 
-                                          onclick="claimReward('${userName}', '${reward.name}', '${reward.type || ''}', ${reward.honey || 0}, '${JSON.stringify(reward.outcomes || [])}')">Get It</button>
+                                          onclick="claimReward('${userName}', '${reward.name}', '${reward.type || ''}', ${rewardCost}, '${JSON.stringify(reward.outcomes || [])}')">Get It</button>
                               </div>
                               <div class="reward-card-back text-center">
                                   <h3 class="text-lg font-semibold">${reward.name}</h3>
-                                  <p class="text-[var(--text-color)]">Honey: ${reward.honey || 0} 🍯</p>
+                                  <p class="text-[var(--text-color)]">Honey: ${rewardCost} 🍯</p>
                                   <button class="mt-2 px-3 py-1 btn-primary rounded font-semibold" 
                                           onclick="${isHoney ? `redeemHoneyReward('${userName}', '${reward.name}')` : 
                                                     isTheKey ? `useTheKey('${userName}', '${reward.name}')` : 
@@ -636,7 +632,7 @@
               const historyResponse = await fetch(`https://beemazing.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}`);
               const historyData = await historyResponse.json();
               if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
-              const rewardHistory = historyData.rewardHistory || {};
+              const rewardHistory = historyData.rewardsHistory || {};
   
               const receivedReward = { ...reward, receivedDate: new Date().toLocaleString() };
               rewards.splice(rewards.indexOf(reward), 1);
@@ -876,10 +872,5 @@
           }
       });
   </script>
-
-
-
-
-
 </body>
 </html>
