@@ -272,7 +272,7 @@
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
         <span>Home</span>
     </a>
-    <a href="/BeeMazing-Y1/mobile/2-UserProfiles/users.html" id="profileButton" class="footer-icon" aria-label="Profile">
+    <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
         <span>Profile</span>
     </a>
@@ -289,15 +289,29 @@
 
 
   <script>
+    
+document.addEventListener("DOMContentLoaded", function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminEmail = urlParams.get("admin") || localStorage.getItem("currentAdminEmail");
+    const user = urlParams.get("user") || localStorage.getItem("currentUser");
 
-document.querySelectorAll('.footer a').forEach(link => {
-  const currentPath = window.location.pathname.replace(/\/$/, '');
-  const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
-  if (currentPath === linkPath) {
-    link.classList.add('active');
-  } else {
-    link.classList.remove('active');
-  }
+    const profileButton = document.getElementById("profileButton");
+    if (adminEmail && user) {
+        profileButton.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+    } else {
+        profileButton.href = "/BeeMazing-Y1/mobile/1-Home/home.html"; // Fallback if no user data
+        console.warn("Missing admin or user data for Profile button navigation");
+    }
+
+    document.querySelectorAll('.footer a').forEach(link => {
+        const currentPath = window.location.pathname.replace(/\/$/, '');
+        const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
+        if (currentPath === linkPath) {
+            link.classList.add('active');
+        } else {
+            link.classList.remove('active');
+        }
+    });
 });
 
 const adminEmail = localStorage.getItem("currentAdminEmail");
