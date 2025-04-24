@@ -44,11 +44,13 @@
       z-index: 50;
     }
     .month-nav {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 18px;
-      font-weight: bold;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 18px;
+        font-weight: bold;
+        width: 100%;
+        padding: 5px 0;
     }
     .month-nav button {
       margin: 0 10px;
@@ -250,19 +252,24 @@
 
 
 
-/* Menu Toggle Button */
-.menu-btn {
-    background: none;
-    border: none;
-    color: var(--text-color);
-    font-size: 24px;
-    cursor: pointer;
-    padding: 5px 10px;
-    transition: color 0.3s ease;
-}
-.menu-btn:hover {
-    color: var(--primary-color);
-}
+ /* Menu Toggle Button */
+ .menu-btn {
+        position: fixed;
+        top: 0;
+        left: 10px;
+        background: var(--secondary-color);
+        border: none;
+        color: var(--text-color);
+        font-size: 24px;
+        cursor: pointer;
+        padding: 8px;
+        z-index: 201;
+        transition: color 0.3s ease, background 0.3s ease;
+    }
+    .menu-btn:hover {
+        color: var(--primary-color);
+        background: var(--light-bg);
+    }
 
 /* Side Menu */
 .side-menu {
@@ -366,8 +373,8 @@ body.menu-open {
         </ul>
     </nav>
     <div class="date-header">
+        <button id="menuToggle" class="menu-btn" aria-label="Toggle Menu">☰</button>
         <div class="month-nav">
-            <button id="menuToggle" class="menu-btn" aria-label="Toggle Menu">☰</button>
             <button id="prevMonth"><</button>
             <span id="monthLabel">Month</span>
             <button id="nextMonth">></button>
@@ -448,6 +455,7 @@ closeMenu.addEventListener('click', () => {
     document.body.classList.remove('menu-open');
 });
 
+
 // Set side menu links
 const taskSettingsLink = document.getElementById('taskSettingsLink');
         const marketDashLink = document.getElementById('marketDashLink');
@@ -461,12 +469,13 @@ const taskSettingsLink = document.getElementById('taskSettingsLink');
             logoutLink.href = `/BeeMazing-Y1/login.html`;
         }
 
-        // Clear localStorage on logout
+        // Clear localStorage on logout to match home.html
         logoutLink.addEventListener('click', () => {
-            localStorage.removeItem('currentAdminEmail');
+            localStorage.removeItem('isAdmin');
             localStorage.removeItem('userData');
+            localStorage.removeItem('adminPassword');
+            // Keep currentAdminEmail as per home.js
         });
-
 
 
 
