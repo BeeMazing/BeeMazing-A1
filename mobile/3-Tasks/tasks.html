@@ -545,9 +545,25 @@ body {
 
 
 
-
-
         function calculateTurn(task, selectedDate) {
+  if (task.settings !== "Rotation") {
+    const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
+    const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+    const pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
+    const allCompletedUsers = [...new Set([...completedUsers, ...pendingUsers])];
+    const completedCount = allCompletedUsers.length;
+    const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
+                       task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+                       task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+
+    return {
+      currentTurn: userOrder.length > 0 ? userOrder.join(", ") : "No users assigned",
+      nextUser: "—",
+      completedCount,
+      repeatLimit
+    };
+  }
+
   const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
   const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
                      task.repeat === "Weekly" ? task.timesPerWeek || 1 :
@@ -706,13 +722,17 @@ body {
       const isCompleted = completedCount >= repeatLimit;
 
       taskDiv.innerHTML = `
-        <strong>${task.title}</strong><br>
-        Turn: ${currentTurn}<br>
-        Next: ${nextUser}<br>
-        Completed: ${completedCount}/${repeatLimit}<br>
-        ${isCompleted ? `<span style="color: green; font-weight: bold;">Completed</span><br>` : ""}
-        <button class="delete-btn">Delete</button>
-      `;
+  <strong>${task.title}</strong><br>
+  ${task.settings === "Rotation" ? `
+    Turn: ${currentTurn}<br>
+    Next: ${nextUser}<br>
+  ` : `
+    Assigned: ${currentTurn}<br>
+  `}
+  Completed: ${completedCount}/${repeatLimit}<br>
+  ${isCompleted ? `<span style="color: green; font-weight: bold;">Completed</span><br>` : ""}
+  <button class="delete-btn">Delete</button>
+`;
 
       taskDiv.addEventListener("click", async (e) => {
         if (!e.target.classList.contains("delete-btn")) {
@@ -755,21 +775,25 @@ async function showTaskDetails(task) {
   const allCompletedUsers = [...new Set([...completedUsers, ...pendingUsers])];
 
   let taskDetails = `
-    <strong>Title:</strong> ${task.title}<br>
-    ${task.notes ? `<strong>Notes:</strong> ${task.notes}<br>` : ""}
-    ${task.room ? `<strong>Room:</strong> ${task.room}<br>` : ""}
-    <strong>Frequency:</strong> ${task.repeat}
-    ${task.repeat === "Daily" && task.timesPerDay ? ` - ${task.timesPerDay} time(s)/day` : ""}
-    ${task.repeat === "Weekly" && task.timesPerWeek ? ` - ${task.timesPerWeek} time(s)/week` : ""}
-    ${task.repeat === "Monthly" && task.timesPerMonth ? ` - ${task.timesPerMonth} time(s)/month` : ""}
-    <br>
-    <strong>Date:</strong> ${task.date}<br>
-    <strong>Users:</strong> ${userOrder.join(", ")}<br>
-    ${task.reward && task.reward !== "0" ? `<strong>Reward:</strong> ${task.reward} 🍯<br>` : ""}
+  <strong>Title:</strong> ${task.title}<br>
+  ${task.notes ? `<strong>Notes:</strong> ${task.notes}<br>` : ""}
+  ${task.room ? `<strong>Room:</strong> ${task.room}<br>` : ""}
+  <strong>Frequency:</strong> ${task.repeat}
+  ${task.repeat === "Daily" && task.timesPerDay ? ` - ${task.timesPerDay} time(s)/day` : ""}
+  ${task.repeat === "Weekly" && task.timesPerWeek ? ` - ${task.timesPerWeek} time(s)/week` : ""}
+  ${task.repeat === "Monthly" && task.timesPerMonth ? ` - ${task.timesPerMonth} time(s)/month` : ""}
+  <br>
+  <strong>Date:</strong> ${task.date}<br>
+  <strong>Users:</strong> ${userOrder.join(", ")}<br>
+  ${task.reward && task.reward !== "0" ? `<strong>Reward:</strong> ${task.reward} 🍯<br>` : ""}
+  ${task.settings === "Rotation" ? `
     <strong>Current Turn:</strong> ${currentTurn}<br>
     <strong>Next:</strong> ${nextUser}<br>
-    <strong>Completed:</strong> ${completedCount}/${repeatLimit}<br>
-  `;
+  ` : `
+    <strong>Assigned:</strong> ${currentTurn}<br>
+  `}
+  <strong>Completed:</strong> ${completedCount}/${repeatLimit}<br>
+`;
 
   if (allCompletedUsers.length > 0) {
     taskDetails += `
@@ -807,40 +831,62 @@ async function showTaskDetails(task) {
         // Handle task completion and turn advancement
 // ✅ Handle task completion and turn advancement
 async function finishTask(userName, task, button, selectedDate) {
-    const adminEmail = localStorage.getItem("currentAdminEmail");
-    const todayStr = selectedDate || new Date().toISOString().split("T")[0];
+  console.log(`Completing task '${task.title}' for user '${userName}' with settings: ${task.settings}`);
+  const adminEmail = localStorage.getItem("currentAdminEmail");
+  const todayStr = selectedDate || new Date().toISOString().split("T")[0];
 
-    try {
-        const res = await fetch("https://beemazing.onrender.com/api/complete-task", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                adminEmail,
-                taskTitle: task.title,
-                user: userName,
-                date: todayStr
-            })
-        });
+  try {
+    const res = await fetch("https://beemazing.onrender.com/api/complete-task", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        adminEmail,
+        taskTitle: task.title,
+        user: userName,
+        date: todayStr
+      })
+    });
 
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error || "Failed to complete task");
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || "Failed to complete task");
 
-        const rewardAmount = result.updatedTask.reward || 0;
+    const rewardAmount = result.updatedTask.reward || 0;
 
-        // ✅ Trigger reward animation if available
-        if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
+    if (task.settings === "Rotation") {
+      const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
+      const currentIndex = userOrder.indexOf(userName);
+      let nextTurn = null;
 
-        // ✅ Refresh task and user data after slight delay to allow DB sync
-        if (typeof loadTasksForDate === 'function') {
-            setTimeout(() => loadTasksForDate(todayStr), 150);
+      if (currentIndex !== -1) {
+        for (let i = 1; i <= userOrder.length; i++) {
+          const nextIndex = (currentIndex + i) % userOrder.length;
+          if (!result.updatedTask.completions?.[todayStr]?.includes(userOrder[nextIndex])) {
+            nextTurn = userOrder[nextIndex];
+            break;
+          }
         }
-        if (typeof loadUserTasks === 'function') loadUserTasks(userName, todayStr);
-        if (typeof loadUserReward === 'function') loadUserReward(userName);
+      }
 
-    } catch (err) {
-        console.error("❌ Error completing task:", err);
-        alert("Failed to finish task. Please try again.");
+      if (!nextTurn) {
+        nextTurn = userOrder.find(u => !result.updatedTask.completions?.[todayStr]?.includes(u)) || userOrder[0];
+      }
+
+      task.turn = nextTurn;
+      await saveTaskToBackend(task);
     }
+
+    if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
+
+    if (typeof loadTasksForDate === 'function') {
+      setTimeout(() => loadTasksForDate(todayStr), 150);
+    }
+    if (typeof loadUserTasks === 'function') loadUserTasks(userName, todayStr);
+    if (typeof loadUserReward === 'function') loadUserReward(userName);
+
+  } catch (err) {
+    console.error("❌ Error completing task:", err);
+    alert("Failed to finish task. Please try again.");
+  }
 }
 
 
