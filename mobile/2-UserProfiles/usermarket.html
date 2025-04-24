@@ -390,7 +390,7 @@
               } else {
                   availableRewards.forEach((reward, index) => {
                       const userReward = userRewards.find(ur => ur.name === reward.name) || {};
-                      const count = userReward.count || 0;
+                      const count = userReward.count || userRewards.filter(ur => ur.name === reward.name).length || 0;
                       const isTheKey = reward.name === "The Key";
                       const isDiceChest = reward.type === "dice";
                       const isHoney = reward.type === "Honey";
@@ -452,7 +452,7 @@
                               <div class="reward-card-front text-center">
                                   <h3 class="text-lg font-semibold">${reward.name}</h3>
                                   <p class="text-[var(--text-color)]">Collected on: ${reward.date}</p>
-                                  <p class="text-[var(--text-color)]">Received on: ${reward.receivedDate}</p>
+                                  <p class="text-[var(--text-color)]">Received on: ${reward.receivedDate || 'N/A'}</p>
                               </div>
                               <div class="reward-card-back text-center">
                                   <h3 class="text-lg font-semibold">${reward.name}</h3>
@@ -529,18 +529,13 @@
               if (!rewardsResponse.ok) throw new Error(rewardsData.error || "Failed to fetch rewards");
               const rewards = rewardsData.rewards || {};
   
-              // Deduct honey
-              if (!rewards[userName]) rewards[userName] = 0;
-              rewards[userName] = Math.max(0, userHoney - honey); // Ensure non-negative
-              console.log(`claimReward: Updated rewards for ${userName}=${rewards[userName]}`);
-  
-              // Validate rewards payload
+              // Validate user balance
               if (!rewards[userName] && rewards[userName] !== 0) {
                   throw new Error("Invalid rewards data: user balance is undefined");
               }
   
-              // Save updated honey balance with retry
-              const rewardsPayload = { adminEmail, rewards };
+              // Update honey balance (use old payload format)
+              const rewardsPayload = { adminEmail, user: userName, amount: -honey };
               console.log('claimReward: Posting to /api/rewards with body=', rewardsPayload);
               let updateRewardsResponse;
               for (let attempt = 1; attempt <= 2; attempt++) {
@@ -559,7 +554,7 @@
               const updateRewardsData = await updateRewardsResponse.json();
               console.log('claimReward: /api/rewards POST response=', updateRewardsData);
   
-              // Update user rewards
+              // Fetch current user rewards
               console.log('claimReward: Fetching /api/user-rewards');
               const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
               const userRewardsData = await userRewardsResponse.json();
@@ -567,37 +562,20 @@
               if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
               const userRewards = userRewardsData.userRewards || {};
   
+              // Add the claimed reward (simplified structure)
               if (!userRewards[userName]) userRewards[userName] = [];
-              const existingReward = userRewards[userName].find(r => r.name === rewardName);
-  
-              if (existingReward) {
-                  existingReward.count = (existingReward.count || 0) + 1;
-                  console.log(`claimReward: Incremented count for ${rewardName}, new count=${existingReward.count}`);
-              } else {
-                  const newReward = {
-                      name: rewardName,
-                      date: new Date().toLocaleString(),
-                      count: 1,
-                      type: rewardType || undefined,
-                      amount: honey || undefined,
-                  };
-                  if (rewardType === "dice" && outcomes) {
-                      try {
-                          newReward.outcomes = JSON.parse(outcomes);
-                      } catch (e) {
-                          console.warn(`claimReward: Failed to parse outcomes for ${rewardName}, outcomes=`, outcomes);
-                      }
-                  }
-                  userRewards[userName].push(newReward);
-                  console.log(`claimReward: Added new reward for ${rewardName}=`, newReward);
-              }
+              userRewards[userName].push({
+                  name: rewardName,
+                  date: new Date().toLocaleString()
+              });
+              console.log(`claimReward: Added reward for ${rewardName}=`, { name: rewardName, date: new Date().toLocaleString() });
   
               // Validate userRewards payload
               if (!Array.isArray(userRewards[userName])) {
                   throw new Error("Invalid userRewards data: user rewards is not an array");
               }
   
-              // Save updated user rewards with retry
+              // Save updated user rewards
               const userRewardsPayload = { adminEmail, userRewards };
               console.log('claimReward: Posting to /api/user-rewards with body=', userRewardsPayload);
               let updateUserRewardsResponse;
