@@ -1017,14 +1017,20 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     if (currentDate < startDate || currentDate > endDate) return false;
 
     const repeat = task.repeat || "Daily";
-    let requiredTimes = 1;
-    if (task.settings === "Rotation") {
-      requiredTimes = task.users?.length || 1;
-    } else {
-      if (repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-      if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-      if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-    }
+let requiredTimes = 1;
+
+if (task.settings === "Individual") {
+  if (repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+  if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+  if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+} else if (task.settings === "Rotation") {
+  requiredTimes = task.users?.length || 1;
+} else {
+  if (repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+  if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+  if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+}
+
 
     const userOrder = [...task.users];
     const fullTurnOrder = [];
@@ -1066,13 +1072,18 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
       fullTurnOrder.push(user);
     }
 
-    let pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
-    let completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-    let completedTimes = completedUsers.length + pendingUsers.length;
 
-    let progressText = completedTimes >= requiredTimes
-      ? `<span style="color: green; font-weight: bold;">Completed</span>`
-      : `${completedTimes}/${requiredTimes}`;
+    let completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+let pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
+
+let youCompleted = completedUsers.filter(u => u === userName).length;
+let youPending = pendingUsers.filter(u => u === userName).length;
+let yourTotal = youCompleted + youPending;
+
+let progressText = yourTotal >= requiredTimes
+  ? `<span style="color: green; font-weight: bold;">Completed</span>`
+  : `${yourTotal}/${requiredTimes}`;
+
 
     const userTurnIndexes = [];
     const replacedIndexes = [];
@@ -1096,15 +1107,18 @@ if (completedTimes < requiredTimes) {
 }
 
 
-    let turnText = '';
-    if (replacedIndexes.length > 0) {
-      const replacements = replacedIndexes.map(r => `Replaced by ${r.by} for Turn ${r.index + 1}`).join('<br>');
-      turnText = `<span style="color: orange;">${replacements}</span><br>`;
-    } else if (showTurn) {
-      turnText = `Turn: ${currentTurn}<br>`;
-    } else {
-      turnText = `<span style="color: green;">Turn: All done!</span><br>`;
-    }
+let turnText = '';
+if (task.settings === "Individual") {
+  turnText = `<span style="color: orange;">Each bee must finish their own task</span><br>`;
+} else if (replacedIndexes.length > 0) {
+  const replacements = replacedIndexes.map(r => `Replaced by ${r.by} for Turn ${r.index + 1}`).join('<br>');
+  turnText = `<span style="color: orange;">${replacements}</span><br>`;
+} else if (showTurn) {
+  turnText = `Turn: ${currentTurn}<br>`;
+} else {
+  turnText = `<span style="color: green;">Turn: All done!</span><br>`;
+}
+
 
     taskDiv.innerHTML = `
       <strong>${task.title || "Untitled Task"}</strong><br>
@@ -1113,7 +1127,14 @@ if (completedTimes < requiredTimes) {
       Progress: ${progressText}
     `;
 
-    const canFinish = isToday && currentTurn === userName && completedTimes < requiredTimes && !isPending && !isCompleted;
+    let canFinish = false;
+
+if (task.settings === "Individual") {
+  canFinish = isToday && yourTotal < requiredTimes;
+} else {
+  canFinish = isToday && currentTurn === userName && completedTimes < requiredTimes && !isPending && !isCompleted;
+}
+
 
     if (canFinish) {
       const finishedButton = document.createElement("button");
