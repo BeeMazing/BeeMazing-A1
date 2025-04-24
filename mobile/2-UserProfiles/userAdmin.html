@@ -757,12 +757,13 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
 
       if (shouldReplace) {
         tasksByTitle[task.title] = {
-          turns: [],
-          pendingCount: 0,
-          date: task.date,
-          userOrder: task.users || [],
-          startDate
-        };
+  turns: [],
+  pendingCount: 0,
+  date: task.date,
+  userOrder: task.users || [],
+  startDate,
+  settings: task.settings || "Rotation" // <-- ADD THIS
+};
       } else {
         console.warn(`Duplicate task title: ${task.title}, date: ${task.date}, keeping date: ${existingTask.date}`); // Debug
         return;
@@ -781,35 +782,47 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
 
       tasksByTitle[task.title].pendingCount += pendingCompletions.length;
 
+
       const fullTurn = [];
 const isRotation = task.settings === "Rotation";
 
 if (isRotation) {
-  // Rotation task: Each user takes a turn
+  // Rotation: Turn 1: User1, Turn 2: User2, etc
   for (let i = 0; i < requiredTimes; i++) {
     const userIndex = i % userOrder.length;
     const user = tempTurnReplacement[i] || userOrder[userIndex];
-    fullTurn.push(user);
+    fullTurn.push({ user, repetition: i + 1 });
   }
 } else {
-  // Individual task: Same user does multiple repetitions
-  for (let i = 0; i < requiredTimes; i++) {
-    const user = userOrder[0]; // Always first (and only) user
-    fullTurn.push(user);
+  // Individual: User1 (1: Pending, 2: Pending), User2 (1: Pending, 2: Pending)
+  for (const user of userOrder) {
+    for (let rep = 1; rep <= requiredTimes; rep++) {
+      fullTurn.push({ user, repetition: rep });
+    }
   }
 }
 
+
+
+
+
+
+
+
+
       console.log(`Task ${task.title}: fullTurn=${fullTurn}`); // Debug
 
-      fullTurn.forEach((user, index) => {
-        tasksByTitle[task.title].turns.push({
-          user,
-          index,
-          date: task.date,
-          isPending: pendingCompletions.includes(user),
-          isCompleted: completions.includes(user)
-        });
-      });
+      fullTurn.forEach((item, index) => {
+  tasksByTitle[task.title].turns.push({
+    user: item.user,
+    repetition: item.repetition || null,
+    index,
+    date: task.date,
+    isPending: pendingCompletions.includes(item.user),
+    isCompleted: completions.includes(item.user)
+  });
+});
+
     });
 
     // Log all duplicates
@@ -839,25 +852,31 @@ if (isRotation) {
       div.dataset.date = date;
       div.innerHTML = `
         <h3 class="task-title">${title}${pendingCount > 0 ? `<span class="notification-bubble">${pendingCount}</span>` : ''}</h3>
-        <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
-          ${turns.map(turn => `
-            <div class="turn-entry" draggable="true" data-index="${turn.index}" data-user="${turn.user}">
-              <p>Turn ${turn.index + 1}: ${turn.user} - ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
-              ${turn.isPending && !turn.isCompleted ? `
-                <button class="accept-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
-                <button class="decline-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
-              ` : turn.isCompleted ? `
-                <button class="revert-btn" onclick="handleRevert('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
-              ` : `
-                <select id="replace-select-${turn.index}">
-                  <option value="">Select User</option>
-                  ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
-                </select>
-                <button class="replace-btn" onclick="handleReplace('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
-              `}
-            </div>
-          `).join('')}
-        </div>
+<div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
+  ${turns.map(turn => `
+    <div class="turn-entry" draggable="true" data-index="${turn.index}" data-user="${turn.user}">
+      <p>
+        ${task.settings === "Rotation"
+          ? `Turn ${turn.index + 1}: ${turn.user} - ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}`
+          : `${turn.user} - Attempt ${turn.repetition}: ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}`
+        }
+      </p>
+      ${turn.isPending && !turn.isCompleted ? `
+        <button class="accept-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
+        <button class="decline-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
+      ` : turn.isCompleted ? `
+        <button class="revert-btn" onclick="handleRevert('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
+      ` : `
+        <select id="replace-select-${turn.index}">
+          <option value="">Select User</option>
+          ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
+        </select>
+        <button class="replace-btn" onclick="handleReplace('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
+      `}
+    </div>
+  `).join('')}
+</div>
+
       `;
       container.appendChild(div);
 
