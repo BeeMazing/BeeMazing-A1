@@ -19,6 +19,8 @@
             --footer-height: 70px;
             --border-dark: #444754;
             --card-bg: #2A2B32;
+            --card-back-bg: #FFC107; /* Yellow for back */
+            --card-back-text: #212121; /* Black for back text */
         }
         body {
             font-family: 'Poppins', Arial, sans-serif;
@@ -57,10 +59,29 @@
             align-items: center;
             padding: 1rem;
             border-radius: 0.5rem;
+        }
+        .reward-card-front {
             background-color: var(--card-bg);
+            color: var(--text-color);
         }
         .reward-card-back {
             transform: rotateY(180deg);
+            background-color: var(--card-back-bg);
+            color: var(--card-back-text);
+        }
+        .reward-card-back select {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            border: 1px solid var(--secondary-color);
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            width: 80px;
+            cursor: pointer;
+        }
+        .reward-card-back select:focus {
+            outline: none;
+            border-color: var(--primary-color);
         }
         .purchase-indicator {
             position: absolute;
@@ -115,6 +136,13 @@
         }
         .btn-primary:hover {
             background-color: #FFB300;
+        }
+        .btn-back {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+        }
+        .btn-back:hover {
+            background-color: #3A3B3F;
         }
         .btn-disabled {
             background-color: #6B7280;
@@ -202,6 +230,7 @@
             .reward-card-front, .reward-card-back { padding: 0.75rem; }
             .reward-card-front h3, .reward-card-back h3 { font-size: 1rem; }
             .reward-card-front p, .reward-card-back p { font-size: 0.875rem; }
+            .reward-card-back select { width: 70px; font-size: 0.75rem; }
             .purchase-indicator {
                 width: 20px;
                 height: 20px;
@@ -389,22 +418,40 @@
                   rewardsGrid.innerHTML = "<p class='text-center'>No rewards available in the hive.</p>";
               } else {
                   availableRewards.forEach((reward, index) => {
-                      const userReward = userRewards.find(ur => ur.name === reward.name) || {};
-                      const count = userReward.count || userRewards.filter(ur => ur.name === reward.name).length || 0;
+                      const userRewardCount = userRewards.filter(ur => ur.name === reward.name).length || 0;
                       const isTheKey = reward.name === "The Key";
                       const isDiceChest = reward.type === "dice";
                       const isHoney = reward.type === "Honey";
                       const rewardCost = reward.honey || reward.diamonds || 0;
                       const canAfford = userHoney >= rewardCost;
-                      console.log(`Reward: ${reward.name}, cost=${rewardCost} (honey=${reward.honey}, diamonds=${reward.diamonds}), canAfford=${canAfford} (userHoney=${userHoney})`);
+                      console.log(`Reward: ${reward.name}, cost=${rewardCost} (honey=${reward.honey}, diamonds=${reward.diamonds}), canAfford=${canAfford} (userHoney=${userHoney}), count=${userRewardCount}`);
                       const card = document.createElement("div");
                       card.className = "reward-card";
                       card.dataset.reward = reward.name;
                       card.dataset.index = index;
+                      let backContent = '';
+                      if (userRewardCount > 0) {
+                          const options = Array.from({ length: userRewardCount }, (_, i) => i + 1)
+                              .map(n => `<option value="${n}">${n}</option>`).join('');
+                          backContent = `
+                              <select id="quantity-${reward.name.replace(/\s+/g, '-')}" class="mt-2">
+                                  ${options}
+                              </select>
+                              <button class="mt-2 px-3 py-1 btn-back rounded font-semibold" 
+                                      onclick="${isHoney ? `redeemHoneyReward('${userName}', '${reward.name}', document.getElementById('quantity-${reward.name.replace(/\s+/g, '-')}').value)` : 
+                                                isTheKey ? `useTheKey('${userName}', '${reward.name}', document.getElementById('quantity-${reward.name.replace(/\s+/g, '-')}').value)` : 
+                                                isDiceChest ? `useDiceChest('${userName}', '${reward.name}', '${JSON.stringify(reward.outcomes || [])}', document.getElementById('quantity-${reward.name.replace(/\s+/g, '-')}').value)` : 
+                                                `redeemReward('${userName}', '${reward.name}', document.getElementById('quantity-${reward.name.replace(/\s+/g, '-')}').value)`}">
+                                  ${isHoney ? 'Get it' : isTheKey || isDiceChest ? 'Use it' : 'Receive'}
+                              </button>
+                          `;
+                      } else {
+                          backContent = `<p class="text-[var(--card-back-text)]">You don't own this reward yet.</p>`;
+                      }
                       card.innerHTML = `
                           <div class="reward-card-inner">
                               <div class="reward-card-front text-center">
-                                  <span class="purchase-indicator" data-count="${count}"></span>
+                                  <span class="purchase-indicator" data-count="${userRewardCount}"></span>
                                   <h3 class="text-lg font-semibold">${reward.name}</h3>
                                   <p class="text-[var(--text-color)]">Honey: ${rewardCost} 🍯</p>
                                   <button class="mt-2 px-3 py-1 rounded font-semibold ${canAfford ? 'btn-primary' : 'btn-disabled'}" 
@@ -413,23 +460,19 @@
                               </div>
                               <div class="reward-card-back text-center">
                                   <h3 class="text-lg font-semibold">${reward.name}</h3>
-                                  <p class="text-[var(--text-color)]">Honey: ${rewardCost} 🍯</p>
-                                  <button class="mt-2 px-3 py-1 btn-primary rounded font-semibold" 
-                                          onclick="${isHoney ? `redeemHoneyReward('${userName}', '${reward.name}')` : 
-                                                    isTheKey ? `useTheKey('${userName}', '${reward.name}')` : 
-                                                    isDiceChest ? `useDiceChest('${userName}', '${reward.name}', '${JSON.stringify(reward.outcomes || [])}')` : 
-                                                    `redeemReward('${userName}', '${reward.name}')`}">${isHoney ? 'Get it' : isTheKey || isDiceChest ? 'Use it' : 'Received'}</button>
+                                  <p class="text-[var(--card-back-text)]">Honey: ${rewardCost} 🍯</p>
+                                  ${backContent}
                               </div>
                           </div>
                       `;
                       rewardsGrid.appendChild(card);
                       const indicator = card.querySelector('.purchase-indicator');
-                      indicator.style.display = count > 0 ? 'flex' : 'none';
-                      indicator.textContent = count;
+                      indicator.style.display = userRewardCount > 0 ? 'flex' : 'none';
+                      indicator.textContent = userRewardCount;
   
                       // Add flip event listener
                       card.addEventListener('click', (e) => {
-                          if (!e.target.closest('button')) {
+                          if (!e.target.closest('button') && !e.target.closest('select')) {
                               card.classList.toggle('flipped');
                           }
                       });
@@ -637,26 +680,36 @@
           });
       }
   
-      async function redeemHoneyReward(userName, rewardName) {
+      async function redeemHoneyReward(userName, rewardName, quantity) {
           try {
+              const qty = parseInt(quantity, 10);
+              if (isNaN(qty) || qty <= 0) {
+                  throw new Error("Invalid quantity selected");
+              }
               const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
               const userRewardsData = await userRewardsResponse.json();
               if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
               const userRewards = userRewardsData.userRewards || {};
               const rewards = userRewards[userName] || [];
-              const reward = rewards.find(r => r.name === rewardName);
-              if (!reward) return;
+              const matchingRewards = rewards.filter(r => r.name === rewardName);
+              if (matchingRewards.length < qty) {
+                  throw new Error(`Not enough ${rewardName} rewards to redeem (${matchingRewards.length} available)`);
+              }
   
               const historyResponse = await fetch(`https://beemazing.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}`);
               const historyData = await historyResponse.json();
               if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
               const rewardHistory = historyData.rewardHistory || {};
   
-              const receivedReward = { ...reward, receivedDate: new Date().toLocaleString() };
-              rewards.splice(rewards.indexOf(reward), 1);
-  
-              if (!rewardHistory[userName]) rewardHistory[userName] = [];
-              rewardHistory[userName].push(receivedReward);
+              // Remove 'qty' instances of the reward
+              for (let i = 0; i < qty; i++) {
+                  const rewardIndex = rewards.findIndex(r => r.name === rewardName);
+                  if (rewardIndex === -1) break;
+                  const receivedReward = { ...rewards[rewardIndex], receivedDate: new Date().toLocaleString() };
+                  rewards.splice(rewardIndex, 1);
+                  if (!rewardHistory[userName]) rewardHistory[userName] = [];
+                  rewardHistory[userName].push(receivedReward);
+              }
   
               userRewards[userName] = rewards;
               await fetch("https://beemazing.onrender.com/api/user-rewards", {
@@ -671,56 +724,90 @@
                   body: JSON.stringify({ adminEmail, rewardHistory })
               });
   
-              const honeyAmount = Number(reward.amount) || 0;
-              if (honeyAmount > 0) {
-                  window.location.href = `${basePath}/users.html?addPoints=${honeyAmount}&user=${encodeURIComponent(userName)}&admin=${encodeURIComponent(adminEmail)}`;
-              } else {
-                  alert("Invalid honey amount!");
-              }
+              loadRewards(userName);
+              showTab('history');
+              alert(`Successfully redeemed ${qty} ${rewardName}(s)!`);
           } catch (err) {
               console.error("Error redeeming honey reward:", err);
-              alert("Failed to redeem honey. Please try again.");
+              alert(`Failed to redeem ${rewardName}: ${err.message}. Please try again.`);
           }
       }
   
-      async function useDiceChest(userName, rewardName, outcomes) {
+      async function useDiceChest(userName, rewardName, outcomes, quantity) {
           try {
+              const qty = parseInt(quantity, 10);
+              if (isNaN(qty) || qty <= 0) {
+                  throw new Error("Invalid quantity selected");
+              }
               const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
               const userRewardsData = await userRewardsResponse.json();
               if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
               const rewards = userRewardsData.userRewards[userName] || [];
-              const reward = rewards.find(r => r.name === rewardName);
-  
-              if (!reward || reward.type !== "dice" || !reward.outcomes) {
-                  alert("Invalid dice chest!");
-                  return;
+              const matchingRewards = rewards.filter(r => r.name === rewardName);
+              if (matchingRewards.length < qty) {
+                  throw new Error(`Not enough ${rewardName} rewards to use (${matchingRewards.length} available)`);
               }
+  
+              // Remove 'qty' instances (simplified for dice chest)
+              for (let i = 0; i < qty; i++) {
+                  const rewardIndex = rewards.findIndex(r => r.name === rewardName);
+                  if (rewardIndex === -1) break;
+                  rewards.splice(rewardIndex, 1);
+              }
+  
+              await fetch("https://beemazing.onrender.com/api/user-rewards", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ adminEmail, userRewards: { [userName]: rewards } })
+              });
   
               const fullChest = { type: "dice", outcomes: JSON.parse(outcomes) };
               const encoded = encodeURIComponent(btoa(JSON.stringify(fullChest)));
               window.location.href = `/BeeMazing-Y1/mobile/4-Market/rollthedice.html?user=${encodeURIComponent(userName)}&data=${encoded}&admin=${encodeURIComponent(adminEmail)}`;
           } catch (err) {
               console.error("Error using dice chest:", err);
-              alert("Failed to process dice chest. Please try again.");
+              alert(`Failed to process ${rewardName}: ${err.message}. Please try again.`);
           }
       }
   
-      async function useTheKey(userName, rewardName) {
+      async function useTheKey(userName, rewardName, quantity) {
           try {
+              const qty = parseInt(quantity, 10);
+              if (isNaN(qty) || qty <= 0) {
+                  throw new Error("Invalid quantity selected");
+              }
+              const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+              const userRewardsData = await userRewardsResponse.json();
+              if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
+              const userRewards = userRewardsData.userRewards || {};
+              const rewards = userRewards[userName] || [];
+              const matchingRewards = rewards.filter(r => r.name === rewardName);
+              if (matchingRewards.length < qty) {
+                  throw new Error(`Not enough ${rewardName} rewards to use (${matchingRewards.length} available)`);
+              }
+  
+              // Remove 'qty' instances
+              for (let i = 0; i < qty; i++) {
+                  const rewardIndex = rewards.findIndex(r => r.name === rewardName);
+                  if (rewardIndex === -1) break;
+                  rewards.splice(rewardIndex, 1);
+              }
+  
+              await fetch("https://beemazing.onrender.com/api/user-rewards", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ adminEmail, userRewards: { [userName]: rewards } })
+              });
+  
               const tasksResponse = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
               const tasksData = await tasksResponse.json();
               if (!tasksResponse.ok) throw new Error(tasksData.error || "Failed to fetch tasks");
               const allTasks = tasksData.tasks || [];
               const userTasks = allTasks.filter(task => task.users.includes(userName));
   
-              const rewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-              const rewardsData = await rewardsResponse.json();
-              if (!rewardsResponse.ok) throw new Error(rewardsData.error || "Failed to fetch user rewards");
-              const allRewards = rewardsData.userRewards || {};
-  
               const allUsers = new Set();
               allTasks.forEach(task => task.users.forEach(user => allUsers.add(user)));
-              Object.keys(allRewards).forEach(user => allUsers.add(user));
+              Object.keys(userRewards).forEach(user => allUsers.add(user));
   
               const taskSelect = document.getElementById("taskSelect");
               const userSelect = document.getElementById("userSelect");
@@ -743,16 +830,16 @@
                   }
               });
   
-              keyTransferData = { userName, rewardName };
+              keyTransferData = { userName, rewardName, quantity: qty };
               document.getElementById("keyPopup").style.display = "flex";
           } catch (err) {
               console.error("Error loading data for The Key:", err);
-              alert("Failed to load tasks or users. Please try again.");
+              alert(`Failed to load tasks or users for ${rewardName}: ${err.message}. Please try again.`);
           }
       }
   
       async function confirmKeyTransfer() {
-          const { userName, rewardName } = keyTransferData;
+          const { userName, rewardName, quantity } = keyTransferData;
           const selectedTask = document.getElementById("taskSelect").value;
           const selectedUser = document.getElementById("userSelect").value;
   
@@ -789,32 +876,21 @@
                   body: JSON.stringify({ adminEmail, task })
               });
   
-              const rewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-              const rewardsData = await rewardsResponse.json();
-              if (!rewardsResponse.ok) throw new Error(rewardsData.error || "Failed to fetch user rewards");
-              const userRewards = rewardsData.userRewards || {};
-  
-              const rewardIndex = userRewards[userName].findIndex(r => r.name === rewardName);
-              if (rewardIndex !== -1) {
-                  userRewards[userName].splice(rewardIndex, 1);
-                  await fetch("https://beemazing.onrender.com/api/user-rewards", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ adminEmail, userRewards })
-                  });
-              }
-  
               loadRewards(userName);
               document.getElementById("keyPopup").style.display = "none";
-              alert(`You delegated "${selectedTask}" to ${selectedUser}!`);
+              alert(`You delegated "${selectedTask}" to ${selectedUser} ${quantity} time(s)!`);
           } catch (err) {
               console.error("Error confirming key transfer:", err);
               alert("Failed to delegate task. Please try again.");
           }
       }
   
-      async function redeemReward(userName, rewardName) {
+      async function redeemReward(userName, rewardName, quantity) {
           try {
+              const qty = parseInt(quantity, 10);
+              if (isNaN(qty) || qty <= 0) {
+                  throw new Error("Invalid quantity selected");
+              }
               const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
               const userRewardsData = await userRewardsResponse.json();
               if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
@@ -826,14 +902,20 @@
               const rewardHistory = historyData.rewardHistory || {};
   
               const rewards = userRewards[userName] || [];
-              const reward = rewards.find(r => r.name === rewardName);
-              if (!reward) return;
+              const matchingRewards = rewards.filter(r => r.name === rewardName);
+              if (matchingRewards.length < qty) {
+                  throw new Error(`Not enough ${rewardName} rewards to redeem (${matchingRewards.length} available)`);
+              }
   
-              const receivedReward = { ...reward, receivedDate: new Date().toLocaleString() };
-              rewards.splice(rewards.indexOf(reward), 1);
-  
-              if (!rewardHistory[userName]) rewardHistory[userName] = [];
-              rewardHistory[userName].push(receivedReward);
+              // Remove 'qty' instances of the reward
+              for (let i = 0; i < qty; i++) {
+                  const rewardIndex = rewards.findIndex(r => r.name === rewardName);
+                  if (rewardIndex === -1) break;
+                  const receivedReward = { ...rewards[rewardIndex], receivedDate: new Date().toLocaleString() };
+                  rewards.splice(rewardIndex, 1);
+                  if (!rewardHistory[userName]) rewardHistory[userName] = [];
+                  rewardHistory[userName].push(receivedReward);
+              }
   
               userRewards[userName] = rewards;
               await fetch("https://beemazing.onrender.com/api/user-rewards", {
@@ -850,9 +932,10 @@
   
               loadRewards(userName);
               showTab('history');
+              alert(`Successfully redeemed ${qty} ${rewardName}(s)!`);
           } catch (err) {
               console.error("Error redeeming reward:", err);
-              alert("Failed to redeem reward. Please try again.");
+              alert(`Failed to redeem ${rewardName}: ${err.message}. Please try again.`);
           }
       }
   
