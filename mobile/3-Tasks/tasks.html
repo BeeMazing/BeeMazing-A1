@@ -650,6 +650,9 @@ body {
   };
 }
 
+
+
+
         // Load tasks for a specific date
 
         async function loadTasksForDate(selectedDate) {
@@ -738,6 +741,7 @@ body {
 
 
 
+
 async function showTaskDetails(task) {
   const selectedDate = document.querySelector(".day.selected")?.dataset.date;
   if (!selectedDate) return;
@@ -771,14 +775,12 @@ async function showTaskDetails(task) {
     taskDetails += `
       <div style="margin-top: 8px;">
         <strong>Completed by:</strong> ${allCompletedUsers.join(", ")}
-        <button id="editCompletionBtn" style="margin-left: 10px; padding: 4px 8px; font-size: 12px; border-radius: 6px; background: var(--primary-color); color: var(--secondary-color); border: none; cursor: pointer;">Edit</button>
       </div>
     `;
   }
 
   taskDetails += `
     <br>
-    <button id="editTurnBtn" style="padding: 6px 10px; background: var(--primary-color); color: var(--secondary-color); font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">Edit Turn Order</button>
     <button id="editTaskBtn" style="padding: 6px 10px; background: var(--secondary-color); color: var(--accent-color); font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">Edit Task</button>
   `;
 
@@ -791,29 +793,12 @@ async function showTaskDetails(task) {
     if (e.target.classList.contains("task-modal")) modal.remove();
   });
 
-  document.getElementById("editTurnBtn").addEventListener("click", () => {
-    modal.remove();
-    showEditTurnModal(task);
-  });
-
   document.getElementById("editTaskBtn").addEventListener("click", () => {
     localStorage.setItem("familyApp_editTask", JSON.stringify(task));
     localStorage.setItem("familyApp_editTask_index", task.title + "-" + task.date);
     window.location.href = "/BeeMazing-Y1/mobile/3-Tasks/addtasks.html";
   });
-
-  const editBtn = document.getElementById("editCompletionBtn");
-  if (editBtn) {
-    editBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      modal.remove();
-      showEditCompletionModal(task, allCompletedUsers, selectedDate, modal);
-    });
-  }
 }
-
-
-
 
 
 
@@ -946,7 +931,17 @@ async function finishTask(userName, task, button, selectedDate) {
             }
         }
         
+
+
+
+
+
+        
         // Show modal to edit task completions
+/* 
+// Unused functions (previously triggered by Edit Completion and Edit Turn Order buttons)
+// Remove if not needed elsewhere
+        
         async function showEditCompletionModal(task, completedUsers, today, parentModal) {
             const modal = document.createElement("div");
             modal.className = "task-modal";
@@ -1146,6 +1141,22 @@ async function finishTask(userName, task, button, selectedDate) {
             });
         }
         
+
+
+// End of unused functions
+*/
+
+
+
+
+
+
+
+
+
+
+
+
         // Generate scrollable date picker
         function generateScrollableDates(monthOffset = 0) {
             const container = document.getElementById("dayScrollContainer");
