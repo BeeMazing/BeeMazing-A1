@@ -702,17 +702,28 @@ body {
       taskDiv.dataset.taskTitle = task.title;
       taskDiv.dataset.taskDate = task.date;
 
-      const { currentTurn, nextUser, completedCount, repeatLimit } = calculateTurn(task, selectedDate);
-      const isCompleted = completedCount >= repeatLimit;
+      let currentTurn = "—", nextUser = "—", completedCount = 0, repeatLimit = 1, isCompleted = false;
+if (task.settings?.includes("Rotation")) {
+    const result = calculateTurn(task, selectedDate);
+    currentTurn = result.currentTurn;
+    nextUser = result.nextUser;
+    completedCount = result.completedCount;
+    repeatLimit = result.repeatLimit;
+    isCompleted = completedCount >= repeatLimit;
+}
 
-      taskDiv.innerHTML = `
-        <strong>${task.title}</strong><br>
-        Turn: ${currentTurn}<br>
-        Next: ${nextUser}<br>
-        Completed: ${completedCount}/${repeatLimit}<br>
-        ${isCompleted ? `<span style="color: green; font-weight: bold;">Completed</span><br>` : ""}
-        <button class="delete-btn">Delete</button>
-      `;
+
+taskDiv.innerHTML = `
+  <strong>${task.title}</strong><br>
+  ${task.settings?.includes("Rotation") ? `
+    Turn: ${currentTurn}<br>
+    Next: ${nextUser}<br>
+    Completed: ${completedCount}/${repeatLimit}<br>
+    ${isCompleted ? '<span style="color: green; font-weight: bold;">Completed</span><br>' : ''}
+  ` : '<em style="color: #aaa;">No rotation</em><br>'}
+  <button class="delete-btn">Delete</button>
+`;
+
 
       taskDiv.addEventListener("click", async (e) => {
         if (!e.target.classList.contains("delete-btn")) {
@@ -742,17 +753,26 @@ body {
 
 
 
+
+
 async function showTaskDetails(task) {
   const selectedDate = document.querySelector(".day.selected")?.dataset.date;
   if (!selectedDate) return;
 
   const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
-  console.log("Task details, userOrder:", userOrder);
 
-  const { currentTurn, nextUser, completedCount, repeatLimit } = calculateTurn(task, selectedDate);
+  let currentTurn = "—", nextUser = "—", completedCount = 0, repeatLimit = 1;
   const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
   const pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
   const allCompletedUsers = [...new Set([...completedUsers, ...pendingUsers])];
+
+  if (task.settings?.includes("Rotation")) {
+    const rotation = calculateTurn(task, selectedDate);
+    currentTurn = rotation.currentTurn;
+    nextUser = rotation.nextUser;
+    completedCount = rotation.completedCount;
+    repeatLimit = rotation.repeatLimit;
+  }
 
   let taskDetails = `
     <strong>Title:</strong> ${task.title}<br>
@@ -766,10 +786,17 @@ async function showTaskDetails(task) {
     <strong>Date:</strong> ${task.date}<br>
     <strong>Users:</strong> ${userOrder.join(", ")}<br>
     ${task.reward && task.reward !== "0" ? `<strong>Reward:</strong> ${task.reward} 🍯<br>` : ""}
-    <strong>Current Turn:</strong> ${currentTurn}<br>
-    <strong>Next:</strong> ${nextUser}<br>
-    <strong>Completed:</strong> ${completedCount}/${repeatLimit}<br>
   `;
+
+  if (task.settings?.includes("Rotation")) {
+    taskDetails += `
+      <strong>Current Turn:</strong> ${currentTurn}<br>
+      <strong>Next:</strong> ${nextUser}<br>
+      <strong>Completed:</strong> ${completedCount}/${repeatLimit}<br>
+    `;
+  } else {
+    taskDetails += `<em style="color:#aaa;">No rotation logic for this task</em><br>`;
+  }
 
   if (allCompletedUsers.length > 0) {
     taskDetails += `
@@ -799,6 +826,10 @@ async function showTaskDetails(task) {
     window.location.href = "/BeeMazing-Y1/mobile/3-Tasks/addtasks.html";
   });
 }
+
+
+
+
 
 
 
