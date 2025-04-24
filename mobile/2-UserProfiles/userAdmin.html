@@ -782,11 +782,23 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
       tasksByTitle[task.title].pendingCount += pendingCompletions.length;
 
       const fullTurn = [];
-      for (let i = 0; i < requiredTimes; i++) {
-        const userIndex = i % userOrder.length;
-        const user = tempTurnReplacement[i] || userOrder[userIndex];
-        fullTurn.push(user);
-      }
+const isRotation = task.settings === "Rotation";
+
+if (isRotation) {
+  // Rotation task: Each user takes a turn
+  for (let i = 0; i < requiredTimes; i++) {
+    const userIndex = i % userOrder.length;
+    const user = tempTurnReplacement[i] || userOrder[userIndex];
+    fullTurn.push(user);
+  }
+} else {
+  // Individual task: Same user does multiple repetitions
+  for (let i = 0; i < requiredTimes; i++) {
+    const user = userOrder[0]; // Always first (and only) user
+    fullTurn.push(user);
+  }
+}
+
       console.log(`Task ${task.title}: fullTurn=${fullTurn}`); // Debug
 
       fullTurn.forEach((user, index) => {
