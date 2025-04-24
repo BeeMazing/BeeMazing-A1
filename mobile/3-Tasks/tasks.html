@@ -703,14 +703,20 @@ body {
       taskDiv.dataset.taskDate = task.date;
 
       let currentTurn = "—", nextUser = "—", completedCount = 0, repeatLimit = 1, isCompleted = false;
-if (task.settings?.includes("Rotation")) {
-    const result = calculateTurn(task, selectedDate);
-    currentTurn = result.currentTurn;
-    nextUser = result.nextUser;
-    completedCount = result.completedCount;
-    repeatLimit = result.repeatLimit;
-    isCompleted = completedCount >= repeatLimit;
+      if (task.settings?.includes("Rotation")) {
+  const rotation = calculateTurn(task, selectedDate);
+  completedCount = rotation.completedCount;
+  repeatLimit = rotation.repeatLimit;
+
+  if (completedCount < repeatLimit) {
+    currentTurn = rotation.currentTurn;
+    nextUser = rotation.nextUser;
+  } else {
+    currentTurn = "All done!";
+    nextUser = "—";
+  }
 }
+
 
 
 taskDiv.innerHTML = `
