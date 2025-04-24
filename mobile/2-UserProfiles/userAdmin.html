@@ -305,8 +305,8 @@ if (adminEmail && userName) {
     homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
     profileButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
 }
-marketButton.href = '/BeeMazing-Y1/mobile/4-Market/market.html';
-rewardsButton.href = '/BeeMazing-Y1/mobile/4-Market/market.html'; // Adjust if Rewards has a different page
+marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+rewardsButton.href = `${basePath}/userrewards.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
 
 document.querySelectorAll('.footer a').forEach(link => {
     const currentPath = window.location.pathname.replace(/\/$/, '');
