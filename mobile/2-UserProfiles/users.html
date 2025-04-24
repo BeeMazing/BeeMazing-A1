@@ -830,23 +830,21 @@
 
 
     <div class="footer">
-      <a href="#" id="homeButton" class="footer-icon" aria-label="Home">
-          <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-          <span>Home</span>
-      </a>
-      <a href="#" id="profileButton" class="footer-icon active" aria-label="Profile">
-          <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
-          <span>Profile</span>
-      </a>
-      <a href="#" id="marketButton" class="footer-icon" aria-label="Market">
-          <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
-          <span>Market</span>
-      </a>
-      <a href="#" id="rewardsButton" class="footer-icon" aria-label="Rewards">
-          <img src="/BeeMazing-Y1/mobile/1-Home/RewardsBtn.png" alt="Rewards" />
-          <span>Rewards</span>
-      </a>
-  </div>
+
+        </a>
+        <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
+            <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
+            <span>Profile</span>
+        </a>
+        <a href="#" id="marketButton" class="footer-icon" aria-label="Market">
+            <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
+            <span>Market</span>
+        </a>
+        <a href="#" id="rewardsButton" class="footer-icon" aria-label="Rewards">
+            <img src="/BeeMazing-Y1/mobile/1-Home/RewardsBtn.png" alt="Rewards" />
+            <span>Rewards</span>
+        </a>
+    </div>
     
     
 
@@ -870,13 +868,6 @@
 
 
     <script>
-
-
-
-
-
-
-
 document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     let adminEmail = urlParams.get('admin') || localStorage.getItem("currentAdminEmail");
@@ -884,16 +875,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const addPoints = Number(urlParams.get('addPoints')) || 0;
 
     if (adminEmail && adminEmail !== "null") {
-    localStorage.setItem("currentAdminEmail", adminEmail);
-}
+        localStorage.setItem("currentAdminEmail", adminEmail);
+        const homeLink = document.getElementById("homeFooterLink");
+        if (homeLink) {
+            homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+        }
+    }
 
-if (userName && adminEmail) {
-    populateUserDropdown(userName);
-    document.getElementById('homeButton').href = `/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-    document.getElementById('profileButton').href = `/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
-    document.getElementById('marketButton').href = `/mobile/2-UserProfiles/usermarket.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
-    document.getElementById('rewardsButton').href = `/mobile/2-UserProfiles/userrewards.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
-    
+    if (userName && adminEmail) {
+        populateUserDropdown(userName);
+        document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+        document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+        document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+
         loadUserTasks(userName);
         loadUserReward(userName);
         loadLuckyChests(userName);
@@ -924,16 +918,6 @@ if (userName && adminEmail) {
     generateScrollableDates();
     showAdminControlsIfNeeded();
 });
-
-
-
-
-
-
-
-
-
-
 
 async function populateUserDropdown(currentUser) {
     const userDropdown = document.getElementById("userDropdown");

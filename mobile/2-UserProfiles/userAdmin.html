@@ -268,7 +268,7 @@
 
 
   <div class="footer">
-    <a href="/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon active" aria-label="Home">
+    <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
         <span>Home</span>
     </a>
@@ -289,32 +289,36 @@
 
 
   <script>
-    
-document.addEventListener("DOMContentLoaded", function () {
-    const urlParams = new URLSearchParams(window.location.search);
-    const adminEmail = urlParams.get("admin") || localStorage.getItem("currentAdminEmail");
-    const user = urlParams.get("user") || localStorage.getItem("currentUser");
 
-    const profileButton = document.getElementById("profileButton");
-    if (adminEmail && user) {
-        profileButton.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+// Dynamically set footer button links and active state
+const urlParams = new URLSearchParams(window.location.search);
+const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
+const userName = urlParams.get('user') || '';
+const basePath = '/BeeMazing-Y1/mobile/2-UserProfiles';
+
+const homeButton = document.getElementById('homeButton');
+const profileButton = document.getElementById('profileButton');
+const marketButton = document.getElementById('marketButton');
+const rewardsButton = document.getElementById('rewardsButton');
+
+if (adminEmail && userName) {
+    homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+    profileButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+}
+marketButton.href = '/BeeMazing-Y1/mobile/4-Market/market.html';
+rewardsButton.href = '/BeeMazing-Y1/mobile/4-Market/market.html'; // Adjust if Rewards has a different page
+
+document.querySelectorAll('.footer a').forEach(link => {
+    const currentPath = window.location.pathname.replace(/\/$/, '');
+    const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
+    if (currentPath === linkPath) {
+        link.classList.add('active');
     } else {
-        profileButton.href = "/BeeMazing-Y1/mobile/1-Home/home.html"; // Fallback if no user data
-        console.warn("Missing admin or user data for Profile button navigation");
+        link.classList.remove('active');
     }
-
-    document.querySelectorAll('.footer a').forEach(link => {
-        const currentPath = window.location.pathname.replace(/\/$/, '');
-        const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
-        if (currentPath === linkPath) {
-            link.classList.add('active');
-        } else {
-            link.classList.remove('active');
-        }
-    });
 });
 
-const adminEmail = localStorage.getItem("currentAdminEmail");
+
 let selectedDate = new Date().toLocaleDateString("sv-SE");
 let allUsers = [];
 const expandedTasks = new Set();
