@@ -449,17 +449,23 @@ closeMenu.addEventListener('click', () => {
 });
 
 // Set side menu links
-const taskSettingsLink = document.getElementById('taskSettingsLink');
-const marketDashLink = document.getElementById('marketDashLink');
-const userManagementLink = document.getElementById('userManagementLink');
-const logoutLink = document.getElementById('logoutLink');
+        const taskSettingsLink = document.getElementById('taskSettingsLink');
+        const marketDashLink = document.getElementById('marketDashLink');
+        const userManagementLink = document.getElementById('userManagementLink');
+        const logoutLink = document.getElementById('logoutLink');
 
-if (adminEmail && userName) {
-    taskSettingsLink.href = `${basePath}/tasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-    marketDashLink.href = `${basePath}/market.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-    userManagementLink.href = `${basePath}/home.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-    logoutLink.href = `${basePath}/login.html`;
-}
+        if (adminEmail && userName) {
+            taskSettingsLink.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+            marketDashLink.href = `/BeeMazing-Y1/mobile/4-Market/market.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+            userManagementLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+            logoutLink.href = `/BeeMazing-Y1/mobile/1-Home/login.html`;
+        }
+
+        // Clear localStorage on logout
+        logoutLink.addEventListener('click', () => {
+            localStorage.removeItem('currentAdminEmail');
+            localStorage.removeItem('userData');
+        });
 
 
 
