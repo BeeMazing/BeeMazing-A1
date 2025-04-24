@@ -980,7 +980,7 @@ async function populateUserDropdown(currentUser) {
 
 
 
-        async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
+async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
   const userTasksDiv = document.getElementById("userTasks");
   userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
 
@@ -992,7 +992,6 @@ async function populateUserDropdown(currentUser) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
     tasks = data.tasks || [];
-    console.log(`Loaded tasks for ${userName} on ${selectedDate}:`, tasks.map(t => ({ title: t.title, date: t.date })));
   } catch (err) {
     console.error("Failed to fetch tasks from server:", err);
     userTasksDiv.innerHTML = "<p>Failed to load tasks. Please try again later.</p>";
@@ -1006,10 +1005,7 @@ async function populateUserDropdown(currentUser) {
   }
 
   const userTasks = tasks.filter(task => {
-    if (!task || !task.users || !task.title || !task.date) {
-      console.warn("Skipping invalid task:", task);
-      return false;
-    }
+    if (!task || !task.users || !task.title || !task.date) return false;
 
     const dateRange = task.date.split(" to ");
     const startDateStr = dateRange[0];
@@ -1018,16 +1014,17 @@ async function populateUserDropdown(currentUser) {
     const endDate = parseLocalDate(endDateStr);
     const currentDate = parseLocalDate(selectedDate);
 
-    if (isNaN(startDate) || isNaN(endDate) || isNaN(currentDate)) {
-      console.warn("Invalid dates in task:", task);
-      return false;
-    }
     if (currentDate < startDate || currentDate > endDate) return false;
 
     const repeat = task.repeat || "Daily";
-    let requiredTimes = task.timesPerDay || 1;
-    if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-    if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+    let requiredTimes = 1;
+    if (task.settings === "Rotation") {
+      requiredTimes = task.users?.length || 1;
+    } else {
+      if (repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+      if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+      if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+    }
 
     const userOrder = [...task.users];
     const fullTurnOrder = [];
@@ -1052,15 +1049,15 @@ async function populateUserDropdown(currentUser) {
     const taskDiv = document.createElement("div");
     taskDiv.className = "task-item";
 
-    const dateRange = task.date.split(" to ");
-    const startDateStr = dateRange[0];
-    const startDate = parseLocalDate(startDateStr);
-    const currentDate = parseLocalDate(selectedDate);
-
     const repeat = task.repeat || "Daily";
-    let requiredTimes = task.timesPerDay || 1;
-    if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-    if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+    let requiredTimes = 1;
+    if (task.settings === "Rotation") {
+      requiredTimes = task.users?.length || 1;
+    } else {
+      if (repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+      if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+      if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+    }
 
     const userOrder = [...task.users];
     const fullTurnOrder = [];
@@ -1071,7 +1068,6 @@ async function populateUserDropdown(currentUser) {
 
     let pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
     let completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-    // Count both completed and pending completions to advance the turn
     let completedTimes = completedUsers.length + pendingUsers.length;
 
     let progressText = completedTimes >= requiredTimes
@@ -1101,6 +1097,8 @@ async function populateUserDropdown(currentUser) {
       turnText = `<span style="color: orange;">${replacements}</span><br>`;
     } else if (showTurn) {
       turnText = `Turn: ${currentTurn}<br>`;
+    } else {
+      turnText = `<span style="color: green;">Turn: All done!</span><br>`;
     }
 
     taskDiv.innerHTML = `
@@ -1110,7 +1108,7 @@ async function populateUserDropdown(currentUser) {
       Progress: ${progressText}
     `;
 
-    const canFinish = isToday && currentTurn === userName && completedTimes < requiredTimes && !pendingUsers.includes(userName) && !completedUsers.includes(userName);
+    const canFinish = isToday && currentTurn === userName && completedTimes < requiredTimes && !isPending && !isCompleted;
 
     if (canFinish) {
       const finishedButton = document.createElement("button");
@@ -1175,7 +1173,6 @@ async function populateUserDropdown(currentUser) {
     userTasksDiv.appendChild(taskDiv);
   });
 }
-
 
 
 
