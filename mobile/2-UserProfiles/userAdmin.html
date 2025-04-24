@@ -452,6 +452,18 @@ body.menu-open {
 const urlParams = new URLSearchParams(window.location.search);
 const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
 const userName = urlParams.get('user') || '';
+
+// 🔐 Make sure adminEmail gets saved for future use
+if (urlParams.get('admin')) {
+  localStorage.setItem('currentAdminEmail', urlParams.get('admin'));
+}
+
+// ❌ Stop if adminEmail is still missing
+if (!adminEmail) {
+  document.getElementById("taskContainer").innerHTML = "<p style='color: red;'>Missing admin email. Cannot load tasks.</p>";
+  throw new Error("Missing admin email");
+}
+
 const basePath = '/BeeMazing-Y1/mobile/2-UserProfiles';
 
 const homeButton = document.getElementById('homeButton');
