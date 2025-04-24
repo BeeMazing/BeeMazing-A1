@@ -980,135 +980,7 @@ async function populateUserDropdown(currentUser) {
 
 
 
-
-
-
-function calculateTurn(task, selectedDate) {
-  if (task.settings !== "Rotation") {
-    const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
-    const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-    const pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
-    const allCompletedUsers = [...new Set([...completedUsers, ...pendingUsers])];
-    const completedCount = allCompletedUsers.length;
-    const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                       task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                       task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-
-    return {
-      currentTurn: userOrder.length > 0 ? userOrder.join(", ") : "No users assigned",
-      nextUser: "—",
-      completedCount,
-      repeatLimit
-    };
-  }
-
-  const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
-  const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                     task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                     task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-  const tempTurnReplacement = task.tempTurnReplacement?.[selectedDate] || {};
-  const assignedUsers = [...userOrder];
-  Object.entries(tempTurnReplacement).forEach(([index, user]) => {
-    assignedUsers[parseInt(index)] = user;
-  });
-
-  const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-  const pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
-  const allCompletedUsers = [...new Set([...completedUsers, ...pendingUsers])];
-  const completedCount = allCompletedUsers.length;
-  const completedSet = new Set(allCompletedUsers);
-
-  let lastTurnUser = task.turn || (userOrder.length > 0 ? userOrder[0] : null);
-  let lastTurnDate = task.date.split(" to ")[0];
-
-  if (task.completions) {
-    const completionDates = Object.keys(task.completions)
-      .filter(date => new Date(date) < new Date(selectedDate))
-      .sort((a, b) => new Date(b) - new Date(a));
-    if (completionDates.length > 0) {
-      lastTurnDate = completionDates[0];
-      const lastCompletions = task.completions[completionDates[0]];
-      if (lastCompletions.length > 0) {
-        lastTurnUser = lastCompletions[lastCompletions.length - 1];
-      }
-    }
-  }
-
-  let currentTurn = null;
-  let nextUser = null;
-
-  function parseLocalDate(dateStr) {
-    const [year, month, day] = dateStr.split("-").map(Number);
-    return new Date(year, month - 1, day);
-  }
-
-  const selected = parseLocalDate(selectedDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  let currentIndex = assignedUsers.indexOf(lastTurnUser);
-  if (currentIndex === -1) currentIndex = 0;
-
-  if (selected < today) {
-    for (let i = 0; i < assignedUsers.length; i++) {
-      if (!completedSet.has(assignedUsers[i])) {
-        currentTurn = assignedUsers[i];
-        break;
-      }
-    }
-    if (currentTurn) {
-      const currentIndex = assignedUsers.indexOf(currentTurn);
-      for (let i = currentIndex + 1; i < assignedUsers.length; i++) {
-        if (!completedSet.has(assignedUsers[i])) {
-          nextUser = assignedUsers[i];
-          break;
-        }
-      }
-    }
-  } else if (selected.getTime() === today.getTime()) {
-    for (let i = 0; i < assignedUsers.length; i++) {
-      if (!completedSet.has(assignedUsers[(currentIndex + i) % assignedUsers.length])) {
-        currentTurn = assignedUsers[(currentIndex + i) % assignedUsers.length];
-        break;
-      }
-    }
-    if (currentTurn) {
-      const currentIndex = assignedUsers.indexOf(currentTurn);
-      for (let i = currentIndex + 1; i < assignedUsers.length; i++) {
-        if (!completedSet.has(assignedUsers[i])) {
-          nextUser = assignedUsers[i];
-          break;
-        }
-      }
-      if (!nextUser) {
-        for (let i = 0; i < assignedUsers.length; i++) {
-          if (!completedSet.has(assignedUsers[i])) {
-            nextUser = assignedUsers[i];
-            break;
-          }
-        }
-      }
-    }
-  } else {
-    const daysDiff = Math.floor((selected - parseLocalDate(lastTurnDate)) / (1000 * 60 * 60 * 24));
-    const totalCompletions = daysDiff * repeatLimit;
-    currentIndex = (currentIndex + totalCompletions) % assignedUsers.length;
-    currentTurn = assignedUsers[currentIndex];
-    nextUser = assignedUsers[(currentIndex + 1) % assignedUsers.length];
-  }
-
-  return {
-    currentTurn: currentTurn || "All done!",
-    nextUser: nextUser || "—",
-    completedCount,
-    repeatLimit
-  };
-}
-
-
-
-
-
-async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
+        async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
   const userTasksDiv = document.getElementById("userTasks");
   userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
 
@@ -1152,7 +1024,19 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     }
     if (currentDate < startDate || currentDate > endDate) return false;
 
-    return task.users.includes(userName);
+    const repeat = task.repeat || "Daily";
+    let requiredTimes = task.timesPerDay || 1;
+    if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+    if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+
+    const userOrder = [...task.users];
+    const fullTurnOrder = [];
+    for (let i = 0; i < requiredTimes; i++) {
+      const user = task.tempTurnReplacement?.[selectedDate]?.[i] || userOrder[i % userOrder.length];
+      fullTurnOrder.push(user);
+    }
+
+    return userOrder.includes(userName) || fullTurnOrder.includes(userName);
   });
 
   userTasksDiv.innerHTML = "";
@@ -1168,36 +1052,65 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     const taskDiv = document.createElement("div");
     taskDiv.className = "task-item";
 
-    const { currentTurn, completedCount, repeatLimit } = calculateTurn(task, selectedDate);
-    const isCompleted = completedCount >= repeatLimit;
-    const pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
-    const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-    const isPending = pendingUsers.includes(userName);
-    const isUserCompleted = completedUsers.includes(userName);
+    const dateRange = task.date.split(" to ");
+    const startDateStr = dateRange[0];
+    const startDate = parseLocalDate(startDateStr);
+    const currentDate = parseLocalDate(selectedDate);
 
-    let progressText = isCompleted
+    const repeat = task.repeat || "Daily";
+    let requiredTimes = task.timesPerDay || 1;
+    if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+    if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+
+    const userOrder = [...task.users];
+    const fullTurnOrder = [];
+    for (let i = 0; i < requiredTimes; i++) {
+      const user = task.tempTurnReplacement?.[selectedDate]?.[i] || userOrder[i % userOrder.length];
+      fullTurnOrder.push(user);
+    }
+
+    let pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
+    let completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+    // Count both completed and pending completions to advance the turn
+    let completedTimes = completedUsers.length + pendingUsers.length;
+
+    let progressText = completedTimes >= requiredTimes
       ? `<span style="color: green; font-weight: bold;">Completed</span>`
-      : `${completedCount}/${repeatLimit}`;
+      : `${completedTimes}/${requiredTimes}`;
 
-    let assignmentText = task.settings === "Rotation"
-      ? `Turn: ${currentTurn}`
-      : `Assigned: ${currentTurn}`;
+    const userTurnIndexes = [];
+    const replacedIndexes = [];
+    fullTurnOrder.forEach((user, index) => {
+      if (user === userName) {
+        userTurnIndexes.push(index);
+      } else if (userOrder[index % userOrder.length] === userName && user !== userName) {
+        replacedIndexes.push({ index, by: user });
+      }
+    });
+
+    const isPending = pendingUsers.includes(userName);
+    const isCompleted = completedUsers.includes(userName);
+
+    const currentTurnIndex = completedTimes < requiredTimes ? completedTimes : 0;
+    const currentTurn = fullTurnOrder[currentTurnIndex];
+    const showTurn = completedTimes < requiredTimes;
+
+    let turnText = '';
+    if (replacedIndexes.length > 0) {
+      const replacements = replacedIndexes.map(r => `Replaced by ${r.by} for Turn ${r.index + 1}`).join('<br>');
+      turnText = `<span style="color: orange;">${replacements}</span><br>`;
+    } else if (showTurn) {
+      turnText = `Turn: ${currentTurn}<br>`;
+    }
 
     taskDiv.innerHTML = `
       <strong>${task.title || "Untitled Task"}</strong><br>
-      ${assignmentText}<br>
+      ${turnText}
       Honey: ${task.reward || "0"} 🍯<br>
       Progress: ${progressText}
     `;
 
-    let canFinish = false;
-    if (isToday && !isPending && !isUserCompleted && completedCount < repeatLimit) {
-      if (task.settings === "Rotation") {
-        canFinish = currentTurn === userName;
-      } else {
-        canFinish = task.users.includes(userName);
-      }
-    }
+    const canFinish = isToday && currentTurn === userName && completedTimes < requiredTimes && !pendingUsers.includes(userName) && !completedUsers.includes(userName);
 
     if (canFinish) {
       const finishedButton = document.createElement("button");
@@ -1214,36 +1127,51 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     statusDiv.style.marginTop = "10px";
     statusDiv.style.fontWeight = "bold";
 
-    const taskDate = parseLocalDate(selectedDate);
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-
-    let statusText, color, emoji;
-    if (isUserCompleted) {
-      emoji = "✅";
-      color = "green";
-      statusText = "Accepted";
-    } else if (isPending) {
-      emoji = "⏳";
-      color = "orange";
-      statusText = "Pending Review";
+    if (userTurnIndexes.length === 0 && replacedIndexes.length === 0) {
+      statusDiv.innerHTML = "You: Not Assigned";
+      statusDiv.style.color = "gray";
     } else {
-      const isPast = taskDate < now;
-      if (isPast) {
-        emoji = "❌";
-        color = "red";
-        statusText = "Incomplete";
-      } else {
-        emoji = "⏳";
-        color = "orange";
-        statusText = "Pending";
-      }
+      statusDiv.innerHTML = "You:<br>";
+      const taskDate = new Date(selectedDate);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      userTurnIndexes.forEach((turnIndex, i) => {
+        let emoji, color, statusText;
+
+        if (isCompleted) {
+          emoji = "✅";
+          color = "green";
+          statusText = `Turn ${turnIndex + 1} - Accepted`;
+        } else if (isPending) {
+          emoji = "⏳";
+          color = "orange";
+          statusText = `Turn ${turnIndex + 1} - Pending Review`;
+        } else {
+          const isPast = taskDate < now;
+          if (isPast) {
+            emoji = "❌";
+            color = "red";
+            statusText = `Turn ${turnIndex + 1} - Incomplete`;
+          } else {
+            emoji = "⏳";
+            color = "orange";
+            statusText = `Turn ${turnIndex + 1} - Pending`;
+          }
+        }
+
+        const line = `<span style="color: ${color}">${emoji} ${statusText}</span><br>`;
+        statusDiv.innerHTML += line;
+      });
+
+      replacedIndexes.forEach(r => {
+        const line = `<span style="color: orange">❌ Turn ${r.index + 1} - Replaced by ${r.by}</span><br>`;
+        statusDiv.innerHTML += line;
+      });
     }
 
-    statusDiv.innerHTML = `You: <span style="color: ${color}">${emoji} ${statusText}</span>`;
     taskDiv.appendChild(statusDiv);
-
-    taskDiv.addEventListener("click", () => showTaskDetails(task, selectedDate));
+    taskDiv.addEventListener("click", () => showTaskDetails(task));
     userTasksDiv.appendChild(taskDiv);
   });
 }
@@ -1388,179 +1316,229 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
           }, 1000);
         }
         
-
-
-
-
-        function showTaskDetails(task, selectedDate) {
-  if (!selectedDate) return;
-
-  const { currentTurn, completedCount, repeatLimit } = calculateTurn(task, selectedDate);
-  const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-  const pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
-
-  let taskDetails = "";
-  if (task.title) taskDetails += `<strong>Title:</strong> ${task.title}<br>`;
-  if (task.notes) taskDetails += `<strong>Notes:</strong> ${task.notes}<br>`;
-  if (task.room) taskDetails += `<strong>Room:</strong> ${task.room}<br>`;
-  if (task.repeat) {
-    taskDetails += `<strong>Frequency:</strong> ${task.repeat}`;
-    if (task.repeat === "Daily" && task.timesPerDay)
-      taskDetails += ` - ${task.timesPerDay} time(s) per day`;
-    if (task.repeat === "Weekly" && task.timesPerWeek)
-      taskDetails += ` - ${task.timesPerWeek} time(s) per week`;
-    if (task.repeat === "Monthly" && task.timesPerMonth)
-      taskDetails += ` - ${task.timesPerMonth} time(s) per month`;
-    taskDetails += "<br>";
-  }
-  if (task.settings) taskDetails += `<strong>Settings:</strong> ${task.settings}<br>`;
-  if (task.date) taskDetails += `<strong>Date:</strong> ${task.date}<br>`;
-  if (task.reminder) taskDetails += `<strong>Reminder:</strong> Yes<br>`;
-  if (task.users?.length) taskDetails += `<strong>Users:</strong> ${task.users.join(", ")}<br>`;
-  if (task.reward && task.reward !== "0") taskDetails += `<strong>Reward:</strong> ${task.reward} 🍯<br>`;
-
-  if (completedCount < repeatLimit) {
-    taskDetails += task.settings === "Rotation"
-      ? `<strong>Current Turn:</strong> ${currentTurn}<br>`
-      : `<strong>Assigned:</strong> ${currentTurn}<br>`;
-  }
-
-  if (completedUsers.length > 0 || pendingUsers.length > 0) {
-    taskDetails += `<div style="margin-top: 8px;">`;
-    if (completedUsers.length > 0) {
-      taskDetails += `<strong>Accepted:</strong> ${completedUsers.join(", ")}<br>`;
-    }
-    if (pendingUsers.length > 0) {
-      taskDetails += `<strong>Pending Review:</strong> ${pendingUsers.join(", ")}<br>`;
-    }
-    taskDetails += `</div>`;
-  }
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const currentUserName = urlParams.get('user');
-  const today = new Date().toLocaleDateString("sv-SE");
-  const isToday = selectedDate === today;
-  const isUserCompleted = completedUsers.includes(currentUserName);
-  const isPending = pendingUsers.includes(currentUserName);
-
-  let canFinish = false;
-  if (isToday && !isPending && !isUserCompleted && completedCount < repeatLimit) {
-    if (task.settings === "Rotation") {
-      canFinish = currentTurn === currentUserName;
-    } else {
-      canFinish = task.users.includes(currentUserName);
-    }
-  }
-
-  if (canFinish) {
-    taskDetails += `
-      <br>
-      <button id="finishTaskBtn" style="
-        padding: 8px 14px;
-        background: green;
-        color: white;
-        font-weight: bold;
-        border-radius: 6px;
-        border: none;
-        cursor: pointer;">Finish Task ✅</button>
-    `;
-  }
-
-  const modal = document.createElement("div");
-  modal.className = "modal";
-  modal.innerHTML = `<div class="modal-content">${taskDetails}</div>`;
-  document.body.appendChild(modal);
-
-  modal.addEventListener("click", (e) => {
-    if (e.target.classList.contains("modal")) {
-      modal.remove();
-    }
-  });
-
-  const finishBtn = document.getElementById("finishTaskBtn");
-  if (finishBtn) {
-    finishBtn.addEventListener("click", async () => {
-      await finishTask(currentUserName, task, selectedDate);
-      modal.remove();
-    });
-  }
-}
-
-
-
-
-
+        function showTaskDetails(task) {
+          const selectedDate = document.querySelector(".day.selected")?.dataset.date;
+          if (!selectedDate) return;
+        
+          function parseLocalDate(dateStr) {
+            const [year, month, day] = dateStr.split("-").map(Number);
+            return new Date(year, month - 1, day);
+          }
+        
+          const dateRange = task.date.split(" to ");
+          const startDateStr = dateRange[0];
+          const startDate = parseLocalDate(startDateStr);
+          const currentDate = parseLocalDate(selectedDate);
+          const diffDays = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+          const userOrder = [...task.users];
+          let currentUser;
+          let nextTurn = [];
+        
+          const isDailyMoreThanOnce = task.repeat === "Daily" && task.timesPerDay > 1;
+        
+          const completedRaw = task.completions?.[selectedDate] || [];
+          const completedUsers = Array.isArray(completedRaw) ? completedRaw : [];
+        
+          let requiredTimes = 1;
+          if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+          if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+          if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+        
+          if (isDailyMoreThanOnce) {
+            const totalRequiredCompletions = task.timesPerDay;
+            const completionIndex = completedUsers.length % userOrder.length;
+            currentUser = userOrder[completionIndex];
+            let index = completionIndex;
+            for (let i = 1; i < userOrder.length; i++) {
+              index = (completionIndex + i) % userOrder.length;
+              nextTurn.push(userOrder[index]);
+            }
+          } else {
+            let currentIndex;
+            if (task.repeat === "Daily" && task.timesPerDay === 1) {
+              currentIndex = diffDays % userOrder.length;
+            } else {
+              const storedTurn = task.tempTurnReplacement?.replacement || task.turn || task.users[0];
+              currentIndex = userOrder.indexOf(storedTurn);
+            }
+            currentUser = userOrder[currentIndex];
+            let index = currentIndex;
+            for (let i = 1; i < task.users.length; i++) {
+              index = (currentIndex + i) % task.users.length;
+              nextTurn.push(userOrder[index]);
+            }
+          }
+        
+          let taskDetails = "";
+          if (task.title) taskDetails += `<strong>Title:</strong> ${task.title}<br>`;
+          if (task.notes) taskDetails += `<strong>Notes:</strong> ${task.notes}<br>`;
+          if (task.room) taskDetails += `<strong>Room:</strong> ${task.room}<br>`;
+          if (task.repeat) {
+            taskDetails += `<strong>Frequency:</strong> ${task.repeat}`;
+            if (task.repeat === "Daily" && task.timesPerDay)
+              taskDetails += ` - ${task.timesPerDay} time(s) per day`;
+            if (task.repeat === "Weekly" && task.timesPerWeek)
+              taskDetails += ` - ${task.timesPerWeek} time(s) per week`;
+            if (task.repeat === "Monthly" && task.timesPerMonth)
+              taskDetails += ` - ${task.timesPerMonth} time(s) per month`;
+            taskDetails += "<br>";
+          }
+          if (task.settings) taskDetails += `<strong>Settings:</strong> ${task.settings}<br>`;
+          if (task.date) taskDetails += `<strong>Date:</strong> ${task.date}<br>`;
+          if (task.reminder) taskDetails += `<strong>Reminder:</strong> Yes<br>`;
+          if (task.users?.length) taskDetails += `<strong>Users:</strong> ${task.users.join(", ")}<br>`;
+          if (task.reward && task.reward !== "0") taskDetails += `<strong>Reward:</strong> ${task.reward} 🍯<br>`;
+        
+          if (completedUsers.length < requiredTimes) {
+            taskDetails += `<strong>Current Turn:</strong> ${currentUser}<br>`;
+            taskDetails += `<strong>Next:</strong> ${nextTurn.length > 0 ? nextTurn.join(" → ") : "-"}<br>`;
+          }
+        
+          if (completedUsers.length > 0) {
+            taskDetails += `
+              <div style="margin-top: 8px;">
+                <strong>Completed by:</strong> ${completedUsers.join(", ")}
+                <button id="editCompletionBtn" style="margin-left: 10px; padding: 4px 8px; font-size: 12px; border-radius: 6px; background: var(--primary-color); color: var(--secondary-color); border: none; cursor: pointer;">Edit</button>
+              </div>
+            `;
+          }
+        
+          taskDetails += `
+            <br>
+            <button id="editTurnBtn" style="
+              padding: 6px 10px;
+              background: var(--primary-color);
+              color: var(--secondary-color);
+              font-weight: bold;
+              border-radius: 6px;
+              border: none;
+              cursor: pointer;">Edit Turn Order</button>
+               
+            <button id="editTaskBtn" style="
+              padding: 6px 10px;
+              background: var(--secondary-color);
+              color: var(--accent-color);
+              font-weight: bold;
+              border-radius: 6px;
+              border: none;
+              cursor: pointer;">Edit Task</button>
+          `;
+        
+          const urlParams = new URLSearchParams(window.location.search);
+          const currentUserName = urlParams.get('user');
+          const today = new Date().toLocaleDateString("sv-SE");
+          const isToday = selectedDate === today;
+          const canFinish = isToday && currentUser === currentUserName && completedUsers.length < requiredTimes;
+        
+          if (canFinish) {
+            taskDetails += `
+            <br><br>
+            <button id="finishTaskBtn" style="
+              padding: 8px 14px;
+              background: green;
+              color: white;
+              font-weight: bold;
+              border-radius: 6px;
+              border: none;
+              cursor: pointer;">Finish Task ✅</button>
+            `;
+          }
+        
+          const modal = document.createElement("div");
+          modal.className = "task-modal";
+          modal.innerHTML = `<div class="modal-content">${taskDetails}</div>`;
+          document.body.appendChild(modal);
+        
+          modal.addEventListener("click", (e) => {
+            if (e.target.classList.contains("task-modal")) {
+              modal.remove();
+            }
+          });
+        
+          document.getElementById("editTurnBtn").addEventListener("click", () => {
+            modal.remove();
+            showEditTurnModal(task);
+          });
+        
+          document.getElementById("editTaskBtn").addEventListener("click", () => {
+            localStorage.setItem("familyApp_editTask", JSON.stringify(task));
+            localStorage.setItem("familyApp_editTask_index", task.title + "-" + task.date);
+            window.location.href = "/BeeMazing-Y1/mobile/3-Tasks/addtasks.html";
+          });
+        
+          const editBtn = document.getElementById("editCompletionBtn");
+          if (editBtn) {
+            editBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              modal.remove();
+              showEditCompletionModal(task, completedUsers, selectedDate, modal);
+            });
+          }
+        
+          const finishBtn = document.getElementById("finishTaskBtn");
+          if (finishBtn) {
+            finishBtn.addEventListener("click", async () => {
+              await finishTask(currentUserName, task, selectedDate);
+              modal.remove();
+            });
+          }
+        }
+        
         let monthOffset = 0;
         
-
-
-
-
         function generateScrollableDates(monthOffset = 0) {
-  const container = document.getElementById("dayScrollContainer");
-  container.innerHTML = "";
-
-  const today = new Date();
-  today.setDate(1);
-  today.setMonth(today.getMonth() + monthOffset);
-
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-  document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
-    month: 'long',
-    year: 'numeric'
-  });
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const userName = urlParams.get('user');
-
-  for (let i = 1; i <= daysInMonth; i++) {
-    const date = new Date(currentYear, currentMonth, i);
-    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-
-    const btn = document.createElement("div");
-    btn.className = "day";
-    btn.textContent = i;
-    btn.dataset.date = dateStr;
-
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-      btn.classList.add("selected");
-      loadUserTasks(userName, dateStr);
-    });
-
-    const now = new Date();
-    const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    if (dateStr === nowStr) {
-      btn.classList.add("selected");
-      loadUserTasks(userName, dateStr);
-    }
-
-    container.appendChild(btn);
-  }
-
-  setTimeout(() => {
-    const selected = document.querySelector(".day.selected");
-    if (selected) {
-      selected.scrollIntoView({ behavior: "smooth", inline: "center" });
-    } else {
-      const firstDay = container.querySelector(".day");
-      if (firstDay) {
-        firstDay.classList.add("selected");
-        loadUserTasks(userName, firstDay.dataset.date);
-      }
-    }
-  }, 50);
-}
-
-
-
-
-
-
-
+          const container = document.getElementById("dayScrollContainer");
+          container.innerHTML = "";
+        
+          const today = new Date();
+          today.setDate(1);
+          today.setMonth(today.getMonth() + monthOffset);
+        
+          const currentMonth = today.getMonth();
+          const currentYear = today.getFullYear();
+          const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        
+          document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
+            month: 'long',
+            year: 'numeric'
+          });
+        
+          const urlParams = new URLSearchParams(window.location.search);
+          const userName = urlParams.get('user');
+        
+          for (let i = 1; i <= daysInMonth; i++) {
+            const date = new Date(currentYear, currentMonth, i);
+            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        
+            const btn = document.createElement("div");
+            btn.className = "day";
+            btn.textContent = i;
+            btn.dataset.date = dateStr;
+        
+            btn.addEventListener("click", () => {
+              document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+              btn.classList.add("selected");
+              loadUserTasks(userName, dateStr);
+            });
+        
+            const now = new Date();
+            const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            if (dateStr === nowStr) {
+              btn.classList.add("selected");
+              loadUserTasks(userName, dateStr);
+            }
+        
+            container.appendChild(btn);
+          }
+        
+          setTimeout(() => {
+            const selected = document.querySelector(".day.selected");
+            if (selected) {
+              selected.scrollIntoView({ behavior: "smooth", inline: "center" });
+            }
+          }, 50);
+        }
+        
         document.getElementById("prevMonth").addEventListener("click", () => {
           monthOffset--;
           generateScrollableDates(monthOffset);
@@ -1916,7 +1894,7 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
 
 
         async function finishTask(currentUser, task, selectedDate) {
-  const today = selectedDate || new Date().toLocaleDateString("sv-SE");
+  const today = selectedDate || new Date().toISOString().split("T")[0];
   const adminEmail = localStorage.getItem("currentAdminEmail");
   const button = event.target;
   button.disabled = true;
@@ -1948,7 +1926,6 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     popup.textContent = `Task Submitted! Waiting for Admin Review`;
     setTimeout(() => popup.remove(), 2000);
 
-    await updateLuckyChestProgress(currentUser, Number(task.reward) || 0);
     await loadUserTasks(currentUser, selectedDate);
   } catch (err) {
     console.error("Error submitting task:", err);
@@ -1958,6 +1935,8 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     button.disabled = false;
   }
 }
+
+
 
 
 
