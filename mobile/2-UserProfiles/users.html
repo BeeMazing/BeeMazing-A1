@@ -910,7 +910,9 @@ if (userName && adminEmail) {
     });
 
     populateUserDropdown(userName);
-    loadUserTasks(userName);
+    const today = new Date().toLocaleDateString("sv-SE");
+loadUserTasks(userName, today); // ✅ pass today's date explicitly
+
     loadUserReward(userName);
     loadLuckyChests(userName);
 
