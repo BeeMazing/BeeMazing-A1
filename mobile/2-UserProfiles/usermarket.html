@@ -369,17 +369,24 @@
           const isUserAdmin = permissions[userName] === "Admin";
   
           // Set footer button links
-          const homeButton = document.getElementById("homeButton");
-          const profileButton = document.getElementById("profileButton");
-          const marketButton = document.getElementById("marketButton");
-  
-          if (isUserAdmin && homeButton) {
-              homeButton.style.display = "flex";
-              homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-          }
-  
-          profileButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-          marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+// Set footer button links
+const homeButton = document.getElementById("homeButton");
+const profileButton = document.getElementById("profileButton");
+const marketButton = document.getElementById("marketButton");
+
+// Show Home button for admins, hide for non-admins
+if (homeButton) {
+    if (isUserAdmin) {
+        homeButton.style.display = "flex";
+        homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+    } else {
+        homeButton.style.display = "none";
+    }
+}
+
+// Set other button links
+profileButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
   
           // Set active state
           document.querySelectorAll('.footer a').forEach(link => {
