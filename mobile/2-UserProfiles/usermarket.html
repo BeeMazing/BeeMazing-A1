@@ -384,19 +384,16 @@ profileButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEma
 marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
   
           // Set active state
-          document.querySelectorAll('.footer a').forEach(link => {
-              const currentPath = window.location.pathname.replace(/\/$/, '');
-              const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
-              if (currentPath === linkPath) {
-                  link.classList.add('active');
-                  link.querySelector('img').style.filter = "invert(77%) sepia(88%) saturate(900%) hue-rotate(0deg) brightness(100%) contrast(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))";
-                  link.querySelector('span').style.color = "var(--primary-color)";
-              } else {
-                  link.classList.remove('active');
-                  link.querySelector('img').style.filter = "invert(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))";
-                  link.querySelector('span').style.color = "var(--text-color)";
-              }
-          });
+// Set active state
+document.querySelectorAll('.footer a').forEach(link => {
+    const currentPath = window.location.pathname.replace(/\/$/, '');
+    const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
+    if (currentPath === linkPath) {
+        link.classList.add('active');
+    } else {
+        link.classList.remove('active');
+    }
+});
   
           // Load initial tab
           showTab(tabParam);
