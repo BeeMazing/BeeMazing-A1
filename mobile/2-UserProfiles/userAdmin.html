@@ -812,19 +812,41 @@ if (isRotation) {
 
       console.log(`Task ${task.title}: fullTurn=${fullTurn}`); // Debug
 
-      fullTurn.forEach((entry, index) => {
+      const userCompletionCounts = {};
+const userPendingCounts = {};
+
+completions.forEach(u => {
+  userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
+});
+pendingCompletions.forEach(u => {
+  userPendingCounts[u] = (userPendingCounts[u] || 0) + 1;
+});
+
+fullTurn.forEach((entry, index) => {
   const user = entry.user;
   const repetition = entry.repetition || index + 1;
+
+  let isCompleted = false;
+  let isPending = false;
+
+  if (userCompletionCounts[user]) {
+    isCompleted = true;
+    userCompletionCounts[user]--;
+  } else if (userPendingCounts[user]) {
+    isPending = true;
+    userPendingCounts[user]--;
+  }
 
   tasksByTitle[task.title].turns.push({
     user,
     repetition,
     index,
     date: task.date,
-    isPending: pendingCompletions.includes(user),
-    isCompleted: completions.includes(user)
+    isPending,
+    isCompleted
   });
 });
+
 
     });
 
