@@ -35,9 +35,6 @@ if (!isAdmin && footer) {
 
   const usernameInput = document.getElementById("usernameInput");
   const userList = document.getElementById("userList");
-  const manageMembersBtn = document.getElementById("manageMembersBtn");
-  const manageMembersModal = document.getElementById("manageMembersModal");
-  const manageMembersList = document.getElementById("manageMembersList");
 
   // Determine the base path (mobile or web) based on the current URL
   const isMobile = window.location.pathname.includes("/BeeMazing-Y1/mobile/");
@@ -86,59 +83,18 @@ if (!isAdmin && footer) {
   }
 
 
-  // Add user when "Add" button is clicked
-  if (submitUserBtn) {
-      submitUserBtn.addEventListener("click", async function () {
-          const username = usernameInput.value.trim();
-          const errorMessage = document.getElementById("errorMessage");
 
-          if (username) {
-              try {
-                  const res = await fetch("https://beemazing.onrender.com/add-user", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ adminEmail: currentAdmin, newUser: username })
-                  });
-          
-                  const result = await res.json();
-                  if (result.success) {
-                      usernameInput.value = "";
-                      addUserModal.classList.remove("show");
-                      errorMessage.style.display = "none";
-          
-                      // Reload from server to sync
-                      fetchUsersFromServer(currentAdmin);
-          
-                      if (manageMembersModal && manageMembersModal.classList.contains("show")) {
-                          renderManageMembers();
-                      }
-          
-                      const encodedAdmin = encodeURIComponent(currentAdmin);
-                      const encodedUser = encodeURIComponent(username);
-                      const inviteLink = `${window.location.origin}/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodedAdmin}&user=${encodedUser}`;
-                      alert(`Send this link to the user: ${inviteLink}`);
-                  } else {
-                      errorMessage.textContent = "Failed to add user.";
-                      errorMessage.style.display = "block";
-                  }
-              } catch (err) {
-                  console.error("Failed to add user:", err);
-                  errorMessage.textContent = "Server error. Please try again.";
-                  errorMessage.style.display = "block";
-              }
-          } else {
-              errorMessage.textContent = "Please enter a valid user name.";
-              errorMessage.style.display = "block";
-          }
-          
 
-          const encodedAdmin = encodeURIComponent(currentAdmin);
-const encodedUser = encodeURIComponent(username);
-const inviteLink = `${window.location.origin}/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodedAdmin}&user=${encodedUser}`;
-alert(`Send this link to the user: ${inviteLink}`);
 
-      });
-  }
+
+
+
+
+
+
+
+
+
 
   // Close modal when clicking outside the modal content
   if (addUserModal) {
@@ -149,22 +105,9 @@ alert(`Send this link to the user: ${inviteLink}`);
       });
   }
 
-  // Close manage members modal when clicking outside
-  if (manageMembersModal) {
-      manageMembersModal.addEventListener("click", function (e) {
-          if (e.target === manageMembersModal) {
-              manageMembersModal.classList.remove("show");
-          }
-      });
-  }
 
-  // Show the manage members modal when "Manage Members" button is clicked
-  if (manageMembersBtn) {
-      manageMembersBtn.addEventListener("click", function () {
-          renderManageMembers();
-          manageMembersModal.classList.add("show");
-      });
-  }
+
+
 
   // Function to render users in the main list
   function renderUsers(usersFromServer, permissionsFromServer) {
@@ -240,54 +183,7 @@ alert(`Send this link to the user: ${inviteLink}`);
     
   
 
-  // Function to render users in the manage members modal
-  function renderManageMembers() {
-      if (!manageMembersList) return; // Skip if not in web version
   
-      manageMembersList.innerHTML = "";
-      const updatedUserData = JSON.parse(localStorage.getItem("userData")) || {};
-      const updatedUsers = updatedUserData[currentAdmin]?.users || [];
-  
-      updatedUsers.forEach((username, index) => {
-          const manageItem = document.createElement("li");
-          manageItem.classList.add("manage-members-item");
-  
-          // Input field for editing the username
-          const input = document.createElement("input");
-          input.type = "text";
-          input.value = username;
-          input.addEventListener("change", async function () {
-              const newName = input.value.trim();
-              if (newName !== "") {
-                  updatedUsers[index] = newName;
-                  updatedUserData[currentAdmin].users = updatedUsers;
-                  localStorage.setItem("userData", JSON.stringify(updatedUserData));
-                  renderUsers();
-                  renderManageMembers();
-              } else {
-                  // If the input is empty, treat it as a deletion
-                  await deleteUserFromServer(username);
-              }
-          });
-  
-          // Delete button
-          const deleteBtn = document.createElement("button");
-          deleteBtn.classList.add("delete-btn");
-          deleteBtn.textContent = "Delete";
-          deleteBtn.addEventListener("click", async function () {
-              await deleteUserFromServer(username);
-          });
-  
-          manageItem.appendChild(input);
-          manageItem.appendChild(deleteBtn);
-          manageMembersList.appendChild(manageItem);
-      });
-  
-      // Show a message if no users exist
-      if (updatedUsers.length === 0) {
-          manageMembersList.innerHTML = "<p>No members to manage.</p>";
-      }
-  }
   
 // Helper function to delete a user from the server
 async function deleteUserFromServer(username) {
