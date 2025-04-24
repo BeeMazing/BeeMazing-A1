@@ -452,21 +452,20 @@ closeMenu.addEventListener('click', () => {
 const taskSettingsLink = document.getElementById('taskSettingsLink');
         const marketDashLink = document.getElementById('marketDashLink');
         const userManagementLink = document.getElementById('userManagementLink');
+        const logoutLink = document.getElementById('logoutLink');
 
         if (adminEmail && userName) {
             taskSettingsLink.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
             marketDashLink.href = `/BeeMazing-Y1/mobile/4-Market/market.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
             userManagementLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+            logoutLink.href = `/BeeMazing-Y1/login.html`;
         }
 
-        // Logout button
-        const logoutBtn = document.getElementById('logoutBtn');
-        logoutBtn.addEventListener('click', () => {
+        // Clear localStorage on logout
+        logoutLink.addEventListener('click', () => {
             localStorage.removeItem('currentAdminEmail');
             localStorage.removeItem('userData');
-            window.location.href = '/BeeMazing-Y1/mobile/1-Home/login.html';
         });
-
 
 
 
