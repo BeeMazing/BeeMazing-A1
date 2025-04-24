@@ -252,10 +252,10 @@
 
 
 
- /* Menu Toggle Button */
- .menu-btn {
+/* Menu Toggle Button */
+.menu-btn {
         position: fixed;
-        top: 0;
+        top: 1px;
         left: 10px;
         background: var(--secondary-color);
         border: none;
@@ -263,7 +263,7 @@
         font-size: 24px;
         cursor: pointer;
         padding: 8px;
-        z-index: 201;
+        z-index: 202; /* Above overlay */
         transition: color 0.3s ease, background 0.3s ease;
     }
     .menu-btn:hover {
@@ -271,24 +271,58 @@
         background: var(--light-bg);
     }
 
-/* Side Menu */
-.side-menu {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 250px;
-    height: 100%;
-    background: var(--secondary-color);
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
-    transform: translateX(-100%);
-    transition: transform 0.3s ease-in-out;
-    z-index: 200;
-    display: flex;
-    flex-direction: column;
-}
-.side-menu.open {
-    transform: translateX(0);
-}
+    /* Side Menu */
+    .side-menu {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 250px;
+        height: 100%;
+        background: var(--secondary-color);
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+        z-index: 201; /* Above overlay, below menu-btn */
+        display: flex;
+        flex-direction: column;
+    }
+    .side-menu.open {
+        transform: translateX(0);
+    }
+
+
+/* Overlay */
+.overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        z-index: 200; /* Below menu and menu-btn */
+    }
+    .overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* Content Blur */
+    .content-blur {
+        transition: filter 0.3s ease;
+    }
+    body.menu-open .content-blur {
+        filter: blur(3px); /* Apply blur when menu is open */
+    }
+
+
+
+
+
+
+
 .menu-header {
     display: flex;
     justify-content: space-between;
@@ -360,31 +394,33 @@ body.menu-open {
 
 </head>
 <body>
-    <nav id="sideMenu" class="side-menu">
-        <div class="menu-header">
-            <h2>Admin Menu</h2>
-            <button id="closeMenu" class="close-btn" aria-label="Close Menu">×</button>
+    <body>
+        <nav id="sideMenu" class="side-menu">
+            <div class="menu-header">
+                <h2>Admin Menu</h2>
+                <button id="closeMenu" class="close-btn" aria-label="Close Menu">×</button>
+            </div>
+            <ul class="menu-items">
+                <li><a href="#" id="taskSettingsLink" class="menu-link">Task Settings</a></li>
+                <li><a href="#" id="marketDashLink" class="menu-link">Market Dash</a></li>
+                <li><a href="#" id="userManagementLink" class="menu-link">User Management</a></li>
+                <li><a href="#" id="logoutLink" class="menu-link">Logout</a></li>
+            </ul>
+        </nav>
+        <div id="overlay" class="overlay"></div>
+        <div class="date-header">
+            <button id="menuToggle" class="menu-btn" aria-label="Toggle Menu">☰</button>
+            <div class="month-nav">
+                <button id="prevMonth"><</button>
+                <span id="monthLabel">Month</span>
+                <button id="nextMonth">></button>
+            </div>
+            <div class="day-scroll-wrapper">
+                <button class="scroll-btn" id="scrollLeft"><</button>
+                <div class="day-scroll" id="dayScrollContainer"></div>
+                <button class="scroll-btn" id="scrollRight">></button>
+            </div>
         </div>
-        <ul class="menu-items">
-            <li><a href="#" id="taskSettingsLink" class="menu-link">Task Settings</a></li>
-            <li><a href="#" id="marketDashLink" class="menu-link">Market Dash</a></li>
-            <li><a href="#" id="userManagementLink" class="menu-link">User Management</a></li>
-            <li><a href="#" id="logoutLink" class="menu-link">Logout</a></li>
-        </ul>
-    </nav>
-    <div class="date-header">
-        <button id="menuToggle" class="menu-btn" aria-label="Toggle Menu">☰</button>
-        <div class="month-nav">
-            <button id="prevMonth"><</button>
-            <span id="monthLabel">Month</span>
-            <button id="nextMonth">></button>
-        </div>
-        <div class="day-scroll-wrapper">
-            <button class="scroll-btn" id="scrollLeft"><</button>
-            <div class="day-scroll" id="dayScrollContainer"></div>
-            <button class="scroll-btn" id="scrollRight">></button>
-        </div>
-    </div>
 
   <div id="taskContainer">Loading tasks...</div>
 
@@ -442,18 +478,33 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 // Side Menu Toggle
 const menuToggle = document.getElementById('menuToggle');
-const sideMenu = document.getElementById('sideMenu');
-const closeMenu = document.getElementById('closeMenu');
+    const sideMenu = document.getElementById('sideMenu');
+    const closeMenu = document.getElementById('closeMenu');
+    const overlay = document.getElementById('overlay');
+    const contentElements = document.querySelectorAll('.date-header, #taskContainer, .footer');
 
-menuToggle.addEventListener('click', () => {
-    sideMenu.classList.add('open');
-    document.body.classList.add('menu-open');
-});
+    function openMenu() {
+        sideMenu.classList.add('open');
+        overlay.classList.add('active');
+        document.body.classList.add('menu-open');
+        contentElements.forEach(el => el.classList.add('content-blur'));
+    }
 
-closeMenu.addEventListener('click', () => {
-    sideMenu.classList.remove('open');
-    document.body.classList.remove('menu-open');
-});
+    function closeMenuFn() {
+        sideMenu.classList.remove('open');
+        overlay.classList.remove('active');
+        document.body.classList.remove('menu-open');
+        contentElements.forEach(el => el.classList.remove('content-blur'));
+    }
+
+    menuToggle.addEventListener('click', openMenu);
+    closeMenu.addEventListener('click', closeMenuFn);
+    overlay.addEventListener('click', closeMenuFn);
+
+    // Prevent clicks inside the menu from closing it
+    sideMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
 
 
 // Set side menu links
