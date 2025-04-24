@@ -849,30 +849,25 @@ if (isRotation) {
       div.dataset.date = date;
       div.innerHTML = `
         <h3 class="task-title">${title}${pendingCount > 0 ? `<span class="notification-bubble">${pendingCount}</span>` : ''}</h3>
-<div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
-  ${turns.map(turn => `
-    <div class="turn-entry" draggable="true" data-index="${turn.index}" data-user="${turn.user}">
-      <p>
-        ${task.settings === "Rotation"
-          ? `Turn ${turn.index + 1}: ${turn.user} - ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}`
-          : `${turn.user} - Attempt ${turn.repetition}: ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}`
-        }
-      </p>
-      ${turn.isPending && !turn.isCompleted ? `
-        <button class="accept-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
-        <button class="decline-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
-      ` : turn.isCompleted ? `
-        <button class="revert-btn" onclick="handleRevert('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
-      ` : `
-        <select id="replace-select-${turn.index}">
-          <option value="">Select User</option>
-          ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
-        </select>
-        <button class="replace-btn" onclick="handleReplace('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
-      `}
-    </div>
-  `).join('')}
-</div>
+        <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
+          ${turns.map(turn => `
+            <div class="turn-entry" draggable="true" data-index="${turn.index}" data-user="${turn.user}">
+              <p>Turn ${turn.index + 1}: ${turn.user} - ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
+              ${turn.isPending && !turn.isCompleted ? `
+                <button class="accept-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
+                <button class="decline-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
+              ` : turn.isCompleted ? `
+                <button class="revert-btn" onclick="handleRevert('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
+              ` : `
+                <select id="replace-select-${turn.index}">
+                  <option value="">Select User</option>
+                  ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
+                </select>
+                <button class="replace-btn" onclick="handleReplace('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
+              `}
+            </div>
+          `).join('')}
+        </div>
       `;
       container.appendChild(div);
 
