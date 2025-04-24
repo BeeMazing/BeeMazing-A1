@@ -280,16 +280,13 @@
         <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
         <span>Market</span>
     </a>
-    <a href="#" id="rewardsButton" class="footer-icon" aria-label="Rewards">
-        <img src="/BeeMazing-Y1/mobile/1-Home/RewardsBtn.png" alt="Rewards" />
-        <span>Rewards</span>
-    </a>
 </div>
 
 
 
   <script>
 
+// Dynamically set footer button links and active state
 // Dynamically set footer button links and active state
 const urlParams = new URLSearchParams(window.location.search);
 const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
@@ -299,15 +296,14 @@ const basePath = '/BeeMazing-Y1/mobile/2-UserProfiles';
 const homeButton = document.getElementById('homeButton');
 const profileButton = document.getElementById('profileButton');
 const marketButton = document.getElementById('marketButton');
-const rewardsButton = document.getElementById('rewardsButton');
 
 if (adminEmail && userName) {
     homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
     profileButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+    marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
 }
-marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-rewardsButton.href = `${basePath}/userrewards.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
 
+// Set active state
 document.querySelectorAll('.footer a').forEach(link => {
     const currentPath = window.location.pathname.replace(/\/$/, '');
     const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
