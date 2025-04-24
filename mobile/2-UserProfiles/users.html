@@ -1046,7 +1046,11 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
 
     const totalDone = completedCount + pendingCount;
 
-    const isCompleted = totalDone >= requiredTimes;
+    const userCompletionCount = completionsToday.filter(u => u === userName).length;
+const userPendingCount = pendingToday.filter(u => u === userName).length;
+const userTotal = userCompletionCount + userPendingCount;
+const isCompleted = userTotal >= requiredTimes;
+
 
     let currentTurnUser = null;
     if (isRotation && !isCompleted) {
@@ -1063,7 +1067,8 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     }
 
     taskHTML += `Honey: ${task.reward || 0} 🍯<br>`;
-    taskHTML += `Progress: ${totalDone}/${requiredTimes}<br>`;
+    taskHTML += `Progress: ${userTotal}/${requiredTimes}<br>`;
+
 
     taskDiv.innerHTML = taskHTML;
 
