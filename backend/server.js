@@ -1316,9 +1316,21 @@ app.post("/api/complete-task", async (req, res) => {
     task.completions = task.completions || {};
     task.completions[normalizedDate] = task.completions[normalizedDate] || [];
 
-    if (task.pendingCompletions[normalizedDate].includes(user) || task.completions[normalizedDate].includes(user)) {
-      return res.status(400).json({ error: "Task already submitted or completed by this user" });
-    }
+// Count total submissions (pending + completed) by this user on this date
+const pendingCount = task.pendingCompletions[normalizedDate].filter(u => u === user).length;
+const completedCount = task.completions[normalizedDate].filter(u => u === user).length;
+const totalCount = pendingCount + completedCount;
+
+// Determine how many times this task can be completed per day
+let requiredTimes = 1;
+if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+
+// Block if they've already completed enough times
+if (totalCount >= requiredTimes) {
+  return res.status(400).json({ error: "Task already submitted maximum times today" });
+}
 
     // Check if user is assigned (in task.users or tempTurnReplacement)
     const userList = task.users || [];
