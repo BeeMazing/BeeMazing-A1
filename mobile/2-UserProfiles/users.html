@@ -1007,18 +1007,11 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
   const userTasks = tasks.filter(task => {
     if (!task || !task.users || !task.title || !task.date) return false;
 
-    let startDateStr = task.date;
-let endDateStr = task.date;
-
-if (task.date.includes(" to ")) {
-  const parts = task.date.split(" to ");
-  startDateStr = parts[0];
-  endDateStr = parts[1];
-}
-
-const startDate = parseLocalDate(startDateStr);
-const endDate = parseLocalDate(endDateStr || "3000-01-01");
-
+    const dateRange = task.date.split(" to ");
+    const startDateStr = dateRange[0];
+    const startDate = parseLocalDate(startDateStr);
+    const endDateStr = dateRange[1] || "3000-01-01";
+    const endDate = parseLocalDate(endDateStr);
     const currentDate = parseLocalDate(selectedDate);
 
     if (currentDate < startDate || currentDate > endDate) return false;
