@@ -315,201 +315,179 @@
 
 
     <script>
-
-const urlParams = new URLSearchParams(window.location.search);
-const userName = urlParams.get('user');
-const adminEmail = urlParams.get('admin') || localStorage.getItem("currentAdminEmail");
-
-if (userName && adminEmail) {
-    document.getElementById('userName').textContent = userName;
-
-    // Check if user is admin
-    const userData = JSON.parse(localStorage.getItem("userData")) || {};
-    const permissions = userData[adminEmail]?.permissions || {};
-    const isUserAdmin = permissions[userName] === "Admin";
-
-    // Set footer button links
-    const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
-    const homeButton = document.getElementById("homeButton");
-    const profileButton = document.getElementById("profileButton");
-    const marketButton = document.getElementById("marketButton");
-    const rewardsButton = document.getElementById("rewardsButton");
-
-    // Show Home button for admins
-    if (isUserAdmin && homeButton) {
-        homeButton.style.display = "flex";
-        homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-    }
-
-    // Set other button links
-    profileButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-    marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-    rewardsButton.href = `${basePath}/userrewards.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-
-    // Set active state
-    document.querySelectorAll('.footer a').forEach(link => {
-        const currentPath = window.location.pathname.replace(/\/$/, '');
-        const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
-        if (currentPath === linkPath) {
-            link.classList.add('active');
+        const urlParams = new URLSearchParams(window.location.search);
+        const userName = urlParams.get('user');
+        let adminEmail = urlParams.get('adminEmail') || localStorage.getItem("currentAdminEmail");
+        
+        if (userName && adminEmail) {
+          document.getElementById('userName').textContent = userName;
+        
+          document.getElementById('profileButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+          document.getElementById('marketButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/usermarket.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+          document.getElementById('rewardsButton').href = `/BeeMazing-Y1/mobile/2-UserProfiles/userrewards.html?user=${encodeURIComponent(userName)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+        
+          loadRewards(userName);
         } else {
-            link.classList.remove('active');
+          document.getElementById('rewardList').innerHTML = "<p>Error: Missing user or admin email. Please log in again.</p>";
         }
-    });
-
-    loadRewards(userName);
-} else {
-    document.getElementById('rewardList').innerHTML = "<p>Error: Missing user or admin email. Please log in again.</p>";
-}
-
-async function getUserDiamonds(userName) {
-    try {
-        const response = await fetch(`https://beemazing.onrender.com/api/rewards?admin=${encodeURIComponent(adminEmail)}`);
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Failed to fetch rewards");
-        const rewards = data.rewards || {};
-        return rewards[userName] || 0;
-    } catch (err) {
-        console.error("Error fetching user diamonds:", err);
-        return 0;
-    }
-}
-
-async function loadRewards(userName) {
-    const rewardList = document.getElementById("rewardList");
-    rewardList.innerHTML = "<p>Loading rewards...</p>";
-
-    try {
-        // Fetch market rewards
-        const marketResponse = await fetch(`https://beemazing.onrender.com/api/market-rewards?admin=${encodeURIComponent(adminEmail)}`);
-        const marketData = await marketResponse.json();
-        if (!marketResponse.ok) throw new Error(marketData.error || "Failed to fetch market rewards");
-        const rewards = marketData.rewards || [];
-
-        // Fetch user diamonds
-        const userDiamonds = await getUserDiamonds(userName);
-
-        rewardList.innerHTML = "";
-        if (rewards.length === 0) {
-            rewardList.innerHTML = "<p>No rewards available in the hive.</p>";
-        } else {
-            rewards.forEach((reward) => {
+        
+        document.querySelectorAll('.footer a').forEach(link => {
+          const currentPath = window.location.pathname.replace(/\/$/, '');
+          const linkPath = new URL(link.href).pathname.replace(/\/$/, '');
+        
+          if (currentPath === linkPath) {
+            link.classList.add('active');
+          } else {
+            link.classList.remove('active');
+          }
+        });
+        
+        async function getUserDiamonds(userName) {
+          try {
+            const response = await fetch(`https://beemazing.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Failed to fetch rewards");
+            const rewards = data.rewards || {};
+            return rewards[userName] || 0;
+          } catch (err) {
+            console.error("Error fetching user diamonds:", err);
+            return 0;
+          }
+        }
+        
+        async function loadRewards(userName) {
+          const rewardList = document.getElementById("rewardList");
+          rewardList.innerHTML = "<p>Loading rewards...</p>";
+        
+          try {
+            // Fetch market rewards
+            const marketResponse = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const marketData = await marketResponse.json();
+            if (!marketResponse.ok) throw new Error(marketData.error || "Failed to fetch market rewards");
+            const rewards = marketData.rewards || [];
+        
+            // Fetch user diamonds
+            const userDiamonds = await getUserDiamonds(userName);
+        
+            rewardList.innerHTML = "";
+            if (rewards.length === 0) {
+              rewardList.innerHTML = "<p>No rewards available in the hive.</p>";
+            } else {
+              rewards.forEach((reward) => {
                 const rewardItem = document.createElement("li");
                 rewardItem.className = "reward-item";
                 const canAfford = userDiamonds >= reward.diamonds;
                 rewardItem.innerHTML = `
-                    <div class="reward-details">
-                        <strong>${reward.name}</strong><br>
-                        Honey: ${reward.diamonds} 🍯
-                    </div>
-                    <button class="get-it-btn ${canAfford ? 'enabled' : 'disabled'}" 
-                            ${canAfford ? '' : 'disabled'} 
-                            onclick="purchaseReward('${userName}', '${reward.name}', ${reward.diamonds})">
-                        Get It
-                    </button>
+                  <div class="reward-details">
+                    <strong>${reward.name}</strong><br>
+                    Honey: ${reward.diamonds} 🍯
+                  </div>
+                  <button class="get-it-btn ${canAfford ? 'enabled' : 'disabled'}" 
+                          ${canAfford ? '' : 'disabled'} 
+                          onclick="purchaseReward('${userName}', '${reward.name}', ${reward.diamonds})">
+                    Get It
+                  </button>
                 `;
                 rewardList.appendChild(rewardItem);
+              });
+            }
+          } catch (err) {
+            console.error("Error loading rewards:", err);
+            rewardList.innerHTML = "<p>Failed to load rewards. Please try again later.</p>";
+          }
+        }
+        
+        async function purchaseReward(userName, rewardName, diamondCost) {
+          try {
+            // Fetch current rewards (honey balances)
+            const rewardsResponse = await fetch(`https://beemazing.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const rewardsData = await rewardsResponse.json();
+            if (!rewardsResponse.ok) throw new Error(rewardsData.error || "Failed to fetch rewards");
+            const rewards = rewardsData.rewards || {};
+            const userDiamonds = rewards[userName] || 0;
+        
+            if (userDiamonds < diamondCost) {
+              alert("Not enough honey to claim this reward!");
+              return;
+            }
+        
+            // Update honey balance
+            rewards[userName] = userDiamonds - diamondCost;
+            const updateRewardsResponse = await fetch("https://beemazing.onrender.com/api/rewards", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ adminEmail, user: userName, amount: -diamondCost })
             });
+            if (!updateRewardsResponse.ok) {
+              const errorData = await updateRewardsResponse.json();
+              throw new Error(errorData.error || "Failed to update rewards");
+            }
+        
+            // Fetch current user rewards
+            const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const userRewardsData = await userRewardsResponse.json();
+            if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
+            const userRewards = userRewardsData.userRewards || {};
+        
+            // Add the claimed reward
+            if (!userRewards[userName]) userRewards[userName] = [];
+            userRewards[userName].push({ name: rewardName, date: new Date().toLocaleString() });
+        
+            // Save updated user rewards
+            const updateUserRewardsResponse = await fetch("https://beemazing.onrender.com/api/user-rewards", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ adminEmail, userRewards })
+            });
+            if (!updateUserRewardsResponse.ok) {
+              const errorData = await updateUserRewardsResponse.json();
+              throw new Error(errorData.error || "Failed to save user rewards");
+            }
+        
+            showRewardEffect(rewardName, userName);
+          } catch (err) {
+            console.error("Error purchasing reward:", err);
+            alert("Failed to purchase reward. Please try again.");
+          }
         }
-    } catch (err) {
-        console.error("Error loading rewards:", err);
-        rewardList.innerHTML = "<p>Failed to load rewards. Please try again later.</p>";
-    }
-}
-
-async function purchaseReward(userName, rewardName, diamondCost) {
-    try {
-        // Fetch current rewards (honey balances)
-        const rewardsResponse = await fetch(`https://beemazing.onrender.com/api/rewards?admin=${encodeURIComponent(adminEmail)}`);
-        const rewardsData = await rewardsResponse.json();
-        if (!rewardsResponse.ok) throw new Error(rewardsData.error || "Failed to fetch rewards");
-        const rewards = rewardsData.rewards || {};
-        const userDiamonds = rewards[userName] || 0;
-
-        if (userDiamonds < diamondCost) {
-            alert("Not enough honey to claim this reward!");
-            return;
+        
+        function showRewardEffect(rewardName, userName) {
+          const overlay = document.getElementById("rewardOverlay");
+          const rewardMessage = document.getElementById("claimedRewardName");
+          rewardMessage.textContent = rewardName;
+        
+          overlay.classList.add("show");
+        
+          // Add flashing effect
+          const flash = document.createElement("div");
+          flash.className = "flash";
+          overlay.appendChild(flash);
+          setTimeout(() => flash.remove(), 600);
+        
+          // Add confetti burst
+          for (let i = 0; i < 30; i++) {
+            const confetti = document.createElement("div");
+            confetti.className = "confetti";
+            const angle = Math.random() * 360;
+            const distance = Math.random() * 20 + 10;
+            confetti.style.setProperty('--x', Math.cos(angle * Math.PI / 180) * distance);
+            confetti.style.setProperty('--y', Math.sin(angle * Math.PI / 180) * distance);
+            confetti.style.left = '50%';
+            confetti.style.top = '50%';
+            confetti.style.background = i % 2 === 0 ? 'var(--primary-color)' : '#FFB300';
+            overlay.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 1500);
+          }
+        
+          // Close overlay when clicking outside the message
+          overlay.addEventListener("click", function closeOverlay(e) {
+            if (e.target === overlay) {
+              overlay.classList.remove("show");
+              loadRewards(userName);
+              overlay.removeEventListener("click", closeOverlay);
+            }
+          });
         }
-
-        // Update honey balance
-        const updateRewardsResponse = await fetch("https://beemazing.onrender.com/api/rewards", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ admin: adminEmail, user: userName, amount: -diamondCost })
-        });
-        if (!updateRewardsResponse.ok) {
-            const errorData = await updateRewardsResponse.json();
-            throw new Error(errorData.error || "Failed to update rewards");
-        }
-
-        // Fetch current user rewards
-        const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?admin=${encodeURIComponent(adminEmail)}`);
-        const userRewardsData = await userRewardsResponse.json();
-        if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
-        const userRewards = userRewardsData.userRewards || {};
-
-        // Add the claimed reward
-        if (!userRewards[userName]) userRewards[userName] = [];
-        userRewards[userName].push({ name: rewardName, date: new Date().toLocaleString() });
-
-        // Save updated user rewards
-        const updateUserRewardsResponse = await fetch("https://beemazing.onrender.com/api/user-rewards", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ admin: adminEmail, userRewards })
-        });
-        if (!updateUserRewardsResponse.ok) {
-            const errorData = await updateUserRewardsResponse.json();
-            throw new Error(errorData.error || "Failed to save user rewards");
-        }
-
-        showRewardEffect(rewardName, userName);
-    } catch (err) {
-        console.error("Error purchasing reward:", err);
-        alert("Failed to purchase reward. Please try again.");
-    }
-}
-
-function showRewardEffect(rewardName, userName) {
-    const overlay = document.getElementById("rewardOverlay");
-    const rewardMessage = document.getElementById("claimedRewardName");
-    rewardMessage.textContent = rewardName;
-
-    overlay.classList.add("show");
-
-    // Add flashing effect
-    const flash = document.createElement("div");
-    flash.className = "flash";
-    overlay.appendChild(flash);
-    setTimeout(() => flash.remove(), 600);
-
-    // Add confetti burst
-    for (let i = 0; i < 30; i++) {
-        const confetti = document.createElement("div");
-        confetti.className = "confetti";
-        const angle = Math.random() * 360;
-        const distance = Math.random() * 20 + 10;
-        confetti.style.setProperty('--x', Math.cos(angle * Math.PI / 180) * distance);
-        confetti.style.setProperty('--y', Math.sin(angle * Math.PI / 180) * distance);
-        confetti.style.left = '50%';
-        confetti.style.top = '50%';
-        confetti.style.background = i % 2 === 0 ? 'var(--primary-color)' : '#FFB300';
-        overlay.appendChild(confetti);
-        setTimeout(() => confetti.remove(), 1500);
-    }
-
-    // Close overlay when clicking outside the message
-    overlay.addEventListener("click", function closeOverlay(e) {
-        if (e.target === overlay) {
-            overlay.classList.remove("show");
-            loadRewards(userName);
-            overlay.removeEventListener("click", closeOverlay);
-        }
-    });
-}
-
-
-
         </script>
 
 
