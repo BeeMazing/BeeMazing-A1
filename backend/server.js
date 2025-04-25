@@ -367,6 +367,114 @@ app.get('/get-tasks', async (req, res) => {
 
 
 
+
+// register.html forgot password ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
+
+// Email transporter setup
+const transporter = nodemailer.createTransport({
+  host: 'smtp.inbox.lv',
+  port: 587,
+  secure: false,
+  auth: {
+    user: 'beemazing@inbox.lv',
+    pass: 'Pass123' // Replace with your actual email password or use environment variables
+  }
+});
+
+// FORGOT PASSWORD
+app.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Missing email" });
+  }
+
+  try {
+    const db = await connectDB();
+    const users = db.collection('users');
+    const user = await users.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Email not found" });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = Date.now() + 3600000; // 1 hour expiry
+
+    // Store token in database
+    await users.updateOne(
+      { email },
+      { $set: { resetToken, resetTokenExpiry } }
+    );
+
+    // Send reset email
+    const resetLink = `https://g4mechanger.github.io/register.html?resetToken=${resetToken}`;
+    const mailOptions = {
+      from: 'gamechanger@inbox.lv',
+      to: email,
+      subject: 'BeeMazing Password Reset',
+      html: `
+        <h2>Password Reset Request</h2>
+        <p>Click the link below to reset your BeeMazing password:</p>
+        <a href="${resetLink}">Reset Password</a>
+        <p>This link will expire in 1 hour.</p>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.json({ success: true, message: "Password reset link sent to your email" });
+  } catch (err) {
+    console.error("🔥 Error in /forgot-password:", err);
+    res.status(500).json({ success: false, message: "Failed to process password reset" });
+  }
+});
+
+// RESET PASSWORD
+app.post('/reset-password', async (req, res) => {
+  const { resetToken, newPassword } = req.body;
+
+  if (!resetToken || !newPassword) {
+    return res.status(400).json({ success: false, message: "Missing reset token or new password" });
+  }
+
+  try {
+    const db = await connectDB();
+    const users = db.collection('users');
+    const user = await users.findOne({
+      resetToken,
+      resetTokenExpiry: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid or expired reset token" });
+    }
+
+    // Update password and clear reset token
+    await users.updateOne(
+      { resetToken },
+      {
+        $set: { password: newPassword },
+        $unset: { resetToken: "", resetTokenExpiry: "" }
+      }
+    );
+
+    res.json({ success: true, message: "Password reset successfully" });
+  } catch (err) {
+    console.error("🔥 Error in /reset-password:", err);
+    res.status(500).json({ success: false, message: "Failed to reset password" });
+  }
+});
+
+
+// register.html forgot password ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
 app.listen(port, () => {
   console.log(`✅ Server is running on http://localhost:${port}`);
 });

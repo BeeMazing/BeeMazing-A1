@@ -285,16 +285,18 @@
 <body>
   <div class="container">
     <div class="logo">
-      <!-- Replace with your logo URL or remove if not needed -->
       <img src="https://i.postimg.cc/x1fDPQPX/pngtree-honey-bee-logo-design-vector-png-image-12507314-removebg-preview.png" alt="BeeMazing Logo">
     </div>
-    <h2 id="formTitle">Register z418</h2>
+    <h2 id="formTitle">Register z1</h2>
     <form id="authForm">
-      <div class="input-group email">
+      <div id="emailGroup" class="input-group email">
         <input type="email" id="email" placeholder="Email" required />
       </div>
-      <div class="input-group password">
+      <div id="passwordGroup" class="input-group password">
         <input type="password" id="password" placeholder="Password" required />
+      </div>
+      <div id="confirmPasswordGroup" class="input-group password" style="display: none;">
+        <input type="password" id="confirmPassword" placeholder="Confirm Password" />
       </div>
       <button type="submit" id="submitBtn">Register</button>
       <div class="message" id="message"></div>
@@ -302,58 +304,132 @@
     <div class="toggle">
       <span id="toggleText">Already have an account?</span>
       <a onclick="toggleForm()" id="toggleFormText">Login</a>
+      <span> | </span>
+      <a onclick="showForgotPassword()" id="forgotPasswordLink">Forgot Password?</a>
     </div>
   </div>
 
   <script>
     let isRegistering = true;
-
+    let isResettingPassword = false;
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetToken = urlParams.get('resetToken');
     const form = document.getElementById("authForm");
     const message = document.getElementById("message");
+    const emailGroup = document.getElementById("emailGroup");
+    const passwordGroup = document.getElementById("passwordGroup");
+    const confirmPasswordGroup = document.getElementById("confirmPasswordGroup");
+    const submitBtn = document.getElementById("submitBtn");
+    const toggleText = document.getElementById("toggleText");
+    const toggleFormText = document.getElementById("toggleFormText");
+    const forgotPasswordLink = document.getElementById("forgotPasswordLink");
 
     function toggleForm() {
+      if (isResettingPassword) return;
       isRegistering = !isRegistering;
       document.getElementById("formTitle").textContent = isRegistering ? "Register" : "Login";
-      document.getElementById("submitBtn").textContent = isRegistering ? "Register" : "Login";
-      document.getElementById("toggleText").textContent = isRegistering ? "Already have an account?" : "Don't have an account?";
-      document.getElementById("toggleFormText").textContent = isRegistering ? "Login" : "Register";
+      submitBtn.textContent = isRegistering ? "Register" : "Login";
+      toggleText.textContent = isRegistering ? "Already have an account?" : "Don't have an account?";
+      toggleFormText.textContent = isRegistering ? "Login" : "Register";
+      emailGroup.style.display = "block";
+      passwordGroup.style.display = "block";
+      confirmPasswordGroup.style.display = "none";
+      forgotPasswordLink.style.display = "inline";
+    }
+
+    function showForgotPassword() {
+      isResettingPassword = true;
+      isRegistering = false;
+      document.getElementById("formTitle").textContent = "Reset Password";
+      submitBtn.textContent = "Send Reset Link";
+      emailGroup.style.display = "block";
+      passwordGroup.style.display = "none";
+      confirmPasswordGroup.style.display = "none";
+      toggleText.style.display = "none";
+      toggleFormText.style.display = "none";
+      forgotPasswordLink.style.display = "none";
+    }
+
+    function showResetPasswordForm() {
+      isResettingPassword = true;
+      isRegistering = false;
+      document.getElementById("formTitle").textContent = "Set New Password";
+      submitBtn.textContent = "Reset Password";
+      emailGroup.style.display = "none";
+      passwordGroup.style.display = "block";
+      confirmPasswordGroup.style.display = "block";
+      toggleText.style.display = "none";
+      toggleFormText.style.display = "none";
+      forgotPasswordLink.style.display = "none";
+    }
+
+    if (resetToken) {
+      showResetPasswordForm();
     }
 
     form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const endpoint = isRegistering ? "/register" : "/login";
+      e.preventDefault();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const confirmPassword = document.getElementById("confirmPassword").value.trim();
+      let endpoint;
 
-  try {
-    const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      if (isResettingPassword && !resetToken) {
+        endpoint = "/forgot-password";
+      } else if (isResettingPassword && resetToken) {
+        if (password !== confirmPassword) {
+          message.style.color = "#D32F2F";
+          message.textContent = "❌ Passwords do not match";
+          return;
+        }
+        endpoint = "/reset-password";
+      } else {
+        endpoint = isRegistering ? "/register" : "/login";
+      }
+
+      try {
+        const body = resetToken ? { resetToken, newPassword: password } : isResettingPassword ? { email } : { email, password };
+        const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          message.style.color = "#4CAF50";
+          if (isResettingPassword && !resetToken) {
+            message.textContent = "✅ Reset link sent to your email!";
+            setTimeout(() => {
+              toggleForm();
+              isResettingPassword = false;
+              toggleText.style.display = "inline";
+              toggleFormText.style.display = "inline";
+              forgotPasswordLink.style.display = "inline";
+            }, 2000);
+          } else if (isResettingPassword && resetToken) {
+            message.textContent = "✅ Password reset successfully! Redirecting to login...";
+            setTimeout(() => {
+              window.location.href = "register.html";
+            }, 2000);
+          } else {
+            message.textContent = isRegistering ? "✅ Registered successfully! Redirecting to login..." : "✅ Logged in!";
+            localStorage.setItem("isAdmin", "true");
+            localStorage.setItem("currentAdminEmail", email);
+            setTimeout(() => {
+              window.location.href = "login.html";
+            }, 1000);
+          }
+        } else {
+          message.style.color = "#D32F2F";
+          message.textContent = "❌ " + (data.message || "Something went wrong");
+        }
+      } catch (err) {
+        message.style.color = "#D32F2F";
+        message.textContent = "❌ Error connecting to server";
+      }
     });
-
-    const data = await res.json();
-
-    if (res.ok && data.success) {
-      message.style.color = "#4CAF50";
-      message.textContent = isRegistering ? "✅ Registered successfully! Redirecting to login..." : "✅ Logged in!";
-
-      // Store admin info in localStorage
-      localStorage.setItem("isAdmin", "true");
-      localStorage.setItem("currentAdminEmail", email);
-
-      setTimeout(() => {
-        window.location.href = "login.html"; // Redirect to login.html
-      }, 1000);
-    } else {
-      message.style.color = "#D32F2F";
-      message.textContent = "❌ " + (data.message || "Something went wrong");
-    }
-  } catch (err) {
-    message.style.color = "#D32F2F";
-    message.textContent = "❌ Error connecting to server";
-  }
-});
   </script>
 </body>
 </html>
