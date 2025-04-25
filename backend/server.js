@@ -7,6 +7,8 @@ const { connectDB } = require('./db');
 const app = express();
 const port = process.env.PORT || 3000;
 
+
+
 // ✅ CORS for GitHub Pages
 const corsOptions = {
   origin: ['https://g4mechanger.github.io'],
@@ -381,15 +383,30 @@ const transporter = nodemailer.createTransport({
   secure: false,
   auth: {
     user: 'beemazing@inbox.lv',
-    pass: 'Pass123' // Replace with your actual email password or use environment variables
+    pass: 'Pass123' // Replace with the real password
   }
 });
 
+
+// Verify transporter on server start
+transporter.verify((error, success) => {
+  if (error) {
+    console.error('🔥 SMTP connection error:', error);
+  } else {
+    console.log('✅ SMTP server is ready to send emails');
+  }
+});
+
+
+
+
+// FORGOT PASSWORD
 // FORGOT PASSWORD
 app.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
+    console.log("🔥 /forgot-password: Missing email in request");
     return res.status(400).json({ success: false, message: "Missing email" });
   }
 
@@ -399,6 +416,7 @@ app.post('/forgot-password', async (req, res) => {
     const user = await users.findOne({ email });
 
     if (!user) {
+      console.log(`🔥 /forgot-password: Email not found - ${email}`);
       return res.status(404).json({ success: false, message: "Email not found" });
     }
 
@@ -411,11 +429,12 @@ app.post('/forgot-password', async (req, res) => {
       { email },
       { $set: { resetToken, resetTokenExpiry } }
     );
+    console.log(`✅ /forgot-password: Reset token generated for ${email}`);
 
     // Send reset email
     const resetLink = `https://g4mechanger.github.io/register.html?resetToken=${resetToken}`;
     const mailOptions = {
-      from: 'gamechanger@inbox.lv',
+      from: 'beemazing@inbox.lv', // Match the transporter's user
       to: email,
       subject: 'BeeMazing Password Reset',
       html: `
@@ -427,12 +446,17 @@ app.post('/forgot-password', async (req, res) => {
     };
 
     await transporter.sendMail(mailOptions);
+    console.log(`✅ /forgot-password: Reset email sent to ${email}`);
     res.json({ success: true, message: "Password reset link sent to your email" });
   } catch (err) {
-    console.error("🔥 Error in /forgot-password:", err);
+    console.error(`🔥 /forgot-password: Error for ${email} -`, err);
     res.status(500).json({ success: false, message: "Failed to process password reset" });
   }
 });
+
+
+
+
 
 // RESET PASSWORD
 app.post('/reset-password', async (req, res) => {
@@ -469,6 +493,31 @@ app.post('/reset-password', async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to reset password" });
   }
 });
+
+// Test email endpoint for debugging
+// Test email endpoint for debugging
+app.post('/test-email', async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'Missing email in request body' });
+  }
+  try {
+    const mailOptions = {
+      from: 'beemazing@inbox.lv',
+      to: email,
+      subject: 'Test Email from BeeMazing',
+      text: 'This is a test email to verify SMTP configuration.'
+    };
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Test email sent to ${email}`);
+    res.json({ success: true, message: `Test email sent to ${email}` });
+  } catch (err) {
+    console.error('🔥 Test email error:', err);
+    res.status(500).json({ success: false, message: 'Failed to send test email' });
+  }
+});
+
+
 
 
 // register.html forgot password ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

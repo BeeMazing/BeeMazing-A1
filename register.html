@@ -309,6 +309,7 @@
     </div>
   </div>
 
+
   <script>
     let isRegistering = true;
     let isResettingPassword = false;
@@ -323,7 +324,7 @@
     const toggleText = document.getElementById("toggleText");
     const toggleFormText = document.getElementById("toggleFormText");
     const forgotPasswordLink = document.getElementById("forgotPasswordLink");
-
+  
     function toggleForm() {
       if (isResettingPassword) return;
       isRegistering = !isRegistering;
@@ -335,8 +336,10 @@
       passwordGroup.style.display = "block";
       confirmPasswordGroup.style.display = "none";
       forgotPasswordLink.style.display = "inline";
+      message.textContent = "";
+      form.reset(); // Clear form fields
     }
-
+  
     function showForgotPassword() {
       isResettingPassword = true;
       isRegistering = false;
@@ -348,8 +351,10 @@
       toggleText.style.display = "none";
       toggleFormText.style.display = "none";
       forgotPasswordLink.style.display = "none";
+      message.textContent = "";
+      form.reset(); // Clear form fields
     }
-
+  
     function showResetPasswordForm() {
       isResettingPassword = true;
       isRegistering = false;
@@ -361,46 +366,84 @@
       toggleText.style.display = "none";
       toggleFormText.style.display = "none";
       forgotPasswordLink.style.display = "none";
+      message.textContent = "";
+      form.reset(); // Clear form fields
     }
-
+  
+    // Email validation regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  
+    // Password strength validation (minimum 8 characters, at least one number)
+    const passwordRegex = /^(?=.*\d).{8,}$/;
+  
+    // Token format validation (64-character hex string)
+    const tokenRegex = /^[0-9a-fA-F]{64}$/;
+  
     if (resetToken) {
-      showResetPasswordForm();
+      if (!tokenRegex.test(resetToken)) {
+        message.style.color = "#D32F2F";
+        message.textContent = "❌ Invalid reset token";
+      } else {
+        showResetPasswordForm();
+      }
     }
-
+  
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
       const confirmPassword = document.getElementById("confirmPassword").value.trim();
-      let endpoint;
-
-      if (isResettingPassword && !resetToken) {
-        endpoint = "/forgot-password";
-      } else if (isResettingPassword && resetToken) {
+  
+      // Validate email for forgot password
+      if (isResettingPassword && !resetToken && !emailRegex.test(email)) {
+        message.style.color = "#D32F2F";
+        message.textContent = "❌ Please enter a valid email";
+        return;
+      }
+  
+      // Validate password for reset password
+      if (isResettingPassword && resetToken) {
+        if (!passwordRegex.test(password)) {
+          message.style.color = "#D32F2F";
+          message.textContent = "❌ Password must be at least 8 characters and include a number";
+          return;
+        }
         if (password !== confirmPassword) {
           message.style.color = "#D32F2F";
           message.textContent = "❌ Passwords do not match";
           return;
         }
+      }
+  
+      let endpoint;
+      if (isResettingPassword && !resetToken) {
+        endpoint = "/forgot-password";
+      } else if (isResettingPassword && resetToken) {
         endpoint = "/reset-password";
       } else {
         endpoint = isRegistering ? "/register" : "/login";
       }
-
+  
       try {
+        submitBtn.disabled = true; // Disable button during request
+        submitBtn.textContent = isResettingPassword && !resetToken ? "Sending..." : isResettingPassword ? "Resetting..." : isRegistering ? "Registering..." : "Logging in...";
+  
         const body = resetToken ? { resetToken, newPassword: password } : isResettingPassword ? { email } : { email, password };
+        console.log(`Sending request to ${endpoint} with body:`, body); // Debug
         const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
-
+  
         const data = await res.json();
-
+        console.log(`Response from ${endpoint}:`, data); // Debug
+  
         if (res.ok && data.success) {
           message.style.color = "#4CAF50";
           if (isResettingPassword && !resetToken) {
             message.textContent = "✅ Reset link sent to your email!";
+            form.reset(); // Clear form fields
             setTimeout(() => {
               toggleForm();
               isResettingPassword = false;
@@ -410,6 +453,7 @@
             }, 2000);
           } else if (isResettingPassword && resetToken) {
             message.textContent = "✅ Password reset successfully! Redirecting to login...";
+            form.reset(); // Clear form fields
             setTimeout(() => {
               window.location.href = "register.html";
             }, 2000);
@@ -417,6 +461,7 @@
             message.textContent = isRegistering ? "✅ Registered successfully! Redirecting to login..." : "✅ Logged in!";
             localStorage.setItem("isAdmin", "true");
             localStorage.setItem("currentAdminEmail", email);
+            form.reset(); // Clear form fields
             setTimeout(() => {
               window.location.href = "login.html";
             }, 1000);
@@ -424,12 +469,19 @@
         } else {
           message.style.color = "#D32F2F";
           message.textContent = "❌ " + (data.message || "Something went wrong");
+          console.log(`Error from ${endpoint}:`, data.message);
         }
       } catch (err) {
         message.style.color = "#D32F2F";
-        message.textContent = "❌ Error connecting to server";
+        message.textContent = "❌ Failed to connect to server. Please check your internet connection.";
+        console.error(`Fetch error for ${endpoint}:`, err);
+      } finally {
+        submitBtn.disabled = false; // Re-enable button
+        submitBtn.textContent = isResettingPassword && !resetToken ? "Send Reset Link" : isResettingPassword ? "Reset Password" : isRegistering ? "Register" : "Login";
       }
     });
   </script>
+
+
 </body>
 </html>
