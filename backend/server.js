@@ -379,11 +379,11 @@ const crypto = require('crypto');
 // Email transporter setup
 const transporter = nodemailer.createTransport({
   host: 'mail.inbox.lv',
-  port: 465,
-  secure: true,
+  port: 587,
+  secure: false,
   auth: {
     user: 'beemazing@inbox.lv',
-    pass: 'Pass123'
+    pass: '6BZ54xudDX'
   },
   timeout: 10000,
   tls: {
