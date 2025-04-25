@@ -383,7 +383,7 @@ const transporter = nodemailer.createTransport({
   secure: false,
   auth: {
     user: 'beemazing@inbox.lv',
-    pass: 'Pass123' // Replace with the real password
+    pass: 'Pass123' // This is real password
   }
 });
 
