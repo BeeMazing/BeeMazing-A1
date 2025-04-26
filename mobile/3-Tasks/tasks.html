@@ -543,6 +543,8 @@ body {
         
 
 
+
+
         function calculateTurn(task, selectedDate) {
     const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
     const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
@@ -576,20 +578,31 @@ body {
     if (completedCount >= repeatLimit) {
         currentTurn = "All done!";
         nextUser = "—";
-    } else if (selected < today) {
-        // Past date: Use actual completions
-        const currentIndex = completedCount % assignedUsers.length;
-        currentTurn = assignedUsers[currentIndex];
-        const nextIndex = (completedCount + 1) % assignedUsers.length;
-        nextUser = completedSet.has(assignedUsers[nextIndex]) ? "—" : assignedUsers[nextIndex];
     } else {
-        // Today or future: Project from start date
-        const daysDiff = Math.floor((selected - startDate) / (1000 * 60 * 60 * 24));
-        const totalCompletions = daysDiff * repeatLimit + completedCount;
+        // Find the last completion date before selected date
+        let lastCompletionDate = startDate;
+        let lastCompletedCount = 0;
+        if (task.completions) {
+            const completionDates = Object.keys(task.completions)
+                .map(date => parseLocalDate(date))
+                .filter(date => date <= selected && date >= startDate)
+                .sort((a, b) => b - a);
+            if (completionDates.length > 0) {
+                lastCompletionDate = completionDates[0];
+                const lastDateStr = lastCompletionDate.toISOString().split("T")[0];
+                const lastCompletions = task.completions[lastDateStr] || [];
+                const lastPending = task.pendingCompletions?.[lastDateStr] || [];
+                lastCompletedCount = lastCompletions.length + lastPending.length;
+            }
+        }
+
+        // Calculate starting index based on last completion
+        const daysDiff = Math.floor((selected - lastCompletionDate) / (1000 * 60 * 60 * 24));
+        const totalCompletions = lastCompletedCount + completedCount;
         const currentIndex = totalCompletions % assignedUsers.length;
         currentTurn = assignedUsers[currentIndex];
         const nextIndex = (totalCompletions + 1) % assignedUsers.length;
-        nextUser = assignedUsers[nextIndex];
+        nextUser = selected < today && completedSet.has(assignedUsers[nextIndex]) ? "—" : assignedUsers[nextIndex];
     }
 
     return {
@@ -599,6 +612,8 @@ body {
         repeatLimit
     };
 }
+
+
 
 
 
