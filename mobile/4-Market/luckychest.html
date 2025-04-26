@@ -542,34 +542,48 @@ async function openAssignModal() {
   }
 }
 
-    async function assignChest() {
-      const user = selectedUserInput.value;
-      const points = parseInt(document.getElementById("requiredPoints").value);
-      if (!user || !points || points <= 0) return alert("Please complete all fields.");
-      try {
-        const response = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
-        const allChests = data.luckyChests || {};
-        if (!allChests[user]) allChests[user] = [];
-        allChests[user].push({
-          ...selectedChest,
-          requiredPoints: points,
-          progress: 0
-        });
-        await fetch("https://beemazing.onrender.com/api/lucky-chests", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ adminEmail, luckyChests: allChests })
-        });
-        assignModal.classList.remove("show");
-        alert(`"${selectedChest.name}" assigned to ${user}!`);
-        window.location.href = `luckychest.html?adminEmail=${encodeURIComponent(adminEmail)}`;
-      } catch (err) {
-        console.error("Error assigning chest:", err);
-        alert("Failed to assign chest. Please try again.");
-      }
-    }
+
+
+async function assignChest(userName, requiredPoints) {
+  const adminEmail = localStorage.getItem("currentAdminEmail");
+  if (!userName || !adminEmail || requiredPoints <= 0) {
+    console.error("Invalid input for assigning chest:", { userName, adminEmail, requiredPoints });
+    return false;
+  }
+
+  try {
+    // Fetch existing lucky chests
+    const response = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
+
+    const luckyChests = data.luckyChests || {};
+    luckyChests[userName] = luckyChests[userName] || [];
+    luckyChests[userName].push({
+      requiredPoints: parseInt(requiredPoints),
+      progress: 0,
+      reward: "TBD",
+      unlocked: false
+    });
+
+    // Save updated lucky chests
+    const saveResponse = await fetch("https://beemazing.onrender.com/api/lucky-chests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminEmail, luckyChests })
+    });
+    const saveData = await saveResponse.json();
+    if (!saveResponse.ok) throw new Error(saveData.error || "Failed to save lucky chest");
+
+    return true;
+  } catch (err) {
+    console.error("Error assigning chest:", err);
+    return false;
+  }
+}
+
+
+
 
     async function openDiceModal() {
   try {

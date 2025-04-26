@@ -545,6 +545,11 @@ async function fetchUsers() {
   }
 }
 
+
+
+
+
+
 async function handleDecision(title, date, index, decision, user, event) {
   try {
     const button = event.target;
@@ -571,7 +576,7 @@ async function handleDecision(title, date, index, decision, user, event) {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to process decision");
 
-    setTimeout(() => loadTasks(), 500);
+    setTimeout(() => loadTasks(), 100); // Reduced delay for faster UI update
   } catch (err) {
     console.error("Error processing decision:", err);
     const errorDiv = document.createElement("div");
@@ -585,6 +590,10 @@ async function handleDecision(title, date, index, decision, user, event) {
     setTimeout(() => errorDiv.remove(), 3000);
   }
 }
+
+
+
+
 
 async function handleReplace(title, date, index, originalUser, event) {
   const taskEntry = event.target.closest(".task-entry");

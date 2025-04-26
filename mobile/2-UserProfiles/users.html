@@ -1417,58 +1417,44 @@ const isCompleted = userTotal >= requiredTimes;
           }
         }
         
+
+
+
         async function loadLuckyChests(userName) {
-          const container = document.getElementById("luckyChestContainer");
-          const adminEmail = localStorage.getItem("currentAdminEmail");
-          try {
-            const response = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
-            const allChests = data.luckyChests || {};
-            const userChests = allChests[userName] || [];
-        
-            container.innerHTML = "";
-        
-            if (userChests.length === 0) {
-              container.innerHTML = "<p>No Lucky Chests assigned yet.</p>";
-              return;
-            }
-        
-            userChests.forEach((chest, index) => {
-              const isUnlocked = chest.progress >= chest.requiredPoints;
-              const chestImage = isUnlocked
-                ? '/BeeMazing-Y1/mobile/4-Market/LuckyChest/ChestReady.gif'
-                : '/BeeMazing-Y1/mobile/4-Market/LuckyChest/ChestPending.png';
-        
-              const card = document.createElement("div");
-              card.className = "lucky-chest-card";
-              if (!isUnlocked) {
-                card.classList.add("locked");
-              }
-        
-              card.innerHTML = `
-                <img src="${chestImage}" alt="Chest" class="${isUnlocked ? 'pulse' : ''}">
-                <div class="info">
-                  <p>${isUnlocked ? 'CONGRATULATIONS! Chest unlocked!' : 'Unlock to reveal your reward!'}</p>
-                  <div class="lucky-chest-progress">
-                    Progress: ${chest.progress || 0} / ${chest.requiredPoints} 🍯
-                  </div>
-                </div>
-              `;
-        
-              if (isUnlocked) {
-                card.style.cursor = "pointer";
-                card.addEventListener("click", () => revealLuckyChestReward(userName, chest, index, true));
-              }
-        
-              container.appendChild(card);
-            });
-          } catch (err) {
-            console.error("Error loading lucky chests:", err);
-            container.innerHTML = "<p>Failed to load lucky chests.</p>";
-          }
-        }
-        
+  const adminEmail = localStorage.getItem("currentAdminEmail");
+  try {
+    const response = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
+
+    const chestContainer = document.getElementById("luckyChestContainer");
+    chestContainer.innerHTML = "";
+
+    const chests = data.luckyChests?.[userName] || [];
+    if (chests.length === 0) {
+      chestContainer.innerHTML = "<p>No lucky chests assigned.</p>";
+      return;
+    }
+
+    chests.forEach((chest, index) => {
+      const chestDiv = document.createElement("div");
+      chestDiv.className = "chest-entry";
+      chestDiv.innerHTML = `
+        <p>Chest ${index + 1}: ${chest.progress}/${chest.requiredPoints} Honey</p>
+        <p>Status: ${chest.unlocked ? "Unlocked" : "Locked"}</p>
+        ${chest.unlocked ? `<button onclick="revealLuckyChestReward(${index})">Open Chest</button>` : ""}
+      `;
+      chestContainer.appendChild(chestDiv);
+    });
+  } catch (err) {
+    console.error("Error loading lucky chests:", err);
+    document.getElementById("luckyChestContainer").innerHTML = "<p>Error loading lucky chests.</p>";
+  }
+}
+
+
+
+
         function revealLuckyChestReward(userName, chest, chestIndex, isUserAction = false) {
           const overlay = document.getElementById("chestVideoOverlay");
           const video = document.getElementById("chestVideo");
@@ -1712,50 +1698,43 @@ const isCompleted = userTotal >= requiredTimes;
 
 
 
-        async function finishTask(currentUser, task, selectedDate) {
-  const today = selectedDate || new Date().toISOString().split("T")[0];
+        async function finishTask(taskTitle, selectedDate) {
   const adminEmail = localStorage.getItem("currentAdminEmail");
-  const button = event.target;
-  button.disabled = true;
-
-  const popup = document.createElement("div");
-  popup.className = "reward-popup";
-  popup.textContent = `Submitting Task...`;
-  document.body.appendChild(popup);
+  const userName = urlParams.get("user") || "";
+  if (!userName) {
+    console.error("No userName found for task submission");
+    return;
+  }
 
   try {
-    console.log(`Submitting task: title="${task.title}", user="${currentUser}", date="${today}", adminEmail="${adminEmail}"`);
     const response = await fetch("https://beemazing.onrender.com/api/complete-task", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         adminEmail,
-        taskTitle: task.title.trim(),
-        user: currentUser,
-        date: today
+        taskTitle,
+        user: userName,
+        date: selectedDate
       })
     });
 
     const data = await response.json();
     if (!response.ok) {
-      console.error("Server response:", data);
-      throw new Error(data.error || `HTTP error ${response.status}`);
+      throw new Error(data.error || "Failed to submit task");
     }
 
-    popup.textContent = `Task Submitted! Waiting for Admin Review`;
-    setTimeout(() => popup.remove(), 2000);
-
-    await loadUserTasks(currentUser, selectedDate);
+    // Refresh rewards and lucky chests to reflect any updates
+    await loadUserReward(userName);
+    await loadLuckyChests(userName);
   } catch (err) {
     console.error("Error submitting task:", err);
-    popup.textContent = `Error: ${err.message}`;
-    popup.style.color = "red";
-    setTimeout(() => popup.remove(), 3000);
-    button.disabled = false;
+    const errorDiv = document.createElement("div");
+    errorDiv.style.color = "red";
+    errorDiv.textContent = `Error: ${err.message}`;
+    document.getElementById("taskContainer").appendChild(errorDiv);
+    setTimeout(() => errorDiv.remove(), 3000);
   }
 }
-
-
 
 
 
@@ -1773,6 +1752,17 @@ const isCompleted = userTotal >= requiredTimes;
             showAdminControlsIfNeeded();
           }
         });
+
+
+
+
+
+
+        const userName = urlParams.get("user") || "";
+if (userName) {
+  loadUserReward(userName);
+  loadLuckyChests(userName);
+}
         </script>
 
 

@@ -1400,14 +1400,22 @@ app.post('/api/review-task', async (req, res) => {
       if (!completions.includes(user)) {
         completions.push(user);
       }
-      // Award reward
+      // Award reward and update lucky chest
       const rewardAmount = Number(task.reward || 0);
       if (rewardAmount > 0) {
         const rewards = admin.rewards || {};
         rewards[user] = (rewards[user] || 0) + rewardAmount;
+        // Update lucky chest progress
+        const luckyChests = admin.luckyChests || {};
+        luckyChests[user] = luckyChests[user] || [];
+        const activeChest = luckyChests[user].find(chest => !chest.unlocked);
+        if (activeChest) {
+          activeChest.progress = (activeChest.progress || 0) + rewardAmount;
+          activeChest.unlocked = activeChest.progress >= activeChest.requiredPoints;
+        }
         await admins.updateOne(
           { email: adminEmail },
-          { $set: { rewards } }
+          { $set: { rewards, luckyChests } }
         );
       }
     } else if (decision === 'decline') {
@@ -1427,8 +1435,6 @@ app.post('/api/review-task', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-
 
 
 
