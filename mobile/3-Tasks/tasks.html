@@ -545,112 +545,71 @@ body {
 
 
 
-
-
         function calculateTurn(task, selectedDate) {
-  const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
-  const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                     task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                     task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-  const tempTurnReplacement = task.tempTurnReplacement?.[selectedDate] || {};
-  const assignedUsers = [...userOrder];
-  Object.entries(tempTurnReplacement).forEach(([index, user]) => {
-    assignedUsers[parseInt(index)] = user;
-  });
+    const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
+    const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
+                       task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+                       task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+    const tempTurnReplacement = task.tempTurnReplacement?.[selectedDate] || {};
+    const assignedUsers = [...userOrder];
+    Object.entries(tempTurnReplacement).forEach(([index, user]) => {
+        assignedUsers[parseInt(index)] = user;
+    });
 
-  const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-  const pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
-  const allCompletedUsers = [...new Set([...completedUsers, ...pendingUsers])];
-  const completedCount = allCompletedUsers.length;
-  const completedSet = new Set(allCompletedUsers);
+    const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+    const pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
+    const allCompletedUsers = [...new Set([...completedUsers, ...pendingUsers])];
+    const completedCount = allCompletedUsers.length;
+    const completedSet = new Set(allCompletedUsers);
 
-  let lastTurnUser = task.turn || (userOrder.length > 0 ? userOrder[0] : null);
-  let lastTurnDate = task.date.split(" to ")[0];
-
-  if (task.completions) {
-    const completionDates = Object.keys(task.completions)
-      .filter(date => new Date(date) < new Date(selectedDate))
-      .sort((a, b) => new Date(b) - new Date(a));
-    if (completionDates.length > 0) {
-      lastTurnDate = completionDates[0];
-      const lastCompletions = task.completions[completionDates[0]];
-      if (lastCompletions.length > 0) {
-        lastTurnUser = lastCompletions[lastCompletions.length - 1];
-      }
+    function parseLocalDate(dateStr) {
+        const [year, month, day] = dateStr.split("-").map(Number);
+        return new Date(year, month - 1, day);
     }
-  }
 
-  let currentTurn = null;
-  let nextUser = null;
+    const selected = parseLocalDate(selectedDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  function parseLocalDate(dateStr) {
-    const [year, month, day] = dateStr.split("-").map(Number);
-    return new Date(year, month - 1, day);
-  }
+    let currentTurn = null;
+    let nextUser = null;
 
-  const selected = parseLocalDate(selectedDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  let currentIndex = assignedUsers.indexOf(lastTurnUser);
-  if (currentIndex === -1) currentIndex = 0;
-
-  if (selected < today) {
-    for (let i = 0; i < assignedUsers.length; i++) {
-      if (!completedSet.has(assignedUsers[i])) {
-        currentTurn = assignedUsers[i];
-        break;
-      }
-    }
-    if (currentTurn) {
-      const currentIndex = assignedUsers.indexOf(currentTurn);
-      for (let i = currentIndex + 1; i < assignedUsers.length; i++) {
-        if (!completedSet.has(assignedUsers[i])) {
-          nextUser = assignedUsers[i];
-          break;
-        }
-      }
-    }
-  } else if (selected.getTime() === today.getTime()) {
-    for (let i = 0; i < assignedUsers.length; i++) {
-      if (!completedSet.has(assignedUsers[(currentIndex + i) % assignedUsers.length])) {
-        currentTurn = assignedUsers[(currentIndex + i) % assignedUsers.length];
-        break;
-      }
-    }
-    if (currentTurn) {
-      const currentIndex = assignedUsers.indexOf(currentTurn);
-      for (let i = currentIndex + 1; i < assignedUsers.length; i++) {
-        if (!completedSet.has(assignedUsers[i])) {
-          nextUser = assignedUsers[i];
-          break;
-        }
-      }
-      if (!nextUser) {
+    if (completedCount >= repeatLimit) {
+        // All completions done for the day
+        currentTurn = "All done!";
+        nextUser = "—";
+    } else if (selected < today) {
+        // Past date: Show who could have done it
         for (let i = 0; i < assignedUsers.length; i++) {
-          if (!completedSet.has(assignedUsers[i])) {
-            nextUser = assignedUsers[i];
-            break;
-          }
+            const index = (completedCount + i) % assignedUsers.length;
+            if (!completedSet.has(assignedUsers[index])) {
+                currentTurn = assignedUsers[index];
+                break;
+            }
         }
-      }
+        if (currentTurn) {
+            const currentIndex = assignedUsers.indexOf(currentTurn);
+            const nextIndex = (currentIndex + 1) % assignedUsers.length;
+            nextUser = completedSet.has(assignedUsers[nextIndex]) ? "—" : assignedUsers[nextIndex];
+        } else {
+            currentTurn = "All done!";
+            nextUser = "—";
+        }
+    } else {
+        // Today or future date: Rotate based on completedCount
+        const currentIndex = completedCount % assignedUsers.length;
+        currentTurn = assignedUsers[currentIndex];
+        const nextIndex = (completedCount + 1) % assignedUsers.length;
+        nextUser = assignedUsers[nextIndex];
     }
-  } else {
-    const daysDiff = Math.floor((selected - parseLocalDate(lastTurnDate)) / (1000 * 60 * 60 * 24));
-    const totalCompletions = daysDiff * repeatLimit;
-    currentIndex = (currentIndex + totalCompletions) % assignedUsers.length;
-    currentTurn = assignedUsers[currentIndex];
-    nextUser = assignedUsers[(currentIndex + 1) % assignedUsers.length];
-  }
 
-  return {
-    currentTurn: currentTurn || "All done!",
-    nextUser: nextUser || "—",
-    completedCount,
-    repeatLimit
-  };
+    return {
+        currentTurn: currentTurn || "All done!",
+        nextUser: nextUser || "—",
+        completedCount,
+        repeatLimit
+    };
 }
-
-
 
 
 
