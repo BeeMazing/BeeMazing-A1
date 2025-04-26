@@ -543,7 +543,6 @@ body {
         
 
 
-
         function calculateTurn(task, selectedDate) {
     const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
     const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
@@ -569,6 +568,7 @@ body {
     const selected = parseLocalDate(selectedDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const startDate = parseLocalDate(task.date.split(" to ")[0]);
 
     let currentTurn = null;
     let nextUser = null;
@@ -576,43 +576,20 @@ body {
     if (completedCount >= repeatLimit) {
         currentTurn = "All done!";
         nextUser = "—";
+    } else if (selected < today) {
+        // Past date: Use actual completions
+        const currentIndex = completedCount % assignedUsers.length;
+        currentTurn = assignedUsers[currentIndex];
+        const nextIndex = (completedCount + 1) % assignedUsers.length;
+        nextUser = completedSet.has(assignedUsers[nextIndex]) ? "—" : assignedUsers[nextIndex];
     } else {
-        // Find the last completion date before today
-        let lastCompletionDate = null;
-        let lastCompletedCount = 0;
-        if (task.completions) {
-            const completionDates = Object.keys(task.completions)
-                .map(date => parseLocalDate(date))
-                .filter(date => date < today)
-                .sort((a, b) => b - a);
-            if (completionDates.length > 0) {
-                lastCompletionDate = completionDates[0];
-                const lastDateStr = lastCompletionDate.toISOString().split("T")[0];
-                const lastCompletions = task.completions[lastDateStr] || [];
-                const lastPending = task.pendingCompletions?.[lastDateStr] || [];
-                lastCompletedCount = lastCompletions.length + lastPending.length;
-            }
-        }
-
-        if (selected < today) {
-            // Past date: Use actual completions for this date
-            const currentIndex = completedCount % assignedUsers.length;
-            currentTurn = assignedUsers[currentIndex];
-            const nextIndex = (completedCount + 1) % assignedUsers.length;
-            nextUser = completedSet.has(assignedUsers[nextIndex]) ? "—" : assignedUsers[nextIndex];
-        } else {
-            // Today or future: Start from last completion date
-            let startIndex = 0;
-            if (lastCompletionDate) {
-                const daysDiff = Math.floor((selected - lastCompletionDate) / (1000 * 60 * 60 * 24));
-                const totalCompletions = lastCompletedCount + (daysDiff - 1) * repeatLimit;
-                startIndex = totalCompletions % assignedUsers.length;
-            }
-            const currentIndex = (startIndex + completedCount) % assignedUsers.length;
-            currentTurn = assignedUsers[currentIndex];
-            const nextIndex = (startIndex + completedCount + 1) % assignedUsers.length;
-            nextUser = assignedUsers[nextIndex];
-        }
+        // Today or future: Project from start date
+        const daysDiff = Math.floor((selected - startDate) / (1000 * 60 * 60 * 24));
+        const totalCompletions = daysDiff * repeatLimit + completedCount;
+        const currentIndex = totalCompletions % assignedUsers.length;
+        currentTurn = assignedUsers[currentIndex];
+        const nextIndex = (totalCompletions + 1) % assignedUsers.length;
+        nextUser = assignedUsers[nextIndex];
     }
 
     return {
@@ -622,7 +599,6 @@ body {
         repeatLimit
     };
 }
-
 
 
 
