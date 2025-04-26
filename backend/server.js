@@ -1354,7 +1354,6 @@ app.get("/api/admin-tasks", async (req, res) => {
 
 
 
-
 app.post('/api/review-task', async (req, res) => {
   const { adminEmail, title, date, selectedDate, user, decision } = req.body;
 
@@ -1391,6 +1390,7 @@ app.post('/api/review-task', async (req, res) => {
       return res.status(400).json({ error: 'User has not submitted this task for review' });
     }
 
+    let rewardAmount = 0;
     if (decision === 'accept') {
       if (pendingIndex === -1) {
         return res.status(400).json({ error: 'User has not submitted this task for review' });
@@ -1401,7 +1401,7 @@ app.post('/api/review-task', async (req, res) => {
         completions.push(user);
       }
       // Award reward
-      const rewardAmount = Number(task.reward || 0);
+      rewardAmount = Number(task.reward || 0);
       if (rewardAmount > 0) {
         const rewards = admin.rewards || {};
         rewards[user] = (rewards[user] || 0) + rewardAmount;
@@ -1421,7 +1421,7 @@ app.post('/api/review-task', async (req, res) => {
       { $set: { tasks } }
     );
 
-    res.json({ message: `Task ${decision}d successfully` });
+    res.json({ success: true, message: `Task ${decision}d successfully`, rewardAmount });
   } catch (err) {
     console.error('Error reviewing task:', err);
     res.status(500).json({ error: 'Internal server error' });
