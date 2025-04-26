@@ -171,6 +171,35 @@
       width: 100%;
     }
 
+
+    .toggle a#forgotPasswordLink {
+      color: #FFC107;
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer !important;
+      position: relative;
+      transition: color 0.3s;
+}
+
+.toggle a#forgotPasswordLink:hover {
+      color: #FFB300;
+    }
+
+    .toggle a#forgotPasswordLink::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 1px;
+      bottom: -2px;
+      left: 0;
+      background-color: #FFB300;
+      transition: width 0.3s ease;
+    }
+
+    .toggle a#forgotPasswordLink:hover::after {
+      width: 100%;
+    }
+
     .message {
       text-align: center;
       margin-top: 1rem;
@@ -280,6 +309,30 @@
         font-size: 0.75rem;
       }
     }
+
+    #backBtn {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  background: #B0B0B0; /* Gray color for secondary action */
+  color: #212121;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.3s, box-shadow 0.3s;
+  margin-top: 0.5rem; /* Add some spacing between Send Reset Link and Back */
+}
+
+#backBtn:hover {
+  background: #A0A0A0; /* Slightly darker gray on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(176, 176, 176, 0.4);
+}
+
+#backBtn:active {
+  transform: translateY(0);
+}
 </style>
 </head>
 <body>
@@ -287,7 +340,7 @@
     <div class="logo">
       <img src="https://i.postimg.cc/x1fDPQPX/pngtree-honey-bee-logo-design-vector-png-image-12507314-removebg-preview.png" alt="BeeMazing Logo">
     </div>
-    <h2 id="formTitle">Register z9</h2>
+    <h2 id="formTitle">Register z10</h2>
     <form id="authForm" novalidate>
       <div id="emailGroup" class="input-group email">
         <input type="email" id="email" placeholder="Email" required />
@@ -299,6 +352,7 @@
         <input type="password" id="confirmPassword" placeholder="Confirm Password" />
       </div>
       <button type="submit" id="submitBtn">Register</button>
+      <button type="button" id="backBtn" style="display: none;">Back</button>
       <div class="message" id="message"></div>
     </form>
     <!-- Reset Password Form -->
@@ -341,36 +395,37 @@ const resetMessage = document.getElementById("resetMessage");
 const newPassword = document.getElementById("newPassword");
 const confirmNewPassword = document.getElementById("confirmNewPassword");
 const resetSubmitBtn = document.getElementById("resetSubmitBtn");
+const backBtn = document.getElementById("backBtn");
   
-    function toggleForm() {
-      if (isResettingPassword) return;
-      isRegistering = !isRegistering;
-      document.getElementById("formTitle").textContent = isRegistering ? "Register" : "Login";
-      submitBtn.textContent = isRegistering ? "Register" : "Login";
-      toggleText.textContent = isRegistering ? "Already have an account?" : "Don't have an account?";
-      toggleFormText.textContent = isRegistering ? "Login" : "Register";
-      emailGroup.style.display = "block";
-      passwordGroup.style.display = "block";
-      confirmPasswordGroup.style.display = "none";
-      forgotPasswordLink.style.display = "inline";
-      message.textContent = "";
-      form.reset(); // Clear form fields
-    }
+function toggleForm() {
+  if (isResettingPassword) return;
+  isRegistering = !isRegistering;
+  document.getElementById("formTitle").textContent = isRegistering ? "Register" : "Login";
+  submitBtn.textContent = isRegistering ? "Register" : "Login";
+  toggleText.textContent = isRegistering ? "Already have an account?" : "Don't have an account?";
+  toggleFormText.textContent = isRegistering ? "Login" : "Register";
+  emailGroup.style.display = "block";
+  passwordGroup.style.display = "block";
+  confirmPasswordGroup.style.display = "none";
+  document.querySelector(".toggle").style.display = "block";
+  backBtn.style.display = "none"; // Hide the Back button
+  message.textContent = "";
+  form.reset(); // Clear form fields
+}
   
-    function showForgotPassword() {
-      isResettingPassword = true;
-      isRegistering = false;
-      document.getElementById("formTitle").textContent = "Reset Password";
-      submitBtn.textContent = "Send Reset Link";
-      emailGroup.style.display = "block";
-      passwordGroup.style.display = "none";
-      confirmPasswordGroup.style.display = "none";
-      toggleText.style.display = "none";
-      toggleFormText.style.display = "none";
-      forgotPasswordLink.style.display = "none";
-      message.textContent = "";
-      form.reset(); // Clear form fields
-    }
+function showForgotPassword() {
+  isResettingPassword = true;
+  isRegistering = false;
+  document.getElementById("formTitle").textContent = "Reset Password";
+  submitBtn.textContent = "Send Reset Link";
+  emailGroup.style.display = "block";
+  passwordGroup.style.display = "none";
+  confirmPasswordGroup.style.display = "none";
+  document.querySelector(".toggle").style.display = "none";
+  backBtn.style.display = "block"; // Show the Back button
+  message.textContent = "";
+  form.reset(); // Clear form fields
+}
   
     function showResetPasswordForm() {
   isResettingPassword = true;
@@ -460,13 +515,11 @@ const resetSubmitBtn = document.getElementById("resetSubmitBtn");
       if (isResettingPassword) {
         message.textContent = "✅ Reset link sent to your email!";
         authForm.reset();
-        setTimeout(() => {
-          toggleForm();
-          isResettingPassword = false;
-          toggleText.style.display = "inline";
-          toggleFormText.style.display = "inline";
-          forgotPasswordLink.style.display = "inline";
-        }, 2000);
+setTimeout(() => {
+  toggleForm();
+  isResettingPassword = false;
+  document.querySelector(".toggle").style.display = "block"; // Show the entire toggle div
+}, 2000);
       } else {
         message.textContent = isRegistering ? "✅ Registered successfully! Redirecting to login..." : "✅ Logged in!";
         localStorage.setItem("isAdmin", "true");
@@ -547,7 +600,10 @@ resetPasswordForm.addEventListener("submit", async (e) => {
 });
 
 
-
+backBtn.addEventListener("click", () => {
+  isResettingPassword = false;
+  toggleForm();
+});
 
 
   </script>
