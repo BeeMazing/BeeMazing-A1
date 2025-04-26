@@ -785,7 +785,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  populateUsers();
 
   const editTask = JSON.parse(localStorage.getItem("familyApp_editTask"));
   if (editTask) {
@@ -820,8 +819,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         day: "numeric",
       });
       if (to) {
-        dateMode = "from-to";
-        document.getElementById("dateModeToggle").textContent = "From - To";
         document.getElementById("dateDisplayTo").style.display = "inline-block";
         document.getElementById("taskDateTo").value = to;
         flatpickrTo.setDate(to);
@@ -830,8 +827,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           day: "numeric",
         });
       } else {
-        dateMode = "from";
-        document.getElementById("dateModeToggle").textContent = "From";
         document.getElementById("dateDisplayTo").style.display = "none";
       }
     }
@@ -1026,10 +1021,7 @@ if (editTask.users) {
         : "Select users";
 };
 
-    
-        document.addEventListener("DOMContentLoaded", () => {
-            populateUsers();
-        });
+
     
         assignedToDisplay.addEventListener("click", () => {
             showModal(userModal);

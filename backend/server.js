@@ -542,35 +542,30 @@ app.listen(port, () => {
 });
 
 
-// ✅ Save a single task for an admin
+// Save a single task for an admin
 app.post("/api/tasks", async (req, res) => {
   const { adminEmail, task } = req.body;
-
   if (!adminEmail || !task) {
     return res.status(400).json({ error: "Missing adminEmail or task" });
   }
-
   try {
+    console.log("POST /api/tasks - Received task:", { title: task.title, users: task.users }); // Debug
     const db = await connectDB();
     const admins = db.collection("admins");
-
     const admin = await admins.findOne({ email: adminEmail });
     const updatedTasks = admin?.tasks || [];
-
-    // Replace if exists, otherwise add new
     const taskIndex = updatedTasks.findIndex(t => t.title === task.title && t.date === task.date);
     if (taskIndex >= 0) {
       updatedTasks[taskIndex] = task;
     } else {
       updatedTasks.push(task);
     }
-
     await admins.updateOne(
       { email: adminEmail },
       { $set: { tasks: updatedTasks } },
       { upsert: true }
     );
-
+    console.log("POST /api/tasks - Saved task:", { title: task.title, users: task.users }); // Debug
     res.json({ success: true });
   } catch (err) {
     console.error("Error saving task:", err);
@@ -578,19 +573,17 @@ app.post("/api/tasks", async (req, res) => {
   }
 });
 
-// ✅ Get all tasks for an admin
+// Get all tasks for an admin
 app.get("/api/tasks", async (req, res) => {
   const { adminEmail } = req.query;
-
   if (!adminEmail) {
     return res.status(400).json({ error: "Missing adminEmail" });
   }
-
   try {
     const db = await connectDB();
     const admins = db.collection("admins");
-
     const admin = await admins.findOne({ email: adminEmail });
+    console.log("GET /api/tasks - Fetched tasks for", adminEmail, ":", admin?.tasks?.map(t => ({ title: t.title, users: t.users }))); // Debug
     res.json({ tasks: admin?.tasks || [] });
   } catch (err) {
     console.error("Error fetching tasks:", err);
@@ -647,37 +640,30 @@ app.delete("/api/tasks", async (req, res) => {
 // ✅ Update a specific task for an admin
 app.put("/api/tasks", async (req, res) => {
   const { adminEmail, task, originalTitle, originalDate } = req.body;
-
   if (!adminEmail || !task || !originalTitle || !originalDate) {
     return res.status(400).json({ error: "Missing adminEmail, task, originalTitle, or originalDate" });
   }
-
   try {
+    console.log("PUT /api/tasks - Received task:", { title: task.title, users: task.users }); // Debug
     const db = await connectDB();
     const admins = db.collection("admins");
-
     const admin = await admins.findOne({ email: adminEmail });
     if (!admin) {
       return res.status(404).json({ error: "Admin not found" });
     }
-
     const tasks = admin.tasks || [];
     const taskIndex = tasks.findIndex(
       (t) => t.title === originalTitle && t.date === originalDate
     );
-
     if (taskIndex === -1) {
       return res.status(404).json({ error: "Task not found" });
     }
-
-    // Update the task at its original index
     tasks[taskIndex] = task;
-
     await admins.updateOne(
       { email: adminEmail },
       { $set: { tasks } }
     );
-
+    console.log("PUT /api/tasks - Updated task:", { title: task.title, users: task.users }); // Debug
     res.json({ success: true });
   } catch (err) {
     console.error("Error updating task:", err);
