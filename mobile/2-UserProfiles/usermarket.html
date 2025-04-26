@@ -444,6 +444,9 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
+
+
+
       async function loadRewards(userName) {
     const rewardsGrid = document.getElementById("rewards-grid");
     const historyGrid = document.getElementById("history-grid");
@@ -506,7 +509,7 @@ document.querySelectorAll('.footer a').forEach(link => {
                 const canAfford = userHoney >= rewardCost;
 
                 const card = document.createElement("div");
-                card.className = `reward-card ${isFromUserRewardsOnly ? 'flipped no-flip' : userRewardCount > 0 ? 'flipped' : ''}`;
+                card.className = `reward-card ${isFromUserRewardsOnly ? 'flipped no-flip' : ''}`;
                 card.dataset.reward = rewardName;
                 card.dataset.index = index;
 
@@ -644,6 +647,8 @@ document.querySelectorAll('.footer a').forEach(link => {
         historyGrid.innerHTML = "<p class='text-center'>Failed to load history. Please try again later.</p>";
     }
 }
+
+
 
 
 
