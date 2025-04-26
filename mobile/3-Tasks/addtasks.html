@@ -873,8 +873,8 @@ if (editTask.users) {
     }
 
 
-      // Handle specific dates
-      if (editTask.specificDates) {
+// Handle specific dates
+if (editTask.specificDates) {
       selectedDates = editTask.specificDates.split(",").map(date => new Date(date));
       specificDatesInput.value = editTask.specificDates;
       flatpickrSpecific.setDate(selectedDates);
@@ -883,6 +883,9 @@ if (editTask.users) {
       updateSelectedDatesDisplay();
     }
     specificDatesGroup.style.display = editTask.repeat === "Daily" ? "flex" : "none";
+  } else {
+    // For non-edit mode, initialize user list
+    populateUsers();
   }
 });
 
