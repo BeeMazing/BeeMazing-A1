@@ -836,11 +836,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    // Handle users
-    if (editTask.users) {
-      selectedUsers = [...editTask.users];
-      updateSelectedUsersDisplay();
-    }
+
+// Handle users
+if (editTask.users) {
+    selectedUsers = [...editTask.users].map(u => u.trim()).filter(u => u);
+    updateSelectedUsersDisplay();
+    populateUsers(); // Refresh user list to reflect selected users
+}
 
       // Handle alarms
       if (editTask.alarms?.length) {
@@ -960,50 +962,58 @@ document.addEventListener("DOMContentLoaded", async () => {
     
         let selectedUsers = [];
         const populateUsers = () => {
-            const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-const currentAdmin = localStorage.getItem("currentAdminEmail");
-const users = allUserData[currentAdmin]?.users || [];
+    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+    const currentAdmin = localStorage.getItem("currentAdminEmail");
+    const users = allUserData[currentAdmin]?.users || [];
 
-            userList.innerHTML = "";
-            users.forEach((user) => {
-                const userItem = document.createElement("li");
-                userItem.textContent = user;
-                userItem.style.padding = "10px";
-                userItem.style.margin = "5px 0";
+    userList.innerHTML = "";
+    users.forEach((user) => {
+        const userItem = document.createElement("li");
+        userItem.textContent = user;
+        userItem.style.padding = "10px";
+        userItem.style.margin = "5px 0";
+        userItem.style.border = "1px solid var(--selection-border)";
+        userItem.style.borderRadius = "8px";
+        userItem.style.cursor = "pointer";
+        userItem.style.textAlign = "center";
+
+        // Set initial background based on selectedUsers
+        if (selectedUsers.includes(user)) {
+            userItem.style.backgroundColor = "var(--primary-color)";
+            userItem.style.color = "var(--secondary-color)";
+        } else {
+            userItem.style.backgroundColor = "var(--light-bg)";
+            userItem.style.color = "var(--text-color)";
+        }
+
+        userItem.addEventListener("mouseover", () => {
+            userItem.style.backgroundColor = "var(--primary-color)";
+            userItem.style.color = "var(--secondary-color)";
+        });
+        userItem.addEventListener("mouseout", () => {
+            if (selectedUsers.includes(user)) {
+                userItem.style.backgroundColor = "var(--primary-color)";
+                userItem.style.color = "var(--secondary-color)";
+            } else {
                 userItem.style.backgroundColor = "var(--light-bg)";
-                userItem.style.border = "1px solid var(--selection-border)";
-                userItem.style.borderRadius = "8px";
-                userItem.style.cursor = "pointer";
-                userItem.style.textAlign = "center";
-    
-                userItem.addEventListener("mouseover", () => {
-                    userItem.style.backgroundColor = "var(--primary-color)";
-                    userItem.style.color = "var(--secondary-color)";
-                });
-                userItem.addEventListener("mouseout", () => {
-                    if (selectedUsers.includes(user)) {
-                        userItem.style.backgroundColor = "var(--primary-color)";
-                        userItem.style.color = "var(--secondary-color)";
-                    } else {
-                        userItem.style.backgroundColor = "var(--light-bg)";
-                        userItem.style.color = "var(--text-color)";
-                    }
-                });
-                userItem.addEventListener("click", () => {
-                    if (selectedUsers.includes(user)) {
-                        selectedUsers = selectedUsers.filter((u) => u !== user);
-                        userItem.style.backgroundColor = "var(--light-bg)";
-                        userItem.style.color = "var(--text-color)";
-                    } else {
-                        selectedUsers.push(user);
-                        userItem.style.backgroundColor = "var(--primary-color)";
-                        userItem.style.color = "var(--secondary-color)";
-                    }
-                    updateSelectedUsersDisplay();
-                });
-                userList.appendChild(userItem);
-            });
-        };
+                userItem.style.color = "var(--text-color)";
+            }
+        });
+        userItem.addEventListener("click", () => {
+            if (selectedUsers.includes(user)) {
+                selectedUsers = selectedUsers.filter((u) => u !== user);
+                userItem.style.backgroundColor = "var(--light-bg)";
+                userItem.style.color = "var(--text-color)";
+            } else {
+                selectedUsers.push(user);
+                userItem.style.backgroundColor = "var(--primary-color)";
+                userItem.style.color = "var(--secondary-color)";
+            }
+            updateSelectedUsersDisplay();
+        });
+        userList.appendChild(userItem);
+    });
+};
     
         const updateSelectedUsersDisplay = () => {
     // Clean the selectedUsers array just in case
