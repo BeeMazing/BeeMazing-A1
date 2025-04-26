@@ -868,6 +868,9 @@
 
 
 
+
+
+
 document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     let adminEmail = urlParams.get('admin') || localStorage.getItem("currentAdminEmail");
@@ -911,21 +914,41 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-
-        resetUserReward(userName);
+        // Remove the resetUserReward call after confirming the reset
+        // resetUserReward(userName);
 
         populateUserDropdown(userName);
         loadUserTasks(userName);
         loadUserReward(userName);
         loadLuckyChests(userName);
 
+        // Process addPoints only if it hasn't been processed for this session
         if (addPoints > 0) {
-            setTimeout(async () => {
-                await updateUserReward(userName, addPoints);
-                triggerHoneyRain(addPoints);
-                await loadUserReward(userName);
-                await updateLuckyChestProgress(userName, addPoints);
-            }, 500);
+            const sessionKey = `addPointsProcessed_${userName}_${addPoints}`;
+            const hasProcessed = localStorage.getItem(sessionKey);
+
+            if (!hasProcessed) {
+                console.log(`Processing addPoints: ${addPoints} for user: ${userName}`);
+                setTimeout(async () => {
+                    try {
+                        await updateUserReward(userName, addPoints);
+                        triggerHoneyRain(addPoints);
+                        await loadUserReward(userName);
+                        await updateLuckyChestProgress(userName, addPoints);
+
+                        // Mark addPoints as processed
+                        localStorage.setItem(sessionKey, "true");
+
+                        // Clear the addPoints parameter from the URL
+                        const newUrl = `${window.location.pathname}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                        window.history.replaceState({}, document.title, newUrl);
+                    } catch (err) {
+                        console.error("Error processing addPoints:", err);
+                    }
+                }, 500);
+            } else {
+                console.log(`addPoints (${addPoints}) already processed for user: ${userName}`);
+            }
         }
 
         // Listen for reward updates from other tabs (e.g., userAdmin.html)
@@ -933,6 +956,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (event.key === "rewardUpdate") {
                 const update = JSON.parse(event.newValue);
                 if (update.user === userName) {
+                    console.log(`Received reward update for ${userName}: amount=${update.amount}`);
                     // Reward updated for this user, refresh the UI
                     await loadUserReward(userName);
                     await updateLuckyChestProgress(userName, update.amount);
@@ -949,6 +973,9 @@ document.addEventListener("DOMContentLoaded", () => {
     generateScrollableDates();
     showAdminControlsIfNeeded();
 });
+
+
+
 
 
 
@@ -1134,6 +1161,7 @@ async function loadUserReward(userName) {
         if (!response.ok) throw new Error(data.error || "Failed to fetch rewards");
         const rewards = data.rewards || {};
         const userReward = Number(rewards[userName]) || 0;
+        console.log(`loadUserReward: userName=${userName}, userReward=${userReward}`);
         document.getElementById("rewardAmount").textContent = userReward.toString();
     } catch (err) {
         console.error("Error loading user reward:", err);
@@ -1147,12 +1175,13 @@ async function loadUserReward(userName) {
 
 
 
-        async function updateUserReward(userName, amount) {
+async function updateUserReward(userName, amount) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     try {
         // Ensure amount is a number
         const numericAmount = Number(amount);
         if (isNaN(numericAmount)) {
+            console.error("Amount is not a valid number:", amount);
             throw new Error("Amount must be a valid number");
         }
 
@@ -1163,8 +1192,14 @@ async function loadUserReward(userName) {
         const rewards = data.rewards || {};
         const currentReward = Number(rewards[userName]) || 0;
 
+        // Log the values for debugging
+        console.log(`updateUserReward: userName=${userName}, currentReward=${currentReward}, numericAmount=${numericAmount}`);
+
         // Calculate new reward
         const newReward = currentReward + numericAmount;
+
+        // Log the new reward
+        console.log(`updateUserReward: newReward=${newReward}`);
 
         // Update the server with the new total
         const updateResponse = await fetch("https://beemazing.onrender.com/api/rewards", {
@@ -1174,6 +1209,9 @@ async function loadUserReward(userName) {
         });
         const updateData = await updateResponse.json();
         if (!updateResponse.ok) throw new Error(updateData.error || "Failed to update rewards");
+
+        // Log the server response
+        console.log("updateUserReward: Server response:", updateData);
     } catch (err) {
         console.error("Error updating user reward:", err);
         throw err;
