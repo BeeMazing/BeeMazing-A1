@@ -405,7 +405,6 @@ transporter.verify((error, success) => {
 
 
 // FORGOT PASSWORD
-// FORGOT PASSWORD
 app.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
 
@@ -433,12 +432,12 @@ app.post('/forgot-password', async (req, res) => {
       { email },
       { $set: { resetToken, resetTokenExpiry } }
     );
-    console.log(`✅ /forgot-password: Reset token generated for ${email}`);
+    console.log(`✅ /forgot-password: Generated resetToken for ${email}: ${resetToken}`);
 
     // Send reset email
-    const resetLink = `https://g4mechanger.github.io/register.html?resetToken=${resetToken}`;
+    const resetLink = `https://g4mechanger.github.io/BeeMazing-Y1/register.html?resetToken=${resetToken}`;
     const mailOptions = {
-      from: 'beemazing@inbox.lv', // Match the transporter's user
+      from: 'beemazing@inbox.lv',
       to: email,
       subject: 'BeeMazing Password Reset',
       html: `
@@ -461,12 +460,12 @@ app.post('/forgot-password', async (req, res) => {
 
 
 
-
 // RESET PASSWORD
 app.post('/reset-password', async (req, res) => {
   const { resetToken, newPassword } = req.body;
 
   if (!resetToken || !newPassword) {
+    console.log("🔥 /reset-password: Missing reset token or new password");
     return res.status(400).json({ success: false, message: "Missing reset token or new password" });
   }
 
@@ -479,8 +478,12 @@ app.post('/reset-password', async (req, res) => {
     });
 
     if (!user) {
+      console.log("🔥 /reset-password: Invalid or expired reset token");
       return res.status(400).json({ success: false, message: "Invalid or expired reset token" });
     }
+
+    // Log the token
+    console.log(`✅ /reset-password: Valid resetToken for ${user.email}: ${resetToken}`);
 
     // Update password and clear reset token
     await users.updateOne(
@@ -491,12 +494,18 @@ app.post('/reset-password', async (req, res) => {
       }
     );
 
+    console.log(`✅ /reset-password: Password reset successfully for ${user.email}`);
     res.json({ success: true, message: "Password reset successfully" });
   } catch (err) {
-    console.error("🔥 Error in /reset-password:", err);
+    console.error("🔥 /reset-password: Error -", err);
     res.status(500).json({ success: false, message: "Failed to reset password" });
   }
 });
+
+
+
+
+
 
 // Test email endpoint for debugging
 // Test email endpoint for debugging

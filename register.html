@@ -287,7 +287,7 @@
     <div class="logo">
       <img src="https://i.postimg.cc/x1fDPQPX/pngtree-honey-bee-logo-design-vector-png-image-12507314-removebg-preview.png" alt="BeeMazing Logo">
     </div>
-    <h2 id="formTitle">Register z7</h2>
+    <h2 id="formTitle">Register z8</h2>
     <form id="authForm" novalidate>
       <div id="emailGroup" class="input-group email">
         <input type="email" id="email" placeholder="Email" required />
@@ -393,7 +393,7 @@ const resetSubmitBtn = document.getElementById("resetSubmitBtn");
     const passwordRegex = /^(?=.*\d).{8,}$/;
   
     // Token format validation (64-character hex string)
-    const tokenRegex = /^[0-9a-fA-F]{32,}$/; // Allow 32+ characters to be more flexible
+    const tokenRegex = /^[0-9a-fA-F-]{32,}$/; // Allow hyphens
   
     if (resetToken) {
       if (!tokenRegex.test(resetToken)) {
