@@ -292,6 +292,15 @@
     }
 }
         
+
+
+
+.reward-card.no-flip .reward-card-inner {
+    transform: rotateY(180deg);
+}
+.reward-card.no-flip {
+    cursor: default;
+}
     </style>
 </head>
 <body>
@@ -446,25 +455,26 @@ document.querySelectorAll('.footer a').forEach(link => {
         const userHoney = await getUserHoney(userName);
         document.getElementById('honeyBalance').textContent = userHoney;
 
+        // Fetch all available market rewards
+        const marketResponse = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const marketData = await marketResponse.json();
+        if (!marketResponse.ok) throw new Error(marketData.error || "Failed to fetch market rewards");
+        const marketRewards = marketData.rewards || [];
+
         // Fetch user rewards
         const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
         const userRewardsData = await userRewardsResponse.json();
         if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
         const userRewards = (userRewardsData.userRewards || {})[userName] || [];
 
-        // Fetch market rewards
-        const marketResponse = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-        const marketData = await marketResponse.json();
-        if (!marketResponse.ok) throw new Error(marketData.error || "Failed to fetch market rewards");
-        const marketRewards = marketData.rewards || [];
-
-        // Create a map of market rewards for cost lookup
+        // Create a map of market rewards for cost and type lookup
         const marketRewardMap = {};
         marketRewards.forEach(reward => {
             marketRewardMap[reward.name] = {
                 honey: reward.honey || 0,
                 diamonds: reward.diamonds || 0,
-                type: reward.type || 'normal'
+                type: reward.type || 'normal',
+                outcomes: reward.outcomes || []
             };
         });
 
@@ -474,23 +484,29 @@ document.querySelectorAll('.footer a').forEach(link => {
             rewardCounts[reward.name] = (rewardCounts[reward.name] || 0) + 1;
         });
 
-        // Render user rewards
+        // Combine market rewards and unique user rewards
+        const allRewardNames = [...new Set([...marketRewards.map(r => r.name), ...Object.keys(rewardCounts)])];
+
+        // Render all rewards
         rewardsGrid.innerHTML = "";
-        if (Object.keys(rewardCounts).length === 0) {
-            rewardsGrid.innerHTML = "<p class='text-center'>No rewards owned yet.</p>";
+        if (allRewardNames.length === 0) {
+            rewardsGrid.innerHTML = "<p class='text-center'>No rewards available in the hive.</p>";
         } else {
-            Object.keys(rewardCounts).forEach((rewardName, index) => {
-                const userRewardCount = rewardCounts[rewardName];
-                const rewardInfo = userRewards.find(r => r.name === rewardName);
-                const marketInfo = marketRewardMap[rewardName] || { honey: 0, diamonds: 0, type: rewardInfo?.type || 'normal' };
+            allRewardNames.forEach((rewardName, index) => {
+                const userRewardCount = rewardCounts[rewardName] || 0;
+                const marketInfo = marketRewardMap[rewardName] || {};
+                const userRewardInfo = userRewards.find(r => r.name === rewardName) || {};
+                const rewardType = marketInfo.type || userRewardInfo.type || 'normal';
                 const rewardCost = marketInfo.honey || marketInfo.diamonds || 0;
+                const outcomes = marketInfo.outcomes || userRewardInfo.outcomes || [];
                 const isTheKey = rewardName === "The Key";
-                const isDiceChest = marketInfo.type === "dice" || rewardInfo?.type === "dice";
-                const isHoney = marketInfo.type === "Honey" || rewardInfo?.type === "Honey";
+                const isDiceChest = rewardType === "dice";
+                const isHoney = rewardType === "Honey";
+                const isFromUserRewardsOnly = !marketRewardMap[rewardName] && userRewardCount > 0;
                 const canAfford = userHoney >= rewardCost;
 
                 const card = document.createElement("div");
-                card.className = `reward-card ${userRewardCount > 0 ? 'flipped' : ''}`;
+                card.className = `reward-card ${isFromUserRewardsOnly ? 'flipped no-flip' : userRewardCount > 0 ? 'flipped' : ''}`;
                 card.dataset.reward = rewardName;
                 card.dataset.index = index;
 
@@ -505,7 +521,7 @@ document.querySelectorAll('.footer a').forEach(link => {
                         <button class="mt-2 px-3 py-1 btn-back rounded font-semibold" 
                                 onclick="${isHoney ? `redeemHoneyReward('${userName}', '${rewardName}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)` : 
                                           isTheKey ? `useTheKey('${userName}', '${rewardName}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)` : 
-                                          isDiceChest ? `useDiceChest('${userName}', '${rewardName}', '${JSON.stringify(rewardInfo?.outcomes || [])}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)` : 
+                                          isDiceChest ? `useDiceChest('${userName}', '${rewardName}', '${JSON.stringify(outcomes)}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)` : 
                                           `redeemReward('${userName}', '${rewardName}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)`}">
                             ${isHoney ? 'Get it' : isTheKey || isDiceChest ? 'Use it' : 'Receive'}
                         </button>
@@ -522,7 +538,7 @@ document.querySelectorAll('.footer a').forEach(link => {
                             <p class="text-[var(--text-color)]">Honey: ${rewardCost} 🍯</p>
                             <button class="mt-2 px-3 py-1 rounded font-semibold ${canAfford ? 'btn-primary' : 'btn-disabled'}" 
                                     ${canAfford ? '' : 'disabled'} 
-                                    onclick="claimReward('${userName}', '${rewardName}', '${marketInfo.type}', ${rewardCost}, '${JSON.stringify(rewardInfo?.outcomes || [])}')">Get It</button>
+                                    onclick="claimReward('${userName}', '${rewardName}', '${rewardType}', ${rewardCost}, '${JSON.stringify(outcomes)}')">Get It</button>
                         </div>
                         <div class="reward-card-back text-center">
                             <h3 class="text-lg font-semibold">${rewardName}</h3>
@@ -532,15 +548,19 @@ document.querySelectorAll('.footer a').forEach(link => {
                     </div>
                 `;
                 rewardsGrid.appendChild(card);
+
                 const indicator = card.querySelector('.purchase-indicator');
                 indicator.style.display = userRewardCount > 0 ? 'flex' : 'none';
                 indicator.textContent = userRewardCount;
 
-                card.addEventListener('click', (e) => {
-                    if (!e.target.closest('button') && !e.target.closest('select')) {
-                        card.classList.toggle('flipped');
-                    }
-                });
+                // Add flip event listener only for non-user-rewards-only cards
+                if (!isFromUserRewardsOnly) {
+                    card.addEventListener('click', (e) => {
+                        if (!e.target.closest('button') && !e.target.closest('select')) {
+                            card.classList.toggle('flipped');
+                        }
+                    });
+                }
             });
         }
 
@@ -629,7 +649,7 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-
+      
       async function claimReward(userName, rewardName, rewardType, honey, outcomes) {
           try {
               // Fetch user honey balance
