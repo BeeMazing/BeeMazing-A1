@@ -340,7 +340,7 @@
     <div class="logo">
       <img src="https://i.postimg.cc/x1fDPQPX/pngtree-honey-bee-logo-design-vector-png-image-12507314-removebg-preview.png" alt="BeeMazing Logo">
     </div>
-    <h2 id="formTitle">Register z10</h2>
+    <h2 id="formTitle">Register z11</h2>
     <form id="authForm" novalidate>
       <div id="emailGroup" class="input-group email">
         <input type="email" id="email" placeholder="Email" required />
@@ -427,15 +427,14 @@ function showForgotPassword() {
   form.reset(); // Clear form fields
 }
   
-    function showResetPasswordForm() {
+function showResetPasswordForm() {
   isResettingPassword = true;
   isRegistering = false;
   document.getElementById("formTitle").textContent = "Set New Password";
   authForm.style.display = "none";
   resetPasswordForm.style.display = "block";
-  toggleText.style.display = "none";
-  toggleFormText.style.display = "none";
-  forgotPasswordLink.style.display = "none";
+  document.querySelector(".toggle").style.display = "none"; // Hide the entire toggle div
+  backBtn.style.display = "block"; // Show the Back button
   message.textContent = "";
   resetMessage.textContent = "";
   resetPasswordForm.reset();
