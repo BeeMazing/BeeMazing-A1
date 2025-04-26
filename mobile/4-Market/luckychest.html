@@ -303,11 +303,51 @@
         margin: 10px;
       }
     }
+
+
+    #welcomeModal .modal-content p {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    color: var(--text-color);
+}
+#welcomeModal .modal-content h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    text-align: center;
+}
+#welcomeModal input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-color);
+}
   </style>
 </head>
 <body>
   <div class="header">Lucky Chest Mindblow</div>
   <div class="container" id="chestContainer"></div>
+
+
+  <div class="modal" id="welcomeModal">
+    <div class="modal-content">
+        <h3>Welcome to Treasure Land!</h3>
+        <p>
+            Here, you can create surprise rewards to celebrate your loved ones' overall hard work.<br>
+            Pick a chest with a prize inside by tapping on it, or create your own by pressing the '+'.<br>
+            Set how many points are needed to unlock the chest, then send it to the lucky receiver.<br>
+            Once they collect the required points, they will receive their prize!<br>
+            <em>(Points are not deducted when receiving a chest — it's a gift!)</em>
+        </p>
+        <div class="form-group" style="display: flex; align-items: center; margin-top: 15px;">
+            <input type="checkbox" id="doNotShowAgain" style="margin-right: 10px;">
+            <label for="doNotShowAgain" style="font-weight: normal;">Do not show this again</label>
+        </div>
+        <button class="btn" onclick="closeWelcomePopup()">Close</button>
+    </div>
+</div>
+
 
   <div class="modal" id="assignModal">
     <div class="modal-content">
@@ -429,31 +469,36 @@
     let adminEmail = null;
 
     document.addEventListener("DOMContentLoaded", async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      adminEmail = urlParams.get('adminEmail') || localStorage.getItem("currentAdminEmail");
+         const urlParams = new URLSearchParams(window.location.search);
+         adminEmail = urlParams.get('adminEmail') || localStorage.getItem("currentAdminEmail");
 
-      if (adminEmail && adminEmail !== "null") {
-        localStorage.setItem("currentAdminEmail", adminEmail);
-        document.getElementById('homeLink').href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
-        document.getElementById('tasksLink').href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?adminEmail=${encodeURIComponent(adminEmail)}`;
-        document.getElementById('marketLink').href = `/BeeMazing-Y1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}`;
-        document.getElementById('statsLink').href = `/BeeMazing-Y1/mobile/5-Stats/stats.html?adminEmail=${encodeURIComponent(adminEmail)}`;
-      }
+         if (adminEmail && adminEmail !== "null") {
+             localStorage.setItem("currentAdminEmail", adminEmail);
+             document.getElementById('homeLink').href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+             document.getElementById('tasksLink').href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?adminEmail=${encodeURIComponent(adminEmail)}`;
+             document.getElementById('marketLink').href = `/BeeMazing-Y1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}`;
+             document.getElementById('statsLink').href = `/BeeMazing-Y1/mobile/5-Stats/stats.html?adminEmail=${encodeURIComponent(adminEmail)}`;
+         }
 
-      await loadChests();
+         // Show welcome popup if not disabled
+         if (localStorage.getItem("hideWelcomePopup") !== "true") {
+             document.getElementById("welcomeModal").classList.add("show");
+         }
 
-      document.querySelectorAll('.footer a').forEach(link => {
-        const currentPath = window.location.pathname.replace(/\/$/, '');
-        const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
-        if (linkPath === "/BeeMazing-Y1/mobile/4-Market/market.html" && currentPath.startsWith("/BeeMazing-Y1/mobile/4-Market/")) {
-          link.classList.add('active');
-        } else if (currentPath === linkPath) {
-          link.classList.add('active');
-        } else {
-          link.classList.remove('active');
-        }
-      });
-    });
+         await loadChests();
+
+         document.querySelectorAll('.footer a').forEach(link => {
+             const currentPath = window.location.pathname.replace(/\/$/, '');
+             const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
+             if (linkPath === "/BeeMazing-Y1/mobile/4-Market/market.html" && currentPath.startsWith("/BeeMazing-Y1/mobile/4-Market/")) {
+                 link.classList.add('active');
+             } else if (currentPath === linkPath) {
+                 link.classList.add('active');
+             } else {
+                 link.classList.remove('active');
+             }
+         });
+     });
 
     function createChestCard(chest) {
       const card = document.createElement("div");
@@ -598,7 +643,6 @@ async function assignChest(userName, requiredPoints) {
         // Close modal and redirect
         assignModal.classList.remove("show");
         alert(`"${selectedChest.name}" assigned to ${userName}!`);
-        window.location.href = `/BeeMazing-Y1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}&userName=${encodeURIComponent(userName)}&tab=rewards`;
         return true;
     } catch (err) {
         console.error("Error assigning chest:", err);
@@ -686,7 +730,6 @@ async function assignChest(userName, requiredPoints) {
         });
         diceModal.classList.remove("show");
         alert("Dice Chest assigned!");
-        window.location.href = `/BeeMazing-Y1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}`;
       } catch (err) {
         console.error("Error saving dice chest:", err);
         alert("Failed to assign dice chest. Please try again.");
@@ -772,13 +815,25 @@ async function assignChest(userName, requiredPoints) {
     });
 
     document.querySelectorAll(".modal").forEach(modal => {
-      modal.addEventListener("click", e => {
-        if (e.target === modal) {
-          modal.classList.remove("show");
-          userListEl.style.display = "none";
-        }
-      });
-    });
+         modal.addEventListener("click", e => {
+             if (e.target === modal) {
+                 modal.classList.remove("show");
+                 userListEl.style.display = "none";
+                 if (modal.id === "welcomeModal") {
+                     closeWelcomePopup();
+                 }
+             }
+         });
+     });
+
+
+     function closeWelcomePopup() {
+    const doNotShowAgain = document.getElementById("doNotShowAgain").checked;
+    if (doNotShowAgain) {
+        localStorage.setItem("hideWelcomePopup", "true");
+    }
+    document.getElementById("welcomeModal").classList.remove("show");
+}
   </script>
 </body>
 </html>
