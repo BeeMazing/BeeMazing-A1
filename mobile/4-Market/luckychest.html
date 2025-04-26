@@ -322,7 +322,7 @@
         <label>Points Required to Unlock:</label>
         <input type="number" id="requiredPoints" min="1" placeholder="e.g. 100" />
       </div>
-      <button class="btn" onclick="assignChest()">Assign Chest</button>
+      <button class="btn" onclick="assignChest(document.getElementById('selectedUser').value, document.getElementById('requiredPoints').value)">Assign Chest</button>
       <button class="btn" id="deleteChestBtn" style="margin-top: 10px; background: #D32F2F; display: none;">Delete Chest</button>
     </div>
   </div>
@@ -543,45 +543,69 @@ async function openAssignModal() {
 }
 
 
-
 async function assignChest(userName, requiredPoints) {
-  const adminEmail = localStorage.getItem("currentAdminEmail");
-  if (!userName || !adminEmail || requiredPoints <= 0) {
-    console.error("Invalid input for assigning chest:", { userName, adminEmail, requiredPoints });
-    return false;
-  }
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    if (!userName) {
+        alert("Please select a user.");
+        return false;
+    }
+    if (!requiredPoints || isNaN(parseInt(requiredPoints)) || parseInt(requiredPoints) <= 0) {
+        alert("Please enter a valid point requirement.");
+        return false;
+    }
+    if (!adminEmail) {
+        alert("Admin email not found. Please log in again.");
+        return false;
+    }
 
-  try {
-    // Fetch existing lucky chests
-    const response = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
+    try {
+        // Fetch existing lucky chests
+        const response = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
 
-    const luckyChests = data.luckyChests || {};
-    luckyChests[userName] = luckyChests[userName] || [];
-    luckyChests[userName].push({
-      requiredPoints: parseInt(requiredPoints),
-      progress: 0,
-      reward: "TBD",
-      unlocked: false
-    });
+        const luckyChests = data.luckyChests || {};
+        luckyChests[userName] = luckyChests[userName] || [];
 
-    // Save updated lucky chests
-    const saveResponse = await fetch("https://beemazing.onrender.com/api/lucky-chests", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminEmail, luckyChests })
-    });
-    const saveData = await saveResponse.json();
-    if (!saveResponse.ok) throw new Error(saveData.error || "Failed to save lucky chest");
+        // Determine chest type
+        let chestType = "normal";
+        if (selectedChest.name === "The Key") {
+            chestType = "The Key";
+        } else if (selectedChest.honey !== undefined) {
+            chestType = "Honey";
+        }
 
-    return true;
-  } catch (err) {
-    console.error("Error assigning chest:", err);
-    return false;
-  }
+        // Add the chest with details
+        luckyChests[userName].push({
+            name: selectedChest.name,
+            type: chestType,
+            image: selectedChest.image || "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png",
+            requiredPoints: parseInt(requiredPoints),
+            progress: 0,
+            reward: selectedChest.honey !== undefined ? `${selectedChest.honey} Honey` : selectedChest.name,
+            unlocked: false
+        });
+
+        // Save updated lucky chests
+        const saveResponse = await fetch("https://beemazing.onrender.com/api/lucky-chests", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ adminEmail, luckyChests })
+        });
+        const saveData = await saveResponse.json();
+        if (!saveResponse.ok) throw new Error(saveData.error || "Failed to save lucky chest");
+
+        // Close modal and redirect
+        assignModal.classList.remove("show");
+        alert(`"${selectedChest.name}" assigned to ${userName}!`);
+        window.location.href = `/BeeMazing-Y1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}&userName=${encodeURIComponent(userName)}&tab=rewards`;
+        return true;
+    } catch (err) {
+        console.error("Error assigning chest:", err);
+        alert("Failed to assign chest. Please try again.");
+        return false;
+    }
 }
-
 
 
 
