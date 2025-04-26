@@ -301,6 +301,23 @@
 .reward-card.no-flip {
     cursor: default;
 }
+
+
+.quantity-circle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 24px;
+    height: 24px;
+    background-color: black;
+    color: #FFC107; /* Yellow color for the number */
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: bold;
+    margin: 8px auto;
+}
+
+
     </style>
 </head>
 <body>
@@ -446,7 +463,6 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-
       async function loadRewards(userName) {
     const rewardsGrid = document.getElementById("rewards-grid");
     const historyGrid = document.getElementById("history-grid");
@@ -515,20 +531,33 @@ document.querySelectorAll('.footer a').forEach(link => {
 
                 let backContent = '';
                 if (userRewardCount > 0) {
-                    const options = Array.from({ length: userRewardCount }, (_, i) => i + 1)
-                        .map(n => `<option value="${n}">${n}</option>`).join('');
-                    backContent = `
-                        <select id="quantity-${rewardName.replace(/\s+/g, '-')}" class="mt-2">
-                            ${options}
-                        </select>
-                        <button class="mt-2 px-3 py-1 btn-back rounded font-semibold" 
-                                onclick="${isHoney ? `redeemHoneyReward('${userName}', '${rewardName}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)` : 
-                                          isTheKey ? `useTheKey('${userName}', '${rewardName}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)` : 
-                                          isDiceChest ? `useDiceChest('${userName}', '${rewardName}', '${JSON.stringify(outcomes)}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)` : 
-                                          `redeemReward('${userName}', '${rewardName}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)`}">
-                            ${isHoney ? 'Get it' : isTheKey || isDiceChest ? 'Use it' : 'Receive'}
-                        </button>
-                    `;
+                    if (isFromUserRewardsOnly && (isTheKey || isDiceChest)) {
+                        // For chest rewards with "Use it", show quantity circle and button
+                        backContent = `
+                            <div class="quantity-circle">${userRewardCount}</div>
+                            <button class="mt-2 px-3 py-1 btn-back rounded font-semibold" 
+                                    onclick="${isTheKey ? `useTheKey('${userName}', '${rewardName}', 1)` : 
+                                              `useDiceChest('${userName}', '${rewardName}', '${JSON.stringify(outcomes)}', 1)`}">
+                                Use it
+                            </button>
+                        `;
+                    } else {
+                        // For other owned rewards, show dropdown
+                        const options = Array.from({ length: userRewardCount }, (_, i) => i + 1)
+                            .map(n => `<option value="${n}">${n}</option>`).join('');
+                        backContent = `
+                            <select id="quantity-${rewardName.replace(/\s+/g, '-')}" class="mt-2">
+                                ${options}
+                            </select>
+                            <button class="mt-2 px-3 py-1 btn-back rounded font-semibold" 
+                                    onclick="${isHoney ? `redeemHoneyReward('${userName}', '${rewardName}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)` : 
+                                              isTheKey ? `useTheKey('${userName}', '${rewardName}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)` : 
+                                              isDiceChest ? `useDiceChest('${userName}', '${rewardName}', '${JSON.stringify(outcomes)}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)` : 
+                                              `redeemReward('${userName}', '${rewardName}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)`}">
+                                ${isHoney ? 'Get it' : isTheKey || isDiceChest ? 'Use it' : 'Receive'}
+                            </button>
+                        `;
+                    }
                 } else {
                     backContent = `<p class="text-[var(--card-back-text)]">You don't own this reward yet.</p>`;
                 }
@@ -545,7 +574,7 @@ document.querySelectorAll('.footer a').forEach(link => {
                         </div>
                         <div class="reward-card-back text-center">
                             <h3 class="text-lg font-semibold">${rewardName}</h3>
-                            <p class="text-[var(--card-back-text)]">Honey: ${rewardCost} 🍯</p>
+                            ${isFromUserRewardsOnly ? '' : `<p class="text-[var(--card-back-text)]">Honey: ${rewardCost} 🍯</p>`}
                             ${backContent}
                         </div>
                     </div>
@@ -647,7 +676,6 @@ document.querySelectorAll('.footer a').forEach(link => {
         historyGrid.innerHTML = "<p class='text-center'>Failed to load history. Please try again later.</p>";
     }
 }
-
 
 
 
