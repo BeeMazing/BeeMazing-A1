@@ -340,7 +340,7 @@
     <div class="logo">
       <img src="https://i.postimg.cc/x1fDPQPX/pngtree-honey-bee-logo-design-vector-png-image-12507314-removebg-preview.png" alt="BeeMazing Logo">
     </div>
-    <h2 id="formTitle">Register z13</h2>
+    <h2 id="formTitle">Register z11</h2>
     <form id="authForm" novalidate>
       <div id="emailGroup" class="input-group email">
         <input type="email" id="email" placeholder="Email" required />
@@ -440,9 +440,8 @@ function showResetPasswordForm() {
   resetPasswordForm.reset();
 }
   
-    /* Email validation regex
+    // Email validation regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    */
   
     // Password strength validation (minimum 8 characters, at least one number)
     // const passwordRegex = /^(?=.*\d).{8,}$/;
@@ -476,23 +475,16 @@ function showResetPasswordForm() {
 
   // Validate inputs for register/login
   if (!isResettingPassword) {
-/*
     if (!emailRegex.test(email)) {
       message.style.color = "#D32F2F";
       message.textContent = "❌ Please enter a valid email";
       return;
     }
-    */
     /* if (!passwordRegex.test(password)) {
       message.style.color = "#D32F2F";
       message.textContent = "❌ Password must be at least 8 characters and include a number";
       return;
     } */
-
-
-
-
-    
     if (isRegistering && password !== confirmPassword) {
       message.style.color = "#D32F2F";
       message.textContent = "❌ Passwords do not match";
