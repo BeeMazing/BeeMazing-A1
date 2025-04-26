@@ -432,180 +432,204 @@ document.querySelectorAll('.footer a').forEach(link => {
           }
       }
   
+
+
+
       async function loadRewards(userName) {
-          const rewardsGrid = document.getElementById("rewards-grid");
-          const historyGrid = document.getElementById("history-grid");
-          rewardsGrid.innerHTML = "<p class='text-center'>Loading rewards...</p>";
-          historyGrid.innerHTML = "<p class='text-center'>Loading history...</p>";
-  
-          try {
-              // Fetch user honey balance
-              const userHoney = await getUserHoney(userName);
-              document.getElementById('honeyBalance').textContent = userHoney;
-              console.log(`loadRewards: userHoney=${userHoney} for user=${userName}`);
-  
-              // Fetch all available rewards
-              const marketResponse = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-              const marketData = await marketResponse.json();
-              if (!marketResponse.ok) throw new Error(marketData.error || "Failed to fetch market rewards");
-              const availableRewards = marketData.rewards || [];
-              console.log('market-rewards raw response:', marketData);
-  
-              // Fetch user rewards
-              const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-              const userRewardsData = await userRewardsResponse.json();
-              if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
-              const userRewards = (userRewardsData.userRewards || {})[userName] || [];
-              console.log(`loadRewards: userRewards for ${userName}=`, userRewards);
-  
-              // Fetch reward history
-              const historyResponse = await fetch(`https://beemazing.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}`);
-              const historyData = await historyResponse.json();
-              if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
-              const rewardHistory = (historyData.rewardHistory || {})[userName] || [];
-  
-              // Render available rewards
-              rewardsGrid.innerHTML = "";
-              if (availableRewards.length === 0) {
-                  rewardsGrid.innerHTML = "<p class='text-center'>No rewards available in the hive.</p>";
-              } else {
-                  availableRewards.forEach((reward, index) => {
-                      const userRewardCount = userRewards.filter(ur => ur.name === reward.name).length || 0;
-                      const isTheKey = reward.name === "The Key";
-                      const isDiceChest = reward.type === "dice";
-                      const isHoney = reward.type === "Honey";
-                      const rewardCost = reward.honey || reward.diamonds || 0;
-                      const canAfford = userHoney >= rewardCost;
-                      console.log(`Reward: ${reward.name}, cost=${rewardCost} (honey=${reward.honey}, diamonds=${reward.diamonds}), canAfford=${canAfford} (userHoney=${userHoney}), count=${userRewardCount}`);
-                      const card = document.createElement("div");
-                      card.className = "reward-card";
-                      card.dataset.reward = reward.name;
-                      card.dataset.index = index;
-                      let backContent = '';
-                      if (userRewardCount > 0) {
-                          const options = Array.from({ length: userRewardCount }, (_, i) => i + 1)
-                              .map(n => `<option value="${n}">${n}</option>`).join('');
-                          backContent = `
-                              <select id="quantity-${reward.name.replace(/\s+/g, '-')}" class="mt-2">
-                                  ${options}
-                              </select>
-                              <button class="mt-2 px-3 py-1 btn-back rounded font-semibold" 
-                                      onclick="${isHoney ? `redeemHoneyReward('${userName}', '${reward.name}', document.getElementById('quantity-${reward.name.replace(/\s+/g, '-')}').value)` : 
-                                                isTheKey ? `useTheKey('${userName}', '${reward.name}', document.getElementById('quantity-${reward.name.replace(/\s+/g, '-')}').value)` : 
-                                                isDiceChest ? `useDiceChest('${userName}', '${reward.name}', '${JSON.stringify(reward.outcomes || [])}', document.getElementById('quantity-${reward.name.replace(/\s+/g, '-')}').value)` : 
-                                                `redeemReward('${userName}', '${reward.name}', document.getElementById('quantity-${reward.name.replace(/\s+/g, '-')}').value)`}">
-                                  ${isHoney ? 'Get it' : isTheKey || isDiceChest ? 'Use it' : 'Receive'}
-                              </button>
-                          `;
-                      } else {
-                          backContent = `<p class="text-[var(--card-back-text)]">You don't own this reward yet.</p>`;
-                      }
-                      card.innerHTML = `
-                          <div class="reward-card-inner">
-                              <div class="reward-card-front text-center">
-                                  <span class="purchase-indicator" data-count="${userRewardCount}"></span>
-                                  <h3 class="text-lg font-semibold">${reward.name}</h3>
-                                  <p class="text-[var(--text-color)]">Honey: ${rewardCost} 🍯</p>
-                                  <button class="mt-2 px-3 py-1 rounded font-semibold ${canAfford ? 'btn-primary' : 'btn-disabled'}" 
-                                          ${canAfford ? '' : 'disabled'} 
-                                          onclick="claimReward('${userName}', '${reward.name}', '${reward.type || ''}', ${rewardCost}, '${JSON.stringify(reward.outcomes || [])}')">Get It</button>
-                              </div>
-                              <div class="reward-card-back text-center">
-                                  <h3 class="text-lg font-semibold">${reward.name}</h3>
-                                  <p class="text-[var(--card-back-text)]">Honey: ${rewardCost} 🍯</p>
-                                  ${backContent}
-                              </div>
-                          </div>
-                      `;
-                      rewardsGrid.appendChild(card);
-                      const indicator = card.querySelector('.purchase-indicator');
-                      indicator.style.display = userRewardCount > 0 ? 'flex' : 'none';
-                      indicator.textContent = userRewardCount;
-  
-                      // Add flip event listener
-                      card.addEventListener('click', (e) => {
-                          if (!e.target.closest('button') && !e.target.closest('select')) {
-                              card.classList.toggle('flipped');
-                          }
-                      });
-                  });
-              }
-  
-              // Render reward history
-              historyGrid.innerHTML = "";
-              if (rewardHistory.length === 0) {
-                  historyGrid.innerHTML = "<p class='text-center'>No rewards received yet.</p>";
-              } else {
-                  const reversedHistory = [...rewardHistory].reverse();
-                  reversedHistory.forEach((reward, index) => {
-                      const actualIndex = rewardHistory.length - 1 - index;
-                      const card = document.createElement("div");
-                      card.className = "reward-card history-item";
-                      card.dataset.historyId = actualIndex;
-                      card.innerHTML = `
-                          <div class="reward-card-inner">
-                              <div class="reward-card-front text-center">
-                                  <h3 class="text-lg font-semibold">${reward.name}</h3>
-                                  <p class="text-[var(--text-color)]">Collected on: ${reward.date}</p>
-                                  <p class="text-[var(--text-color)]">Received on: ${reward.receivedDate || 'N/A'}</p>
-                              </div>
-                              <div class="reward-card-back text-center">
-                                  <h3 class="text-lg font-semibold">${reward.name}</h3>
-                                  <p class="text-[var(--text-color)]">Swipe to delete or click to return.</p>
-                              </div>
-                          </div>
-                          <button class="delete-btn" onclick="deleteReward('${userName}', ${actualIndex})">Delete</button>
-                      `;
-                      historyGrid.appendChild(card);
-  
-                      let startX = 0;
-                      let currentX = 0;
-                      let isSwiping = false;
-  
-                      card.addEventListener("touchstart", (e) => {
-                          startX = e.touches[0].clientX;
-                          isSwiping = true;
-                      });
-  
-                      card.addEventListener("touchmove", (e) => {
-                          if (!isSwiping) return;
-                          currentX = e.touches[0].clientX;
-                          const diffX = startX - currentX;
-                          if (diffX > 50) card.classList.add("swiped");
-                          else if (diffX < -50) card.classList.remove("swiped");
-                      });
-  
-                      card.addEventListener("touchend", () => isSwiping = false);
-  
-                      card.addEventListener("mousedown", (e) => {
-                          startX = e.clientX;
-                          isSwiping = true;
-                      });
-  
-                      card.addEventListener("mousemove", (e) => {
-                          if (!isSwiping) return;
-                          currentX = e.clientX;
-                          const diffX = startX - currentX;
-                          if (diffX > 50) card.classList.add("swiped");
-                          else if (diffX < -50) card.classList.remove("swiped");
-                      });
-  
-                      card.addEventListener("mouseup", () => isSwiping = false);
-  
-                      card.querySelector('.reward-card-inner').addEventListener('click', (e) => {
-                          if (!e.target.closest('button')) {
-                              card.classList.toggle('flipped');
-                          }
-                      });
-                  });
-              }
-          } catch (err) {
-              console.error("Error loading rewards or history:", err);
-              rewardsGrid.innerHTML = "<p class='text-center'>Failed to load rewards. Please try again later.</p>";
-              historyGrid.innerHTML = "<p class='text-center'>Failed to load history. Please try again later.</p>";
-          }
-      }
-  
+    const rewardsGrid = document.getElementById("rewards-grid");
+    const historyGrid = document.getElementById("history-grid");
+    rewardsGrid.innerHTML = "<p class='text-center'>Loading rewards...</p>";
+    historyGrid.innerHTML = "<p class='text-center'>Loading history...</p>";
+
+    try {
+        // Fetch user honey balance
+        const userHoney = await getUserHoney(userName);
+        document.getElementById('honeyBalance').textContent = userHoney;
+
+        // Fetch user rewards
+        const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const userRewardsData = await userRewardsResponse.json();
+        if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
+        const userRewards = (userRewardsData.userRewards || {})[userName] || [];
+
+        // Fetch market rewards
+        const marketResponse = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const marketData = await marketResponse.json();
+        if (!marketResponse.ok) throw new Error(marketData.error || "Failed to fetch market rewards");
+        const marketRewards = marketData.rewards || [];
+
+        // Create a map of market rewards for cost lookup
+        const marketRewardMap = {};
+        marketRewards.forEach(reward => {
+            marketRewardMap[reward.name] = {
+                honey: reward.honey || 0,
+                diamonds: reward.diamonds || 0,
+                type: reward.type || 'normal'
+            };
+        });
+
+        // Group user rewards by name and count occurrences
+        const rewardCounts = {};
+        userRewards.forEach(reward => {
+            rewardCounts[reward.name] = (rewardCounts[reward.name] || 0) + 1;
+        });
+
+        // Render user rewards
+        rewardsGrid.innerHTML = "";
+        if (Object.keys(rewardCounts).length === 0) {
+            rewardsGrid.innerHTML = "<p class='text-center'>No rewards owned yet.</p>";
+        } else {
+            Object.keys(rewardCounts).forEach((rewardName, index) => {
+                const userRewardCount = rewardCounts[rewardName];
+                const rewardInfo = userRewards.find(r => r.name === rewardName);
+                const marketInfo = marketRewardMap[rewardName] || { honey: 0, diamonds: 0, type: rewardInfo?.type || 'normal' };
+                const rewardCost = marketInfo.honey || marketInfo.diamonds || 0;
+                const isTheKey = rewardName === "The Key";
+                const isDiceChest = marketInfo.type === "dice" || rewardInfo?.type === "dice";
+                const isHoney = marketInfo.type === "Honey" || rewardInfo?.type === "Honey";
+                const canAfford = userHoney >= rewardCost;
+
+                const card = document.createElement("div");
+                card.className = `reward-card ${userRewardCount > 0 ? 'flipped' : ''}`;
+                card.dataset.reward = rewardName;
+                card.dataset.index = index;
+
+                let backContent = '';
+                if (userRewardCount > 0) {
+                    const options = Array.from({ length: userRewardCount }, (_, i) => i + 1)
+                        .map(n => `<option value="${n}">${n}</option>`).join('');
+                    backContent = `
+                        <select id="quantity-${rewardName.replace(/\s+/g, '-')}" class="mt-2">
+                            ${options}
+                        </select>
+                        <button class="mt-2 px-3 py-1 btn-back rounded font-semibold" 
+                                onclick="${isHoney ? `redeemHoneyReward('${userName}', '${rewardName}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)` : 
+                                          isTheKey ? `useTheKey('${userName}', '${rewardName}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)` : 
+                                          isDiceChest ? `useDiceChest('${userName}', '${rewardName}', '${JSON.stringify(rewardInfo?.outcomes || [])}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)` : 
+                                          `redeemReward('${userName}', '${rewardName}', document.getElementById('quantity-${rewardName.replace(/\s+/g, '-')}').value)`}">
+                            ${isHoney ? 'Get it' : isTheKey || isDiceChest ? 'Use it' : 'Receive'}
+                        </button>
+                    `;
+                } else {
+                    backContent = `<p class="text-[var(--card-back-text)]">You don't own this reward yet.</p>`;
+                }
+
+                card.innerHTML = `
+                    <div class="reward-card-inner">
+                        <div class="reward-card-front text-center">
+                            <span class="purchase-indicator" data-count="${userRewardCount}"></span>
+                            <h3 class="text-lg font-semibold">${rewardName}</h3>
+                            <p class="text-[var(--text-color)]">Honey: ${rewardCost} 🍯</p>
+                            <button class="mt-2 px-3 py-1 rounded font-semibold ${canAfford ? 'btn-primary' : 'btn-disabled'}" 
+                                    ${canAfford ? '' : 'disabled'} 
+                                    onclick="claimReward('${userName}', '${rewardName}', '${marketInfo.type}', ${rewardCost}, '${JSON.stringify(rewardInfo?.outcomes || [])}')">Get It</button>
+                        </div>
+                        <div class="reward-card-back text-center">
+                            <h3 class="text-lg font-semibold">${rewardName}</h3>
+                            <p class="text-[var(--card-back-text)]">Honey: ${rewardCost} 🍯</p>
+                            ${backContent}
+                        </div>
+                    </div>
+                `;
+                rewardsGrid.appendChild(card);
+                const indicator = card.querySelector('.purchase-indicator');
+                indicator.style.display = userRewardCount > 0 ? 'flex' : 'none';
+                indicator.textContent = userRewardCount;
+
+                card.addEventListener('click', (e) => {
+                    if (!e.target.closest('button') && !e.target.closest('select')) {
+                        card.classList.toggle('flipped');
+                    }
+                });
+            });
+        }
+
+        // Fetch reward history
+        const historyResponse = await fetch(`https://beemazing.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const historyData = await historyResponse.json();
+        if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
+        const rewardHistory = (historyData.rewardHistory || {})[userName] || [];
+
+        // Render reward history
+        historyGrid.innerHTML = "";
+        if (rewardHistory.length === 0) {
+            historyGrid.innerHTML = "<p class='text-center'>No rewards received yet.</p>";
+        } else {
+            const reversedHistory = [...rewardHistory].reverse();
+            reversedHistory.forEach((reward, index) => {
+                const actualIndex = rewardHistory.length - 1 - index;
+                const card = document.createElement("div");
+                card.className = "reward-card history-item";
+                card.dataset.historyId = actualIndex;
+                card.innerHTML = `
+                    <div class="reward-card-inner">
+                        <div class="reward-card-front text-center">
+                            <h3 class="text-lg font-semibold">${reward.name}</h3>
+                            <p class="text-[var(--text-color)]">Collected on: ${reward.date}</p>
+                            <p class="text-[var(--text-color)]">Received on: ${reward.receivedDate || 'N/A'}</p>
+                        </div>
+                        <div class="reward-card-back text-center">
+                            <h3 class="text-lg font-semibold">${reward.name}</h3>
+                            <p class="text-[var(--text-color)]">Swipe to delete or click to return.</p>
+                        </div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteReward('${userName}', ${actualIndex})">Delete</button>
+                `;
+                historyGrid.appendChild(card);
+
+                let startX = 0;
+                let currentX = 0;
+                let isSwiping = false;
+
+                card.addEventListener("touchstart", (e) => {
+                    startX = e.touches[0].clientX;
+                    isSwiping = true;
+                });
+
+                card.addEventListener("touchmove", (e) => {
+                    if (!isSwiping) return;
+                    currentX = e.touches[0].clientX;
+                    const diffX = startX - currentX;
+                    if (diffX > 50) card.classList.add("swiped");
+                    else if (diffX < -50) card.classList.remove("swiped");
+                });
+
+                card.addEventListener("touchend", () => isSwiping = false);
+
+                card.addEventListener("mousedown", (e) => {
+                    startX = e.clientX;
+                    isSwiping = true;
+                });
+
+                card.addEventListener("mousemove", (e) => {
+                    if (!isSwiping) return;
+                    currentX = e.clientX;
+                    const diffX = startX - currentX;
+                    if (diffX > 50) card.classList.add("swiped");
+                    else if (diffX < -50) card.classList.remove("swiped");
+                });
+
+                card.addEventListener("mouseup", () => isSwiping = false);
+
+                card.querySelector('.reward-card-inner').addEventListener('click', (e) => {
+                    if (!e.target.closest('button')) {
+                        card.classList.toggle('flipped');
+                    }
+                });
+            });
+        }
+    } catch (err) {
+        console.error("Error loading rewards or history:", err);
+        rewardsGrid.innerHTML = "<p class='text-center'>Failed to load rewards. Please try again later.</p>";
+        historyGrid.innerHTML = "<p class='text-center'>Failed to load history. Please try again later.</p>";
+    }
+}
+
+
+
+
+
+
       async function claimReward(userName, rewardName, rewardType, honey, outcomes) {
           try {
               // Fetch user honey balance

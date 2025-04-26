@@ -1562,97 +1562,120 @@ const isCompleted = userTotal >= requiredTimes;
           }, 500);
         }
         
+
+
+
+ 
+
+
         async function claimLuckyChest(userName, chestIndex) {
-          const adminEmail = localStorage.getItem("currentAdminEmail");
-          try {
-            const allChestsResponse = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
-            const allChestsData = await allChestsResponse.json();
-            if (!allChestsResponse.ok) throw new Error(allChestsData.error || "Failed to fetch lucky chests");
-            const allChests = allChestsData.luckyChests || {};
-        
-            const rewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-            const rewardsData = await rewardsResponse.json();
-            if (!rewardsResponse.ok) throw new Error(rewardsData.error || "Failed to fetch user rewards");
-            const rewards = rewardsData.userRewards || {};
-        
-            const userChests = allChests[userName] || [];
-            const claimedChest = userChests[chestIndex];
-            if (!claimedChest) return;
-        
-            if (!rewards[userName]) rewards[userName] = [];
-            const now = new Date();
-        
-            const hasHoney = claimedChest.honey !== undefined && claimedChest.honey > 0;
-            const hasCustomReward = !claimedChest.onlyHoney;
-            const isHoneyOnlyName = !hasHoney && claimedChest.name.endsWith(" Honey");
-        
-            if (claimedChest.type === "dice") {
-              rewards[userName].push({
-                name: claimedChest.name,
-                type: "dice",
-                outcomes: claimedChest.outcomes,
-                date: now.toLocaleDateString(),
-                claimedAt: now.toISOString()
-              });
-              userChests.splice(chestIndex, 1);
-            } else if (hasCustomReward && !isHoneyOnlyName) {
-              rewards[userName].push({
-                name: claimedChest.name,
-                quote: claimedChest.quote || "",
-                effect: claimedChest.effect || "",
-                image: claimedChest.image || "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png",
-                date: now.toLocaleDateString(),
-                claimedAt: now.toISOString(),
-                type: "normal"
-              });
-        
-              if (hasHoney) {
-                const updatedChest = {
-                  name: `${claimedChest.honey} Honey`,
-                  quote: claimedChest.quote || "",
-                  effect: claimedChest.effect || "",
-                  honey: claimedChest.honey,
-                  image: claimedChest.image || "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png",
-                  requiredPoints: claimedChest.requiredPoints,
-                  progress: claimedChest.progress,
-                  onlyHoney: true
-                };
-                userChests[chestIndex] = updatedChest;
-              } else {
-                userChests.splice(chestIndex, 1);
-              }
-            } else if (hasHoney || isHoneyOnlyName) {
-              const honeyAmount = hasHoney ? claimedChest.honey : parseInt(claimedChest.name.split(" ")[0]);
-              rewards[userName].push({
-                name: `${honeyAmount} Honey`,
-                type: "Honey",
-                amount: honeyAmount,
-                date: now.toLocaleDateString()
-              });
-              await updateUserReward(userName, honeyAmount);
-              userChests.splice(chestIndex, 1);
-            }
-        
-            allChests[userName] = userChests;
-            await fetch("https://beemazing.onrender.com/api/lucky-chests", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ adminEmail, luckyChests: allChests })
-            });
-        
-            await fetch("https://beemazing.onrender.com/api/user-rewards", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ adminEmail, userRewards: rewards })
-            });
-        
-            loadLuckyChests(userName);
-          } catch (err) {
-            console.error("Error claiming lucky chest:", err);
-            alert("Failed to claim reward. Please try again.");
-          }
-        }
-        
+  const adminEmail = localStorage.getItem("currentAdminEmail");
+  try {
+    const allChestsResponse = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const allChestsData = await allChestsResponse.json();
+    if (!allChestsResponse.ok) throw new Error(allChestsData.error || "Failed to fetch lucky chests");
+    const allChests = allChestsData.luckyChests || {};
+
+    const rewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const rewardsData = await rewardsResponse.json();
+    if (!rewardsResponse.ok) throw new Error(rewardsData.error || "Failed to fetch user rewards");
+    const rewards = rewardsData.userRewards || {};
+
+    const userChests = allChests[userName] || [];
+    const claimedChest = userChests[chestIndex];
+    if (!claimedChest) return;
+
+    if (!rewards[userName]) rewards[userName] = [];
+    const now = new Date();
+
+    const hasHoney = claimedChest.honey !== undefined && claimedChest.honey > 0;
+    const hasCustomReward = !claimedChest.onlyHoney;
+    const isHoneyOnlyName = !hasHoney && claimedChest.name.endsWith(" Honey");
+
+    let rewardDetails = {};
+
+    if (claimedChest.type === "dice") {
+      rewards[userName].push({
+        name: claimedChest.name,
+        type: "dice",
+        outcomes: claimedChest.outcomes,
+        date: now.toLocaleDateString(),
+        claimedAt: now.toISOString()
+      });
+      userChests.splice(chestIndex, 1);
+      rewardDetails = { name: claimedChest.name, type: "dice" };
+    } else if (hasCustomReward && !isHoneyOnlyName) {
+      rewards[userName].push({
+        name: claimedChest.name,
+        quote: claimedChest.quote || "",
+        effect: claimedChest.effect || "",
+        image: claimedChest.image || "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png",
+        date: now.toLocaleDateString(),
+        claimedAt: now.toISOString(),
+        type: "normal"
+      });
+
+      if (hasHoney) {
+        const updatedChest = {
+          name: `${claimedChest.honey} Honey`,
+          quote: claimedChest.quote || "",
+          effect: claimedChest.effect || "",
+          honey: claimedChest.honey,
+          image: claimedChest.image || "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png",
+          requiredPoints: claimedChest.requiredPoints,
+          progress: claimedChest.progress,
+          onlyHoney: true
+        };
+        userChests[chestIndex] = updatedChest;
+      } else {
+        userChests.splice(chestIndex, 1);
+      }
+      rewardDetails = { name: claimedChest.name, type: "normal" };
+    } else if (hasHoney || isHoneyOnlyName) {
+      const honeyAmount = hasHoney ? claimedChest.honey : parseInt(claimedChest.name.split(" ")[0]);
+      rewards[userName].push({
+        name: `${honeyAmount} Honey`,
+        type: "Honey",
+        amount: honeyAmount,
+        date: now.toLocaleDateString()
+      });
+      await updateUserReward(userName, honeyAmount);
+      userChests.splice(chestIndex, 1);
+      rewardDetails = { name: `${honeyAmount} Honey`, type: "Honey" };
+    }
+
+    allChests[userName] = userChests;
+    await fetch("https://beemazing.onrender.com/api/lucky-chests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminEmail, luckyChests: allChests })
+    });
+
+    await fetch("https://beemazing.onrender.com/api/user-rewards", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminEmail, userRewards: rewards })
+    });
+
+    loadLuckyChests(userName);
+
+    // Redirect to usermarket.html with tab=rewards
+    const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
+    window.location.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}&tab=rewards`;
+  } catch (err) {
+    console.error("Error claiming lucky chest:", err);
+    alert("Failed to claim reward. Please try again.");
+  }
+}
+
+
+
+
+
+
+
+
+
         function adjustContentTop() {
           const header = document.querySelector(".date-header");
           const content = document.querySelector(".content");
