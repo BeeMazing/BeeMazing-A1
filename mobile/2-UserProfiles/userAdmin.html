@@ -549,6 +549,7 @@ async function fetchUsers() {
 
 
 
+
 async function handleDecision(title, date, index, decision, user, event) {
     try {
         const button = event.target;
@@ -567,6 +568,13 @@ async function handleDecision(title, date, index, decision, user, event) {
         const { tasks } = await tasksResponse.json();
         const task = tasks.find(t => t.title === title && t.date === date);
         if (!task) throw new Error("Task not found");
+
+        // Ensure reward is a number
+        const rewardAmount = Number(task.reward) || 0;
+        if (isNaN(rewardAmount)) {
+            throw new Error(`Invalid reward value: ${task.reward}`);
+        }
+        console.log(`handleDecision: title=${title}, user=${user}, rewardAmount=${rewardAmount}, type=${typeof rewardAmount}`);
 
         // Submit the decision
         const response = await fetch("https://beemazing.onrender.com/api/review-task", {
@@ -587,13 +595,16 @@ async function handleDecision(title, date, index, decision, user, event) {
 
         // If decision is "accept", award the task reward to the user
         if (decision === "accept") {
-            const rewardAmount = task.reward || 0;
             if (rewardAmount > 0) {
-                await fetch("https://beemazing.onrender.com/api/rewards", {
+                const rewardResponse = await fetch("https://beemazing.onrender.com/api/rewards", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ adminEmail, user, amount: rewardAmount })
                 });
+                const rewardData = await rewardResponse.json();
+                if (!rewardResponse.ok) throw new Error(rewardData.error || "Failed to update rewards");
+                console.log(`Reward awarded: user=${user}, amount=${rewardAmount}, serverResponse=`, rewardData);
+
                 const successDiv = document.createElement("div");
                 successDiv.style.color = "green";
                 successDiv.textContent = `${user} earned ${rewardAmount} honey!`;
@@ -606,6 +617,12 @@ async function handleDecision(title, date, index, decision, user, event) {
                     amount: rewardAmount,
                     timestamp: Date.now()
                 }));
+                localStorage.removeItem("rewardUpdate"); // Clear to trigger change
+
+                // Redirect to users.html with addPoints
+                setTimeout(() => {
+                    window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}&addPoints=${rewardAmount}`;
+                }, 1000);
             }
         }
 
@@ -623,7 +640,6 @@ async function handleDecision(title, date, index, decision, user, event) {
         setTimeout(() => errorDiv.remove(), 3000);
     }
 }
-
 
 
 
