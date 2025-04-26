@@ -911,6 +911,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
+
+        resetUserReward(userName);
+
         populateUserDropdown(userName);
         loadUserTasks(userName);
         loadUserReward(userName);
@@ -1123,24 +1126,27 @@ const isCompleted = userTotal >= requiredTimes;
 
 
 
+async function loadUserReward(userName) {
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    try {
+        const response = await fetch(`https://beemazing.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to fetch rewards");
+        const rewards = data.rewards || {};
+        const userReward = Number(rewards[userName]) || 0;
+        document.getElementById("rewardAmount").textContent = userReward.toString();
+    } catch (err) {
+        console.error("Error loading user reward:", err);
+        document.getElementById("rewardAmount").textContent = "Error";
+    }
+}
 
 
 
-        async function loadUserReward(userName) {
-          const adminEmail = localStorage.getItem("currentAdminEmail");
-          try {
-            const response = await fetch(`https://beemazing.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || "Failed to fetch rewards");
-            const rewards = data.rewards || {};
-            const userReward = rewards[userName] || 0;
-            document.getElementById("rewardAmount").textContent = userReward;
-          } catch (err) {
-            console.error("Error loading user reward:", err);
-            document.getElementById("rewardAmount").textContent = "Error";
-          }
-        }
-        
+
+
+
+
         async function updateUserReward(userName, amount) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     try {
@@ -1181,24 +1187,32 @@ const isCompleted = userTotal >= requiredTimes;
 async function sellReward(userName, amount) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     try {
+        // Fetch current user rewards
         const response = await fetch(`https://beemazing.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Failed to fetch rewards");
         const rewards = data.rewards || {};
         const userReward = Number(rewards[userName]) || 0;
 
+        // Ensure the amount to sell is a number
         const numericAmount = Number(amount);
         if (isNaN(numericAmount)) {
             throw new Error("Amount to sell must be a valid number");
         }
 
+        // Check if the user has enough honey to sell
         if (userReward >= numericAmount) {
+            // Calculate the new reward after selling
             const newReward = userReward - numericAmount;
+
+            // Update the server with the new total
             await fetch("https://beemazing.onrender.com/api/rewards", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ adminEmail, user: userName, amount: newReward })
             });
+
+            // Refresh the UI
             await loadUserReward(userName);
             await updateLuckyChestProgress(userName, -numericAmount);
         } else {
@@ -1211,6 +1225,22 @@ async function sellReward(userName, amount) {
 }
 
 
+async function resetUserReward(userName) {
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    try {
+        // Set the user's reward to 0
+        await fetch("https://beemazing.onrender.com/api/rewards", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ adminEmail, user: userName, amount: 0 })
+        });
+        console.log(`Reset ${userName}'s reward to 0`);
+        await loadUserReward(userName);
+        await updateLuckyChestProgress(userName, 0); // Update chest progress to reflect the reset
+    } catch (err) {
+        console.error("Error resetting user reward:", err);
+    }
+}
 
 
 
