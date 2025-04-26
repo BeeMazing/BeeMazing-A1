@@ -1519,14 +1519,10 @@ if (totalCount >= requiredTimes) {
       if (task.currentTurnIndex === -1) task.currentTurnIndex = 0;
     }
 
-    for (let i = 1; i <= assignedUsers.length; i++) {
-      const nextIndex = (task.currentTurnIndex + i) % assignedUsers.length;
-      const nextUser = assignedUsers[nextIndex];
-      if (!task.pendingCompletions[normalizedDate].includes(nextUser) && !task.completions[normalizedDate].includes(nextUser)) {
-        task.currentTurnIndex = nextIndex;
-        break;
-      }
-    }
+// Calculate total completions (pending + completed)
+const totalCompletions = task.pendingCompletions[normalizedDate].length + task.completions[normalizedDate].length;
+// Advance turn to the next user in rotation
+task.currentTurnIndex = totalCompletions % assignedUsers.length;
 
     tasks[taskIndex] = task;
 
