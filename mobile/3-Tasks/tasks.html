@@ -562,6 +562,16 @@ body {
     const completedCount = completedUsers.length + pendingUsers.length;
     const completedSet = new Set([...completedUsers, ...pendingUsers]);
 
+    function parseLocalDate(dateStr) {
+    if (!dateStr) return new Date(3000, 0, 1);
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return new Date(3000, 0, 1);
+    const [year, month, day] = parts.map(Number);
+    if (isNaN(year) || isNaN(month) || isNaN(day)) return new Date(3000, 0, 1);
+    const date = new Date(year, month - 1, day);
+    if (isNaN(date.getTime())) return new Date(3000, 0, 1);
+    return date;
+}
 
     const selected = parseLocalDate(selectedDate);
     const today = new Date();
@@ -652,21 +662,10 @@ body {
     taskList.innerHTML = "";
 
     function parseLocalDate(dateStr) {
-    if (!dateStr || typeof dateStr !== 'string') return new Date(3000, 0, 1);
-    const parts = dateStr.trim().split("-");
-    if (parts.length !== 3) return new Date(3000, 0, 1);
-    const [year, month, day] = parts.map(Number);
-    if (isNaN(year) || isNaN(month) || isNaN(day) || year < 1970 || month < 1 || month > 12 || day < 1 || day > 31) {
-        console.warn(`Invalid date string: ${dateStr}`);
-        return new Date(3000, 0, 1);
+      if (!dateStr) return new Date(3000, 0, 1);
+      const [year, month, day] = dateStr.split("-").map(Number);
+      return new Date(year, month - 1, day);
     }
-    const date = new Date(year, month - 1, day, 0, 0, 0, 0); // Explicitly set to midnight local time
-    if (isNaN(date.getTime())) {
-        console.warn(`Failed to parse date: ${dateStr}`);
-        return new Date(3000, 0, 1);
-    }
-    return date;
-}
 
     const selected = parseLocalDate(selectedDate);
     const today = new Date();
