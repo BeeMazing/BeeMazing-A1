@@ -652,7 +652,6 @@ body {
 
 
         // Load tasks for a specific date
-
         async function loadTasksForDate(selectedDate) {
   const adminEmail = localStorage.getItem("currentAdminEmail");
   if (!adminEmail) {
@@ -668,6 +667,7 @@ body {
     console.log("Raw tasks from backend:", JSON.stringify(tasks.map(t => ({
         title: t.title,
         specificDates: t.specificDates,
+        specificDays: t.specificDays,
         date: t.date
     })), null, 2)); // Debug log
 
@@ -679,7 +679,10 @@ body {
     today.setHours(0, 0, 0, 0);
 
     const visibleTasks = tasks.filter(task => {
-      if (!task.date) return false;
+      if (!task.date) {
+        console.log(`Task ${task.title} has no date, skipping`);
+        return false;
+      }
 
       // Parse the From/To range
       const range = task.date.split(" to ");
@@ -687,37 +690,44 @@ body {
       const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
 
       // Check if the selected date is within the From/To range
-      if (selected < from || selected > to) return false;
+      if (selected < from || selected > to) {
+        console.log(`Task ${task.title} out of date range: ${selectedDate} not in ${task.date}`);
+        return false;
+      }
 
       // Handle Specific Dates mode
       if (task.specificDates || task.specificDates === "") {
         console.log(`Task: ${task.title}, Specific Dates: ${task.specificDates}, Selected Date: ${selectedDate}`);
-        // If specificDates is empty, treat it as "every day" (already within range due to earlier check)
         if (!task.specificDates) {
+          console.log(`Task ${task.title} has empty specificDates, showing every day in range`);
           return true; // Show on every day within the From/To range
         }
         const specificDates = task.specificDates.split(",").map(date => {
           const trimmedDate = date.trim();
-          // Try parsing the date and reformat to YYYY-MM-DD
           const parsedDate = parseLocalDate(trimmedDate);
           if (isNaN(parsedDate.getTime())) {
             console.warn(`Invalid specific date: ${trimmedDate} for task: ${task.title}`);
-            return trimmedDate; // Keep original if parsing fails
+            return trimmedDate;
           }
           return `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}-${String(parsedDate.getDate()).padStart(2, '0')}`;
         });
         console.log(`Normalized Specific Dates: ${specificDates}`);
-        const specificDatesSet = new Set(specificDates); // Create a Set for faster lookup
-        return specificDatesSet.has(selectedDate); // Use Set.has() instead of Array.includes()
+        const specificDatesSet = new Set(specificDates);
+        return specificDatesSet.has(selectedDate);
       }
 
       // Handle Specific Days mode
-      if (task.specificDays && Array.isArray(task.specificDays)) {
-        const dayOfWeek = selected.toLocaleDateString(undefined, { weekday: "long" });
-        return task.specificDays.includes(dayOfWeek);
-      }
+  // In tasks.html, ensure this is present in loadTasksForDate
+if (task.specificDays && Array.isArray(task.specificDays)) {
+    const dayOfWeek = selected.toLocaleDateString('en-US', { weekday: "long" });
+    console.log(`Task: ${task.title}, Specific Days: ${task.specificDays}, Selected Date: ${selectedDate}, Day of Week: ${dayOfWeek}`);
+    const isMatch = task.specificDays.includes(dayOfWeek);
+    console.log(`Task ${task.title} Specific Days match: ${isMatch}`);
+    return isMatch;
+}
 
       // Default (From - To mode): Show if within range
+      console.log(`Task ${task.title} in default From-To mode, showing for ${selectedDate}`);
       return true;
     });
 
@@ -783,7 +793,6 @@ body {
     document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">Error loading tasks: ${err.message}</div>`;
   }
 }
-
 
 
 
