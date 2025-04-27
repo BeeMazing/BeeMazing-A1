@@ -1742,8 +1742,8 @@ function updateSelectedDatesDisplay() {
         selectedDatesContainer.appendChild(placeholder);
     } else {
         specificDatesInput.value = selectedDates.map(date =>
-            date.toISOString().split("T")[0]
-        ).join(",");
+    `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`
+).join(",");
         selectedDates.forEach(date => {
             const chip = document.createElement("div");
             chip.className = "date-chip";
