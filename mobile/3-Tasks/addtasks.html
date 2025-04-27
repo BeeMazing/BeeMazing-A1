@@ -1594,9 +1594,6 @@ function updateSelectedDaysDisplay() {
             button.classList.remove("selected");
         }
     });
-    specificDaysInput.value = selectedDays.join(",");
-    console.log("Updated selectedDays:", selectedDays); // Debug
-    console.log("specificDaysInput.value:", specificDaysInput.value); // Debug
 }
 
 // Add click event listeners to day buttons
@@ -1606,15 +1603,14 @@ document.querySelectorAll("#specificDaysButtons .day-btn").forEach(button => {
         const fullDay = dayMapping[shortDay];
         if (selectedDays.includes(fullDay)) {
             selectedDays = selectedDays.filter(day => day !== fullDay);
+            button.classList.remove("selected");
         } else {
             selectedDays.push(fullDay);
+            button.classList.add("selected");
         }
-        updateSelectedDaysDisplay(); // Update UI and input
+        specificDaysInput.value = selectedDays.join(",");
     });
 });
-
-// Initialize display on load
-updateSelectedDaysDisplay();
 
 
 
@@ -1916,7 +1912,10 @@ window.addEventListener("click", (e) => {
     let timesPerWeek = parseInt(document.getElementById("timesPerWeekInput").value) || null;
     let timesPerMonth = parseInt(document.getElementById("timesPerMonthInput").value) || null;
     const specificDates = document.getElementById("specificDatesInput").value;
-    const specificDays = dateMode === "specific-days" ? selectedDays : [];
+    const specificDays = document.getElementById("specificDaysInput").value
+        .split(",")
+        .map(d => d.trim())
+        .filter(d => d);
 
     if (!title) {
         alert("Task title is required!");
@@ -1932,30 +1931,24 @@ window.addEventListener("click", (e) => {
     if (timesPerMonth !== null && timesPerMonth < 1) timesPerMonth = 1;
 
     let dateValue = "";
-    if (dateMode === "from-to" || dateMode === "specific-days") {
-        dateValue = dateFrom;
-        if (dateTo && dateTo !== dateFrom && dateDisplayTo.style.display !== "none") {
-            dateValue += ` to ${dateTo}`;
-        }
-    } else if (dateMode === "specific-dates" && specificDates) {
-        const dates = specificDates.split(",").map(date => new Date(date.trim()));
-        const validDates = dates.filter(date => !isNaN(date.getTime()));
-        if (validDates.length > 0) {
-            const minDate = new Date(Math.min(...validDates));
-            const maxDate = new Date(Math.max(...validDates));
-            const formatDate = (date) => {
-                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-            };
-            dateValue = `${formatDate(minDate)} to ${formatDate(maxDate)}`;
-        } else {
-            const today = new Date();
-            const farFuture = new Date(3000, 0, 1);
-            const formatDate = (date) => {
-                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-            };
-            dateValue = `${formatDate(today)} to ${formatDate(farFuture)}`;
-        }
+if (dateMode === "from-to" || dateMode === "specific-days") {
+    dateValue = dateFrom;
+    if (dateTo && dateDisplayTo.style.display !== "none") {
+        dateValue += ` to ${dateTo}`;
+    }
+} else if (dateMode === "specific-dates" && specificDates) {
+    // For Specific Dates mode, set dateValue as the range of specific dates
+    const dates = specificDates.split(",").map(date => new Date(date.trim()));
+    const validDates = dates.filter(date => !isNaN(date.getTime()));
+    if (validDates.length > 0) {
+        const minDate = new Date(Math.min(...validDates));
+        const maxDate = new Date(Math.max(...validDates));
+        const formatDate = (date) => {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        };
+        dateValue = `${formatDate(minDate)} to ${formatDate(maxDate)}`;
     } else {
+        // If no specific dates are selected, set a default range (e.g., today to far future)
         const today = new Date();
         const farFuture = new Date(3000, 0, 1);
         const formatDate = (date) => {
@@ -1963,6 +1956,15 @@ window.addEventListener("click", (e) => {
         };
         dateValue = `${formatDate(today)} to ${formatDate(farFuture)}`;
     }
+} else {
+    // Default case: set a range from today to far future
+    const today = new Date();
+    const farFuture = new Date(3000, 0, 1);
+    const formatDate = (date) => {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    };
+    dateValue = `${formatDate(today)} to ${formatDate(farFuture)}`;
+}
 
     const currentAdmin = localStorage.getItem("currentAdminEmail");
 
@@ -1981,10 +1983,8 @@ window.addEventListener("click", (e) => {
         timesPerWeek,
         timesPerMonth,
         specificDates: dateMode === "specific-dates" ? specificDates : "",
-        specificDays
+        specificDays: dateMode === "specific-days" ? specificDays : []
     };
-
-    console.log("Task being saved:", JSON.stringify(task, null, 2)); // Debug
 
     const editTask = JSON.parse(localStorage.getItem("familyApp_editTask"));
 
@@ -2028,6 +2028,8 @@ window.addEventListener("click", (e) => {
         alert(`Failed to save task: ${error.message}`);
     }
 });
+
+
 
 
 

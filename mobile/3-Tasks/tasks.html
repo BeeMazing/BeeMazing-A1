@@ -542,25 +542,7 @@ body {
         const formatDate = (d) => d.toISOString().split("T")[0];
         
 
-        function parseLocalDate(dateStr) {
-    if (!dateStr || typeof dateStr !== 'string') return new Date(3000, 0, 1);
-    const parts = dateStr.trim().split("-");
-    if (parts.length !== 3) {
-        console.warn(`Invalid date string: ${dateStr}`);
-        return new Date(3000, 0, 1);
-    }
-    const [year, month, day] = parts.map(Number);
-    if (isNaN(year) || isNaN(month) || isNaN(day) || year < 1970 || month < 1 || month > 12 || day < 1 || day > 31) {
-        console.warn(`Invalid date string: ${dateStr}`);
-        return new Date(3000, 0, 1);
-    }
-    const date = new Date(year, month - 1, day, 0, 0, 0, 0); // Explicitly set to midnight local time
-    if (isNaN(date.getTime())) {
-        console.warn(`Failed to parse date: ${dateStr}`);
-        return new Date(3000, 0, 1);
-    }
-    return date;
-}
+
 
 
         function calculateTurn(task, selectedDate) {
@@ -652,6 +634,7 @@ body {
 
 
         // Load tasks for a specific date
+
         async function loadTasksForDate(selectedDate) {
   const adminEmail = localStorage.getItem("currentAdminEmail");
   if (!adminEmail) {
@@ -664,72 +647,70 @@ body {
     if (!response.ok) throw new Error(`HTTP error ${response.status}`);
     const result = await response.json();
     const tasks = result.tasks || [];
-    console.log("Raw tasks from backend:", JSON.stringify(tasks.map(t => ({
-        title: t.title,
-        specificDates: t.specificDates,
-        specificDays: t.specificDays,
-        date: t.date
-    })), null, 2)); // Debug log
 
     const taskList = document.getElementById("taskList");
     taskList.innerHTML = "";
+
+    function parseLocalDate(dateStr) {
+    if (!dateStr || typeof dateStr !== 'string') return new Date(3000, 0, 1);
+    const parts = dateStr.trim().split("-");
+    if (parts.length !== 3) return new Date(3000, 0, 1);
+    const [year, month, day] = parts.map(Number);
+    if (isNaN(year) || isNaN(month) || isNaN(day) || year < 1970 || month < 1 || month > 12 || day < 1 || day > 31) {
+        console.warn(`Invalid date string: ${dateStr}`);
+        return new Date(3000, 0, 1);
+    }
+    const date = new Date(year, month - 1, day, 0, 0, 0, 0); // Explicitly set to midnight local time
+    if (isNaN(date.getTime())) {
+        console.warn(`Failed to parse date: ${dateStr}`);
+        return new Date(3000, 0, 1);
+    }
+    return date;
+}
 
     const selected = parseLocalDate(selectedDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const visibleTasks = tasks.filter(task => {
-      if (!task.date) {
-        console.log(`Task ${task.title} has no date, skipping`);
-        return false;
-      }
+    if (!task.date) return false;
 
-      // Parse the From/To range
-      const range = task.date.split(" to ");
-      const from = parseLocalDate(range[0]);
-      const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
+    // Parse the From/To range
+    const range = task.date.split(" to ");
+    const from = parseLocalDate(range[0]);
+    const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
 
-      // Check if the selected date is within the From/To range
-      if (selected < from || selected > to) {
-        console.log(`Task ${task.title} out of date range: ${selectedDate} not in ${task.date}`);
-        return false;
-      }
+    // Check if the selected date is within the From/To range
+    if (selected < from || selected > to) return false;
 
-      // Handle Specific Dates mode
-      if (task.specificDates || task.specificDates === "") {
-        console.log(`Task: ${task.title}, Specific Dates: ${task.specificDates}, Selected Date: ${selectedDate}`);
-        if (!task.specificDates) {
-          console.log(`Task ${task.title} has empty specificDates, showing every day in range`);
-          return true; // Show on every day within the From/To range
-        }
-        const specificDates = task.specificDates.split(",").map(date => {
-          const trimmedDate = date.trim();
-          const parsedDate = parseLocalDate(trimmedDate);
-          if (isNaN(parsedDate.getTime())) {
-            console.warn(`Invalid specific date: ${trimmedDate} for task: ${task.title}`);
-            return trimmedDate;
-          }
-          return `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}-${String(parsedDate.getDate()).padStart(2, '0')}`;
-        });
-        console.log(`Normalized Specific Dates: ${specificDates}`);
-        const specificDatesSet = new Set(specificDates);
-        return specificDatesSet.has(selectedDate);
-      }
-
-      // Handle Specific Days mode
-  // In tasks.html, ensure this is present in loadTasksForDate
-if (task.specificDays && Array.isArray(task.specificDays)) {
-    const dayOfWeek = selected.toLocaleDateString('en-US', { weekday: "long" });
-    console.log(`Task: ${task.title}, Specific Days: ${task.specificDays}, Selected Date: ${selectedDate}, Day of Week: ${dayOfWeek}`);
-    const isMatch = task.specificDays.includes(dayOfWeek);
-    console.log(`Task ${task.title} Specific Days match: ${isMatch}`);
-    return isMatch;
+// Handle Specific Dates mode
+if (task.specificDates || task.specificDates === "") {
+    console.log(`Task: ${task.title}, Specific Dates: ${task.specificDates}, Selected Date: ${selectedDate}`);
+    // If specificDates is empty, treat it as "every day" (already within range due to earlier check)
+    if (!task.specificDates) {
+        return true; // Show on every day within the From/To range
+    }
+    const specificDates = task.specificDates.split(",").map(date => {
+        const trimmedDate = date.trim();
+        // Try parsing the date and reformat to YYYY-MM-DD
+        const parsedDate = parseLocalDate(trimmedDate);
+        if (isNaN(parsedDate.getTime())) return trimmedDate; // If parsing fails, keep original
+        return `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}-${String(parsedDate.getDate()).padStart(2, '0')}`;
+    });
+    console.log(`Normalized Specific Dates: ${specificDates}`);
+    const specificDatesSet = new Set(specificDates); // Create a Set for faster lookup
+    return specificDatesSet.has(selectedDate); // Use Set.has() instead of Array.includes()
 }
 
-      // Default (From - To mode): Show if within range
-      console.log(`Task ${task.title} in default From-To mode, showing for ${selectedDate}`);
-      return true;
-    });
+    // Handle Specific Days mode
+    if (task.specificDays && Array.isArray(task.specificDays)) {
+        const dayOfWeek = selected.toLocaleDateString(undefined, { weekday: "long" });
+        return task.specificDays.includes(dayOfWeek);
+    }
+
+    // Default (From - To mode): Show if within range
+    return true;
+});
 
     if (visibleTasks.length === 0) {
       taskList.innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">No tasks for this day 🌙</div>`;
@@ -793,6 +774,9 @@ if (task.specificDays && Array.isArray(task.specificDays)) {
     document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">Error loading tasks: ${err.message}</div>`;
   }
 }
+
+
+
 
 
 
