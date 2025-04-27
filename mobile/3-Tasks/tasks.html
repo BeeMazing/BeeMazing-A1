@@ -682,11 +682,24 @@ body {
     // Check if the selected date is within the From/To range
     if (selected < from || selected > to) return false;
 
-    // Handle Specific Dates mode
-    if (task.specificDates) {
-        const specificDates = task.specificDates.split(",").map(date => date.trim());
-        return specificDates.includes(selectedDate);
+// Handle Specific Dates mode
+if (task.specificDates || task.specificDates === "") {
+    console.log(`Task: ${task.title}, Specific Dates: ${task.specificDates}, Selected Date: ${selectedDate}`);
+    // If specificDates is empty, treat it as "every day" (already within range due to earlier check)
+    if (!task.specificDates) {
+        return true; // Show on every day within the From/To range
     }
+    const specificDates = task.specificDates.split(",").map(date => {
+        const trimmedDate = date.trim();
+        // Try parsing the date and reformat to YYYY-MM-DD
+        const parsedDate = parseLocalDate(trimmedDate);
+        if (isNaN(parsedDate.getTime())) return trimmedDate; // If parsing fails, keep original
+        return `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}-${String(parsedDate.getDate()).padStart(2, '0')}`;
+    });
+    console.log(`Normalized Specific Dates: ${specificDates}`);
+    const specificDatesSet = new Set(specificDates); // Create a Set for faster lookup
+    return specificDatesSet.has(selectedDate); // Use Set.has() instead of Array.includes()
+}
 
     // Handle Specific Days mode
     if (task.specificDays && Array.isArray(task.specificDays)) {
