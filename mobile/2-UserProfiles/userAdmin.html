@@ -383,6 +383,8 @@
 
 
 
+
+
   <script>
     // Footer button links and active state
     const urlParams = new URLSearchParams(window.location.search);
@@ -459,17 +461,16 @@
   
     let selectedDate = new Date().toLocaleDateString("sv-SE");
   
-    async function deleteTask(title, date) {
+    async function deleteTask(taskIndex) {
       if (!adminEmail) {
-        alert("No admin email found.");
+        alert("No admin email found. Please log in again.");
         return false;
       }
-      if (!title || !date) {
-        alert("Missing task title or date.");
+      if (taskIndex === undefined || taskIndex < 0) {
+        alert("Invalid task selection.");
         return false;
       }
   
-      const startDate = date.split(" to ")[0];
       const maxRetries = 2;
       let attempt = 0;
   
@@ -478,9 +479,9 @@
         const timeoutId = setTimeout(() => controller.abort(), 90000);
   
         try {
-          console.log(`Attempt ${attempt + 1} to delete task: adminEmail=${adminEmail}, title=${title}, date=${startDate}`);
+          console.log(`Attempt ${attempt + 1} to delete task at index: ${taskIndex}, adminEmail=${adminEmail}`);
           const response = await fetch(
-            `https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(title)}&date=${encodeURIComponent(startDate)}`,
+            `https://beemazing.onrender.com/api/delete-any-task?adminEmail=${encodeURIComponent(adminEmail)}&taskIndex=${taskIndex}`,
             {
               method: "DELETE",
               headers: { "Content-Type": "application/json" },
@@ -495,7 +496,7 @@
             throw new Error(`Failed to delete task: ${errorData.error || response.statusText}`);
           }
   
-          console.log(`Task deleted successfully: ${title}`);
+          console.log(`Task at index ${taskIndex} deleted successfully`);
           return true;
         } catch (error) {
           clearTimeout(timeoutId);
@@ -519,7 +520,7 @@
         });
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         const { tasks } = await res.json();
-        console.log("Tasks received:", tasks.map(t => ({ title: t.title, date: t.date })));
+        console.log("Tasks received:", tasks);
   
         const container = document.getElementById("taskContainer");
         container.innerHTML = "";
@@ -529,20 +530,21 @@
           return;
         }
   
-        tasks.forEach(task => {
+        tasks.forEach((task, index) => {
           const div = document.createElement("div");
           div.className = "task-entry";
-          div.dataset.title = task.title;
-          div.dataset.date = task.date;
+          div.dataset.index = index;
+          // Display task data, even if corrupted
+          const title = task.title || "Untitled Task";
+          const date = task.date || "No Date";
           div.innerHTML = `
-            <h3 class="task-title">${task.title}</h3>
-            <p><strong>Date:</strong> ${task.date}</p>
-            <button class="delete-btn" style="background-color: #D32F2F; color: white; padding: 8px 14px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; margin: 10px 0;">Delete Task</button>
+            <h3 class="task-title">${title}</h3>
+            <p><strong>Date:</strong> ${date}</p>
+            <button class="delete-btn" style="background-color: #D32F2F; color: white; padding: 8px 14px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; margin: 10px 0;">Destroy Task</button>
           `;
-          // Single event listener for delete button
           div.querySelector(".delete-btn").addEventListener("click", async () => {
-            if (confirm(`Are you sure you want to delete the task "${task.title}"?`)) {
-              const success = await deleteTask(task.title, task.date);
+            if (confirm(`Are you sure you want to destroy this task? (Title: ${title}, Date: ${date})`)) {
+              const success = await deleteTask(index);
               if (success) {
                 loadTasks(); // Refresh task list
               }
@@ -632,6 +634,10 @@
   
     generateScrollableDates();
   </script>
+
+
+
+
 
 
 

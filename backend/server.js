@@ -595,7 +595,46 @@ app.get("/api/tasks", async (req, res) => {
 
 
 
+app.delete("/api/delete-any-task", async (req, res) => {
+  const { adminEmail, taskIndex } = req.query;
 
+  if (!adminEmail || taskIndex === undefined) {
+    console.log(`Missing adminEmail or taskIndex: adminEmail=${adminEmail}, taskIndex=${taskIndex}`);
+    return res.status(400).json({ error: "Missing adminEmail or taskIndex" });
+  }
+
+  try {
+    console.log(`Attempting to delete task at index ${taskIndex} for adminEmail=${adminEmail}`);
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      console.log(`Admin not found: ${adminEmail}`);
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const tasks = admin.tasks || [];
+    if (taskIndex < 0 || taskIndex >= tasks.length) {
+      console.log(`Invalid task index: ${taskIndex}, tasks length: ${tasks.length}`);
+      return res.status(400).json({ error: "Invalid task index" });
+    }
+
+    // Remove the task at the specified index
+    tasks.splice(taskIndex, 1);
+
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { tasks } }
+    );
+
+    console.log(`Task at index ${taskIndex} deleted successfully for ${adminEmail}`);
+    res.json({ success: true, message: "Task deleted successfully" });
+  } catch (err) {
+    console.error(`Error deleting task at index ${taskIndex}:`, err);
+    res.status(500).json({ error: "Failed to delete task", details: err.message });
+  }
+});
 
 
 
