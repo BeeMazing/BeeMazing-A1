@@ -564,15 +564,13 @@ body {
 
     function parseLocalDate(dateStr) {
     if (!dateStr) return new Date(3000, 0, 1);
-    if (dateStr.includes("T")) {
-        const date = new Date(dateStr);
-        if (!isNaN(date.getTime())) {
-            return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-        }
-    }
-    const [year, month, day] = dateStr.split("-").map(Number);
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return new Date(3000, 0, 1);
+    const [year, month, day] = parts.map(Number);
     if (isNaN(year) || isNaN(month) || isNaN(day)) return new Date(3000, 0, 1);
-    return new Date(Date.UTC(year, month - 1, day));
+    const date = new Date(year, month - 1, day);
+    if (isNaN(date.getTime())) return new Date(3000, 0, 1);
+    return date;
 }
 
     const selected = parseLocalDate(selectedDate);
@@ -663,6 +661,11 @@ body {
     const taskList = document.getElementById("taskList");
     taskList.innerHTML = "";
 
+    function parseLocalDate(dateStr) {
+      if (!dateStr) return new Date(3000, 0, 1);
+      const [year, month, day] = dateStr.split("-").map(Number);
+      return new Date(year, month - 1, day);
+    }
 
     const selected = parseLocalDate(selectedDate);
     const today = new Date();
@@ -682,21 +685,20 @@ body {
 // Handle Specific Dates mode
 if (task.specificDates || task.specificDates === "") {
     console.log(`Task: ${task.title}, Specific Dates: ${task.specificDates}, Selected Date: ${selectedDate}`);
+    // If specificDates is empty, treat it as "every day" (already within range due to earlier check)
     if (!task.specificDates) {
-        return true;
+        return true; // Show on every day within the From/To range
     }
-    const specificDates = task.specificDates
-    .split(",")
-    .map(date => {
+    const specificDates = task.specificDates.split(",").map(date => {
         const trimmedDate = date.trim();
+        // Try parsing the date and reformat to YYYY-MM-DD
         const parsedDate = parseLocalDate(trimmedDate);
-        if (isNaN(parsedDate.getTime())) return null;
-        return `${parsedDate.getUTCFullYear()}-${String(parsedDate.getUTCMonth() + 1).padStart(2, '0')}-${String(parsedDate.getUTCDate()).padStart(2, '0')}`;
-    })
-    .filter(date => date !== null);
+        if (isNaN(parsedDate.getTime())) return trimmedDate; // If parsing fails, keep original
+        return `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}-${String(parsedDate.getDate()).padStart(2, '0')}`;
+    });
     console.log(`Normalized Specific Dates: ${specificDates}`);
-    const specificDatesSet = new Set(specificDates);
-    return specificDatesSet.has(selectedDate);
+    const specificDatesSet = new Set(specificDates); // Create a Set for faster lookup
+    return specificDatesSet.has(selectedDate); // Use Set.has() instead of Array.includes()
 }
 
     // Handle Specific Days mode
@@ -1236,26 +1238,28 @@ async function finishTask(userName, task, button, selectedDate) {
             });
         
             for (let i = 1; i <= daysInMonth; i++) {
-    const date = new Date(Date.UTC(currentYear, currentMonth, i));
-    const btn = document.createElement("div");
-    btn.className = "day";
-    btn.textContent = i;
-    btn.dataset.date = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-    btn.addEventListener("click", () => {
-        document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-        btn.classList.add("selected");
-        loadTasksForDate(btn.dataset.date);
-    });
-    const now = new Date();
-const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-if (date.getTime() === todayUTC.getTime()) {
-    btn.classList.add("selected");
-    if (!document.querySelector(".day.selected")) {
-        loadTasksForDate(btn.dataset.date);
-    }
-}
-    container.appendChild(btn);
-}
+                const date = new Date(currentYear, currentMonth, i);
+                const btn = document.createElement("div");
+                btn.className = "day";
+                btn.textContent = i;
+                btn.dataset.date = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        
+                btn.addEventListener("click", () => {
+                    document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+                    btn.classList.add("selected");
+                    loadTasksForDate(btn.dataset.date);
+                });
+        
+                const now = new Date();
+                if (date.toDateString() === now.toDateString()) {
+                    btn.classList.add("selected");
+                    if (!document.querySelector(".day.selected")) {
+                        loadTasksForDate(btn.dataset.date);
+                    }
+                }
+        
+                container.appendChild(btn);
+            }
         
             setTimeout(() => {
                 const selected = document.querySelector(".day.selected");
