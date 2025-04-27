@@ -1033,7 +1033,10 @@ if (editTask.specificDates) {
     document.getElementById("specificDatesGroup").style.display = "block";
     document.getElementById("fromToDateGroup").style.display = "none";
     document.getElementById("specificDaysGroup").style.display = "none";
-    selectedDates = editTask.specificDates.split(",").map(date => new Date(date));
+    selectedDates = editTask.specificDates.split(",").map(date => {
+    const [year, month, day] = date.split("-").map(Number);
+    return new Date(Date.UTC(year, month - 1, day));
+});
     specificDatesInput.value = editTask.specificDates;
     flatpickrSpecific.setDate(selectedDates);
     updateSelectedDatesDisplay();
@@ -1926,34 +1929,23 @@ if (dateMode === "from-to" || dateMode === "specific-days") {
     if (dateTo && dateDisplayTo.style.display !== "none") {
         dateValue += ` to ${dateTo}`;
     }
-} else if (dateMode === "specific-dates" && specificDates) {
-    // For Specific Dates mode, set dateValue as the range of specific dates
-    const dates = specificDates.split(",").map(date => new Date(date.trim()));
-    const validDates = dates.filter(date => !isNaN(date.getTime()));
-    if (validDates.length > 0) {
-        const minDate = new Date(Math.min(...validDates));
-        const maxDate = new Date(Math.max(...validDates));
-        const formatDate = (date) => {
-            return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-        };
-        dateValue = `${formatDate(minDate)} to ${formatDate(maxDate)}`;
+} else if (dateMode === "specific-dates") {
+    if (specificDates) {
+        const dates = specificDates.split(",").map(date => new Date(date.trim()));
+        const validDates = dates.filter(date => !isNaN(date.getTime()));
+        if (validDates.length > 0) {
+            const minDate = new Date(Math.min(...validDates));
+            const maxDate = new Date(Math.max(...validDates));
+            const formatDate = (date) => {
+                return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+            };
+            dateValue = `${formatDate(minDate)} to ${formatDate(maxDate)}`;
+        } else {
+            dateValue = "";
+        }
     } else {
-        // If no specific dates are selected, set a default range (e.g., today to far future)
-        const today = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
-        const farFuture = new Date(Date.UTC(3000, 0, 1));
-        const formatDate = (date) => {
-            return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-        };
-        dateValue = `${formatDate(today)} to ${formatDate(farFuture)}`;
+        dateValue = "";
     }
-} else {
-    // Default case: set a range from today to far future
-    const today = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
-    const farFuture = new Date(Date.UTC(3000, 0, 1));
-    const formatDate = (date) => {
-        return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-    };
-    dateValue = `${formatDate(today)} to ${formatDate(farFuture)}`;
 }
 
     const currentAdmin = localStorage.getItem("currentAdminEmail");

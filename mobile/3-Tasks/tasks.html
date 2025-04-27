@@ -564,7 +564,14 @@ body {
 
     function parseLocalDate(dateStr) {
     if (!dateStr) return new Date(3000, 0, 1);
+    if (dateStr.includes("T")) {
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) {
+            return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+        }
+    }
     const [year, month, day] = dateStr.split("-").map(Number);
+    if (isNaN(year) || isNaN(month) || isNaN(day)) return new Date(3000, 0, 1);
     return new Date(Date.UTC(year, month - 1, day));
 }
 
@@ -678,12 +685,15 @@ if (task.specificDates || task.specificDates === "") {
     if (!task.specificDates) {
         return true;
     }
-    const specificDates = task.specificDates.split(",").map(date => {
+    const specificDates = task.specificDates
+    .split(",")
+    .map(date => {
         const trimmedDate = date.trim();
         const parsedDate = parseLocalDate(trimmedDate);
-        if (isNaN(parsedDate.getTime())) return trimmedDate;
+        if (isNaN(parsedDate.getTime())) return null;
         return `${parsedDate.getUTCFullYear()}-${String(parsedDate.getUTCMonth() + 1).padStart(2, '0')}-${String(parsedDate.getUTCDate()).padStart(2, '0')}`;
-    });
+    })
+    .filter(date => date !== null);
     console.log(`Normalized Specific Dates: ${specificDates}`);
     const specificDatesSet = new Set(specificDates);
     return specificDatesSet.has(selectedDate);
@@ -1237,12 +1247,13 @@ async function finishTask(userName, task, button, selectedDate) {
         loadTasksForDate(btn.dataset.date);
     });
     const now = new Date();
-    if (date.toDateString() === now.toDateString()) {
-        btn.classList.add("selected");
-        if (!document.querySelector(".day.selected")) {
-            loadTasksForDate(btn.dataset.date);
-        }
+const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+if (date.getTime() === todayUTC.getTime()) {
+    btn.classList.add("selected");
+    if (!document.querySelector(".day.selected")) {
+        loadTasksForDate(btn.dataset.date);
     }
+}
     container.appendChild(btn);
 }
         
