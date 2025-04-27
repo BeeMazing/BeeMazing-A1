@@ -563,9 +563,15 @@ body {
     const completedSet = new Set([...completedUsers, ...pendingUsers]);
 
     function parseLocalDate(dateStr) {
-        const [year, month, day] = dateStr.split("-").map(Number);
-        return new Date(year, month - 1, day);
-    }
+    if (!dateStr) return new Date(3000, 0, 1);
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return new Date(3000, 0, 1);
+    const [year, month, day] = parts.map(Number);
+    if (isNaN(year) || isNaN(month) || isNaN(day)) return new Date(3000, 0, 1);
+    const date = new Date(year, month - 1, day);
+    if (isNaN(date.getTime())) return new Date(3000, 0, 1);
+    return date;
+}
 
     const selected = parseLocalDate(selectedDate);
     const today = new Date();
@@ -666,12 +672,31 @@ body {
     today.setHours(0, 0, 0, 0);
 
     const visibleTasks = tasks.filter(task => {
-      if (!task.date) return false;
-      const range = task.date.split(" to ");
-      const from = parseLocalDate(range[0]);
-      const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
-      return selected >= from && selected <= to;
-    });
+    if (!task.date) return false;
+
+    // Parse the From/To range
+    const range = task.date.split(" to ");
+    const from = parseLocalDate(range[0]);
+    const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
+
+    // Check if the selected date is within the From/To range
+    if (selected < from || selected > to) return false;
+
+    // Handle Specific Dates mode
+    if (task.specificDates) {
+        const specificDates = task.specificDates.split(",").map(date => date.trim());
+        return specificDates.includes(selectedDate);
+    }
+
+    // Handle Specific Days mode
+    if (task.specificDays && Array.isArray(task.specificDays)) {
+        const dayOfWeek = selected.toLocaleDateString(undefined, { weekday: "long" });
+        return task.specificDays.includes(dayOfWeek);
+    }
+
+    // Default (From - To mode): Show if within range
+    return true;
+});
 
     if (visibleTasks.length === 0) {
       taskList.innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">No tasks for this day 🌙</div>`;
