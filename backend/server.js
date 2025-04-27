@@ -600,38 +600,40 @@ app.get("/api/tasks", async (req, res) => {
 
 
 
-// ✅ Delete a specific task for an admin
+// Delete a specific task for an admin
 app.delete("/api/tasks", async (req, res) => {
   const { adminEmail, title, date } = req.query;
 
   if (!adminEmail || !title || !date) {
-      return res.status(400).json({ error: "Missing adminEmail, title, or date" });
+    return res.status(400).json({ error: "Missing adminEmail, title, or date" });
   }
 
   try {
-      const db = await connectDB();
-      const admins = db.collection("admins");
+    console.log(`Attempting to delete task: adminEmail=${adminEmail}, title=${title}, date=${date}`);
+    const db = await connectDB();
+    const admins = db.collection("admins");
 
-      const admin = await admins.findOne({ email: adminEmail });
-      if (!admin) {
-          return res.status(404).json({ error: "Admin not found" });
-      }
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      console.log(`Admin not found: ${adminEmail}`);
+      return res.status(404).json({ error: "Admin not found" });
+    }
 
-      // Filter tasks by comparing the start date of the task's date range
-      const updatedTasks = admin.tasks.filter(task => {
-          const taskStartDate = task.date.split(" to ")[0];
-          return !(task.title === title && taskStartDate === date);
-      });
+    const updatedTasks = admin.tasks.filter(task => {
+      const taskStartDate = task.date.split(" to ")[0];
+      return !(task.title === title && taskStartDate === date);
+    });
 
-      await admins.updateOne(
-          { email: adminEmail },
-          { $set: { tasks: updatedTasks } }
-      );
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { tasks: updatedTasks } }
+    );
 
-      res.json({ success: true });
+    console.log(`Task deleted successfully: title=${title}, date=${date}`);
+    res.json({ success: true, message: "Task deleted successfully" });
   } catch (err) {
-      console.error("Error deleting task:", err);
-      res.status(500).json({ error: "Failed to delete task" });
+    console.error(`Error deleting task (title=${title}, date=${date}):`, err);
+    res.status(500).json({ error: "Failed to delete task", details: err.message });
   }
 });
 
