@@ -564,13 +564,8 @@ body {
 
     function parseLocalDate(dateStr) {
     if (!dateStr) return new Date(3000, 0, 1);
-    const parts = dateStr.split("-");
-    if (parts.length !== 3) return new Date(3000, 0, 1);
-    const [year, month, day] = parts.map(Number);
-    if (isNaN(year) || isNaN(month) || isNaN(day)) return new Date(3000, 0, 1);
-    const date = new Date(year, month - 1, day);
-    if (isNaN(date.getTime())) return new Date(3000, 0, 1);
-    return date;
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(Date.UTC(year, month - 1, day));
 }
 
     const selected = parseLocalDate(selectedDate);
@@ -661,11 +656,6 @@ body {
     const taskList = document.getElementById("taskList");
     taskList.innerHTML = "";
 
-    function parseLocalDate(dateStr) {
-    if (!dateStr) return new Date(3000, 0, 1);
-    const [year, month, day] = dateStr.split("-").map(Number);
-    return new Date(Date.UTC(year, month - 1, day));
-}
 
     const selected = parseLocalDate(selectedDate);
     const today = new Date();
