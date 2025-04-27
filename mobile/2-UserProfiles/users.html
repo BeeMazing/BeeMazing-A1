@@ -983,7 +983,6 @@ async function populateUserDropdown(currentUser) {
 
 
 
-
 async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
     const userTasksDiv = document.getElementById("userTasks");
     userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
@@ -1003,22 +1002,49 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     }
 
     function parseLocalDate(dateStr) {
-        if (!dateStr) return new Date();
-        const [year, month, day] = dateStr.split("-").map(Number);
-        return new Date(year, month - 1, day);
+        if (!dateStr) return new Date(3000, 0, 1);
+        const parts = dateStr.split("-");
+        if (parts.length !== 3) return new Date(3000, 0, 1);
+        const [year, month, day] = parts.map(Number);
+        if (isNaN(year) || isNaN(month) || isNaN(day)) return new Date(3000, 0, 1);
+        const date = new Date(year, month - 1, day);
+        if (isNaN(date.getTime())) return new Date(3000, 0, 1);
+        return date;
     }
 
     const userTasks = tasks.filter(task => {
         if (!task || !task.users || !task.title || !task.date) return false;
+        if (!task.users.includes(userName)) return false;
 
         const [startStr, endStr] = task.date.split(" to ");
         const startDate = parseLocalDate(startStr);
         const endDate = endStr ? parseLocalDate(endStr) : new Date(3000, 0, 1);
         const currentDate = parseLocalDate(selectedDate);
 
+        // Check if the selected date is within the From/To range
         if (currentDate < startDate || currentDate > endDate) return false;
 
-        return task.users.includes(userName);
+        // Handle Specific Dates mode
+        if (task.specificDates) {
+            const specificDates = task.specificDates.split(",").map(date => date.trim());
+            return specificDates.includes(selectedDate);
+        }
+
+        // Handle Specific Days mode
+        if (task.specificDays) {
+            let days = task.specificDays;
+            if (typeof days === "string") {
+                days = days.split(",").map(d => d.trim()).filter(d => d);
+            }
+            if (Array.isArray(days) && days.length > 0) {
+                const dayOfWeek = currentDate.toLocaleDateString(undefined, { weekday: "long" });
+                return days.includes(dayOfWeek);
+            }
+            return false; // If specificDays is set but invalid or empty, hide the task
+        }
+
+        // Default (From - To mode): Show if within range
+        return true;
     });
 
     userTasksDiv.innerHTML = "";
@@ -1092,7 +1118,6 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         userTasksDiv.appendChild(taskDiv);
     }
 }
-
 
 
 
