@@ -382,6 +382,7 @@
 
 
 
+
   <script>
     // Footer button links and active state
     const urlParams = new URLSearchParams(window.location.search);
@@ -538,11 +539,12 @@
             <p><strong>Date:</strong> ${task.date}</p>
             <button class="delete-btn" style="background-color: #D32F2F; color: white; padding: 8px 14px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; margin: 10px 0;">Delete Task</button>
           `;
+          // Single event listener for delete button
           div.querySelector(".delete-btn").addEventListener("click", async () => {
             if (confirm(`Are you sure you want to delete the task "${task.title}"?`)) {
               const success = await deleteTask(task.title, task.date);
               if (success) {
-                loadTasks();
+                loadTasks(); // Refresh task list
               }
             }
           });
@@ -630,8 +632,6 @@
   
     generateScrollableDates();
   </script>
-
-
 
 
 
