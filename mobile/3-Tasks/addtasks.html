@@ -1731,8 +1731,11 @@ function getDatesInRange(start, end) {
     return dates;
 }
 
+
+
 function updateSelectedDatesDisplay() {
     selectedDatesContainer.innerHTML = "";
+    console.log("Selected Dates (raw):", selectedDates); // Debug
     if (selectedDates.length === 0) {
         specificDatesInput.value = "";
         const placeholder = document.createElement("span");
@@ -1741,9 +1744,10 @@ function updateSelectedDatesDisplay() {
         placeholder.style.fontSize = "14px";
         selectedDatesContainer.appendChild(placeholder);
     } else {
-        specificDatesInput.value = selectedDates.map(date =>
-            date.toISOString().split("T")[0]
-        ).join(",");
+        specificDatesInput.value = selectedDates.map(date => {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }).join(",");
+        console.log("specificDatesInput.value:", specificDatesInput.value); // Debug
         selectedDates.forEach(date => {
             const chip = document.createElement("div");
             chip.className = "date-chip";
@@ -1763,6 +1767,12 @@ function updateSelectedDatesDisplay() {
         });
     }
 }
+
+
+
+
+
+
 
 specificDatesButton.addEventListener("click", () => {
     showModal(specificDatesModal);

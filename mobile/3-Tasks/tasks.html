@@ -662,10 +662,14 @@ body {
     taskList.innerHTML = "";
 
     function parseLocalDate(dateStr) {
-      if (!dateStr) return new Date(3000, 0, 1);
-      const [year, month, day] = dateStr.split("-").map(Number);
-      return new Date(year, month - 1, day);
-    }
+    if (!dateStr) return new Date(3000, 0, 1);
+    const [year, month, day] = dateStr.split("-").map(Number);
+    if (isNaN(year) || isNaN(month) || isNaN(day)) return new Date(3000, 0, 1);
+    const date = new Date();
+    date.setFullYear(year, month - 1, day);
+    date.setHours(0, 0, 0, 0); // Normalize to midnight local time
+    return date;
+}
 
     const selected = parseLocalDate(selectedDate);
     const today = new Date();
