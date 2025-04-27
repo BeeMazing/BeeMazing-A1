@@ -542,7 +542,25 @@ body {
         const formatDate = (d) => d.toISOString().split("T")[0];
         
 
-
+        function parseLocalDate(dateStr) {
+    if (!dateStr || typeof dateStr !== 'string') return new Date(3000, 0, 1);
+    const parts = dateStr.trim().split("-");
+    if (parts.length !== 3) {
+        console.warn(`Invalid date string: ${dateStr}`);
+        return new Date(3000, 0, 1);
+    }
+    const [year, month, day] = parts.map(Number);
+    if (isNaN(year) || isNaN(month) || isNaN(day) || year < 1970 || month < 1 || month > 12 || day < 1 || day > 31) {
+        console.warn(`Invalid date string: ${dateStr}`);
+        return new Date(3000, 0, 1);
+    }
+    const date = new Date(year, month - 1, day, 0, 0, 0, 0); // Explicitly set to midnight local time
+    if (isNaN(date.getTime())) {
+        console.warn(`Failed to parse date: ${dateStr}`);
+        return new Date(3000, 0, 1);
+    }
+    return date;
+}
 
 
         function calculateTurn(task, selectedDate) {
@@ -562,16 +580,6 @@ body {
     const completedCount = completedUsers.length + pendingUsers.length;
     const completedSet = new Set([...completedUsers, ...pendingUsers]);
 
-    function parseLocalDate(dateStr) {
-    if (!dateStr) return new Date(3000, 0, 1);
-    const parts = dateStr.split("-");
-    if (parts.length !== 3) return new Date(3000, 0, 1);
-    const [year, month, day] = parts.map(Number);
-    if (isNaN(year) || isNaN(month) || isNaN(day)) return new Date(3000, 0, 1);
-    const date = new Date(year, month - 1, day);
-    if (isNaN(date.getTime())) return new Date(3000, 0, 1);
-    return date;
-}
 
     const selected = parseLocalDate(selectedDate);
     const today = new Date();
@@ -644,127 +652,132 @@ body {
 
 
         // Load tasks for a specific date
-
         async function loadTasksForDate(selectedDate) {
-  const adminEmail = localStorage.getItem("currentAdminEmail");
-  if (!adminEmail) {
-    document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">No admin email found 🌙</div>`;
-    return;
-  }
-
-  try {
-    const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-    const result = await response.json();
-    const tasks = result.tasks || [];
-
-    const taskList = document.getElementById("taskList");
-    taskList.innerHTML = "";
-
-    function parseLocalDate(dateStr) {
-      if (!dateStr) return new Date(3000, 0, 1);
-      const [year, month, day] = dateStr.split("-").map(Number);
-      return new Date(year, month - 1, day);
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    if (!adminEmail) {
+        document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">No admin email found 🌙</div>`;
+        return;
     }
 
-    const selected = parseLocalDate(selectedDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    try {
+        const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        const result = await response.json();
+        const tasks = result.tasks || [];
 
-    const visibleTasks = tasks.filter(task => {
-    if (!task.date) return false;
+        const taskList = document.getElementById("taskList");
+        taskList.innerHTML = "";
 
-    // Parse the From/To range
-    const range = task.date.split(" to ");
-    const from = parseLocalDate(range[0]);
-    const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
+        function parseLocalDate(dateStr) {
+            if (!dateStr) return new Date(3000, 0, 1);
+            const parts = dateStr.split("-");
+            if (parts.length !== 3) return new Date(3000, 0, 1);
+            const [year, month, day] = parts.map(Number);
+            if (isNaN(year) || isNaN(month) || isNaN(day)) return new Date(3000, 0, 1);
+            const date = new Date(year, month - 1, day);
+            if (isNaN(date.getTime())) return new Date(3000, 0, 1);
+            return date;
+        }
 
-    // Check if the selected date is within the From/To range
-    if (selected < from || selected > to) return false;
+        const selected = parseLocalDate(selectedDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-    // Handle Specific Dates mode
-    if (task.specificDates) {
-        const specificDates = task.specificDates.split(",").map(date => date.trim());
-        return specificDates.includes(selectedDate);
-    }
+        const visibleTasks = tasks.filter(task => {
+            if (!task.date) return false;
 
-    // Handle Specific Days mode
-    if (task.specificDays && Array.isArray(task.specificDays)) {
-        const dayOfWeek = selected.toLocaleDateString(undefined, { weekday: "long" });
-        return task.specificDays.includes(dayOfWeek);
-    }
+            // Parse the From/To range
+            const range = task.date.split(" to ");
+            const from = parseLocalDate(range[0]);
+            const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
 
-    // Default (From - To mode): Show if within range
-    return true;
-});
+            // Check if the selected date is within the From/To range
+            if (selected < from || selected > to) return false;
 
-    if (visibleTasks.length === 0) {
-      taskList.innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">No tasks for this day 🌙</div>`;
-      return;
-    }
+            // Handle Specific Dates mode
+            if (task.specificDates) {
+                const specificDates = task.specificDates.split(",").map(date => date.trim());
+                return specificDates.includes(selectedDate);
+            }
 
-    visibleTasks.forEach((task) => {
-      const taskDiv = document.createElement("div");
-      taskDiv.className = "task-item";
-      taskDiv.dataset.taskTitle = task.title;
-      taskDiv.dataset.taskDate = task.date;
+            // Handle Specific Days mode
+            if (task.specificDays) {
+                let days = task.specificDays;
+                if (typeof days === "string") {
+                    days = days.split(",").map(d => d.trim()).filter(d => d);
+                }
+                if (Array.isArray(days) && days.length > 0) {
+                    const dayOfWeek = selected.toLocaleDateString(undefined, { weekday: "long" });
+                    return days.includes(dayOfWeek);
+                }
+                return false; // If specificDays is set but invalid or empty, hide the task
+            }
 
-      let taskHTML = '';
-      const required = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                      task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                      task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-
-      if (task.settings?.includes("Individual")) {
-        taskHTML += `<strong>${task.title}</strong><br><em>Individual Task</em><br>`;
-        task.users.forEach(user => {
-          const count = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate].filter(u => u === user).length : 0;
-          const check = count >= required ? '✅' : '';
-          taskHTML += `${user}: ${count}/${required} ${check}<br>`;
+            // Default (From - To mode): Show if within range
+            return true;
         });
 
-      } else if (task.settings?.includes("Rotation")) {
-        const { currentTurn, nextUser, completedCount, repeatLimit } = calculateTurn(task, selectedDate);
-        taskHTML += `
-          <strong>${task.title}</strong><br>
-          Turn: ${currentTurn}<br>
-          Next: ${nextUser}<br>
-          Completed: ${completedCount}/${repeatLimit}<br>
-        `;
-      } else {
-        taskHTML += `<strong>${task.title}</strong><br><em style="color:#aaa;">No rotation</em><br>`;
-      }
-
-      taskDiv.innerHTML = taskHTML + `<button class="delete-btn">Delete</button>`;
-
-      taskDiv.addEventListener("click", async (e) => {
-        if (!e.target.classList.contains("delete-btn")) {
-          const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-          const latestResult = await latest.json();
-          const latestTask = latestResult.tasks.find(t => t.title === task.title && t.date === task.date);
-          if (latestTask) showTaskDetails(latestTask);
+        if (visibleTasks.length === 0) {
+            taskList.innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">No tasks for this day 🌙</div>`;
+            return;
         }
-      });
 
-      taskDiv.querySelector(".delete-btn").addEventListener("click", async () => {
-        if (confirm("Are you sure you want to delete this task?")) {
-          await deleteTaskFromBackend(task.title, task.date);
-          loadTasksForDate(selectedDate);
-        }
-      });
+        visibleTasks.forEach((task) => {
+            const taskDiv = document.createElement("div");
+            taskDiv.className = "task-item";
+            taskDiv.dataset.taskTitle = task.title;
+            taskDiv.dataset.taskDate = task.date;
 
-      taskList.appendChild(taskDiv);
-      enableSwipeToDelete(taskDiv);
-    });
-  } catch (err) {
-    console.error("Error loading tasks:", err);
-    document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">Error loading tasks: ${err.message}</div>`;
-  }
+            let taskHTML = '';
+            const required = task.repeat === "Daily" ? task.timesPerDay || 1 :
+                            task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+                            task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+
+            if (task.settings?.includes("Individual")) {
+                taskHTML += `<strong>${task.title}</strong><br><em>Individual Task</em><br>`;
+                task.users.forEach(user => {
+                    const count = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate].filter(u => u === user).length : 0;
+                    const check = count >= required ? '✅' : '';
+                    taskHTML += `${user}: ${count}/${required} ${check}<br>`;
+                });
+            } else if (task.settings?.includes("Rotation")) {
+                const { currentTurn, nextUser, completedCount, repeatLimit } = calculateTurn(task, selectedDate);
+                taskHTML += `
+                    <strong>${task.title}</strong><br>
+                    Turn: ${currentTurn}<br>
+                    Next: ${nextUser}<br>
+                    Completed: ${completedCount}/${repeatLimit}<br>
+                `;
+            } else {
+                taskHTML += `<strong>${task.title}</strong><br><em style="color:#aaa;">No rotation</em><br>`;
+            }
+
+            taskDiv.innerHTML = taskHTML + `<button class="delete-btn">Delete</button>`;
+
+            taskDiv.addEventListener("click", async (e) => {
+                if (!e.target.classList.contains("delete-btn")) {
+                    const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+                    const latestResult = await latest.json();
+                    const latestTask = latestResult.tasks.find(t => t.title === task.title && t.date === task.date);
+                    if (latestTask) showTaskDetails(latestTask);
+                }
+            });
+
+            taskDiv.querySelector(".delete-btn").addEventListener("click", async () => {
+                if (confirm("Are you sure you want to delete this task?")) {
+                    await deleteTaskFromBackend(task.title, task.date);
+                    loadTasksForDate(selectedDate);
+                }
+            });
+
+            taskList.appendChild(taskDiv);
+            enableSwipeToDelete(taskDiv);
+        });
+    } catch (err) {
+        console.error("Error loading tasks:", err);
+        document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">Error loading tasks: ${err.message}</div>`;
+    }
 }
-
-
-
-
-
 
 
 
