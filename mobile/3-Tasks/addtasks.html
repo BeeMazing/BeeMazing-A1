@@ -1479,34 +1479,35 @@ removeEndDateBtn.addEventListener("click", () => {
 
 
     
-        const flatpickrFrom = flatpickr("#taskDate", {
-            dateFormat: "Y-m-d",
-            defaultDate: "today",
-            disableMobile: true,
-            onChange: function (selectedDates) {
-                const formatted = new Date(selectedDates[0]).toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
-                dateDisplay.textContent = formatted;
-            },
-            positionElement: dateDisplay,
-            appendTo: document.body
-        });
+const flatpickrFrom = flatpickr("#taskDate", {
+    dateFormat: "Y-m-d",
+    defaultDate: new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate())),
+    disableMobile: true,
+    onChange: function (selectedDates) {
+        const date = selectedDates[0];
+        dateDisplay.textContent = date.toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
+        dateInputFrom.value = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+    },
+    positionElement: dateDisplay,
+    appendTo: document.body
+});
     
-        const flatpickrTo = flatpickr("#taskDateTo", {
-  dateFormat: "Y-m-d",
-  disableMobile: true,
-  onChange: function (selectedDates) {
-    if (selectedDates.length > 0) {
-      const toDate = selectedDates[0];
-      const formatted = toDate.toLocaleDateString(undefined, { month: "long", day: "numeric" });
-      dateInputTo.value = toDate.toISOString().split("T")[0];
-      dateDisplayTo.textContent = formatted;
-      dateToWrapper.style.display = "flex";
-      addEndDateBtn.style.display = "none";
-      dateMode = "from-to";
-    }
-  },
-  positionElement: addEndDateBtn,
-  appendTo: document.body
+const flatpickrTo = flatpickr("#taskDateTo", {
+    dateFormat: "Y-m-d",
+    disableMobile: true,
+    onChange: function (selectedDates) {
+        if (selectedDates.length > 0) {
+            const toDate = selectedDates[0];
+            const formatted = toDate.toLocaleDateString(undefined, { month: "long", day: "numeric" });
+            dateInputTo.value = `${toDate.getUTCFullYear()}-${String(toDate.getUTCMonth() + 1).padStart(2, '0')}-${String(toDate.getUTCDate()).padStart(2, '0')}`;
+            dateDisplayTo.textContent = formatted;
+            dateToWrapper.style.display = "flex";
+            addEndDateBtn.style.display = "none";
+            dateMode = "from-to";
+        }
+    },
+    positionElement: addEndDateBtn,
+    appendTo: document.body
 });
 
 
@@ -1933,24 +1934,24 @@ if (dateMode === "from-to" || dateMode === "specific-days") {
         const minDate = new Date(Math.min(...validDates));
         const maxDate = new Date(Math.max(...validDates));
         const formatDate = (date) => {
-            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
         };
         dateValue = `${formatDate(minDate)} to ${formatDate(maxDate)}`;
     } else {
         // If no specific dates are selected, set a default range (e.g., today to far future)
-        const today = new Date();
-        const farFuture = new Date(3000, 0, 1);
+        const today = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
+        const farFuture = new Date(Date.UTC(3000, 0, 1));
         const formatDate = (date) => {
-            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
         };
         dateValue = `${formatDate(today)} to ${formatDate(farFuture)}`;
     }
 } else {
     // Default case: set a range from today to far future
-    const today = new Date();
-    const farFuture = new Date(3000, 0, 1);
+    const today = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
+    const farFuture = new Date(Date.UTC(3000, 0, 1));
     const formatDate = (date) => {
-        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
     };
     dateValue = `${formatDate(today)} to ${formatDate(farFuture)}`;
 }
