@@ -749,6 +749,34 @@ async function handleReorder(title, date, newUserOrder) {
   }
 }
 
+
+
+async function deleteTask(title, date) {
+  const taskContainer = document.getElementById("taskContainer");
+  // Extract start date from task.date (e.g., "2025-04-27" from "2025-04-27 to 2025-05-27")
+  const startDate = date.split(" to ")[0];
+  try {
+    const response = await fetch(
+      `https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(title)}&date=${encodeURIComponent(startDate)}`,
+      {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" }
+      }
+    );
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to delete task");
+    setTimeout(() => loadTasks(), 500); // Refresh tasks after deletion
+  } catch (err) {
+    console.error("Error deleting task:", err);
+    const errorDiv = document.createElement("div");
+    errorDiv.style.color = "red";
+    errorDiv.style.margin = "15px";
+    errorDiv.textContent = `Error deleting task: ${err.message}`;
+    taskContainer.insertBefore(errorDiv, taskContainer.firstChild);
+    setTimeout(() => errorDiv.remove(), 3000);
+  }
+}
+
 async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
   try {
     console.log(`Loading tasks for date: ${selectedDate}, attempt: ${attempt}`); // Debug
@@ -809,14 +837,14 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
       }
 
       if (shouldReplace) {
-  tasksByTitle[task.title] = {
-    turns: [],
-    pendingCount: 0,
-    date: task.date,
-    userOrder: task.users || [],
-    settings: task.settings || "Rotation", // ← this is the fix
-    startDate
-  };
+        tasksByTitle[task.title] = {
+          turns: [],
+          pendingCount: 0,
+          date: task.date,
+          userOrder: task.users || [],
+          settings: task.settings || "Rotation",
+          startDate
+        };
       } else {
         console.warn(`Duplicate task title: ${task.title}, date: ${task.date}, keeping date: ${existingTask.date}`); // Debug
         return;
@@ -835,72 +863,61 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
 
       tasksByTitle[task.title].pendingCount += pendingCompletions.length;
 
-
       const fullTurn = [];
-const isRotation = task.settings === "Rotation";
+      const isRotation = task.settings === "Rotation";
 
-if (isRotation) {
-  // Rotation: Turn 1: User1, Turn 2: User2, etc
-  for (let i = 0; i < requiredTimes; i++) {
-    const userIndex = i % userOrder.length;
-    const user = tempTurnReplacement[i] || userOrder[userIndex];
-    fullTurn.push({ user, repetition: i + 1 });
-  }
-} else {
-  // Individual: User1 (1: Pending, 2: Pending), User2 (1: Pending, 2: Pending)
-  for (const user of userOrder) {
-    for (let rep = 1; rep <= requiredTimes; rep++) {
-      fullTurn.push({ user, repetition: rep });
-    }
-  }
-}
+      if (isRotation) {
+        // Rotation: Turn 1: User1, Turn 2: User2, etc
+        for (let i = 0; i < requiredTimes; i++) {
+          const userIndex = i % userOrder.length;
+          const user = tempTurnReplacement[i] || userOrder[userIndex];
+          fullTurn.push({ user, repetition: i + 1 });
+        }
+      } else {
+        // Individual: User1 (1: Pending, 2: Pending), User2 (1: Pending, 2: Pending)
+        for (const user of userOrder) {
+          for (let rep = 1; rep <= requiredTimes; rep++) {
+            fullTurn.push({ user, repetition: rep });
+          }
+        }
+      }
 
-
-
-
-
-
-
-
-
-      console.log(`Task ${task.title}: fullTurn=${fullTurn}`); // Debug
+      console.log(`Task ${task.title}: fullTurn=${JSON.stringify(fullTurn)}`); // Debug
 
       const userCompletionCounts = {};
-const userPendingCounts = {};
+      const userPendingCounts = {};
 
-completions.forEach(u => {
-  userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
-});
-pendingCompletions.forEach(u => {
-  userPendingCounts[u] = (userPendingCounts[u] || 0) + 1;
-});
+      completions.forEach(u => {
+        userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
+      });
+      pendingCompletions.forEach(u => {
+        userPendingCounts[u] = (userPendingCounts[u] || 0) + 1;
+      });
 
-fullTurn.forEach((entry, index) => {
-  const user = entry.user;
-  const repetition = entry.repetition || index + 1;
+      fullTurn.forEach((entry, index) => {
+        const user = entry.user;
+        const repetition = entry.repetition || index + 1;
 
-  let isCompleted = false;
-  let isPending = false;
+        let isCompleted = false;
+        let isPending = false;
 
-  if (userCompletionCounts[user]) {
-    isCompleted = true;
-    userCompletionCounts[user]--;
-  } else if (userPendingCounts[user]) {
-    isPending = true;
-    userPendingCounts[user]--;
-  }
+        if (userCompletionCounts[user]) {
+          isCompleted = true;
+          userCompletionCounts[user]--;
+        } else if (userPendingCounts[user]) {
+          isPending = true;
+          userPendingCounts[user]--;
+        }
 
-  tasksByTitle[task.title].turns.push({
-    user,
-    repetition,
-    index,
-    date: task.date,
-    isPending,
-    isCompleted
-  });
-});
-
-
+        tasksByTitle[task.title].turns.push({
+          user,
+          repetition,
+          index,
+          date: task.date,
+          isPending,
+          isCompleted
+        });
+      });
     });
 
     // Log all duplicates
@@ -923,42 +940,21 @@ fullTurn.forEach((entry, index) => {
     }
 
     Object.keys(tasksByTitle).sort().forEach(title => {
-  const { turns, pendingCount, date, userOrder } = tasksByTitle[title];
-  const div = document.createElement("div");
-  div.className = "task-entry";
-  div.dataset.title = title;
-  div.dataset.date = date;
-  div.innerHTML = `
-    <h3 class="task-title">${title}${pendingCount > 0 ? `<span class="notification-bubble">${pendingCount}</span>` : ''}</h3>
-    <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
-      ${
-        tasksByTitle[title].turns.length && turns[0].repetition !== undefined && turns[0].user !== undefined && tasksByTitle[title].turns
-          ? (tasksByTitle[title].settings === "Rotation"
-            ? turns.map(turn => `
-              <div class="turn-entry" draggable="true" data-index="${turn.index}" data-user="${turn.user}">
-                <p>Turn ${turn.index + 1}: ${turn.user} - ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
-                ${turn.isPending && !turn.isCompleted ? `
-                  <button class="accept-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
-                  <button class="decline-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
-                ` : turn.isCompleted ? `
-                  <button class="revert-btn" onclick="handleRevert('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
-                ` : `
-                  <select id="replace-select-${turn.index}">
-                    <option value="">Select User</option>
-                    ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
-                  </select>
-                  <button class="replace-btn" onclick="handleReplace('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
-                `}
-              </div>
-            `).join('')
-            :
-            userOrder.map(user => {
-              const userTurns = turns.filter(t => t.user === user);
-              return `
-                <h4 style="margin-top: 10px;">${user}</h4>
-                ${userTurns.map(turn => `
-                  <div class="turn-entry" draggable="false" data-index="${turn.index}" data-user="${turn.user}">
-                    <p>Attempt ${turn.repetition}: ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
+      const { turns, pendingCount, date, userOrder } = tasksByTitle[title];
+      const div = document.createElement("div");
+      div.className = "task-entry";
+      div.dataset.title = title;
+      div.dataset.date = date;
+      div.innerHTML = `
+        <h3 class="task-title">${title}${pendingCount > 0 ? `<span class="notification-bubble">${pendingCount}</span>` : ''}</h3>
+        <button class="delete-btn" style="background-color: #D32F2F; color: white; padding: 8px 14px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; margin: 10px 0;">Delete Task</button>
+        <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
+          ${
+            tasksByTitle[title].turns.length && turns[0].repetition !== undefined && turns[0].user !== undefined && tasksByTitle[title].turns
+              ? (tasksByTitle[title].settings === "Rotation"
+                ? turns.map(turn => `
+                  <div class="turn-entry" draggable="true" data-index="${turn.index}" data-user="${turn.user}">
+                    <p>Turn ${turn.index + 1}: ${turn.user} - ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
                     ${turn.isPending && !turn.isCompleted ? `
                       <button class="accept-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
                       <button class="decline-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
@@ -972,83 +968,110 @@ fullTurn.forEach((entry, index) => {
                       <button class="replace-btn" onclick="handleReplace('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
                     `}
                   </div>
-                `).join('')}
-              `;
-            }).join(''))
-          : '<p>No turns assigned.</p>'
-      }
-    </div>
-  `;
-  container.appendChild(div);
+                `).join('')
+                : userOrder.map(user => {
+                    const userTurns = turns.filter(t => t.user === user);
+                    return `
+                      <h4 style="margin-top: 10px;">${user}</h4>
+                      ${userTurns.map(turn => `
+                        <div class="turn-entry" draggable="false" data-index="${turn.index}" data-user="${turn.user}">
+                          <p>Attempt ${turn.repetition}: ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
+                          ${turn.isPending && !turn.isCompleted ? `
+                            <button class="accept-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
+                            <button class="decline-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
+                          ` : turn.isCompleted ? `
+                            <button class="revert-btn" onclick="handleRevert('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
+                          ` : `
+                            <select id="replace-select-${turn.index}">
+                              <option value="">Select User</option>
+                              ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
+                            </select>
+                            <button class="replace-btn" onclick="handleReplace('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
+                          `}
+                        </div>
+                      `).join('')}
+                    `;
+                  }).join(''))
+              : '<p>No turns assigned.</p>'
+          }
+        </div>
+      `;
+      container.appendChild(div);
 
-  div.querySelector(".task-title").addEventListener("click", () => {
-    const details = div.querySelector(".task-details");
-    details.classList.toggle("show");
-    if (details.classList.contains("show")) {
-      expandedTasks.add(title);
-    } else {
-      expandedTasks.delete(title);
-    }
-  });
+      // Add event listener for delete button
+      div.querySelector(".delete-btn").addEventListener("click", () => {
+        if (confirm(`Are you sure you want to delete the task "${title}"?`)) {
+          deleteTask(title, date);
+        }
+      });
 
-  const turnEntries = div.querySelectorAll(".turn-entry");
-  turnEntries.forEach(turn => {
-    turn.addEventListener("dragstart", (e) => {
-      turn.classList.add("dragging");
-      e.dataTransfer.setData("text/plain", JSON.stringify({
-        index: parseInt(turn.dataset.index),
-        title,
-        date
-      }));
+      div.querySelector(".task-title").addEventListener("click", () => {
+        const details = div.querySelector(".task-details");
+        details.classList.toggle("show");
+        if (details.classList.contains("show")) {
+          expandedTasks.add(title);
+        } else {
+          expandedTasks.delete(title);
+        }
+      });
+
+      const turnEntries = div.querySelectorAll(".turn-entry");
+      turnEntries.forEach(turn => {
+        turn.addEventListener("dragstart", (e) => {
+          turn.classList.add("dragging");
+          e.dataTransfer.setData("text/plain", JSON.stringify({
+            index: parseInt(turn.dataset.index),
+            title,
+            date
+          }));
+        });
+
+        turn.addEventListener("dragend", () => {
+          turn.classList.remove("dragging");
+          turnEntries.forEach(t => t.classList.remove("drag-over"));
+        });
+
+        turn.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          const dragging = document.querySelector(".dragging");
+          if (dragging !== turn) {
+            turn.classList.add("drag-over");
+          }
+        });
+
+        turn.addEventListener("dragleave", () => {
+          turn.classList.remove("drag-over");
+        });
+
+        turn.addEventListener("drop", async (e) => {
+          e.preventDefault();
+          turn.classList.remove("drag-over");
+          const dragData = JSON.parse(e.dataTransfer.getData("text/plain"));
+          const draggedIndex = dragData.index;
+          const droppedIndex = parseInt(turn.dataset.index);
+
+          if (draggedIndex !== droppedIndex && dragData.title === title && dragData.date === date) {
+            const currentUsers = userOrder.slice();
+            [currentUsers[draggedIndex], currentUsers[droppedIndex]] = [currentUsers[droppedIndex], currentUsers[draggedIndex]];
+            const draggedTurnData = turns[draggedIndex];
+            const droppedTurnData = turns[droppedIndex];
+            turns[draggedIndex] = { ...droppedTurnData, user: currentUsers[draggedIndex], index: draggedIndex };
+            turns[droppedIndex] = { ...draggedTurnData, user: currentUsers[droppedIndex], index: droppedIndex };
+            const draggedTurn = turnEntries[draggedIndex];
+            const droppedTurn = turnEntries[droppedIndex];
+            const draggedUser = currentUsers[draggedIndex];
+            const droppedUser = currentUsers[droppedIndex];
+            const draggedStatus = turns[draggedIndex].isCompleted ? 'Accepted' : turns[draggedIndex].isPending ? 'Waiting for Review' : 'Pending';
+            const droppedStatus = turns[droppedIndex].isCompleted ? 'Accepted' : turns[droppedIndex].isPending ? 'Waiting for Review' : 'Pending';
+            draggedTurn.querySelector("p").textContent = `Turn ${draggedIndex + 1}: ${draggedUser} - ${draggedStatus}`;
+            droppedTurn.querySelector("p").textContent = `Turn ${droppedIndex + 1}: ${droppedUser} - ${droppedStatus}`;
+            draggedTurn.dataset.user = draggedUser;
+            droppedTurn.dataset.user = droppedUser;
+            await handleReorder(title, date, currentUsers);
+          }
+        });
+      });
     });
-
-    turn.addEventListener("dragend", () => {
-      turn.classList.remove("dragging");
-      turnEntries.forEach(t => t.classList.remove("drag-over"));
-    });
-
-    turn.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      const dragging = document.querySelector(".dragging");
-      if (dragging !== turn) {
-        turn.classList.add("drag-over");
-      }
-    });
-
-    turn.addEventListener("dragleave", () => {
-      turn.classList.remove("drag-over");
-    });
-
-    turn.addEventListener("drop", async (e) => {
-      e.preventDefault();
-      turn.classList.remove("drag-over");
-      const dragData = JSON.parse(e.dataTransfer.getData("text/plain"));
-      const draggedIndex = dragData.index;
-      const droppedIndex = parseInt(turn.dataset.index);
-
-      if (draggedIndex !== droppedIndex && dragData.title === title && dragData.date === date) {
-        const currentUsers = userOrder.slice();
-        [currentUsers[draggedIndex], currentUsers[droppedIndex]] = [currentUsers[droppedIndex], currentUsers[draggedIndex]];
-        const draggedTurnData = turns[draggedIndex];
-        const droppedTurnData = turns[droppedIndex];
-        turns[draggedIndex] = { ...droppedTurnData, user: currentUsers[draggedIndex], index: draggedIndex };
-        turns[droppedIndex] = { ...draggedTurnData, user: currentUsers[droppedIndex], index: droppedIndex };
-        const draggedTurn = turnEntries[draggedIndex];
-        const droppedTurn = turnEntries[droppedIndex];
-        const draggedUser = currentUsers[draggedIndex];
-        const droppedUser = currentUsers[droppedIndex];
-        const draggedStatus = turns[draggedIndex].isCompleted ? 'Accepted' : turns[draggedIndex].isPending ? 'Waiting for Review' : 'Pending';
-        const droppedStatus = turns[droppedIndex].isCompleted ? 'Accepted' : turns[droppedIndex].isPending ? 'Waiting for Review' : 'Pending';
-        draggedTurn.querySelector("p").textContent = `Turn ${draggedIndex + 1}: ${draggedUser} - ${draggedStatus}`;
-        droppedTurn.querySelector("p").textContent = `Turn ${droppedIndex + 1}: ${droppedUser} - ${droppedStatus}`;
-        draggedTurn.dataset.user = draggedUser;
-        droppedTurn.dataset.user = droppedUser;
-        await handleReorder(title, date, currentUsers);
-      }
-    });
-  });
-});
-
 
     if (!container.innerHTML) {
       container.innerHTML = "<p>No tasks for this date.</p>";
@@ -1058,6 +1081,8 @@ fullTurn.forEach((entry, index) => {
     document.getElementById("taskContainer").innerHTML = "<p>Error loading tasks. Please try again.</p>";
   }
 }
+
+
 
 function generateScrollableDates(monthOffset = 0) {
   const container = document.getElementById("dayScrollContainer");
@@ -1131,6 +1156,17 @@ document.getElementById("scrollRight").addEventListener("click", () => {
 });
 
 fetchUsers().then(() => generateScrollableDates());
+
+
+
+
+
+
+
+
+
+
+
 
 
   </script>
