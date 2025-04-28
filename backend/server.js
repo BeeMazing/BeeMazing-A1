@@ -1579,4 +1579,50 @@ task.currentTurnIndex = totalCompletions % assignedUsers.length;
 
 
 
+// ✅ Clean up invalid tasks for an admin
+app.post("/api/cleanup-invalid-tasks", async (req, res) => {
+  const { adminEmail } = req.body;
+
+  if (!adminEmail) {
+    return res.status(400).json({ error: "Missing adminEmail" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    let tasks = admin.tasks || [];
+
+    // Filter tasks: Keep only tasks that have a title and date
+    const validTasks = tasks.filter(task => task.title && task.date);
+
+    // If nothing to change
+    if (validTasks.length === tasks.length) {
+      return res.json({ success: true, message: "No invalid tasks found" });
+    }
+
+    // Update the database with only valid tasks
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { tasks: validTasks } }
+    );
+
+    console.log(`✅ Cleaned up invalid tasks for ${adminEmail}. Deleted ${tasks.length - validTasks.length} tasks.`);
+
+    res.json({ success: true, deleted: tasks.length - validTasks.length });
+  } catch (err) {
+    console.error("🔥 Error cleaning up invalid tasks:", err);
+    res.status(500).json({ error: "Failed to clean up invalid tasks" });
+  }
+});
+
+
+
+
+
 // users.html and tasks.html task details //

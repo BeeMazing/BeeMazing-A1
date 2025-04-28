@@ -657,6 +657,12 @@ body {
         if (!response.ok) throw new Error(`HTTP error ${response.status}`);
         const result = await response.json();
         const tasks = result.tasks || [];
+        for (const task of tasks) {
+  if (!task.title || !task.date || !Array.isArray(task.users)) {
+    console.warn("Found invalid task, deleting:", task);
+    await deleteInvalidTask(task);
+  }
+}
 
         const taskList = document.getElementById("taskList");
         taskList.innerHTML = "";
@@ -1396,6 +1402,25 @@ async function finishTask(userName, task, button, selectedDate) {
   taskElement.addEventListener('mouseleave', () => {
     if (isSwiping) onEnd({});
   });
+}
+
+
+
+
+async function deleteInvalidTask(task) {
+  const adminEmail = localStorage.getItem("currentAdminEmail");
+  if (!adminEmail) return;
+
+  const startDate = task.date?.split(" to ")[0] || "";
+  try {
+    await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(task.title || "")}&date=${encodeURIComponent(startDate)}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" }
+    });
+    console.log("Deleted invalid task:", task.title);
+  } catch (error) {
+    console.error("Error deleting invalid task:", error);
+  }
 }
 
 
