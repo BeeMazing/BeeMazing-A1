@@ -1319,8 +1319,7 @@ async function finishTask(userName, task, button, selectedDate) {
   let startTime = 0;
   let moved = false;
 
-  const SWIPE_THRESHOLD = 30; // ✅ MUCH easier now (was 50)
-  const TAP_MOVEMENT_LIMIT = 8; // ✅ Limit for tap vs swipe
+  const SWIPE_THRESHOLD = 30;
   const SWIPE_TIME_LIMIT = 300; // ms
 
   const onStart = (x) => {
@@ -1336,9 +1335,7 @@ async function finishTask(userName, task, button, selectedDate) {
     if (!isSwiping) return;
     const deltaX = x - startX;
     currentX = x;
-    if (Math.abs(deltaX) > TAP_MOVEMENT_LIMIT) {
-      moved = true;
-    }
+    moved = true; // ✅ Always set moved=true on any movement
     if (deltaX < 0) { // Only allow left swipe
       taskElement.style.transform = `translateX(${deltaX}px)`;
     }
@@ -1367,13 +1364,13 @@ async function finishTask(userName, task, button, selectedDate) {
   });
   taskElement.addEventListener('touchmove', (e) => {
     onMove(e.touches[0].clientX);
-    if (moved) e.preventDefault(); // Prevent scroll when swiping
+    if (moved) e.preventDefault();
   });
   taskElement.addEventListener('touchend', (e) => {
     onEnd();
   });
 
-  // --- Mouse events (desktop testing) ---
+  // --- Mouse events ---
   taskElement.addEventListener('mousedown', (e) => {
     onStart(e.clientX);
   });
@@ -1388,20 +1385,19 @@ async function finishTask(userName, task, button, selectedDate) {
   taskElement.addEventListener('click', (e) => {
     if (moved) {
       e.preventDefault();
-      e.stopImmediatePropagation(); // ✅ Very important: no popup if swipe
+      e.stopImmediatePropagation();
     }
   });
 
-  // --- Ensure delete button works even near '+' ---
+  // --- Ensure delete button works ---
   const deleteBtn = taskElement.querySelector('.delete-btn');
   if (deleteBtn) {
     deleteBtn.addEventListener('click', (e) => {
-      e.stopPropagation(); // ✅ Only trigger delete
+      moved = false; // ✅ Reset moved when Delete clicked
+      e.stopPropagation();
     });
   }
 }
-
-
 
 
 
