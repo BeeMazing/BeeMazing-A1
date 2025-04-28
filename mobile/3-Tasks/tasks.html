@@ -107,6 +107,7 @@ body {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     touch-action: pan-y;
     transition: transform 0.3s ease; /* <- 🐝 Add this!! smooth like market */
+    overflow: hidden;
 }
 
 .task-item.swiped-left {
@@ -116,7 +117,7 @@ body {
 .task-item .delete-btn {
     position: absolute;
     top: 0;
-    right: -100%;
+    right: 0; /* Always aligned right */
     width: 100px;
     height: 100%;
     background: var(--danger-color);
@@ -129,14 +130,17 @@ body {
     font-weight: bold;
     font-size: 16px;
     cursor: pointer;
-    transition: right 0.3s ease;
+    transform: translateX(100%); /* 🐝 Start hidden to right */
+    transition: transform 0.3s ease;
 }
 
 
 
 
 
+
 .task-item.swiped-left .delete-btn {
+    transform: translateX(0);
     display: block;
     right: 0;
 }
@@ -504,7 +508,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>Home9</span>
+            <span>Home10</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
