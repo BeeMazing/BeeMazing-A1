@@ -116,8 +116,8 @@ body {
     position: absolute;
     top: 0;
     right: -100%;
-    height: 100%;
     width: 100px;
+    height: 100%;
     background: var(--danger-color);
     color: white;
     border: none;
@@ -129,7 +129,10 @@ body {
     font-size: 16px;
     cursor: pointer;
     transition: right 0.3s ease;
+    padding: 0;
+    text-align: center; /* 🐝 Important for extra safety */
 }
+
 
 .task-item.swiped-left .delete-btn {
     display: block;
@@ -513,7 +516,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>Home5</span>
+            <span>Home6</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
