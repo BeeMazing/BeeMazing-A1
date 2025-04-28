@@ -503,8 +503,20 @@ document.querySelectorAll('.footer a').forEach(link => {
             rewardCounts[reward.name] = (rewardCounts[reward.name] || 0) + 1;
         });
 
-        // Combine market rewards and unique user rewards
-        const allRewardNames = [...new Set([...marketRewards.map(r => r.name), ...Object.keys(rewardCounts)])];
+
+// Only include rewards assigned to "Everyone" or to this specific user
+const filteredRewards = marketRewards.filter(reward => {
+  if (!reward.assignedUsers || reward.assignedUsers.length === 0) {
+    return true; // Everyone
+  }
+  return reward.assignedUsers.includes(userName);
+});
+
+const allRewardNames = [...new Set([
+  ...filteredRewards.map(r => r.name),
+  ...Object.keys(rewardCounts)
+])];
+
 
         // Render all rewards
         rewardsGrid.innerHTML = "";
