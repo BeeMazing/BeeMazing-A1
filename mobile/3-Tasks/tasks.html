@@ -31,9 +31,8 @@
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: auto;
+  overflow: hidden;
 }
-
 
 
 
@@ -510,7 +509,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>Home1</span> <!--whaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-->
+            <span>Home</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -1320,7 +1319,8 @@ async function finishTask(userName, task, button, selectedDate) {
   let startTime = 0;
   let moved = false;
 
-  const SWIPE_THRESHOLD = 30;
+  const SWIPE_THRESHOLD = 30; // ✅ MUCH easier now (was 50)
+  const TAP_MOVEMENT_LIMIT = 8; // ✅ Limit for tap vs swipe
   const SWIPE_TIME_LIMIT = 300; // ms
 
   const onStart = (x) => {
@@ -1336,7 +1336,9 @@ async function finishTask(userName, task, button, selectedDate) {
     if (!isSwiping) return;
     const deltaX = x - startX;
     currentX = x;
-    moved = true; // ✅ Always set moved=true on any movement
+    if (Math.abs(deltaX) > TAP_MOVEMENT_LIMIT) {
+      moved = true;
+    }
     if (deltaX < 0) { // Only allow left swipe
       taskElement.style.transform = `translateX(${deltaX}px)`;
     }
@@ -1357,10 +1359,7 @@ async function finishTask(userName, task, button, selectedDate) {
       taskElement.classList.remove('swiped-left');
       taskElement.style.transform = 'translateX(0)';
     }
-    
-    moved = false; // ✅ ADD THIS LINE
-};
-
+  };
 
   // --- Touch events ---
   taskElement.addEventListener('touchstart', (e) => {
@@ -1368,13 +1367,13 @@ async function finishTask(userName, task, button, selectedDate) {
   });
   taskElement.addEventListener('touchmove', (e) => {
     onMove(e.touches[0].clientX);
-    if (moved) e.preventDefault();
+    if (moved) e.preventDefault(); // Prevent scroll when swiping
   });
   taskElement.addEventListener('touchend', (e) => {
     onEnd();
   });
 
-  // --- Mouse events ---
+  // --- Mouse events (desktop testing) ---
   taskElement.addEventListener('mousedown', (e) => {
     onStart(e.clientX);
   });
@@ -1387,22 +1386,24 @@ async function finishTask(userName, task, button, selectedDate) {
 
   // --- Prevent accidental popup on swipe ---
   taskElement.addEventListener('click', (e) => {
-    if (isSwiping || moved) {
+    if (moved) {
       e.preventDefault();
-      e.stopImmediatePropagation();
+      e.stopImmediatePropagation(); // ✅ Very important: no popup if swipe
     }
-});
+  });
 
-
-  // --- Ensure delete button works ---
+  // --- Ensure delete button works even near '+' ---
   const deleteBtn = taskElement.querySelector('.delete-btn');
   if (deleteBtn) {
-    deleteBtn.addEventListener('click', (e) => {
-      moved = false; // ✅ Reset moved when Delete clicked
-      e.stopPropagation();
-    });
-  }
+  deleteBtn.addEventListener('click', (e) => {
+    moved = false; // ✅ Reset moved when Delete clicked
+    e.stopPropagation(); // ✅ Only trigger delete
+  });
 }
+
+}
+
+
 
 
 
