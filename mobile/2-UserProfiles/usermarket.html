@@ -349,7 +349,7 @@
       </a>
       <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
           <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
-          <span>Profile</span>
+          <span>Profile1</span>
       </a>
       <a href="#" id="marketButton" class="footer-icon active" aria-label="Market">
           <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
@@ -548,8 +548,9 @@ const allRewardNames = [...new Set([
                         backContent = `
                             <div class="quantity-circle">${userRewardCount}</div>
                             <button class="mt-2 px-3 py-1 btn-back rounded font-semibold" 
-                                    onclick="${isTheKey ? `useTheKey('${userName}', '${rewardName}', 1)` : 
-                                              `useDiceChest('${userName}', '${rewardName}', '${JSON.stringify(outcomes)}', 1)`}">
+onclick="${isTheKey ? `useTheKey('${userName}', '${rewardName}', 1)` : 
+          `useDiceChest('${userName}', '${rewardName}', encodeURIComponent('${btoa(JSON.stringify(outcomes))}'), 1)`}"
+
                                 Use it
                             </button>
                         `;
@@ -874,7 +875,9 @@ const allRewardNames = [...new Set([
           }
       }
   
-      async function useDiceChest(userName, rewardName, outcomes, quantity) {
+      async function useDiceChest(userName, rewardName, encodedOutcomes, quantity) {
+  const outcomes = JSON.parse(atob(decodeURIComponent(encodedOutcomes)));
+
           try {
               const qty = parseInt(quantity, 10);
               if (isNaN(qty) || qty <= 0) {
