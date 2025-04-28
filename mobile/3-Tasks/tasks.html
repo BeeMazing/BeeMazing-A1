@@ -96,43 +96,43 @@ body {
 
 
 .task-item {
-    position: relative;
-    overflow: hidden; /* 🔥 Important: hide Delete button outside */
+    padding: 16px;
     background: #2A2B32;
     color: #FFFFFF;
     border: 2px solid var(--border-dark);
     border-radius: 12px;
     margin-bottom: 12px;
+    cursor: pointer;
+    position: relative;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     touch-action: pan-y;
 }
 
-.task-item-content {
-    position: relative;
-    padding: 16px;
-    z-index: 1;
+.task-item.swiped-left {
+    transform: translateX(-100px);
 }
 
-.delete-btn {
+.task-item .delete-btn {
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 100px;
-    height: 100%; /* 🔥 Full height */
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
     background-color: var(--danger-color);
     color: white;
     border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
     font-size: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 0 12px 12px 0;
+    display: none;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    z-index: 0;
 }
 
-.delete-btn:hover {
+.task-item.swiped-left .delete-btn {
+    display: block;
+}
+
+.task-item .delete-btn:hover {
     background-color: #B71C1C;
 }
 
@@ -263,7 +263,30 @@ body {
             display: inline-block;
             margin-bottom: 5px;
         }
-        
+        .task-item .delete-btn {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            display: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .task-item.swiped-left {
+            transform: translateX(-100px);
+        }
+        .task-item.swiped-left .delete-btn {
+            display: block;
+        }
+        .task-item .delete-btn:hover {
+            background-color: #B71C1C;
+        }
         @media (max-width: 600px) {
             .add-task-btn {
                 width: 50px;
@@ -486,7 +509,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>Home4</span>
+            <span>Home</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -710,70 +733,56 @@ const visibleTasks = tasks.filter(task => {
         }
 
         visibleTasks.forEach((task) => {
-    const taskDiv = document.createElement("div");
-    taskDiv.className = "task-item";
-    taskDiv.dataset.taskTitle = task.title;
-    taskDiv.dataset.taskDate = task.date;
+            const taskDiv = document.createElement("div");
+            taskDiv.className = "task-item";
+            taskDiv.dataset.taskTitle = task.title;
+            taskDiv.dataset.taskDate = task.date;
 
-    // Create the inner sliding content
-    const taskContent = document.createElement("div");
-    taskContent.className = "task-item-content";
+            let taskHTML = '';
+            const required = task.repeat === "Daily" ? task.timesPerDay || 1 :
+                            task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+                            task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-    let taskHTML = '';
-    const required = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                    task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                    task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+            if (task.settings?.includes("Individual")) {
+                taskHTML += `<strong>${task.title}</strong><br><em>Individual Task</em><br>`;
+                task.users.forEach(user => {
+                    const count = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate].filter(u => u === user).length : 0;
+                    const check = count >= required ? '✅' : '';
+                    taskHTML += `${user}: ${count}/${required} ${check}<br>`;
+                });
+            } else if (task.settings?.includes("Rotation")) {
+                const { currentTurn, nextUser, completedCount, repeatLimit } = calculateTurn(task, selectedDate);
+                taskHTML += `
+                    <strong>${task.title}</strong><br>
+                    Turn: ${currentTurn}<br>
+                    Next: ${nextUser}<br>
+                    Completed: ${completedCount}/${repeatLimit}<br>
+                `;
+            } else {
+                taskHTML += `<strong>${task.title}</strong><br><em style="color:#aaa;">No rotation</em><br>`;
+            }
 
-    if (task.settings?.includes("Individual")) {
-        taskHTML += `<strong>${task.title}</strong><br><em>Individual Task</em><br>`;
-        task.users.forEach(user => {
-            const count = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate].filter(u => u === user).length : 0;
-            const check = count >= required ? '✅' : '';
-            taskHTML += `${user}: ${count}/${required} ${check}<br>`;
+            taskDiv.innerHTML = taskHTML + `<button class="delete-btn">Delete</button>`;
+
+            taskDiv.addEventListener("click", async (e) => {
+                if (!e.target.classList.contains("delete-btn")) {
+                    const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+                    const latestResult = await latest.json();
+                    const latestTask = latestResult.tasks.find(t => t.title === task.title && t.date === task.date);
+                    if (latestTask) showTaskDetails(latestTask);
+                }
+            });
+
+            taskDiv.querySelector(".delete-btn").addEventListener("click", async () => {
+                if (confirm("Are you sure you want to delete this task?")) {
+                    await deleteTaskFromBackend(task.title, task.date);
+                    loadTasksForDate(selectedDate);
+                }
+            });
+
+            taskList.appendChild(taskDiv);
+            enableSwipeToDelete(taskDiv);
         });
-    } else if (task.settings?.includes("Rotation")) {
-        const { currentTurn, nextUser, completedCount, repeatLimit } = calculateTurn(task, selectedDate);
-        taskHTML += `
-            <strong>${task.title}</strong><br>
-            Turn: ${currentTurn}<br>
-            Next: ${nextUser}<br>
-            Completed: ${completedCount}/${repeatLimit}<br>
-        `;
-    } else {
-        taskHTML += `<strong>${task.title}</strong><br><em style="color:#aaa;">No rotation</em><br>`;
-    }
-
-    // Set inner HTML for sliding content
-    taskContent.innerHTML = taskHTML;
-    taskDiv.appendChild(taskContent);
-
-    // Create Delete button
-    const deleteBtn = document.createElement("button");
-    deleteBtn.className = "delete-btn";
-    deleteBtn.textContent = "Delete";
-    taskDiv.appendChild(deleteBtn);
-
-    // Click to open task details (only if not clicking delete)
-    taskContent.addEventListener("click", async () => {
-        const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-        const latestResult = await latest.json();
-        const latestTask = latestResult.tasks.find(t => t.title === task.title && t.date === task.date);
-        if (latestTask) showTaskDetails(latestTask);
-    });
-
-    // Click delete
-    deleteBtn.addEventListener("click", async (e) => {
-        e.stopPropagation(); // Important: prevent triggering task popup
-        if (confirm("Are you sure you want to delete this task?")) {
-            await deleteTaskFromBackend(task.title, task.date);
-            loadTasksForDate(selectedDate);
-        }
-    });
-
-    taskList.appendChild(taskDiv);
-    enableSwipeToDelete(taskDiv);
-});
-
     } catch (err) {
         console.error("Error loading tasks:", err);
         document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">Error loading tasks: ${err.message}</div>`;
@@ -1301,58 +1310,97 @@ async function finishTask(userName, task, button, selectedDate) {
 
 
 
-        function enableSwipeToDelete(taskElement) {
-  const content = taskElement.querySelector('.task-item-content');
 
+
+        function enableSwipeToDelete(taskElement) {
   let startX = 0;
   let currentX = 0;
-  let isDragging = false;
+  let isSwiping = false;
+  let startTime = 0;
+  let isTap = true;
 
-  const onStart = (x) => {
+  const threshold = 50; // Pixels needed to confirm a swipe
+  const minSwipeDuration = 200; // Minimum duration in milliseconds
+  const tapThreshold = 10; // Max movement for a tap (pixels)
+  const maxTapDuration = 500; // Max duration for a tap (milliseconds)
+
+  const onStart = (x, e) => {
     startX = x;
-    currentX = x;
-    isDragging = true;
-    content.style.transition = 'none';
+    startTime = Date.now();
+    isSwiping = true;
+    isTap = true;
+    taskElement.style.transition = 'none';
   };
 
-  const onMove = (x) => {
-    if (!isDragging) return;
-    const deltaX = x - startX;
-    if (deltaX < 0 && Math.abs(deltaX) <= 100) { // allow swiping left only up to -100px
-      content.style.transform = `translateX(${deltaX}px)`;
+  const onMove = (x, e) => {
+    if (!isSwiping) return;
+    currentX = x;
+    const deltaX = currentX - startX;
+    const absDeltaX = Math.abs(deltaX);
+
+    // If movement exceeds tap threshold, it’s a swipe, not a tap
+    if (absDeltaX > tapThreshold) {
+      isTap = false;
+      e.preventDefault(); // Prevent scrolling only for swipes
+    }
+
+    if (deltaX < 0) {
+      taskElement.style.transform = `translateX(${deltaX}px)`;
     }
   };
 
-  const onEnd = () => {
-    if (!isDragging) return;
-    isDragging = false;
-    content.style.transition = 'transform 0.3s ease';
+  const onEnd = (e) => {
+    if (!isSwiping) return;
+    isSwiping = false;
     const deltaX = currentX - startX;
-    if (deltaX < -50) {
-      content.style.transform = `translateX(-100px)`;
+    const swipeDuration = Date.now() - startTime;
+    taskElement.style.transition = 'transform 0.3s ease';
+
+    // Handle swipe to delete
+    if (deltaX < -threshold && swipeDuration >= minSwipeDuration && !isTap) {
+      taskElement.classList.add('swiped-left');
+      taskElement.style.transform = 'translateX(-100px)';
     } else {
-      content.style.transform = `translateX(0)`;
+      taskElement.classList.remove('swiped-left');
+      taskElement.style.transform = 'translateX(0)';
+    }
+
+    // Allow tap to proceed if it’s a tap
+    if (isTap && swipeDuration < maxTapDuration) {
+      // Don’t prevent default; let the click event fire naturally
     }
   };
 
   // Touch events
   taskElement.addEventListener('touchstart', (e) => {
-    onStart(e.touches[0].clientX);
+    onStart(e.touches[0].clientX, e);
   });
   taskElement.addEventListener('touchmove', (e) => {
-    onMove(e.touches[0].clientX);
+    onMove(e.touches[0].clientX, e);
   });
-  taskElement.addEventListener('touchend', onEnd);
+  taskElement.addEventListener('touchend', (e) => {
+    onEnd(e);
+  });
 
-  // Mouse events
+  // Mouse events (unchanged, as they work fine on computer)
   taskElement.addEventListener('mousedown', (e) => {
-    onStart(e.clientX);
+    e.preventDefault(); // Prevent text selection
+    onStart(e.clientX, e);
   });
   taskElement.addEventListener('mousemove', (e) => {
-    if (e.buttons === 1) onMove(e.clientX);
+    if (e.buttons === 1) onMove(e.clientX, e);
   });
-  taskElement.addEventListener('mouseup', onEnd);
+  taskElement.addEventListener('mouseup', (e) => {
+    onEnd(e);
+  });
+
+  // Reset swipe if mouse leaves
+  taskElement.addEventListener('mouseleave', () => {
+    if (isSwiping) onEnd();
+  });
 }
+
+
 
 
 
