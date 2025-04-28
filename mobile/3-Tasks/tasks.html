@@ -509,7 +509,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>Home2</span>
+            <span>Home3</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -733,56 +733,70 @@ const visibleTasks = tasks.filter(task => {
         }
 
         visibleTasks.forEach((task) => {
-            const taskDiv = document.createElement("div");
-            taskDiv.className = "task-item";
-            taskDiv.dataset.taskTitle = task.title;
-            taskDiv.dataset.taskDate = task.date;
+    const taskDiv = document.createElement("div");
+    taskDiv.className = "task-item";
+    taskDiv.dataset.taskTitle = task.title;
+    taskDiv.dataset.taskDate = task.date;
 
-            let taskHTML = '';
-            const required = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                            task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                            task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+    // Create the inner sliding content
+    const taskContent = document.createElement("div");
+    taskContent.className = "task-item-content";
 
-            if (task.settings?.includes("Individual")) {
-                taskHTML += `<strong>${task.title}</strong><br><em>Individual Task</em><br>`;
-                task.users.forEach(user => {
-                    const count = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate].filter(u => u === user).length : 0;
-                    const check = count >= required ? '✅' : '';
-                    taskHTML += `${user}: ${count}/${required} ${check}<br>`;
-                });
-            } else if (task.settings?.includes("Rotation")) {
-                const { currentTurn, nextUser, completedCount, repeatLimit } = calculateTurn(task, selectedDate);
-                taskHTML += `
-                    <strong>${task.title}</strong><br>
-                    Turn: ${currentTurn}<br>
-                    Next: ${nextUser}<br>
-                    Completed: ${completedCount}/${repeatLimit}<br>
-                `;
-            } else {
-                taskHTML += `<strong>${task.title}</strong><br><em style="color:#aaa;">No rotation</em><br>`;
-            }
+    let taskHTML = '';
+    const required = task.repeat === "Daily" ? task.timesPerDay || 1 :
+                    task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+                    task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
-            taskDiv.innerHTML = taskHTML + `<button class="delete-btn">Delete</button>`;
-
-            taskDiv.addEventListener("click", async (e) => {
-                if (!e.target.classList.contains("delete-btn")) {
-                    const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-                    const latestResult = await latest.json();
-                    const latestTask = latestResult.tasks.find(t => t.title === task.title && t.date === task.date);
-                    if (latestTask) showTaskDetails(latestTask);
-                }
-            });
-
-            taskDiv.querySelector(".delete-btn").addEventListener("click", async () => {
-                if (confirm("Are you sure you want to delete this task?")) {
-                    await deleteTaskFromBackend(task.title, task.date);
-                    loadTasksForDate(selectedDate);
-                }
-            });
-
-            taskList.appendChild(taskDiv);
-            enableSwipeToDelete(taskDiv);
+    if (task.settings?.includes("Individual")) {
+        taskHTML += `<strong>${task.title}</strong><br><em>Individual Task</em><br>`;
+        task.users.forEach(user => {
+            const count = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate].filter(u => u === user).length : 0;
+            const check = count >= required ? '✅' : '';
+            taskHTML += `${user}: ${count}/${required} ${check}<br>`;
         });
+    } else if (task.settings?.includes("Rotation")) {
+        const { currentTurn, nextUser, completedCount, repeatLimit } = calculateTurn(task, selectedDate);
+        taskHTML += `
+            <strong>${task.title}</strong><br>
+            Turn: ${currentTurn}<br>
+            Next: ${nextUser}<br>
+            Completed: ${completedCount}/${repeatLimit}<br>
+        `;
+    } else {
+        taskHTML += `<strong>${task.title}</strong><br><em style="color:#aaa;">No rotation</em><br>`;
+    }
+
+    // Set inner HTML for sliding content
+    taskContent.innerHTML = taskHTML;
+    taskDiv.appendChild(taskContent);
+
+    // Create Delete button
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "delete-btn";
+    deleteBtn.textContent = "Delete";
+    taskDiv.appendChild(deleteBtn);
+
+    // Click to open task details (only if not clicking delete)
+    taskContent.addEventListener("click", async () => {
+        const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+        const latestResult = await latest.json();
+        const latestTask = latestResult.tasks.find(t => t.title === task.title && t.date === task.date);
+        if (latestTask) showTaskDetails(latestTask);
+    });
+
+    // Click delete
+    deleteBtn.addEventListener("click", async (e) => {
+        e.stopPropagation(); // Important: prevent triggering task popup
+        if (confirm("Are you sure you want to delete this task?")) {
+            await deleteTaskFromBackend(task.title, task.date);
+            loadTasksForDate(selectedDate);
+        }
+    });
+
+    taskList.appendChild(taskDiv);
+    enableSwipeToDelete(taskDiv);
+});
+
     } catch (err) {
         console.error("Error loading tasks:", err);
         document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">Error loading tasks: ${err.message}</div>`;
