@@ -104,7 +104,7 @@
 </head>
 <body>
 
-  <h1>🎲 Roll the Dice 1</h1>
+  <h1>🎲 Roll the Dice</h1>
 
   <div class="dice" id="dice">
     <div class="dot" id="d1"></div>
@@ -183,6 +183,7 @@
 
 
 
+
     function rollDice() {
   const rollBtn = document.getElementById("rollBtn");
   rollBtn.classList.add("hidden"); // Hide Roll button immediately
@@ -195,8 +196,8 @@
   resultText.textContent = "";
   closeBtn.style.display = "none";
 
-  // ✅ Immediately consume the dice chest
-  removeDiceChestFromUser(user);
+  // ✅ Correct: Pass rewardName
+  removeDiceChestFromUser(user, rewardName);
 
   let currentRoll = 0;
   let rollTimes = 30;
@@ -224,9 +225,6 @@
 
   animateRoll();
 }
-
-
-
 
 
 
