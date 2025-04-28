@@ -153,7 +153,9 @@
       <label for="rewardDiamonds">Honey:</label>
       <input type="number" id="rewardDiamonds" placeholder="Enter honey cost" min="1" />
       <label for="rewardTo">To:</label>
-<input type="text" id="rewardTo" placeholder="Everyone" readonly onclick="openUserSelectModal()" />
+      <input type="text" id="rewardTo" value="Everyone" readonly onclick="openUserSelectModal()" />
+
+
 
       <button onclick="saveReward()">Save</button>
     </div>
@@ -182,7 +184,9 @@
     // Get adminEmail from URL query parameters
     const urlParams = new URLSearchParams(window.location.search);
     const adminEmail = urlParams.get('adminEmail');
-    let selectedUsers = []; // by default: empty = Everyone
+    let selectedUsers = []; // initially empty
+
+
 
 
     if (!adminEmail) {
@@ -263,6 +267,12 @@
 
 
 
+
+
+
+
+
+
     function openUserSelectModal() {
   const userListDiv = document.getElementById('userList');
   userListDiv.innerHTML = "";
@@ -271,49 +281,12 @@
   const currentAdmin = localStorage.getItem("currentAdminEmail");
   const users = allUserData[currentAdmin]?.users || [];
 
-  // If no selected users yet, select everyone by default
-  if (selectedUsers.length === 0) {
-    selectedUsers = [...users];
-  }
+  // Add "Everyone" option
+  createUserItem("Everyone", userListDiv);
 
-  // Add "Everyone" option separately
-  const everyoneItem = document.createElement("div");
-  const everyoneCheckbox = document.createElement("input");
-  everyoneCheckbox.type = "checkbox";
-  everyoneCheckbox.name = "userSelect";
-  everyoneCheckbox.value = "Everyone";
-  everyoneCheckbox.checked = selectedUsers.length === 0; // checked if everyone selected
-  everyoneCheckbox.style.marginRight = "8px";
-
-  const everyoneLabel = document.createElement("label");
-  everyoneLabel.style.display = "flex";
-  everyoneLabel.style.alignItems = "center";
-  everyoneLabel.style.marginBottom = "10px";
-  everyoneLabel.appendChild(everyoneCheckbox);
-  everyoneLabel.appendChild(document.createTextNode("Everyone"));
-
-  userListDiv.appendChild(everyoneLabel);
-
-  // Add each user with a checkbox
+  // Add users
   users.forEach(user => {
-    const userItem = document.createElement("div");
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.className = "userCheckbox";
-    checkbox.value = user;
-    checkbox.name = "userSelect";
-    checkbox.checked = selectedUsers.includes(user); // mark selected ones
-
-    checkbox.style.marginRight = "8px";
-
-    const label = document.createElement("label");
-    label.style.display = "flex";
-    label.style.alignItems = "center";
-    label.style.marginBottom = "8px";
-    label.appendChild(checkbox);
-    label.appendChild(document.createTextNode(user));
-
-    userListDiv.appendChild(label);
+    createUserItem(user, userListDiv);
   });
 
   document.getElementById('userSelectModal').style.display = 'flex';
@@ -321,12 +294,73 @@
 
 
 
+function createUserItem(user, container) {
+  const userItem = document.createElement("div");
+  userItem.textContent = user;
+  userItem.style.padding = "10px";
+  userItem.style.marginBottom = "8px";
+  userItem.style.border = "1px solid var(--border-dark)";
+  userItem.style.borderRadius = "8px";
+  userItem.style.cursor = "pointer";
+  userItem.style.textAlign = "center";
+
+  updateUserItemStyle(userItem, user);
+
+  userItem.addEventListener("click", () => {
+    toggleUserSelection(user);
+    updateUserItemStyle(userItem, user);
+    if (user === "Everyone") {
+      // If clicked Everyone, deselect others visually too
+      document.querySelectorAll("#userList div").forEach(div => {
+        if (div.textContent !== "Everyone") {
+          div.style.backgroundColor = "var(--light-bg)";
+          div.style.color = "var(--text-color)";
+        }
+      });
+    }
+  });
+
+  container.appendChild(userItem);
+}
+
+
+
+function toggleUserSelection(user) {
+  if (user === "Everyone") {
+    if (selectedUsers.includes("Everyone")) {
+      selectedUsers = [];
+    } else {
+      selectedUsers = ["Everyone"];
+    }
+  } else {
+    if (selectedUsers.includes("Everyone")) {
+      selectedUsers = [];
+    }
+    if (selectedUsers.includes(user)) {
+      selectedUsers = selectedUsers.filter(u => u !== user);
+    } else {
+      selectedUsers.push(user);
+    }
+  }
+}
+
+function updateUserItemStyle(div, user) {
+  if ((user === "Everyone" && selectedUsers.includes("Everyone")) || selectedUsers.includes(user)) {
+    div.style.backgroundColor = "var(--primary-color)";
+    div.style.color = "var(--secondary-color)";
+  } else {
+    div.style.backgroundColor = "var(--light-bg)";
+    div.style.color = "var(--text-color)";
+  }
+}
+
+
 
 
 
 
 function updateRewardToDisplay() {
-  if (selectedUsers.length === 0) {
+  if (selectedUsers.length === 0 || selectedUsers.includes("Everyone")) {
     document.getElementById("rewardTo").value = "Everyone";
   } else {
     document.getElementById("rewardTo").value = selectedUsers.join(", ");
@@ -337,25 +371,12 @@ function updateRewardToDisplay() {
 
 
 
-
 function saveUserSelection() {
-  selectedUsers = [];
+  if (selectedUsers.length === 0) {
+    selectedUsers = ["Everyone"];
+  }
 
-  const checkboxes = document.querySelectorAll('input[name="userSelect"]:checked');
-
-  // If "Everyone" is selected, ignore specific users
-  let everyoneSelected = false;
-
-  checkboxes.forEach(cb => {
-    if (cb.value === "Everyone") {
-      everyoneSelected = true;
-    } else {
-      selectedUsers.push(cb.value);
-    }
-  });
-
-  if (everyoneSelected) {
-    selectedUsers = []; // empty array means Everyone
+  if (selectedUsers.includes("Everyone")) {
     document.getElementById("rewardTo").value = "Everyone";
   } else {
     document.getElementById("rewardTo").value = selectedUsers.join(", ");
