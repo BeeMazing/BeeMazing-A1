@@ -1317,89 +1317,89 @@ async function finishTask(userName, task, button, selectedDate) {
   let currentX = 0;
   let isSwiping = false;
   let startTime = 0;
-  let isTap = true;
+  let moved = false;
 
-  const threshold = 50; // Pixels needed to confirm a swipe
-  const minSwipeDuration = 200; // Minimum duration in milliseconds
-  const tapThreshold = 10; // Max movement for a tap (pixels)
-  const maxTapDuration = 500; // Max duration for a tap (milliseconds)
+  const SWIPE_THRESHOLD = 30; // ✅ MUCH easier now (was 50)
+  const TAP_MOVEMENT_LIMIT = 8; // ✅ Limit for tap vs swipe
+  const SWIPE_TIME_LIMIT = 300; // ms
 
-  const onStart = (x, e) => {
+  const onStart = (x) => {
     startX = x;
+    currentX = x;
     startTime = Date.now();
     isSwiping = true;
-    isTap = true;
+    moved = false;
     taskElement.style.transition = 'none';
   };
 
-  const onMove = (x, e) => {
+  const onMove = (x) => {
     if (!isSwiping) return;
+    const deltaX = x - startX;
     currentX = x;
-    const deltaX = currentX - startX;
-    const absDeltaX = Math.abs(deltaX);
-
-    // If movement exceeds tap threshold, it’s a swipe, not a tap
-    if (absDeltaX > tapThreshold) {
-      isTap = false;
-      e.preventDefault(); // Prevent scrolling only for swipes
+    if (Math.abs(deltaX) > TAP_MOVEMENT_LIMIT) {
+      moved = true;
     }
-
-    if (deltaX < 0) {
+    if (deltaX < 0) { // Only allow left swipe
       taskElement.style.transform = `translateX(${deltaX}px)`;
     }
   };
 
-  const onEnd = (e) => {
+  const onEnd = () => {
     if (!isSwiping) return;
     isSwiping = false;
-    const deltaX = currentX - startX;
-    const swipeDuration = Date.now() - startTime;
     taskElement.style.transition = 'transform 0.3s ease';
 
-    // Handle swipe to delete
-    if (deltaX < -threshold && swipeDuration >= minSwipeDuration && !isTap) {
+    const deltaX = currentX - startX;
+    const swipeDuration = Date.now() - startTime;
+
+    if (deltaX < -SWIPE_THRESHOLD && swipeDuration < SWIPE_TIME_LIMIT) {
       taskElement.classList.add('swiped-left');
       taskElement.style.transform = 'translateX(-100px)';
     } else {
       taskElement.classList.remove('swiped-left');
       taskElement.style.transform = 'translateX(0)';
     }
-
-    // Allow tap to proceed if it’s a tap
-    if (isTap && swipeDuration < maxTapDuration) {
-      // Don’t prevent default; let the click event fire naturally
-    }
   };
 
-  // Touch events
+  // --- Touch events ---
   taskElement.addEventListener('touchstart', (e) => {
-    onStart(e.touches[0].clientX, e);
+    onStart(e.touches[0].clientX);
   });
   taskElement.addEventListener('touchmove', (e) => {
-    onMove(e.touches[0].clientX, e);
+    onMove(e.touches[0].clientX);
+    if (moved) e.preventDefault(); // Prevent scroll when swiping
   });
   taskElement.addEventListener('touchend', (e) => {
-    onEnd(e);
+    onEnd();
   });
 
-  // Mouse events (unchanged, as they work fine on computer)
+  // --- Mouse events (desktop testing) ---
   taskElement.addEventListener('mousedown', (e) => {
-    e.preventDefault(); // Prevent text selection
-    onStart(e.clientX, e);
+    onStart(e.clientX);
   });
   taskElement.addEventListener('mousemove', (e) => {
-    if (e.buttons === 1) onMove(e.clientX, e);
+    if (e.buttons === 1) onMove(e.clientX);
   });
   taskElement.addEventListener('mouseup', (e) => {
-    onEnd(e);
+    onEnd();
   });
 
-  // Reset swipe if mouse leaves
-  taskElement.addEventListener('mouseleave', () => {
-    if (isSwiping) onEnd();
+  // --- Prevent accidental popup on swipe ---
+  taskElement.addEventListener('click', (e) => {
+    if (moved) {
+      e.preventDefault();
+      e.stopImmediatePropagation(); // ✅ Very important: no popup if swipe
+    }
   });
+
+  // --- Ensure delete button works even near '+' ---
+  const deleteBtn = taskElement.querySelector('.delete-btn');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); // ✅ Only trigger delete
+    });
+  }
 }
-
 
 
 
