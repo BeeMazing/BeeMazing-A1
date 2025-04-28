@@ -6,6 +6,7 @@ if (adminFromURL) {
   localStorage.setItem("currentAdminEmail", adminFromURL);
 }
 
+const currentAdmin = localStorage.getItem("currentAdminEmail");
 
   // Redirect to login if user not logged in
   if (localStorage.getItem("isAdmin") === null) {
@@ -95,9 +96,6 @@ if (!isAdmin && footer) {
   const isMobile = window.location.pathname.includes("/BeeMazing-Y1/mobile/");
   const basePath = isMobile ? "/BeeMazing-Y1/mobile" : "/web";
 
-  // Load users from localStorage on page load
-  const currentAdmin = localStorage.getItem("currentAdminEmail");
-  
 
   async function fetchUsersFromServer(email) {
       try {
