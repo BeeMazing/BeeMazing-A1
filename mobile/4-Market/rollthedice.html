@@ -104,7 +104,7 @@
 </head>
 <body>
 
-  <h1>🎲 Roll the Dice</h1>
+  <h1>🎲 Roll the Dice 1</h1>
 
   <div class="dice" id="dice">
     <div class="dot" id="d1"></div>
@@ -127,11 +127,12 @@
   <ul class="reward-list" id="rewardLegend"></ul>
   
   <!-- Footer with Test Your Luck Later button -->
-  <div style="position:fixed; bottom:0; left:0; right:0; padding:12px 0; display:flex; justify-content:center; align-items:center; box-sizing:border-box;">
+  <div id="testLuckFooter" style="position:fixed; bottom:0; width:100%; background:#212121; padding:12px 0; display:flex; justify-content:center; align-items:center; box-sizing:border-box;">
     <button onclick="testLuckLater()" style="background:#2A2B32; color:#FFC107; font-size:16px; padding:10px 20px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">
       Test Your Luck Later
     </button>
   </div>
+  
   
   
   
@@ -179,6 +180,9 @@
 
 
 
+
+
+
     function rollDice() {
   const rollBtn = document.getElementById("rollBtn");
   rollBtn.classList.add("hidden"); // Hide Roll button immediately
@@ -204,23 +208,18 @@
         const outcomeText = formatOutcomeText(reward);
         resultText.textContent = `You got: ${outcomeText}`;
 
-        // ✅ Now remove the dice chest
-        await removeDiceChestFromUser(user, rewardName);
+        document.getElementById("testLuckFooter").style.display = "none"; // 🛠 HIDE FOOTER
+        closeBtn.style.display = "inline-block"; // 🛠 SHOW CLOSE BUTTON
 
-        // ✅ Then grant the reward
+        await removeDiceChestFromUser(user, rewardName);
         await grantChestToUser(user, reward);
 
-        closeBtn.style.display = "inline-block"; // Show Close button
       }, 300);
     }
   }
 
   animateRoll();
 }
-
-
-
-
 
 
 
