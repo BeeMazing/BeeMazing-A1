@@ -502,7 +502,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/SettingsBtn.png" alt="Home" />
-            <span>User Settings1</span>
+            <span>User Settings2</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -1333,6 +1333,57 @@ async function deleteInvalidTask(task) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+(async function recoverTasks() {
+  const oldTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+  const currentAdmin = localStorage.getItem("currentAdminEmail");
+
+  if (!currentAdmin) {
+    alert("No admin logged in. Recovery aborted.");
+    return;
+  }
+
+  if (!oldTasks.length) {
+    alert("No old tasks found in localStorage. Nothing to recover.");
+    return;
+  }
+
+  let successCount = 0;
+  let failCount = 0;
+
+  for (const task of oldTasks) {
+    try {
+      const response = await fetch("https://beemazing.onrender.com/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail: currentAdmin, task }),
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to upload task: ${task.title}`, await response.json());
+        failCount++;
+      } else {
+        successCount++;
+      }
+    } catch (err) {
+      console.error(`Error uploading task: ${task.title}`, err);
+      failCount++;
+    }
+  }
+
+  alert(`✅ Recovery completed!\n\nUploaded: ${successCount} tasks\nFailed: ${failCount} tasks`);
+})();
 
 
         </script>
