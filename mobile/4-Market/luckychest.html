@@ -415,11 +415,11 @@
   <div class="footer">
     <a href="/BeeMazing-Y1/mobile/1-Home/home.html" id="homeLink" class="footer-icon" aria-label="Home">
       <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-      <span>Home</span>
+      <span>User Settings</span>
     </a>
     <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" id="tasksLink" class="footer-icon" aria-label="Tasks">
       <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
-      <span>Tasks</span>
+      <span>Create Task</span>
     </a>
     <a href="/BeeMazing-Y1/mobile/4-Market/market.html" id="marketLink" class="footer-icon" aria-label="Market">
       <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
@@ -470,11 +470,15 @@
 
          if (adminEmail && adminEmail !== "null") {
              localStorage.setItem("currentAdminEmail", adminEmail);
-             document.getElementById('homeLink').href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
-             document.getElementById('tasksLink').href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?adminEmail=${encodeURIComponent(adminEmail)}`;
-             document.getElementById('marketLink').href = `/BeeMazing-Y1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}`;
-             document.getElementById('statsLink').href = `/BeeMazing-Y1/mobile/5-Stats/stats.html?adminEmail=${encodeURIComponent(adminEmail)}`;
-         }
+
+             const homeLink = document.getElementById('homeLink');
+    const tasksLink = document.getElementById('tasksLink');
+    const marketLink = document.getElementById('marketLink');
+
+    if (homeLink) homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+    if (tasksLink) tasksLink.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?adminEmail=${encodeURIComponent(adminEmail)}`;
+    if (marketLink) marketLink.href = `/BeeMazing-Y1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}`;
+  }
 
          // Show welcome popup if not disabled
          if (localStorage.getItem("hideWelcomePopup") !== "true") {
