@@ -130,6 +130,15 @@
       height: 40px;
       filter: invert(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
     }
+
+    #rewardTo {
+  cursor: pointer; /* Show normal pointer cursor */
+}
+
+
+
+
+
   </style>
 </head>
 <body>
@@ -143,6 +152,9 @@
       <input type="text" id="rewardName" placeholder="Enter reward" />
       <label for="rewardDiamonds">Honey:</label>
       <input type="number" id="rewardDiamonds" placeholder="Enter honey cost" min="1" />
+      <label for="rewardTo">To:</label>
+<input type="text" id="rewardTo" placeholder="Everyone" readonly onclick="openUserSelectModal()" />
+
       <button onclick="saveReward()">Save</button>
     </div>
   </div>
@@ -153,10 +165,25 @@
     </a>
   </div>
 
+
+  <div id="userSelectModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:999; align-items:center; justify-content:center;">
+    <div style="background:#2A2B32; padding:20px; border-radius:12px; width:85%; max-width:400px; max-height:80%; overflow-y:auto;">
+      <strong style="display:block; margin-bottom:10px;">Select Users</strong>
+      <div id="userList"></div>
+      <div style="margin-top:15px; text-align:right;">
+        <button onclick="saveUserSelection()" style="background:var(--primary-color); color:var(--secondary-color); border:none; border-radius:6px; padding:8px 12px; font-weight:bold; margin-right:10px;">Save</button>
+        <button onclick="closeUserSelectModal()" style="background:var(--secondary-color); color:var(--accent-color); border:none; border-radius:6px; padding:8px 12px;">Close</button>
+      </div>
+    </div>
+  </div>
+  
+
   <script>
     // Get adminEmail from URL query parameters
     const urlParams = new URLSearchParams(window.location.search);
     const adminEmail = urlParams.get('adminEmail');
+    let selectedUsers = []; // by default: empty = Everyone
+
 
     if (!adminEmail) {
       console.error("No adminEmail provided in URL");
@@ -216,7 +243,12 @@
         const rewards = await fetchRewards();
 
         // Add the new reward
-        rewards.push({ name: rewardName, diamonds: rewardDiamonds });
+        rewards.push({
+  name: rewardName,
+  diamonds: rewardDiamonds,
+  assignedUsers: selectedUsers.length > 0 ? selectedUsers : undefined
+});
+
 
         // Save the updated rewards to MongoDB
         await saveRewards(rewards);
@@ -227,6 +259,113 @@
         alert("Failed to save reward. Please try again.");
       }
     }
+
+
+    function openUserSelectModal() {
+  const userListDiv = document.getElementById('userList');
+  userListDiv.innerHTML = "";
+
+  const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+  const currentAdmin = localStorage.getItem("currentAdminEmail");
+  const users = allUserData[currentAdmin]?.users || [];
+
+  // Add "Everyone" option at the top
+  const everyoneItem = document.createElement("div");
+  everyoneItem.textContent = "Everyone";
+  everyoneItem.style.padding = "10px";
+  everyoneItem.style.marginBottom = "10px";
+  everyoneItem.style.border = "1px solid var(--selection-border)";
+  everyoneItem.style.borderRadius = "8px";
+  everyoneItem.style.cursor = "pointer";
+  everyoneItem.style.textAlign = "center";
+  everyoneItem.style.backgroundColor = selectedUsers.length === 0 ? "var(--primary-color)" : "var(--light-bg)";
+  everyoneItem.style.color = selectedUsers.length === 0 ? "var(--secondary-color)" : "var(--text-color)";
+  everyoneItem.addEventListener("click", () => {
+    selectedUsers = [];
+    updateRewardToDisplay();
+    closeUserSelectModal();
+  });
+  userListDiv.appendChild(everyoneItem);
+
+  // Add user list
+  users.forEach(user => {
+    const userItem = document.createElement("div");
+    userItem.textContent = user;
+    userItem.style.padding = "10px";
+    userItem.style.marginBottom = "8px";
+    userItem.style.border = "1px solid var(--selection-border)";
+    userItem.style.borderRadius = "8px";
+    userItem.style.cursor = "pointer";
+    userItem.style.textAlign = "center";
+
+    if (selectedUsers.includes(user)) {
+      userItem.style.backgroundColor = "var(--primary-color)";
+      userItem.style.color = "var(--secondary-color)";
+    } else {
+      userItem.style.backgroundColor = "var(--light-bg)";
+      userItem.style.color = "var(--text-color)";
+    }
+
+    userItem.addEventListener("click", () => {
+      if (selectedUsers.includes(user)) {
+        selectedUsers = selectedUsers.filter(u => u !== user);
+      } else {
+        selectedUsers.push(user);
+      }
+      updateRewardToDisplay();
+      closeUserSelectModal();
+    });
+
+    userListDiv.appendChild(userItem);
+  });
+
+  document.getElementById('userSelectModal').style.display = 'flex';
+}
+
+
+function updateRewardToDisplay() {
+  if (selectedUsers.length === 0) {
+    document.getElementById("rewardTo").value = "Everyone";
+  } else {
+    document.getElementById("rewardTo").value = selectedUsers.join(", ");
+  }
+}
+
+
+
+function saveUserSelection() {
+  selectedUsers = [];
+
+  const everyoneSelected = document.querySelector('input[name="userSelect"]:checked')?.value === "Everyone";
+
+  if (everyoneSelected) {
+    selectedUsers = [];
+    document.getElementById("rewardTo").value = "Everyone";
+  } else {
+    document.querySelectorAll('.userCheckbox:checked').forEach(cb => {
+      selectedUsers.push(cb.value);
+    });
+    document.getElementById("rewardTo").value = selectedUsers.join(", ");
+  }
+
+  closeUserSelectModal();
+}
+
+
+function closeUserSelectModal() {
+  document.getElementById('userSelectModal').style.display = 'none';
+}
+
+
+
+// Close user select modal when clicking outside the box
+window.addEventListener("click", (e) => {
+  const modal = document.getElementById('userSelectModal');
+  if (e.target === modal) {
+    closeUserSelectModal();
+  }
+});
+
   </script>
 </body>
 </html>
