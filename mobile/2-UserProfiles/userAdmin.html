@@ -431,7 +431,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home</span>
+        <span>Home 1</span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -825,8 +825,13 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
   startDate,
   completions: task.completions || {},
   pendingCompletions: task.pendingCompletions || {},
-  tempTurnReplacement: task.tempTurnReplacement || {}
+  tempTurnReplacement: task.tempTurnReplacement || {},
+  repeat: task.repeat,
+  timesPerDay: task.timesPerDay,
+  timesPerWeek: task.timesPerWeek,
+  timesPerMonth: task.timesPerMonth
 };
+
 
       } else {
         console.warn(`Duplicate task title: ${task.title}, date: ${task.date}, keeping date: ${existingTask.date}`); // Debug
