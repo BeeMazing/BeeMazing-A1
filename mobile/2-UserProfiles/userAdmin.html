@@ -770,6 +770,12 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
     const tasksByTitle = {};
     const duplicateTasks = {}; // Track duplicates
     tasks.forEach(task => {
+
+      if (!task.title || !task.users || !task.date) {
+  console.warn(`Skipping invalid task:`, task);
+  return; // 🛡️ Skip broken tasks
+}
+
       // Filter by date range
       const [startDateStr, endDateStr] = task.date.split(" to ");
       const startDate = new Date(startDateStr);
