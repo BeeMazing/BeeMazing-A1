@@ -42,52 +42,58 @@ const currentAdmin = localStorage.getItem("currentAdminEmail");
  // ✅ THEN: add event listeners
 
  if (submitUserBtn) {
-   submitUserBtn.addEventListener("click", async function () {
-     const username = usernameInput.value.trim();
-     const errorMessage = document.getElementById("errorMessage");
+  submitUserBtn.addEventListener("click", async function () {
+    const username = usernameInput.value.trim();
+    const errorMessage = document.getElementById("errorMessage");
+    const currentAdmin = localStorage.getItem("currentAdminEmail");
 
-     if (!username) {
-       errorMessage.style.display = "block";
-       return;
-     }
+    if (!username) {
+      errorMessage.style.display = "block";
+      return;
+    }
 
-     errorMessage.style.display = "none";
+    if (!currentAdmin) {
+      console.error("❌ currentAdmin is missing in localStorage!");
+      alert("Error: Admin session expired. Please log in again.");
+      window.location.href = "/BeeMazing-Y1/login.html";
+      return;
+    }
 
-     try {
-       const res = await fetch("https://beemazing.onrender.com/add-user", {
-         method: "POST",
-         headers: { "Content-Type": "application/json" },
-         body: JSON.stringify({
-           adminEmail: currentAdmin,
-           newUser: username,  
-         }),
-       });
+    errorMessage.style.display = "none";
 
-       const result = await res.json();
+    try {
+      const res = await fetch("https://beemazing.onrender.com/add-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adminEmail: currentAdmin,
+          newUser: username,
+        }),
+      });
 
-       if (result.success) {
-         const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-         if (!allUserData[currentAdmin]) {
-           allUserData[currentAdmin] = { users: [], permissions: {} };
-         }
+      const result = await res.json();
 
-         allUserData[currentAdmin].users.push(username);
-         localStorage.setItem("userData", JSON.stringify(allUserData));
+      if (result.success) {
+        const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+        if (!allUserData[currentAdmin]) {
+          allUserData[currentAdmin] = { users: [], permissions: {} };
+        }
 
-         usernameInput.value = "";
-         addUserModal.classList.remove("show");
-         await fetchUsersFromServer(currentAdmin); // 🔥 re-fetch fresh data from server
-         
-       } else {
-         alert("Failed to add user: " + result.message);
-       }
-     } catch (err) {
-       console.error("Error adding user:", err);
-       alert("Error adding user. Please try again.");
-     }
-   });
- }
+        allUserData[currentAdmin].users.push(username);
+        localStorage.setItem("userData", JSON.stringify(allUserData));
 
+        usernameInput.value = "";
+        addUserModal.classList.remove("show");
+        await fetchUsersFromServer(currentAdmin); // 🔥 re-fetch fresh data from server
+      } else {
+        alert("Failed to add user: " + result.message);
+      }
+    } catch (err) {
+      console.error("Error adding user:", err);
+      alert("Error adding user. Please try again.");
+    }
+  });
+}
 
 
   // Determine the base path (mobile or web) based on the current URL
