@@ -502,7 +502,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>Home8</span>
+            <span>Home10</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -1277,11 +1277,13 @@ async function finishTask(userName, task, button, selectedDate) {
             }
         
             setTimeout(() => {
-                const selected = document.querySelector(".day.selected");
-                if (selected) {
-                    selected.scrollIntoView({ behavior: "smooth", inline: "center" });
-                }
-            }, 50);
+    const selected = document.querySelector(".day.selected");
+    if (selected) {
+        selected.scrollIntoView({ behavior: "smooth", inline: "center" });
+        loadTasksForDate(selected.dataset.date); // 🐝 Add this!
+    }
+}, 50);
+
         }
         
         // Initialize date navigation
