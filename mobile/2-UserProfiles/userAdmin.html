@@ -431,7 +431,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home 1</span>
+        <span>Home</span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -864,18 +864,11 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
 
 
     Object.keys(tasksByTitle).sort().forEach(title => {
-  const { turns, pendingCount, date, userOrder: originalUserOrder, settings, completions, pendingCompletions, tempTurnReplacement } = tasksByTitle[title];
+      const taskData = tasksByTitle[title];
+const turnInfo = calculateTurn(taskData, selectedDate);
 
-  const turnInfo = calculateTurn(
-    { 
-      users: originalUserOrder, 
-      completions, 
-      pendingCompletions, 
-      tempTurnReplacement 
-    }, 
-    selectedDate
-  );
 
+  const { turns, pendingCount, date, userOrder: originalUserOrder, settings } = taskData;
   const userOrder = turnInfo.userOrder; // rotated order
 
   const div = document.createElement("div");
