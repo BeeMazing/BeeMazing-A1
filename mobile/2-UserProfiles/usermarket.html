@@ -349,7 +349,7 @@
       </a>
       <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
           <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
-          <span>Profile2</span>
+          <span>Profile5</span>
       </a>
       <a href="#" id="marketButton" class="footer-icon active" aria-label="Market">
           <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
@@ -885,45 +885,67 @@ document.querySelectorAll('.footer a').forEach(link => {
           }
       }
   
-      async function useDiceChest(userName, rewardName, encodedOutcomes, quantity) {
-  const outcomes = JSON.parse(atob(decodeURIComponent(encodedOutcomes)));
 
-          try {
-              const qty = parseInt(quantity, 10);
-              if (isNaN(qty) || qty <= 0) {
-                  throw new Error("Invalid quantity selected");
-              }
-              const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-              const userRewardsData = await userRewardsResponse.json();
-              if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
-              const rewards = userRewardsData.userRewards[userName] || [];
-              const matchingRewards = rewards.filter(r => r.name === rewardName);
-              if (matchingRewards.length < qty) {
-                  throw new Error(`Not enough ${rewardName} rewards to use (${matchingRewards.length} available)`);
-              }
-  
-              // Remove 'qty' instances (simplified for dice chest)
-              for (let i = 0; i < qty; i++) {
-                  const rewardIndex = rewards.findIndex(r => r.name === rewardName);
-                  if (rewardIndex === -1) break;
-                  rewards.splice(rewardIndex, 1);
-              }
-  
-              await fetch("https://beemazing.onrender.com/api/user-rewards", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ adminEmail, userRewards: { [userName]: rewards } })
-              });
-  
-              const fullChest = { type: "dice", outcomes: JSON.parse(outcomes) };
-              const encoded = encodeURIComponent(btoa(JSON.stringify(fullChest)));
-              window.location.href = `/BeeMazing-Y1/mobile/4-Market/rollthedice.html?user=${encodeURIComponent(userName)}&data=${encoded}&admin=${encodeURIComponent(adminEmail)}`;
-          } catch (err) {
-              console.error("Error using dice chest:", err);
-              alert(`Failed to process ${rewardName}: ${err.message}. Please try again.`);
-          }
-      }
-  
+
+
+
+
+
+
+      async function useDiceChest(userName, rewardName, encodedOutcomes, quantity) {
+    try {
+        const outcomes = JSON.parse(atob(decodeURIComponent(encodedOutcomes)));
+
+        const qty = parseInt(quantity, 10);
+        if (isNaN(qty) || qty <= 0) {
+            throw new Error("Invalid quantity selected");
+        }
+
+        const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const userRewardsData = await userRewardsResponse.json();
+        if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
+
+        const rewards = userRewardsData.userRewards[userName] || [];
+        const matchingRewards = rewards.filter(r => r.name === rewardName);
+        if (matchingRewards.length < qty) {
+            throw new Error(`Not enough ${rewardName} rewards to use (${matchingRewards.length} available)`);
+        }
+
+        // Remove 'qty' instances
+        for (let i = 0; i < qty; i++) {
+            const rewardIndex = rewards.findIndex(r => r.name === rewardName);
+            if (rewardIndex === -1) break;
+            rewards.splice(rewardIndex, 1);
+        }
+
+        await fetch("https://beemazing.onrender.com/api/user-rewards", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ adminEmail, userRewards: { [userName]: rewards } })
+        });
+
+        // ✅ Build correct data to pass to rollthedice.html
+        const fullChest = { type: "dice", outcomes: outcomes };
+        const encoded = encodeURIComponent(btoa(JSON.stringify(fullChest)));
+
+        window.location.href = `/BeeMazing-Y1/mobile/4-Market/rollthedice.html?user=${encodeURIComponent(userName)}&data=${encoded}&admin=${encodeURIComponent(adminEmail)}`;
+    } catch (err) {
+        console.error("Error using dice chest:", err);
+        alert(`Failed to process ${rewardName}: ${err.message}. Please try again.`);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
       async function useTheKey(userName, rewardName, quantity) {
           try {
               const qty = parseInt(quantity, 10);
