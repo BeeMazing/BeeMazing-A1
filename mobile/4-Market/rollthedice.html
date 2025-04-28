@@ -104,7 +104,7 @@
 </head>
 <body>
 
-  <h1>🎲 Roll the Dice</h1>
+  <h1>🎲 Roll the Dice 1</h1>
 
   <div class="dice" id="dice">
     <div class="dot" id="d1"></div>
@@ -147,6 +147,8 @@
     let user = "";
     let adminEmail = "";
     let outcomes = [];
+    let rewardName = "";
+
 
     const dotMap = {
       1: [5],
@@ -357,7 +359,9 @@
     document.addEventListener("DOMContentLoaded", function () {
       const params = new URLSearchParams(window.location.search);
       user = params.get("user");
+      rewardName = params.get("rewardName") || "";
       adminEmail = params.get("adminEmail") || localStorage.getItem("currentAdminEmail");
+
 
       if (adminEmail && adminEmail !== "null") {
         localStorage.setItem("currentAdminEmail", adminEmail);
