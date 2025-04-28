@@ -6,6 +6,7 @@ if (adminFromURL) {
   localStorage.setItem("currentAdminEmail", adminFromURL);
 }
 
+const currentAdmin = localStorage.getItem("currentAdminEmail");
 
   // Redirect to login if user not logged in
   if (localStorage.getItem("isAdmin") === null) {
@@ -16,32 +17,89 @@ if (adminFromURL) {
   // Determine if this user is admin
   const isAdmin = localStorage.getItem("isAdmin") === "true";
 
-  const footer = document.getElementById("footer");
-if (!isAdmin && footer) {
-  footer.style.display = "none";
+
+
+
+ // ✅ FIRST: get DOM elements
+ const footer = document.getElementById("footer");
+ const addUserBtn = document.getElementById("addUserBtn");
+ const addUserModal = document.getElementById("addUserModal");
+ const submitUserBtn = document.getElementById("submitUserBtn");
+ const usernameInput = document.getElementById("usernameInput");
+ const userList = document.getElementById("userList");
+ const logoutBtn = document.getElementById("logoutBtn");
+
+ if (!isAdmin && footer) {
+   footer.style.display = "none";
+ }
+ if (!isAdmin && addUserBtn) {
+   addUserBtn.style.display = "none";
+ }
+ if (!isAdmin && submitUserBtn) {
+   submitUserBtn.disabled = true;
+ }
+
+ // ✅ THEN: add event listeners
+
+ if (submitUserBtn) {
+  submitUserBtn.addEventListener("click", async function () {
+    const username = usernameInput.value.trim();
+    const errorMessage = document.getElementById("errorMessage");
+    const currentAdmin = localStorage.getItem("currentAdminEmail");
+
+    if (!username) {
+      errorMessage.style.display = "block";
+      return;
+    }
+
+    if (!currentAdmin) {
+      console.error("❌ currentAdmin is missing in localStorage!");
+      alert("Error: Admin session expired. Please log in again.");
+      window.location.href = "/BeeMazing-Y1/login.html";
+      return;
+    }
+
+    errorMessage.style.display = "none";
+
+    try {
+      const res = await fetch("https://beemazing.onrender.com/add-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adminEmail: currentAdmin,
+          newUser: username,
+        }),
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+        if (!allUserData[currentAdmin]) {
+          allUserData[currentAdmin] = { users: [], permissions: {} };
+        }
+
+        allUserData[currentAdmin].users.push(username);
+        localStorage.setItem("userData", JSON.stringify(allUserData));
+
+        usernameInput.value = "";
+        addUserModal.classList.remove("show");
+        await fetchUsersFromServer(currentAdmin); // 🔥 re-fetch fresh data from server
+      } else {
+        alert("Failed to add user: " + result.message);
+      }
+    } catch (err) {
+      console.error("Error adding user:", err);
+      alert("Error adding user. Please try again.");
+    }
+  });
 }
 
-
-  const addUserBtn = document.getElementById("addUserBtn");
-  if (!isAdmin && addUserBtn) {
-      addUserBtn.style.display = "none";
-  }
-
-  const addUserModal = document.getElementById("addUserModal");
-  const submitUserBtn = document.getElementById("submitUserBtn");
-  if (!isAdmin && submitUserBtn) {
-      submitUserBtn.disabled = true;
-  }
-
-  const usernameInput = document.getElementById("usernameInput");
-  const userList = document.getElementById("userList");
 
   // Determine the base path (mobile or web) based on the current URL
   const isMobile = window.location.pathname.includes("/BeeMazing-Y1/mobile/");
   const basePath = isMobile ? "/BeeMazing-Y1/mobile" : "/web";
 
-  // Load users from localStorage on page load
-  const currentAdmin = localStorage.getItem("currentAdminEmail");
 
   async function fetchUsersFromServer(email) {
       try {
