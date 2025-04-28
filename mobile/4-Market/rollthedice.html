@@ -184,10 +184,11 @@
 
 
 
-
     function rollDice() {
   const rollBtn = document.getElementById("rollBtn");
   rollBtn.classList.add("hidden"); // Hide Roll button immediately
+  document.getElementById("testLuckFooter").style.display = "none";
+
 
   resultText.textContent = "";
   closeBtn.style.display = "none";
@@ -204,17 +205,17 @@
       delay += 12;
       setTimeout(animateRoll, delay);
     } else {
-      setTimeout(async () => {
+      setTimeout(() => {
         const result = number;
         const reward = outcomes[result - 1];
         const outcomeText = formatOutcomeText(reward);
         resultText.textContent = `You got: ${outcomeText}`;
+        grantChestToUser(user, reward);
+        removeDiceChestFromUser(user);
 
-        document.getElementById("testLuckFooter").style.display = "none"; // 🛠 HIDE FOOTER
-        closeBtn.style.display = "inline-block"; // 🛠 SHOW CLOSE BUTTON
-
-        await removeDiceChestFromUser(user, rewardName);
-        await grantChestToUser(user, reward);
+        // ✅ NEW: hide "Test your luck later" and show "Close" button
+        document.getElementById("testLuckFooter").style.display = "none"; 
+        closeBtn.style.display = "inline-block";
 
       }, 300);
     }
@@ -222,7 +223,6 @@
 
   animateRoll();
 }
-
 
 
 
