@@ -502,7 +502,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>Home2</span>
+            <span>Home7</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -758,13 +758,21 @@ const visibleTasks = tasks.filter(task => {
             taskDiv.innerHTML = taskHTML + `<div class="delete-btn">Delete</div>`;
 
             taskDiv.addEventListener("click", async (e) => {
-                if (!e.target.classList.contains("delete-btn")) {
-                    const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-                    const latestResult = await latest.json();
-                    const latestTask = latestResult.tasks.find(t => t.title === task.title && t.date === task.date);
-                    if (latestTask) showTaskDetails(latestTask);
-                }
-            });
+  // Check if swipe was happening
+  if (taskDiv.dataset.swiping === "true") {
+    // Don't open popup if swipe happened
+    taskDiv.dataset.swiping = "false"; // reset
+    return;
+  }
+  
+  if (!e.target.classList.contains("delete-btn")) {
+    const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+    const latestResult = await latest.json();
+    const latestTask = latestResult.tasks.find(t => t.title === task.title && t.date === task.date);
+    if (latestTask) showTaskDetails(latestTask);
+  }
+});
+
 
             taskDiv.querySelector(".delete-btn").addEventListener("click", async (e) => {
     e.stopPropagation(); // ⬅️ Prevent opening the popup
@@ -1332,9 +1340,11 @@ async function finishTask(userName, task, button, selectedDate) {
     const deltaX = currentX - startX;
 
     if (Math.abs(deltaX) > tapMoveThreshold) {
-      isTap = false;
-      e.preventDefault(); // stop scrolling
-    }
+  isTap = false;
+  e.preventDefault(); // stop scrolling
+  taskElement.dataset.swiping = "true"; // 🐝 Mark swiping
+}
+
 
     if (deltaX < 0) { // Only allow swipe left
       taskElement.style.transform = `translateX(${deltaX}px)`;
