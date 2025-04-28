@@ -283,7 +283,7 @@
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>Home7</span>
+            <span>Home8</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -370,10 +370,18 @@
             rewards.forEach((reward, index) => {
               const rewardItem = document.createElement("li");
               rewardItem.className = "reward-item";
-              rewardItem.innerHTML = `
-                <strong>${reward.name}</strong><br>
-                Honey: ${reward.diamonds} 🍯
-              `;
+// Determine who the reward is assigned to
+let assignedText = "Everyone";
+if (reward.assignedUsers && reward.assignedUsers.length > 0) {
+  assignedText = "To: " + reward.assignedUsers.join(", ");
+}
+
+rewardItem.innerHTML = `
+  <strong>${reward.name}</strong><br>
+  Honey: ${reward.diamonds} 🍯<br>
+  <small style="color: var(--accent-color); opacity: 0.8;">${assignedText}</small>
+`;
+
         
               // Create delete button
               const deleteButton = document.createElement("button");
