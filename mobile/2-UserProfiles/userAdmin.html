@@ -431,7 +431,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home 1</span>
+        <span>Home</span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -858,10 +858,21 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
 
 
 
+
     Object.keys(tasksByTitle).sort().forEach(title => {
-  const { turns, pendingCount, date, userOrder: originalUserOrder } = tasksByTitle[title];
-  const turnInfo = calculateTurn({ users: originalUserOrder, completions: {}, pendingCompletions: {}, tempTurnReplacement: {} }, selectedDate);
-  const userOrder = turnInfo.userOrder;
+  const { turns, pendingCount, date, userOrder: originalUserOrder, settings, completions, pendingCompletions, tempTurnReplacement } = tasksByTitle[title];
+
+  const turnInfo = calculateTurn(
+    { 
+      users: originalUserOrder, 
+      completions, 
+      pendingCompletions, 
+      tempTurnReplacement 
+    }, 
+    selectedDate
+  );
+
+  const userOrder = turnInfo.userOrder; // rotated order
 
   const div = document.createElement("div");
   div.className = "task-entry";
@@ -871,12 +882,23 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
     <h3 class="task-title">${title}${pendingCount > 0 ? `<span class="notification-bubble">${pendingCount}</span>` : ''}</h3>
     <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
       ${
-        tasksByTitle[title].turns.length && turns[0].repetition !== undefined && turns[0].user !== undefined && tasksByTitle[title].turns
-          ? (tasksByTitle[title].settings === "Rotation"
+        turns.length && turns[0].repetition !== undefined && turns[0].user !== undefined
+          ? (settings === "Rotation"
             ? turns.map(turn => `
               <div class="turn-entry" draggable="true" data-index="${turn.index}" data-user="${turn.user}">
                 <p>Turn ${turn.index + 1}: ${turn.user} - ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
-                ...
+                ${turn.isPending && !turn.isCompleted ? `
+                  <button class="accept-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
+                  <button class="decline-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
+                ` : turn.isCompleted ? `
+                  <button class="revert-btn" onclick="handleRevert('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
+                ` : `
+                  <select id="replace-select-${turn.index}">
+                    <option value="">Select User</option>
+                    ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
+                  </select>
+                  <button class="replace-btn" onclick="handleReplace('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
+                `}
               </div>
             `).join('')
             :
@@ -887,7 +909,18 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
                 ${userTurns.map(turn => `
                   <div class="turn-entry" draggable="false" data-index="${turn.index}" data-user="${turn.user}">
                     <p>Attempt ${turn.repetition}: ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
-                    ...
+                    ${turn.isPending && !turn.isCompleted ? `
+                      <button class="accept-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
+                      <button class="decline-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
+                    ` : turn.isCompleted ? `
+                      <button class="revert-btn" onclick="handleRevert('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
+                    ` : `
+                      <select id="replace-select-${turn.index}">
+                        <option value="">Select User</option>
+                        ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
+                      </select>
+                      <button class="replace-btn" onclick="handleReplace('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
+                    `}
                   </div>
                 `).join('')}
               `;
@@ -908,6 +941,13 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
     }
   });
 });
+
+
+
+
+
+
+
 
 
 
