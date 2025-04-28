@@ -93,6 +93,13 @@
     .close-btn:hover {
       background: #e0a800;
     }
+
+
+
+    #rollBtn.hidden {
+  display: none;
+}
+
   </style>
 </head>
 <body>
@@ -111,11 +118,21 @@
     <div class="dot" id="d9"></div>
   </div>
 
-  <button class="btn" onclick="rollDice()">Roll</button>
-  <div class="result" id="resultText"></div>
-  <button class="close-btn" id="closeBtn" onclick="goBack()">Close</button>
+  <button class="btn" id="rollBtn" onclick="rollDice()">Roll</button>
 
+  <div class="result" id="resultText"></div>
+  
+  <button class="close-btn" id="closeBtn" onclick="goBack()">Close</button>
+  
   <ul class="reward-list" id="rewardLegend"></ul>
+  
+  <!-- Footer with Test Your Luck Later button -->
+  <div style="position:fixed; bottom:0; width:100%; background:#212121; padding:12px; display:flex; justify-content:center;">
+    <button onclick="testLuckLater()" style="background:#2A2B32; color:#FFC107; font-size:16px; padding:10px 20px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">
+      Test Your Luck Later
+    </button>
+  </div>
+  
 
   <script>
     let user = "";
@@ -151,35 +168,61 @@
       return outcome?.type || "Mystery Reward";
     }
 
+
+
+
+
+
+
+
+
+
+
     function rollDice() {
-      resultText.textContent = "";
-      closeBtn.style.display = "none";
-      let currentRoll = 0;
-      let rollTimes = 30;
-      let delay = 40;
+  const rollBtn = document.getElementById("rollBtn");
+  rollBtn.classList.add("hidden"); // Hide Roll button immediately
 
-      function animateRoll() {
-        const number = Math.floor(Math.random() * 6) + 1;
-        showFace(number);
-        currentRoll++;
-        if (currentRoll < rollTimes) {
-          delay += 12;
-          setTimeout(animateRoll, delay);
-        } else {
-          setTimeout(() => {
-            const result = number;
-            const reward = outcomes[result - 1];
-            const outcomeText = formatOutcomeText(reward);
-            resultText.textContent = `You got: ${outcomeText}`;
-            grantChestToUser(user, reward);
-            removeDiceChestFromUser(user);
-            closeBtn.style.display = "inline-block";
-          }, 300);
-        }
-      }
+  resultText.textContent = "";
+  closeBtn.style.display = "none";
 
-      animateRoll();
+  let currentRoll = 0;
+  let rollTimes = 30;
+  let delay = 40;
+
+  function animateRoll() {
+    const number = Math.floor(Math.random() * 6) + 1;
+    showFace(number);
+    currentRoll++;
+    if (currentRoll < rollTimes) {
+      delay += 12;
+      setTimeout(animateRoll, delay);
+    } else {
+      setTimeout(() => {
+        const result = number;
+        const reward = outcomes[result - 1];
+        const outcomeText = formatOutcomeText(reward);
+        resultText.textContent = `You got: ${outcomeText}`;
+        grantChestToUser(user, reward);
+        removeDiceChestFromUser(user);
+        closeBtn.style.display = "inline-block"; // Show Close button
+      }, 300);
     }
+  }
+
+  animateRoll();
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
     async function grantChestToUser(userName, reward) {
       try {
@@ -322,6 +365,18 @@
         document.body.innerHTML = `<p class="error-message">Invalid Dice Chest format.</p>`;
       }
     });
+
+
+
+
+    function testLuckLater() {
+  window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(user)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+}
+
+
+
+
+
   </script>
 </body>
 </html>
