@@ -106,6 +106,7 @@ body {
     position: relative;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     touch-action: pan-y;
+    transition: transform 0.3s ease; /* <- 🐝 Add this!! smooth like market */
 }
 
 .task-item.swiped-left {
@@ -115,23 +116,22 @@ body {
 .task-item .delete-btn {
     position: absolute;
     top: 0;
-    right: -100%;
-    width: 100px;
+    right: -100px;
     height: 100%;
+    width: 100px;
     background: var(--danger-color);
     color: white;
     border: none;
     border-radius: 0 12px 12px 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; /* 🐝 flexbox */
+    align-items: center; /* 🐝 vertically center */
+    justify-content: center; /* 🐝 horizontally center */
     font-weight: bold;
     font-size: 16px;
     cursor: pointer;
-    transition: right 0.3s ease;
-    padding: 0;
-    text-align: center; /* 🐝 Important for extra safety */
+    transition: right 0.3s ease, background-color 0.3s ease;
 }
+
 
 
 .task-item.swiped-left .delete-btn {
@@ -516,7 +516,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>Home6</span>
+            <span>Home7</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -1322,80 +1322,65 @@ async function finishTask(userName, task, button, selectedDate) {
   let startX = 0;
   let currentX = 0;
   let isSwiping = false;
-  let isTap = true;
-  let startTime = 0;
+  
+  const threshold = 50; // swipe distance to trigger
+  const maxSwipeDistance = 150; // prevent accidental crazy swipes
 
-  const swipeThreshold = 80; // 🐝 Now needs to move 80px left to trigger swipe (was too small before)
-  const tapMoveThreshold = 10; // small movements = tap
-  const maxTapTime = 300; // milliseconds
-
-  const onStart = (x) => {
-    startX = x;
-    currentX = x;
+  taskElement.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
     isSwiping = true;
-    isTap = true;
-    startTime = Date.now();
-    taskElement.style.transition = 'none';
-  };
+    document.querySelectorAll('.task-item.swiped-left').forEach(item => {
+      if (item !== taskElement) item.classList.remove('swiped-left');
+    });
+  });
 
-  const onMove = (x, e) => {
+  taskElement.addEventListener('touchmove', (e) => {
     if (!isSwiping) return;
-    currentX = x;
-    const deltaX = currentX - startX;
+    currentX = e.touches[0].clientX;
+    const diffX = startX - currentX;
 
-    if (Math.abs(deltaX) > tapMoveThreshold) {
-      isTap = false;
-      e.preventDefault(); // stop scrolling
-    }
-
-    if (deltaX < 0) { // Only allow swipe left
-      taskElement.style.transform = `translateX(${deltaX}px)`;
-    }
-  };
-
-  const onEnd = (e) => {
-    if (!isSwiping) return;
-    isSwiping = false;
-
-    const deltaX = currentX - startX;
-    const elapsedTime = Date.now() - startTime;
-    taskElement.style.transition = 'transform 0.2s ease';
-
-    if (deltaX < -swipeThreshold) {
-      // Real swipe left detected
+    if (diffX > threshold && diffX < maxSwipeDistance) {
       taskElement.classList.add('swiped-left');
-      taskElement.style.transform = 'translateX(-100px)';
-    } else {
-      // Not enough swipe, snap back
+    } else if (diffX < -10) {
       taskElement.classList.remove('swiped-left');
-      taskElement.style.transform = 'translateX(0)';
     }
+  });
 
-    // If tap, and clicked on delete-btn, trigger it
-    if (isTap && elapsedTime < maxTapTime && e.target.classList.contains('delete-btn')) {
-      e.target.click();
-    }
-  };
+  taskElement.addEventListener('touchend', () => {
+    isSwiping = false;
+  });
 
-  // Touch Events
-  taskElement.addEventListener('touchstart', (e) => onStart(e.touches[0].clientX));
-  taskElement.addEventListener('touchmove', (e) => onMove(e.touches[0].clientX, e));
-  taskElement.addEventListener('touchend', (e) => onEnd(e));
-
-  // Mouse Events (Desktop)
+  // Desktop mouse support
   taskElement.addEventListener('mousedown', (e) => {
-    e.preventDefault();
-    onStart(e.clientX);
+    startX = e.clientX;
+    isSwiping = true;
+    document.querySelectorAll('.task-item.swiped-left').forEach(item => {
+      if (item !== taskElement) item.classList.remove('swiped-left');
+    });
   });
+
   taskElement.addEventListener('mousemove', (e) => {
-    if (e.buttons === 1) onMove(e.clientX, e);
+    if (!isSwiping) return;
+    currentX = e.clientX;
+    const diffX = startX - currentX;
+
+    if (diffX > threshold && diffX < maxSwipeDistance) {
+      taskElement.classList.add('swiped-left');
+    } else if (diffX < -10) {
+      taskElement.classList.remove('swiped-left');
+    }
   });
-  taskElement.addEventListener('mouseup', (e) => onEnd(e));
-  taskElement.addEventListener('mouseleave', () => {
-    if (isSwiping) onEnd({});
+
+  taskElement.addEventListener('mouseup', () => {
+    isSwiping = false;
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!taskElement.contains(e.target)) {
+      taskElement.classList.remove('swiped-left');
+    }
   });
 }
-
 
 
 
