@@ -29,6 +29,61 @@ if (!isAdmin && footer) {
 
   const addUserModal = document.getElementById("addUserModal");
   const submitUserBtn = document.getElementById("submitUserBtn");
+
+  if (submitUserBtn) {
+    submitUserBtn.addEventListener("click", async function () {
+        const username = usernameInput.value.trim();
+        const errorMessage = document.getElementById("errorMessage");
+
+        if (!username) {
+            errorMessage.style.display = "block";
+            return;
+        }
+
+        errorMessage.style.display = "none";
+
+        try {
+            // Send new user to server
+            const res = await fetch("https://beemazing.onrender.com/add-user", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    adminEmail: currentAdmin,
+                    username: username,
+                }),
+            });
+
+            const result = await res.json();
+
+            if (result.success) {
+                // Update localStorage immediately
+                const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                if (!allUserData[currentAdmin]) {
+                    allUserData[currentAdmin] = { users: [], permissions: {} };
+                }
+
+                allUserData[currentAdmin].users.push(username);
+                localStorage.setItem("userData", JSON.stringify(allUserData));
+
+                // Close modal and refresh list
+                usernameInput.value = "";
+                addUserModal.classList.remove("show");
+
+                renderUsers(allUserData[currentAdmin].users, allUserData[currentAdmin].permissions);
+            } else {
+                alert("Failed to add user: " + result.message);
+            }
+        } catch (err) {
+            console.error("Error adding user:", err);
+            alert("Error adding user. Please try again.");
+        }
+    });
+}
+
+
+
   if (!isAdmin && submitUserBtn) {
       submitUserBtn.disabled = true;
   }
