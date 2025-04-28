@@ -340,7 +340,7 @@
     <div class="logo">
       <img src="https://i.postimg.cc/x1fDPQPX/pngtree-honey-bee-logo-design-vector-png-image-12507314-removebg-preview.png" alt="BeeMazing Logo">
     </div>
-    <h2 id="formTitle">Register z55</h2>
+    <h2 id="formTitle">Register z56</h2>
     <form id="authForm" novalidate>
       <div id="emailGroup" class="input-group email">
         <input type="email" id="email" placeholder="Email" required />
@@ -493,11 +493,12 @@ function showResetPasswordForm() {
       message.textContent = "❌ Password must be at least 8 characters and include a number";
       return;
     } */
-    if (isRegistering && password !== confirmPassword) {
-      message.style.color = "#D32F2F";
-      message.textContent = "❌ Passwords do not match";
-      return;
-    }
+    if (isRegistering && confirmPasswordGroup.style.display !== "none" && password !== confirmPassword) {
+  message.style.color = "#D32F2F";
+  message.textContent = "❌ Passwords do not match";
+  return;
+}
+
   }
 
   let endpoint = isResettingPassword ? "/forgot-password" : isRegistering ? "/register" : "/login";
