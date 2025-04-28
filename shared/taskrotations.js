@@ -83,3 +83,81 @@ function calculateTurn(task, selectedDate) {
         userOrder: assignedUsers
     };
 }
+
+
+
+
+function prepareTaskTurnData(task, selectedDate) {
+    const repeat = task.repeat || "Daily";
+    let requiredTimes = task.timesPerDay || 1;
+    if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+    if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+
+    const completions = (task.completions && task.completions[selectedDate]) || [];
+    const pendingCompletions = (task.pendingCompletions && task.pendingCompletions[selectedDate]) || [];
+    const tempTurnReplacement = (task.tempTurnReplacement && task.tempTurnReplacement[selectedDate]) || {};
+
+    const turns = [];
+    const userCompletionCounts = {};
+    const userPendingCounts = {};
+
+    completions.forEach(u => {
+        userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
+    });
+
+    pendingCompletions.forEach(u => {
+        userPendingCounts[u] = (userPendingCounts[u] || 0) + 1;
+    });
+
+    const userOrder = task.users || [];
+    const isRotation = (task.settings || "Rotation") === "Rotation";
+
+    if (isRotation) {
+        for (let i = 0; i < requiredTimes; i++) {
+            const originalUser = userOrder[i % userOrder.length];
+            const user = tempTurnReplacement[i] || originalUser;
+            let isCompleted = false;
+            let isPending = false;
+
+            if (userCompletionCounts[user]) {
+                isCompleted = true;
+                userCompletionCounts[user]--;
+            } else if (userPendingCounts[user]) {
+                isPending = true;
+                userPendingCounts[user]--;
+            }
+
+            turns.push({
+                user,
+                repetition: i + 1,
+                isCompleted,
+                isPending,
+                originalUser
+            });
+        }
+    } else {
+        for (const user of userOrder) {
+            for (let rep = 1; rep <= requiredTimes; rep++) {
+                let isCompleted = false;
+                let isPending = false;
+
+                if (userCompletionCounts[user]) {
+                    isCompleted = true;
+                    userCompletionCounts[user]--;
+                } else if (userPendingCounts[user]) {
+                    isPending = true;
+                    userPendingCounts[user]--;
+                }
+
+                turns.push({
+                    user,
+                    repetition: rep,
+                    isCompleted,
+                    isPending
+                });
+            }
+        }
+    }
+
+    return turns;
+}
