@@ -29,6 +29,14 @@ if (!isAdmin && footer) {
 
   const addUserModal = document.getElementById("addUserModal");
   const submitUserBtn = document.getElementById("submitUserBtn");
+  const usernameInput = document.getElementById("usernameInput");
+  const userList = document.getElementById("userList");
+
+  
+  if (!isAdmin && submitUserBtn) {
+      submitUserBtn.disabled = true;
+  }
+
 
   if (submitUserBtn) {
     submitUserBtn.addEventListener("click", async function () {
@@ -83,20 +91,13 @@ if (!isAdmin && footer) {
 }
 
 
-
-  if (!isAdmin && submitUserBtn) {
-      submitUserBtn.disabled = true;
-  }
-
-  const usernameInput = document.getElementById("usernameInput");
-  const userList = document.getElementById("userList");
-
   // Determine the base path (mobile or web) based on the current URL
   const isMobile = window.location.pathname.includes("/BeeMazing-Y1/mobile/");
   const basePath = isMobile ? "/BeeMazing-Y1/mobile" : "/web";
 
   // Load users from localStorage on page load
   const currentAdmin = localStorage.getItem("currentAdminEmail");
+  
 
   async function fetchUsersFromServer(email) {
       try {
