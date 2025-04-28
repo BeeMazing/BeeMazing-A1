@@ -96,43 +96,43 @@ body {
 
 
 .task-item {
-    padding: 16px;
+    position: relative;
+    overflow: hidden; /* 🔥 Important: hide Delete button outside */
     background: #2A2B32;
     color: #FFFFFF;
     border: 2px solid var(--border-dark);
     border-radius: 12px;
     margin-bottom: 12px;
-    cursor: pointer;
-    position: relative;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     touch-action: pan-y;
 }
 
-.task-item.swiped-left {
-    transform: translateX(-100px);
+.task-item-content {
+    position: relative;
+    padding: 16px;
+    z-index: 1;
 }
 
-.task-item .delete-btn {
+.delete-btn {
     position: absolute;
-    top: 50%;
-    right: 10px;
-    transform: translateY(-50%);
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100%; /* 🔥 Full height */
     background-color: var(--danger-color);
     color: white;
     border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
     font-size: 16px;
-    display: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0 12px 12px 0;
     cursor: pointer;
     transition: background-color 0.3s ease;
+    z-index: 0;
 }
 
-.task-item.swiped-left .delete-btn {
-    display: block;
-}
-
-.task-item .delete-btn:hover {
+.delete-btn:hover {
     background-color: #B71C1C;
 }
 
@@ -509,7 +509,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>Home1</span>
+            <span>Home2</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -1310,28 +1310,27 @@ async function finishTask(userName, task, button, selectedDate) {
 
 
 
-
-
         function enableSwipeToDelete(taskElement) {
+  const content = taskElement.querySelector('.task-item-content');
+  const deleteBtn = taskElement.querySelector('.delete-btn');
+
   let startX = 0;
   let currentX = 0;
   let isSwiping = false;
-  let startTime = 0;
   let moved = false;
-  let swipeHappened = false; // 🔥 new: track if swipe really happened
-
-  const SWIPE_THRESHOLD = 30; // ✅ Good value
+  let swipeHappened = false;
+  const SWIPE_THRESHOLD = 30;
   const TAP_MOVEMENT_LIMIT = 8;
   const SWIPE_TIME_LIMIT = 300;
+  let startTime = 0;
 
   const onStart = (x) => {
     startX = x;
     currentX = x;
-    startTime = Date.now();
     isSwiping = true;
     moved = false;
     swipeHappened = false;
-    taskElement.style.transition = 'none';
+    content.style.transition = 'none';
   };
 
   const onMove = (x) => {
@@ -1341,34 +1340,31 @@ async function finishTask(userName, task, button, selectedDate) {
     if (Math.abs(deltaX) > TAP_MOVEMENT_LIMIT) {
       moved = true;
     }
-    if (deltaX < 0) { // Only allow left swipe
-      taskElement.style.transform = `translateX(${deltaX}px)`;
+    if (deltaX < 0 && Math.abs(deltaX) <= 100) { // Swipe left max 100px
+      content.style.transform = `translateX(${deltaX}px)`;
     }
   };
 
   const onEnd = () => {
     if (!isSwiping) return;
     isSwiping = false;
-    taskElement.style.transition = 'transform 0.3s ease';
-
+    content.style.transition = 'transform 0.3s ease';
     const deltaX = currentX - startX;
     const swipeDuration = Date.now() - startTime;
 
     if (deltaX < -SWIPE_THRESHOLD && swipeDuration < SWIPE_TIME_LIMIT) {
-      taskElement.classList.add('swiped-left');
-      taskElement.style.transform = 'translateX(-100px)';
-      swipeHappened = true; // 🔥 remember: a swipe happened
+      content.style.transform = `translateX(-100px)`;
+      swipeHappened = true;
     } else {
-      taskElement.classList.remove('swiped-left');
-      taskElement.style.transform = 'translateX(0)';
+      content.style.transform = `translateX(0)`;
     }
 
     setTimeout(() => {
-      swipeHappened = false; // 🔥 after 300ms, allow normal taps again
+      swipeHappened = false;
     }, 300);
   };
 
-  // --- Touch events ---
+  // Touch events
   taskElement.addEventListener('touchstart', (e) => {
     onStart(e.touches[0].clientX);
   });
@@ -1380,7 +1376,7 @@ async function finishTask(userName, task, button, selectedDate) {
     onEnd();
   });
 
-  // --- Mouse events ---
+  // Mouse events
   taskElement.addEventListener('mousedown', (e) => {
     onStart(e.clientX);
   });
@@ -1391,22 +1387,25 @@ async function finishTask(userName, task, button, selectedDate) {
     onEnd();
   });
 
-  // --- Block accidental popup after swipe ---
+  // Prevent accidental popup
   taskElement.addEventListener('click', (e) => {
     if (swipeHappened) {
       e.preventDefault();
-      e.stopImmediatePropagation(); // 🔥 very important
+      e.stopImmediatePropagation();
     }
   });
 
-  // --- Make sure delete button still works ---
-  const deleteBtn = taskElement.querySelector('.delete-btn');
-  if (deleteBtn) {
-    deleteBtn.addEventListener('click', (e) => {
-      e.stopPropagation(); // ✅ Only trigger delete, no popup
-    });
-  }
+  // Delete button click
+  deleteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (confirm("Are you sure you want to delete this task?")) {
+      deleteTaskFromBackend(taskElement.dataset.taskTitle, taskElement.dataset.taskDate.split(" to ")[0]);
+      const selectedDate = document.querySelector(".day.selected")?.dataset.date;
+      if (selectedDate) loadTasksForDate(selectedDate);
+    }
+  });
 }
+
 
 
 
