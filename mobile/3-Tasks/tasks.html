@@ -513,7 +513,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>Home4</span>
+            <span>Home5</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -1319,19 +1319,19 @@ async function finishTask(userName, task, button, selectedDate) {
   let startX = 0;
   let currentX = 0;
   let isSwiping = false;
-  let startTime = 0;
   let isTap = true;
+  let startTime = 0;
 
-  const threshold = 30; // 🐝 Easier swipe (was 50)
-  const minSwipeDuration = 0; // 🐝 Instant swipe allowed (was 200ms)
-  const tapThreshold = 10;
-  const maxTapDuration = 300; // Slightly faster taps
+  const swipeThreshold = 80; // 🐝 Now needs to move 80px left to trigger swipe (was too small before)
+  const tapMoveThreshold = 10; // small movements = tap
+  const maxTapTime = 300; // milliseconds
 
-  const onStart = (x, e) => {
+  const onStart = (x) => {
     startX = x;
-    startTime = Date.now();
+    currentX = x;
     isSwiping = true;
     isTap = true;
+    startTime = Date.now();
     taskElement.style.transition = 'none';
   };
 
@@ -1339,14 +1339,13 @@ async function finishTask(userName, task, button, selectedDate) {
     if (!isSwiping) return;
     currentX = x;
     const deltaX = currentX - startX;
-    const absDeltaX = Math.abs(deltaX);
 
-    if (absDeltaX > tapThreshold) {
+    if (Math.abs(deltaX) > tapMoveThreshold) {
       isTap = false;
-      e.preventDefault();
+      e.preventDefault(); // stop scrolling
     }
 
-    if (deltaX < 0) {
+    if (deltaX < 0) { // Only allow swipe left
       taskElement.style.transform = `translateX(${deltaX}px)`;
     }
   };
@@ -1354,53 +1353,45 @@ async function finishTask(userName, task, button, selectedDate) {
   const onEnd = (e) => {
     if (!isSwiping) return;
     isSwiping = false;
-    const deltaX = currentX - startX;
-    const swipeDuration = Date.now() - startTime;
-    
-    // 🐝 Faster animation if canceled
-    taskElement.style.transition = deltaX < -threshold ? 'transform 0.3s ease' : 'transform 0.15s ease';
 
-    if (deltaX < -threshold && (swipeDuration >= minSwipeDuration || !isTap)) {
+    const deltaX = currentX - startX;
+    const elapsedTime = Date.now() - startTime;
+    taskElement.style.transition = 'transform 0.2s ease';
+
+    if (deltaX < -swipeThreshold) {
+      // Real swipe left detected
       taskElement.classList.add('swiped-left');
       taskElement.style.transform = 'translateX(-100px)';
     } else {
+      // Not enough swipe, snap back
       taskElement.classList.remove('swiped-left');
       taskElement.style.transform = 'translateX(0)';
     }
 
-    if (isTap && swipeDuration < maxTapDuration) {
-      if (e.target && e.target.classList.contains('delete-btn')) {
-        e.target.click();
-      }
+    // If tap, and clicked on delete-btn, trigger it
+    if (isTap && elapsedTime < maxTapTime && e.target.classList.contains('delete-btn')) {
+      e.target.click();
     }
   };
 
-  taskElement.addEventListener('touchstart', (e) => {
-    onStart(e.touches[0].clientX, e);
-  });
-  taskElement.addEventListener('touchmove', (e) => {
-    onMove(e.touches[0].clientX, e);
-  });
-  taskElement.addEventListener('touchend', (e) => {
-    onEnd(e);
-  });
+  // Touch Events
+  taskElement.addEventListener('touchstart', (e) => onStart(e.touches[0].clientX));
+  taskElement.addEventListener('touchmove', (e) => onMove(e.touches[0].clientX, e));
+  taskElement.addEventListener('touchend', (e) => onEnd(e));
 
+  // Mouse Events (Desktop)
   taskElement.addEventListener('mousedown', (e) => {
     e.preventDefault();
-    onStart(e.clientX, e);
+    onStart(e.clientX);
   });
   taskElement.addEventListener('mousemove', (e) => {
     if (e.buttons === 1) onMove(e.clientX, e);
   });
-  taskElement.addEventListener('mouseup', (e) => {
-    onEnd(e);
-  });
-
+  taskElement.addEventListener('mouseup', (e) => onEnd(e));
   taskElement.addEventListener('mouseleave', () => {
-    if (isSwiping) onEnd();
+    if (isSwiping) onEnd({});
   });
 }
-
 
 
 
