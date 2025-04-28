@@ -502,7 +502,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/SettingsBtn.png" alt="Home" />
-            <span>User Settings</span>
+            <span>User Settings1</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -514,8 +514,10 @@ body {
         </a>
     </div>
 
+    <script src="/BeeMazing-Y1/shared/taskrotations.js"></script>
 
     <script>
+
         // Dynamically highlight the active footer icon
         document.querySelectorAll('.footer a').forEach(link => {
             const currentPath = window.location.pathname.replace(/\/$/, '');
@@ -552,85 +554,6 @@ body {
 }
 
 
-        function calculateTurn(task, selectedDate) {
-    const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
-    const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                       task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                       task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-    const tempTurnReplacement = task.tempTurnReplacement?.[selectedDate] || {};
-    const assignedUsers = [...userOrder];
-    Object.entries(tempTurnReplacement).forEach(([index, user]) => {
-        assignedUsers[parseInt(index)] = user;
-    });
-
-    // Include both completions and pending completions
-    const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-    const pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
-    const completedCount = completedUsers.length + pendingUsers.length;
-    const completedSet = new Set([...completedUsers, ...pendingUsers]);
-
-
-    const selected = parseLocalDate(selectedDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const startDate = parseLocalDate(task.date.split(" to ")[0]);
-
-    let currentTurn = null;
-    let nextUser = null;
-
-    if (completedCount >= repeatLimit) {
-        currentTurn = "All done!";
-        nextUser = "—";
-    } else {
-        // Find the last completion date before today
-        let lastCompletionDate = startDate;
-        let lastCompletedCount = 0;
-        if (task.completions) {
-            const completionDates = Object.keys(task.completions)
-                .map(date => parseLocalDate(date))
-                .filter(date => date < today)
-                .sort((a, b) => b - a);
-            if (completionDates.length > 0) {
-                lastCompletionDate = completionDates[0];
-                const lastDateStr = lastCompletionDate.toISOString().split("T")[0];
-                const lastCompletions = task.completions[lastDateStr] || [];
-                const lastPending = task.pendingCompletions?.[lastDateStr] || [];
-                lastCompletedCount = lastCompletions.length + lastPending.length;
-            }
-        }
-
-        if (selected < today) {
-            // Past date: Use actual completions
-            const currentIndex = completedCount % assignedUsers.length;
-            currentTurn = assignedUsers[currentIndex];
-            const nextIndex = (completedCount + 1) % assignedUsers.length;
-            nextUser = completedSet.has(assignedUsers[nextIndex]) ? "—" : assignedUsers[nextIndex];
-        } else if (selected.getTime() === today.getTime()) {
-            // Today: Continue from last completion
-            const totalCompletions = lastCompletedCount + completedCount;
-            const currentIndex = totalCompletions % assignedUsers.length;
-            currentTurn = assignedUsers[currentIndex];
-            const nextIndex = (totalCompletions + 1) % assignedUsers.length;
-            nextUser = assignedUsers[nextIndex];
-        } else {
-            // Future: Assume repeatLimit completions per day
-            const daysDiff = Math.floor((selected - lastCompletionDate) / (1000 * 60 * 60 * 24));
-            const totalCompletions = lastCompletedCount + (daysDiff - 1) * repeatLimit + completedCount;
-            const currentIndex = totalCompletions % assignedUsers.length;
-            currentTurn = assignedUsers[currentIndex];
-            const nextIndex = (totalCompletions + 1) % assignedUsers.length;
-            nextUser = assignedUsers[nextIndex];
-        }
-    }
-
-    return {
-        currentTurn: currentTurn || "All done!",
-        nextUser: nextUser || "—",
-        completedCount,
-        repeatLimit
-    };
-}
-
 
 
 
@@ -662,17 +585,6 @@ body {
 
         const taskList = document.getElementById("taskList");
         taskList.innerHTML = "";
-
-        function parseLocalDate(dateStr) {
-            if (!dateStr) return new Date(3000, 0, 1);
-            const parts = dateStr.split("-");
-            if (parts.length !== 3) return new Date(3000, 0, 1);
-            const [year, month, day] = parts.map(Number);
-            if (isNaN(year) || isNaN(month) || isNaN(day)) return new Date(3000, 0, 1);
-            const date = new Date(year, month - 1, day);
-            if (isNaN(date.getTime())) return new Date(3000, 0, 1);
-            return date;
-        }
 
         const selected = parseLocalDate(selectedDate);
         const today = new Date();
@@ -1282,9 +1194,9 @@ async function finishTask(userName, task, button, selectedDate) {
     const selected = document.querySelector(".day.selected");
     if (selected) {
         selected.scrollIntoView({ behavior: "smooth", inline: "center" });
-        loadTasksForDate(selected.dataset.date); // 🐝 Add this!
     }
 }, 50);
+
 
         }
         
