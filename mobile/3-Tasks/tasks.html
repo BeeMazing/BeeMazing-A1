@@ -509,7 +509,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>Home</span>
+            <span>Home1</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -1369,6 +1369,11 @@ async function finishTask(userName, task, button, selectedDate) {
     if (isTap && swipeDuration < maxTapDuration) {
       // Don’t prevent default; let the click event fire naturally
     }
+
+    // ✅ Fix: if tap was on delete button, manually trigger its click
+    if (isTap && e.target && e.target.classList.contains('delete-btn')) {
+      e.target.click();
+    }
   };
 
   // Touch events
@@ -1382,7 +1387,7 @@ async function finishTask(userName, task, button, selectedDate) {
     onEnd(e);
   });
 
-  // Mouse events (unchanged, as they work fine on computer)
+  // Mouse events (desktop)
   taskElement.addEventListener('mousedown', (e) => {
     e.preventDefault(); // Prevent text selection
     onStart(e.clientX, e);
@@ -1399,7 +1404,6 @@ async function finishTask(userName, task, button, selectedDate) {
     if (isSwiping) onEnd();
   });
 }
-
 
 
 
