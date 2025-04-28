@@ -104,7 +104,7 @@
 </head>
 <body>
 
-  <h1>🎲 Roll the Dice</h1>
+  <h1>🎲 Roll the Dice 1</h1>
 
   <div class="dice" id="dice">
     <div class="dot" id="d1"></div>
@@ -183,16 +183,20 @@
 
 
 
-
-
     function rollDice() {
   const rollBtn = document.getElementById("rollBtn");
   rollBtn.classList.add("hidden"); // Hide Roll button immediately
-  document.getElementById("testLuckFooter").style.display = "none";
 
+  const testLuckFooter = document.getElementById("testLuckFooter");
+  if (testLuckFooter) {
+    testLuckFooter.style.display = "none"; // Hide Test Your Luck Later button
+  }
 
   resultText.textContent = "";
   closeBtn.style.display = "none";
+
+  // ✅ Immediately consume the dice chest
+  removeDiceChestFromUser(user);
 
   let currentRoll = 0;
   let rollTimes = 30;
@@ -212,18 +216,15 @@
         const outcomeText = formatOutcomeText(reward);
         resultText.textContent = `You got: ${outcomeText}`;
         grantChestToUser(user, reward);
-        removeDiceChestFromUser(user);
 
-        // ✅ NEW: hide "Test your luck later" and show "Close" button
-        document.getElementById("testLuckFooter").style.display = "none"; 
-        closeBtn.style.display = "inline-block";
-
+        closeBtn.style.display = "inline-block"; // Show Close button after result
       }, 300);
     }
   }
 
   animateRoll();
 }
+
 
 
 
