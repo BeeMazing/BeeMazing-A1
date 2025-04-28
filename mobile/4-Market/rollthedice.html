@@ -104,7 +104,7 @@
 </head>
 <body>
 
-  <h1>🎲 Roll the Dice</h1>
+  <h1>🎲 Roll the Dice 1</h1>
 
   <div class="dice" id="dice">
     <div class="dot" id="d1"></div>
@@ -179,10 +179,6 @@
 
 
 
-
-
-
-
     function rollDice() {
   const rollBtn = document.getElementById("rollBtn");
   rollBtn.classList.add("hidden"); // Hide Roll button immediately
@@ -202,13 +198,18 @@
       delay += 12;
       setTimeout(animateRoll, delay);
     } else {
-      setTimeout(() => {
+      setTimeout(async () => {
         const result = number;
         const reward = outcomes[result - 1];
         const outcomeText = formatOutcomeText(reward);
         resultText.textContent = `You got: ${outcomeText}`;
-        grantChestToUser(user, reward);
-        removeDiceChestFromUser(user);
+
+        // ✅ Now remove the dice chest
+        await removeDiceChestFromUser(user, rewardName);
+
+        // ✅ Then grant the reward
+        await grantChestToUser(user, reward);
+
         closeBtn.style.display = "inline-block"; // Show Close button
       }, 300);
     }
@@ -216,6 +217,9 @@
 
   animateRoll();
 }
+
+
+
 
 
 
@@ -290,48 +294,60 @@
       }
     }
 
-    async function removeDiceChestFromUser(userName) {
-      try {
-        const rewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-        const rewardsData = await rewardsResponse.json();
-        if (!rewardsResponse.ok) throw new Error(rewardsData.error || "Failed to fetch user rewards");
-        const rewards = rewardsData.userRewards || {};
-        if (!rewards[userName]) return;
 
-        const historyResponse = await fetch(`https://beemazing.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}`);
-        const historyData = await historyResponse.json();
-        if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
-        const history = historyData.rewardHistory || {};
 
-        const index = rewards[userName].findIndex(r => r.type === "dice");
-        if (index !== -1) {
-          const reward = rewards[userName][index];
-          rewards[userName].splice(index, 1);
 
-          if (!history[userName]) history[userName] = [];
-          history[userName].push({
-            name: reward.name,
-            date: reward.date,
-            receivedDate: new Date().toLocaleString()
-          });
 
-          await fetch("https://beemazing.onrender.com/api/user-rewards", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ adminEmail, userRewards: rewards })
-          });
 
-          await fetch("https://beemazing.onrender.com/api/reward-history", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ adminEmail, rewardHistory: history })
-          });
-        }
-      } catch (err) {
-        console.error("Error removing dice chest:", err);
-        alert("Failed to remove dice chest. Please try again.");
-      }
+    async function removeDiceChestFromUser(userName, rewardName) {
+  try {
+    const rewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const rewardsData = await rewardsResponse.json();
+    if (!rewardsResponse.ok) throw new Error(rewardsData.error || "Failed to fetch user rewards");
+    const rewards = rewardsData.userRewards || {};
+    if (!rewards[userName]) return;
+
+    const historyResponse = await fetch(`https://beemazing.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const historyData = await historyResponse.json();
+    if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
+    const history = historyData.rewardHistory || {};
+
+    const index = rewards[userName].findIndex(r => r.name === rewardName);
+    if (index !== -1) {
+      const reward = rewards[userName][index];
+      rewards[userName].splice(index, 1);
+
+      if (!history[userName]) history[userName] = [];
+      history[userName].push({
+        name: reward.name,
+        date: reward.date,
+        receivedDate: new Date().toLocaleString()
+      });
+
+      await fetch("https://beemazing.onrender.com/api/user-rewards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail, userRewards: rewards })
+      });
+
+      await fetch("https://beemazing.onrender.com/api/reward-history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail, rewardHistory: history })
+      });
     }
+  } catch (err) {
+    console.error("Error removing dice chest:", err);
+    alert("Failed to remove dice chest. Please try again.");
+  }
+}
+
+
+
+
+
+
+
 
     function goBack() {
       window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(user)}&adminEmail=${encodeURIComponent(adminEmail)}`;
