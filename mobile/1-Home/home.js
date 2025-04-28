@@ -59,7 +59,7 @@ const currentAdmin = localStorage.getItem("currentAdminEmail");
          headers: { "Content-Type": "application/json" },
          body: JSON.stringify({
            adminEmail: currentAdmin,
-           username: username,
+           newUser: username,  
          }),
        });
 
