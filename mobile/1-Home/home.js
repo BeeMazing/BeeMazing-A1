@@ -472,7 +472,9 @@ if (e.target.id === "changePasswordModal") {
 });
 
 
+
 document.getElementById("submitAdminPasswordBtn").addEventListener("click", async () => {
+  const currentAdmin = localStorage.getItem("currentAdminEmail"); // ✅ add this line
   const passwordInput = document.getElementById("adminPasswordField").value.trim();
   const errorDiv = document.getElementById("adminPasswordError");
 
@@ -482,12 +484,12 @@ document.getElementById("submitAdminPasswordBtn").addEventListener("click", asyn
   }
 
   try {
-    const passwordInput = document.getElementById("adminPasswordField").value.trim();
     const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: currentAdmin, password: passwordInput }),
-    });    
+      body: JSON.stringify({ email: currentAdmin, password: passwordInput }), // ✅ now works
+    });
+
     const data = await res.json();
 
     if (res.ok && data.success) {
@@ -501,6 +503,14 @@ document.getElementById("submitAdminPasswordBtn").addEventListener("click", asyn
     errorDiv.textContent = "Error connecting to server.";
   }
 });
+
+
+
+
+
+
+
+
 
 // Allow clicking outside the modal to close it
 document.getElementById("adminPasswordModal").addEventListener("click", (e) => {
