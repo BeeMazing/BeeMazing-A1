@@ -17,7 +17,9 @@ const currentAdmin = localStorage.getItem("currentAdminEmail");
   // Determine if this user is admin
   const isAdmin = localStorage.getItem("isAdmin") === "true";
 
-
+  let selectedAdminUsername = null;
+  let selectedAdminPage = null;
+  
 
 
  // ✅ FIRST: get DOM elements
@@ -28,6 +30,7 @@ const currentAdmin = localStorage.getItem("currentAdminEmail");
  const usernameInput = document.getElementById("usernameInput");
  const userList = document.getElementById("userList");
  const logoutBtn = document.getElementById("logoutBtn");
+ 
 
  if (!isAdmin && footer) {
    footer.style.display = "none";
@@ -210,11 +213,16 @@ const currentAdmin = localStorage.getItem("currentAdminEmail");
               window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
             } else {
               // Child logged in → ask for password
-              const enteredPassword = prompt("Enter Parent Password to access Admin profile:");
-              if (!enteredPassword) {
-                alert("Password is required to access Admin profile.");
-                return;
-              }
+// Save clicked username and page globally
+selectedAdminUsername = username;
+selectedAdminPage = page;
+
+// Show password modal
+document.getElementById("adminPasswordModal").classList.add("show");
+document.getElementById("adminPasswordField").value = "";
+document.getElementById("adminPasswordError").textContent = "";
+document.getElementById("adminPasswordField").focus();
+
         
               try {
                 const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
@@ -478,3 +486,42 @@ if (e.target.id === "changePasswordModal") {
 
 
 });
+
+
+document.getElementById("submitAdminPasswordBtn").addEventListener("click", async () => {
+  const passwordInput = document.getElementById("adminPasswordField").value.trim();
+  const errorDiv = document.getElementById("adminPasswordError");
+
+  if (!passwordInput) {
+    errorDiv.textContent = "Password is required.";
+    return;
+  }
+
+  try {
+    const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: currentAdmin, password: passwordInput }),
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      document.getElementById("adminPasswordModal").classList.remove("show");
+      window.location.href = `${basePath}/2-UserProfiles/${selectedAdminPage}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(selectedAdminUsername)}`;
+    } else {
+      errorDiv.textContent = data.message || "Incorrect password.";
+    }
+  } catch (err) {
+    console.error("Error verifying admin password:", err);
+    errorDiv.textContent = "Error connecting to server.";
+  }
+});
+
+// Allow clicking outside the modal to close it
+document.getElementById("adminPasswordModal").addEventListener("click", (e) => {
+  if (e.target.id === "adminPasswordModal") {
+    document.getElementById("adminPasswordModal").classList.remove("show");
+  }
+});
+
+
