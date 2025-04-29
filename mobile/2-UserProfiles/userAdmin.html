@@ -423,6 +423,10 @@ body.menu-open {
 
 
 /* Bottom Sheet Modal when selecting users */
+
+
+
+/* Slide-Out Modal for User Selection */
 .bottom-sheet {
     display: none;
     position: fixed;
@@ -438,19 +442,19 @@ body.menu-open {
 }
 .bottom-sheet-content {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    max-height: 70vh;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 100%;
     background: #2A2B32;
     border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
-    transform: translateY(100%);
+    border-bottom-left-radius: 20px;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
+    transform: translateX(100%);
     transition: transform 0.3s ease-in-out;
 }
 .bottom-sheet.show .bottom-sheet-content {
-    transform: translateY(0);
+    transform: translateX(0);
 }
 .bottom-sheet-header {
     display: flex;
@@ -480,7 +484,7 @@ body.menu-open {
     list-style: none;
     padding: 0;
     margin: 0;
-    max-height: calc(70vh - 60px);
+    height: 240px; /* Approx. 5 users at 48px each */
     overflow-y: auto;
 }
 .user-list li {
@@ -512,7 +516,6 @@ body.menu-open {
 }
 
 
-
 /* Bottom Sheet Modal when selecting users */
 
 
@@ -523,19 +526,19 @@ body.menu-open {
         height: 35px;
     }
     .bottom-sheet-content {
-        max-height: 80vh;
+        width: 80%;
     }
     .bottom-sheet-header h3 {
         font-size: 16px;
+    }
+    .user-list {
+        height: 210px; /* Approx. 5 users at 42px each */
     }
     .user-list li {
         font-size: 14px;
         padding: 12px 15px;
     }
 }
-
-
-
 
 
 
@@ -603,7 +606,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>H</span>
+        <span>H1</span>
     </a>
     <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
       <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
