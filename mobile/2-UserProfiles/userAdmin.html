@@ -399,7 +399,7 @@ body.menu-open {
 .profile-icon {
     position: fixed;
     top: 10px;
-    right: 60px;
+    right: 20px;
     width: 40px;
     height: 40px;
     cursor: pointer;
@@ -592,9 +592,12 @@ const userName = urlParams.get('user') || '';
 const basePath = '/BeeMazing-Y1/mobile/2-UserProfiles';
 
 const homeButton = document.getElementById('homeButton');
-
+const tasksButton = document.querySelector('a[href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html"]');
+const marketButton = document.querySelector('a[href="/BeeMazing-Y1/mobile/4-Market/market.html"]');
 if (adminEmail && userName) {
     homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+    tasksButton.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+    marketButton.href = `/BeeMazing-Y1/mobile/4-Market/market.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
 }
 
 
