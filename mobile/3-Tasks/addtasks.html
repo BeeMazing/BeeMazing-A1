@@ -1978,7 +1978,8 @@ daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? selectedDays : ["An
                   adminEmail: currentAdmin,
                   task,
                   originalTitle: editTask.title,
-                  originalDate: editTask.date
+                  originalDate: editTask.date.split(" to ")[0]
+
               }
             : { adminEmail: currentAdmin, task };
 
