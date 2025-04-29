@@ -1931,38 +1931,37 @@ window.addEventListener("click", (e) => {
     if (timesPerWeek !== null && timesPerWeek < 1) timesPerWeek = 1;
     if (timesPerMonth !== null && timesPerMonth < 1) timesPerMonth = 1;
 
-    let dateValue = "";
-    if (dateMode === "from-to" || dateMode === "specific-days") {
-        dateValue = dateFrom;
-        if (dateTo && dateTo !== dateFrom && dateDisplayTo.style.display !== "none") {
-            dateValue += ` to ${dateTo}`;
-        }
-    } else if (dateMode === "specific-dates" && specificDates) {
-        const dates = specificDates.split(",").map(date => new Date(date.trim()));
-        const validDates = dates.filter(date => !isNaN(date.getTime()));
-        if (validDates.length > 0) {
-            const minDate = new Date(Math.min(...validDates));
-            const maxDate = new Date(Math.max(...validDates));
-            const formatDate = (date) => {
-                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-            };
-            dateValue = `${formatDate(minDate)} to ${formatDate(maxDate)}`;
-        } else {
-            const today = new Date();
-            const farFuture = new Date(3000, 0, 1);
-            const formatDate = (date) => {
-                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-            };
-            dateValue = `${formatDate(today)} to ${formatDate(farFuture)}`;
-        }
+
+
+
+
+
+    const formatDate = (date) => {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
+let dateValue = "";
+if (dateMode === "from-to" || dateMode === "specific-days") {
+    const fromDate = dateFrom || formatDate(new Date()); // Fallback to today
+    const toDate = dateTo && dateTo !== fromDate && dateDisplayTo.style.display !== "none" ? dateTo : "3000-01-01";
+    dateValue = `${fromDate} to ${toDate}`;
+} else if (dateMode === "specific-dates" && specificDates) {
+    const dates = specificDates.split(",").map(date => new Date(date.trim()));
+    const validDates = dates.filter(date => !isNaN(date.getTime()));
+    if (validDates.length > 0) {
+        const minDate = new Date(Math.min(...validDates));
+        const maxDate = new Date(Math.max(...validDates));
+        dateValue = `${formatDate(minDate)} to ${formatDate(maxDate)}`;
     } else {
         const today = new Date();
         const farFuture = new Date(3000, 0, 1);
-        const formatDate = (date) => {
-            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        };
         dateValue = `${formatDate(today)} to ${formatDate(farFuture)}`;
     }
+} else {
+    const today = new Date();
+    const farFuture = new Date(3000, 0, 1);
+    dateValue = `${formatDate(today)} to ${formatDate(farFuture)}`;
+}
 
     const currentAdmin = localStorage.getItem("currentAdminEmail");
 
