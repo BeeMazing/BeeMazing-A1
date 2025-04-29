@@ -523,4 +523,3 @@ document.getElementById("adminPasswordModal").addEventListener("click", (e) => {
     document.getElementById("adminPasswordModal").classList.remove("show");
   }
 });
-
