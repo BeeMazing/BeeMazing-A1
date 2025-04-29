@@ -438,7 +438,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home 1</span>
+        <span>Home 2</span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -852,7 +852,7 @@ async function loadTasks() {
  // 🛠 Move this INSIDE the loop:
  enableDragAndDrop(div);
 
- 
+
       div.querySelector(".task-title").addEventListener("click", () => {
         const details = div.querySelector(".task-details");
         details.classList.toggle("show");
@@ -879,71 +879,79 @@ async function loadTasks() {
 
 function enableDragAndDrop(taskDiv) {
   let draggedItem = null;
-  let dragStartIndex = null;
+  let startY = 0;
+  let container = null;
 
   const turnEntries = taskDiv.querySelectorAll(".turn-entry");
-  turnEntries.forEach((entry, index) => {
-    entry.draggable = true;
-    entry.dataset.index = index;
 
-    entry.addEventListener("dragstart", (e) => {
-      draggedItem = entry;
-      dragStartIndex = index;
-      setTimeout(() => {
-        entry.classList.add("dragging");
-      }, 0);
-    });
+  turnEntries.forEach(entry => {
+    entry.draggable = false; // disable native dragging
+    entry.style.userSelect = "none"; // prevent text selection on touch
+    entry.style.touchAction = "none"; // prevent scrolling while dragging
+    container = entry.parentNode;
 
-    entry.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      const draggingOver = e.currentTarget;
-      if (draggingOver !== draggedItem) {
-        draggingOver.classList.add("drag-over");
-      }
-    });
-
-    entry.addEventListener("dragleave", (e) => {
-      e.currentTarget.classList.remove("drag-over");
-    });
-
-    entry.addEventListener("drop", async (e) => {
-      e.preventDefault();
-      const dropTarget = e.currentTarget;
-      if (!draggedItem || draggedItem === dropTarget) return;
-
-      const container = draggedItem.parentNode;
-      const children = Array.from(container.children);
-
-      const draggedIndex = children.indexOf(draggedItem);
-      const dropIndex = children.indexOf(dropTarget);
-
-      if (draggedIndex < dropIndex) {
-        container.insertBefore(draggedItem, dropTarget.nextSibling);
-      } else {
-        container.insertBefore(draggedItem, dropTarget);
-      }
-
-      turnEntries.forEach(entry => {
-        entry.classList.remove("dragging", "drag-over");
-      });
-
-      // After reordering, collect new user order:
-      const newOrder = Array.from(container.children).map(el => el.dataset.user);
-
-      const title = taskDiv.dataset.title;
-      const date = taskDiv.dataset.date;
-
-      await handleReorder(title, date, newOrder);
-    });
-
-    entry.addEventListener("dragend", (e) => {
-      turnEntries.forEach(entry => {
-        entry.classList.remove("dragging", "drag-over");
-      });
-      draggedItem = null;
-    });
+    entry.addEventListener("mousedown", startDrag);
+    entry.addEventListener("touchstart", startDrag, { passive: false });
   });
+
+  function startDrag(e) {
+    e.preventDefault();
+    draggedItem = e.currentTarget;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    draggedItem.classList.add("dragging");
+
+    document.addEventListener("mousemove", onDrag);
+    document.addEventListener("touchmove", onDrag, { passive: false });
+    document.addEventListener("mouseup", endDrag);
+    document.addEventListener("touchend", endDrag);
+  }
+
+  function onDrag(e) {
+    if (!draggedItem) return;
+
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const moveY = y - startY;
+    draggedItem.style.transform = `translateY(${moveY}px)`;
+    draggedItem.style.zIndex = "999";
+    draggedItem.style.position = "relative";
+
+    const entries = Array.from(container.children);
+    entries.forEach(entry => {
+      if (entry === draggedItem) return;
+      const rect = entry.getBoundingClientRect();
+      if (y > rect.top && y < rect.bottom) {
+        if (y < rect.top + rect.height / 2) {
+          container.insertBefore(draggedItem, entry);
+        } else {
+          container.insertBefore(draggedItem, entry.nextSibling);
+        }
+      }
+    });
+  }
+
+  function endDrag() {
+    if (!draggedItem) return;
+
+    draggedItem.classList.remove("dragging");
+    draggedItem.style.transform = "";
+    draggedItem.style.position = "";
+    draggedItem.style.zIndex = "";
+    draggedItem = null;
+
+    document.removeEventListener("mousemove", onDrag);
+    document.removeEventListener("touchmove", onDrag);
+    document.removeEventListener("mouseup", endDrag);
+    document.removeEventListener("touchend", endDrag);
+
+    // After dragging ends, update the order
+    const newOrder = Array.from(container.children).map(el => el.dataset.user);
+    const title = taskDiv.dataset.title;
+    const date = taskDiv.dataset.date;
+    handleReorder(title, date, newOrder);
+  }
 }
+
+
 
 
 
