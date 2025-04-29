@@ -438,7 +438,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home 2</span>
+        <span>Home 1</span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -907,27 +907,36 @@ function enableDragAndDrop(taskDiv) {
   }
 
   function onDrag(e) {
-    if (!draggedItem) return;
+  if (!draggedItem) return;
 
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
-    const moveY = y - startY;
-    draggedItem.style.transform = `translateY(${moveY}px)`;
-    draggedItem.style.zIndex = "999";
-    draggedItem.style.position = "relative";
+  const y = e.touches ? e.touches[0].clientY : e.clientY;
+  const moveY = y - startY;
+  draggedItem.style.transform = `translateY(${moveY}px)`;
+  draggedItem.style.zIndex = "999";
+  draggedItem.style.position = "relative";
 
-    const entries = Array.from(container.children);
-    entries.forEach(entry => {
-      if (entry === draggedItem) return;
-      const rect = entry.getBoundingClientRect();
-      if (y > rect.top && y < rect.bottom) {
-        if (y < rect.top + rect.height / 2) {
-          container.insertBefore(draggedItem, entry);
-        } else {
-          container.insertBefore(draggedItem, entry.nextSibling);
-        }
+  const entries = Array.from(container.children);
+  for (const entry of entries) {
+    if (entry === draggedItem) continue;
+    const rect = entry.getBoundingClientRect();
+    const draggedRect = draggedItem.getBoundingClientRect();
+    const middle = rect.top + rect.height / 2;
+
+    if (y > rect.top && y < rect.bottom) {
+      if (draggedRect.top < middle) {
+        container.insertBefore(draggedItem, entry);
+      } else {
+        container.insertBefore(draggedItem, entry.nextSibling);
       }
-    });
+
+      // 🛠️ FIX: After reorder, reset startY based on new position
+      const newRect = draggedItem.getBoundingClientRect();
+      startY = (e.touches ? e.touches[0].clientY : e.clientY) - (newRect.top + newRect.height / 2);
+      break; // important to prevent multiple moves
+    }
   }
+}
+
 
   function endDrag() {
     if (!draggedItem) return;
