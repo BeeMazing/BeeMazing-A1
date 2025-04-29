@@ -431,7 +431,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home</span>
+        <span>Home 1</span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -801,7 +801,7 @@ async function loadTasks() {
       ${
         turns.length
           ? turns.map((turn, index) => `
-            <div class="turn-entry" draggable="true" data-index="${index}" data-user="${turn.user}">
+<div class="turn-entry" data-index="${index}" data-user="${turn.user}">
               <p>Turn ${turn.repetition}: ${turn.user} - ${
                 turn.isCompleted
                   ? 'Accepted'
