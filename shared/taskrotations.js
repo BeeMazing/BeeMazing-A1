@@ -109,10 +109,17 @@ function prepareTaskTurnData(task, selectedDate) {
         userPendingCounts[u] = (userPendingCounts[u] || 0) + 1;
     });
 
-    const userOrder = task.users || [];
+    let userOrder = task.users || [];
     const isRotation = (task.settings || "Rotation") === "Rotation";
 
     if (isRotation) {
+        // 🛠 SHIFT user order based on today
+        const rotation = calculateTurn(task, selectedDate);
+        const startIndex = userOrder.indexOf(rotation.currentTurn);
+        if (startIndex !== -1) {
+            userOrder = [...userOrder.slice(startIndex), ...userOrder.slice(0, startIndex)];
+        }
+        
         for (let i = 0; i < requiredTimes; i++) {
             const originalUser = userOrder[i % userOrder.length];
             const user = tempTurnReplacement[i] || originalUser;
