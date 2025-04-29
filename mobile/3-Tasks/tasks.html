@@ -503,7 +503,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>w7</span>
+            <span>w</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -595,37 +595,39 @@ if (typeof calculateIndividualProgress === 'undefined') {
 
 
 
-        const visibleTasks = tasks.filter(task => {
+
+const visibleTasks = tasks.filter(task => {
     if (!task.date) return false;
 
+    // Parse the From/To range
     const range = task.date.split(" to ");
     const from = parseLocalDate(range[0]);
     const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
+
     const inRange = selected >= from && selected <= to;
 
-    const dayOfWeek = selected.toLocaleDateString(undefined, { weekday: "long" });
-    const specificDates = task.specificDates
-        ? task.specificDates.split(",").map(date => date.trim())
-        : [];
-
-    const daysOfWeek = Array.isArray(task.daysOfWeek)
-        ? task.daysOfWeek
-        : typeof task.daysOfWeek === "string"
-            ? task.daysOfWeek.split(",").map(d => d.trim()).filter(Boolean)
-            : [];
-
-    // If Specific Dates match, show the task
-    if (specificDates.includes(selectedDate)) return true;
-
-    // If task has specific days of the week, it must match
-    if (daysOfWeek.length > 0 && !daysOfWeek.includes("Any")) {
-        return daysOfWeek.includes(dayOfWeek) && inRange;
+    // If Specific Dates exist, use that first
+    if (task.specificDates) {
+        const specificDates = task.specificDates.split(",").map(date => date.trim());
+        return specificDates.includes(selectedDate);
     }
 
-    // Fallback: show based on date range only
+    // If Specific Days exist, use that second
+// If Specific Days exist, use that second
+if (task.daysOfWeek) {
+    let days = task.daysOfWeek;
+    if (typeof days === "string") {
+        days = days.split(",").map(d => d.trim()).filter(d => d);
+    }
+    if (Array.isArray(days) && days.length > 0) {
+        const dayOfWeek = selected.toLocaleDateString(undefined, { weekday: "long" });
+        return days.includes(dayOfWeek) && inRange; // ✅ Must still be within From-To range
+    }
+}
+
+    // Default case: From-To
     return inRange;
 });
-
 
 
 

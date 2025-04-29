@@ -1881,6 +1881,8 @@ window.addEventListener("click", (e) => {
 
 
 
+
+
         document.getElementById("addTaskForm").addEventListener("submit", async function (event) {
     event.preventDefault();
 
@@ -1893,15 +1895,16 @@ window.addEventListener("click", (e) => {
     const dateTo = document.getElementById("taskDateTo").value;
     const dateMode = document.getElementById("dateModeSelection").value;
     const reminder = document.getElementById("taskReminder").checked;
-    const users = document.getElementById("assignedToSelection").value.split(",").map(u => u.trim()).filter(u => u);
+    const users = document.getElementById("assignedToSelection").value
+        .split(",")
+        .map(u => u.trim())
+        .filter(u => u);
     const reward = document.getElementById("RewardValue").value;
     let timesPerDay = parseInt(document.getElementById("timesPerDayInput").value) || null;
     let timesPerWeek = parseInt(document.getElementById("timesPerWeekInput").value) || null;
     let timesPerMonth = parseInt(document.getElementById("timesPerMonthInput").value) || null;
     const specificDates = document.getElementById("specificDatesInput").value;
-
-    const editTask = JSON.parse(localStorage.getItem("familyApp_editTask"));
-    const currentAdmin = localStorage.getItem("currentAdminEmail");
+    const specificDays = dateMode === "specific-days" ? selectedDays : [];
 
     // Validations
     if (!title) {
@@ -1913,13 +1916,14 @@ window.addEventListener("click", (e) => {
         return;
     }
     if (dateMode === "date" && !dateFrom) {
-        alert("Please select a start date.");
-        return;
-    }
-    if (dateMode === "specific-dates" && !specificDates) {
-        alert("Please select at least one date.");
-        return;
-    }
+    alert("Please select a start date.");
+    return;
+}
+if (dateMode === "specific-dates" && !specificDates) {
+    alert("Please select at least one date.");
+    return;
+}
+
 
     // Cap and sanitize
     if (timesPerDay > 100) timesPerDay = 100;
@@ -1929,15 +1933,20 @@ window.addEventListener("click", (e) => {
     if (timesPerWeek !== null && timesPerWeek < 1) timesPerWeek = 1;
     if (timesPerMonth !== null && timesPerMonth < 1) timesPerMonth = 1;
 
+
     let dateValue = "";
-    if (dateMode === "date") {
-        const fromDate = dateFrom;
-        const toDate = dateTo || "3000-01-01";
-        dateValue = `${fromDate} to ${toDate}`;
-    } else if (dateMode === "specific-dates" && specificDates) {
-        const dates = specificDates.split(",").map(d => d.trim()).filter(d => d);
-        dateValue = `${dates[0]} to ${dates[dates.length - 1]}`;
-    }
+if (dateMode === "date") {
+    const fromDate = dateFrom;
+    const toDate = dateTo || "3000-01-01";
+    dateValue = `${fromDate} to ${toDate}`;
+} else if (dateMode === "specific-dates" && specificDates) {
+    const dates = specificDates.split(",").map(d => d.trim()).filter(d => d);
+    dateValue = `${dates[0]} to ${dates[dates.length - 1]}`;
+} else {
+    const today = new Date().toISOString().split("T")[0];
+    dateValue = `${today} to 3000-01-01`;
+}
+
 
     const task = {
         title,
@@ -1945,6 +1954,7 @@ window.addEventListener("click", (e) => {
         room: room || undefined,
         repeat: repeat || undefined,
         settings: settings || undefined,
+        date: dateValue,
         reminder: reminder || undefined,
         users,
         reward: reward || undefined,
@@ -1952,25 +1962,24 @@ window.addEventListener("click", (e) => {
         timesPerDay: repeat === "Daily" ? timesPerDay : undefined,
         timesPerWeek: repeat === "Weekly" ? timesPerWeek : undefined,
         timesPerMonth: repeat === "Monthly" ? timesPerMonth : undefined,
+        specificDates: dateMode === "specific-dates" ? specificDates : undefined,
+daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? selectedDays : ["Any"]) : undefined
     };
 
-    // Handle dates properly
-    if (dateMode === "specific-dates" && specificDates) {
-        task.specificDates = specificDates;
-        task.date = dateValue;
-    } else {
-        task.date = dateValue;
-    }
+    console.log("Task being saved:", JSON.stringify(task, null, 2));
+
+    const currentAdmin = localStorage.getItem("currentAdminEmail");
+    const editTask = JSON.parse(localStorage.getItem("familyApp_editTask"));
 
     try {
         const url = "https://beemazing.onrender.com/api/tasks";
         const body = editTask
             ? {
-                adminEmail: currentAdmin,
-                task,
-                originalTitle: editTask.title,
-                originalDate: editTask.date
-            }
+                  adminEmail: currentAdmin,
+                  task,
+                  originalTitle: editTask.title,
+                  originalDate: editTask.date
+              }
             : { adminEmail: currentAdmin, task };
 
         const response = await fetch(url, {
@@ -1992,7 +2001,6 @@ window.addEventListener("click", (e) => {
         alert(`Failed to save task: ${error.message}`);
     }
 });
-
 
 
 
