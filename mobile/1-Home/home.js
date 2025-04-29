@@ -224,23 +224,7 @@ document.getElementById("adminPasswordError").textContent = "";
 document.getElementById("adminPasswordField").focus();
 
         
-              try {
-                const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ email: currentAdmin, password: enteredPassword }),
-                });
-                const data = await res.json();
-        
-                if (res.ok && data.success) {
-                  window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
-                } else {
-                  alert(data.message || "Incorrect password. Access denied.");
-                }
-              } catch (err) {
-                console.error("Error verifying admin password:", err);
-                alert("Failed to verify password. Please check your connection.");
-              }
+
             }
           } else {
             // Normal Child user → open directly
