@@ -991,7 +991,7 @@
 }
 
 #logoutBtn {
-    background: #2a2b35;
+    background: transparent;
     color: white;
     border: none;
     padding: 8px 14px;
@@ -1005,6 +1005,19 @@
     background: #2a2b35;;
 }
 
+
+.logout-icon {
+  width: 30px;
+  height: 30px;
+  filter: invert(100%) brightness(200%);
+  transition: transform 0.3s ease;
+}
+
+.logout-icon:hover {
+  transform: scale(1.1);
+}
+
+
 /* logout button */
 
 
@@ -1016,8 +1029,8 @@
       <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" id="profileIcon" alt="Select User" class="profile-icon" />
       <div id="logoutContainer" class="logout-container">
         <button id="logoutBtn" aria-label="Logout" title="Logout">
-          <img src="/BeeMazing-Y1/mobile/1-Home/Logout.png" alt="Logout" style="width: 30px; height: 30px;" />
-        </button>
+          <img src="/BeeMazing-Y1/mobile/1-Home/Logout.png" alt="Logout" class="logout-icon" />
+        </button>        
       </div>
       <div class="month-nav">
             <button id="prevMonth">&lt;</button>
