@@ -200,46 +200,10 @@ const currentAdmin = localStorage.getItem("currentAdminEmail");
           nameContainer.appendChild(userNameSpan);
         }
     
-        newUserItem.addEventListener("click", async function () {
+        newUserItem.addEventListener("click", function () {
           const page = userPermissions[username] === "Admin" ? "userAdmin.html" : "users.html";
-          const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
-        
-          if (userPermissions[username] === "Admin") {
-            if (isLoggedInAsAdmin) {
-              // Parent logged in → direct access
-              window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
-            } else {
-              // Child logged in → ask for password
-              const enteredPassword = prompt("Enter Parent Password to access Admin profile:");
-              if (!enteredPassword) {
-                alert("Password is required to access Admin profile.");
-                return;
-              }
-        
-              try {
-                const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ email: currentAdmin, password: enteredPassword }),
-                });
-                const data = await res.json();
-        
-                if (res.ok && data.success) {
-                  window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
-                } else {
-                  alert(data.message || "Incorrect password. Access denied.");
-                }
-              } catch (err) {
-                console.error("Error verifying admin password:", err);
-                alert("Failed to verify password. Please check your connection.");
-              }
-            }
-          } else {
-            // Normal Child user → open directly
-            window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
-          }
+          window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
         });
-        
     
         newUserItem.appendChild(nameContainer);
     
