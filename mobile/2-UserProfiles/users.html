@@ -1078,15 +1078,15 @@
     <div class="footer">
       <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
           <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-          <span>Home</span>
+          <span>YYY</span>
       </a>
       <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
           <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
-          <span>Tasks</span>
+          <span></span>
       </a>
       <a href="#" id="marketButton" class="footer-icon" aria-label="Market">
           <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
-          <span>Market</span>
+          <span></span>
       </a>
   </div>
   
@@ -1132,12 +1132,47 @@ document.addEventListener("DOMContentLoaded", () => {
                     li.style.background = "#333540";
                     li.style.fontWeight = "600";
                 }
-                li.addEventListener("click", () => {
-                    const isAdmin = data.permissions?.[user] === "Admin";
-                    const page = isAdmin ? "userAdmin.html" : "users.html";
-                    const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
-                    window.location.href = `${basePath}/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+                li.addEventListener("click", async () => {
+    const isAdminUser = data.permissions?.[user] === "Admin"; // the user we're clicking
+    const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
+    const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+
+    if (isAdminUser) {
+        if (isLoggedInAsAdmin) {
+            // Parent already logged in → no password needed
+            window.location.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+        } else {
+            // Logged in as Child → ask for password
+            const enteredPassword = prompt("Enter Parent Password to access Admin profile:");
+            if (!enteredPassword) {
+                alert("Password is required to access Admin profile.");
+                return;
+            }
+
+            try {
+                const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: adminEmail, password: enteredPassword }),
                 });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    window.location.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+                } else {
+                    alert(data.message || "Incorrect password. Access denied.");
+                }
+            } catch (err) {
+                console.error("Error verifying admin password:", err);
+                alert("Failed to verify password. Please check your connection.");
+            }
+        }
+    } else {
+        // Normal Child user selected → no password needed
+        window.location.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+    }
+});
+
                 userList.appendChild(li);
             });
 
