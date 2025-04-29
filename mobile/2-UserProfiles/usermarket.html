@@ -343,7 +343,7 @@
     </div>
 
     <div class="footer">
-      <a href="#" id="homeButton" class="footer-icon" aria-label="Home" style="display: none;">
+        <a href="#" id="homeButton" class="footer-icon" aria-label="Home">
           <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
           <span>Home</span>
       </a>
@@ -395,20 +395,40 @@
           const isUserAdmin = permissions[userName] === "Admin";
   
           // Set footer button links
-const homeButton = document.getElementById("homeButton");
+
+
+
+          const homeButton = document.getElementById("homeButton");
 const profileButton = document.getElementById("profileButton");
 const marketButton = document.getElementById("marketButton");
 
-// Show Home button for admins
-if (isUserAdmin && homeButton) {
+// Always show home button
+if (homeButton) {
     homeButton.style.display = "flex";
-    homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+    homeButton.href = isUserAdmin
+        ? `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`
+        : `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
 }
 
-// Set other button links
-profileButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-  
+// Always set profile and market buttons
+if (profileButton) {
+    profileButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+}
+if (marketButton) {
+    marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+}
+
+
+
+
+
+
+
+
+
+
+
+
           // Set active state
 // Set active state
 document.querySelectorAll('.footer a').forEach(link => {
