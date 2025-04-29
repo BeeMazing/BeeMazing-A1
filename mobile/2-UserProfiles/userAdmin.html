@@ -438,7 +438,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home</span>
+        <span>Home 1</span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -849,7 +849,10 @@ async function loadTasks() {
 
       container.appendChild(div);
       
+ // 🛠 Move this INSIDE the loop:
+ enableDragAndDrop(div);
 
+ 
       div.querySelector(".task-title").addEventListener("click", () => {
         const details = div.querySelector(".task-details");
         details.classList.toggle("show");
@@ -860,9 +863,7 @@ async function loadTasks() {
         }
       });
     });
-
-    // 🛠 Enable drag and drop AFTER creating the div
-enableDragAndDrop(div);
+    
 
     if (!container.innerHTML) {
       container.innerHTML = "<p>No tasks for this date.</p>";
