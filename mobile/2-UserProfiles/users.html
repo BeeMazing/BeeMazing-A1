@@ -178,6 +178,7 @@
     width: 100%;
     display: flex;
     justify-content: space-around;
+    align-items: center;
     background: var(--secondary-color);
     padding: 10px 0;
     box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
@@ -381,6 +382,7 @@
     display: flex;
     align-items: center;
     overflow: hidden;
+    background: var(--secondary-color);
     background: transparent;
     padding: 6px 0;
 }
@@ -978,13 +980,46 @@
 /* overall progress */
 
 
+
+/* logout button */
+
+.logout-container {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 150;
+}
+
+#logoutBtn {
+    background: #2a2b35;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    font-size: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+#logoutBtn:hover {
+    background: #2a2b35;;
+}
+
+/* logout button */
+
+
     </style>
 </head>
 <body>
 
     <div class="date-header">
       <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" id="profileIcon" alt="Select User" class="profile-icon" />
-        <div class="month-nav">
+      <div id="logoutContainer" class="logout-container">
+        <button id="logoutBtn" aria-label="Logout" title="Logout">
+          <img src="/BeeMazing-Y1/mobile/1-Home/Logout.png" alt="Logout" style="width: 30px; height: 30px;" />
+        </button>
+      </div>
+      <div class="month-nav">
             <button id="prevMonth">&lt;</button>
             <span id="monthLabel">Loading...</span>
             <button id="nextMonth">&gt;</button>
@@ -1078,15 +1113,12 @@
     <div class="footer">
       <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
           <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-          <span></span>
       </a>
       <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
           <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
-          <span></span>
       </a>
       <a href="#" id="marketButton" class="footer-icon" aria-label="Market">
           <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
-          <span></span>
       </a>
   </div>
   
@@ -1113,6 +1145,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const userSelectModal = document.getElementById("userSelectModal");
     const userList = document.getElementById("userList");
     const closeModalBtn = document.getElementById("closeModalBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+
+
+    logoutBtn.addEventListener("click", () => {
+  // Only remove login session info
+  localStorage.removeItem("isAdmin");
+  localStorage.removeItem("userData");
+  localStorage.removeItem("adminPassword"); // optional, if stored
+
+  // Keep currentAdminEmail so login.html still knows the registered account
+  window.location.href = "/BeeMazing-Y1/login.html";
+});
+
+
+
+
 
     profileIcon.addEventListener("click", async () => {
         if (!adminEmail) {
@@ -1136,6 +1185,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const isAdminUser = data.permissions?.[user] === "Admin"; // the user we're clicking
     const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
     const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+
+
+
+
+
 
     if (isAdminUser) {
         if (isLoggedInAsAdmin) {
@@ -1896,6 +1950,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("doSummary").textContent = "";
   }
 }
+
+
 
         </script>
 
