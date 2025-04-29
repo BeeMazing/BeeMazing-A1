@@ -498,11 +498,12 @@ document.getElementById("submitAdminPasswordBtn").addEventListener("click", asyn
   }
 
   try {
+    const passwordInput = document.getElementById("adminPasswordField").value.trim();
     const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: currentAdmin, password: passwordInput }),
-    });
+    });    
     const data = await res.json();
 
     if (res.ok && data.success) {
