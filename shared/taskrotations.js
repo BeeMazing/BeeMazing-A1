@@ -176,3 +176,6 @@ function calculateIndividualProgress(task, selectedDate, user) {
         isComplete: count >= required
     };
 }
+
+
+
