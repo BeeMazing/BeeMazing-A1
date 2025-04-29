@@ -519,9 +519,6 @@ body.menu-open {
 
 
 
-/* Bottom Sheet Modal when selecting users */
-
-
 
 @media (max-width: 600px) {
     .profile-icon {
@@ -535,7 +532,7 @@ body.menu-open {
         font-size: 16px;
     }
     .user-list {
-        height: 230px; /* Approx. 5 users at 42px each */
+        height: 240px; /* Approx. 5 users at 42px each */
     }
     .user-list li {
         font-size: 14px;
@@ -545,6 +542,10 @@ body.menu-open {
 
 
 
+.footer {
+    z-index: 100;
+}
+/* Bottom Sheet Modal when selecting users */
 
 
 
@@ -684,14 +685,18 @@ profileIcon.addEventListener("click", async () => {
         alert("No users found for this admin.");
         userList.innerHTML = '<li style="padding: 15px 20px; color: #D32F2F;">No users available</li>';
     } else {
-        users.forEach(user => {
-            const li = document.createElement("li");
-            li.textContent = user;
-            li.addEventListener("click", () => {
-                window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
-            });
-            userList.appendChild(li);
-        });
+      users.forEach(user => {
+    const li = document.createElement("li");
+    li.textContent = user;
+    if (user === userName) {
+        li.style.background = "#333540";
+        li.style.fontWeight = "600";
+    }
+    li.addEventListener("click", () => {
+        window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+    });
+    userList.appendChild(li);
+});
     }
     userSelectModal.classList.add("show");
 });
