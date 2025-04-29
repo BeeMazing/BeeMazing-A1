@@ -161,18 +161,3 @@ function prepareTaskTurnData(task, selectedDate) {
 
     return turns;
 }
-
-
-
-function calculateIndividualProgress(task, selectedDate, user) {
-    const completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-    const count = completions.filter(u => u === user).length;
-    const required = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                    task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                    task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-    return {
-        count,
-        required,
-        isComplete: count >= required
-    };
-}
