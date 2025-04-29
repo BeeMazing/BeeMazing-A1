@@ -431,7 +431,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home 1</span>
+        <span>Home</span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -674,7 +674,7 @@ async function handleReplace(title, date, index, originalUser, event) {
     turnEntry.querySelector("p").textContent = `Turn ${parseInt(index) + 1}: ${newUser} - Pending`;
     turnEntry.querySelector("select").value = "";
     turnEntry.dataset.user = newUser;
-    setTimeout(() => loadTasks(true), 1000); // Increased delay, force retry
+    setTimeout(() => loadTasks(), 500);
   } catch (err) {
     console.error("Error replacing user:", err);
     const errorDiv = document.createElement("div");
@@ -755,7 +755,7 @@ async function handleReorder(title, date, newUserOrder) {
 
 
 
-async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
+async function loadTasks() {
   try {
     const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
       cache: "no-store"
