@@ -666,6 +666,11 @@
     gap: 10px;
 }
 
+.day-buttons-container {
+    justify-content: center;
+}
+
+
 /* Day Buttons for Specific Days (Original Styles) */
 .day-btn {
     position: relative;
@@ -687,28 +692,17 @@
     color: var(--secondary-color);
 }
 
-.day-btn.selected::after {
-    content: "x";
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: var(--danger-color);
-    color: var(--text-color);
-    border-radius: 50%;
-    width: 16px;
-    height: 16px;
-    line-height: 16px;
-    font-size: 12px;
-    font-weight: 600;
-}
+
 
 .day-btn:hover {
     background: var(--hover-accent);
 }
 
 .day-btn.selected:hover {
-    background: #FFB300; /* Brighter gold on hover for selected */
+    background: #FFB300; /* Brighter gold */
+    color: var(--secondary-color);
 }
+
 
 </style>
 
@@ -778,11 +772,11 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
             <div class="form-group-full date-section">
                 <label class="section-label"></label>
                 <div class="date-mode-selector">
-                    <button type="button" class="mode-btn active" data-mode="from-to">From - To</button>
+                    <button type="button" class="mode-btn active" data-mode="date">Date</button>
                     <button type="button" class="mode-btn" data-mode="specific-dates">Specific Dates</button>
-                    <button type="button" class="mode-btn" data-mode="specific-days">Specific Days</button>
-                    <input type="hidden" id="dateModeSelection" value="from-to">
+                    <input type="hidden" id="dateModeSelection" value="date">
                 </div>
+                
             
                 <!-- From - To Date UI -->
                 <div id="fromToDateGroup" class="date-group">
@@ -808,20 +802,23 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
                 </div>
             
                 <!-- Specific Days UI -->
-                <div id="specificDaysGroup" class="date-group" style="display: none;">
-                    <div class="date-row">
-                        <span class="date-label">Days</span>
-                        <div id="specificDaysButtons" class="day-buttons-container">
-                            <button type="button" class="day-btn" data-day="Mon">Mon</button>
-                            <button type="button" class="day-btn" data-day="Tue">Tue</button>
-                            <button type="button" class="day-btn" data-day="Wed">Wed</button>
-                            <button type="button" class="day-btn" data-day="Thu">Thu</button>
-                            <button type="button" class="day-btn" data-day="Fri">Fri</button>
-                            <button type="button" class="day-btn" data-day="Sat">Sat</button>
-                            <button type="button" class="day-btn" data-day="Sun">Sun</button>
-                        </div>
-                    </div>
-                </div>
+<!-- Day Selection UI (for Date mode) -->
+<div id="specificDaysGroup" class="date-group">
+    <div class="date-row">
+        <span class="date-label">Days</span>
+        <div id="specificDaysButtons" class="day-buttons-container">
+            <button type="button" class="day-btn" data-day="Any">Any</button>
+            <button type="button" class="day-btn" data-day="Mon">Mon</button>
+            <button type="button" class="day-btn" data-day="Tue">Tue</button>
+            <button type="button" class="day-btn" data-day="Wed">Wed</button>
+            <button type="button" class="day-btn" data-day="Thu">Thu</button>
+            <button type="button" class="day-btn" data-day="Fri">Fri</button>
+            <button type="button" class="day-btn" data-day="Sat">Sat</button>
+            <button type="button" class="day-btn" data-day="Sun">Sun</button>
+        </div>
+    </div>
+</div>
+
             
                 <!-- Hidden inputs -->
                 <input type="text" id="taskDate" class="date-input" />
@@ -1037,25 +1034,15 @@ if (editTask.specificDates) {
     specificDatesInput.value = editTask.specificDates;
     flatpickrSpecific.setDate(selectedDates);
     updateSelectedDatesDisplay();
-} else if (editTask.specificDays) {
-    // Specific Days mode
-    document.getElementById("dateModeSelection").value = "specific-days";
-    document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
-    document.querySelector(".mode-btn[data-mode='specific-days']").classList.add("active");
-    document.getElementById("specificDaysGroup").style.display = "block";
-    document.getElementById("fromToDateGroup").style.display = "block";
-    document.getElementById("specificDatesGroup").style.display = "none";
-    selectedDays = editTask.specificDays;
-    document.getElementById("specificDaysInput").value = selectedDays.join(",");
-    updateSelectedDaysDisplay();
 } else if (editTask.date) {
-    // From - To mode
-    document.getElementById("dateModeSelection").value = "from-to";
+    // From-To mode with Days
+    document.getElementById("dateModeSelection").value = "date";
     document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
-    document.querySelector(".mode-btn[data-mode='from-to']").classList.add("active");
+    document.querySelector(".mode-btn[data-mode='date']").classList.add("active");
     document.getElementById("fromToDateGroup").style.display = "block";
     document.getElementById("specificDatesGroup").style.display = "none";
-    document.getElementById("specificDaysGroup").style.display = "none";
+    document.getElementById("specificDaysGroup").style.display = "block";
+
     const [from, to] = editTask.date.split(" to ");
     document.getElementById("taskDate").value = from || "";
     flatpickrFrom.setDate(from);
@@ -1063,24 +1050,29 @@ if (editTask.specificDates) {
         month: "long",
         day: "numeric",
     });
-    if (to) {
-        document.getElementById("dateDisplayTo").style.display = "block";
+    if (to && to !== "3000-01-01") {
         document.getElementById("taskDateTo").value = to;
         flatpickrTo.setDate(to);
         document.getElementById("dateDisplayTo").textContent = new Date(to).toLocaleDateString(undefined, {
             month: "long",
             day: "numeric",
         });
-        document.getElementById("dateToWrapper").style.display = "flex";
-        document.getElementById("addEndDateBtn").style.display = "none";
+        dateToWrapper.style.display = "flex";
+        addEndDateBtn.style.display = "none";
         dateMode = "from-to";
     } else {
-        document.getElementById("dateDisplayTo").style.display = "none";
-        document.getElementById("dateToWrapper").style.display = "none";
-        document.getElementById("addEndDateBtn").style.display = "block";
+        document.getElementById("taskDateTo").value = "";
+        document.getElementById("dateDisplayTo").textContent = "To Date";
+        dateToWrapper.style.display = "none";
+        addEndDateBtn.style.display = "block";
         dateMode = "from";
     }
+
+    // Handle Days of the Week
+    selectedDays = editTask.daysOfWeek || ["Any"];
+    updateSelectedDaysDisplay();
 }
+
 
         // Handle users
         if (editTask.users) {
@@ -1517,6 +1509,7 @@ removeEndDateBtn.addEventListener("click", () => {
 
 
 // Date Mode Logic
+// Date Mode Logic
 const dateModeInput = document.getElementById("dateModeSelection");
 const modeButtons = document.querySelectorAll(".mode-btn");
 
@@ -1530,9 +1523,9 @@ modeButtons.forEach(button => {
         button.classList.add("active");
 
         // Show/hide UI based on mode
-        document.getElementById("fromToDateGroup").style.display = mode === "from-to" || mode === "specific-days" ? "block" : "none";
+        document.getElementById("fromToDateGroup").style.display = mode === "date" ? "block" : "none";
         document.getElementById("specificDatesGroup").style.display = mode === "specific-dates" ? "block" : "none";
-        document.getElementById("specificDaysGroup").style.display = mode === "specific-days" ? "block" : "none";
+        document.getElementById("specificDaysGroup").style.display = mode === "date" ? "block" : "none";
 
         // Clear irrelevant fields
         if (mode === "specific-dates") {
@@ -1542,18 +1535,9 @@ modeButtons.forEach(button => {
             document.getElementById("dateDisplayTo").textContent = "To Date";
             document.getElementById("dateToWrapper").style.display = "none";
             document.getElementById("addEndDateBtn").style.display = "block";
-            document.getElementById("specificDaysInput").value = "";
             selectedDays = [];
             updateSelectedDaysDisplay();
-        } else if (mode === "from-to") {
-            document.getElementById("specificDatesInput").value = "";
-            selectedDates = [];
-            flatpickrSpecific.clear();
-            updateSelectedDatesDisplay();
-            document.getElementById("specificDaysInput").value = "";
-            selectedDays = [];
-            updateSelectedDaysDisplay();
-        } else if (mode === "specific-days") {
+        } else if (mode === "date") {
             document.getElementById("specificDatesInput").value = "";
             selectedDates = [];
             flatpickrSpecific.clear();
@@ -1561,19 +1545,17 @@ modeButtons.forEach(button => {
         }
     });
 });
-
-
-
+   
 
 
 
 
 // Specific Days Logic
 const specificDaysInput = document.getElementById("specificDaysInput");
-let selectedDays = [];
+let selectedDays = ["Any"]; // Default selected
 
-// Map short day names (button text) to full day names (stored values)
 const dayMapping = {
+    "Any": "Any",
     "Mon": "Monday",
     "Tue": "Tuesday",
     "Wed": "Wednesday",
@@ -1587,7 +1569,7 @@ function updateSelectedDaysDisplay() {
     const buttons = document.querySelectorAll("#specificDaysButtons .day-btn");
     buttons.forEach(button => {
         const shortDay = button.getAttribute("data-day");
-        const fullDay = dayMapping[shortDay] || shortDay; // Fallback to shortDay if mapping fails
+        const fullDay = dayMapping[shortDay];
         if (selectedDays.includes(fullDay)) {
             button.classList.add("selected");
         } else {
@@ -1595,8 +1577,6 @@ function updateSelectedDaysDisplay() {
         }
     });
     specificDaysInput.value = selectedDays.join(",");
-    console.log("Updated selectedDays:", selectedDays); // Debug
-    console.log("specificDaysInput.value:", specificDaysInput.value); // Debug
 }
 
 // Add click event listeners to day buttons
@@ -1604,20 +1584,24 @@ document.querySelectorAll("#specificDaysButtons .day-btn").forEach(button => {
     button.addEventListener("click", () => {
         const shortDay = button.getAttribute("data-day");
         const fullDay = dayMapping[shortDay];
-        if (selectedDays.includes(fullDay)) {
-            selectedDays = selectedDays.filter(day => day !== fullDay);
+
+        if (fullDay === "Any") {
+            selectedDays = ["Any"];
         } else {
-            selectedDays.push(fullDay);
+            selectedDays = selectedDays.filter(day => day !== "Any"); // Remove Any if selecting specific day
+            if (selectedDays.includes(fullDay)) {
+                selectedDays = selectedDays.filter(day => day !== fullDay);
+                if (selectedDays.length === 0) selectedDays = ["Any"]; // Re-select Any if none selected
+            } else {
+                selectedDays.push(fullDay);
+            }
         }
-        updateSelectedDaysDisplay(); // Update UI and input
+        updateSelectedDaysDisplay();
     });
 });
 
-// Initialize display on load
+// Initialize display
 updateSelectedDaysDisplay();
-
-
-
 
 
 
@@ -1830,10 +1814,12 @@ window.addEventListener("click", (e) => {
         });
     
         dateDisplayTo.addEventListener("click", () => {
-            if (dateMode === "from-to") {
-                flatpickrTo.open();
-            }
-        });
+            if (dateMode === "date") {
+    const fromDate = dateFrom;
+    const toDate = dateTo || "3000-01-01";
+    dateValue = `${fromDate} to ${toDate}`;
+}
+       });
     
         // Reminder and Alarm Logic
         const reminderToggle = document.getElementById('taskReminder');
@@ -1929,18 +1915,15 @@ window.addEventListener("click", (e) => {
         alert("Please assign at least one user.");
         return;
     }
-    if (dateMode === "from-to" && !dateFrom) {
-        alert("Please select a start date.");
-        return;
-    }
-    if (dateMode === "specific-dates" && !specificDates) {
-        alert("Please select at least one date.");
-        return;
-    }
-    if (dateMode === "specific-days" && specificDays.length === 0) {
-        alert("Please select at least one day.");
-        return;
-    }
+    if (dateMode === "date" && !dateFrom) {
+    alert("Please select a start date.");
+    return;
+}
+if (dateMode === "specific-dates" && !specificDates) {
+    alert("Please select at least one date.");
+    return;
+}
+
 
     // Cap and sanitize
     if (timesPerDay > 100) timesPerDay = 100;
@@ -1950,21 +1933,20 @@ window.addEventListener("click", (e) => {
     if (timesPerWeek !== null && timesPerWeek < 1) timesPerWeek = 1;
     if (timesPerMonth !== null && timesPerMonth < 1) timesPerMonth = 1;
 
+
     let dateValue = "";
-    if (dateMode === "from-to") {
-        const fromDate = dateFrom;
-        const toDate = dateTo || "3000-01-01";
-        dateValue = `${fromDate} to ${toDate}`;
-    } else if (dateMode === "specific-dates" && specificDates) {
-        const dates = specificDates.split(",").map(d => d.trim()).filter(d => d);
-        dateValue = `${dates[0]} to ${dates[dates.length - 1]}`;
-    } else if (dateMode === "specific-days") {
-        const today = new Date().toISOString().split("T")[0];
-        dateValue = `${today} to 3000-01-01`;
-    } else {
-        const today = new Date().toISOString().split("T")[0];
-        dateValue = `${today} to 3000-01-01`;
-    }
+if (dateMode === "date") {
+    const fromDate = dateFrom;
+    const toDate = dateTo || "3000-01-01";
+    dateValue = `${fromDate} to ${toDate}`;
+} else if (dateMode === "specific-dates" && specificDates) {
+    const dates = specificDates.split(",").map(d => d.trim()).filter(d => d);
+    dateValue = `${dates[0]} to ${dates[dates.length - 1]}`;
+} else {
+    const today = new Date().toISOString().split("T")[0];
+    dateValue = `${today} to 3000-01-01`;
+}
+
 
     const task = {
         title,
@@ -1981,7 +1963,7 @@ window.addEventListener("click", (e) => {
         timesPerWeek: repeat === "Weekly" ? timesPerWeek : undefined,
         timesPerMonth: repeat === "Monthly" ? timesPerMonth : undefined,
         specificDates: dateMode === "specific-dates" ? specificDates : undefined,
-        specificDays: specificDays.length > 0 ? specificDays : undefined
+daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? selectedDays : ["Any"]) : undefined
     };
 
     console.log("Task being saved:", JSON.stringify(task, null, 2));
