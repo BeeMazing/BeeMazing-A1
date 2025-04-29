@@ -768,6 +768,28 @@
 }
 
 
+
+/* selecting user */
+
+.profile-icon {
+  position: fixed;
+  top: 10px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  z-index: 202;
+  transition: transform 0.3s ease;
+  filter: invert(100%) brightness(200%);
+}
+
+.profile-icon:hover {
+  transform: scale(1.1);
+}
+
+/* selecting user */
+
+
     </style>
 </head>
 <body>
@@ -849,7 +871,7 @@
     <div class="footer">
       <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
           <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-          <span>Home</span>
+          <span>Home 1</span>
       </a>
       <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
           <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -883,81 +905,125 @@
 
 
     <script>
+
+
+
+
 document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     let adminEmail = urlParams.get('admin') || localStorage.getItem("currentAdminEmail");
     const userName = urlParams.get('user');
     const addPoints = Number(urlParams.get('addPoints')) || 0;
 
-    if (adminEmail && adminEmail !== "null") {
-    localStorage.setItem("currentAdminEmail", adminEmail);
-}
+    const profileIcon = document.getElementById("profileIcon");
+    const userSelectModal = document.getElementById("userSelectModal");
+    const userList = document.getElementById("userList");
+    const closeModalBtn = document.getElementById("closeModalBtn");
 
-if (userName && adminEmail) {
-    // Check if user is admin
-    const userData = JSON.parse(localStorage.getItem("userData")) || {};
-    const permissions = userData[adminEmail]?.permissions || {};
-    const isUserAdmin = permissions[userName] === "Admin";
+    profileIcon.addEventListener("click", async () => {
+        if (!adminEmail) {
+            alert("Admin email not found. Please log in again.");
+            return;
+        }
+        try {
+            const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const data = await res.json();
+            if (!res.ok || !data.users) throw new Error("Failed to fetch users");
 
-    // Set footer button links
-   
+            userList.innerHTML = "";
+            data.users.forEach(user => {
+                const li = document.createElement("li");
+                li.textContent = user;
+                if (user === userName) {
+                    li.style.background = "#333540";
+                    li.style.fontWeight = "600";
+                }
+                li.addEventListener("click", () => {
+                    const isAdmin = data.permissions?.[user] === "Admin";
+                    const page = isAdmin ? "userAdmin.html" : "users.html";
+                    const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
+                    window.location.href = `${basePath}/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+                });
+                userList.appendChild(li);
+            });
 
-    const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
-const homeButton = document.getElementById("homeButton");
-const tasksButton = document.getElementById("tasksButton");
-const marketButton = document.getElementById("marketButton");
-
-if (homeButton) {
-    homeButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-}
-if (tasksButton) {
-    tasksButton.href = `${basePath}/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-}
-if (marketButton) {
-    marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-}
-
-
-
-
-
-
-
-
-
-
-    // Set active state
-    document.querySelectorAll('.footer a').forEach(link => {
-        const currentPath = window.location.pathname.replace(/\/$/, '');
-        const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
-        if (currentPath === linkPath) {
-            link.classList.add('active');
-        } else {
-            link.classList.remove('active');
+            userSelectModal.classList.add("show");
+        } catch (err) {
+            console.error("Failed to load users:", err);
+            userList.innerHTML = '<li style="padding: 15px; color: #D32F2F;">Failed to load users</li>';
+            userSelectModal.classList.add("show");
         }
     });
 
-    populateUserDropdown(userName);
-    loadUserReward(userName);
-    loadLuckyChests(userName);
+    userSelectModal.addEventListener("click", (e) => {
+        if (e.target === userSelectModal) {
+            userSelectModal.classList.remove("show");
+        }
+    });
 
-    if (addPoints > 0) {
-        setTimeout(async () => {
-            await updateUserReward(userName, addPoints);
-            triggerHoneyRain(addPoints);
-            loadUserReward(userName);
-        }, 500);
+    closeModalBtn.addEventListener("click", () => {
+        userSelectModal.classList.remove("show");
+    });
+
+    // ---- Your original code continues here ----
+
+    if (adminEmail && adminEmail !== "null") {
+        localStorage.setItem("currentAdminEmail", adminEmail);
     }
-} else {
-    document.getElementById('userTasks').innerHTML = "<p>Error: Missing user or admin email. Please log in again.</p>";
-    document.getElementById('userName').textContent = "Error";
-}
+
+    if (userName && adminEmail) {
+        // Check if user is admin
+        const userData = JSON.parse(localStorage.getItem("userData")) || {};
+        const permissions = userData[adminEmail]?.permissions || {};
+        const isUserAdmin = permissions[userName] === "Admin";
+
+        // Set footer button links
+        const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
+        const homeButton = document.getElementById("homeButton");
+        const tasksButton = document.getElementById("tasksButton");
+        const marketButton = document.getElementById("marketButton");
+
+        if (homeButton) {
+            homeButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+        }
+        if (tasksButton) {
+            tasksButton.href = `${basePath}/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+        }
+        if (marketButton) {
+            marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+        }
+
+        // Set active state
+        document.querySelectorAll('.footer a').forEach(link => {
+            const currentPath = window.location.pathname.replace(/\/$/, '');
+            const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
+            if (currentPath === linkPath) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
+        });
+
+        populateUserDropdown(userName);
+        loadUserReward(userName);
+        loadLuckyChests(userName);
+
+        if (addPoints > 0) {
+            setTimeout(async () => {
+                await updateUserReward(userName, addPoints);
+                triggerHoneyRain(addPoints);
+                loadUserReward(userName);
+            }, 500);
+        }
+    } else {
+        document.getElementById('userTasks').innerHTML = "<p>Error: Missing user or admin email. Please log in again.</p>";
+        document.getElementById('userName').textContent = "Error";
+    }
 
     adjustContentTop();
     generateScrollableDates();
     showAdminControlsIfNeeded();
 });
-
 
 
 
@@ -1655,6 +1721,10 @@ Your browser does not support the video tag.
 
 
 </div>
+
+
+
+
 
 
 </body>
