@@ -17,7 +17,9 @@ const currentAdmin = localStorage.getItem("currentAdminEmail");
   // Determine if this user is admin
   const isAdmin = localStorage.getItem("isAdmin") === "true";
 
-
+  let selectedAdminUsername = null;
+  let selectedAdminPage = null;
+  
 
 
  // ✅ FIRST: get DOM elements
@@ -28,6 +30,7 @@ const currentAdmin = localStorage.getItem("currentAdminEmail");
  const usernameInput = document.getElementById("usernameInput");
  const userList = document.getElementById("userList");
  const logoutBtn = document.getElementById("logoutBtn");
+ 
 
  if (!isAdmin && footer) {
    footer.style.display = "none";
@@ -200,10 +203,51 @@ const currentAdmin = localStorage.getItem("currentAdminEmail");
           nameContainer.appendChild(userNameSpan);
         }
     
-        newUserItem.addEventListener("click", function () {
+        newUserItem.addEventListener("click", async function () {
           const page = userPermissions[username] === "Admin" ? "userAdmin.html" : "users.html";
-          window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
+          const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+        
+          if (userPermissions[username] === "Admin") {
+            if (isLoggedInAsAdmin) {
+              // Parent logged in → direct access
+              window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
+            } else {
+              // Child logged in → ask for password
+// Save clicked username and page globally
+selectedAdminUsername = username;
+selectedAdminPage = page;
+
+// Show password modal
+document.getElementById("adminPasswordModal").classList.add("show");
+document.getElementById("adminPasswordField").value = "";
+document.getElementById("adminPasswordError").textContent = "";
+document.getElementById("adminPasswordField").focus();
+
+        
+              try {
+                const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email: currentAdmin, password: enteredPassword }),
+                });
+                const data = await res.json();
+        
+                if (res.ok && data.success) {
+                  window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
+                } else {
+                  alert(data.message || "Incorrect password. Access denied.");
+                }
+              } catch (err) {
+                console.error("Error verifying admin password:", err);
+                alert("Failed to verify password. Please check your connection.");
+              }
+            }
+          } else {
+            // Normal Child user → open directly
+            window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
+          }
         });
+        
     
         newUserItem.appendChild(nameContainer);
     
@@ -442,3 +486,41 @@ if (e.target.id === "changePasswordModal") {
 
 
 });
+
+
+document.getElementById("submitAdminPasswordBtn").addEventListener("click", async () => {
+  const passwordInput = document.getElementById("adminPasswordField").value.trim();
+  const errorDiv = document.getElementById("adminPasswordError");
+
+  if (!passwordInput) {
+    errorDiv.textContent = "Password is required.";
+    return;
+  }
+
+  try {
+    const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: currentAdmin, password: passwordInput }),
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      document.getElementById("adminPasswordModal").classList.remove("show");
+      window.location.href = `${basePath}/2-UserProfiles/${selectedAdminPage}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(selectedAdminUsername)}`;
+    } else {
+      errorDiv.textContent = data.message || "Incorrect password.";
+    }
+  } catch (err) {
+    console.error("Error verifying admin password:", err);
+    errorDiv.textContent = "Error connecting to server.";
+  }
+});
+
+// Allow clicking outside the modal to close it
+document.getElementById("adminPasswordModal").addEventListener("click", (e) => {
+  if (e.target.id === "adminPasswordModal") {
+    document.getElementById("adminPasswordModal").classList.remove("show");
+  }
+});
+
