@@ -436,7 +436,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home 133 </span>
+        <span>Home 13 </span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -758,7 +758,6 @@ async function handleReorder(title, date, newUserOrder) {
 
 
 
-
 async function loadTasks() {
   try {
     const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
@@ -792,8 +791,8 @@ async function loadTasks() {
 
     Object.keys(tasksByTitle).forEach(title => {
       const task = tasksByTitle[title];
-      const rotation = calculateTurn(task, selectedDate);   // ✅ Get Current Turn, Next, Completed
-      const turns = prepareTaskTurnData(task, selectedDate); // ✅ Get full turn list
+      const rotation = calculateTurn(task, selectedDate);
+      const turns = prepareTaskTurnData(task, selectedDate);
       const date = task.date;
 
       const div = document.createElement("div");
@@ -804,13 +803,36 @@ async function loadTasks() {
       div.innerHTML = `
         <h3 class="task-title">${title}</h3>
         <div class="task-meta">
-          <p><strong>Current Turn:</strong> ${rotation.currentTurn}</p>
-          <p><strong>Next:</strong> ${rotation.nextUser}</p>
-          <p><strong>Completed:</strong> ${rotation.completedCount}/${rotation.repeatLimit}</p>
+          ${
+            task.settings && task.settings.includes("Individual") ? `
+              <p><strong>Individual Progress:</strong></p>
+              ${
+                task.users.map(user => {
+                  const count = Array.isArray(task.completions?.[selectedDate]) 
+                    ? task.completions[selectedDate].filter(u => u === user).length 
+                    : 0;
+                  const required = task.repeat === "Daily" ? (task.timesPerDay || 1)
+                                : task.repeat === "Weekly" ? (task.timesPerWeek || 1)
+                                : task.repeat === "Monthly" ? (task.timesPerMonth || 1)
+                                : 1;
+                  const check = count >= required ? "✅" : "";
+                  return `<p>${user}: ${count}/${required} ${check}</p>`;
+                }).join('')
+              }
+            `
+            : task.settings && task.settings.includes("Rotation") ? `
+              <p><strong>Current Turn:</strong> ${rotation.currentTurn}</p>
+              <p><strong>Next:</strong> ${rotation.nextUser}</p>
+              <p><strong>Completed:</strong> ${rotation.completedCount}/${rotation.repeatLimit}</p>
+            `
+            : `
+              <p><em>No rotation logic.</em></p>
+            `
+          }
         </div>
         <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
           ${
-            turns.length
+            turns.length && task.settings.includes("Rotation")
               ? turns.map((turn, index) => `
                 <div class="turn-entry" data-index="${index}" data-user="${turn.user}">
                   <p>Turn ${turn.repetition}: ${turn.user} - ${
@@ -840,15 +862,17 @@ async function loadTasks() {
                   }
                 </div>
               `).join('')
-              : '<p>No turns assigned.</p>'
+              : '<p>No turn entries.</p>'
           }
         </div>
       `;
 
       container.appendChild(div);
 
-      // Enable drag-and-drop inside each task
-      enableDragAndDrop(div);
+      // Only enable drag-and-drop if it's a Rotation task
+      if (task.settings.includes("Rotation")) {
+        enableDragAndDrop(div);
+      }
 
       div.querySelector(".task-title").addEventListener("click", () => {
         const details = div.querySelector(".task-details");
@@ -869,10 +893,6 @@ async function loadTasks() {
     document.getElementById("taskContainer").innerHTML = "<p>Error loading tasks. Please try again.</p>";
   }
 }
-
-
-
-
 
 
 
