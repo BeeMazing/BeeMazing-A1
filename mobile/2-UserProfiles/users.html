@@ -875,7 +875,7 @@
     <div class="footer">
       <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
           <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-          <span>Home</span>
+          <span>Home 1</span>
       </a>
       <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
           <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -913,16 +913,18 @@
 
 
 // -- Profile Icon and User Selection Modal (simplified version) --
-document.addEventListener("DOMContentLoaded", () => {
-  const profileIcon = document.getElementById("profileIcon");
-  const userSelectModal = document.getElementById("userSelectModal");
-  const userList = document.getElementById("userList");
-  const closeModalBtn = document.getElementById("closeModalBtn");
-  
-  const urlParams = new URLSearchParams(window.location.search);
-  const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail');
-  const currentUser = urlParams.get('user');
+// -- Profile Icon and User Selection Modal (no DOMContentLoaded wrap needed) --
 
+const profileIcon = document.getElementById("profileIcon");
+const userSelectModal = document.getElementById("userSelectModal");
+const userList = document.getElementById("userList");
+const closeModalBtn = document.getElementById("closeModalBtn");
+
+const urlParams = new URLSearchParams(window.location.search);
+const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail');
+const currentUser = urlParams.get('user');
+
+if (profileIcon) {
   profileIcon.addEventListener("click", async () => {
     if (!adminEmail) {
       alert("Admin email not found. Please log in again.");
@@ -957,18 +959,21 @@ document.addEventListener("DOMContentLoaded", () => {
       userSelectModal.classList.add("show");
     }
   });
+}
 
+if (userSelectModal) {
   userSelectModal.addEventListener("click", (e) => {
     if (e.target === userSelectModal) {
       userSelectModal.classList.remove("show");
     }
   });
-  
+}
+
+if (closeModalBtn) {
   closeModalBtn.addEventListener("click", () => {
     userSelectModal.classList.remove("show");
   });
-});
-
+}
 
 
 
