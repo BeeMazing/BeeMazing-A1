@@ -413,21 +413,39 @@
   <div class="add-reward-btn" id="openNewChestModal" aria-label="Add Reward">+</div>
 
   <div class="footer">
-    <a href="/BeeMazing-Y1/mobile/1-Home/home.html" id="homeLink" class="footer-icon" aria-label="Home">
-      <img src="/BeeMazing-Y1/mobile/1-Home/SettingsBtn.png" alt="Home" />
-      <span>User Settings</span>
-    </a>
+    <a href="/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
+      <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
+      <span></span>
+  </a>
     <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" id="tasksLink" class="footer-icon" aria-label="Tasks">
       <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
-      <span>Create Task</span>
+      <span></span>
     </a>
     <a href="/BeeMazing-Y1/mobile/4-Market/market.html" id="marketLink" class="footer-icon" aria-label="Market">
       <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
-      <span>Create Reward</span>
+      <span></span>
     </a>
   </div>
 
   <script>
+
+
+// Append admin and user query parameters to Home link
+document.addEventListener("DOMContentLoaded", () => {
+    const homeLink = document.getElementById("homeLink");
+    const urlParams = new URLSearchParams(window.location.search);
+    const admin = urlParams.get("admin");
+    const user = urlParams.get("user");
+    if (admin && user) {
+        homeLink.href = `/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
+    }
+});
+
+
+
+
+
+
     let chests = [
       { name: "The Key", quote: "You hold the key to the path of others.", effect: "➡ Transfer one of your tasks to another user. You get the honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Keyy.gif", isCustom: false },
       { name: "Double Trouble", quote: "Today’s efforts are worth double.", effect: "➡ Next task = double honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/DoubleTrouble.png", isCustom: false },
