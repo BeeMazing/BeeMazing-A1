@@ -273,7 +273,7 @@
             color: var(--accent-color); /* white */
             font-weight: 600;
         }
-        
+
         @keyframes fadeIn {
             0% { opacity: 0; }
             100% { opacity: 1; }
@@ -945,6 +945,39 @@
 /* selecting user */
 
 
+
+
+
+/* overall progress */
+
+.overall-progress {
+  background: #2a2b35;
+  border: 1px solid #444;
+  border-radius: 10px;
+  padding: 15px;
+  margin: 15px;
+  text-align: center;
+}
+
+.progress-bar-container {
+  width: 100%;
+  background: #555;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 20px;
+  margin: 10px 0;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: #FFC107;
+  transition: width 0.5s;
+}
+
+/* overall progress */
+
+
     </style>
 </head>
 <body>
@@ -994,8 +1027,25 @@
             <div class="reward-container">
                 <p><strong>Buzz points:</strong> <span id="rewardAmount">0</span> 🍯</p>
             </div>
+
+        
+            
         </div>
 
+<!-- overall progress -->
+
+
+        <div id="overallProgress" class="overall-progress">
+          <h3>Overall Progress</h3>
+          <div class="progress-bar-container">
+            <div id="progressBar" class="progress-bar"></div>
+          </div>
+          <p id="taskSummary">Loading...</p>
+          <p id="doSummary">Loading...</p>
+        </div>
+
+
+       <!-- overall progress --> 
      
     </div>
 
@@ -1150,6 +1200,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         loadUserReward(userName);
         loadLuckyChests(userName);
+        loadOverallProgress(userName);
+
         document.getElementById("welcomeMessage").textContent = `Welcome, ${userName}!`;
 
 
@@ -1389,6 +1441,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: JSON.stringify({ adminEmail, luckyChests: allChests })
               });
               loadLuckyChests(userName);
+              loadOverallProgress(userName);
+
             }
           } catch (err) {
             console.error("Error updating lucky chest progress:", err);
@@ -1636,6 +1690,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     loadLuckyChests(userName);
+    loadOverallProgress(userName);
+
 
     // Redirect to usermarket.html with tab=rewards
     const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
@@ -1723,6 +1779,88 @@ document.addEventListener("DOMContentLoaded", () => {
             showAdminControlsIfNeeded();
           }
         });
+
+
+
+        async function loadOverallProgress(userName) {
+  const adminEmail = localStorage.getItem("currentAdminEmail");
+  const todayStr = new Date().toLocaleDateString("sv-SE"); // "YYYY-MM-DD"
+  let totalTasks = 0;
+  let completedTasks = 0;
+  let totalDos = 0;
+  let completedDos = 0;
+
+  try {
+    const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
+
+    const tasks = data.tasks || [];
+    const todayTasks = tasks.filter(task => {
+      if (!task.users || !task.title || !task.date) return false;
+      if (!task.users.includes(userName)) return false;
+
+      const [startStr, endStr] = task.date.split(" to ");
+      const startDate = new Date(startStr);
+      const endDate = endStr ? new Date(endStr) : new Date(3000, 0, 1);
+      const today = new Date(todayStr);
+
+      if (today < startDate || today > endDate) return false;
+
+      // Specific Dates
+      if (task.specificDates) {
+        const specificDates = task.specificDates.split(",").map(d => d.trim());
+        return specificDates.includes(todayStr);
+      }
+
+      // Specific Days
+      if (task.specificDays) {
+        const days = typeof task.specificDays === "string" ? task.specificDays.split(",").map(d => d.trim()) : task.specificDays;
+        const dayOfWeek = today.toLocaleDateString(undefined, { weekday: "long" });
+        return days.includes(dayOfWeek);
+      }
+
+      return true;
+    });
+
+    totalTasks = todayTasks.length;
+
+    todayTasks.forEach(task => {
+      const isRotation = task.settings === "Rotation";
+      let requiredTimes = 1;
+      if (!isRotation) {
+        if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+        if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+        if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+      } else {
+        requiredTimes = task.users.length;
+      }
+
+      const completionsToday = task.completions?.[todayStr] || [];
+      const pendingToday = task.pendingCompletions?.[todayStr] || [];
+      const userCompletionCount = completionsToday.filter(u => u === userName).length;
+      const userPendingCount = pendingToday.filter(u => u === userName).length;
+      const userTotal = userCompletionCount + userPendingCount;
+
+      totalDos += requiredTimes;
+      completedDos += userTotal;
+
+      if (userTotal >= requiredTimes) completedTasks++;
+    });
+
+    const progressPercent = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+    document.getElementById("taskSummary").textContent = `Total Tasks: ${completedTasks}/${totalTasks}`;
+    document.getElementById("doSummary").textContent = `Total Do's: ${completedDos}/${totalDos}`;
+    document.getElementById("progressBar").style.width = `${progressPercent}%`;
+
+  } catch (err) {
+    console.error("Error loading overall progress:", err);
+    document.getElementById("taskSummary").textContent = "Error loading tasks";
+    document.getElementById("doSummary").textContent = "";
+  }
+}
+
         </script>
 
 
