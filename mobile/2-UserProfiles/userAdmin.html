@@ -386,6 +386,13 @@ body.menu-open {
         font-size: 16px;
     }
 }
+
+
+.turn-entry {
+    touch-action: none; /* prevent mobile scroll conflict when dragging */
+  }
+
+
   </style>
 
 
@@ -431,7 +438,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home</span>
+        <span>Home 1</span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -853,6 +860,9 @@ async function loadTasks() {
       });
     });
 
+    // 🆕 Enable drag and drop for this task
+enableDragAndDrop(div);
+
     if (!container.innerHTML) {
       container.innerHTML = "<p>No tasks for this date.</p>";
     }
@@ -865,6 +875,73 @@ async function loadTasks() {
 
 
 
+function enableDragAndDrop(taskDiv) {
+  let draggedItem = null;
+  let dragStartIndex = null;
+
+  const turnEntries = taskDiv.querySelectorAll(".turn-entry");
+  turnEntries.forEach((entry, index) => {
+    entry.draggable = true;
+    entry.dataset.index = index;
+
+    entry.addEventListener("dragstart", (e) => {
+      draggedItem = entry;
+      dragStartIndex = index;
+      setTimeout(() => {
+        entry.classList.add("dragging");
+      }, 0);
+    });
+
+    entry.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      const draggingOver = e.currentTarget;
+      if (draggingOver !== draggedItem) {
+        draggingOver.classList.add("drag-over");
+      }
+    });
+
+    entry.addEventListener("dragleave", (e) => {
+      e.currentTarget.classList.remove("drag-over");
+    });
+
+    entry.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      const dropTarget = e.currentTarget;
+      if (!draggedItem || draggedItem === dropTarget) return;
+
+      const container = draggedItem.parentNode;
+      const children = Array.from(container.children);
+
+      const draggedIndex = children.indexOf(draggedItem);
+      const dropIndex = children.indexOf(dropTarget);
+
+      if (draggedIndex < dropIndex) {
+        container.insertBefore(draggedItem, dropTarget.nextSibling);
+      } else {
+        container.insertBefore(draggedItem, dropTarget);
+      }
+
+      turnEntries.forEach(entry => {
+        entry.classList.remove("dragging", "drag-over");
+      });
+
+      // After reordering, collect new user order:
+      const newOrder = Array.from(container.children).map(el => el.dataset.user);
+
+      const title = taskDiv.dataset.title;
+      const date = taskDiv.dataset.date;
+
+      await handleReorder(title, date, newOrder);
+    });
+
+    entry.addEventListener("dragend", (e) => {
+      turnEntries.forEach(entry => {
+        entry.classList.remove("dragging", "drag-over");
+      });
+      draggedItem = null;
+    });
+  });
+}
 
 
 
