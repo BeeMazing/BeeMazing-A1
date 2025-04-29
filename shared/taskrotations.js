@@ -84,7 +84,6 @@ function calculateTurn(task, selectedDate) {
 
 
 
-
 function prepareTaskTurnData(task, selectedDate) {
     const repeat = task.repeat || "Daily";
     let requiredTimes = task.repeat === "Daily" ? task.timesPerDay || 1 :
@@ -114,7 +113,9 @@ function prepareTaskTurnData(task, selectedDate) {
         // Exactly replicate calculateTurn logic
         const assignedUsers = [...userOrder];
         Object.entries(tempTurnReplacement).forEach(([index, user]) => {
-            assignedUsers[parseInt(index)] = user;
+            if (parseInt(index) < assignedUsers.length) {
+                assignedUsers[parseInt(index)] = user;
+            }
         });
 
         const completedCount = completions.length + pendingCompletions.length;
@@ -141,7 +142,7 @@ function prepareTaskTurnData(task, selectedDate) {
 
         let totalCompletions;
         if (selected < today) {
-            totalCompletions = completedCount;
+            totalCompletions = completedCount; // Use only completions for past dates
         } else if (selected.getTime() === today.getTime()) {
             totalCompletions = lastCompletedCount + completedCount;
         } else {
@@ -149,17 +150,30 @@ function prepareTaskTurnData(task, selectedDate) {
             totalCompletions = lastCompletedCount + (daysDiff - 1) * requiredTimes + completedCount;
         }
 
+        console.log("prepareTaskTurnData debug:", {
+            selectedDate,
+            startDate: startDate.toISOString(),
+            lastCompletionDate: lastCompletionDate.toISOString(),
+            daysDiff: selected < today ? "N/A (past)" : Math.floor((selected - lastCompletionDate) / (1000 * 60 * 60 * 24)),
+            totalCompletions,
+            assignedUsers,
+            completedCount,
+            completions,
+            pendingCompletions,
+            tempTurnReplacement
+        });
+
         for (let i = 0; i < requiredTimes; i++) {
-            const userIndex = (totalCompletions + i) % assignedUsers.length;
+            const userIndex = (totalCompletions + i) % (assignedUsers.length || 1);
             const user = assignedUsers[userIndex] || "Unknown";
             const originalUser = userOrder[userIndex] || user;
             let isCompleted = false;
             let isPending = false;
 
-            if (userCompletionCounts[user]) {
+            if (userCompletionCounts[user] && userCompletionCounts[user] > 0) {
                 isCompleted = true;
                 userCompletionCounts[user]--;
-            } else if (userPendingCounts[user]) {
+            } else if (userPendingCounts[user] && userPendingCounts[user] > 0) {
                 isPending = true;
                 userPendingCounts[user]--;
             }
@@ -178,10 +192,10 @@ function prepareTaskTurnData(task, selectedDate) {
                 let isCompleted = false;
                 let isPending = false;
 
-                if (userCompletionCounts[user]) {
+                if (userCompletionCounts[user] && userCompletionCounts[user] > 0) {
                     isCompleted = true;
                     userCompletionCounts[user]--;
-                } else if (userPendingCounts[user]) {
+                } else if (userPendingCounts[user] && userPendingCounts[user] > 0) {
                     isPending = true;
                     userPendingCounts[user]--;
                 }
@@ -196,6 +210,7 @@ function prepareTaskTurnData(task, selectedDate) {
         }
     }
 
+    console.log("prepareTaskTurnData turns:", turns);
     return turns;
 }
 
