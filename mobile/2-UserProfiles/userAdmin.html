@@ -431,7 +431,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home</span>
+        <span>Home 1</span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -754,7 +754,6 @@ async function handleReorder(title, date, newUserOrder) {
 
 
 
-
 async function loadTasks() {
   try {
     const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
@@ -787,65 +786,72 @@ async function loadTasks() {
     });
 
     Object.keys(tasksByTitle).forEach(title => {
-  const task = tasksByTitle[title];
-  const turns = prepareTaskTurnData(task, selectedDate); // 👈 Correct! Only use prepareTaskTurnData
-  const date = task.date;
+      const task = tasksByTitle[title];
+      const rotation = calculateTurn(task, selectedDate);   // ✅ Get Current Turn, Next, Completed
+      const turns = prepareTaskTurnData(task, selectedDate); // ✅ Get full turn list
+      const date = task.date;
 
-  const div = document.createElement("div");
-  div.className = "task-entry";
-  div.dataset.title = title;
-  div.dataset.date = date;
-  div.innerHTML = `
-    <h3 class="task-title">${title}</h3>
-    <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
-      ${
-        turns.length
-          ? turns.map((turn, index) => `
-<div class="turn-entry" data-index="${index}" data-user="${turn.user}">
-              <p>Turn ${turn.repetition}: ${turn.user} - ${
-                turn.isCompleted
-                  ? 'Accepted'
-                  : turn.isPending
-                    ? 'Waiting for Review'
-                    : 'Pending'
-              }</p>
-              ${
-                turn.isPending && !turn.isCompleted
-                  ? `
-                    <button class="accept-btn" onclick="handleDecision('${title}', '${date}', ${index}, 'accept', '${turn.user}', event)">Accept</button>
-                    <button class="decline-btn" onclick="handleDecision('${title}', '${date}', ${index}, 'decline', '${turn.user}', event)">Decline</button>
-                  `
-                  : turn.isCompleted
-                    ? `
-                      <button class="revert-btn" onclick="handleRevert('${title}', '${date}', ${index}, '${turn.user}', event)">Revert</button>
-                    `
-                    : `
-                      <select id="replace-select-${index}">
-                        <option value="">Select User</option>
-                        ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
-                      </select>
-                      <button class="replace-btn" onclick="handleReplace('${title}', '${date}', ${index}, '${turn.user}', event)">Replace</button>
-                    `
-              }
-            </div>
-          `).join('')
-          : '<p>No turns assigned.</p>'
-      }
-    </div>
-  `;
-  container.appendChild(div);
+      const div = document.createElement("div");
+      div.className = "task-entry";
+      div.dataset.title = title;
+      div.dataset.date = date;
 
-  div.querySelector(".task-title").addEventListener("click", () => {
-    const details = div.querySelector(".task-details");
-    details.classList.toggle("show");
-    if (details.classList.contains("show")) {
-      expandedTasks.add(title);
-    } else {
-      expandedTasks.delete(title);
-    }
-  });
-});
+      div.innerHTML = `
+        <h3 class="task-title">${title}</h3>
+        <div class="task-meta">
+          <p><strong>Current Turn:</strong> ${rotation.currentTurn}</p>
+          <p><strong>Next:</strong> ${rotation.nextUser}</p>
+          <p><strong>Completed:</strong> ${rotation.completedCount}/${rotation.repeatLimit}</p>
+        </div>
+        <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
+          ${
+            turns.length
+              ? turns.map((turn, index) => `
+                <div class="turn-entry" data-index="${index}" data-user="${turn.user}">
+                  <p>Turn ${turn.repetition}: ${turn.user} - ${
+                    turn.isCompleted
+                      ? 'Accepted'
+                      : turn.isPending
+                        ? 'Waiting for Review'
+                        : 'Pending'
+                  }</p>
+                  ${
+                    turn.isPending && !turn.isCompleted
+                      ? `
+                        <button class="accept-btn" onclick="handleDecision('${title}', '${date}', ${index}, 'accept', '${turn.user}', event)">Accept</button>
+                        <button class="decline-btn" onclick="handleDecision('${title}', '${date}', ${index}, 'decline', '${turn.user}', event)">Decline</button>
+                      `
+                      : turn.isCompleted
+                        ? `
+                          <button class="revert-btn" onclick="handleRevert('${title}', '${date}', ${index}, '${turn.user}', event)">Revert</button>
+                        `
+                        : `
+                          <select id="replace-select-${index}">
+                            <option value="">Select User</option>
+                            ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
+                          </select>
+                          <button class="replace-btn" onclick="handleReplace('${title}', '${date}', ${index}, '${turn.user}', event)">Replace</button>
+                        `
+                  }
+                </div>
+              `).join('')
+              : '<p>No turns assigned.</p>'
+          }
+        </div>
+      `;
 
+      container.appendChild(div);
+
+      div.querySelector(".task-title").addEventListener("click", () => {
+        const details = div.querySelector(".task-details");
+        details.classList.toggle("show");
+        if (details.classList.contains("show")) {
+          expandedTasks.add(title);
+        } else {
+          expandedTasks.delete(title);
+        }
+      });
+    });
 
     if (!container.innerHTML) {
       container.innerHTML = "<p>No tasks for this date.</p>";
