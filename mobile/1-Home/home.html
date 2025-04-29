@@ -349,6 +349,12 @@ body {
 
 
 
+
+
+/* Admin password popout style */
+
+
+
 .admin-checkmark {
     color: #00C4B4;
     font-size: 16px;
@@ -359,12 +365,56 @@ body {
     min-width: 90px; /* Prevent "Admin" truncation */
 }
 
+
+
+#adminPasswordModal .modal-content {
+  background: #2A2B32;
+  border: 2px solid var(--border-dark);
+  color: var(--text-color);
+}
+
+#adminPasswordModal input {
+  background: var(--accent-color);
+  color: var(--text-color);
+  border: 2px solid var(--border-dark);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 16px;
+  width: 100%;
+}
+
+#adminPasswordModal .login-btn {
+  padding: 12px 25px;
+  background: var(--primary-color);
+  color: var(--secondary-color);
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#adminPasswordModal .login-btn:hover {
+  background: #FFB300;
+  transform: translateY(-2px);
+}
+
+#adminPasswordModal .error {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--danger-color);
+}
+
+
+/* Admin password popout style */
+
     </style>
 </head>
 <body>
     <div class="header">
         <i class="fas fa-bars menu-icon" aria-label="Menu"></i>
-        <div class="title">BeeMazing</div>
+        <div class="title">BeeMazing A1</div>
     </div>
 
     <div id="logoutContainer" class="logout-container">
