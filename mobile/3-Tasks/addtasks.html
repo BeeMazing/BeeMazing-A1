@@ -1904,7 +1904,7 @@ window.addEventListener("click", (e) => {
     let timesPerDay = parseInt(document.getElementById("timesPerDayInput").value) || null;
     let timesPerWeek = parseInt(document.getElementById("timesPerWeekInput").value) || null;
     let timesPerMonth = parseInt(document.getElementById("timesPerMonthInput").value) || null;
-    const specificDates = document.getElementById("specificDatesInput").value;
+
 
     if (!title) return alert("Task title is required!");
     if (users.length === 0) return alert("Please assign at least one user.");
@@ -1919,70 +1919,80 @@ window.addEventListener("click", (e) => {
     if (timesPerMonth !== null && timesPerMonth < 1) timesPerMonth = 1;
 
     let dateValue = "";
-    if (dateMode === "date") {
-        const fromDate = dateFrom;
-        const toDate = dateTo || "3000-01-01";
-        dateValue = `${fromDate} to ${toDate}`;
-    } else if (dateMode === "specific-dates" && specificDates) {
-        const dates = specificDates.split(",").map(d => d.trim()).filter(d => d);
-        dateValue = `${dates[0]} to ${dates[dates.length - 1]}`;
-    } else {
-        const today = new Date().toISOString().split("T")[0];
-        dateValue = `${today} to 3000-01-01`;
-    }
+  let specificDates = document.getElementById("specificDatesInput").value;
+  let daysOfWeek = dateMode === "date" ? (selectedDays.length > 0 ? selectedDays : ["Any"]) : undefined;
 
-    const task = {
-        title,
-        notes: notes || undefined,
-        room: room || undefined,
-        repeat: repeat || undefined,
-        settings: settings || undefined,
-        date: dateValue,
-        reminder: reminder || undefined,
-        users,
-        reward: reward || undefined,
-        alarms: alarms.length > 0 ? alarms : undefined,
-        timesPerDay: repeat === "Daily" ? timesPerDay : undefined,
-        timesPerWeek: repeat === "Weekly" ? timesPerWeek : undefined,
-        timesPerMonth: repeat === "Monthly" ? timesPerMonth : undefined,
-        specificDates: dateMode === "specific-dates" ? specificDates : undefined,
-        daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 && !selectedDays.includes("Any") ? selectedDays : undefined) : undefined
-    };
+  if (dateMode === "date") {
+    const fromDate = dateFrom;
+    const toDate = dateTo || "3000-01-01";
+    dateValue = `${fromDate} to ${toDate}`;
+    specificDates = undefined; // Clear specificDates if in date mode
+  } else if (dateMode === "specific-dates" && specificDates) {
+    const dates = specificDates.split(",").map(d => d.trim()).filter(d => d);
+    dateValue = `${dates[0]} to ${dates[dates.length - 1]}`;
+    daysOfWeek = undefined; // Clear daysOfWeek if in specific-dates mode
+  } else {
+    const today = new Date().toISOString().split("T")[0];
+    dateValue = `${today} to 3000-01-01`;
+    specificDates = undefined;
+    daysOfWeek = undefined;
+  }
 
-    const currentAdmin = localStorage.getItem("currentAdminEmail");
-    const editTask = JSON.parse(localStorage.getItem("familyApp_editTask"));
+  const task = {
+    title,
+    notes: notes || undefined,
+    room: room || undefined,
+    repeat: repeat || undefined,
+    settings: settings || undefined,
+    date: dateValue,
+    reminder: reminder || undefined,
+    users,
+    reward: reward || undefined,
+    alarms: alarms.length > 0 ? alarms : undefined,
+    timesPerDay: repeat === "Daily" ? timesPerDay : undefined,
+    timesPerWeek: repeat === "Weekly" ? timesPerWeek : undefined,
+    timesPerMonth: repeat === "Monthly" ? timesPerMonth : undefined,
+    specificDates,
+    daysOfWeek
+  };
 
-    try {
-        const url = "https://beemazing.onrender.com/api/tasks";
-        const body = editTask
-            ? { adminEmail: currentAdmin, task, originalTitle: editTask.title, originalDate: editTask.date }
-            : { adminEmail: currentAdmin, task };
+  console.log("Task being saved:", JSON.stringify(task, null, 2));
 
-        console.log("Saving task:", JSON.stringify(body, null, 2));
-        const response = await fetch(url, {
-            method: editTask ? "PUT" : "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body)
-        });
+  const currentAdmin = localStorage.getItem("currentAdminEmail");
+  const editTask = JSON.parse(localStorage.getItem("familyApp_editTask"));
 
-        const data = await response.json();
-        console.log("Backend response:", JSON.stringify(data, null, 2));
-        if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
+  try {
+    const url = "https://beemazing.onrender.com/api/tasks";
+    const body = editTask
+      ? {
+          adminEmail: currentAdmin,
+          task,
+          originalTitle: editTask.title,
+          originalDate: editTask.date // Ensure this matches the database format
+        }
+      : { adminEmail: currentAdmin, task };
 
-        localStorage.removeItem("familyApp_editTask");
-        localStorage.removeItem("familyApp_editTask_index");
-        alert("Task saved successfully!");
-        window.location.href = "tasks.html";
-    } catch (error) {
-        console.error("Error saving task:", error);
-        alert(`Failed to save task: ${error.message}`);
-    }
+    console.log("Sending request body:", JSON.stringify(body, null, 2)); // Debug
+
+    const response = await fetch(url, {
+      method: editTask ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
+
+    console.log("Server response:", data);
+    localStorage.removeItem("familyApp_editTask");
+    localStorage.removeItem("familyApp_editTask_index");
+    alert("Task saved successfully!");
+    window.location.href = "tasks.html";
+  } catch (error) {
+    console.error("Error saving task:", error);
+    alert(`Failed to save task: ${error.message}`);
+  }
 });
-
-
-
-
-
 
 
 

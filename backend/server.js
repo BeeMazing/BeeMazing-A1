@@ -684,8 +684,11 @@ app.put("/api/tasks", async (req, res) => {
   if (!adminEmail || !task || !originalTitle || !originalDate) {
     return res.status(400).json({ error: "Missing adminEmail, task, originalTitle, or originalDate" });
   }
+  if (!task.title || !task.date || !Array.isArray(task.users)) {
+    return res.status(400).json({ error: "Task missing required fields: title, date, or users" });
+  }
   try {
-    console.log("PUT /api/tasks - Received task:", { title: task.title, users: task.users }); // Debug
+    console.log("PUT /api/tasks - Received:", { originalTitle, originalDate, newTask: { title: task.title, date: task.date, users: task.users } });
     const db = await connectDB();
     const admins = db.collection("admins");
     const admin = await admins.findOne({ email: adminEmail });
@@ -697,20 +700,24 @@ app.put("/api/tasks", async (req, res) => {
       (t) => t.title === originalTitle && t.date === originalDate
     );
     if (taskIndex === -1) {
+      console.log(`Task not found: ${originalTitle}, ${originalDate}`);
       return res.status(404).json({ error: "Task not found" });
     }
+    console.log("Before update:", tasks[taskIndex]);
     tasks[taskIndex] = task;
+    console.log("After update:", tasks[taskIndex]);
     await admins.updateOne(
       { email: adminEmail },
       { $set: { tasks } }
     );
-    console.log("PUT /api/tasks - Updated task:", { title: task.title, users: task.users }); // Debug
     res.json({ success: true });
   } catch (err) {
     console.error("Error updating task:", err);
     res.status(500).json({ error: "Failed to update task" });
   }
 });
+
+
 
 
 

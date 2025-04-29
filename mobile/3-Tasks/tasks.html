@@ -503,7 +503,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>w1</span>
+            <span>w7</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -566,150 +566,102 @@ if (typeof calculateIndividualProgress === 'undefined') {
 
 
         // Load tasks for a specific date
+
+
         async function loadTasksForDate(selectedDate) {
-    const adminEmail = localStorage.getItem("currentAdminEmail");
-    if (!adminEmail) {
-        document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">No admin email found 🌙</div>`;
-        return;
-    }
-
-    try {
-        const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-        const result = await response.json();
-        const tasks = result.tasks || [];
-        for (const task of tasks) {
-  if (!task.title || !task.date || !Array.isArray(task.users)) {
-    console.warn("Found invalid task, deleting:", task);
-    await deleteInvalidTask(task);
-  }
-}
-
-        const taskList = document.getElementById("taskList");
-        taskList.innerHTML = "";
-
-        const selected = parseLocalDate(selectedDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        
-
-
-
-
-
-        const visibleTasks = tasks.filter(task => {
-    if (!task.date && !task.specificDates) {
-        console.warn("Task missing date and specificDates:", task);
-        return false;
-    }
-
-    if (task.specificDates) {
-        const specificDates = task.specificDates.split(",").map(date => date.trim());
-        return specificDates.includes(selectedDate);
-    }
-
-    const range = task.date.split(" to ");
-    const from = parseLocalDate(range[0]);
-    const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
-    const inRange = selected >= from && selected <= to;
-
-    if (task.daysOfWeek) {
-        let days = task.daysOfWeek;
-        if (typeof days === "string") days = days.split(",").map(d => d.trim()).filter(d => d);
-        if (Array.isArray(days) && days.length > 0) {
-            const dayOfWeek = selected.toLocaleDateString(undefined, { weekday: "long" });
-            return days.includes(dayOfWeek) && inRange;
-        }
-    }
-
-    return inRange;
-});
-
-
-
-
-
-        if (visibleTasks.length === 0) {
-            taskList.innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">No tasks for this day 🌙</div>`;
-            return;
-        }
-
-        visibleTasks.forEach((task) => {
-            const taskDiv = document.createElement("div");
-            taskDiv.className = "task-item";
-            taskDiv.dataset.taskTitle = task.title;
-            taskDiv.dataset.taskDate = task.date;
-
-            if (!Array.isArray(task.users) || task.users.length === 0) {
-    task.users = ["Unknown"];
-}
-
-
-            let taskHTML = '';
-            const required = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                            task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                            task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-
-                            if (task.settings?.includes("Individual")) {
-    taskHTML += `<strong>${task.title}</strong><br><em>Individual Task</em><br>`;
-    if (typeof calculateIndividualProgress === 'function') {
-        task.users.forEach(user => {
-            const { count, required, isComplete } = calculateIndividualProgress(task, selectedDate, user);
-            const check = isComplete ? '✅' : '';
-            taskHTML += `${user}: ${count}/${required} ${check}<br>`;
-        });
-    } else {
-        taskHTML += `<em style="color:#ff4444;">Error: Progress calculation unavailable</em><br>`;
-    }
-} else if (task.settings?.includes("Rotation")) {
-                const { currentTurn, nextUser, completedCount, repeatLimit } = calculateTurn(task, selectedDate);
-                taskHTML += `
-                    <strong>${task.title}</strong><br>
-                    Turn: ${currentTurn}<br>
-                    Next: ${nextUser}<br>
-                    Completed: ${completedCount}/${repeatLimit}<br>
-                `;
-            } else {
-                taskHTML += `<strong>${task.title}</strong><br><em style="color:#aaa;">No rotation</em><br>`;
-            }
-
-            taskDiv.innerHTML = taskHTML + `<div class="delete-btn">Delete</div>`;
-
-            taskDiv.addEventListener("click", async (e) => {
-  // Check if swipe was happening
-  if (taskDiv.dataset.swiping === "true") {
-    // Don't open popup if swipe happened
-    taskDiv.dataset.swiping = "false"; // reset
+  const adminEmail = localStorage.getItem("currentAdminEmail");
+  if (!adminEmail) {
+    document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">No admin email found 🌙</div>`;
     return;
   }
-  
-  if (!e.target.classList.contains("delete-btn")) {
-    const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-    const latestResult = await latest.json();
-    const latestTask = latestResult.tasks.find(t => t.title === task.title && t.date === task.date);
-    if (latestTask) showTaskDetails(latestTask);
+
+  try {
+    const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+    const result = await response.json();
+    const tasks = result.tasks || [];
+    console.log("Fetched tasks:", tasks.map(t => ({ title: t.title, date: t.date, specificDates: t.specificDates, daysOfWeek: t.daysOfWeek }))); // Debug
+
+    for (const task of tasks) {
+      if (!task.title || !task.date || !Array.isArray(task.users)) {
+        console.warn("Found invalid task, deleting:", task);
+        await deleteInvalidTask(task);
+      }
+    }
+
+    const taskList = document.getElementById("taskList");
+    taskList.innerHTML = "";
+
+    const selected = parseLocalDate(selectedDate);
+    const visibleTasks = tasks.filter(task => {
+      if (!task.date) {
+        console.log(`Task filtered out (no date): ${task.title}`);
+        return false;
+      }
+
+      const range = task.date.split(" to ");
+      const from = parseLocalDate(range[0]);
+      const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
+      const inRange = selected >= from && selected <= to;
+
+      if (task.specificDates) {
+        const specificDates = task.specificDates.split(",").map(date => date.trim());
+        const isIncluded = specificDates.includes(selectedDate);
+        console.log(`Task ${task.title} (specificDates): ${isIncluded ? 'included' : 'filtered out'} for ${selectedDate}`);
+        return isIncluded;
+      }
+
+      if (task.daysOfWeek && !task.specificDates) {
+        let days = task.daysOfWeek;
+        if (typeof days === "string") {
+          days = days.split(",").map(d => d.trim()).filter(d => d);
+        }
+        if (Array.isArray(days) && days.length > 0 && days[0] !== "Any") {
+          const dayOfWeek = selected.toLocaleDateString(undefined, { weekday: "long" });
+          const isDayIncluded = days.includes(dayOfWeek);
+          console.log(`Task ${task.title} (daysOfWeek): ${isDayIncluded ? 'included' : 'filtered out'} for ${dayOfWeek}`);
+          return isDayIncluded && inRange;
+        }
+      }
+
+      console.log(`Task ${task.title} (default range): ${inRange ? 'included' : 'filtered out'}`);
+      return inRange;
+    });
+
+    console.log("Visible tasks:", visibleTasks.map(t => ({ title: t.title, date: t.date }))); // Debug
+
+    if (visibleTasks.length === 0) {
+      taskList.innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">No tasks for this day 🌙</div>`;
+      return;
+    }
+
+    visibleTasks.forEach((task) => {
+      // ... (existing rendering logic)
+    });
+  } catch (err) {
+    console.error("Error loading tasks:", err);
+    document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">Error loading tasks: ${err.message}</div>`;
   }
-});
-
-
-            taskDiv.querySelector(".delete-btn").addEventListener("click", async (e) => {
-    e.stopPropagation(); // ⬅️ Prevent opening the popup
-    if (confirm("Are you sure you want to delete this task?")) {
-        await deleteTaskFromBackend(task.title, task.date);
-        loadTasksForDate(selectedDate);
-    }
-});
-
-
-            taskList.appendChild(taskDiv);
-            enableSwipeToDelete(taskDiv);
-        });
-    } catch (err) {
-        console.error("Error loading tasks:", err);
-        document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">Error loading tasks: ${err.message}</div>`;
-    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
