@@ -393,6 +393,17 @@ body.menu-open {
   }
 
 
+
+
+  .dragging-active {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  transform: scale(1.05);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  z-index: 999;
+  position: relative;
+}
+
+
   </style>
 
 
@@ -438,7 +449,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home 1</span>
+        <span>Home 111</span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -895,16 +906,18 @@ function enableDragAndDrop(taskDiv) {
   });
 
   function startDrag(e) {
-    e.preventDefault();
-    draggedItem = e.currentTarget;
-    startY = e.touches ? e.touches[0].clientY : e.clientY;
-    draggedItem.classList.add("dragging");
+  e.preventDefault();
+  draggedItem = e.currentTarget;
+  startY = e.touches ? e.touches[0].clientY : e.clientY;
+  draggedItem.classList.add("dragging-active"); // CHANGE to dragging-active
 
-    document.addEventListener("mousemove", onDrag);
-    document.addEventListener("touchmove", onDrag, { passive: false });
-    document.addEventListener("mouseup", endDrag);
-    document.addEventListener("touchend", endDrag);
-  }
+  document.addEventListener("mousemove", onDrag);
+  document.addEventListener("touchmove", onDrag, { passive: false });
+  document.addEventListener("mouseup", endDrag);
+  document.addEventListener("touchend", endDrag);
+}
+
+
 
   function onDrag(e) {
   if (!draggedItem) return;
@@ -938,26 +951,27 @@ function enableDragAndDrop(taskDiv) {
 }
 
 
-  function endDrag() {
-    if (!draggedItem) return;
+function endDrag() {
+  if (!draggedItem) return;
 
-    draggedItem.classList.remove("dragging");
-    draggedItem.style.transform = "";
-    draggedItem.style.position = "";
-    draggedItem.style.zIndex = "";
-    draggedItem = null;
+  draggedItem.classList.remove("dragging-active"); // CHANGE to dragging-active
+  draggedItem.style.transform = "";
+  draggedItem.style.position = "";
+  draggedItem.style.zIndex = "";
+  draggedItem = null;
 
-    document.removeEventListener("mousemove", onDrag);
-    document.removeEventListener("touchmove", onDrag);
-    document.removeEventListener("mouseup", endDrag);
-    document.removeEventListener("touchend", endDrag);
+  document.removeEventListener("mousemove", onDrag);
+  document.removeEventListener("touchmove", onDrag);
+  document.removeEventListener("mouseup", endDrag);
+  document.removeEventListener("touchend", endDrag);
 
-    // After dragging ends, update the order
-    const newOrder = Array.from(container.children).map(el => el.dataset.user);
-    const title = taskDiv.dataset.title;
-    const date = taskDiv.dataset.date;
-    handleReorder(title, date, newOrder);
-  }
+  const newOrder = Array.from(container.children).map(el => el.dataset.user);
+  const title = taskDiv.dataset.title;
+  const date = taskDiv.dataset.date;
+  handleReorder(title, date, newOrder);
+}
+
+
 }
 
 
