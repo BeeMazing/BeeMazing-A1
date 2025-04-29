@@ -273,29 +273,7 @@
             color: var(--accent-color); /* white */
             font-weight: 600;
         }
-        .sell-modal-content input {
-            padding: 12px;
-            font-size: 16px;
-            width: 100%;
-            margin: 15px 0;
-            border: 2px solid var(--primary-color);
-            border-radius: 8px;
-        }
-        .sell-modal-content button {
-            background: var(--secondary-color);
-            color: var(--accent-color);
-            padding: 12px;
-            border-radius: 8px;
-            border: none;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: background-color 0.3s ease;
-        }
-        .sell-modal-content button:hover {
-            background: #424242;
-        }
+        
         @keyframes fadeIn {
             0% { opacity: 0; }
             100% { opacity: 1; }
@@ -1015,7 +993,6 @@
   
             <div class="reward-container">
                 <p><strong>Buzz points:</strong> <span id="rewardAmount">0</span> 🍯</p>
-                <button id="sellButton">Sell Honey</button>
             </div>
         </div>
 
@@ -1064,19 +1041,6 @@
   </div>
   
     
-
-    <div id="sellModal" class="modal" style="display:none;">
-        <div class="sell-modal-content">
-            <strong>Enter honey to sell:</strong><br>
-            <input type="number" id="sellAmount" placeholder="Enter amount" />
-            <button id="confirmSell">Sell</button>
-        </div>
-    </div>
-
-
-
-
-
 
 
 
@@ -1254,52 +1218,8 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
         
-        async function sellReward(userName, amount) {
-          const adminEmail = localStorage.getItem("currentAdminEmail");
-          try {
-            const response = await fetch(`https://beemazing.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || "Failed to fetch rewards");
-            const rewards = data.rewards || {};
-            const userReward = rewards[userName] || 0;
-        
-            if (userReward >= amount) {
-              await fetch("https://beemazing.onrender.com/api/rewards", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ adminEmail, user: userName, amount: -amount })
-              });
-              loadUserReward(userName);
-            } else {
-              alert("Not enough honey!");
-            }
-          } catch (err) {
-            console.error("Error selling reward:", err);
-            alert("Failed to sell honey. Please try again.");
-          }
-        }
-        
-        document.getElementById('sellButton').addEventListener('click', () => {
-          document.getElementById('sellModal').style.display = 'flex';
-        });
-        
-        document.getElementById('sellModal').addEventListener('click', (e) => {
-          if (e.target === document.getElementById('sellModal')) {
-            document.getElementById('sellModal').style.display = 'none';
-          }
-        });
-        
-        document.getElementById('confirmSell').addEventListener('click', () => {
-          const sellAmount = Number(document.getElementById('sellAmount').value);
-          const urlParams = new URLSearchParams(window.location.search);
-          const userName = urlParams.get('user');
-          if (sellAmount > 0) {
-            sellReward(userName, sellAmount);
-            document.getElementById('sellModal').style.display = 'none';
-          } else {
-            alert("Please enter a valid amount.");
-          }
-        });
+      
+    
         
         async function saveTaskHistory(userName, task) {
           const adminEmail = localStorage.getItem("currentAdminEmail");
