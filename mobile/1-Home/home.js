@@ -224,7 +224,23 @@ document.getElementById("adminPasswordError").textContent = "";
 document.getElementById("adminPasswordField").focus();
 
         
-
+              try {
+                const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email: currentAdmin, password: enteredPassword }),
+                });
+                const data = await res.json();
+        
+                if (res.ok && data.success) {
+                  window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
+                } else {
+                  alert(data.message || "Incorrect password. Access denied.");
+                }
+              } catch (err) {
+                console.error("Error verifying admin password:", err);
+                alert("Failed to verify password. Please check your connection.");
+              }
             }
           } else {
             // Normal Child user → open directly
@@ -472,9 +488,7 @@ if (e.target.id === "changePasswordModal") {
 });
 
 
-
 document.getElementById("submitAdminPasswordBtn").addEventListener("click", async () => {
-  const currentAdmin = localStorage.getItem("currentAdminEmail"); // ✅ add this line
   const passwordInput = document.getElementById("adminPasswordField").value.trim();
   const errorDiv = document.getElementById("adminPasswordError");
 
@@ -487,9 +501,8 @@ document.getElementById("submitAdminPasswordBtn").addEventListener("click", asyn
     const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: currentAdmin, password: passwordInput }), // ✅ now works
+      body: JSON.stringify({ email: currentAdmin, password: passwordInput }),
     });
-
     const data = await res.json();
 
     if (res.ok && data.success) {
@@ -504,19 +517,10 @@ document.getElementById("submitAdminPasswordBtn").addEventListener("click", asyn
   }
 });
 
-
-
-
-
-
-
-
-
 // Allow clicking outside the modal to close it
 document.getElementById("adminPasswordModal").addEventListener("click", (e) => {
   if (e.target.id === "adminPasswordModal") {
     document.getElementById("adminPasswordModal").classList.remove("show");
   }
 });
-
 
