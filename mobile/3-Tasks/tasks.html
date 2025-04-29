@@ -514,9 +514,16 @@ body {
         </a>
     </div>
 
-    <script src="/BeeMazing-Y1/shared/taskrotations.js"></script>
+    <script src="/BeeMazing-Y1/shared/taskrotations.js?t=${Date.now()}"></script>
 
     <script>
+
+
+if (typeof calculateIndividualProgress === 'undefined') {
+    console.error("taskrotations.js failed to load or does not contain calculateIndividualProgress");
+} else {
+    console.log("taskrotations.js loaded successfully");
+}
 
         // Dynamically highlight the active footer icon
         document.querySelectorAll('.footer a').forEach(link => {
@@ -639,12 +646,16 @@ const visibleTasks = tasks.filter(task => {
 
                             if (task.settings?.includes("Individual")) {
     taskHTML += `<strong>${task.title}</strong><br><em>Individual Task</em><br>`;
-    task.users.forEach(user => {
-        const { count, required, isComplete } = calculateIndividualProgress(task, selectedDate, user);
-        const check = isComplete ? '✅' : '';
-        taskHTML += `${user}: ${count}/${required} ${check}<br>`;
-    });
-            } else if (task.settings?.includes("Rotation")) {
+    if (typeof calculateIndividualProgress === 'function') {
+        task.users.forEach(user => {
+            const { count, required, isComplete } = calculateIndividualProgress(task, selectedDate, user);
+            const check = isComplete ? '✅' : '';
+            taskHTML += `${user}: ${count}/${required} ${check}<br>`;
+        });
+    } else {
+        taskHTML += `<em style="color:#ff4444;">Error: Progress calculation unavailable</em><br>`;
+    }
+} else if (task.settings?.includes("Rotation")) {
                 const { currentTurn, nextUser, completedCount, repeatLimit } = calculateTurn(task, selectedDate);
                 taskHTML += `
                     <strong>${task.title}</strong><br>
@@ -722,13 +733,16 @@ async function showTaskDetails(task) {
 
                    if (task.settings?.includes("Individual")) {
     taskDetails += `<strong>Individual Progress:</strong><br>`;
-    task.users.forEach(user => {
-        const { count, required, isComplete } = calculateIndividualProgress(task, selectedDate, user);
-        const check = isComplete ? '✅' : '';
-        taskDetails += `${user}: ${count}/${required} ${check}<br>`;
-    });
-
-  } else if (task.settings?.includes("Rotation")) {
+    if (typeof calculateIndividualProgress === 'function') {
+        task.users.forEach(user => {
+            const { count, required, isComplete } = calculateIndividualProgress(task, selectedDate, user);
+            const check = isComplete ? '✅' : '';
+            taskDetails += `${user}: ${count}/${required} ${check}<br>`;
+        });
+    } else {
+        taskDetails += `<em style="color:#ff4444;">Error: Progress calculation unavailable</em><br>`;
+    }
+} else if (task.settings?.includes("Rotation")) {
     const rotation = calculateTurn(task, selectedDate);
     taskDetails += `
       <strong>Current Turn:</strong> ${rotation.currentTurn}<br>
