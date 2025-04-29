@@ -1078,15 +1078,15 @@
     <div class="footer">
       <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
           <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-          <span>Home</span>
+          <span></span>
       </a>
       <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
           <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
-          <span>Tasks</span>
+          <span></span>
       </a>
       <a href="#" id="marketButton" class="footer-icon" aria-label="Market">
           <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
-          <span>Market</span>
+          <span></span>
       </a>
   </div>
   
@@ -1132,12 +1132,36 @@ document.addEventListener("DOMContentLoaded", () => {
                     li.style.background = "#333540";
                     li.style.fontWeight = "600";
                 }
-                li.addEventListener("click", () => {
-                    const isAdmin = data.permissions?.[user] === "Admin";
-                    const page = isAdmin ? "userAdmin.html" : "users.html";
-                    const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
-                    window.location.href = `${basePath}/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
-                });
+                li.addEventListener("click", async () => {
+    const isAdmin = data.permissions?.[user] === "Admin";
+    const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
+
+    if (isAdmin) {
+        let storedAdminPassword = localStorage.getItem("adminPassword") || "";
+        if (!storedAdminPassword) {
+            // No password set yet
+            storedAdminPassword = prompt("No Admin password set. Please create one now:");
+            if (storedAdminPassword && storedAdminPassword.length >= 4) {
+                localStorage.setItem("adminPassword", storedAdminPassword);
+                alert("Admin password saved! Now log in using it.");
+            } else {
+                alert("Password must be at least 4 characters. Please try again.");
+                return;
+            }
+        }
+        
+        const passwordInput = prompt("Enter Admin Password:");
+        if (passwordInput === storedAdminPassword) {
+            window.location.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+        } else {
+            alert("Incorrect password. Access denied.");
+            return;
+        }
+    } else {
+        window.location.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+    }
+});
+
                 userList.appendChild(li);
             });
 
