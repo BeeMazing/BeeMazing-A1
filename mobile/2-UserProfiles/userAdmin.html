@@ -425,8 +425,7 @@ body.menu-open {
 /* Bottom Sheet Modal when selecting users */
 
 
-
-/* Slide-Out Modal for User Selection */
+/* Bottom Sheet Modal for User Selection */
 .bottom-sheet {
     display: none;
     position: fixed;
@@ -436,25 +435,28 @@ body.menu-open {
     height: 100%;
     background: var(--modal-bg);
     z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
 }
 .bottom-sheet.show {
     display: block;
+    opacity: 1;
 }
 .bottom-sheet-content {
     position: fixed;
-    top: 0;
-    right: 0;
-    width: 300px;
-    height: 100%;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: 70vh;
     background: #2A2B32;
     border-top-left-radius: 20px;
-    border-bottom-left-radius: 20px;
-    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
-    transform: translateX(100%);
+    border-top-right-radius: 20px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+    transform: translateY(100%);
     transition: transform 0.3s ease-in-out;
 }
 .bottom-sheet.show .bottom-sheet-content {
-    transform: translateX(0);
+    transform: translateY(0);
 }
 .bottom-sheet-header {
     display: flex;
@@ -516,6 +518,7 @@ body.menu-open {
 }
 
 
+
 /* Bottom Sheet Modal when selecting users */
 
 
@@ -526,7 +529,7 @@ body.menu-open {
         height: 35px;
     }
     .bottom-sheet-content {
-        width: 80%;
+        max-height: 80vh;
     }
     .bottom-sheet-header h3 {
         font-size: 16px;
@@ -539,8 +542,6 @@ body.menu-open {
         padding: 12px 15px;
     }
 }
-
-
 
 
 
@@ -606,7 +607,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>H1</span>
+        <span>H</span>
     </a>
     <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
       <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
