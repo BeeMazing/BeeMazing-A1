@@ -557,10 +557,27 @@ body.menu-open {
         padding: 6px;
     }
     .remove-user-btn, .edit-user-btn {
-        width: 20px;
-        height: 20px;
-        font-size: 12px;
-    }
+    background: #2A2B32; /* Dark background */
+    color: white; /* White icon/text by default */
+    border: none;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+    border: 2px solid var(--border-dark);
+}
+
+/* Make remove button (X) yellow and dark text */
+.remove-user-btn {
+    background: #FFC107;
+    color: #212121;
+}
+
     .footer-icon img {
         width: 35px;
         height: 35px;
@@ -695,13 +712,24 @@ body.menu-open {
     transition: background 0.2s ease;
 }
 .edit-user-btn {
-    background: #2196F3;
+    background: #333540;
 }
+/* Optional hover effects */
 .remove-user-btn:hover {
-    background: #B71C1C;
+    background: #FFD54F;
 }
 .edit-user-btn:hover {
-    background: #1976D2;
+    background: #333540;
+}
+
+
+
+@media (max-width: 600px) {
+  .remove-user-btn, .edit-user-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
 }
 
 /* Bottom Sheet Modal when selecting users */
@@ -787,6 +815,8 @@ body.menu-open {
   </div>
 </div>
 
+
+
 <!-- User Selection ----------------------------->
 
   <div class="footer">
@@ -851,6 +881,7 @@ async function fetchUsersFromServer(email) {
         return [];
     }
 }
+
 
 
 // User selection ///////////////////////////////////////////////////////////////////////
