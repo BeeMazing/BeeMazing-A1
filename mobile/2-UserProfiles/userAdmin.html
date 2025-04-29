@@ -427,7 +427,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home 1</span>
+        <span>Home 333</span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -751,7 +751,6 @@ async function handleReorder(title, date, newUserOrder) {
 
 
 
-
 async function loadTasks() {
   try {
     const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
@@ -763,62 +762,62 @@ async function loadTasks() {
     const container = document.getElementById("taskContainer");
     container.innerHTML = "";
 
-    const tasksForUser = tasks.filter(task => {
-      if (!task.title || !task.users || !task.date) return false;
+    const tasksByTitle = {};
+    tasks.forEach(task => {
+      if (!task.title || !task.users || !task.date) return;
 
       const [startDateStr, endDateStr] = task.date.split(" to ");
       const startDate = new Date(startDateStr);
       const endDate = new Date(endDateStr || "3000-01-01");
       const currentDate = new Date(selectedDate);
+      if (currentDate < startDate || currentDate > endDate) return;
 
-      // Only include tasks for the selected user
-      return (
-        currentDate >= startDate &&
-        currentDate <= endDate &&
-        task.users.includes(userName)
-      );
+      tasksByTitle[task.title] = {
+        ...task,
+        startDate,
+        settings: task.settings || "Rotation",
+        completions: task.completions || {},
+      };
     });
 
-    tasksForUser.forEach(task => {
+    Object.keys(tasksByTitle).forEach(title => {
+      const task = tasksByTitle[title];
+      const date = task.date;
+
       const div = document.createElement("div");
       div.className = "task-entry";
-      div.dataset.title = task.title;
-      div.dataset.date = task.date;
-
-      const status = task.pendingCompletions?.[selectedDate]?.includes(userName)
-        ? "Waiting for Review"
-        : task.completions?.[selectedDate]?.includes(userName)
-        ? "Accepted"
-        : "Pending";
+      div.dataset.title = title;
+      div.dataset.date = date;
 
       div.innerHTML = `
-        <h3 class="task-title">${task.title}</h3>
+        <h3 class="task-title">${title}</h3>
         <div class="task-meta">
-          <p><strong>Status:</strong> ${status}</p>
+          <p><strong>Repeat Limit:</strong> ${task.repeatLimit || 0} times</p>
         </div>
-        <div class="task-details${expandedTasks.has(task.title) ? ' show' : ''}">
+        <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
           ${
-            status === "Waiting for Review"
-              ? `
-                <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', 0, 'accept', '${userName}', event)">Accept</button>
-                <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', 0, 'decline', '${userName}', event)">Decline</button>
-              `
-              : status === "Accepted"
-                ? `<button class="revert-btn" onclick="handleRevert('${task.title}', '${task.date}', 0, '${userName}', event)">Revert</button>`
-                : `<p>No actions available.</p>`
+            task.users.length
+              ? task.users.map((user, index) => `
+                <div class="turn-entry" data-index="${index}" data-user="${user}">
+                  <p>${user}: ${task.completions?.[selectedDate]?.[user] || 0}/${task.repeatLimit}</p>
+                </div>
+              `).join('')
+              : '<p>No users assigned.</p>'
           }
         </div>
       `;
 
       container.appendChild(div);
 
+      enableDragAndDrop(div); // 🛠 Enable simple dragging inside each task box
+
       div.querySelector(".task-title").addEventListener("click", () => {
         const details = div.querySelector(".task-details");
         details.classList.toggle("show");
         if (details.classList.contains("show")) {
-          expandedTasks.add(task.title);
+          expandedTasks.add(title);
         } else {
-          expandedTasks.delete(task.title);
+          expandedTasks.delete(title);
         }
       });
     });
