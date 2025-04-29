@@ -26,6 +26,8 @@
     --light-bg: #1E1F26;
     --text-color: #FFFFFF;
     --footer-height: 70px;
+    --modal-bg: rgba(33, 33, 33, 0.7); /* Added */
+    --border-dark: #444754; /* Added */
 }
 
 
@@ -397,12 +399,13 @@ body.menu-open {
 .profile-icon {
     position: fixed;
     top: 10px;
-    right: 10px;
+    right: 60px;
     width: 40px;
     height: 40px;
     cursor: pointer;
     z-index: 202;
     transition: transform 0.3s ease;
+    filter: invert(100%) brightness(200%);
 }
 
 .profile-icon:hover {
@@ -510,7 +513,6 @@ body.menu-open {
 
 
 </head>
-<body>
     <body>
         <nav id="sideMenu" class="side-menu">
             <div class="menu-header">
@@ -578,6 +580,24 @@ body.menu-open {
   <script>
 
 
+
+
+
+
+// Dynamically set footer button links and active state
+// Dynamically set footer button links and active state
+const urlParams = new URLSearchParams(window.location.search);
+const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
+const userName = urlParams.get('user') || '';
+const basePath = '/BeeMazing-Y1/mobile/2-UserProfiles';
+
+const homeButton = document.getElementById('homeButton');
+
+if (adminEmail && userName) {
+    homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+}
+
+
 // Fetch users from server (adapted from home.js)
 async function fetchUsersFromServer(email) {
     try {
@@ -600,6 +620,7 @@ async function fetchUsersFromServer(email) {
     }
 }
 
+
 // User selection modal logic
 const profileIcon = document.getElementById("profileIcon");
 const userSelectModal = document.getElementById("userSelectModal");
@@ -607,8 +628,15 @@ const userSelect = document.getElementById("userSelect");
 const confirmUserBtn = document.getElementById("confirmUserBtn");
 
 profileIcon.addEventListener("click", async () => {
+    if (!adminEmail) {
+        alert("Admin email not found. Please log in again.");
+        return;
+    }
     const users = await fetchUsersFromServer(adminEmail);
     userSelect.innerHTML = '<option value="">Select a user</option>';
+    if (users.length === 0) {
+        alert("No users found for this admin.");
+    }
     users.forEach(user => {
         const option = document.createElement("option");
         option.value = user;
@@ -632,23 +660,6 @@ confirmUserBtn.addEventListener("click", () => {
     userSelectModal.classList.remove("show");
 });
 
-
-// Dynamically set footer button links and active state
-// Dynamically set footer button links and active state
-const urlParams = new URLSearchParams(window.location.search);
-const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
-const userName = urlParams.get('user') || '';
-const basePath = '/BeeMazing-Y1/mobile/2-UserProfiles';
-
-const homeButton = document.getElementById('homeButton');
-const profileButton = document.getElementById('profileButton');
-const marketButton = document.getElementById('marketButton');
-
-if (adminEmail && userName) {
-    homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-    profileButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-    marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-}
 
 // Set active state
 document.querySelectorAll('.footer a').forEach(link => {
@@ -720,16 +731,11 @@ const taskSettingsLink = document.getElementById('taskSettingsLink');
 let allUsers = [];
 const expandedTasks = new Set();
 
-async function fetchUsers() {
-  try {
-    const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
-    const data = await res.json();
-    allUsers = data.users || [];
-  } catch (err) {
-    console.error("Error fetching users:", err);
-  }
-}
 
+fetchUsersFromServer(adminEmail).then(users => {
+    allUsers = users;
+    generateScrollableDates();
+});
 
 
 
@@ -1332,11 +1338,6 @@ document.getElementById("scrollRight").addEventListener("click", () => {
     behavior: "smooth",
   });
 });
-
-fetchUsers().then(() => generateScrollableDates());
-
-
-
 
 
 
