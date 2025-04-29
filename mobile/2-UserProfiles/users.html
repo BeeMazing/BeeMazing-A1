@@ -1848,10 +1848,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (userTotal >= requiredTimes) completedTasks++;
     });
 
-    const progressPercent = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+    const progressPercent = totalDos > 0 ? (completedDos / totalDos) * 100 : 0;
 
-    document.getElementById("taskSummary").textContent = `Total Tasks: ${completedTasks}/${totalTasks}`;
-    document.getElementById("doSummary").textContent = `Total Do's: ${completedDos}/${totalDos}`;
+
+    document.getElementById("taskSummary").textContent = `Tasks: ${completedTasks}/${totalTasks}`;
+    document.getElementById("doSummary").textContent = `Do's Completed: ${completedDos}/${totalDos}`;
     document.getElementById("progressBar").style.width = `${progressPercent}%`;
 
   } catch (err) {
