@@ -142,13 +142,6 @@
       cursor: move;
       border: 2px solid transparent;
     }
-    .turn-entry.dragging {
-      opacity: 0.7;
-      border: 2px solid #FFC107;
-    }
-    .turn-entry.drag-over {
-      border: 2px dashed #FFC107;
-    }
     .turn-entry p {
       margin: 5px 0;
     }
@@ -389,8 +382,6 @@ body.menu-open {
 
 
 
-
-
   </style>
 
 
@@ -436,7 +427,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home 13 </span>
+        <span>Home 333</span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -791,70 +782,92 @@ async function loadTasks() {
     });
 
     Object.keys(tasksByTitle).forEach(title => {
-  const task = tasksByTitle[title];
-  const date = task.date;
-  const div = document.createElement("div");
-  div.className = "task-entry";
-  div.dataset.title = title;
-  div.dataset.date = date;
+      const task = tasksByTitle[title];
+      const rotation = calculateTurn(task, selectedDate);   // ✅ Current Turn, Next, Completed
+      const turns = prepareTaskTurnData(task, selectedDate); // ✅ All turns
+      const date = task.date;
 
-  let taskMetaHTML = '';
+      const div = document.createElement("div");
+      div.className = "task-entry";
+      div.dataset.title = title;
+      div.dataset.date = date;
 
-  const required = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                   task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                   task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+      div.innerHTML = `
+        <h3 class="task-title">${title}</h3>
+        <div class="task-meta">
+          ${
+            task.settings === "Rotation" ? `
+            <p><strong>Current Turn:</strong> ${rotation.currentTurn}</p>
+            <p><strong>Next:</strong> ${rotation.nextUser}</p>
+            <p><strong>Completed:</strong> ${rotation.completedCount}/${rotation.repeatLimit}</p>
+            ` : `
+            <p><strong>Task Type:</strong> Individual</p>
+            `
+          }
+        </div>
+        <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
+          ${
+            turns.length
+              ? turns.map((turn, index) => `
+                <div class="turn-entry" data-index="${index}" data-user="${turn.user}">
+                  ${
+                    task.settings === "Individual"
+                      ? `<p>${turn.user}: ${turn.completed}/${turn.required}</p>`
+                      : `<p>Turn ${turn.repetition}: ${turn.user} - ${
+                          turn.isCompleted
+                            ? 'Accepted'
+                            : turn.isPending
+                              ? 'Waiting for Review'
+                              : 'Pending'
+                        }</p>`
+                  }
+                  ${
+                    task.settings === "Rotation" && !turn.isCompleted
+                      ? `
+                        <select id="replace-select-${index}">
+                          <option value="">Select User</option>
+                          ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
+                        </select>
+                        <button class="replace-btn" onclick="handleReplace('${title}', '${date}', ${index}, '${turn.user}', event)">Replace</button>
+                      `
+                      : ''
+                  }
+                  ${
+                    turn.isPending && !turn.isCompleted
+                      ? `
+                        <button class="accept-btn" onclick="handleDecision('${title}', '${date}', ${index}, 'accept', '${turn.user}', event)">Accept</button>
+                        <button class="decline-btn" onclick="handleDecision('${title}', '${date}', ${index}, 'decline', '${turn.user}', event)">Decline</button>
+                      `
+                      : ''
+                  }
+                  ${
+                    turn.isCompleted && task.settings === "Rotation"
+                      ? `
+                        <button class="revert-btn" onclick="handleRevert('${title}', '${date}', ${index}, '${turn.user}', event)">Revert</button>
+                      `
+                      : ''
+                  }
+                </div>
+              `).join('')
+              : '<p>No turns assigned.</p>'
+          }
+        </div>
+      `;
 
-  if (task.settings?.includes("Individual")) {
-    taskMetaHTML += `<p><strong>Individual Task</strong></p>`;
-    task.users.forEach(user => {
-      const completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate].filter(u => u === user).length : 0;
-      const check = completions >= required ? '✅' : '';
-      taskMetaHTML += `<p>${user}: ${completions}/${required} ${check}</p>`;
+      container.appendChild(div);
+
+      enableDragAndDrop(div); // ✅ Attach drag-and-drop
+
+      div.querySelector(".task-title").addEventListener("click", () => {
+        const details = div.querySelector(".task-details");
+        details.classList.toggle("show");
+        if (details.classList.contains("show")) {
+          expandedTasks.add(title);
+        } else {
+          expandedTasks.delete(title);
+        }
+      });
     });
-  } else if (task.settings?.includes("Rotation")) {
-    const rotation = calculateTurn(task, selectedDate);
-    taskMetaHTML += `
-      <p><strong>Current Turn:</strong> ${rotation.currentTurn}</p>
-      <p><strong>Next:</strong> ${rotation.nextUser}</p>
-      <p><strong>Completed:</strong> ${rotation.completedCount}/${rotation.repeatLimit}</p>
-    `;
-  } else {
-    taskMetaHTML += `<p><em style="color:#aaa;">No rotation</em></p>`;
-  }
-
-  div.innerHTML = `
-    <h3 class="task-title">${title}</h3>
-    <div class="task-meta">
-      ${taskMetaHTML}
-    </div>
-    <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
-      ${
-        task.users.length
-          ? task.users.map((user, index) => `
-            <div class="turn-entry" data-index="${index}" data-user="${user}">
-              <p>${user}</p>
-            </div>
-          `).join('')
-          : '<p>No users assigned.</p>'
-      }
-    </div>
-  `;
-
-  container.appendChild(div);
-
-
-  div.querySelector(".task-title").addEventListener("click", () => {
-    const details = div.querySelector(".task-details");
-    details.classList.toggle("show");
-    if (details.classList.contains("show")) {
-      expandedTasks.add(title);
-    } else {
-      expandedTasks.delete(title);
-    }
-  });
-});
-
-    
 
     if (!container.innerHTML) {
       container.innerHTML = "<p>No tasks for this date.</p>";
@@ -864,6 +877,9 @@ async function loadTasks() {
     document.getElementById("taskContainer").innerHTML = "<p>Error loading tasks. Please try again.</p>";
   }
 }
+
+
+
 
 
 
@@ -957,3 +973,4 @@ fetchUsers().then(() => generateScrollableDates());
 
 </body>
 </html>
+
