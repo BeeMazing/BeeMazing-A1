@@ -768,11 +768,38 @@
 }
 
 
+
+
+
+/* selecting user */
+
+
+.profile-icon {
+  position: fixed;
+  top: 10px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  z-index: 202;
+  transition: transform 0.3s ease;
+  filter: invert(100%) brightness(200%);
+}
+
+.profile-icon:hover {
+  transform: scale(1.1);
+}
+
+
+
+/* selecting user */
+
     </style>
 </head>
 <body>
 
     <div class="date-header">
+      <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" id="profileIcon" alt="Select User" class="profile-icon" />
         <div class="month-nav">
             <button id="prevMonth">&lt;</button>
             <span id="monthLabel">Loading...</span>
@@ -818,14 +845,31 @@
                 <p><strong>Honey:</strong> <span id="rewardAmount">0</span> 🍯</p>
                 <button id="sellButton">Sell Honey</button>
             </div>
-            <h3>Assigned Tasks:</h3>
-            <div id="userTasks" class="task-list">
-                <!-- Tasks will be displayed here -->
-            </div>
         </div>
 
      
     </div>
+
+
+
+
+<!-- selecting user -->
+
+    <div class="bottom-sheet" id="userSelectModal">
+      <div class="bottom-sheet-content">
+        <div class="bottom-sheet-header">
+          <h3>Select User</h3>
+          <button id="closeModalBtn" class="close-btn" aria-label="Close">×</button>
+        </div>
+        <ul id="userList" class="user-list"></ul>
+      </div>
+    </div>
+    
+
+<!-- selecting user -->
+
+
+
 
 
     <div class="footer">
@@ -865,81 +909,71 @@
 
 
     <script>
+
+
+
+// -- Profile Icon and User Selection Modal (simplified version) --
 document.addEventListener("DOMContentLoaded", () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    let adminEmail = urlParams.get('admin') || localStorage.getItem("currentAdminEmail");
-    const userName = urlParams.get('user');
-    const addPoints = Number(urlParams.get('addPoints')) || 0;
+  const profileIcon = document.getElementById("profileIcon");
+  const userSelectModal = document.getElementById("userSelectModal");
+  const userList = document.getElementById("userList");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail');
+  const currentUser = urlParams.get('user');
 
-    if (adminEmail && adminEmail !== "null") {
-    localStorage.setItem("currentAdminEmail", adminEmail);
-}
-
-if (userName && adminEmail) {
-    // Check if user is admin
-    const userData = JSON.parse(localStorage.getItem("userData")) || {};
-    const permissions = userData[adminEmail]?.permissions || {};
-    const isUserAdmin = permissions[userName] === "Admin";
-
-    // Set footer button links
-   
-
-    const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
-const homeButton = document.getElementById("homeButton");
-const tasksButton = document.getElementById("tasksButton");
-const marketButton = document.getElementById("marketButton");
-
-if (homeButton) {
-    homeButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-}
-if (tasksButton) {
-    tasksButton.href = `${basePath}/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-}
-if (marketButton) {
-    marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-}
-
-
-
-
-
-
-
-
-
-
-    // Set active state
-    document.querySelectorAll('.footer a').forEach(link => {
-        const currentPath = window.location.pathname.replace(/\/$/, '');
-        const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
-        if (currentPath === linkPath) {
-            link.classList.add('active');
-        } else {
-            link.classList.remove('active');
-        }
-    });
-
-    populateUserDropdown(userName);
-    loadUserTasks(userName);
-    loadUserReward(userName);
-    loadLuckyChests(userName);
-
-    if (addPoints > 0) {
-        setTimeout(async () => {
-            await updateUserReward(userName, addPoints);
-            triggerHoneyRain(addPoints);
-            loadUserReward(userName);
-        }, 500);
+  profileIcon.addEventListener("click", async () => {
+    if (!adminEmail) {
+      alert("Admin email not found. Please log in again.");
+      return;
     }
-} else {
-    document.getElementById('userTasks').innerHTML = "<p>Error: Missing user or admin email. Please log in again.</p>";
-    document.getElementById('userName').textContent = "Error";
-}
+    try {
+      const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
+      const data = await res.json();
+      if (!res.ok || !data.users) throw new Error("Failed to fetch users");
 
-    adjustContentTop();
-    generateScrollableDates();
-    showAdminControlsIfNeeded();
+      userList.innerHTML = "";
+      data.users.forEach(user => {
+        const li = document.createElement("li");
+        li.textContent = user;
+        if (user === currentUser) {
+          li.style.background = "#333540";
+          li.style.fontWeight = "600";
+        }
+        li.addEventListener("click", () => {
+          const isAdmin = data.permissions?.[user] === "Admin";
+          const page = isAdmin ? "userAdmin.html" : "users.html";
+          const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
+          window.location.href = `${basePath}/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+        });
+        userList.appendChild(li);
+      });
+
+      userSelectModal.classList.add("show");
+    } catch (err) {
+      console.error("Failed to load users:", err);
+      userList.innerHTML = '<li style="padding: 15px; color: #D32F2F;">Failed to load users</li>';
+      userSelectModal.classList.add("show");
+    }
+  });
+
+  userSelectModal.addEventListener("click", (e) => {
+    if (e.target === userSelectModal) {
+      userSelectModal.classList.remove("show");
+    }
+  });
+  
+  closeModalBtn.addEventListener("click", () => {
+    userSelectModal.classList.remove("show");
+  });
 });
+
+
+
+
+
+
 
 async function populateUserDropdown(currentUser) {
     const userDropdown = document.getElementById("userDropdown");
@@ -991,143 +1025,6 @@ async function populateUserDropdown(currentUser) {
 
 
 
-
-
-async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
-    const userTasksDiv = document.getElementById("userTasks");
-    userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
-
-    const adminEmail = localStorage.getItem("currentAdminEmail");
-    let tasks = [];
-
-    try {
-        const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
-        tasks = data.tasks || [];
-    } catch (err) {
-        console.error("Failed to fetch tasks from server:", err);
-        userTasksDiv.innerHTML = "<p>Failed to load tasks. Please try again later.</p>";
-        return;
-    }
-
-    function parseLocalDate(dateStr) {
-        if (!dateStr) return new Date(3000, 0, 1);
-        const parts = dateStr.split("-");
-        if (parts.length !== 3) return new Date(3000, 0, 1);
-        const [year, month, day] = parts.map(Number);
-        if (isNaN(year) || isNaN(month) || isNaN(day)) return new Date(3000, 0, 1);
-        const date = new Date(year, month - 1, day);
-        if (isNaN(date.getTime())) return new Date(3000, 0, 1);
-        return date;
-    }
-
-    const userTasks = tasks.filter(task => {
-        if (!task || !task.users || !task.title || !task.date) return false;
-        if (!task.users.includes(userName)) return false;
-
-        const [startStr, endStr] = task.date.split(" to ");
-        const startDate = parseLocalDate(startStr);
-        const endDate = endStr ? parseLocalDate(endStr) : new Date(3000, 0, 1);
-        const currentDate = parseLocalDate(selectedDate);
-
-        // Check if the selected date is within the From/To range
-        if (currentDate < startDate || currentDate > endDate) return false;
-
-        // Handle Specific Dates mode
-        if (task.specificDates) {
-            const specificDates = task.specificDates.split(",").map(date => date.trim());
-            return specificDates.includes(selectedDate);
-        }
-
-        // Handle Specific Days mode
-        if (task.specificDays) {
-            let days = task.specificDays;
-            if (typeof days === "string") {
-                days = days.split(",").map(d => d.trim()).filter(d => d);
-            }
-            if (Array.isArray(days) && days.length > 0) {
-                const dayOfWeek = currentDate.toLocaleDateString(undefined, { weekday: "long" });
-                return days.includes(dayOfWeek);
-            }
-            return false; // If specificDays is set but invalid or empty, hide the task
-        }
-
-        // Default (From - To mode): Show if within range
-        return true;
-    });
-
-    userTasksDiv.innerHTML = "";
-    if (userTasks.length === 0) {
-        userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
-        return;
-    }
-
-    for (const task of userTasks) {
-        const taskDiv = document.createElement("div");
-        taskDiv.className = "task-item";
-
-        const isRotation = task.settings === "Rotation";
-        const repeat = task.repeat || "Daily";
-
-        let requiredTimes = 1;
-        if (!isRotation) {
-            if (repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-            if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-            if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-        } else {
-            requiredTimes = task.users.length;
-        }
-
-        const completionsToday = task.completions?.[selectedDate] || [];
-        const pendingToday = task.pendingCompletions?.[selectedDate] || [];
-        const userCompletionCount = completionsToday.filter(u => u === userName).length;
-        const userPendingCount = pendingToday.filter(u => u === userName).length;
-        const userTotal = userCompletionCount + userPendingCount;
-        const isCompleted = userTotal >= requiredTimes;
-
-        let taskHTML = `<strong>${task.title}</strong><br>`;
-
-        if (isRotation) {
-            const turnInfo = calculateTurn(task, selectedDate);
-            taskHTML += turnInfo.currentTurn !== "All done!" 
-                ? `Turn: ${turnInfo.currentTurn}<br>Next: ${turnInfo.nextUser}<br>`
-                : `<span style="color: green;">Turn: All done!</span><br>`;
-        }
-
-        taskHTML += `Honey: ${task.reward || 0} 🍯<br>`;
-        taskHTML += `Progress: ${userTotal}/${requiredTimes}<br>`;
-
-        taskDiv.innerHTML = taskHTML;
-
-        const todayStr = new Date().toLocaleDateString("sv-SE");
-        const isToday = selectedDate === todayStr;
-
-        let canFinish = false;
-        if (isToday && !isCompleted) {
-            if (isRotation) {
-                const turnInfo = calculateTurn(task, selectedDate);
-                canFinish = turnInfo.currentTurn === userName;
-            } else {
-                canFinish = true;
-            }
-        }
-
-        if (canFinish) {
-            const finishBtn = document.createElement("button");
-            finishBtn.className = "finished-btn";
-            finishBtn.textContent = "Finish Task";
-            finishBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                finishTask(userName, task, selectedDate);
-            });
-            taskDiv.appendChild(finishBtn);
-        }
-
-        taskDiv.addEventListener("click", () => showTaskDetails(task, selectedDate));
-        userTasksDiv.appendChild(taskDiv);
-    }
-}
 
 
 
@@ -1276,162 +1173,6 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
 
 
 
-
-
-        function showTaskDetails(task, selectedDate = new Date().toLocaleDateString("sv-SE")) {
-    const isRotation = task.settings === "Rotation";
-    const repeat = task.repeat || "Daily";
-
-    let requiredTimes = 1;
-    if (!isRotation) {
-        if (repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-        if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-        if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-    } else {
-        requiredTimes = task.users.length;
-    }
-
-    const turnInfo = calculateTurn(task, selectedDate);
-
-    let modalHTML = `<strong>Title:</strong> ${task.title}<br>`;
-    if (task.notes) modalHTML += `<strong>Notes:</strong> ${task.notes}<br>`;
-    if (task.room) modalHTML += `<strong>Room:</strong> ${task.room}<br>`;
-    modalHTML += `<strong>Reward:</strong> ${task.reward || 0} 🍯<br>`;
-    modalHTML += `<strong>Repeat:</strong> ${task.repeat || "Daily"}<br>`;
-    modalHTML += `<strong>Date:</strong> ${task.date}<br>`;
-
-    if (isRotation) {
-        modalHTML += `<strong>Rotation:</strong> Yes<br>`;
-        modalHTML += `<strong>Users:</strong> ${task.users.join(", ")}<br>`;
-        if (turnInfo.currentTurn !== "All done!") {
-            modalHTML += `<strong>Current Turn:</strong> ${turnInfo.currentTurn}<br>`;
-            modalHTML += `<strong>Next:</strong> ${turnInfo.nextUser}<br>`;
-        } else {
-            modalHTML += `<strong>All turns completed!</strong><br>`;
-        }
-    } else {
-        modalHTML += `<strong>Assigned Users:</strong> ${task.users.join(", ")}<br>`;
-    }
-
-    modalHTML += `<strong>Progress:</strong> ${turnInfo.completedCount}/${turnInfo.repeatLimit}<br>`;
-
-    const modal = document.createElement("div");
-    modal.className = "modal";
-    modal.innerHTML = `<div class="modal-content">${modalHTML}</div>`;
-    document.body.appendChild(modal);
-
-    modal.addEventListener("click", (e) => {
-        if (e.target.classList.contains("modal")) {
-            modal.remove();
-        }
-    });
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function calculateTurn(task, selectedDate) {
-    const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
-    const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                       task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                       task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-    const tempTurnReplacement = task.tempTurnReplacement?.[selectedDate] || {};
-    const assignedUsers = [...userOrder];
-    Object.entries(tempTurnReplacement).forEach(([index, user]) => {
-        assignedUsers[parseInt(index)] = user;
-    });
-
-    // Include both completions and pending completions
-    const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-    const pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
-    const completedCount = completedUsers.length + pendingUsers.length;
-    const completedSet = new Set([...completedUsers, ...pendingUsers]);
-
-    function parseLocalDate(dateStr) {
-        const [year, month, day] = dateStr.split("-").map(Number);
-        return new Date(year, month - 1, day);
-    }
-
-    const selected = parseLocalDate(selectedDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const startDate = parseLocalDate(task.date.split(" to ")[0]);
-
-    let currentTurn = null;
-    let nextUser = null;
-
-    if (completedCount >= repeatLimit) {
-        currentTurn = "All done!";
-        nextUser = "—";
-    } else {
-        // Find the last completion date before today
-        let lastCompletionDate = startDate;
-        let lastCompletedCount = 0;
-        if (task.completions) {
-            const completionDates = Object.keys(task.completions)
-                .map(date => parseLocalDate(date))
-                .filter(date => date < today)
-                .sort((a, b) => b - a);
-            if (completionDates.length > 0) {
-                lastCompletionDate = completionDates[0];
-                const lastDateStr = lastCompletionDate.toISOString().split("T")[0];
-                const lastCompletions = task.completions[lastDateStr] || [];
-                const lastPending = task.pendingCompletions?.[lastDateStr] || [];
-                lastCompletedCount = lastCompletions.length + lastPending.length;
-            }
-        }
-
-        if (selected < today) {
-            // Past date: Use actual completions
-            const currentIndex = completedCount % assignedUsers.length;
-            currentTurn = assignedUsers[currentIndex];
-            const nextIndex = (completedCount + 1) % assignedUsers.length;
-            nextUser = completedSet.has(assignedUsers[nextIndex]) ? "—" : assignedUsers[nextIndex];
-        } else if (selected.getTime() === today.getTime()) {
-            // Today: Continue from last completion
-            const totalCompletions = lastCompletedCount + completedCount;
-            const currentIndex = totalCompletions % assignedUsers.length;
-            currentTurn = assignedUsers[currentIndex];
-            const nextIndex = (totalCompletions + 1) % assignedUsers.length;
-            nextUser = assignedUsers[nextIndex];
-        } else {
-            // Future: Assume repeatLimit completions per day
-            const daysDiff = Math.floor((selected - lastCompletionDate) / (1000 * 60 * 60 * 24));
-            const totalCompletions = lastCompletedCount + (daysDiff - 1) * repeatLimit + completedCount;
-            const currentIndex = totalCompletions % assignedUsers.length;
-            currentTurn = assignedUsers[currentIndex];
-            const nextIndex = (totalCompletions + 1) % assignedUsers.length;
-            nextUser = assignedUsers[nextIndex];
-        }
-    }
-
-    return {
-        currentTurn: currentTurn || "All done!",
-        nextUser: nextUser || "—",
-        completedCount,
-        repeatLimit
-    };
-}
-
-
-
-
-
-
-
-
-
-
         let monthOffset = 0;
         
         function generateScrollableDates(monthOffset = 0) {
@@ -1466,14 +1207,12 @@ function calculateTurn(task, selectedDate) {
             btn.addEventListener("click", () => {
               document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
               btn.classList.add("selected");
-              loadUserTasks(userName, dateStr);
             });
         
             const now = new Date();
             const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             if (dateStr === nowStr) {
               btn.classList.add("selected");
-              loadUserTasks(userName, dateStr);
             }
         
             container.appendChild(btn);
@@ -1859,57 +1598,6 @@ function calculateTurn(task, selectedDate) {
         }
         
         
-
-
-
-
-
-        async function finishTask(currentUser, task, selectedDate) {
-  const today = selectedDate || new Date().toISOString().split("T")[0];
-  const adminEmail = localStorage.getItem("currentAdminEmail");
-  const button = event.target;
-  button.disabled = true;
-
-  const popup = document.createElement("div");
-  popup.className = "reward-popup";
-  popup.textContent = `Submitting Task...`;
-  document.body.appendChild(popup);
-
-  try {
-    console.log(`Submitting task: title="${task.title}", user="${currentUser}", date="${today}", adminEmail="${adminEmail}"`);
-    const response = await fetch("https://beemazing.onrender.com/api/complete-task", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        adminEmail,
-        taskTitle: task.title.trim(),
-        user: currentUser,
-        date: today
-      })
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      console.error("Server response:", data);
-      throw new Error(data.error || `HTTP error ${response.status}`);
-    }
-
-    popup.textContent = `Task Submitted! Waiting for Admin Review`;
-    setTimeout(() => popup.remove(), 2000);
-
-    await loadUserTasks(currentUser, selectedDate);
-  } catch (err) {
-    console.error("Error submitting task:", err);
-    popup.textContent = `Error: ${err.message}`;
-    popup.style.color = "red";
-    setTimeout(() => popup.remove(), 3000);
-    button.disabled = false;
-  }
-}
-
-
-
-
 
 
 
