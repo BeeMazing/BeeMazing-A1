@@ -353,7 +353,7 @@
         </a>
         <a href="#" id="marketButton" class="footer-icon" aria-label="Market">
             <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
-            <span>Market111</span>
+            <span>Market</span>
         </a>
     </div>
     
@@ -408,7 +408,7 @@ if (isUserAdmin) {
     tasksButton.href = `${basePath}/tasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
 } else {
     homeButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-    tasksButton.href = `${basePath}/tasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+    tasksButton.href = `${basePath}/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
 }
 
 marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
