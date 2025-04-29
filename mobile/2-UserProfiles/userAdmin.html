@@ -431,7 +431,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home</span>
+        <span>Home 1</span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -774,6 +774,8 @@ async function handleReorder(title, date, newUserOrder) {
 
 
 
+
+
 async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
   try {
     console.log(`Loading tasks for date: ${selectedDate}, attempt: ${attempt}`); // Debug
@@ -873,6 +875,12 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
                           task.repeat === "Weekly" ? task.timesPerWeek || 1 :
                           task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
+          // Calculate days since startDate
+          const startDateObj = new Date(task.date.split(" to ")[0]);
+          const selectedDateObj = new Date(selectedDate);
+          const daysSinceStart = Math.floor((selectedDateObj - startDateObj) / (1000 * 60 * 60 * 24));
+          const assignedUsers = rotation.userOrder || task.users;
+
           // Calculate user completion counts
           const userCompletionCounts = {};
           const userPendingCounts = {};
@@ -883,11 +891,9 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
             userPendingCounts[u] = (userPendingCounts[u] || 0) + 1;
           });
 
-          // Generate turns using calculateTurn's logic
-          const totalCompletions = rotation.completedCount;
-          const assignedUsers = rotation.userOrder;
+          // Generate turns with rotation based on daysSinceStart
           for (let i = 0; i < required; i++) {
-            const userIndex = (totalCompletions + i) % (assignedUsers.length || 1);
+            const userIndex = (daysSinceStart + i) % (assignedUsers.length || 1);
             const user = assignedUsers[userIndex] || "Unknown";
             const originalUser = task.users[userIndex % task.users.length] || user;
             let isCompleted = false;
@@ -1057,6 +1063,10 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
     document.getElementById("taskContainer").innerHTML = "<p>Error loading tasks. Please try again.</p>";
   }
 }
+
+
+
+
 
 
 
