@@ -109,22 +109,10 @@ function prepareTaskTurnData(task, selectedDate) {
         userPendingCounts[u] = (userPendingCounts[u] || 0) + 1;
     });
 
-    let userOrder = task.users || [];
+    const userOrder = task.users || [];
     const isRotation = (task.settings || "Rotation") === "Rotation";
 
     if (isRotation) {
-        // 🛠 ONLY ROTATE if no completions exist yet
-        const rotation = calculateTurn(task, selectedDate);
-
-        const totalDone = completions.length + pendingCompletions.length;
-
-        if (totalDone === 0) {
-            const startIndex = userOrder.indexOf(rotation.currentTurn);
-            if (startIndex !== -1) {
-                userOrder = [...userOrder.slice(startIndex), ...userOrder.slice(0, startIndex)];
-            }
-        }
-
         for (let i = 0; i < requiredTimes; i++) {
             const originalUser = userOrder[i % userOrder.length];
             const user = tempTurnReplacement[i] || originalUser;
