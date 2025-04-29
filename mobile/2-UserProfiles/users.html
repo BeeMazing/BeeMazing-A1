@@ -993,6 +993,9 @@
                 Change Admin Password
             </button>
 
+            <h2 id="welcomeMessage" style="color: var(--primary-color); margin-bottom: 10px;"></h2>
+
+
             <div class="modal" id="changePasswordModal" style="display: none;">
                 <div class="modal-content">
                   <h3>Change Admin Password</h3>
@@ -1001,11 +1004,7 @@
                 </div>
               </div>
 
-              
-              <select id="userDropdown" style="width: 100%; max-width: 300px; padding: 10px; font-size: 18px; border-radius: 8px; background: #2A2B32; color: var(--text-color); border: 2px solid var(--border-dark); margin-bottom: 15px;">
-                <option value="" disabled>Select User</option>
-            </select>
-            <p>Welcome to the hive of <span id="userName"></span>.</p>
+            
 
                    <!-- 🎁 Lucky Chest Section -->
 <div class="lucky-chests-section">
@@ -1185,9 +1184,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        populateUserDropdown(userName);
         loadUserReward(userName);
         loadLuckyChests(userName);
+        document.getElementById("welcomeMessage").textContent = `Welcome, ${userName}!`;
+
 
         if (addPoints > 0) {
             setTimeout(async () => {
@@ -1198,7 +1198,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     } else {
         document.getElementById('userTasks').innerHTML = "<p>Error: Missing user or admin email. Please log in again.</p>";
-        document.getElementById('userName').textContent = "Error";
     }
 
     adjustContentTop();
@@ -1212,55 +1211,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-
-
-
-async function populateUserDropdown(currentUser) {
-    const userDropdown = document.getElementById("userDropdown");
-    const userNameSpan = document.getElementById("userName");
-    const adminEmail = localStorage.getItem("currentAdminEmail");
-    const isMobile = window.location.pathname.includes("/BeeMazing-Y1/mobile/");
-    const basePath = isMobile ? "/BeeMazing-Y1/mobile" : "/web";
-
-    try {
-        const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to fetch users");
-
-        const users = data.users || [];
-        const permissions = data.permissions || {};
-
-        // Clear dropdown except default option
-        userDropdown.innerHTML = '<option value="" disabled>Select User</option>';
-
-        // Populate dropdown
-        users.forEach((user) => {
-            const option = document.createElement("option");
-            option.value = user;
-            option.textContent = permissions[user] === "Admin" ? `${user} (Admin)` : user;
-            if (user === currentUser) {
-                option.selected = true;
-            }
-            userDropdown.appendChild(option);
-        });
-
-        // Update welcome message
-        userNameSpan.textContent = currentUser || "Bee";
-
-        // Handle selection
-        userDropdown.addEventListener("change", () => {
-            const selectedUser = userDropdown.value;
-            if (selectedUser) {
-                const page = permissions[selectedUser] === "Admin" ? "userAdmin.html" : "users.html";
-                window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(selectedUser)}`;
-            }
-        });
-    } catch (err) {
-        console.error("Failed to populate user dropdown:", err);
-        userDropdown.innerHTML = '<option value="" disabled>Error loading users</option>';
-        userNameSpan.textContent = "Error";
-    }
-}
 
 
 
