@@ -386,6 +386,24 @@ body.menu-open {
         font-size: 16px;
     }
 }
+
+
+.placeholder {
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px dashed var(--primary-color);
+  margin: 5px 0;
+  border-radius: 8px;
+}
+
+  .dragging-active {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  transform: scale(1.05);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  z-index: 999;
+  position: relative;
+}
+
+
   </style>
 
 
@@ -431,7 +449,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home 1111</span>
+        <span>Home 13 </span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -443,7 +461,7 @@ body.menu-open {
     </a>
 </div>
 
-
+<script src="/BeeMazing-Y1/shared/taskrotations.js"></script>
 
   <script>
 
@@ -674,7 +692,7 @@ async function handleReplace(title, date, index, originalUser, event) {
     turnEntry.querySelector("p").textContent = `Turn ${parseInt(index) + 1}: ${newUser} - Pending`;
     turnEntry.querySelector("select").value = "";
     turnEntry.dataset.user = newUser;
-    setTimeout(() => loadTasks(true), 1000); // Increased delay, force retry
+    setTimeout(() => loadTasks(), 500);
   } catch (err) {
     console.error("Error replacing user:", err);
     const errorDiv = document.createElement("div");
@@ -753,150 +771,91 @@ async function handleReorder(title, date, newUserOrder) {
 
 
 
-async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
+
+async function loadTasks() {
   try {
-    console.log(`Loading tasks for date: ${selectedDate}, attempt: ${attempt}`); // Debug
     const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
       cache: "no-store"
     });
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     const { tasks } = await res.json();
-    console.log("All tasks received:", tasks.map(t => ({
-      title: t.title,
-      users: t.users,
-      date: t.date,
-      tempTurnReplacement: t.tempTurnReplacement
-    }))); // Debug
 
     const container = document.getElementById("taskContainer");
-    container.innerHTML = ""; // Clear UI
+    container.innerHTML = "";
 
     const tasksByTitle = {};
-    const duplicateTasks = {}; // Track duplicates
     tasks.forEach(task => {
-      if (!task.title || !task.users || !task.date) {
-        console.warn(`Skipping invalid task:`, task);
-        return;
-      }
+      if (!task.title || !task.users || !task.date) return;
 
-      // Filter by date range
       const [startDateStr, endDateStr] = task.date.split(" to ");
       const startDate = new Date(startDateStr);
       const endDate = new Date(endDateStr || "3000-01-01");
       const currentDate = new Date(selectedDate);
-      if (currentDate < startDate || currentDate > endDate) {
-        console.log(`Skipping task ${task.title}: ${task.date} does not include ${selectedDate}`); // Debug
-        return;
-      }
+      if (currentDate < startDate || currentDate > endDate) return;
 
-      // Track all tasks with same title
-      if (!duplicateTasks[task.title]) duplicateTasks[task.title] = [];
-      duplicateTasks[task.title].push({
-        date: task.date,
-        users: task.users,
-        tempTurnReplacement: task.tempTurnReplacement?.[selectedDate] || {},
-        startDate
-      });
-
-      const existingTask = tasksByTitle[task.title];
-      const currentDateRange = task.date;
-      const existingDateRange = existingTask?.date;
-      let shouldReplace = false;
-
-      if (!existingTask) {
-        shouldReplace = true;
-      } else {
-        const taskEntry = document.querySelector(`.task-entry[data-title="${task.title}"]`);
-        const replaceDateRange = taskEntry?.dataset.date;
-        if (replaceDateRange && currentDateRange === replaceDateRange) {
-          shouldReplace = true;
-        } else if (new Date(existingTask.startDate) < startDate) {
-          shouldReplace = true;
-        }
-      }
-
-      if (shouldReplace) {
-        tasksByTitle[task.title] = {
-          turns: [],
-          pendingCount: 0,
-          date: task.date,
-          userOrder: task.users || [],
-          settings: task.settings || "Rotation",
-          startDate
-        };
-      } else {
-        console.warn(`Duplicate task title: ${task.title}, date: ${task.date}, keeping date: ${existingTask.date}`); // Debug
-        return;
-      }
-
-      const turns = prepareTaskTurnData(task, selectedDate);
-      tasksByTitle[task.title].pendingCount += turns.filter(t => t.isPending).length;
-      turns.forEach((turn, index) => {
-        tasksByTitle[task.title].turns.push({
-          user: turn.user,
-          repetition: turn.repetition,
-          index,
-          date: task.date,
-          isPending: turn.isPending,
-          isCompleted: turn.isCompleted
-        });
-      });
+      tasksByTitle[task.title] = {
+        ...task,
+        startDate,
+        settings: task.settings || "Rotation",
+        completions: task.completions || {},
+        pendingCompletions: task.pendingCompletions || {},
+        tempTurnReplacement: task.tempTurnReplacement || {}
+      };
     });
 
-    if (retry && attempt < maxAttempts) {
-      const hasReplacement = Object.values(tasksByTitle).some(task =>
-        task.turns.some(turn => turn.user !== task.userOrder[turn.index % task.userOrder.length])
-      );
-      if (!hasReplacement) {
-        console.warn(`Retry ${attempt}: No tempTurnReplacement found, retrying...`);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return loadTasks(true, attempt + 1, maxAttempts);
-      }
-    }
-
-
-
-
-
-    Object.keys(tasksByTitle).sort().forEach(title => {
-  const { turns, pendingCount, date, userOrder: originalUserOrder } = tasksByTitle[title];
-  const turnInfo = calculateTurn({ users: originalUserOrder, completions: {}, pendingCompletions: {}, tempTurnReplacement: {} }, selectedDate);
-  const userOrder = turnInfo.userOrder;
-
+    Object.keys(tasksByTitle).forEach(title => {
+  const task = tasksByTitle[title];
+  const date = task.date;
   const div = document.createElement("div");
   div.className = "task-entry";
   div.dataset.title = title;
   div.dataset.date = date;
+
+  let taskMetaHTML = '';
+
+  const required = task.repeat === "Daily" ? task.timesPerDay || 1 :
+                   task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+                   task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+
+  if (task.settings?.includes("Individual")) {
+    taskMetaHTML += `<p><strong>Individual Task</strong></p>`;
+    task.users.forEach(user => {
+      const completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate].filter(u => u === user).length : 0;
+      const check = completions >= required ? '✅' : '';
+      taskMetaHTML += `<p>${user}: ${completions}/${required} ${check}</p>`;
+    });
+  } else if (task.settings?.includes("Rotation")) {
+    const rotation = calculateTurn(task, selectedDate);
+    taskMetaHTML += `
+      <p><strong>Current Turn:</strong> ${rotation.currentTurn}</p>
+      <p><strong>Next:</strong> ${rotation.nextUser}</p>
+      <p><strong>Completed:</strong> ${rotation.completedCount}/${rotation.repeatLimit}</p>
+    `;
+  } else {
+    taskMetaHTML += `<p><em style="color:#aaa;">No rotation</em></p>`;
+  }
+
   div.innerHTML = `
-    <h3 class="task-title">${title}${pendingCount > 0 ? `<span class="notification-bubble">${pendingCount}</span>` : ''}</h3>
+    <h3 class="task-title">${title}</h3>
+    <div class="task-meta">
+      ${taskMetaHTML}
+    </div>
     <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
       ${
-        tasksByTitle[title].turns.length && turns[0].repetition !== undefined && turns[0].user !== undefined && tasksByTitle[title].turns
-          ? (tasksByTitle[title].settings === "Rotation"
-            ? turns.map(turn => `
-              <div class="turn-entry" draggable="true" data-index="${turn.index}" data-user="${turn.user}">
-                <p>Turn ${turn.index + 1}: ${turn.user} - ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
-                ...
-              </div>
-            `).join('')
-            :
-            userOrder.map(user => {
-              const userTurns = turns.filter(t => t.user === user);
-              return `
-                <h4 style="margin-top: 10px;">${user}</h4>
-                ${userTurns.map(turn => `
-                  <div class="turn-entry" draggable="false" data-index="${turn.index}" data-user="${turn.user}">
-                    <p>Attempt ${turn.repetition}: ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
-                    ...
-                  </div>
-                `).join('')}
-              `;
-            }).join(''))
-          : '<p>No turns assigned.</p>'
+        task.users.length
+          ? task.users.map((user, index) => `
+            <div class="turn-entry" data-index="${index}" data-user="${user}">
+              <p>${user}</p>
+            </div>
+          `).join('')
+          : '<p>No users assigned.</p>'
       }
     </div>
   `;
+
   container.appendChild(div);
+
+  enableDragAndDrop(div);
 
   div.querySelector(".task-title").addEventListener("click", () => {
     const details = div.querySelector(".task-details");
@@ -909,10 +868,7 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
   });
 });
 
-
-
-
-
+    
 
     if (!container.innerHTML) {
       container.innerHTML = "<p>No tasks for this date.</p>";
@@ -923,6 +879,100 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
   }
 }
 
+
+
+function enableDragAndDrop(taskDiv) {
+  let draggedItem = null;
+  let container = null;
+  let placeholder = null;
+
+  const turnEntries = taskDiv.querySelectorAll(".turn-entry");
+
+  turnEntries.forEach(entry => {
+    entry.draggable = false;
+    entry.style.userSelect = "none";
+    container = entry.parentNode;
+
+    entry.addEventListener("mousedown", startDrag);
+    entry.addEventListener("touchstart", startDrag, { passive: false });
+  });
+
+  function startDrag(e) {
+    e.preventDefault();
+    draggedItem = e.currentTarget;
+    container = draggedItem.parentNode;
+
+    placeholder = document.createElement("div");
+    placeholder.className = "turn-entry";
+    placeholder.style.height = `${draggedItem.offsetHeight}px`;
+    placeholder.style.background = "rgba(255, 255, 255, 0.1)";
+    placeholder.style.border = "2px dashed var(--primary-color)";
+    placeholder.style.borderRadius = "8px";
+
+    draggedItem.parentNode.insertBefore(placeholder, draggedItem.nextSibling);
+
+    draggedItem.classList.add("dragging-active");
+
+    document.addEventListener("mousemove", onDrag);
+    document.addEventListener("touchmove", onDrag, { passive: false });
+    document.addEventListener("mouseup", endDrag);
+    document.addEventListener("touchend", endDrag);
+  }
+
+  function onDrag(e) {
+    if (!draggedItem) return;
+
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    draggedItem.style.position = "absolute";
+    draggedItem.style.zIndex = "1000";
+    draggedItem.style.pointerEvents = "none";
+    draggedItem.style.width = `${placeholder.offsetWidth}px`;
+    draggedItem.style.left = `${placeholder.getBoundingClientRect().left}px`;
+    draggedItem.style.top = `${y - placeholder.offsetHeight / 2}px`;
+
+    const entries = Array.from(container.children).filter(el => el !== draggedItem && el !== placeholder);
+
+    for (const entry of entries) {
+      const rect = entry.getBoundingClientRect();
+      const middleY = rect.top + rect.height / 2;
+
+      if (y < middleY) {
+        container.insertBefore(placeholder, entry);
+        break;
+      } else if (entry === entries[entries.length - 1]) {
+        container.appendChild(placeholder);
+      }
+    }
+  }
+
+  function endDrag() {
+    if (!draggedItem) return;
+
+    draggedItem.classList.remove("dragging-active");
+
+    draggedItem.style.position = "";
+    draggedItem.style.top = "";
+    draggedItem.style.left = "";
+    draggedItem.style.zIndex = "";
+    draggedItem.style.pointerEvents = "";
+    draggedItem.style.width = "";
+
+    container.insertBefore(draggedItem, placeholder);
+    placeholder.remove();
+    placeholder = null;
+    draggedItem = null;
+
+    document.removeEventListener("mousemove", onDrag);
+    document.removeEventListener("touchmove", onDrag);
+    document.removeEventListener("mouseup", endDrag);
+    document.removeEventListener("touchend", endDrag);
+
+    const newOrder = Array.from(container.children).map(el => el.dataset.user);
+    const title = taskDiv.dataset.title;
+    const date = taskDiv.dataset.date;
+    handleReorder(title, date, newOrder);
+  }
+}
 
 
 
@@ -1005,7 +1055,7 @@ fetchUsers().then(() => generateScrollableDates());
 
 
 
-<script src="/BeeMazing-Y1/shared/taskrotations.js"></script>
+
 
 
 
