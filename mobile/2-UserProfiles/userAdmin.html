@@ -449,7 +449,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home 666 </span>
+        <span>Home 1 </span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -890,12 +890,12 @@ async function loadTasks() {
 
 function enableDragAndDrop(taskDiv) {
   let draggedItem = null;
-  let container = null;
-  let placeholder = null;
   let startY = 0;
-  let scrollInterval = null;
+  let offsetY = 0;
+  let container = null;
 
   const turnEntries = taskDiv.querySelectorAll(".turn-entry");
+
   turnEntries.forEach(entry => {
     entry.draggable = false; 
     entry.style.userSelect = "none";
@@ -908,39 +908,40 @@ function enableDragAndDrop(taskDiv) {
   function startDrag(e) {
     e.preventDefault();
     draggedItem = e.currentTarget;
-    startY = e.touches ? e.touches[0].clientY : e.clientY;
 
-    draggedItem.classList.add("dragging");
-    placeholder = document.createElement("div");
-    placeholder.className = "turn-entry placeholder";
-    placeholder.style.height = `${draggedItem.offsetHeight}px`;
-    container.insertBefore(placeholder, draggedItem.nextSibling);
+    const touchY = e.touches ? e.touches[0].clientY : e.clientY;
+    const rect = draggedItem.getBoundingClientRect();
+    offsetY = touchY - rect.top;
+    startY = touchY;
+
+    draggedItem.style.position = "absolute";
+    draggedItem.style.width = `${rect.width}px`;
+    draggedItem.style.left = `${rect.left}px`;
+    draggedItem.style.top = `${touchY - offsetY}px`;
+    draggedItem.style.zIndex = 1000;
+    draggedItem.style.pointerEvents = "none"; // so it doesn't block other elements
+
+    document.body.appendChild(draggedItem);
 
     document.addEventListener("mousemove", onDrag);
     document.addEventListener("touchmove", onDrag, { passive: false });
     document.addEventListener("mouseup", endDrag);
     document.addEventListener("touchend", endDrag);
-
-    startAutoScroll();
   }
 
   function onDrag(e) {
     if (!draggedItem) return;
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
-    const moveY = y - startY;
-    draggedItem.style.transform = `translateY(${moveY}px)`;
-    draggedItem.style.zIndex = "1000";
-    draggedItem.style.position = "relative";
+    const touchY = e.touches ? e.touches[0].clientY : e.clientY;
+    draggedItem.style.top = `${touchY - offsetY}px`;
 
-    const entries = Array.from(container.children).filter(el => el !== draggedItem && el !== placeholder);
+    const entries = Array.from(container.children);
     for (const entry of entries) {
       const rect = entry.getBoundingClientRect();
-      if (y > rect.top && y < rect.bottom) {
-        if (y < rect.top + rect.height / 2) {
-          container.insertBefore(placeholder, entry);
-        } else {
-          container.insertBefore(placeholder, entry.nextSibling);
+      if (touchY > rect.top && touchY < rect.bottom) {
+        if (entry !== draggedItem) {
+          container.insertBefore(draggedItem, touchY < rect.top + rect.height / 2 ? entry : entry.nextSibling);
         }
+        break;
       }
     }
   }
@@ -948,16 +949,14 @@ function enableDragAndDrop(taskDiv) {
   function endDrag() {
     if (!draggedItem) return;
 
-    container.insertBefore(draggedItem, placeholder);
-    draggedItem.classList.remove("dragging");
-    draggedItem.style.transform = "";
-    draggedItem.style.zIndex = "";
     draggedItem.style.position = "";
+    draggedItem.style.width = "";
+    draggedItem.style.left = "";
+    draggedItem.style.top = "";
+    draggedItem.style.zIndex = "";
+    draggedItem.style.pointerEvents = "";
 
-    if (placeholder) {
-      placeholder.remove();
-      placeholder = null;
-    }
+    container.appendChild(draggedItem);
 
     draggedItem = null;
 
@@ -966,36 +965,12 @@ function enableDragAndDrop(taskDiv) {
     document.removeEventListener("mouseup", endDrag);
     document.removeEventListener("touchend", endDrag);
 
-    stopAutoScroll();
-
     const newOrder = Array.from(container.children).map(el => el.dataset.user);
     const title = taskDiv.dataset.title;
     const date = taskDiv.dataset.date;
     handleReorder(title, date, newOrder);
   }
-
-  function startAutoScroll() {
-    scrollInterval = setInterval(() => {
-      const y = (window.TouchEvent && event instanceof TouchEvent) ? event.touches[0].clientY : event.clientY;
-      const windowHeight = window.innerHeight;
-      const scrollSpeed = 10;
-
-      if (y < 100) {
-        window.scrollBy(0, -scrollSpeed);
-      } else if (y > windowHeight - 100) {
-        window.scrollBy(0, scrollSpeed);
-      }
-    }, 20);
-  }
-
-  function stopAutoScroll() {
-    if (scrollInterval) {
-      clearInterval(scrollInterval);
-      scrollInterval = null;
-    }
-  }
 }
-
 
 
 
