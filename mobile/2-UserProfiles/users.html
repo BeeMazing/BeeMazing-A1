@@ -787,6 +787,73 @@
   transform: scale(1.1);
 }
 
+
+
+/* 👇 Add these missing styles for userSelectModal to work */
+.bottom-sheet {
+  position: fixed;
+  bottom: -100%;
+  left: 0;
+  width: 100%;
+  background: var(--card-bg);
+  color: var(--text-color);
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5);
+  transition: bottom 0.3s ease-in-out;
+  z-index: 1100;
+  padding: 20px;
+}
+
+.bottom-sheet.show {
+  bottom: 0;
+}
+
+.bottom-sheet-content {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.bottom-sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.user-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.user-list li {
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  background: var(--secondary-color);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: background 0.2s;
+}
+
+.user-list li:hover {
+  background: var(--primary-color);
+  color: var(--secondary-color);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+
+
+
+
 /* selecting user */
 
 
@@ -862,6 +929,10 @@
     </div>
     
 
+
+
+    
+
 <!-- selecting user -->
 
 
@@ -871,7 +942,7 @@
     <div class="footer">
       <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
           <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-          <span>Home 1</span>
+          <span>Home</span>
       </a>
       <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
           <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
