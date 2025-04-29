@@ -1,5 +1,3 @@
-// /BeeMazing-Y1/shared/taskrotations.js
-
 function parseLocalDate(dateStr) {
     if (!dateStr || typeof dateStr !== 'string') return new Date(3000, 0, 1);
     const parts = dateStr.trim().split("-");
@@ -84,14 +82,11 @@ function calculateTurn(task, selectedDate) {
     };
 }
 
-
-
-
 function prepareTaskTurnData(task, selectedDate) {
     const repeat = task.repeat || "Daily";
-    let requiredTimes = task.timesPerDay || 1;
-    if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-    if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+    let requiredTimes = task.repeat === "Daily" ? task.timesPerDay || 1 :
+                       task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+                       task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
 
     const completions = (task.completions && task.completions[selectedDate]) || [];
     const pendingCompletions = (task.pendingCompletions && task.pendingCompletions[selectedDate]) || [];
@@ -109,12 +104,39 @@ function prepareTaskTurnData(task, selectedDate) {
         userPendingCounts[u] = (userPendingCounts[u] || 0) + 1;
     });
 
-    const userOrder = task.users || [];
+    const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
     const isRotation = (task.settings || "Rotation") === "Rotation";
 
     if (isRotation) {
+        // Apply daily offset and completion logic like calculateTurn
+        const selected = parseLocalDate(selectedDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const startDate = parseLocalDate(task.date.split(" to ")[0]);
+
+        let lastCompletionDate = startDate;
+        let lastCompletedCount = 0;
+        if (task.completions) {
+            const completionDates = Object.keys(task.completions)
+                .map(date => parseLocalDate(date))
+                .filter(date => date < today)
+                .sort((a, b) => b - a);
+            if (completionDates.length > 0) {
+                lastCompletionDate = completionDates[0];
+                const lastDateStr = lastCompletionDate.toISOString().split("T")[0];
+                const lastCompletions = task.completions[lastDateStr] || [];
+                const lastPending = task.pendingCompletions?.[lastDateStr] || [];
+                lastCompletedCount = lastCompletions.length + lastPending.length;
+            }
+        }
+
+        const completedCount = completions.length + pendingCompletions.length;
+        const daysDiff = Math.floor((selected - lastCompletionDate) / (1000 * 60 * 60 * 24));
+        const totalCompletions = lastCompletedCount + (daysDiff - 1) * requiredTimes + completedCount;
+
         for (let i = 0; i < requiredTimes; i++) {
-            const originalUser = userOrder[i % userOrder.length];
+            const userIndex = (totalCompletions + i) % userOrder.length;
+            const originalUser = userOrder[userIndex] || "Unknown";
             const user = tempTurnReplacement[i] || originalUser;
             let isCompleted = false;
             let isPending = false;
@@ -162,8 +184,6 @@ function prepareTaskTurnData(task, selectedDate) {
     return turns;
 }
 
-
-
 function calculateIndividualProgress(task, selectedDate, user) {
     const completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
     const count = completions.filter(u => u === user).length;
@@ -176,6 +196,3 @@ function calculateIndividualProgress(task, selectedDate, user) {
         isComplete: count >= required
     };
 }
-
-
-

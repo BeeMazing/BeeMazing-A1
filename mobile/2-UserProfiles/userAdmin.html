@@ -431,7 +431,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        <span>Home 10</span>
+        <span>Home 11</span>
     </a>
     <a href="#" id="profileButton" class="footer-icon" aria-label="Profile">
         <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" alt="Profile" />
@@ -780,6 +780,8 @@ async function handleReorder(title, date, newUserOrder) {
 
 
 
+
+
 async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
   try {
     console.log(`Loading tasks for date: ${selectedDate}, attempt: ${attempt}`); // Debug
@@ -893,7 +895,7 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
       }
     }
 
-    Object.keys(tasksByTitle).sort().forEach(title => {
+    Object.keys(tasksByTitle).forEach(title => {
       const { turns, pendingCount, date, userOrder } = tasksByTitle[title];
       const div = document.createElement("div");
       div.className = "task-entry";
@@ -971,6 +973,7 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
     document.getElementById("taskContainer").innerHTML = "<p>Error loading tasks. Please try again.</p>";
   }
 }
+
 
 
 
