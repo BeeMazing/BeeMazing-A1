@@ -119,40 +119,42 @@ function mixedTurnData(task, selectedDate) {
         // Calculate rotation offset for Daily tasks
         let rotationOffset = 0;
         let totalPreviousTurns = 0;
-// Calculate offset: total turns modulo number of users
-if (repeat === "Daily" && assignedUsers.length > 0) {
-    // Parse task start date and selected date
-    const range = task.date && typeof task.date === "string" ? task.date.split(" to ") : [selectedDate];
-    const taskStartDate = parseLocalDate(range[0]);
-    const selected = parseLocalDate(selectedDate);
+        if (repeat === "Daily" && assignedUsers.length > 0) {
+            // Parse task start date and selected date
+            const range = task.date.split(" to ");
+            const taskStartDate = parseLocalDate(range[0]);
+            const selected = parseLocalDate(selectedDate);
 
-    if (isNaN(taskStartDate.getTime()) || isNaN(selected.getTime())) {
-        console.error("Invalid date in mixedTurnData:", { taskDate: task.date, selectedDate });
-        return { turns: [], completedCount: 0, requiredTimes };
-    }
+            if (isNaN(taskStartDate.getTime())) {
+                console.error("Invalid task start date in mixedTurnData:", { taskDate: task.date, range, taskStartDateRaw: range[0] });
+                return { turns: [], completedCount: 0, requiredTimes };
+            }
+            if (isNaN(selected.getTime())) {
+                console.error("Invalid selected date in mixedTurnData:", { selectedDate });
+                return { turns: [], completedCount: 0, requiredTimes };
+            }
 
-    // Sum turns for all previous days
-    const start = new Date(taskStartDate);
-    const end = new Date(selected);
-    end.setDate(end.getDate() - 1);
+            // Sum turns for all previous days
+            const start = new Date(taskStartDate);
+            const end = new Date(selected);
+            end.setDate(end.getDate() - 1); // Up to the day before selectedDate
 
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().split("T")[0];
-        const dayCompletions = (task.completions && task.completions[dateStr]) || [];
-        const dayPending = (task.pendingCompletions && task.pendingCompletions[dateStr]) || [];
-        const dayTurns = dayCompletions.length + dayPending.length;
-        totalPreviousTurns += (dayTurns > 0 ? dayTurns : requiredTimes);
-    }
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                const dateStr = d.toISOString().split("T")[0];
+                const dayCompletions = (task.completions && Array.isArray(task.completions[dateStr]) ? task.completions[dateStr] : []);
+                const dayPending = (task.pendingCompletions && Array.isArray(task.pendingCompletions[dateStr]) ? task.pendingCompletions[dateStr] : []);
+                const dayTurns = dayCompletions.length + dayPending.length;
+                totalPreviousTurns += (dayTurns > 0 ? dayTurns : requiredTimes);
+            }
 
-    rotationOffset = assignedUsers.length > 0 ? totalPreviousTurns % assignedUsers.length : 0;
-}
-
+            // Calculate offset: total turns modulo number of users
+            rotationOffset = totalPreviousTurns % assignedUsers.length;
+        }
 
         // Generate turns for the required number of times
         for (let i = 0; i < requiredTimes; i++) {
-            if (assignedUsers.length === 0) break;
-            const userIndex = (i + rotationOffset) % assignedUsers.length;
-            const user = assignedUsers[userIndex];        
+            const userIndex = (i + rotationOffset) % (assignedUsers.length || 1);
+            const user = assignedUsers[userIndex] || "Unknown";
             const originalUser = userOrder[userIndex] || user;
             let isCompleted = false;
             let isPending = false;
@@ -201,7 +203,6 @@ if (repeat === "Daily" && assignedUsers.length > 0) {
         return { turns: [], completedCount: 0, requiredTimes: 1 };
     }
 }
-
 
 
 // addtasks.html settings: Rotation ///////////////////////////////////////////////////////////////////////
