@@ -62,15 +62,15 @@ function filterTasksForDate(tasks, selectedDate) {
 
 function mixedTurnData(task, selectedDate) {
     try {
-        if (!task || typeof task !== "object" || !Array.isArray(task.users) || !task.date) {
+        if (!task || typeof task !== "object" || !Array.isArray(task.users) || task.users.length === 0 || !task.date) {
             console.error("Invalid task input in mixedTurnData:", task);
             return { turns: [], completedCount: 0, requiredTimes: 1 };
         }
 
         const repeat = task.repeat || "Daily";
-        const requiredTimes = repeat === "Daily" ? (Number.isInteger(task.timesPerDay) ? task.timesPerDay : 1)
-                          : repeat === "Weekly" ? (Number.isInteger(task.timesPerWeek) ? task.timesPerWeek : 1)
-                          : repeat === "Monthly" ? (Number.isInteger(task.timesPerMonth) ? task.timesPerMonth : 1)
+        const requiredTimes = repeat === "Daily" ? (Number.isInteger(task.timesPerDay) && task.timesPerDay > 0 ? task.timesPerDay : 1)
+                          : repeat === "Weekly" ? (Number.isInteger(task.timesPerWeek) && task.timesPerWeek > 0 ? task.timesPerWeek : 1)
+                          : repeat === "Monthly" ? (Number.isInteger(task.timesPerMonth) && task.timesPerMonth > 0 ? task.timesPerMonth : 1)
                           : 1;
 
         const completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
@@ -82,19 +82,24 @@ function mixedTurnData(task, selectedDate) {
         const userPendingCounts = {};
 
         completions.forEach(user => {
-            userCompletionCounts[user] = (userCompletionCounts[user] || 0) + 1;
+            if (user) userCompletionCounts[user] = (userCompletionCounts[user] || 0) + 1;
         });
 
         pendingCompletions.forEach(user => {
-            userPendingCounts[user] = (userPendingCounts[user] || 0) + 1;
+            if (user) userPendingCounts[user] = (userPendingCounts[user] || 0) + 1;
         });
 
-        const userOrder = [...task.users];
+        const userOrder = task.users.filter(user => typeof user === "string" && user.trim());
+        if (userOrder.length === 0) {
+            console.error("No valid users in task.users:", task.users);
+            return { turns: [], completedCount: 0, requiredTimes };
+        }
+
         const assignedUsers = [...userOrder];
 
         Object.entries(tempTurnReplacement).forEach(([index, user]) => {
             const i = parseInt(index);
-            if (!isNaN(i) && i >= 0 && i < assignedUsers.length) {
+            if (!isNaN(i) && i >= 0 && i < assignedUsers.length && typeof user === "string" && user.trim()) {
                 assignedUsers[i] = user;
             }
         });
@@ -123,8 +128,8 @@ function mixedTurnData(task, selectedDate) {
 
         for (let i = 0; i < requiredTimes; i++) {
             const userIndex = (i + rotationOffset) % assignedUsers.length;
-            const user = assignedUsers[userIndex];
-            const originalUser = userOrder[userIndex];
+            const user = assignedUsers[userIndex] || userOrder[userIndex % userOrder.length]; // Fallback to userOrder
+            const originalUser = userOrder[userIndex % userOrder.length];
 
             let isCompleted = false;
             let isPending = false;
@@ -154,6 +159,7 @@ function mixedTurnData(task, selectedDate) {
             requiredTimes,
             rotationOffset,
             daysSinceStart,
+            userOrder,
             turns
         });
 
@@ -163,7 +169,6 @@ function mixedTurnData(task, selectedDate) {
         return { turns: [], completedCount: 0, requiredTimes: 1 };
     }
 }
-
 
 
 
