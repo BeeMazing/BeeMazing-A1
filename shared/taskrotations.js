@@ -123,9 +123,8 @@ function mixedTurnData(task, selectedDate) {
                 const completedTurns = completionsOnDay.length + pendingOnDay.length;
 
                 // ✅ Only count fully completed days
-                if (completedTurns >= requiredTimes) {
-                    totalPreviousTurns += requiredTimes;
-                }
+                totalPreviousTurns += requiredTimes;
+
             }
 
             rotationOffset = totalPreviousTurns % assignedUsers.length;
