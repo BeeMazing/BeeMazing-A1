@@ -1904,7 +1904,6 @@ window.addEventListener("click", (e) => {
     let timesPerWeek = parseInt(document.getElementById("timesPerWeekInput").value) || null;
     let timesPerMonth = parseInt(document.getElementById("timesPerMonthInput").value) || null;
     const specificDates = document.getElementById("specificDatesInput").value;
-    const specificDays = dateMode === "specific-days" ? selectedDays : [];
 
     // Validations
     if (!title) {
