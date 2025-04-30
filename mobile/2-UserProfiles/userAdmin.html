@@ -1746,11 +1746,11 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
         return;
       }
 
-      let turns = [];
-      if (task.settings?.includes("Rotation")) {
-        if (typeof calculateTurn !== 'function') {
-          console.error(`calculateTurn is not defined for task: ${task.title}`);
-          turns = [{
+      let turnData;
+if (task.settings?.includes("Rotation")) {
+    if (typeof mixedTurnData !== 'function') {
+        console.error(`mixedTurnData is not defined for task: ${task.title}`);
+        turnData = { turns: [{
             user: "Error",
             repetition: 1,
             index: 0,
@@ -1758,58 +1758,14 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
             isPending: false,
             isCompleted: false,
             originalUser: "Error"
-          }];
-        } else {
-          const rotation = calculateTurn(task, selectedDate);
-          const completions = (task.completions && task.completions[selectedDate]) || [];
-          const pendingCompletions = (task.pendingCompletions && task.pendingCompletions[selectedDate]) || [];
-          const required = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                          task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                          task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-
-          // Calculate user completion counts
-          const userCompletionCounts = {};
-          const userPendingCounts = {};
-          completions.forEach(u => {
-            userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
-          });
-          pendingCompletions.forEach(u => {
-            userPendingCounts[u] = (userPendingCounts[u] || 0) + 1;
-          });
-
-          // Generate turns starting from currentTurn
-          const assignedUsers = rotation.userOrder || task.users;
-          const startIndex = assignedUsers.indexOf(rotation.currentTurn) >= 0 ? assignedUsers.indexOf(rotation.currentTurn) : 0;
-          for (let i = 0; i < required; i++) {
-            const userIndex = (startIndex + i) % (assignedUsers.length || 1);
-            const user = assignedUsers[userIndex] || "Unknown";
-            const originalUser = task.users[userIndex % task.users.length] || user;
-            let isCompleted = false;
-            let isPending = false;
-
-            if (userCompletionCounts[user] && userCompletionCounts[user] > 0) {
-              isCompleted = true;
-              userCompletionCounts[user]--;
-            } else if (userPendingCounts[user] && userPendingCounts[user] > 0) {
-              isPending = true;
-              userPendingCounts[user]--;
-            }
-
-            turns.push({
-              user,
-              repetition: i + 1,
-              index: i,
-              date: task.date,
-              isPending,
-              isCompleted,
-              originalUser
-            });
-          }
-        }
-      } else if (task.settings?.includes("Individual")) {
-        if (typeof calculateIndividualProgress !== 'function') {
-          console.error(`calculateIndividualProgress is not defined for task: ${task.title}`);
-          turns = [{
+        }], completedCount: 0, requiredTimes: 1 };
+    } else {
+        turnData = mixedTurnData(task, selectedDate);
+    }
+} else if (task.settings?.includes("Individual")) {
+    if (typeof individualTurnData !== 'function') {
+        console.error(`individualTurnData is not defined for task: ${task.title}`);
+        turnData = { turns: [{
             user: "Error",
             repetition: 1,
             index: 0,
@@ -1817,77 +1773,39 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
             isPending: false,
             isCompleted: false,
             originalUser: "Error"
-          }];
-        } else {
-          const completions = (task.completions && task.completions[selectedDate]) || [];
-          const pendingCompletions = (task.pendingCompletions && task.pendingCompletions[selectedDate]) || [];
-          const required = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                          task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                          task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+        }], completedCount: 0, requiredTimes: 1 };
+    } else {
+        turnData = individualTurnData(task, selectedDate);
+    }
+} else {
+    console.warn(`Unsupported task settings for ${task.title}: ${task.settings}`);
+    turnData = { turns: [{
+        user: "No Settings",
+        repetition: 1,
+        index: 0,
+        date: task.date,
+        isPending: false,
+        isCompleted: false,
+        originalUser: "No Settings"
+    }], completedCount: 0, requiredTimes: 1 };
+}
 
-          // Calculate user completion and pending counts
-          const userCompletionCounts = {};
-          const userPendingCounts = {};
-          completions.forEach(u => {
-            userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
-          });
-          pendingCompletions.forEach(u => {
-            userPendingCounts[u] = (userPendingCounts[u] || 0) + 1;
-          });
+console.log(`Turn data for ${task.title} on ${selectedDate}:`, turnData); // Debug
 
-          // Generate turns for each user up to required attempts
-          task.users.forEach((user, userIndex) => {
-            let completionCount = userCompletionCounts[user] || 0;
-            let pendingCount = userPendingCounts[user] || 0;
-            for (let i = 0; i < required; i++) {
-              let isCompleted = false;
-              let isPending = false;
-              if (completionCount > 0) {
-                isCompleted = true;
-                completionCount--;
-              } else if (pendingCount > 0) {
-                isPending = true;
-                pendingCount--;
-              }
-              turns.push({
-                user,
-                repetition: i + 1,
-                index: userIndex * required + i,
-                date: task.date,
-                isPending,
-                isCompleted,
-                originalUser: user
-              });
-            }
-          });
-        }
-      } else {
-        console.warn(`Unsupported task settings for ${task.title}: ${task.settings}`);
-        turns = [{
-          user: "No Settings",
-          repetition: 1,
-          index: 0,
-          date: task.date,
-          isPending: false,
-          isCompleted: false,
-          originalUser: "No Settings"
-        }];
-      }
-
-      console.log(`Turns for ${task.title} on ${selectedDate}:`, turns); // Debug
-
-      tasksByTitle[task.title].pendingCount += turns.filter(t => t.isPending).length;
-      turns.forEach((turn) => {
-        tasksByTitle[task.title].turns.push({
-          user: turn.user,
-          repetition: turn.repetition,
-          index: turn.index,
-          date: turn.date,
-          isPending: turn.isPending,
-          isCompleted: turn.isCompleted,
-          originalUser: turn.originalUser
-        });
-      });
+tasksByTitle[task.title].pendingCount = turnData.turns.filter(t => t.isPending).length;
+tasksByTitle[task.title].completedCount = turnData.completedCount;
+tasksByTitle[task.title].timesPerDay = turnData.requiredTimes; // Use requiredTimes for consistency
+turnData.turns.forEach((turn) => {
+    tasksByTitle[task.title].turns.push({
+        user: turn.user,
+        repetition: turn.repetition,
+        index: turn.index,
+        date: task.date,
+        isPending: turn.isPending,
+        isCompleted: turn.isCompleted,
+        originalUser: turn.originalUser
+    });
+});
     });
 
     if (retry && attempt < maxAttempts) {

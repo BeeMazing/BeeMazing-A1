@@ -529,8 +529,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-if (typeof calculateIndividualProgress === 'undefined') {
-    console.error("taskrotations.js failed to load or does not contain calculateIndividualProgress");
+if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undefined') {
+    console.error("taskrotations.js failed to load or does not contain mixedTurnData/individualTurnData");
 } else {
     console.log("taskrotations.js loaded successfully");
 }
@@ -602,32 +602,42 @@ if (typeof calculateIndividualProgress === 'undefined') {
                 task.users = ["Unknown"];
             }
 
-            let taskHTML = '';
-            const required = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                            task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                            task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+            let taskHTML = `<strong>${task.title}</strong>`;
+            let turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
 
-            if (task.settings?.includes("Individual")) {
-                taskHTML += `<strong>${task.title}</strong><br><em>Individual Task</em><br>`;
-                if (typeof calculateIndividualProgress === 'function') {
-                    task.users.forEach(user => {
-                        const { count, required, isComplete } = calculateIndividualProgress(task, selectedDate, user);
-                        const check = isComplete ? '✅' : '';
-                        taskHTML += `${user}: ${count}/${required} ${check}<br>`;
-                    });
+            if (task.settings?.includes("Rotation")) {
+                if (typeof mixedTurnData !== 'function') {
+                    console.error(`mixedTurnData is not defined for task: ${task.title}`);
+                    taskHTML += `<br><em style="color:#ff4444;">Error: Rotation calculation unavailable</em>`;
                 } else {
-                    taskHTML += `<em style="color:#ff4444;">Error: Progress calculation unavailable</em><br>`;
+                    turnData = mixedTurnData(task, selectedDate);
+                    const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
+                    const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
+                    const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : "—";
+                    taskHTML += `
+                        <br><em>Rotation Task</em>
+                        <br>Turn: ${currentTurn}
+                        <br>Next: ${nextUser}
+                        <div class="task-progress">Progress: ${turnData.completedCount}/${turnData.requiredTimes}</div>
+                    `;
                 }
-            } else if (task.settings?.includes("Rotation")) {
-                const { currentTurn, nextUser, completedCount, repeatLimit } = calculateTurn(task, selectedDate);
-                taskHTML += `
-                    <strong>${task.title}</strong><br>
-                    Turn: ${currentTurn}<br>
-                    Next: ${nextUser}<br>
-                    Completed: ${completedCount}/${repeatLimit}<br>
-                `;
+            } else if (task.settings?.includes("Individual")) {
+                if (typeof individualTurnData !== 'function') {
+                    console.error(`individualTurnData is not defined for task: ${task.title}`);
+                    taskHTML += `<br><em style="color:#ff4444;">Error: Progress calculation unavailable</em>`;
+                } else {
+                    turnData = individualTurnData(task, selectedDate);
+                    taskHTML += `<br><em>Individual Task</em>`;
+                    task.users.forEach(user => {
+                        const userTurns = turnData.turns.filter(t => t.user === user);
+                        const count = userTurns.filter(t => t.isCompleted || t.isPending).length;
+                        const required = turnData.requiredTimes;
+                        const check = count >= required ? '✅' : '';
+                        taskHTML += `<br>${user}: ${count}/${required} ${check}`;
+                    });
+                }
             } else {
-                taskHTML += `<strong>${task.title}</strong><br><em style="color:#aaa;">No rotation</em><br>`;
+                taskHTML += `<br><em style="color:#aaa;">No rotation</em>`;
             }
 
             taskDiv.innerHTML = taskHTML + `<div class="delete-btn">Delete</div>`;
@@ -664,82 +674,109 @@ if (typeof calculateIndividualProgress === 'undefined') {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 async function showTaskDetails(task) {
-  const selectedDate = document.querySelector(".day.selected")?.dataset.date;
-  if (!selectedDate) return;
+    const selectedDate = document.querySelector(".day.selected")?.dataset.date;
+    if (!selectedDate) return;
 
-  const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
+    const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
 
-  let taskDetails = `
-    <strong>Title:</strong> ${task.title}<br>
-    ${task.notes ? `<strong>Notes:</strong> ${task.notes}<br>` : ""}
-    ${task.room ? `<strong>Room:</strong> ${task.room}<br>` : ""}
-    <strong>Frequency:</strong> ${task.repeat}
-    ${task.repeat === "Daily" && task.timesPerDay ? ` - ${task.timesPerDay} time(s)/day` : ""}
-    ${task.repeat === "Weekly" && task.timesPerWeek ? ` - ${task.timesPerWeek} time(s)/week` : ""}
-    ${task.repeat === "Monthly" && task.timesPerMonth ? ` - ${task.timesPerMonth} time(s)/month` : ""}
-    <br>
-    <strong>Date:</strong> ${task.date}<br>
-    <strong>Users:</strong> ${userOrder.join(", ")}<br>
-    ${task.reward && task.reward !== "0" ? `<strong>Reward:</strong> ${task.reward} 🍯<br>` : ""}
-  `;
+    let taskDetails = `
+        <strong>Title:</strong> ${task.title}<br>
+        ${task.notes ? `<strong>Notes:</strong> ${task.notes}<br>` : ""}
+        ${task.room ? `<strong>Room:</strong> ${task.room}<br>` : ""}
+        <strong>Frequency:</strong> ${task.repeat}
+        ${task.repeat === "Daily" && task.timesPerDay ? ` - ${task.timesPerDay} time(s)/day` : ""}
+        ${task.repeat === "Weekly" && task.timesPerWeek ? ` - ${task.timesPerWeek} time(s)/week` : ""}
+        ${task.repeat === "Monthly" && task.timesPerMonth ? ` - ${task.timesPerMonth} time(s)/month` : ""}
+        <br>
+        <strong>Date:</strong> ${task.date}<br>
+        <strong>Users:</strong> ${userOrder.join(", ")}<br>
+        ${task.reward && task.reward !== "0" ? `<strong>Reward:</strong> ${task.reward} 🍯<br>` : ""}
+    `;
 
-  const required = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                   task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                   task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-
-                   if (task.settings?.includes("Individual")) {
-    taskDetails += `<strong>Individual Progress:</strong><br>`;
-    if (typeof calculateIndividualProgress === 'function') {
-        task.users.forEach(user => {
-            const { count, required, isComplete } = calculateIndividualProgress(task, selectedDate, user);
-            const check = isComplete ? '✅' : '';
-            taskDetails += `${user}: ${count}/${required} ${check}<br>`;
-        });
+    let turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+    if (task.settings?.includes("Rotation")) {
+        if (typeof mixedTurnData !== 'function') {
+            taskDetails += `<em style="color:#ff4444;">Error: Rotation calculation unavailable</em><br>`;
+        } else {
+            turnData = mixedTurnData(task, selectedDate);
+            const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
+            const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
+            const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : "—";
+            taskDetails += `
+                <strong>Settings:</strong> Rotation<br>
+                <strong>Current Turn:</strong> ${currentTurn}<br>
+                <strong>Next:</strong> ${nextUser}<br>
+                <div class="task-progress">Progress: ${turnData.completedCount}/${turnData.requiredTimes}</div>
+            `;
+        }
+    } else if (task.settings?.includes("Individual")) {
+        if (typeof individualTurnData !== 'function') {
+            taskDetails += `<em style="color:#ff4444;">Error: Progress calculation unavailable</em><br>`;
+        } else {
+            turnData = individualTurnData(task, selectedDate);
+            taskDetails += `<strong>Settings:</strong> Individual<br><strong>Progress:</strong><br>`;
+            task.users.forEach(user => {
+                const userTurns = turnData.turns.filter(t => t.user === user);
+                const count = userTurns.filter(t => t.isCompleted || t.isPending).length;
+                const required = turnData.requiredTimes;
+                const check = count >= required ? '✅' : '';
+                taskDetails += `${user}: ${count}/${required} ${check}<br>`;
+            });
+        }
     } else {
-        taskDetails += `<em style="color:#ff4444;">Error: Progress calculation unavailable</em><br>`;
+        taskDetails += `<em style="color:#aaa;">No rotation logic for this task</em><br>`;
     }
-} else if (task.settings?.includes("Rotation")) {
-    const rotation = calculateTurn(task, selectedDate);
+
+    const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+    const uniqueUsers = [...new Set(completedUsers)];
+    if (uniqueUsers.length > 0) {
+        taskDetails += `
+            <div style="margin-top: 8px;">
+                <strong>Completed by:</strong> ${uniqueUsers.join(", ")}
+            </div>
+        `;
+    }
+
     taskDetails += `
-      <strong>Current Turn:</strong> ${rotation.currentTurn}<br>
-      <strong>Next:</strong> ${rotation.nextUser}<br>
-      <strong>Completed:</strong> ${rotation.completedCount}/${rotation.repeatLimit}<br>
+        <br>
+        <button id="editTaskBtn" style="padding: 6px 10px; background: var(--secondary-color); color: var(--accent-color); font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">Edit Task</button>
     `;
-  } else {
-    taskDetails += `<em style="color:#aaa;">No rotation logic for this task</em><br>`;
-  }
 
-  const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-  const uniqueUsers = [...new Set(completedUsers)];
-  if (uniqueUsers.length > 0) {
-    taskDetails += `
-      <div style="margin-top: 8px;">
-        <strong>Completed by:</strong> ${uniqueUsers.join(", ")}
-      </div>
-    `;
-  }
+    const modal = document.createElement("div");
+    modal.className = "task-modal";
+    modal.innerHTML = `<div class="modal-content">${taskDetails}</div>`;
+    document.body.appendChild(modal);
 
-  taskDetails += `
-    <br>
-    <button id="editTaskBtn" style="padding: 6px 10px; background: var(--secondary-color); color: var(--accent-color); font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">Edit Task</button>
-  `;
+    modal.addEventListener("click", (e) => {
+        if (e.target.classList.contains("task-modal")) modal.remove();
+    });
 
-  const modal = document.createElement("div");
-  modal.className = "task-modal";
-  modal.innerHTML = `<div class="modal-content">${taskDetails}</div>`;
-  document.body.appendChild(modal);
-
-  modal.addEventListener("click", (e) => {
-    if (e.target.classList.contains("task-modal")) modal.remove();
-  });
-
-  document.getElementById("editTaskBtn").addEventListener("click", () => {
-    localStorage.setItem("familyApp_editTask", JSON.stringify(task));
-    localStorage.setItem("familyApp_editTask_index", task.title + "-" + task.date);
-    window.location.href = "/BeeMazing-Y1/mobile/3-Tasks/addtasks.html";
-  });
+    document.getElementById("editTaskBtn").addEventListener("click", () => {
+        localStorage.setItem("familyApp_editTask", JSON.stringify(task));
+        localStorage.setItem("familyApp_editTask_index", task.title + "-" + task.date);
+        window.location.href = "/BeeMazing-Y1/mobile/3-Tasks/addtasks.html";
+    });
 }
+
+
+
+
+
+
 
 
 
@@ -877,228 +914,6 @@ async function finishTask(userName, task, button, selectedDate) {
             }
         }
         
-
-
-
-
-
-        
-        // Show modal to edit task completions
-/* 
-// Unused functions (previously triggered by Edit Completion and Edit Turn Order buttons)
-// Remove if not needed elsewhere
-        
-        async function showEditCompletionModal(task, completedUsers, today, parentModal) {
-            const modal = document.createElement("div");
-            modal.className = "task-modal";
-        
-            const checkboxes = task.users.map(user => `
-                <label style="display:block;margin-bottom:8px;">
-                    <input type="checkbox" value="${user}" ${completedUsers.includes(user) ? "checked" : ""}>
-                    ${user}
-                </label>
-            `).join("");
-        
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <strong>Edit Completed By:</strong><br><br>
-                    ${checkboxes}
-                    <button id="saveCompletionBtn" style="margin-top: 10px; padding: 8px 12px; background: var(--primary-color); color: var(--secondary-color); border: none; font-weight: bold; border-radius: 6px; cursor: pointer;">
-                        Save
-                    </button>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        
-            modal.addEventListener("click", (e) => {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
-        
-            document.getElementById("saveCompletionBtn").addEventListener("click", async () => {
-                const checkboxes = modal.querySelectorAll("input[type='checkbox']");
-                const newCompleted = [];
-                const removedUsers = [];
-        
-                checkboxes.forEach(box => {
-                    const user = box.value;
-                    if (box.checked) {
-                        newCompleted.push(user);
-                    } else if (completedUsers.includes(user)) {
-                        removedUsers.push(user);
-                    }
-                });
-        
-                if (!task.completions) task.completions = {};
-                task.completions[today] = newCompleted;
-        
-                let newTurn = null;
-                for (const removed of removedUsers) {
-                    if (task.users.includes(removed)) {
-                        newTurn = removed;
-                        break;
-                    }
-                }
-        
-                if (!newTurn) {
-                    const completedSet = new Set(newCompleted);
-                    newTurn = task.users.find(u => !completedSet.has(u)) || task.users[0];
-                }
-        
-                task.turn = newTurn;
-        
-                const adminEmail = localStorage.getItem("currentAdminEmail");
-                const rewardAmount = Number(task.reward) || 0;
-                if (adminEmail && removedUsers.length > 0) {
-                    for (const user of removedUsers) {
-                        await fetch("https://beemazing.onrender.com/api/rewards", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ adminEmail, user, amount: -rewardAmount })
-                        });
-                    }
-                }
-        
-                await saveTaskToBackend(task);
-        
-                modal.remove();
-                parentModal.remove();
-        
-                const selectedDate = document.querySelector(".day.selected")?.dataset.date;
-                if (selectedDate) loadTasksForDate(selectedDate);
-                showTaskDetails(task);
-            });
-        }
-        
-        // Show modal to edit turn order
-        async function showEditTurnModal(task) {
-            const modal = document.createElement("div");
-            modal.className = "task-modal";
-        
-            const generateUserOptions = (selected) => {
-                return task.users.map(user => `
-                    <option value="${user}" ${user === selected ? 'selected' : ''}>${user}</option>
-                `).join("");
-            };
-        
-            const generateUserList = (excludeUser) => {
-                return task.users
-                    .filter(user => user !== excludeUser)
-                    .map(user => `
-                        <li class="draggable-user">${user}</li>
-                    `).join("");
-            };
-        
-            const currentTurn = task.turn || task.users[0];
-        
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <strong>Edit Current Turn:</strong><br>
-                    <select id="turnSelector" style="margin: 6px 0 12px;">
-                        ${generateUserOptions(currentTurn)}
-                    </select><br>
-                    <strong>Edit Turn Order:</strong><br>
-                    <ul id="userOrderList" style="list-style: none; padding: 0; margin: 10px 0;">
-                        ${generateUserList(currentTurn)}
-                    </ul>
-                    <button id="saveTurnOrder" style="padding: 8px 12px; background: var(--primary-color); color: var(--secondary-color); border: none; font-weight: bold; border-radius: 6px; cursor: pointer;">
-                        Save
-                    </button>
-                </div>
-            `;
-        
-            document.body.appendChild(modal);
-        
-            const listContainer = () => modal.querySelector("#userOrderList");
-        
-            const enableDragAndDrop = () => {
-                const list = listContainer();
-                let draggedItem = null;
-                let startY = 0;
-                let currentIndex = -1;
-        
-                const handleStart = (e) => {
-                    draggedItem = e.target.closest("li");
-                    startY = e.touches ? e.touches[0].clientY : e.clientY;
-                    currentIndex = Array.from(list.children).indexOf(draggedItem);
-                    draggedItem.classList.add("dragging");
-                };
-        
-                const handleMove = (e) => {
-                    if (!draggedItem) return;
-                    const moveY = e.touches ? e.touches[0].clientY : e.clientY;
-                    const targetIndex = Array.from(list.children).findIndex(child => {
-                        const rect = child.getBoundingClientRect();
-                        return moveY >= rect.top && moveY <= rect.bottom;
-                    });
-        
-                    if (targetIndex !== -1 && targetIndex !== currentIndex) {
-                        const movingUp = targetIndex < currentIndex;
-                        list.insertBefore(draggedItem, movingUp ? list.children[targetIndex] : list.children[targetIndex].nextSibling);
-                        currentIndex = targetIndex;
-                    }
-                };
-        
-                const handleEnd = () => {
-                    if (draggedItem) {
-                        draggedItem.classList.remove("dragging");
-                        draggedItem = null;
-                    }
-                };
-        
-                list.querySelectorAll("li").forEach((li) => {
-                    li.addEventListener("touchstart", handleStart);
-                    li.addEventListener("touchmove", handleMove);
-                    li.addEventListener("touchend", handleEnd);
-                    li.addEventListener("mousedown", handleStart);
-                    li.addEventListener("mousemove", (e) => {
-                        if (e.buttons === 1) handleMove(e);
-                    });
-                    li.addEventListener("mouseup", handleEnd);
-                });
-            };
-        
-            enableDragAndDrop();
-        
-            document.getElementById("turnSelector").addEventListener("change", (e) => {
-                const newTurn = e.target.value;
-                listContainer().innerHTML = generateUserList(newTurn);
-                enableDragAndDrop();
-            });
-        
-            document.getElementById("saveTurnOrder").addEventListener("click", async () => {
-                const selectedTurn = document.getElementById("turnSelector").value;
-                const reordered = Array.from(listContainer().querySelectorAll("li")).map(li => li.textContent.trim());
-        
-                task.turn = selectedTurn;
-                task.users = [selectedTurn, ...reordered];
-        
-                await saveTaskToBackend(task);
-        
-                modal.remove();
-                loadTasksForDate(document.querySelector(".day.selected")?.dataset.date);
-            });
-        
-            modal.addEventListener("click", (e) => {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
-        }
-        
-
-
-// End of unused functions
-*/
-
-
-
-
-
-
-
-
 
 
 
