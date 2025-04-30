@@ -56,6 +56,47 @@ function filterTasksForDate(tasks, selectedDate) {
 // addtasks.html settings: Rotation ////////////////////////////////////////////////////////////////////////
 
 
+function calculateRotationOffsetUntilDate(task, selectedDate) {
+    const repeat = task.repeat || "Daily";
+    const requiredTimes = repeat === "Daily" ? (Number.isInteger(task.timesPerDay) ? task.timesPerDay : 1)
+                      : repeat === "Weekly" ? (Number.isInteger(task.timesPerWeek) ? task.timesPerWeek : 1)
+                      : repeat === "Monthly" ? (Number.isInteger(task.timesPerMonth) ? task.timesPerMonth : 1)
+                      : 1;
+
+    const range = task.date.split(" to ");
+    const taskStartDate = parseLocalDate(range[0]);
+    const selected = parseLocalDate(selectedDate);
+
+    if (isNaN(taskStartDate.getTime()) || isNaN(selected.getTime())) {
+        return 0;
+    }
+
+    const assignedUsers = task.users || [];
+    if (assignedUsers.length === 0) return 0;
+
+    let rotationOffset = 0;
+
+    for (
+        let currentDate = new Date(taskStartDate);
+        currentDate < selected;
+        currentDate.setDate(currentDate.getDate() + 1)
+    ) {
+        const dateStr = currentDate.toISOString().split("T")[0];
+        const completionsOnDay = Array.isArray(task.completions?.[dateStr]) ? task.completions[dateStr] : [];
+        const pendingOnDay = Array.isArray(task.pendingCompletions?.[dateStr]) ? task.pendingCompletions[dateStr] : [];
+
+        const isCompleted = (completionsOnDay.length + pendingOnDay.length) >= requiredTimes;
+
+        if (isCompleted) {
+            rotationOffset += requiredTimes;
+        }
+    }
+
+    return rotationOffset % assignedUsers.length;
+}
+
+
+
 
 
 
@@ -99,40 +140,8 @@ function mixedTurnData(task, selectedDate) {
             }
         });
 
-        const completedCount = completions.length + pendingCompletions.length;
-
-        let rotationOffset = 0;
-        let totalPreviousTurns = 0;
-
-        if (repeat === "Daily" && assignedUsers.length > 0) {
-            const range = task.date.split(" to ");
-            const taskStartDate = parseLocalDate(range[0]);
-            const selected = parseLocalDate(selectedDate);
-
-            if (isNaN(taskStartDate.getTime()) || isNaN(selected.getTime())) {
-                console.error("Invalid date(s) in mixedTurnData:", { taskStartDate, selectedDate });
-                return { turns: [], completedCount: 0, requiredTimes };
-            }
-
-            const start = new Date(taskStartDate);
-            const end = new Date(selected);
-            end.setDate(end.getDate() - 1); // Count only before selectedDate
-
-            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                const dateStr = d.toISOString().split("T")[0];
-                const completionsOnDay = Array.isArray(task.completions?.[dateStr]) ? task.completions[dateStr] : [];
-                const pendingOnDay = Array.isArray(task.pendingCompletions?.[dateStr]) ? task.pendingCompletions[dateStr] : [];
-
-                const isFullyCompleted = (completionsOnDay.length + pendingOnDay.length) >= requiredTimes;
-
-                if (isFullyCompleted) {
-                    totalPreviousTurns += requiredTimes;
-                }
-                // Else – incomplete day, don't advance rotation
-            }
-
-            rotationOffset = totalPreviousTurns % assignedUsers.length;
-        }
+        // ✅ New rotation logic (includes skipped days)
+        const rotationOffset = calculateRotationOffsetUntilDate(task, selectedDate);
 
         for (let i = 0; i < requiredTimes; i++) {
             const userIndex = (i + rotationOffset) % assignedUsers.length;
@@ -160,15 +169,7 @@ function mixedTurnData(task, selectedDate) {
             });
         }
 
-        console.log("mixedTurnData debug:", {
-            selectedDate,
-            assignedUsers,
-            completedCount,
-            requiredTimes,
-            rotationOffset,
-            totalPreviousTurns,
-            turns
-        });
+        const completedCount = completions.length + pendingCompletions.length;
 
         return { turns, completedCount, requiredTimes };
     } catch (err) {
@@ -176,10 +177,6 @@ function mixedTurnData(task, selectedDate) {
         return { turns: [], completedCount: 0, requiredTimes: 1 };
     }
 }
-
-
-
-
 
 
 
