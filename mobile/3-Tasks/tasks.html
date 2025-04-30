@@ -523,7 +523,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>111</span>
+            <span>1a</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -634,8 +634,9 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
         }
         const result = await response.json();
         const tasks = result.tasks || [];
+
         for (const task of tasks) {
-            if (!task.title || !task.date || !Array.isArray(task.users)) {
+            if (!task.title || !task.date || typeof task.date !== "string" || !Array.isArray(task.users) || task.users.length === 0 || task.users.every(u => !u || typeof u !== "string" || u.trim() === "")) {
                 console.warn("Found invalid task, deleting:", task);
                 await deleteInvalidTask(task);
             }
@@ -666,13 +667,13 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
 
             if (task.settings?.includes("Rotation")) {
                 if (typeof mixedTurnData !== 'function') {
-                    console.error(`mixedTurnData is not defined for task: ${task.title}. Check if taskrotations.js loaded and inspect console for errors.`);
+                    console.error(`mixedTurnData is not defined for task: ${task.title}. Check if taskrotations.js loaded and inspect console for details.`);
                     taskHTML += `<br><em style="color:#ff4444;">Error: Rotation calculation unavailable. See console for details.</em>`;
                 } else {
                     let rotationError = null;
                     if (!task.date || typeof task.date !== "string") {
                         rotationError = "Invalid or missing task date";
-                    } else if (!task.users || !Array.isArray(task.users) || task.users.length === 0) {
+                    } else if (!task.users || !Array.isArray(task.users) || task.users.length === 0 || task.users.every(u => !u || typeof u !== "string" || u.trim() === "")) {
                         rotationError = "Invalid or empty task users";
                     } else if (task.repeat === "Daily" && (!Number.isInteger(task.timesPerDay) || task.timesPerDay <= 0)) {
                         rotationError = "Invalid times per day for Daily task";
@@ -762,9 +763,6 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
         document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">Error loading tasks: ${err.message}</div>`;
     }
 }
-
-
-
 
 
 
