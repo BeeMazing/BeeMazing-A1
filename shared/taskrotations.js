@@ -92,12 +92,12 @@ function mixedTurnData(task, selectedDate) {
     // Calculate rotation offset for Daily tasks
     let rotationOffset = 0;
     if (repeat === "Daily" && assignedUsers.length > 0) {
-        // Parse task start date
+        // Parse task start date and selected date
         const range = task.date.split(" to ");
         const taskStartDate = parseLocalDate(range[0]);
         const selected = parseLocalDate(selectedDate);
 
-        // Sum completions and pending completions for all previous days
+        // Sum turns for all previous days
         let totalPreviousTurns = 0;
         const start = new Date(taskStartDate);
         const end = new Date(selected);
@@ -105,9 +105,11 @@ function mixedTurnData(task, selectedDate) {
 
         for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
             const dateStr = d.toISOString().split("T")[0];
+            // Use actual completions if available, otherwise assume requiredTimes
             const dayCompletions = (task.completions && task.completions[dateStr]) || [];
             const dayPending = (task.pendingCompletions && task.pendingCompletions[dateStr]) || [];
-            totalPreviousTurns += dayCompletions.length + dayPending.length;
+            const dayTurns = dayCompletions.length + dayPending.length;
+            totalPreviousTurns += (dayTurns > 0 ? dayTurns : requiredTimes);
         }
 
         // Calculate offset: total turns modulo number of users
@@ -150,12 +152,12 @@ function mixedTurnData(task, selectedDate) {
         pendingCompletions,
         tempTurnReplacement,
         rotationOffset,
+        totalPreviousTurns,
         turns
     });
 
     return { turns, completedCount, requiredTimes };
 }
-
 
 
 // addtasks.html settings: Rotation ///////////////////////////////////////////////////////////////////////
