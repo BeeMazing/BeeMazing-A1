@@ -56,6 +56,10 @@ function filterTasksForDate(tasks, selectedDate) {
 // addtasks.html settings: Rotation ////////////////////////////////////////////////////////////////////////
 
 
+
+
+
+
 function calculateRotationOffsetUntilDate(task, selectedDate) {
     const repeat = task.repeat || "Daily";
     const requiredTimes = repeat === "Daily" ? (Number.isInteger(task.timesPerDay) ? task.timesPerDay : 1)
@@ -75,6 +79,8 @@ function calculateRotationOffsetUntilDate(task, selectedDate) {
     if (assignedUsers.length === 0) return 0;
 
     let rotationOffset = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to start of day
 
     // Go from start date up to selected date (inclusive)
     for (
@@ -83,27 +89,38 @@ function calculateRotationOffsetUntilDate(task, selectedDate) {
         currentDate.setDate(currentDate.getDate() + 1)
     ) {
         const dateStr = currentDate.toISOString().split("T")[0];
-        const completionsOnDay = Array.isArray(task.completions?.[dateStr]) ? task.completions[dateStr] : [];
-        const pendingOnDay = Array.isArray(task.pendingCompletions?.[dateStr]) ? task.pendingCompletions[dateStr] : [];
-
-        const completedCount = completionsOnDay.length + pendingOnDay.length;
         const isCurrentDate = dateStr === selectedDate;
+        const isFutureDate = currentDate > today;
+        const isToday = currentDate.toDateString() === today.toDateString();
 
-        // ✅ For current date: if not fully completed, skip rotation
-        // ✅ For past dates: if fully completed, count full turns
-        if (!isCurrentDate && completedCount >= requiredTimes) {
-            rotationOffset += requiredTimes;
+        let completedCount = 0;
+
+        // For past and current day, check actual completions
+        if (!isFutureDate) {
+            const completionsOnDay = Array.isArray(task.completions?.[dateStr]) ? task.completions[dateStr] : [];
+            const pendingOnDay = Array.isArray(task.pendingCompletions?.[dateStr]) ? task.pendingCompletions[dateStr] : [];
+            completedCount = completionsOnDay.length + pendingOnDay.length;
         }
 
-        // ✅ For current date, if fully completed already (like looking at tomorrow),
-        // include today's progress so next day can rotate properly.
-        if (isCurrentDate && completedCount >= requiredTimes) {
+        // ✅ For future dates: Assume full completion (requiredTimes) for days before selectedDate
+        if (isFutureDate && !isCurrentDate) {
+            rotationOffset += requiredTimes;
+        }
+        // ✅ For past dates or today (if fully completed): Count full turns
+        else if (!isCurrentDate || (isToday && completedCount >= requiredTimes)) {
+            rotationOffset += completedCount >= requiredTimes ? requiredTimes : completedCount;
+        }
+        // ✅ For selected date (if today or future): Include progress only if fully completed
+        else if (isCurrentDate && completedCount >= requiredTimes) {
             rotationOffset += requiredTimes;
         }
     }
 
     return rotationOffset % assignedUsers.length;
 }
+
+
+
 
 
 
