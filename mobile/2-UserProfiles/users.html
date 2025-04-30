@@ -1122,7 +1122,7 @@
     <div class="footer">
       <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
           <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-          <span>q111</span>
+          <span>z</span>
       </a>
       <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
           <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -1881,7 +1881,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-
         async function loadOverallProgress(userName) {
   const adminEmail = localStorage.getItem("currentAdminEmail");
   const selectedDay = document.querySelector(".day.selected")?.dataset.date || new Date().toLocaleDateString("sv-SE"); // "YYYY-MM-DD"
@@ -1901,7 +1900,8 @@ document.addEventListener("DOMContentLoaded", () => {
       date: t.date,
       daysOfWeek: t.daysOfWeek,
       specificDays: t.specificDays,
-      users: t.users
+      users: t.users,
+      settings: t.settings
     })));
 
     const todayTasks = filterTasksForDate(tasks, selectedDay).filter(task => {
@@ -1914,12 +1914,14 @@ document.addEventListener("DOMContentLoaded", () => {
     todayTasks.forEach(task => {
       const isRotation = task.settings === "Rotation";
       let requiredTimes = 1;
-      if (!isRotation) {
+
+      if (isRotation) {
+        // Count turns assigned to userName in task.users sequence
+        requiredTimes = task.users.filter(user => user === userName).length;
+      } else {
         if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
         if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
         if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-      } else {
-        requiredTimes = task.users.length;
       }
 
       const completionsToday = task.completions?.[selectedDay] || [];
@@ -1946,6 +1948,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("doSummary").textContent = "";
   }
 }
+
+
+
 
 
         </script>
