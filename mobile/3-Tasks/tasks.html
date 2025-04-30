@@ -523,7 +523,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>1aa</span>
+            <span>a11231</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -611,7 +611,10 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
 
     try {
         const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: `HTTP error ${response.status}` }));
+            throw new Error(`Failed to fetch tasks: ${errorData.error || response.statusText}`);
+        }
         const result = await response.json();
         const tasks = result.tasks || [];
         for (const task of tasks) {
@@ -646,34 +649,64 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
 
             if (task.settings?.includes("Rotation")) {
                 if (typeof mixedTurnData !== 'function') {
-    console.error(`mixedTurnData is not defined for task: ${task.title}. Check if taskrotations.js loaded and inspect console for errors.`);
-    taskHTML += `<br><em style="color:#ff4444;">Error: Rotation calculation unavailable. See console for details.</em>`;
-} else {
-                    turnData = mixedTurnData(task, selectedDate);
-                    const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
-                    const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
-                    const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : "—";
-                    taskHTML += `
-                        <br><em>Rotation Task</em>
-                        <br>Turn: ${currentTurn}
-                        <br>Next: ${nextUser}
-                        <div class="task-progress">Progress: ${turnData.completedCount}/${turnData.requiredTimes}</div>
-                    `;
+                    console.error(`mixedTurnData is not defined for task: ${task.title}. Check if taskrotations.js loaded and inspect console for errors.`);
+                    taskHTML += `<br><em style="color:#ff4444;">Error: Rotation calculation unavailable. See console for details.</em>`;
+                } else {
+                    // Validate task data before calling mixedTurnData
+                    let rotationError = null;
+                    if (!task.date || typeof task.date !== "string") {
+                        rotationError = "Invalid or missing task date";
+                    } else if (!task.users || !Array.isArray(task.users) || task.users.length === 0) {
+                        rotationError = "Invalid or empty task users";
+                    } else if (task.repeat === "Daily" && (!Number.isInteger(task.timesPerDay) || task.timesPerDay <= 0)) {
+                        rotationError = "Invalid times per day for Daily task";
+                    }
+
+                    if (rotationError) {
+                        console.error(`Error processing Rotation task "${task.title}" on ${selectedDate}: ${rotationError}`, task);
+                        taskHTML += `<br><em style="color:#ff4444;">Error: ${rotationError}. See console for details.</em>`;
+                    } else {
+                        try {
+                            turnData = mixedTurnData(task, selectedDate);
+                            console.log(`Rotation task "${task.title}" on ${selectedDate}:`, turnData);
+                            if (turnData.turns.length === 0) {
+                                taskHTML += `<br><em style="color:#ff4444;">Error: No rotation turns available. Check task configuration.</em>`;
+                            } else {
+                                const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
+                                const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
+                                const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : "—";
+                                taskHTML += `
+                                    <br><em>Rotation Task</em>
+                                    <br>Turn: ${currentTurn}
+                                    <br>Next: ${nextUser}
+                                    <div class="task-progress">Progress: ${turnData.completedCount}/${turnData.requiredTimes}</div>
+                                `;
+                            }
+                        } catch (err) {
+                            console.error(`Error processing Rotation task "${task.title}" on ${selectedDate}:`, err, task);
+                            taskHTML += `<br><em style="color:#ff4444;">Error: Unable to calculate rotation (${err.message}). See console for details.</em>`;
+                        }
+                    }
                 }
             } else if (task.settings?.includes("Individual")) {
                 if (typeof individualTurnData !== 'function') {
                     console.error(`individualTurnData is not defined for task: ${task.title}`);
                     taskHTML += `<br><em style="color:#ff4444;">Error: Progress calculation unavailable</em>`;
                 } else {
-                    turnData = individualTurnData(task, selectedDate);
-                    taskHTML += `<br><em>Individual Task</em>`;
-                    task.users.forEach(user => {
-                        const userTurns = turnData.turns.filter(t => t.user === user);
-                        const count = userTurns.filter(t => t.isCompleted || t.isPending).length;
-                        const required = turnData.requiredTimes;
-                        const check = count >= required ? '✅' : '';
-                        taskHTML += `<br>${user}: ${count}/${required} ${check}`;
-                    });
+                    try {
+                        turnData = individualTurnData(task, selectedDate);
+                        taskHTML += `<br><em>Individual Task</em>`;
+                        task.users.forEach(user => {
+                            const userTurns = turnData.turns.filter(t => t.user === user);
+                            const count = userTurns.filter(t => t.isCompleted || t.isPending).length;
+                            const required = turnData.requiredTimes;
+                            const check = count >= required ? '✅' : '';
+                            taskHTML += `<br>${user}: ${count}/${required} ${check}`;
+                        });
+                    } catch (err) {
+                        console.error(`Error processing Individual task "${task.title}" on ${selectedDate}:`, err, task);
+                        taskHTML += `<br><em style="color:#ff4444;">Error: Unable to calculate progress (${err.message}). See console for details.</em>`;
+                    }
                 }
             } else {
                 taskHTML += `<br><em style="color:#aaa;">No rotation</em>`;
@@ -707,14 +740,10 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
             enableSwipeToDelete(taskDiv);
         });
     } catch (err) {
-        console.error("Error loading tasks:", err);
+        console.error("Error loading tasks:", err, { adminEmail, selectedDate });
         document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">Error loading tasks: ${err.message}</div>`;
     }
 }
-
-
-
-
 
 
 
@@ -736,45 +765,76 @@ async function showTaskDetails(task) {
         <strong>Title:</strong> ${task.title}<br>
         ${task.notes ? `<strong>Notes:</strong> ${task.notes}<br>` : ""}
         ${task.room ? `<strong>Room:</strong> ${task.room}<br>` : ""}
-        <strong>Frequency:</strong> ${task.repeat}
+        <strong>Frequency:</strong> ${task.repeat || "Daily"}
         ${task.repeat === "Daily" && task.timesPerDay ? ` - ${task.timesPerDay} time(s)/day` : ""}
         ${task.repeat === "Weekly" && task.timesPerWeek ? ` - ${task.timesPerWeek} time(s)/week` : ""}
         ${task.repeat === "Monthly" && task.timesPerMonth ? ` - ${task.timesPerMonth} time(s)/month` : ""}
         <br>
-        <strong>Date:</strong> ${task.date}<br>
-        <strong>Users:</strong> ${userOrder.join(", ")}<br>
+        <strong>Date:</strong> ${task.date || "Unknown"}<br>
+        <strong>Users:</strong> ${userOrder.join(", ") || "None"}<br>
         ${task.reward && task.reward !== "0" ? `<strong>Reward:</strong> ${task.reward} 🍯<br>` : ""}
     `;
 
     let turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
     if (task.settings?.includes("Rotation")) {
         if (typeof mixedTurnData !== 'function') {
-            taskDetails += `<em style="color:#ff4444;">Error: Rotation calculation unavailable</em><br>`;
+            console.error(`mixedTurnData is not defined for task: ${task.title}. Check if taskrotations.js loaded and inspect console for errors.`);
+            taskDetails += `<em style="color:#ff4444;">Error: Rotation calculation unavailable. See console for details.</em><br>`;
         } else {
-            turnData = mixedTurnData(task, selectedDate);
-            const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
-            const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
-            const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : "—";
-            taskDetails += `
-                <strong>Settings:</strong> Rotation<br>
-                <strong>Current Turn:</strong> ${currentTurn}<br>
-                <strong>Next:</strong> ${nextUser}<br>
-                <div class="task-progress">Progress: ${turnData.completedCount}/${turnData.requiredTimes}</div>
-            `;
+            let rotationError = null;
+            if (!task.date || typeof task.date !== "string") {
+                rotationError = "Invalid or missing task date";
+            } else if (!task.users || !Array.isArray(task.users) || task.users.length === 0) {
+                rotationError = "Invalid or empty task users";
+            } else if (task.repeat === "Daily" && (!Number.isInteger(task.timesPerDay) || task.timesPerDay <= 0)) {
+                rotationError = "Invalid times per day for Daily task";
+            }
+
+            if (rotationError) {
+                console.error(`Error processing Rotation task "${task.title}" on ${selectedDate} in showTaskDetails: ${rotationError}`, task);
+                taskDetails += `<em style="color:#ff4444;">Error: ${rotationError}. See console for details.</em><br>`;
+            } else {
+                try {
+                    turnData = mixedTurnData(task, selectedDate);
+                    console.log(`Rotation task "${task.title}" details on ${selectedDate}:`, turnData);
+                    if (turnData.turns.length === 0) {
+                        taskDetails += `<em style="color:#ff4444;">Error: No rotation turns available. Check task configuration.</em><br>`;
+                    } else {
+                        const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
+                        const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
+                        const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : "—";
+                        taskDetails += `
+                            <strong>Settings:</strong> Rotation<br>
+                            <strong>Current Turn:</strong> ${currentTurn}<br>
+                            <strong>Next:</strong> ${nextUser}<br>
+                            <div class="task-progress">Progress: ${turnData.completedCount}/${turnData.requiredTimes}</div>
+                        `;
+                    }
+                } catch (err) {
+                    console.error(`Error processing Rotation task "${task.title}" on ${selectedDate} in showTaskDetails:`, err, task);
+                    taskDetails += `<em style="color:#ff4444;">Error: Unable to calculate rotation (${err.message}). See console for details.</em><br>`;
+                }
+            }
         }
     } else if (task.settings?.includes("Individual")) {
         if (typeof individualTurnData !== 'function') {
+            console.error(`individualTurnData is not defined for task: ${task.title}`);
             taskDetails += `<em style="color:#ff4444;">Error: Progress calculation unavailable</em><br>`;
         } else {
-            turnData = individualTurnData(task, selectedDate);
-            taskDetails += `<strong>Settings:</strong> Individual<br><strong>Progress:</strong><br>`;
-            task.users.forEach(user => {
-                const userTurns = turnData.turns.filter(t => t.user === user);
-                const count = userTurns.filter(t => t.isCompleted || t.isPending).length;
-                const required = turnData.requiredTimes;
-                const check = count >= required ? '✅' : '';
-                taskDetails += `${user}: ${count}/${required} ${check}<br>`;
-            });
+            try {
+                turnData = individualTurnData(task, selectedDate);
+                taskDetails += `<strong>Settings:</strong> Individual<br><strong>Progress:</strong><br>`;
+                task.users.forEach(user => {
+                    const userTurns = turnData.turns.filter(t => t.user === user);
+                    const count = userTurns.filter(t => t.isCompleted || t.isPending).length;
+                    const required = turnData.requiredTimes;
+                    const check = count >= required ? '✅' : '';
+                    taskDetails += `${user}: ${count}/${required} ${check}<br>`;
+                });
+            } catch (err) {
+                console.error(`Error processing Individual task "${task.title}" on ${selectedDate} in showTaskDetails:`, err, task);
+                taskDetails += `<em style="color:#ff4444;">Error: Unable to calculate progress (${err.message}). See console for details.</em><br>`;
+            }
         }
     } else {
         taskDetails += `<em style="color:#aaa;">No rotation logic for this task</em><br>`;
@@ -810,7 +870,6 @@ async function showTaskDetails(task) {
         window.location.href = "/BeeMazing-Y1/mobile/3-Tasks/addtasks.html";
     });
 }
-
 
 
 
