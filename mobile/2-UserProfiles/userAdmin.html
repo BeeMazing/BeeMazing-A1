@@ -889,40 +889,7 @@ body.menu-open {
 
 
 
-/* logout button */
 
-.logout-container {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 150;
-}
-
-#logoutBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-
-
-.logout-icon {
-  width: 30px;
-  height: 30px;
-  filter: invert(100%) brightness(150%);
-  transition: transform 0.3s ease;
-}
-
-.logout-icon:hover {
-  transform: scale(1.1);
-}
-
-
-/* logout button */
 
 
 
@@ -941,13 +908,22 @@ body.menu-open {
 
 </head>
     <body>
-        <div class="date-header">
-            <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" class="profile-icon" id="profileIcon" alt="Select User" />
-            <div id="logoutContainer" class="logout-container">
-              <button id="logoutBtn" aria-label="Logout" title="Logout">
-                <img src="/BeeMazing-Y1/mobile/1-Home/Logout.png" alt="Logout" class="logout-icon" />
-              </button>        
+        <nav id="sideMenu" class="side-menu">
+            <div class="menu-header">
+                <h2>Admin Menu</h2>
+                <button id="closeMenu" class="close-btn" aria-label="Close Menu">×</button>
             </div>
+            <ul class="menu-items">
+                <li><a href="#" id="taskSettingsLink" class="menu-link">Create a Task</a></li>
+                <li><a href="#" id="marketDashLink" class="menu-link">Create a Reward</a></li>
+                <li><a href="#" id="userManagementLink" class="menu-link">User Management</a></li>
+                <li><a href="#" id="logoutLink" class="menu-link">Logout</a></li>
+            </ul>
+        </nav>
+        <div id="overlay" class="overlay"></div>
+        <div class="date-header">
+            <button id="menuToggle" class="menu-btn" aria-label="Toggle Menu">☰</button>
+            <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" class="profile-icon" id="profileIcon" alt="Select User" />
             <div class="month-nav">
                 <button id="prevMonth"><</button>
                 <span id="monthLabel">Month</span>
@@ -1046,7 +1022,6 @@ const urlParams = new URLSearchParams(window.location.search);
 const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
 const userName = urlParams.get('user') || '';
 const basePath = '/BeeMazing-Y1/mobile/2-UserProfiles';
-const logoutBtn = document.getElementById("logoutBtn");
 
 const homeButton = document.getElementById('homeButton');
 const tasksButton = document.querySelector('a[href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html"]');
@@ -1056,18 +1031,6 @@ if (adminEmail && userName) {
     tasksButton.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
     marketButton.href = `/BeeMazing-Y1/mobile/4-Market/market.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
 }
-
-
-logoutBtn.addEventListener("click", () => {
-  // Only remove login session info
-  localStorage.removeItem("isAdmin");
-  localStorage.removeItem("userData");
-  localStorage.removeItem("adminPassword"); // optional, if stored
-
-  // Keep currentAdminEmail so login.html still knows the registered account
-  window.location.href = "/BeeMazing-Y1/login.html";
-});
-
 
 
 // Fetch users from server (adapted from home.js)
