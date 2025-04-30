@@ -916,18 +916,43 @@ body.menu-open {
   <div id="taskContainer">Loading tasks...</div>
 
 <!-- User Selection ----------------------------->
-  <div class="bottom-sheet" id="userSelectModal">
-    <div class="bottom-sheet-content">
-      <div class="bottom-sheet-header">
-        <h3>Add User</h3>
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <button class="add-user-btn" id="addUserBtn">+</button>
-          <button id="closeModalBtn" class="close-btn" aria-label="Close">×</button>
-        </div>
+<div class="bottom-sheet" id="userSelectModal">
+  <div class="bottom-sheet-content">
+    <div class="bottom-sheet-header">
+      <h3>Select User</h3>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button class="add-user-btn" id="addUserBtn">+</button>
+        <button id="closeModalBtn" class="close-btn" aria-label="Close">×</button>
       </div>
+    </div>
+    <ul id="userList" class="user-list"></ul>
+  </div>
+</div>
 
+<!-- Confirm Delete Modal -->
+<div class="modal" id="confirmModal">
+  <div class="modal-content">
+    <p>Are you sure you want to delete this user?</p>
+    <div class="modal-actions">
+      <button id="confirmYesBtn">Yes</button>
+      <button id="confirmNoBtn">No</button>
+    </div>
+  </div>
+</div>
 
-
+<!-- Permission Modal -->
+<div class="modal" id="permissionModal">
+  <div class="modal-content">
+    <h3 id="permissionModalUser">Permissions for User</h3>
+    <select id="permissionSelect">
+      <option value="User">User</option>
+      <option value="Admin">Admin</option>
+    </select>
+    <div class="modal-actions">
+      <button id="savePermissionBtn">Save</button>
+    </div>
+  </div>
+</div>
 
 <!-- Add User Modal -->
 <div class="add-user-modal" id="addUserModal">
@@ -939,33 +964,6 @@ body.menu-open {
       <button class="cancel-btn" id="cancelUserBtn">Cancel</button>
       <button class="submit-btn" id="submitUserBtn">Submit</button>
     </div>
-  </div>
-</div>
-
-
-
-<!-- Confirm Delete Modal -->
-<div class="modal" id="confirmModal">
-  <div class="modal-content">
-      <p>Are you sure you want to delete this user?</p>
-      <div class="modal-actions">
-          <button id="confirmYesBtn">Yes</button>
-          <button id="confirmNoBtn">No</button>
-      </div>
-  </div>
-</div>
-
-<!-- Permission Modal -->
-<div class="modal" id="permissionModal">
-  <div class="modal-content">
-      <h3 id="permissionModalUser">Permissions for User</h3>
-      <select id="permissionSelect">
-          <option value="User">User</option>
-          <option value="Admin">Admin</option>
-      </select>
-      <div class="modal-actions">
-          <button id="savePermissionBtn">Save</button>
-      </div>
   </div>
 </div>
 
