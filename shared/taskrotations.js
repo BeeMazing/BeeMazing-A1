@@ -56,7 +56,6 @@ function filterTasksForDate(tasks, selectedDate) {
 // addtasks.html settings: Rotation ////////////////////////////////////////////////////////////////////////
 
 
-
 function mixedTurnData(task, selectedDate) {
     const repeat = task.repeat || "Daily";
     let requiredTimes = task.repeat === "Daily" ? task.timesPerDay || 1 :
@@ -90,9 +89,34 @@ function mixedTurnData(task, selectedDate) {
     // Calculate completed and pending turns for progress
     const completedCount = completions.length + pendingCompletions.length;
 
+    // Calculate rotation offset for Daily tasks
+    let rotationOffset = 0;
+    if (repeat === "Daily" && assignedUsers.length > 0) {
+        // Parse task start date
+        const range = task.date.split(" to ");
+        const taskStartDate = parseLocalDate(range[0]);
+        const selected = parseLocalDate(selectedDate);
+
+        // Sum completions and pending completions for all previous days
+        let totalPreviousTurns = 0;
+        const start = new Date(taskStartDate);
+        const end = new Date(selected);
+        end.setDate(end.getDate() - 1); // Up to the day before selectedDate
+
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            const dateStr = d.toISOString().split("T")[0];
+            const dayCompletions = (task.completions && task.completions[dateStr]) || [];
+            const dayPending = (task.pendingCompletions && task.pendingCompletions[dateStr]) || [];
+            totalPreviousTurns += dayCompletions.length + dayPending.length;
+        }
+
+        // Calculate offset: total turns modulo number of users
+        rotationOffset = totalPreviousTurns % assignedUsers.length;
+    }
+
     // Generate turns for the required number of times
     for (let i = 0; i < requiredTimes; i++) {
-        const userIndex = i % (assignedUsers.length || 1);
+        const userIndex = (i + rotationOffset) % (assignedUsers.length || 1);
         const user = assignedUsers[userIndex] || "Unknown";
         const originalUser = userOrder[userIndex] || user;
         let isCompleted = false;
@@ -125,11 +149,22 @@ function mixedTurnData(task, selectedDate) {
         completions,
         pendingCompletions,
         tempTurnReplacement,
+        rotationOffset,
         turns
     });
 
     return { turns, completedCount, requiredTimes };
 }
+
+
+
+// addtasks.html settings: Rotation ///////////////////////////////////////////////////////////////////////
+
+
+// addtasks.html settings: Individual ///////////////////////////////////////////////////////////////////////
+
+
+
 
 function individualTurnData(task, selectedDate) {
     const repeat = task.repeat || "Daily";
@@ -183,8 +218,8 @@ function individualTurnData(task, selectedDate) {
 
 
 
+// addtasks.html settings: Individual ///////////////////////////////////////////////////////////////////////
 
-// addtasks.html settings: Rotation ///////////////////////////////////////////////////////////////////////
 
 
 
