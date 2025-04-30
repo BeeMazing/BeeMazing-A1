@@ -89,6 +89,7 @@ function mixedTurnData(task, selectedDate) {
 
         const userOrder = [...task.users];
         const assignedUsers = [...userOrder];
+
         Object.entries(tempTurnReplacement).forEach(([index, user]) => {
             const i = parseInt(index);
             if (!isNaN(i) && i >= 0 && i < assignedUsers.length) {
@@ -113,19 +114,17 @@ function mixedTurnData(task, selectedDate) {
 
             const start = new Date(taskStartDate);
             const end = new Date(selected);
-            end.setDate(end.getDate() - 1); // check up to the day before selected
+            end.setDate(end.getDate() - 1); // Only count days before selected date
 
             for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                 const dateStr = d.toISOString().split("T")[0];
-                const dayCompletions = Array.isArray(task.completions?.[dateStr]) ? task.completions[dateStr] : [];
-                const dayPending = Array.isArray(task.pendingCompletions?.[dateStr]) ? task.pendingCompletions[dateStr] : [];
+                const completionsOnDay = Array.isArray(task.completions?.[dateStr]) ? task.completions[dateStr] : [];
+                const pendingOnDay = Array.isArray(task.pendingCompletions?.[dateStr]) ? task.pendingCompletions[dateStr] : [];
+                const completedTurns = completionsOnDay.length + pendingOnDay.length;
 
-                const hadActivity = dayCompletions.length + dayPending.length > 0;
-
-                // ✅ Only rotate if task was actually done that day
-                if (hadActivity) {
-                    const dayTurns = dayCompletions.length + dayPending.length;
-                    totalPreviousTurns += dayTurns;
+                // ✅ Only count fully completed days
+                if (completedTurns >= requiredTimes) {
+                    totalPreviousTurns += requiredTimes;
                 }
             }
 
@@ -158,7 +157,7 @@ function mixedTurnData(task, selectedDate) {
             });
         }
 
-        console.log("mixedTurnData [✅ FIXED]:", {
+        console.log("mixedTurnData debug:", {
             selectedDate,
             assignedUsers,
             completedCount,
@@ -174,7 +173,6 @@ function mixedTurnData(task, selectedDate) {
         return { turns: [], completedCount: 0, requiredTimes: 1 };
     }
 }
-
 
 
 
