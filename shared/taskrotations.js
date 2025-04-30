@@ -76,25 +76,34 @@ function calculateRotationOffsetUntilDate(task, selectedDate) {
 
     let rotationOffset = 0;
 
+    // Go from start date up to selected date (inclusive)
     for (
         let currentDate = new Date(taskStartDate);
-        currentDate < selected;
+        currentDate <= selected;
         currentDate.setDate(currentDate.getDate() + 1)
     ) {
         const dateStr = currentDate.toISOString().split("T")[0];
         const completionsOnDay = Array.isArray(task.completions?.[dateStr]) ? task.completions[dateStr] : [];
         const pendingOnDay = Array.isArray(task.pendingCompletions?.[dateStr]) ? task.pendingCompletions[dateStr] : [];
 
-        const isCompleted = (completionsOnDay.length + pendingOnDay.length) >= requiredTimes;
+        const completedCount = completionsOnDay.length + pendingOnDay.length;
+        const isCurrentDate = dateStr === selectedDate;
 
-        if (isCompleted) {
+        // ✅ For current date: if not fully completed, skip rotation
+        // ✅ For past dates: if fully completed, count full turns
+        if (!isCurrentDate && completedCount >= requiredTimes) {
+            rotationOffset += requiredTimes;
+        }
+
+        // ✅ For current date, if fully completed already (like looking at tomorrow),
+        // include today's progress so next day can rotate properly.
+        if (isCurrentDate && completedCount >= requiredTimes) {
             rotationOffset += requiredTimes;
         }
     }
 
     return rotationOffset % assignedUsers.length;
 }
-
 
 
 
@@ -140,7 +149,7 @@ function mixedTurnData(task, selectedDate) {
             }
         });
 
-        // ✅ New rotation logic (includes skipped days)
+        // ✅ Updated offset calculation
         const rotationOffset = calculateRotationOffsetUntilDate(task, selectedDate);
 
         for (let i = 0; i < requiredTimes; i++) {
@@ -177,7 +186,6 @@ function mixedTurnData(task, selectedDate) {
         return { turns: [], completedCount: 0, requiredTimes: 1 };
     }
 }
-
 
 
 
