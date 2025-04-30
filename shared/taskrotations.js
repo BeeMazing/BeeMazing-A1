@@ -186,43 +186,6 @@ function mixedTurnData(task, selectedDate) {
 
 
 
-function predictRotation(task, selectedDate) {
-    // Clone the task so we don't mutate original
-    const clonedTask = JSON.parse(JSON.stringify(task));
-    const today = parseLocalDate(selectedDate);
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-
-    const todayStr = today.toISOString().split("T")[0];
-    const tomorrowStr = tomorrow.toISOString().split("T")[0];
-    const yesterdayStr = yesterday.toISOString().split("T")[0];
-
-    const repeat = task.repeat || "Daily";
-    const requiredTimes = repeat === "Daily" ? (Number.isInteger(task.timesPerDay) ? task.timesPerDay : 1)
-                      : repeat === "Weekly" ? (Number.isInteger(task.timesPerWeek) ? task.timesPerWeek : 1)
-                      : repeat === "Monthly" ? (Number.isInteger(task.timesPerMonth) ? task.timesPerMonth : 1)
-                      : 1;
-
-    const completionsToday = Array.isArray(clonedTask.completions?.[todayStr]) ? clonedTask.completions[todayStr].length : 0;
-    const pendingToday = Array.isArray(clonedTask.pendingCompletions?.[todayStr]) ? clonedTask.pendingCompletions[todayStr].length : 0;
-
-    // If today's task is incomplete, simulate as if it's still 0 (not advancing)
-    const todayIsComplete = completionsToday + pendingToday >= requiredTimes;
-
-    // Simulate completions if we want to "predict" advancement
-    if (todayIsComplete) {
-        // Leave completions as-is
-    } else {
-        // Don't count today; predict based on yesterday
-        delete clonedTask.completions?.[todayStr];
-        delete clonedTask.pendingCompletions?.[todayStr];
-    }
-
-    return mixedTurnData(clonedTask, tomorrowStr);
-}
-
 
 
 // addtasks.html settings: Rotation ///////////////////////////////////////////////////////////////////////

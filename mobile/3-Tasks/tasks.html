@@ -523,7 +523,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>a</span>
+            <span>a1111</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -533,8 +533,7 @@ body {
         </a>
     </div>
 
-    <script src="/BeeMazing-Y1/shared/taskrotations.js"></script>
-
+    <script src="/BeeMazing-Y1/shared/taskrotations.js?t=${Date.now()}"></script>
 
     <script>
 
@@ -686,27 +685,15 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
                             if (turnData.turns.length === 0) {
                                 taskHTML += `<br><em style="color:#ff4444;">Error: No rotation turns available. Check task configuration.</em>`;
                             } else {
-                                const today = parseLocalDate(selectedDate);
-const yesterday = new Date(today);
-yesterday.setDate(today.getDate() - 1);
-const tomorrow = new Date(today);
-tomorrow.setDate(today.getDate() + 1);
-
-const yesterdayStr = yesterday.toISOString().split("T")[0];
-const todayStr = selectedDate;
-const tomorrowStr = tomorrow.toISOString().split("T")[0];
-
-const yesterdayRotation = mixedTurnData(task, yesterdayStr);
-const todayRotation = mixedTurnData(task, todayStr);
-const tomorrowRotation = predictRotation(task, todayStr); // Predict based on today's state
-
-taskHTML += `
-    <br><em>Rotation Task</em><br>
-    ${renderRotationText("Yesterday", yesterdayStr, yesterdayRotation)}
-    ${renderRotationText("Today", todayStr, todayRotation)}
-    ${renderRotationText("Tomorrow", tomorrowStr, tomorrowRotation)}
-`;
-
+                                const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
+                                const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
+                                const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : "—";
+                                taskHTML += `
+                                    <br><em>Rotation Task</em>
+                                    <br>Turn: ${currentTurn}
+                                    <br>Next: ${nextUser}
+                                    <div class="task-progress">Progress: ${turnData.completedCount}/${turnData.requiredTimes}</div>
+                                `;
                             }
                         } catch (err) {
                             console.error(`Error processing Rotation task "${task.title}" on ${selectedDate}:`, err, task);
