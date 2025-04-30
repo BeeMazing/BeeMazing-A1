@@ -158,6 +158,19 @@ body {
     transform: translateY(-5px);
     box-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
 }
+
+
+
+
+.task-progress {
+    font-size: 14px;
+    color: #FFD54F;
+    margin-top: 5px;
+}
+
+
+
+
         .footer {
     position: fixed;
     bottom: 0;
@@ -470,6 +483,15 @@ body {
     z-index: 10;
 }
 
+
+
+
+
+
+
+
+
+
         
     </style>
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
@@ -503,6 +525,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
+            <span>aa</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -527,6 +550,24 @@ document.addEventListener("DOMContentLoaded", () => {
         homeLink.href = `/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
     }
 });
+
+
+
+
+
+// Verify taskrotations.js load
+fetch("/BeeMazing-Y1/shared/taskrotations.js?t=" + Date.now(), { method: "HEAD" })
+    .then(response => {
+        if (!response.ok) {
+            console.error(`Failed to fetch taskrotations.js: HTTP ${response.status}`);
+        } else {
+            console.log("taskrotations.js is accessible");
+        }
+    })
+    .catch(err => console.error("Error fetching taskrotations.js:", err));
+
+
+
 
 
 if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undefined') {
@@ -607,9 +648,9 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
 
             if (task.settings?.includes("Rotation")) {
                 if (typeof mixedTurnData !== 'function') {
-                    console.error(`mixedTurnData is not defined for task: ${task.title}`);
-                    taskHTML += `<br><em style="color:#ff4444;">Error: Rotation calculation unavailable</em>`;
-                } else {
+    console.error(`mixedTurnData is not defined for task: ${task.title}. Check if taskrotations.js loaded and inspect console for errors.`);
+    taskHTML += `<br><em style="color:#ff4444;">Error: Rotation calculation unavailable. See console for details.</em>`;
+} else {
                     turnData = mixedTurnData(task, selectedDate);
                     const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
                     const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
