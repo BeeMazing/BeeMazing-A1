@@ -51,130 +51,160 @@ function filterTasksForDate(tasks, selectedDate) {
     });
 }
 
+// Existing functions (unchanged)
+function calculateTurn(task, selectedDate) {
+    const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
+    const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
+                       task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+                       task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+    const tempTurnReplacement = task.tempTurnReplacement?.[selectedDate] || {};
+    const assignedUsers = [...userOrder];
+    Object.entries(tempTurnReplacement).forEach(([index, user]) => {
+        assignedUsers[parseInt(index)] = user;
+    });
 
+    const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+    const pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
+    const completedCount = completedUsers.length + pendingUsers.length;
 
-// addtasks.html settings: Rotation ////////////////////////////////////////////////////////////////////////
+    const selected = parseLocalDate(selectedDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startDate = parseLocalDate(task.date.split(" to ")[0]);
 
+    let currentTurn = null;
+    let nextUser = null;
 
-
-
-function mixedTurnData(task, selectedDate) {
-    try {
-        // Validate inputs
-        if (!task || typeof task !== "object") {
-            console.error("Invalid task object in mixedTurnData:", { task, selectedDate });
-            return { turns: [], completedCount: 0, requiredTimes: 1 };
-        }
-        if (!selectedDate || typeof selectedDate !== "string") {
-            console.error("Invalid selectedDate in mixedTurnData:", { task, selectedDate });
-            return { turns: [], completedCount: 0, requiredTimes: 1 };
-        }
-
-        // Validate required task properties
-        if (!task.date || typeof task.date !== "string") {
-            console.error("Invalid or missing task.date in mixedTurnData:", { taskDate: task.date, task });
-            return { turns: [], completedCount: 0, requiredTimes: 1 };
-        }
-        if (!task.users || !Array.isArray(task.users) || task.users.length === 0) {
-            console.error("Invalid or empty task.users in mixedTurnData:", { taskUsers: task.users, task });
-            return { turns: [], completedCount: 0, requiredTimes: 1 };
-        }
-
-        const repeat = task.repeat || "Daily";
-        let requiredTimes = task.repeat === "Daily" ? (Number.isInteger(task.timesPerDay) && task.timesPerDay > 0 ? task.timesPerDay : 1) :
-                           task.repeat === "Weekly" ? (Number.isInteger(task.timesPerWeek) && task.timesPerWeek > 0 ? task.timesPerWeek : 1) :
-                           task.repeat === "Monthly" ? (Number.isInteger(task.timesPerMonth) && task.timesPerMonth > 0 ? task.timesPerMonth : 1) : 1;
-
-        const completions = (task.completions && Array.isArray(task.completions[selectedDate]) ? task.completions[selectedDate] : []);
-        const pendingCompletions = (task.pendingCompletions && Array.isArray(task.pendingCompletions[selectedDate]) ? task.pendingCompletions[selectedDate] : []);
-        const tempTurnReplacement = (task.tempTurnReplacement && typeof task.tempTurnReplacement[selectedDate] === "object" ? task.tempTurnReplacement[selectedDate] : {});
-
-        const turns = [];
-        const userCompletionCounts = {};
-        const userPendingCounts = {};
-
-        completions.forEach(u => {
-            if (typeof u === "string") {
-                userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
+    if (completedCount >= repeatLimit) {
+        currentTurn = "All done!";
+        nextUser = "—";
+    } else {
+        let lastCompletionDate = startDate;
+        let lastCompletedCount = 0;
+        if (task.completions) {
+            const completionDates = Object.keys(task.completions)
+                .map(date => parseLocalDate(date))
+                .filter(date => date < today)
+                .sort((a, b) => b - a);
+            if (completionDates.length > 0) {
+                lastCompletionDate = completionDates[0];
+                const lastDateStr = lastCompletionDate.toISOString().split("T")[0];
+                const lastCompletions = task.completions[lastDateStr] || [];
+                const lastPending = task.pendingCompletions?.[lastDateStr] || [];
+                lastCompletedCount = lastCompletions.length + lastPending.length;
             }
-        });
+        }
 
-        pendingCompletions.forEach(u => {
-            if (typeof u === "string") {
-                userPendingCounts[u] = (userPendingCounts[u] || 0) + 1;
-            }
-        });
+        if (selected < today) {
+            const currentIndex = completedCount % assignedUsers.length;
+            currentTurn = assignedUsers[currentIndex];
+            const nextIndex = (completedCount + 1) % assignedUsers.length;
+            nextUser = assignedUsers[nextIndex];
+        } else if (selected.getTime() === today.getTime()) {
+            const totalCompletions = lastCompletedCount + completedCount;
+            const currentIndex = totalCompletions % assignedUsers.length;
+            currentTurn = assignedUsers[currentIndex];
+            const nextIndex = (totalCompletions + 1) % assignedUsers.length;
+            nextUser = assignedUsers[nextIndex];
+        } else {
+            const daysDiff = Math.floor((selected - lastCompletionDate) / (1000 * 60 * 60 * 24));
+            const totalCompletions = lastCompletedCount + (daysDiff - 1) * repeatLimit + completedCount;
+            const currentIndex = totalCompletions % assignedUsers.length;
+            currentTurn = assignedUsers[currentIndex];
+            const nextIndex = (totalCompletions + 1) % assignedUsers.length;
+            nextUser = assignedUsers[nextIndex];
+        }
+    }
 
-        const userOrder = [...task.users];
+    return {
+        currentTurn: currentTurn || "All done!",
+        nextUser: nextUser || "—",
+        completedCount,
+        repeatLimit,
+        userOrder: assignedUsers
+    };
+}
+
+function prepareTaskTurnData(task, selectedDate) {
+    const repeat = task.repeat || "Daily";
+    let requiredTimes = task.repeat === "Daily" ? task.timesPerDay || 1 :
+                       task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+                       task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+
+    const completions = (task.completions && task.completions[selectedDate]) || [];
+    const pendingCompletions = (task.pendingCompletions && task.pendingCompletions[selectedDate]) || [];
+    const tempTurnReplacement = (task.tempTurnReplacement && task.tempTurnReplacement[selectedDate]) || {};
+
+    const turns = [];
+    const userCompletionCounts = {};
+    const userPendingCounts = {};
+
+    completions.forEach(u => {
+        userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
+    });
+
+    pendingCompletions.forEach(u => {
+        userPendingCounts[u] = (userPendingCounts[u] || 0) + 1;
+    });
+
+    const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
+    const isRotation = (task.settings || "Rotation") === "Rotation";
+
+    if (isRotation) {
         const assignedUsers = [...userOrder];
         Object.entries(tempTurnReplacement).forEach(([index, user]) => {
-            const idx = parseInt(index);
-            if (Number.isInteger(idx) && idx < assignedUsers.length && typeof user === "string") {
-                assignedUsers[idx] = user;
+            if (parseInt(index) < assignedUsers.length) {
+                assignedUsers[parseInt(index)] = user;
             }
         });
 
-        // Calculate completed and pending turns for progress
         const completedCount = completions.length + pendingCompletions.length;
+        const selected = parseLocalDate(selectedDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const startDate = parseLocalDate(task.date.split(" to ")[0]);
 
-        // Calculate rotation offset for Daily tasks - UPDATED LOGIC
-        let rotationOffset = 0;
-        let totalActualTurns = 0;
-        
-        if (repeat === "Daily" && assignedUsers.length > 0) {
-            // Parse task start date and selected date
-            const range = task.date.split(" to ");
-            const taskStartDate = parseLocalDate(range[0]);
-            const selected = parseLocalDate(selectedDate);
-
-            if (isNaN(taskStartDate.getTime())) {
-                console.error("Invalid task start date in mixedTurnData:", { taskDate: task.date, range, taskStartDateRaw: range[0] });
-                return { turns: [], completedCount: 0, requiredTimes };
+        let lastCompletionDate = startDate;
+        let lastCompletedCount = 0;
+        if (task.completions) {
+            const completionDates = Object.keys(task.completions)
+                .map(date => parseLocalDate(date))
+                .filter(date => date < today)
+                .sort((a, b) => b - a);
+            if (completionDates.length > 0) {
+                lastCompletionDate = completionDates[0];
+                const lastDateStr = lastCompletionDate.toISOString().split("T")[0];
+                const lastCompletions = task.completions[lastDateStr] || [];
+                const lastPending = task.pendingCompletions?.[lastDateStr] || [];
+                lastCompletedCount = lastCompletions.length + lastPending.length;
             }
-            if (isNaN(selected.getTime())) {
-                console.error("Invalid selected date in mixedTurnData:", { selectedDate });
-                return { turns: [], completedCount: 0, requiredTimes };
-            }
-
-            // First, collect all dates from start to selected
-            const dateRange = [];
-            const start = new Date(taskStartDate);
-            for (let d = new Date(start); d <= selected; d.setDate(d.getDate() + 1)) {
-                dateRange.push(d.toISOString().split("T")[0]);
-            }
-
-            // Sort dates chronologically
-            dateRange.sort();
-
-            // Track actual turn progression based on completions
-            let turnPosition = 0;
-            
-            // Process each date in chronological order
-            for (let i = 0; i < dateRange.length; i++) {
-                const dateStr = dateRange[i];
-                
-                // Skip the selected date - we'll handle it separately
-                if (dateStr === selectedDate) continue;
-                
-                const dayCompletions = (task.completions && Array.isArray(task.completions[dateStr]) ? task.completions[dateStr] : []);
-                const dayPending = (task.pendingCompletions && Array.isArray(task.pendingCompletions[dateStr]) ? task.pendingCompletions[dateStr] : []);
-                
-                if (dayCompletions.length > 0 || dayPending.length > 0) {
-                    // If there were completions/pending on this day, count them all
-                    turnPosition += dayCompletions.length + dayPending.length;
-                } else {
-                    // If no completions on this day, add the required times to maintain sequence
-                    turnPosition += requiredTimes;
-                }
-            }
-            
-            totalActualTurns = turnPosition;
-            rotationOffset = totalActualTurns % assignedUsers.length;
         }
 
-        // Generate turns for the required number of times
+        let totalCompletions;
+        if (selected < today) {
+            totalCompletions = completedCount;
+        } else if (selected.getTime() === today.getTime()) {
+            totalCompletions = lastCompletedCount + completedCount;
+        } else {
+            const daysDiff = Math.floor((selected - lastCompletionDate) / (1000 * 60 * 60 * 24));
+            totalCompletions = lastCompletedCount + (daysDiff - 1) * requiredTimes + completedCount;
+        }
+
+        console.log("prepareTaskTurnData debug:", {
+            selectedDate,
+            startDate: startDate.toISOString(),
+            lastCompletionDate: lastCompletionDate.toISOString(),
+            daysDiff: selected < today ? "N/A (past)" : Math.floor((selected - lastCompletionDate) / (1000 * 60 * 60 * 24)),
+            totalCompletions,
+            assignedUsers,
+            completedCount,
+            completions,
+            pendingCompletions,
+            tempTurnReplacement
+        });
+
         for (let i = 0; i < requiredTimes; i++) {
-            const userIndex = (i + rotationOffset) % (assignedUsers.length || 1);
+            const userIndex = (totalCompletions + i) % (assignedUsers.length || 1);
             const user = assignedUsers[userIndex] || "Unknown";
             const originalUser = userOrder[userIndex] || user;
             let isCompleted = false;
@@ -193,110 +223,36 @@ function mixedTurnData(task, selectedDate) {
                 repetition: i + 1,
                 isCompleted,
                 isPending,
-                originalUser,
-                index: i
+                originalUser
             });
         }
+    } else {
+        for (const user of userOrder) {
+            for (let rep = 1; rep <= requiredTimes; rep++) {
+                let isCompleted = false;
+                let isPending = false;
 
-        console.log("mixedTurnData debug:", {
-            selectedDate,
-            assignedUsers,
-            completedCount,
-            requiredTimes,
-            completions,
-            pendingCompletions,
-            tempTurnReplacement,
-            rotationOffset,
-            totalActualTurns, // Updated to actual turns
-            turns,
-            task: {
-                title: task.title,
-                date: task.date,
-                users: task.users,
-                repeat: task.repeat,
-                timesPerDay: task.timesPerDay
+                if (userCompletionCounts[user] && userCompletionCounts[user] > 0) {
+                    isCompleted = true;
+                    userCompletionCounts[user]--;
+                } else if (userPendingCounts[user] && userPendingCounts[user] > 0) {
+                    isPending = true;
+                    userPendingCounts[user]--;
+                }
+
+                turns.push({
+                    user,
+                    repetition: rep,
+                    isCompleted,
+                    isPending
+                });
             }
-        });
-
-        return { turns, completedCount, requiredTimes };
-    } catch (err) {
-        console.error("Error in mixedTurnData:", err, { task, selectedDate });
-        return { turns: [], completedCount: 0, requiredTimes: 1 };
-    }
-}
-
-
-
-
-
-
-
-
-
-// addtasks.html settings: Rotation ///////////////////////////////////////////////////////////////////////
-
-
-// addtasks.html settings: Individual ///////////////////////////////////////////////////////////////////////
-
-
-
-
-function individualTurnData(task, selectedDate) {
-    const repeat = task.repeat || "Daily";
-    let requiredTimes = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                       task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                       task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-
-    const completions = (task.completions && task.completions[selectedDate]) || [];
-    const pendingCompletions = (task.pendingCompletions && task.pendingCompletions[selectedDate]) || [];
-
-    const turns = [];
-    const userCompletionCounts = {};
-    const userPendingCounts = {};
-
-    completions.forEach(u => {
-        userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
-    });
-
-    pendingCompletions.forEach(u => {
-        userPendingCounts[u] = (userPendingCounts[u] || 0) + 1;
-    });
-
-    const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
-
-    for (const user of userOrder) {
-        for (let rep = 1; rep <= requiredTimes; rep++) {
-            let isCompleted = false;
-            let isPending = false;
-
-            if (userCompletionCounts[user] && userCompletionCounts[user] > 0) {
-                isCompleted = true;
-                userCompletionCounts[user]--;
-            } else if (userPendingCounts[user] && userPendingCounts[user] > 0) {
-                isPending = true;
-                userPendingCounts[user]--;
-            }
-
-            turns.push({
-                user,
-                repetition: rep,
-                isCompleted,
-                isPending,
-                index: (userOrder.indexOf(user) * requiredTimes) + (rep - 1)
-            });
         }
     }
 
-    console.log("individualTurnData turns:", turns);
-    return { turns, completedCount: completions.length + pendingCompletions.length, requiredTimes };
+    console.log("prepareTaskTurnData turns:", turns);
+    return turns;
 }
-
-
-
-// addtasks.html settings: Individual ///////////////////////////////////////////////////////////////////////
-
-
-
 
 function calculateIndividualProgress(task, selectedDate, user) {
     const completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
