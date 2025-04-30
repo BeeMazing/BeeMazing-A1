@@ -57,6 +57,7 @@ function filterTasksForDate(tasks, selectedDate) {
 
 
 
+
 function mixedTurnData(task, selectedDate) {
     try {
         // Validate inputs
@@ -116,9 +117,10 @@ function mixedTurnData(task, selectedDate) {
         // Calculate completed and pending turns for progress
         const completedCount = completions.length + pendingCompletions.length;
 
-        // Calculate rotation offset for Daily tasks
+        // Calculate rotation offset for Daily tasks - UPDATED LOGIC
         let rotationOffset = 0;
-        let totalPreviousTurns = 0;
+        let totalActualTurns = 0;
+        
         if (repeat === "Daily" && assignedUsers.length > 0) {
             // Parse task start date and selected date
             const range = task.date.split(" to ");
@@ -134,21 +136,40 @@ function mixedTurnData(task, selectedDate) {
                 return { turns: [], completedCount: 0, requiredTimes };
             }
 
-            // Sum turns for all previous days
+            // First, collect all dates from start to selected
+            const dateRange = [];
             const start = new Date(taskStartDate);
-            const end = new Date(selected);
-            end.setDate(end.getDate() - 1); // Up to the day before selectedDate
-
-            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                const dateStr = d.toISOString().split("T")[0];
-                const dayCompletions = (task.completions && Array.isArray(task.completions[dateStr]) ? task.completions[dateStr] : []);
-                const dayPending = (task.pendingCompletions && Array.isArray(task.pendingCompletions[dateStr]) ? task.pendingCompletions[dateStr] : []);
-                const dayTurns = dayCompletions.length + dayPending.length;
-                totalPreviousTurns += (dayTurns > 0 ? dayTurns : requiredTimes);
+            for (let d = new Date(start); d <= selected; d.setDate(d.getDate() + 1)) {
+                dateRange.push(d.toISOString().split("T")[0]);
             }
 
-            // Calculate offset: total turns modulo number of users
-            rotationOffset = totalPreviousTurns % assignedUsers.length;
+            // Sort dates chronologically
+            dateRange.sort();
+
+            // Track actual turn progression based on completions
+            let turnPosition = 0;
+            
+            // Process each date in chronological order
+            for (let i = 0; i < dateRange.length; i++) {
+                const dateStr = dateRange[i];
+                
+                // Skip the selected date - we'll handle it separately
+                if (dateStr === selectedDate) continue;
+                
+                const dayCompletions = (task.completions && Array.isArray(task.completions[dateStr]) ? task.completions[dateStr] : []);
+                const dayPending = (task.pendingCompletions && Array.isArray(task.pendingCompletions[dateStr]) ? task.pendingCompletions[dateStr] : []);
+                
+                if (dayCompletions.length > 0 || dayPending.length > 0) {
+                    // If there were completions/pending on this day, count them all
+                    turnPosition += dayCompletions.length + dayPending.length;
+                } else {
+                    // If no completions on this day, add the required times to maintain sequence
+                    turnPosition += requiredTimes;
+                }
+            }
+            
+            totalActualTurns = turnPosition;
+            rotationOffset = totalActualTurns % assignedUsers.length;
         }
 
         // Generate turns for the required number of times
@@ -186,7 +207,7 @@ function mixedTurnData(task, selectedDate) {
             pendingCompletions,
             tempTurnReplacement,
             rotationOffset,
-            totalPreviousTurns,
+            totalActualTurns, // Updated to actual turns
             turns,
             task: {
                 title: task.title,
@@ -203,6 +224,13 @@ function mixedTurnData(task, selectedDate) {
         return { turns: [], completedCount: 0, requiredTimes: 1 };
     }
 }
+
+
+
+
+
+
+
 
 
 // addtasks.html settings: Rotation ///////////////////////////////////////////////////////////////////////
