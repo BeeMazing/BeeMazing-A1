@@ -61,10 +61,6 @@ function filterTasksForDate(tasks, selectedDate) {
 
 
 
-
-
-
-
 function mixedTurnData(task, selectedDate) {
     try {
         if (!task || typeof task !== "object" || !Array.isArray(task.users) || !task.date) {
@@ -107,7 +103,6 @@ function mixedTurnData(task, selectedDate) {
         const completedCount = completions.length + pendingCompletions.length;
 
         let rotationOffset = 0;
-        let totalPreviousTurns = 0;
 
         if (repeat === "Daily" && assignedUsers.length > 0) {
             const range = task.date.split(" to ");
@@ -119,24 +114,40 @@ function mixedTurnData(task, selectedDate) {
                 return { turns: [], completedCount: 0, requiredTimes };
             }
 
-            const start = new Date(taskStartDate);
-            const end = new Date(selected);
-            end.setDate(end.getDate() - 1); // Only count days before selected date
+            // Calculate days between task start and selected date
+            const timeDiff = selected.getTime() - taskStartDate.getTime();
+            const daysSinceStart = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
 
-            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                const dateStr = d.toISOString().split("T")[0];
-                const completionsOnDay = Array.isArray(task.completions?.[dateStr]) ? task.completions[dateStr] : [];
-                const pendingOnDay = Array.isArray(task.pendingCompletions?.[dateStr]) ? task.pendingCompletions[dateStr] : [];
-                const completedTurns = completionsOnDay.length + pendingOnDay.length;
+            // For past and current dates, adjust offset based on actual completions
+            if (selected <= new Date()) {
+                let totalPreviousTurns = 0;
+                const start = new Date(taskStartDate);
+                const end = new Date(selected);
+                end.setDate(end.getDate() - 1); // Count only days before selected date
 
-                if (completedTurns >= requiredTimes) {
-                    totalPreviousTurns += requiredTimes;
+                for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                    const dateStr = d.toISOString().split("T")[0];
+                    const completionsOnDay = Array.isArray(task.completions?.[dateStr]) ? task.completions[dateStr] : [];
+                    const pendingOnDay = Array.isArray(task.pendingCompletions?.[dateStr]) ? task.pendingCompletions[dateStr] : [];
+                    const completedTurns = completionsOnDay.length + pendingOnDay.length;
+
+                    if (completedTurns >= requiredTimes) {
+                        totalPreviousTurns += requiredTimes;
+                    } else {
+                        totalPreviousTurns += completedTurns;
+                    }
                 }
-                
 
+                // For the selected date, include completions if any
+                if (selected.toISOString().split("T")[0] === selectedDate) {
+                    totalPreviousTurns += completedCount;
+                }
+
+                rotationOffset = totalPreviousTurns % assignedUsers.length;
+            } else {
+                // For future dates, simulate rotation based on days and required turns
+                rotationOffset = (daysSinceStart * requiredTimes) % assignedUsers.length;
             }
-
-            rotationOffset = totalPreviousTurns % assignedUsers.length;
         }
 
         for (let i = 0; i < requiredTimes; i++) {
@@ -171,7 +182,7 @@ function mixedTurnData(task, selectedDate) {
             completedCount,
             requiredTimes,
             rotationOffset,
-            totalPreviousTurns,
+            daysSinceStart, // Add for debugging
             turns
         });
 
@@ -181,6 +192,8 @@ function mixedTurnData(task, selectedDate) {
         return { turns: [], completedCount: 0, requiredTimes: 1 };
     }
 }
+
+
 
 
 
