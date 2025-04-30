@@ -523,7 +523,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>1a</span>
+            <span>1111</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -597,28 +597,11 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
 
 
 
-        function renderRotationText(title, dateStr, turnData) {
-    const current = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
-    const nextIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
-    const nextUser = nextIndex < turnData.turns.length ? turnData.turns[nextIndex]?.user : turnData.turns[0]?.user || "—";
-    const nextNextUser = nextIndex + 1 < turnData.turns.length ? turnData.turns[nextIndex + 1]?.user : turnData.turns[1]?.user || turnData.turns[0]?.user || "—";
-    const nextText = `${nextUser} - ${nextNextUser}`;
-    return `
-        <div style="margin-bottom: 10px;">
-            <strong>${title} ${dateStr}:</strong><br>
-            Current Turn: ${current}<br>
-            Next: ${nextText}<br>
-            ${typeof turnData.completedCount !== "undefined" && typeof turnData.requiredTimes !== "undefined" ? `Completed: ${turnData.completedCount}/${turnData.requiredTimes}` : ""}
-        </div>
-    `;
-}
 
 
 
 
         // Load tasks for a specific date
-
-
         async function loadTasksForDate(selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     if (!adminEmail) {
@@ -627,142 +610,124 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
     }
 
     try {
-        const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: `HTTP error ${response.status}` }));
-            throw new Error(`Failed to fetch tasks: ${errorData.error || response.statusText}`);
+    const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: `HTTP error ${response.status}` }));
+        throw new Error(`Failed to fetch tasks: ${errorData.error || response.statusText}`);
+    }
+    const result = await response.json();
+    const tasks = result.tasks || [];
+    for (const task of tasks) {
+        if (!task.title || !task.date || !Array.isArray(task.users)) {
+            console.warn("Found invalid task, deleting:", task);
+            await deleteInvalidTask(task);
         }
-        const result = await response.json();
-        const tasks = result.tasks || [];
+    }
 
-        for (const task of tasks) {
-            if (!task.title || !task.date || typeof task.date !== "string" || !Array.isArray(task.users) || task.users.length === 0 || task.users.every(u => !u || typeof u !== "string" || u.trim() === "")) {
-                console.warn("Found invalid task, deleting:", task);
-                await deleteInvalidTask(task);
-            }
+    const taskList = document.getElementById("taskList");
+    taskList.innerHTML = "";
+
+    const visibleTasks = filterTasksForDate(tasks, selectedDate);
+
+    if (visibleTasks.length === 0) {
+        taskList.innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">No tasks for this day 🌙</div>`;
+        return;
+    }
+
+    visibleTasks.forEach((task) => {
+        const taskDiv = document.createElement("div");
+        taskDiv.className = "task-item";
+        taskDiv.dataset.taskTitle = task.title;
+        taskDiv.dataset.taskDate = task.date;
+
+        if (!Array.isArray(task.users) || task.users.length === 0) {
+            task.users = ["Unknown"];
         }
 
-        const taskList = document.getElementById("taskList");
-        taskList.innerHTML = "";
+        let taskHTML = `<strong>${task.title}</strong>`;
+        let turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
 
-        const visibleTasks = filterTasksForDate(tasks, selectedDate);
-
-        if (visibleTasks.length === 0) {
-            taskList.innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">No tasks for this day 🌙</div>`;
-            return;
-        }
-
-        visibleTasks.forEach((task) => {
-            const taskDiv = document.createElement("div");
-            taskDiv.className = "task-item";
-            taskDiv.dataset.taskTitle = task.title;
-            taskDiv.dataset.taskDate = task.date;
-
-            if (!Array.isArray(task.users) || task.users.length === 0) {
-                task.users = ["Unknown"];
-            }
-
-            let taskHTML = `<strong>${task.title}</strong>`;
-            let turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
-
-            if (task.settings?.includes("Rotation")) {
-                if (typeof mixedTurnData !== 'function') {
-                    console.error(`mixedTurnData is not defined for task: ${task.title}. Check if taskrotations.js loaded and inspect console for details.`);
-                    taskHTML += `<br><em style="color:#ff4444;">Error: Rotation calculation unavailable. See console for details.</em>`;
-                } else {
-                    let rotationError = null;
-                    if (!task.date || typeof task.date !== "string") {
-                        rotationError = "Invalid or missing task date";
-                    } else if (!task.users || !Array.isArray(task.users) || task.users.length === 0 || task.users.every(u => !u || typeof u !== "string" || u.trim() === "")) {
-                        rotationError = "Invalid or empty task users";
-                    } else if (task.repeat === "Daily" && (!Number.isInteger(task.timesPerDay) || task.timesPerDay <= 0)) {
-                        rotationError = "Invalid times per day for Daily task";
-                    }
-
-                    if (rotationError) {
-                        console.error(`Error processing Rotation task "${task.title}" on ${selectedDate}: ${rotationError}`, task);
-                        taskHTML += `<br><em style="color:#ff4444;">Error: ${rotationError}. See console for details.</em>`;
-                    } else {
-                        try {
-                            turnData = mixedTurnData(task, selectedDate);
-                            console.log(`Rotation task "${task.title}" on ${selectedDate}:`, turnData);
-                            if (turnData.turns.length === 0) {
-                                taskHTML += `<br><em style="color:#ff4444;">Error: No rotation turns available. Check task configuration.</em>`;
-                            } else {
-                                const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
-                                const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
-                                const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : turnData.turns[0]?.user || "—";
-                                const nextNextUser = nextTurnIndex + 1 < turnData.turns.length ? turnData.turns[nextTurnIndex + 1]?.user : turnData.turns[1]?.user || turnData.turns[0]?.user || "—";
-                                const nextText = `${nextUser} - ${nextNextUser}`;
-                                taskHTML += `
-                                    <br><em>Rotation Task</em>
-                                    <br>Turn: ${currentTurn}
-                                    <br>Next: ${nextText}
-                                    <div class="task-progress">Progress: ${turnData.completedCount}/${turnData.requiredTimes}</div>
-                                `;
-                            }
-                        } catch (err) {
-                            console.error(`Error processing Rotation task "${task.title}" on ${selectedDate}:`, err, task);
-                            taskHTML += `<br><em style="color:#ff4444;">Error: Unable to calculate rotation (${err.message}). See console for details.</em>`;
-                        }
-                    }
-                }
-            } else if (task.settings?.includes("Individual")) {
-                if (typeof individualTurnData !== 'function') {
-                    console.error(`individualTurnData is not defined for task: ${task.title}`);
-                    taskHTML += `<br><em style="color:#ff4444;">Error: Progress calculation unavailable</em>`;
-                } else {
-                    try {
-                        turnData = individualTurnData(task, selectedDate);
-                        taskHTML += `<br><em>Individual Task</em>`;
-                        task.users.forEach(user => {
-                            const userTurns = turnData.turns.filter(t => t.user === user);
-                            const count = userTurns.filter(t => t.isCompleted || t.isPending).length;
-                            const required = turnData.requiredTimes;
-                            const check = count >= required ? '✅' : '';
-                            taskHTML += `<br>${user}: ${count}/${required} ${check}`;
-                        });
-                    } catch (err) {
-                        console.error(`Error processing Individual task "${task.title}" on ${selectedDate}:`, err, task);
-                        taskHTML += `<br><em style="color:#ff4444;">Error: Unable to calculate progress (${err.message}). See console for details.</em>`;
-                    }
-                }
+        if (task.settings?.includes("Rotation")) {
+            if (typeof mixedTurnData !== 'function') {
+                console.error(`mixedTurnData is not defined for task: ${task.title}. Check if taskrotations.js loaded and inspect console for errors.`);
+                taskHTML += `<br><em style="color:#ff4444;">Error: Rotation calculation unavailable. See console for details.</em>`;
             } else {
-                taskHTML += `<br><em style="color:#aaa;">No rotation</em>`;
+                try {
+                    turnData = mixedTurnData(task, selectedDate);
+                    console.log(`Rotation task "${task.title}" on ${selectedDate}:`, turnData);
+                    const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
+                    const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
+                    const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : "—";
+                    taskHTML += `
+                        <br><em>Rotation Task</em>
+                        <br>Turn: ${currentTurn}
+                        <br>Next: ${nextUser}
+                        <div class="task-progress">Progress: ${turnData.completedCount}/${turnData.requiredTimes}</div>
+                    `;
+                } catch (err) {
+                    console.error(`Error processing Rotation task "${task.title}" on ${selectedDate}:`, err);
+                    taskHTML += `<br><em style="color:#ff4444;">Error: Unable to calculate rotation. See console for details.</em>`;
+                }
             }
-
-            taskDiv.innerHTML = taskHTML + `<div class="delete-btn">Delete</div>`;
-
-            taskDiv.addEventListener("click", async (e) => {
-                if (taskDiv.dataset.swiping === "true") {
-                    taskDiv.dataset.swiping = "false";
-                    return;
+        } else if (task.settings?.includes("Individual")) {
+            if (typeof individualTurnData !== 'function') {
+                console.error(`individualTurnData is not defined for task: ${task.title}`);
+                taskHTML += `<br><em style="color:#ff4444;">Error: Progress calculation unavailable</em>`;
+            } else {
+                try {
+                    turnData = individualTurnData(task, selectedDate);
+                    taskHTML += `<br><em>Individual Task</em>`;
+                    task.users.forEach(user => {
+                        const userTurns = turnData.turns.filter(t => t.user === user);
+                        const count = userTurns.filter(t => t.isCompleted || t.isPending).length;
+                        const required = turnData.requiredTimes;
+                        const check = count >= required ? '✅' : '';
+                        taskHTML += `<br>${user}: ${count}/${required} ${check}`;
+                    });
+                } catch (err) {
+                    console.error(`Error processing Individual task "${task.title}" on ${selectedDate}:`, err);
+                    taskHTML += `<br><em style="color:#ff4444;">Error: Unable to calculate progress. See console for details.</em>`;
                 }
-                
-                if (!e.target.classList.contains("delete-btn")) {
-                    const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-                    const latestResult = await latest.json();
-                    const latestTask = latestResult.tasks.find(t => t.title === task.title && t.date === task.date);
-                    if (latestTask) showTaskDetails(latestTask);
-                }
-            });
+            }
+        } else {
+            taskHTML += `<br><em style="color:#aaa;">No rotation</em>`;
+        }
 
-            taskDiv.querySelector(".delete-btn").addEventListener("click", async (e) => {
-                e.stopPropagation();
-                if (confirm("Are you sure you want to delete this task?")) {
-                    await deleteTaskFromBackend(task.title, task.date);
-                    loadTasksForDate(selectedDate);
-                }
-            });
+        taskDiv.innerHTML = taskHTML + `<div class="delete-btn">Delete</div>`;
 
-            taskList.appendChild(taskDiv);
-            enableSwipeToDelete(taskDiv);
+        taskDiv.addEventListener("click", async (e) => {
+            if (taskDiv.dataset.swiping === "true") {
+                taskDiv.dataset.swiping = "false";
+                return;
+            }
+            
+            if (!e.target.classList.contains("delete-btn")) {
+                const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+                const latestResult = await latest.json();
+                const latestTask = latestResult.tasks.find(t => t.title === task.title && t.date === task.date);
+                if (latestTask) showTaskDetails(latestTask);
+            }
         });
-    } catch (err) {
-        console.error("Error loading tasks:", err, { adminEmail, selectedDate });
-        document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">Error loading tasks: ${err.message}</div>`;
+
+        taskDiv.querySelector(".delete-btn").addEventListener("click", async (e) => {
+            e.stopPropagation();
+            if (confirm("Are you sure you want to delete this task?")) {
+                await deleteTaskFromBackend(task.title, task.date);
+                loadTasksForDate(selectedDate);
+            }
+        });
+
+        taskList.appendChild(taskDiv);
+        enableSwipeToDelete(taskDiv);
+    });
+} catch (err) {
+    console.error("Error loading tasks:", err, { adminEmail, selectedDate });
+    document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">Error loading tasks: ${err.message}</div>`;
     }
 }
+
+
+
 
 
 
@@ -785,78 +750,45 @@ async function showTaskDetails(task) {
         <strong>Title:</strong> ${task.title}<br>
         ${task.notes ? `<strong>Notes:</strong> ${task.notes}<br>` : ""}
         ${task.room ? `<strong>Room:</strong> ${task.room}<br>` : ""}
-        <strong>Frequency:</strong> ${task.repeat || "Daily"}
+        <strong>Frequency:</strong> ${task.repeat}
         ${task.repeat === "Daily" && task.timesPerDay ? ` - ${task.timesPerDay} time(s)/day` : ""}
         ${task.repeat === "Weekly" && task.timesPerWeek ? ` - ${task.timesPerWeek} time(s)/week` : ""}
         ${task.repeat === "Monthly" && task.timesPerMonth ? ` - ${task.timesPerMonth} time(s)/month` : ""}
         <br>
-        <strong>Date:</strong> ${task.date || "Unknown"}<br>
-        <strong>Users:</strong> ${userOrder.join(", ") || "None"}<br>
+        <strong>Date:</strong> ${task.date}<br>
+        <strong>Users:</strong> ${userOrder.join(", ")}<br>
         ${task.reward && task.reward !== "0" ? `<strong>Reward:</strong> ${task.reward} 🍯<br>` : ""}
     `;
 
     let turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
     if (task.settings?.includes("Rotation")) {
         if (typeof mixedTurnData !== 'function') {
-            console.error(`mixedTurnData is not defined for task: ${task.title}. Check if taskrotations.js loaded and inspect console for errors.`);
-            taskDetails += `<em style="color:#ff4444;">Error: Rotation calculation unavailable. See console for details.</em><br>`;
+            taskDetails += `<em style="color:#ff4444;">Error: Rotation calculation unavailable</em><br>`;
         } else {
-            let rotationError = null;
-            if (!task.date || typeof task.date !== "string") {
-                rotationError = "Invalid or missing task date";
-            } else if (!task.users || !Array.isArray(task.users) || task.users.length === 0) {
-                rotationError = "Invalid or empty task users";
-            } else if (task.repeat === "Daily" && (!Number.isInteger(task.timesPerDay) || task.timesPerDay <= 0)) {
-                rotationError = "Invalid times per day for Daily task";
-            }
-
-            if (rotationError) {
-                console.error(`Error processing Rotation task "${task.title}" on ${selectedDate} in showTaskDetails: ${rotationError}`, task);
-                taskDetails += `<em style="color:#ff4444;">Error: ${rotationError}. See console for details.</em><br>`;
-            } else {
-                try {
-                    turnData = mixedTurnData(task, selectedDate);
-                    console.log(`Rotation task "${task.title}" details on ${selectedDate}:`, turnData);
-                    if (turnData.turns.length === 0) {
-                        taskDetails += `<em style="color:#ff4444;">Error: No rotation turns available. Check task configuration.</em><br>`;
-                    } else {
-                        const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
-                        const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
-                        const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : turnData.turns[0]?.user || "—";
-                        const nextNextUser = nextTurnIndex + 1 < turnData.turns.length ? turnData.turns[nextTurnIndex + 1]?.user : turnData.turns[1]?.user || turnData.turns[0]?.user || "—";
-                        const nextText = `${nextUser} - ${nextNextUser}`;
-                        taskDetails += `
-                            <strong>Settings:</strong> Rotation<br>
-                            <strong>Current Turn:</strong> ${currentTurn}<br>
-                            <strong>Next:</strong> ${nextText}<br>
-                            <div class="task-progress">Progress: ${turnData.completedCount}/${turnData.requiredTimes}</div>
-                        `;
-                    }
-                } catch (err) {
-                    console.error(`Error processing Rotation task "${task.title}" on ${selectedDate} in showTaskDetails:`, err, task);
-                    taskDetails += `<em style="color:#ff4444;">Error: Unable to calculate rotation (${err.message}). See console for details.</em><br>`;
-                }
-            }
+            turnData = mixedTurnData(task, selectedDate);
+            const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
+            const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
+            const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : "—";
+            taskDetails += `
+                <strong>Settings:</strong> Rotation<br>
+                <strong>Current Turn:</strong> ${currentTurn}<br>
+                <strong>Next:</strong> ${nextUser}<br>
+                <div class="task-progress">Progress: ${turnData.completedCount}/${turnData.requiredTimes}</div>
+            `;
         }
     } else if (task.settings?.includes("Individual")) {
         if (typeof individualTurnData !== 'function') {
-            console.error(`individualTurnData is not defined for task: ${task.title}`);
             taskDetails += `<em style="color:#ff4444;">Error: Progress calculation unavailable</em><br>`;
         } else {
-            try {
-                turnData = individualTurnData(task, selectedDate);
-                taskDetails += `<strong>Settings:</strong> Individual<br><strong>Progress:</strong><br>`;
-                task.users.forEach(user => {
-                    const userTurns = turnData.turns.filter(t => t.user === user);
-                    const count = userTurns.filter(t => t.isCompleted || t.isPending).length;
-                    const required = turnData.requiredTimes;
-                    const check = count >= required ? '✅' : '';
-                    taskDetails += `${user}: ${count}/${required} ${check}<br>`;
-                });
-            } catch (err) {
-                console.error(`Error processing Individual task "${task.title}" on ${selectedDate} in showTaskDetails:`, err, task);
-                taskDetails += `<em style="color:#ff4444;">Error: Unable to calculate progress (${err.message}). See console for details.</em><br>`;
-            }
+            turnData = individualTurnData(task, selectedDate);
+            taskDetails += `<strong>Settings:</strong> Individual<br><strong>Progress:</strong><br>`;
+            task.users.forEach(user => {
+                const userTurns = turnData.turns.filter(t => t.user === user);
+                const count = userTurns.filter(t => t.isCompleted || t.isPending).length;
+                const required = turnData.requiredTimes;
+                const check = count >= required ? '✅' : '';
+                taskDetails += `${user}: ${count}/${required} ${check}<br>`;
+            });
         }
     } else {
         taskDetails += `<em style="color:#aaa;">No rotation logic for this task</em><br>`;
@@ -892,6 +824,9 @@ async function showTaskDetails(task) {
         window.location.href = "/BeeMazing-Y1/mobile/3-Tasks/addtasks.html";
     });
 }
+
+
+
 
 
 
