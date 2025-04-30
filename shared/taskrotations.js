@@ -58,6 +58,7 @@ function filterTasksForDate(tasks, selectedDate) {
 
 
 
+
 function mixedTurnData(task, selectedDate) {
     try {
         if (!task || typeof task !== "object" || !Array.isArray(task.users) || !task.date) {
@@ -90,6 +91,7 @@ function mixedTurnData(task, selectedDate) {
         const userOrder = [...task.users];
         const assignedUsers = [...userOrder];
 
+        // Apply temp replacements
         Object.entries(tempTurnReplacement).forEach(([index, user]) => {
             const i = parseInt(index);
             if (!isNaN(i) && i >= 0 && i < assignedUsers.length) {
@@ -114,19 +116,19 @@ function mixedTurnData(task, selectedDate) {
 
             const start = new Date(taskStartDate);
             const end = new Date(selected);
-            end.setDate(end.getDate() - 1); // Only count days before selected date
+            end.setDate(end.getDate() - 1); // Count only before selectedDate
 
             for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                 const dateStr = d.toISOString().split("T")[0];
                 const completionsOnDay = Array.isArray(task.completions?.[dateStr]) ? task.completions[dateStr] : [];
                 const pendingOnDay = Array.isArray(task.pendingCompletions?.[dateStr]) ? task.pendingCompletions[dateStr] : [];
-                const completedTurns = completionsOnDay.length + pendingOnDay.length;
 
-                if ((completionsOnDay.length + pendingOnDay.length) >= requiredTimes) {
+                const isFullyCompleted = (completionsOnDay.length + pendingOnDay.length) >= requiredTimes;
+
+                if (isFullyCompleted) {
                     totalPreviousTurns += requiredTimes;
                 }
-                
-
+                // Else – incomplete day, don't advance rotation
             }
 
             rotationOffset = totalPreviousTurns % assignedUsers.length;
@@ -174,6 +176,14 @@ function mixedTurnData(task, selectedDate) {
         return { turns: [], completedCount: 0, requiredTimes: 1 };
     }
 }
+
+
+
+
+
+
+
+
 
 
 
