@@ -1122,7 +1122,7 @@
     <div class="footer">
       <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
           <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-          <span>q</span>
+          <span>q111</span>
       </a>
       <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
           <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -1881,6 +1881,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+
         async function loadOverallProgress(userName) {
   const adminEmail = localStorage.getItem("currentAdminEmail");
   const selectedDay = document.querySelector(".day.selected")?.dataset.date || new Date().toLocaleDateString("sv-SE"); // "YYYY-MM-DD"
@@ -1890,15 +1891,22 @@ document.addEventListener("DOMContentLoaded", () => {
   let completedDos = 0;
 
   try {
-    const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
 
     const tasks = data.tasks || [];
-    const todayTasks = tasks.filter(task => {
+    console.log("loadOverallProgress tasks:", tasks.map(t => ({
+      title: t.title,
+      date: t.date,
+      daysOfWeek: t.daysOfWeek,
+      specificDays: t.specificDays,
+      users: t.users
+    })));
+
+    const todayTasks = filterTasksForDate(tasks, selectedDay).filter(task => {
       if (!task.users || !task.title || !task.date) return false;
-      if (!task.users.includes(userName)) return false;
-      return filterTasksForDate(task, selectedDay);
+      return task.users.includes(userName);
     });
 
     totalTasks = todayTasks.length;
@@ -1938,6 +1946,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("doSummary").textContent = "";
   }
 }
+
 
         </script>
 
