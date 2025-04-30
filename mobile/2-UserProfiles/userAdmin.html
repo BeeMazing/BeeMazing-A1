@@ -655,11 +655,11 @@ body.menu-open {
     background: #B71C1C;
 }
 .modal-actions button:last-child {
-    background: #4CAF50;
+    background: #333;
     color: white;
 }
 .modal-actions button:last-child:hover {
-    background: #388E3C;
+    background: #333;
 }
 
 /* Permission Modal Specific */
@@ -740,14 +740,16 @@ body.menu-open {
 
 
 /* Add User Button in User Selection Modal */
+/* Add User Button in User Selection Modal */
+/* Add User Button in User Selection Modal */
 .add-user-btn {
   background: var(--primary-color);
   color: #212121;
   border: none;
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  font-size: 18px;
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
   font-weight: bold;
   cursor: pointer;
   display: inline-flex;
@@ -830,17 +832,35 @@ body.menu-open {
   background: #B71C1C;
 }
 .add-user-modal-actions .submit-btn {
-  background: #4CAF50;
+  background: #333;
   color: white;
 }
 .add-user-modal-actions .submit-btn:hover {
-  background: #388E3C;
+  background: #333;
 }
+
+/* Header Title Container for Select User and Add Button */
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Update Bottom Sheet Header for New Layout */
+.bottom-sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border-dark);
+}
+
+/* Responsive Adjustments */
 @media (max-width: 600px) {
   .add-user-btn {
-    width: 25px;
-    height: 25px;
-    font-size: 16px;
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
   }
   .add-user-modal-content {
     width: 95%;
@@ -856,6 +876,9 @@ body.menu-open {
   .add-user-modal-actions button {
     padding: 6px 12px;
     font-size: 14px;
+  }
+  .header-title {
+    gap: 6px;
   }
 }
 
@@ -919,11 +942,11 @@ body.menu-open {
 <div class="bottom-sheet" id="userSelectModal">
   <div class="bottom-sheet-content">
     <div class="bottom-sheet-header">
-      <h3>Select User</h3>
-      <div style="display: flex; align-items: center; gap: 10px;">
+      <div class="header-title">
+        <h3>Add User</h3>
         <button class="add-user-btn" id="addUserBtn">+</button>
-        <button id="closeModalBtn" class="close-btn" aria-label="Close">×</button>
       </div>
+      <button id="closeModalBtn" class="close-btn" aria-label="Close"></button>
     </div>
     <ul id="userList" class="user-list"></ul>
   </div>
