@@ -60,117 +60,86 @@ function filterTasksForDate(tasks, selectedDate) {
 
 function mixedTurnData(task, selectedDate) {
     try {
-        // Validate inputs
-        if (!task || typeof task !== "object") {
-            console.error("Invalid task object in mixedTurnData:", { task, selectedDate });
-            return { turns: [], completedCount: 0, requiredTimes: 1 };
-        }
-        if (!selectedDate || typeof selectedDate !== "string") {
-            console.error("Invalid selectedDate in mixedTurnData:", { task, selectedDate });
-            return { turns: [], completedCount: 0, requiredTimes: 1 };
-        }
-
-        // Validate required task properties
-        if (!task.date || typeof task.date !== "string") {
-            console.error("Invalid or missing task.date in mixedTurnData:", { taskDate: task.date, task });
-            return { turns: [], completedCount: 0, requiredTimes: 1 };
-        }
-        if (!task.users || !Array.isArray(task.users) || task.users.length === 0) {
-            console.error("Invalid or empty task.users in mixedTurnData:", { taskUsers: task.users, task });
+        if (!task || typeof task !== "object" || !Array.isArray(task.users) || !task.date) {
+            console.error("Invalid task input in mixedTurnData:", task);
             return { turns: [], completedCount: 0, requiredTimes: 1 };
         }
 
         const repeat = task.repeat || "Daily";
-        let requiredTimes = task.repeat === "Daily" ? (Number.isInteger(task.timesPerDay) && task.timesPerDay > 0 ? task.timesPerDay : 1) :
-                           task.repeat === "Weekly" ? (Number.isInteger(task.timesPerWeek) && task.timesPerWeek > 0 ? task.timesPerWeek : 1) :
-                           task.repeat === "Monthly" ? (Number.isInteger(task.timesPerMonth) && task.timesPerMonth > 0 ? task.timesPerMonth : 1) : 1;
+        const requiredTimes = repeat === "Daily" ? (Number.isInteger(task.timesPerDay) ? task.timesPerDay : 1)
+                          : repeat === "Weekly" ? (Number.isInteger(task.timesPerWeek) ? task.timesPerWeek : 1)
+                          : repeat === "Monthly" ? (Number.isInteger(task.timesPerMonth) ? task.timesPerMonth : 1)
+                          : 1;
 
-        const completions = (task.completions && Array.isArray(task.completions[selectedDate]) ? task.completions[selectedDate] : []);
-        const pendingCompletions = (task.pendingCompletions && Array.isArray(task.pendingCompletions[selectedDate]) ? task.pendingCompletions[selectedDate] : []);
-        const tempTurnReplacement = (task.tempTurnReplacement && typeof task.tempTurnReplacement[selectedDate] === "object" ? task.tempTurnReplacement[selectedDate] : {});
+        const completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+        const pendingCompletions = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
+        const tempTurnReplacement = typeof task.tempTurnReplacement?.[selectedDate] === "object" ? task.tempTurnReplacement[selectedDate] : {};
 
         const turns = [];
         const userCompletionCounts = {};
         const userPendingCounts = {};
 
-        completions.forEach(u => {
-            if (typeof u === "string") {
-                userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
-            }
+        completions.forEach(user => {
+            userCompletionCounts[user] = (userCompletionCounts[user] || 0) + 1;
         });
 
-        pendingCompletions.forEach(u => {
-            if (typeof u === "string") {
-                userPendingCounts[u] = (userPendingCounts[u] || 0) + 1;
-            }
+        pendingCompletions.forEach(user => {
+            userPendingCounts[user] = (userPendingCounts[user] || 0) + 1;
         });
 
         const userOrder = [...task.users];
         const assignedUsers = [...userOrder];
         Object.entries(tempTurnReplacement).forEach(([index, user]) => {
-            const idx = parseInt(index);
-            if (Number.isInteger(idx) && idx < assignedUsers.length && typeof user === "string") {
-                assignedUsers[idx] = user;
+            const i = parseInt(index);
+            if (!isNaN(i) && i >= 0 && i < assignedUsers.length) {
+                assignedUsers[i] = user;
             }
         });
 
-        // Calculate completed and pending turns for progress
         const completedCount = completions.length + pendingCompletions.length;
 
-        // Calculate rotation offset for Daily tasks
         let rotationOffset = 0;
         let totalPreviousTurns = 0;
+
         if (repeat === "Daily" && assignedUsers.length > 0) {
-            // Parse task start date and selected date
             const range = task.date.split(" to ");
             const taskStartDate = parseLocalDate(range[0]);
             const selected = parseLocalDate(selectedDate);
 
-            if (isNaN(taskStartDate.getTime())) {
-                console.error("Invalid task start date in mixedTurnData:", { taskDate: task.date, range, taskStartDateRaw: range[0] });
-                return { turns: [], completedCount: 0, requiredTimes };
-            }
-            if (isNaN(selected.getTime())) {
-                console.error("Invalid selected date in mixedTurnData:", { selectedDate });
+            if (isNaN(taskStartDate.getTime()) || isNaN(selected.getTime())) {
+                console.error("Invalid date(s) in mixedTurnData:", { taskStartDate, selectedDate });
                 return { turns: [], completedCount: 0, requiredTimes };
             }
 
-            // Determine today's date for past vs. future logic
-            const today = new Date();
-            today.setHours(0, 0, 0, 0); // Normalize to midnight
-            const selectedIsFuture = selected > today;
-
-            // Sum turns for all previous days
             const start = new Date(taskStartDate);
             const end = new Date(selected);
-            end.setDate(end.getDate() - 1); // Up to the day before selectedDate
+            end.setDate(end.getDate() - 1); // stop before selected date
 
             for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                 const dateStr = d.toISOString().split("T")[0];
-                const dayCompletions = (task.completions && Array.isArray(task.completions[dateStr]) ? task.completions[dateStr] : []);
-                const dayPending = (task.pendingCompletions && Array.isArray(task.pendingCompletions[dateStr]) ? task.pendingCompletions[dateStr] : []);
+                const dayCompletions = Array.isArray(task.completions?.[dateStr]) ? task.completions[dateStr] : [];
+                const dayPending = Array.isArray(task.pendingCompletions?.[dateStr]) ? task.pendingCompletions[dateStr] : [];
                 const dayTurns = dayCompletions.length + dayPending.length;
-            
-                totalPreviousTurns += dayTurns; // ✅ Only count actual turns
-            }
-            
 
-            // Calculate offset: total turns modulo number of users
+                // ✅ Only count real completions — do NOT assume full completion if 0 were done
+                totalPreviousTurns += dayTurns;
+            }
+
             rotationOffset = totalPreviousTurns % assignedUsers.length;
         }
 
-        // Generate turns for the required number of times
         for (let i = 0; i < requiredTimes; i++) {
-            const userIndex = (i + rotationOffset) % (assignedUsers.length || 1);
-            const user = assignedUsers[userIndex] || "Unknown";
-            const originalUser = userOrder[userIndex] || user;
+            const userIndex = (i + rotationOffset) % assignedUsers.length;
+            const user = assignedUsers[userIndex];
+            const originalUser = userOrder[userIndex];
+
             let isCompleted = false;
             let isPending = false;
 
-            if (userCompletionCounts[user] && userCompletionCounts[user] > 0) {
+            if (userCompletionCounts[user]) {
                 isCompleted = true;
                 userCompletionCounts[user]--;
-            } else if (userPendingCounts[user] && userPendingCounts[user] > 0) {
+            } else if (userPendingCounts[user]) {
                 isPending = true;
                 userPendingCounts[user]--;
             }
@@ -190,24 +159,14 @@ function mixedTurnData(task, selectedDate) {
             assignedUsers,
             completedCount,
             requiredTimes,
-            completions,
-            pendingCompletions,
-            tempTurnReplacement,
             rotationOffset,
             totalPreviousTurns,
-            turns,
-            task: {
-                title: task.title,
-                date: task.date,
-                users: task.users,
-                repeat: task.repeat,
-                timesPerDay: task.timesPerDay
-            }
+            turns
         });
 
         return { turns, completedCount, requiredTimes };
     } catch (err) {
-        console.error("Error in mixedTurnData:", err, { task, selectedDate });
+        console.error("Error in mixedTurnData:", err);
         return { turns: [], completedCount: 0, requiredTimes: 1 };
     }
 }
