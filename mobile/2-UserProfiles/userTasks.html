@@ -691,7 +691,7 @@
       </a>
       <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
           <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
-          <span>a1</span>
+          <span>a</span>
       </a>
       <a href="#" id="marketButton" class="footer-icon" aria-label="Market">
           <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
@@ -795,8 +795,6 @@ if (marketButton) {
 
 
 
-
-
 async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
     const userTasksDiv = document.getElementById("userTasks");
     userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
@@ -805,20 +803,30 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     let tasks = [];
 
     try {
-        const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+        // Use the same endpoint as tasks.html
+        const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
         tasks = data.tasks || [];
+
+        // Log task data for debugging
+        console.log("loadUserTasks tasks:", tasks.map(t => ({
+            title: t.title,
+            date: t.date,
+            daysOfWeek: t.daysOfWeek,
+            specificDays: t.specificDays,
+            users: t.users
+        })));
     } catch (err) {
         console.error("Failed to fetch tasks from server:", err);
         userTasksDiv.innerHTML = "<p>Failed to load tasks. Please try again later.</p>";
         return;
     }
 
-    const userTasks = tasks.filter(task => {
+    // Filter tasks by user and date
+    const userTasks = filterTasksForDate(tasks, selectedDate).filter(task => {
         if (!task || !task.users || !task.title || !task.date) return false;
-        if (!task.users.includes(userName)) return false;
-        return filterTasksForDate(task, selectedDate);
+        return task.users.includes(userName);
     });
 
     userTasksDiv.innerHTML = "";
@@ -892,7 +900,6 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         userTasksDiv.appendChild(taskDiv);
     }
 }
-
 
 
 
