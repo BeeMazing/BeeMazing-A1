@@ -113,16 +113,20 @@ function mixedTurnData(task, selectedDate) {
 
             const start = new Date(taskStartDate);
             const end = new Date(selected);
-            end.setDate(end.getDate() - 1); // stop before selected date
+            end.setDate(end.getDate() - 1); // check up to the day before selected
 
             for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                 const dateStr = d.toISOString().split("T")[0];
                 const dayCompletions = Array.isArray(task.completions?.[dateStr]) ? task.completions[dateStr] : [];
                 const dayPending = Array.isArray(task.pendingCompletions?.[dateStr]) ? task.pendingCompletions[dateStr] : [];
-                const dayTurns = dayCompletions.length + dayPending.length;
 
-                // ✅ Only count real completions — do NOT assume full completion if 0 were done
-                totalPreviousTurns += dayTurns;
+                const hadActivity = dayCompletions.length + dayPending.length > 0;
+
+                // ✅ Only rotate if task was actually done that day
+                if (hadActivity) {
+                    const dayTurns = dayCompletions.length + dayPending.length;
+                    totalPreviousTurns += dayTurns;
+                }
             }
 
             rotationOffset = totalPreviousTurns % assignedUsers.length;
@@ -154,7 +158,7 @@ function mixedTurnData(task, selectedDate) {
             });
         }
 
-        console.log("mixedTurnData debug:", {
+        console.log("mixedTurnData [✅ FIXED]:", {
             selectedDate,
             assignedUsers,
             completedCount,
