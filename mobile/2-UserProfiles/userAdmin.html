@@ -824,6 +824,7 @@ body.menu-open {
   <div class="footer">
     <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
         <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
+        <span>a111</span>
     </a>
     <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
       <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -1495,7 +1496,6 @@ async function handleReorder(title, date, newUserOrder) {
 
 
 
-
 async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
   try {
     console.log(`Loading tasks for date: ${selectedDate}, attempt: ${attempt}`); // Debug
@@ -1629,7 +1629,6 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
               index: i,
               date: task.date,
               isPending,
-              isPending,
               isCompleted,
               originalUser
             });
@@ -1648,18 +1647,46 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
             originalUser: "Error"
           }];
         } else {
-          task.users.forEach((user, index) => {
-            const { count, required, isComplete } = calculateIndividualProgress(task, selectedDate, user);
-            const isPending = task.pendingCompletions?.[selectedDate]?.includes(user) || false;
-            turns.push({
-              user,
-              repetition: count + 1,
-              index,
-              date: task.date,
-              isPending,
-              isCompleted: isComplete,
-              originalUser: user
-            });
+          const completions = (task.completions && task.completions[selectedDate]) || [];
+          const pendingCompletions = (task.pendingCompletions && task.pendingCompletions[selectedDate]) || [];
+          const required = task.repeat === "Daily" ? task.timesPerDay || 1 :
+                          task.repeat === "Weekly" ? task.timesPerWeek || 1 :
+                          task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+
+          // Calculate user completion and pending counts
+          const userCompletionCounts = {};
+          const userPendingCounts = {};
+          completions.forEach(u => {
+            userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
+          });
+          pendingCompletions.forEach(u => {
+            userPendingCounts[u] = (userPendingCounts[u] || 0) + 1;
+          });
+
+          // Generate turns for each user up to required attempts
+          task.users.forEach((user, userIndex) => {
+            let completionCount = userCompletionCounts[user] || 0;
+            let pendingCount = userPendingCounts[user] || 0;
+            for (let i = 0; i < required; i++) {
+              let isCompleted = false;
+              let isPending = false;
+              if (completionCount > 0) {
+                isCompleted = true;
+                completionCount--;
+              } else if (pendingCount > 0) {
+                isPending = true;
+                pendingCount--;
+              }
+              turns.push({
+                user,
+                repetition: i + 1,
+                index: userIndex * required + i,
+                date: task.date,
+                isPending,
+                isCompleted,
+                originalUser: user
+              });
+            }
           });
         }
       } else {
@@ -1780,7 +1807,6 @@ async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
     document.getElementById("taskContainer").innerHTML = "<p>Error loading tasks. Please try again.</p>";
   }
 }
-
 
 
 
