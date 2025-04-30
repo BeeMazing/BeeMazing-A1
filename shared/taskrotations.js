@@ -122,8 +122,10 @@ function mixedTurnData(task, selectedDate) {
                 const pendingOnDay = Array.isArray(task.pendingCompletions?.[dateStr]) ? task.pendingCompletions[dateStr] : [];
                 const completedTurns = completionsOnDay.length + pendingOnDay.length;
 
-                // ✅ Only count fully completed days
-                totalPreviousTurns += requiredTimes;
+                if ((completionsOnDay.length + pendingOnDay.length) >= requiredTimes) {
+                    totalPreviousTurns += requiredTimes;
+                }
+                
 
             }
 
