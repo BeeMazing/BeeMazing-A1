@@ -147,17 +147,13 @@ function mixedTurnData(task, selectedDate) {
 
             for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                 const dateStr = d.toISOString().split("T")[0];
-                if (selectedIsFuture && d >= today) {
-                    // For future selected dates, assume requiredTimes for today and beyond
-                    totalPreviousTurns += requiredTimes;
-                } else {
-                    // For past and current days, use actual completions only
-                    const dayCompletions = (task.completions && Array.isArray(task.completions[dateStr]) ? task.completions[dateStr] : []);
-                    const dayPending = (task.pendingCompletions && Array.isArray(task.pendingCompletions[dateStr]) ? task.pendingCompletions[dateStr] : []);
-                    const dayTurns = dayCompletions.length + dayPending.length;
-                    totalPreviousTurns += dayTurns; // Add actual turns, 0 if none
-                }
+                const dayCompletions = (task.completions && Array.isArray(task.completions[dateStr]) ? task.completions[dateStr] : []);
+                const dayPending = (task.pendingCompletions && Array.isArray(task.pendingCompletions[dateStr]) ? task.pendingCompletions[dateStr] : []);
+                const dayTurns = dayCompletions.length + dayPending.length;
+            
+                totalPreviousTurns += dayTurns; // ✅ Only count actual turns
             }
+            
 
             // Calculate offset: total turns modulo number of users
             rotationOffset = totalPreviousTurns % assignedUsers.length;
