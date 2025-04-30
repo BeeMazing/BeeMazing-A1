@@ -1,3 +1,4 @@
+// Parse a date string (e.g., "2025-04-30") into a Date object
 function parseLocalDate(dateStr) {
     if (!dateStr || typeof dateStr !== 'string') return new Date(3000, 0, 1);
     const parts = dateStr.trim().split("-");
@@ -9,6 +10,48 @@ function parseLocalDate(dateStr) {
     return date;
 }
 
+// Filter tasks for a given date, returning only those that should be visible
+function filterTasksForDate(tasks, selectedDate) {
+    if (!Array.isArray(tasks)) return [];
+
+    // Convert selectedDate to a Date object and format as YYYY-MM-DD
+    const selected = parseLocalDate(selectedDate);
+    const selectedDateStr = selected.toISOString().split("T")[0];
+
+    return tasks.filter(task => {
+        if (!task.date) return false;
+
+        // Parse the From/To range
+        const range = task.date.split(" to ");
+        const from = parseLocalDate(range[0]);
+        const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
+
+        const inRange = selected >= from && selected <= to;
+
+        // If Specific Dates exist, use that first
+        if (task.specificDates) {
+            const specificDates = task.specificDates.split(",").map(date => date.trim());
+            return specificDates.includes(selectedDateStr);
+        }
+
+        // If Days of Week exist, use that second
+        if (task.daysOfWeek && !task.daysOfWeek.includes("Any")) {
+            let days = task.daysOfWeek;
+            if (typeof days === "string") {
+                days = days.split(",").map(d => d.trim()).filter(d => d);
+            }
+            if (Array.isArray(days) && days.length > 0) {
+                const dayOfWeek = selected.toLocaleDateString(undefined, { weekday: "long" });
+                return days.includes(dayOfWeek) && inRange; // Must be within From-To range
+            }
+        }
+
+        // Default case: From-To (if "Any" or no specific days)
+        return inRange;
+    });
+}
+
+// Existing functions (unchanged)
 function calculateTurn(task, selectedDate) {
     const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
     const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
@@ -82,8 +125,6 @@ function calculateTurn(task, selectedDate) {
     };
 }
 
-
-
 function prepareTaskTurnData(task, selectedDate) {
     const repeat = task.repeat || "Daily";
     let requiredTimes = task.repeat === "Daily" ? task.timesPerDay || 1 :
@@ -110,7 +151,6 @@ function prepareTaskTurnData(task, selectedDate) {
     const isRotation = (task.settings || "Rotation") === "Rotation";
 
     if (isRotation) {
-        // Exactly replicate calculateTurn logic
         const assignedUsers = [...userOrder];
         Object.entries(tempTurnReplacement).forEach(([index, user]) => {
             if (parseInt(index) < assignedUsers.length) {
@@ -142,7 +182,7 @@ function prepareTaskTurnData(task, selectedDate) {
 
         let totalCompletions;
         if (selected < today) {
-            totalCompletions = completedCount; // Use only completions for past dates
+            totalCompletions = completedCount;
         } else if (selected.getTime() === today.getTime()) {
             totalCompletions = lastCompletedCount + completedCount;
         } else {
@@ -213,9 +253,6 @@ function prepareTaskTurnData(task, selectedDate) {
     console.log("prepareTaskTurnData turns:", turns);
     return turns;
 }
-
-
-
 
 function calculateIndividualProgress(task, selectedDate, user) {
     const completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
