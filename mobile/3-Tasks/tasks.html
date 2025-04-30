@@ -523,7 +523,7 @@ body {
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
             <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-            <span>1</span>
+            <span>11</span>
         </a>
         <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
             <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -600,12 +600,14 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
         function renderRotationText(title, dateStr, turnData) {
     const current = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
     const nextIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
-    const next = nextIndex < turnData.turns.length ? turnData.turns[nextIndex]?.user : "—";
+    const nextUser = nextIndex < turnData.turns.length ? turnData.turns[nextIndex]?.user : turnData.turns[0]?.user || "—";
+    const nextNextUser = nextIndex + 1 < turnData.turns.length ? turnData.turns[nextIndex + 1]?.user : turnData.turns[1]?.user || turnData.turns[0]?.user || "—";
+    const nextText = `${nextUser} - ${nextNextUser}`;
     return `
         <div style="margin-bottom: 10px;">
             <strong>${title} ${dateStr}:</strong><br>
             Current Turn: ${current}<br>
-            Next: ${next}<br>
+            Next: ${nextText}<br>
             ${typeof turnData.completedCount !== "undefined" && typeof turnData.requiredTimes !== "undefined" ? `Completed: ${turnData.completedCount}/${turnData.requiredTimes}` : ""}
         </div>
     `;
@@ -815,11 +817,13 @@ async function showTaskDetails(task) {
                     } else {
                         const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
                         const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
-                        const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : "—";
+                        const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : turnData.turns[0]?.user || "—";
+                        const nextNextUser = nextTurnIndex + 1 < turnData.turns.length ? turnData.turns[nextTurnIndex + 1]?.user : turnData.turns[1]?.user || turnData.turns[0]?.user || "—";
+                        const nextText = `${nextUser} - ${nextNextUser}`;
                         taskDetails += `
                             <strong>Settings:</strong> Rotation<br>
                             <strong>Current Turn:</strong> ${currentTurn}<br>
-                            <strong>Next:</strong> ${nextUser}<br>
+                            <strong>Next:</strong> ${nextText}<br>
                             <div class="task-progress">Progress: ${turnData.completedCount}/${turnData.requiredTimes}</div>
                         `;
                     }
@@ -883,8 +887,6 @@ async function showTaskDetails(task) {
         window.location.href = "/BeeMazing-Y1/mobile/3-Tasks/addtasks.html";
     });
 }
-
-
 
 
 
