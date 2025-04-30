@@ -56,6 +56,8 @@ function filterTasksForDate(tasks, selectedDate) {
 // addtasks.html settings: Rotation ////////////////////////////////////////////////////////////////////////
 
 
+
+
 function mixedTurnData(task, selectedDate) {
     try {
         // Validate inputs
@@ -136,7 +138,6 @@ function mixedTurnData(task, selectedDate) {
             // Determine today's date for past vs. future logic
             const today = new Date();
             today.setHours(0, 0, 0, 0); // Normalize to midnight
-            const todayStr = today.toISOString().split("T")[0];
             const selectedIsFuture = selected > today;
 
             // Sum turns for all previous days
@@ -150,11 +151,11 @@ function mixedTurnData(task, selectedDate) {
                     // For future selected dates, assume requiredTimes for today and beyond
                     totalPreviousTurns += requiredTimes;
                 } else {
-                    // For past and current days, use actual completions
+                    // For past and current days, use actual completions only
                     const dayCompletions = (task.completions && Array.isArray(task.completions[dateStr]) ? task.completions[dateStr] : []);
                     const dayPending = (task.pendingCompletions && Array.isArray(task.pendingCompletions[dateStr]) ? task.pendingCompletions[dateStr] : []);
                     const dayTurns = dayCompletions.length + dayPending.length;
-                    totalPreviousTurns += (dayTurns > 0 ? dayTurns : requiredTimes);
+                    totalPreviousTurns += dayTurns; // Add actual turns, 0 if none
                 }
             }
 
@@ -214,6 +215,9 @@ function mixedTurnData(task, selectedDate) {
         return { turns: [], completedCount: 0, requiredTimes: 1 };
     }
 }
+
+
+
 
 
 // addtasks.html settings: Rotation ///////////////////////////////////////////////////////////////////////
