@@ -60,7 +60,7 @@ function filterTasksForDate(tasks, selectedDate) {
 
 
 
-function calculateRotationOffsetUntilDate(task, selectedDate) {
+function mixedTurnOffset(task, selectedDate) {
     const repeat = task.repeat || "Daily";
     const requiredTimes = repeat === "Daily" ? (Number.isInteger(task.timesPerDay) ? task.timesPerDay : 1)
                       : repeat === "Weekly" ? (Number.isInteger(task.timesPerWeek) ? task.timesPerWeek : 1)
@@ -167,7 +167,7 @@ function mixedTurnData(task, selectedDate) {
         });
 
         // ✅ Updated offset calculation
-        const rotationOffset = calculateRotationOffsetUntilDate(task, selectedDate);
+        const rotationOffset = mixedTurnOffset(task, selectedDate);
 
         for (let i = 0; i < requiredTimes; i++) {
             const userIndex = (i + rotationOffset) % assignedUsers.length;
