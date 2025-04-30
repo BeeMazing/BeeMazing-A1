@@ -159,20 +159,12 @@
       display: block;
     }
     .turn-entry {
-      background: #3A3B44;
-      border-radius: 8px;
-      padding: 10px;
-      margin: 5px 0;
-      cursor: move;
-      border: 2px solid transparent;
-    }
-    .turn-entry.dragging {
-      opacity: 0.7;
-      border: 2px solid #FFC107;
-    }
-    .turn-entry.drag-over {
-      border: 2px dashed #FFC107;
-    }
+  background: #3A3B44;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 5px 0;
+  border: 2px solid transparent;
+}
     .turn-entry p {
       margin: 5px 0;
     }
@@ -1535,13 +1527,15 @@ async function handleDecision(title, date, index, decision, user, event) {
 
 
 
-async function handleReplace(title, date, index, originalUser, event) {
+
+
+async function handleReplace(title, date, index, user, event) {
   const taskEntry = event.target.closest(".task-entry");
   const select = taskEntry.querySelector(`#replace-select-${index}`);
   const newUser = select.value;
 
   // Validate new user
-  if (!newUser || newUser === originalUser) {
+  if (!newUser || newUser === user) {
     const errorDiv = document.createElement("div");
     errorDiv.style.color = "red";
     errorDiv.textContent = "Please select a different user.";
@@ -1568,7 +1562,7 @@ async function handleReplace(title, date, index, originalUser, event) {
         date,
         selectedDate,
         index: parseInt(index),
-        originalUser,
+        originalUser: user,
         newUser
       })
     });
@@ -1581,7 +1575,7 @@ async function handleReplace(title, date, index, originalUser, event) {
     turnEntry.querySelector("p").textContent = `Turn ${parseInt(index) + 1}: ${newUser} - Pending`;
     turnEntry.querySelector("select").value = "";
     turnEntry.dataset.user = newUser;
-    setTimeout(() => loadTasks(true), 500); // Reduced delay, force retry
+    setTimeout(() => loadTasks(), 500);
   } catch (err) {
     console.error("Error replacing user:", err);
     const errorDiv = document.createElement("div");
@@ -1591,6 +1585,7 @@ async function handleReplace(title, date, index, originalUser, event) {
     setTimeout(() => errorDiv.remove(), 3000);
   }
 }
+
 
 
 
@@ -1637,241 +1632,105 @@ async function handleRevert(title, date, index, user, event) {
 
 
 
-async function handleReorder(title, date, newUserOrder) {
+
+
+
+async function loadTasks() {
   try {
-    const response = await fetch("https://beemazing.onrender.com/api/reorder-turns", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        adminEmail,
-        title,
-        date,
-        users: newUserOrder,
-        resetTempReplacement: true,
-        selectedDate
-      })
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to reorder turns");
-    setTimeout(() => loadTasks(), 500); // Reduced delay
-  } catch (err) {
-    console.error("Error reordering turns:", err);
-    const errorDiv = document.createElement("div");
-    errorDiv.style.color = "red";
-    errorDiv.textContent = "Failed to reorder turns. Please try again.";
-    document.getElementById("taskContainer").appendChild(errorDiv);
-    setTimeout(() => errorDiv.remove(), 3000);
-  }
-}
-
-
-
-
-
-async function loadTasks(retry = false, attempt = 1, maxAttempts = 3) {
-  try {
-    console.log(`Loading tasks for date: ${selectedDate}, attempt: ${attempt}`); // Debug
     const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
       cache: "no-store"
     });
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     const { tasks } = await res.json();
-    console.log("All tasks received:", tasks.map(t => ({
-      title: t.title,
-      users: t.users,
-      date: t.date,
-      tempTurnReplacement: t.tempTurnReplacement,
-      timesPerDay: t.timesPerDay,
-      settings: t.settings
-    }))); // Debug
+
+    // Filter tasks using filterTasksForDate from taskrotations.js
+    const filteredTasks = filterTasksForDate(tasks, selectedDate);
 
     const container = document.getElementById("taskContainer");
     container.innerHTML = ""; // Clear UI
 
-    const tasksByTitle = {};
-    const duplicateTasks = {}; // Track duplicates
-    tasks.forEach(task => {
+    if (filteredTasks.length === 0) {
+      container.innerHTML = "<p>No tasks for this date.</p>";
+      return;
+    }
+
+    filteredTasks.forEach(task => {
       if (!task.title || !task.users || !task.date) {
         console.warn(`Skipping invalid task:`, task);
         return;
       }
 
-      // Filter by date range
-      const [startDateStr, endDateStr] = task.date.split(" to ");
-      const startDate = new Date(startDateStr);
-      const endDate = new Date(endDateStr || "3000-01-01");
-      const currentDate = new Date(selectedDate);
-      if (currentDate < startDate || currentDate > endDate) {
-        console.log(`Skipping task ${task.title}: ${task.date} does not include ${selectedDate}`); // Debug
-        return;
-      }
-
-      // Track all tasks with same title
-      if (!duplicateTasks[task.title]) duplicateTasks[task.title] = [];
-      duplicateTasks[task.title].push({
-        date: task.date,
-        users: task.users,
-        tempTurnReplacement: task.tempTurnReplacement?.[selectedDate] || {},
-        startDate
-      });
-
-      const existingTask = tasksByTitle[task.title];
-      const currentDateRange = task.date;
-      let shouldReplace = false;
-
-      if (!existingTask) {
-        shouldReplace = true;
-      } else {
-        const taskEntry = document.querySelector(`.task-entry[data-title="${task.title}"]`);
-        const replaceDateRange = taskEntry?.dataset.date;
-        if (replaceDateRange && currentDateRange === replaceDateRange) {
-          shouldReplace = true;
-        } else if (new Date(existingTask.startDate) < startDate) {
-          shouldReplace = true;
-        }
-      }
-
-      if (shouldReplace) {
-        tasksByTitle[task.title] = {
-          turns: [],
-          pendingCount: 0,
-          date: task.date,
-          userOrder: task.users || [],
-          settings: task.settings || "Rotation",
-          startDate,
-          timesPerDay: task.timesPerDay || 1
-        };
-      } else {
-        console.warn(`Duplicate task title: ${task.title}, date: ${task.date}, keeping date: ${existingTask.date}`); // Debug
-        return;
-      }
-
       let turnData;
-if (task.settings?.includes("Rotation")) {
-    if (typeof mixedTurnData !== 'function') {
-        console.error(`mixedTurnData is not defined for task: ${task.title}`);
-        turnData = { turns: [{
-            user: "Error",
-            repetition: 1,
-            index: 0,
-            date: task.date,
-            isPending: false,
-            isCompleted: false,
-            originalUser: "Error"
-        }], completedCount: 0, requiredTimes: 1 };
-    } else {
-        turnData = mixedTurnData(task, selectedDate);
-    }
-} else if (task.settings?.includes("Individual")) {
-    if (typeof individualTurnData !== 'function') {
-        console.error(`individualTurnData is not defined for task: ${task.title}`);
-        turnData = { turns: [{
-            user: "Error",
-            repetition: 1,
-            index: 0,
-            date: task.date,
-            isPending: false,
-            isCompleted: false,
-            originalUser: "Error"
-        }], completedCount: 0, requiredTimes: 1 };
-    } else {
-        turnData = individualTurnData(task, selectedDate);
-    }
-} else {
-    console.warn(`Unsupported task settings for ${task.title}: ${task.settings}`);
-    turnData = { turns: [{
-        user: "No Settings",
-        repetition: 1,
-        index: 0,
-        date: task.date,
-        isPending: false,
-        isCompleted: false,
-        originalUser: "No Settings"
-    }], completedCount: 0, requiredTimes: 1 };
-}
-
-console.log(`Turn data for ${task.title} on ${selectedDate}:`, turnData); // Debug
-
-tasksByTitle[task.title].pendingCount = turnData.turns.filter(t => t.isPending).length;
-tasksByTitle[task.title].completedCount = turnData.completedCount;
-tasksByTitle[task.title].timesPerDay = turnData.requiredTimes; // Use requiredTimes for consistency
-turnData.turns.forEach((turn) => {
-    tasksByTitle[task.title].turns.push({
-        user: turn.user,
-        repetition: turn.repetition,
-        index: turn.index,
-        date: task.date,
-        isPending: turn.isPending,
-        isCompleted: turn.isCompleted,
-        originalUser: turn.originalUser
-    });
-});
-    });
-
-    if (retry && attempt < maxAttempts) {
-      const hasReplacement = Object.values(tasksByTitle).some(task =>
-        task.turns.some(turn => turn.user !== task.userOrder[turn.index % task.userOrder.length])
-      );
-      if (!hasReplacement) {
-        console.warn(`Retry ${attempt}: No tempTurnReplacement found, retrying...`);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return loadTasks(true, attempt + 1, maxAttempts);
+      if (task.settings?.includes("Rotation")) {
+        if (typeof mixedTurnData !== 'function') {
+          console.error(`mixedTurnData is not defined for task: ${task.title}`);
+          turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+        } else {
+          turnData = mixedTurnData(task, selectedDate);
+        }
+      } else if (task.settings?.includes("Individual")) {
+        if (typeof individualTurnData !== 'function') {
+          console.error(`individualTurnData is not defined for task: ${task.title}`);
+          turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+        } else {
+          turnData = individualTurnData(task, selectedDate);
+        }
+      } else {
+        console.warn(`Unsupported task settings for ${task.title}: ${task.settings}`);
+        turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
       }
-    }
 
-    Object.keys(tasksByTitle).forEach(title => {
-      const { turns, pendingCount, date, userOrder, settings } = tasksByTitle[title];
+      const pendingCount = turnData.turns.filter(t => t.isPending).length;
       const div = document.createElement("div");
       div.className = "task-entry";
-      div.dataset.title = title;
-      div.dataset.date = date;
+      div.dataset.title = task.title;
+      div.dataset.date = task.date;
       div.innerHTML = `
-        <h3 class="task-title">${title}${pendingCount > 0 ? `<span class="notification-bubble">${pendingCount}</span>` : ''}</h3>
-        <div class="task-details${expandedTasks.has(title) ? ' show' : ''}">
+        <h3 class="task-title">${task.title}${pendingCount > 0 ? `<span class="notification-bubble">${pendingCount}</span>` : ''}</h3>
+        <div class="task-details${expandedTasks.has(task.title) ? ' show' : ''}">
           ${
-            tasksByTitle[title].turns.length && turns[0].repetition !== undefined && turns[0].user !== undefined && tasksByTitle[title].turns
-              ? (settings.includes("Rotation")
-                ? turns.map(turn => `
-                  <div class="turn-entry" draggable="true" data-index="${turn.index}" data-user="${turn.user}">
+            turnData.turns.length && turnData.turns[0].repetition !== undefined && turnData.turns[0].user !== undefined
+              ? (task.settings.includes("Rotation")
+                ? turnData.turns.map(turn => `
+                  <div class="turn-entry" data-index="${turn.index}" data-user="${turn.user}">
                     <p>Turn ${turn.index + 1}: ${turn.user} - ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
                     ${turn.isPending && !turn.isCompleted ? `
-                      <button class="accept-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
-                      <button class="decline-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
+                      <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
+                      <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
                     ` : turn.isCompleted ? `
-                      <button class="revert-btn" onclick="handleRevert('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
+                      <button class="revert-btn" onclick="handleRevert('${task.title}', '${task.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
                     ` : `
                       <select id="replace-select-${turn.index}">
                         <option value="">Select User</option>
                         ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
                       </select>
-                      <button class="replace-btn" onclick="handleReplace('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
+                      <button class="replace-btn" onclick="handleReplace('${task.title}', '${task.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
                     `}
                   </div>
                 `).join('')
-                :
-                userOrder.map(user => {
-                  const userTurns = turns.filter(t => t.user === user);
-                  return `
-                    <h4 style="margin-top: 10px;">${user}</h4>
-                    ${userTurns.map(turn => `
-                      <div class="turn-entry" draggable="false" data-index="${turn.index}" data-user="${turn.user}">
-                        <p>Attempt ${turn.repetition}: ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
-                        ${turn.isPending && !turn.isCompleted ? `
-                          <button class="accept-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
-                          <button class="decline-btn" onclick="handleDecision('${title}', '${turn.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
-                        ` : turn.isCompleted ? `
-                          <button class="revert-btn" onclick="handleRevert('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
-                        ` : `
-                          <select id="replace-select-${turn.index}">
-                            <option value="">Select User</option>
-                            ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
-                          </select>
-                          <button class="replace-btn" onclick="handleReplace('${title}', '${turn.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
-                        `}
-                      </div>
-                    `).join('')}
-                  `;
-                }).join(''))
+                : task.users.map(user => {
+                    const userTurns = turnData.turns.filter(t => t.user === user);
+                    return `
+                      <h4 style="margin-top: 10px;">${user}</h4>
+                      ${userTurns.map(turn => `
+                        <div class="turn-entry" draggable="false" data-index="${turn.index}" data-user="${turn.user}">
+                          <p>Attempt ${turn.repetition}: ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
+                          ${turn.isPending && !turn.isCompleted ? `
+                            <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
+                            <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
+                          ` : turn.isCompleted ? `
+                            <button class="revert-btn" onclick="handleRevert('${task.title}', '${task.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
+                          ` : `
+                            <select id="replace-select-${turn.index}">
+                              <option value="">Select User</option>
+                              ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
+                            </select>
+                            <button class="replace-btn" onclick="handleReplace('${task.title}', '${task.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
+                          `}
+                        </div>
+                      `).join('')}
+                    `;
+                  }).join(''))
               : '<p>No turns assigned.</p>'
           }
         </div>
@@ -1882,21 +1741,26 @@ turnData.turns.forEach((turn) => {
         const details = div.querySelector(".task-details");
         details.classList.toggle("show");
         if (details.classList.contains("show")) {
-          expandedTasks.add(title);
+          expandedTasks.add(task.title);
         } else {
-          expandedTasks.delete(title);
+          expandedTasks.delete(task.title);
         }
       });
     });
-
-    if (!container.innerHTML) {
-      container.innerHTML = "<p>No tasks for this date.</p>";
-    }
   } catch (err) {
     console.error("Error loading tasks:", err);
     document.getElementById("taskContainer").innerHTML = "<p>Error loading tasks. Please try again.</p>";
   }
 }
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1928,17 +1792,17 @@ function generateScrollableDates(monthOffset = 0) {
     btn.dataset.date = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-      btn.classList.add("selected");
-      selectedDate = btn.dataset.date;
-      loadTasks();
-    });
+  document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+  btn.classList.add("selected");
+  selectedDate = btn.dataset.date;
+  loadTasks();
+});
 
     if (btn.dataset.date === todayStr) {
-      btn.classList.add("selected");
-      selectedDate = btn.dataset.date;
-      loadTasks();
-    }
+  btn.classList.add("selected");
+  selectedDate = btn.dataset.date;
+  loadTasks();
+}
 
     container.appendChild(btn);
   }
