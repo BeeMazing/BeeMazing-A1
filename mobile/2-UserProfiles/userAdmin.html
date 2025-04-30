@@ -423,10 +423,10 @@ body.menu-open {
 
 
 
-/* Bottom Sheet Modal when selecting users */
 
 
-/* Bottom Sheet Modal for User Selection */
+
+/* Right top corner Select User Menu ********************************************************/
 .bottom-sheet {
     display: none;
     position: fixed;
@@ -734,7 +734,143 @@ body.menu-open {
   }
 }
 
-/* Bottom Sheet Modal when selecting users */
+
+
+
+
+
+/* Add User Button in User Selection Modal */
+.add-user-btn {
+  background: var(--primary-color);
+  color: #212121;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+.add-user-btn:hover {
+  background: #FFD54F;
+}
+
+/* Add User Modal */
+.add-user-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--modal-bg);
+  z-index: 1200;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+.add-user-modal.show {
+  display: block;
+  opacity: 1;
+}
+.add-user-modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #2A2B32;
+  border-radius: 12px;
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+.add-user-modal-content h3 {
+  margin: 0 0 15px;
+  font-size: 18px;
+  color: var(--text-color);
+}
+.add-user-modal-content input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  background: #333;
+  color: var(--text-color);
+  border: 1px solid var(--border-dark);
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+.add-user-modal-content .error-message {
+  color: #D32F2F;
+  font-size: 14px;
+  margin-bottom: 10px;
+  display: none;
+}
+.add-user-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.add-user-modal-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.add-user-modal-actions .cancel-btn {
+  background: #D32F2F;
+  color: white;
+}
+.add-user-modal-actions .cancel-btn:hover {
+  background: #B71C1C;
+}
+.add-user-modal-actions .submit-btn {
+  background: #4CAF50;
+  color: white;
+}
+.add-user-modal-actions .submit-btn:hover {
+  background: #388E3C;
+}
+@media (max-width: 600px) {
+  .add-user-btn {
+    width: 25px;
+    height: 25px;
+    font-size: 16px;
+  }
+  .add-user-modal-content {
+    width: 95%;
+    padding: 15px;
+  }
+  .add-user-modal-content h3 {
+    font-size: 16px;
+  }
+  .add-user-modal-content input {
+    font-size: 14px;
+    padding: 6px;
+  }
+  .add-user-modal-actions button {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+}
+
+
+/* Right top corner Select User Menu ********************************************************/
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -782,12 +918,28 @@ body.menu-open {
 <!-- User Selection ----------------------------->
   <div class="bottom-sheet" id="userSelectModal">
     <div class="bottom-sheet-content">
-        <div class="bottom-sheet-header">
-            <h3>Select User</h3>
-            <button id="closeModalBtn" class="close-btn" aria-label="Close">×</button>
+      <div class="bottom-sheet-header">
+        <h3>Add User</h3>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button class="add-user-btn" id="addUserBtn">+</button>
+          <button id="closeModalBtn" class="close-btn" aria-label="Close">×</button>
         </div>
-        <ul id="userList" class="user-list"></ul>
+      </div>
+
+
+
+
+<!-- Add User Modal -->
+<div class="add-user-modal" id="addUserModal">
+  <div class="add-user-modal-content">
+    <h3>Add New User</h3>
+    <input type="text" id="usernameInput" placeholder="Enter username" />
+    <div class="error-message" id="errorMessage">Please enter a username.</div>
+    <div class="add-user-modal-actions">
+      <button class="cancel-btn" id="cancelUserBtn">Cancel</button>
+      <button class="submit-btn" id="submitUserBtn">Submit</button>
     </div>
+  </div>
 </div>
 
 
@@ -939,6 +1091,142 @@ function showPermissionModal(username) {
     permissionSelect.value = userPermissions[username] || "User";
     document.getElementById("permissionModal").classList.add("show");
 }
+
+
+// Add User Modal Handling
+function showAddUserModal() {
+  const addUserModal = document.getElementById("addUserModal");
+  const usernameInput = document.getElementById("usernameInput");
+  const errorMessage = document.getElementById("errorMessage");
+  usernameInput.value = "";
+  errorMessage.style.display = "none";
+  addUserModal.classList.add("show");
+}
+
+function closeAddUserModal() {
+  const addUserModal = document.getElementById("addUserModal");
+  addUserModal.classList.remove("show");
+}
+
+document.getElementById("addUserBtn").addEventListener("click", () => {
+  showAddUserModal();
+});
+
+document.getElementById("addUserModal").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("addUserModal")) {
+    closeAddUserModal();
+  }
+});
+
+document.getElementById("cancelUserBtn").addEventListener("click", () => {
+  closeAddUserModal();
+});
+
+document.getElementById("submitUserBtn").addEventListener("click", async () => {
+  const username = document.getElementById("usernameInput").value.trim();
+  const errorMessage = document.getElementById("errorMessage");
+
+  if (!username) {
+    errorMessage.style.display = "block";
+    return;
+  }
+
+  if (!adminEmail) {
+    alert("Admin email not found. Please log in again.");
+    closeAddUserModal();
+    return;
+  }
+
+  errorMessage.style.display = "none";
+
+  try {
+    const res = await fetch("https://beemazing.onrender.com/add-user", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        adminEmail,
+        newUser: username
+      })
+    });
+
+    const result = await res.json();
+    if (result.success) {
+      // Update localStorage
+      const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+      if (!allUserData[adminEmail]) {
+        allUserData[adminEmail] = { users: [], permissions: {} };
+      }
+      allUserData[adminEmail].users.push(username);
+      localStorage.setItem("userData", JSON.stringify(allUserData));
+
+      // Refresh user list in modal
+      const users = await fetchUsersFromServer(adminEmail);
+      const userPermissions = allUserData[adminEmail]?.permissions || {};
+      userList.innerHTML = '';
+      if (users.length === 0) {
+        userList.innerHTML = '<li style="padding: 15px 20px; color: #D32F2F;">No users available</li>';
+      } else {
+        users.forEach(user => {
+          const li = document.createElement("li");
+          const nameContainer = document.createElement("div");
+          nameContainer.classList.add("user-list-item");
+          const userNameSpan = document.createElement("span");
+          userNameSpan.textContent = user;
+          nameContainer.appendChild(userNameSpan);
+          if (userPermissions[user] === "Admin") {
+            const checkmark = document.createElement("span");
+            checkmark.textContent = "✓";
+            checkmark.style.color = "#00C4B4";
+            checkmark.style.fontSize = "16px";
+            checkmark.style.fontWeight = "bold";
+            checkmark.title = "Admin";
+            nameContainer.appendChild(checkmark);
+          }
+          li.appendChild(nameContainer);
+          if (isAdmin) {
+            const actionsContainer = document.createElement("div");
+            actionsContainer.classList.add("user-list-actions");
+            const editBtn = document.createElement("button");
+            editBtn.classList.add("edit-user-btn");
+            editBtn.innerHTML = "⚙️";
+            editBtn.addEventListener("click", (event) => {
+              event.stopPropagation();
+              showPermissionModal(user);
+            });
+            const removeBtn = document.createElement("button");
+            removeBtn.classList.add("remove-user-btn");
+            removeBtn.textContent = "X";
+            removeBtn.addEventListener("click", (event) => {
+              event.stopPropagation();
+              showConfirmModal(user);
+            });
+            actionsContainer.appendChild(editBtn);
+            actionsContainer.appendChild(removeBtn);
+            li.appendChild(actionsContainer);
+          }
+          if (user === userName) {
+            li.style.background = "#333540";
+            li.style.fontWeight = "600";
+          }
+          li.addEventListener("click", () => {
+            const page = userPermissions[user] === "Admin" ? "userAdmin.html" : "users.html";
+            window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+          });
+          userList.appendChild(li);
+        });
+      }
+
+      closeAddUserModal();
+    } else {
+      errorMessage.textContent = result.message || "Failed to add user.";
+      errorMessage.style.display = "block";
+    }
+  } catch (err) {
+    console.error("Error adding user:", err);
+    errorMessage.textContent = "Error adding user. Please try again.";
+    errorMessage.style.display = "block";
+  }
+});
 
 
 
