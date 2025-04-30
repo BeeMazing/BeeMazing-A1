@@ -56,7 +56,6 @@ function filterTasksForDate(tasks, selectedDate) {
 // addtasks.html settings: Rotation ////////////////////////////////////////////////////////////////////////
 
 
-
 function mixedTurnData(task, selectedDate) {
     try {
         // Validate inputs
@@ -134,6 +133,12 @@ function mixedTurnData(task, selectedDate) {
                 return { turns: [], completedCount: 0, requiredTimes };
             }
 
+            // Determine today's date for past vs. future logic
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Normalize to midnight
+            const todayStr = today.toISOString().split("T")[0];
+            const selectedIsFuture = selected > today;
+
             // Sum turns for all previous days
             const start = new Date(taskStartDate);
             const end = new Date(selected);
@@ -141,10 +146,16 @@ function mixedTurnData(task, selectedDate) {
 
             for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                 const dateStr = d.toISOString().split("T")[0];
-                const dayCompletions = (task.completions && Array.isArray(task.completions[dateStr]) ? task.completions[dateStr] : []);
-                const dayPending = (task.pendingCompletions && Array.isArray(task.pendingCompletions[dateStr]) ? task.pendingCompletions[dateStr] : []);
-                const dayTurns = dayCompletions.length + dayPending.length;
-                totalPreviousTurns += (dayTurns > 0 ? dayTurns : requiredTimes);
+                if (selectedIsFuture && d >= today) {
+                    // For future selected dates, assume requiredTimes for today and beyond
+                    totalPreviousTurns += requiredTimes;
+                } else {
+                    // For past and current days, use actual completions
+                    const dayCompletions = (task.completions && Array.isArray(task.completions[dateStr]) ? task.completions[dateStr] : []);
+                    const dayPending = (task.pendingCompletions && Array.isArray(task.pendingCompletions[dateStr]) ? task.pendingCompletions[dateStr] : []);
+                    const dayTurns = dayCompletions.length + dayPending.length;
+                    totalPreviousTurns += (dayTurns > 0 ? dayTurns : requiredTimes);
+                }
             }
 
             // Calculate offset: total turns modulo number of users
