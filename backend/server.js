@@ -1741,4 +1741,32 @@ app.post('/set-avatar', async (req, res) => {
 
 
 
+//- ✅ GET avatar for a specific user under an admin 
+//- finish task to play avatar preview
+app.get('/get-avatar', async (req, res) => {
+  const { adminEmail, user } = req.query;
+
+  if (!adminEmail || !user) {
+    return res.status(400).json({ success: false, message: "Missing adminEmail or user" });
+  }
+
+  try {
+    const db = await connectDB();
+    const adminUsers = db.collection('adminUsers');
+
+    const admin = await adminUsers.findOne({ email: adminEmail });
+
+    if (!admin || !admin.avatars || !admin.avatars[user]) {
+      return res.status(404).json({ success: false, message: "Avatar not found" });
+    }
+
+    const avatar = admin.avatars[user];
+    res.json({ success: true, avatar });
+  } catch (err) {
+    console.error("🔥 Error in /get-avatar:", err);
+    res.status(500).json({ success: false, message: "Server error retrieving avatar" });
+  }
+});
+//-end point finish task to play avatar preview
+
 // Endpoint chooseAvatar.html //

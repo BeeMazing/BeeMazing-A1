@@ -1239,33 +1239,44 @@ modalHTML += `<strong>Progress:</strong> ${isRotation ? turnData.completedCount 
   const button = event.target;
   button.disabled = true;
 
+  const avatarData = JSON.parse(localStorage.getItem("userAvatars") || "{}");
+  const avatarId = avatarData[currentUser]; // like "kitana1"
+  const videoPath = avatarId ? `/BeeMazing-Y1/shared/Avatars/Selected/Preview/${avatarId}.mp4` : null;
+
+  if (videoPath) {
+    const overlay = document.getElementById("taskVideoOverlay");
+const videoEl = document.getElementById("taskAvatarVideo");
+
+if (overlay && videoEl && videoPath) {
+  overlay.style.display = "flex";
+  videoEl.src = videoPath;
+  videoEl.muted = false;
+  videoEl.load();
+  videoEl.play().catch(err => console.warn("Could not auto-play preview:", err));
+
+  videoEl.onended = () => {
+    overlay.style.display = "none";
+    videoEl.src = "";
+  };
+}
+
+  }
+
   const popup = document.createElement("div");
   popup.className = "reward-popup";
   popup.textContent = `Submitting Task...`;
   document.body.appendChild(popup);
 
   try {
-    console.log(`Submitting task: title="${task.title}", user="${currentUser}", date="${today}", adminEmail="${adminEmail}"`);
     const response = await fetch("https://beemazing.onrender.com/api/complete-task", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        adminEmail,
-        taskTitle: task.title.trim(),
-        user: currentUser,
-        date: today
-      })
+      body: JSON.stringify({ adminEmail, taskTitle: task.title.trim(), user: currentUser, date: today })
     });
-
     const data = await response.json();
-    if (!response.ok) {
-      console.error("Server response:", data);
-      throw new Error(data.error || `HTTP error ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
     popup.textContent = `Task Submitted! Waiting for Admin Review`;
     setTimeout(() => popup.remove(), 2000);
-
     await loadUserTasks(currentUser, selectedDate);
   } catch (err) {
     console.error("Error submitting task:", err);
@@ -1275,7 +1286,6 @@ modalHTML += `<strong>Progress:</strong> ${isRotation ? turnData.completedCount 
     button.disabled = false;
   }
 }
-
 
 
 
@@ -1343,6 +1353,15 @@ Your browser does not support the video tag.
 
 
 </div>
+
+
+
+
+<div id="taskVideoOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; justify-content:center; align-items:center; flex-direction:column;">
+  <h1 style="color: gold; font-size: 36px; margin-bottom: 20px; font-family: Orbitron, sans-serif;">Well Done!</h1>
+  <video id="taskAvatarVideo" autoplay playsinline controls style="max-width:90vw; max-height:70vh; border-radius:20px; box-shadow: 0 0 30px gold; background: black;"></video>
+</div>
+
 
 
 </body>

@@ -353,7 +353,7 @@
         video.load();
         confirmButton.style.display = "none";
 
-        
+
         video.muted = false;
         video.volume = 1;
         video.currentTime = 0;
@@ -382,10 +382,17 @@ confirmButton.style.display = "inline-block";
                 body: JSON.stringify({ adminEmail, userName, avatar: avatarPath })
               });
               const data = await res.json();
-              if (data.success) {
-                console.log(`Avatar set successfully for ${userName}: ${avatarPath}`);
-                window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-              } else {
+             if (data.success) {
+  console.log(`Avatar set successfully for ${userName}: ${avatarPath}`);
+
+  // ✅ Save avatar ID (e.g., "kitana1") to localStorage
+  let avatars = JSON.parse(localStorage.getItem("userAvatars") || "{}");
+  avatars[userName] = id; // this is the avatar ID like "kitana1"
+  localStorage.setItem("userAvatars", JSON.stringify(avatars));
+
+  window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+}
+ else {
                 console.error("Failed to save avatar:", data.message);
                 alert(`Failed to save avatar: ${data.message || "Unknown error"}`);
               }
