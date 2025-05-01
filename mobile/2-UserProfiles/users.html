@@ -751,7 +751,7 @@
 
 
 
-/* selecting user */
+/* profile icon selecting users */
 
 .profile-icon {
   position: fixed;
@@ -944,9 +944,15 @@
 }
 
 
+.edit-user-icon {
+  filter: invert(100%) brightness(130%);
+  transition: transform 0.2s ease;
+}
+.edit-user-icon:hover {
+  transform: scale(1.2);
+}
 
-
-/* selecting user */
+/* profile icon selecting users */
 
 
 
@@ -1017,6 +1023,10 @@
 
 
 /* logout button */
+
+
+
+
 
 
     </style>
@@ -1187,7 +1197,18 @@ document.addEventListener("DOMContentLoaded", () => {
             userList.innerHTML = "";
             data.users.forEach(user => {
                 const li = document.createElement("li");
-                li.textContent = user;
+                li.innerHTML = `
+  <span>${user}</span>
+  <img 
+    src="/BeeMazing-Y1/mobile/1-Home/EditIcon.png" 
+    alt="Edit User" 
+    class="edit-user-icon" 
+    title="Edit ${user}"
+    data-username="${user}"
+    style="width: 20px; height: 20px; margin-left: 10px; cursor: pointer; float: right;"
+  />
+`;
+
                 if (user === userName) {
                     li.style.background = "#333540";
                     li.style.fontWeight = "600";
@@ -1239,6 +1260,13 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
                 userList.appendChild(li);
+
+                li.querySelector('.edit-user-icon').addEventListener('click', (e) => {
+  e.stopPropagation(); // Prevent triggering the user switch
+  const userToEdit = e.target.dataset.username;
+  window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/chooseAvatar.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userToEdit)}`;
+});
+
             });
 
             userSelectModal.classList.add("show");

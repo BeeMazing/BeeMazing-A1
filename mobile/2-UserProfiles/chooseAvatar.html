@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Choose Your Fighter</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: radial-gradient(#161616, #070707);
+      color: white;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 20px 0 10px;
+    }
+
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .character-list {
+      width: 170px;
+      overflow-y: auto;
+      padding: 20px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .character-card {
+      width: 100px;
+      height: 100px;
+      background: #222;
+      border: 3px solid #555;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: 0.3s ease;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .character-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.85);
+    }
+
+    .character-card:hover,
+    .character-card.selected {
+      border-color: gold;
+      box-shadow: 0 0 10px gold;
+      transform: scale(1.05);
+    }
+
+    .char-name {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      text-align: center;
+      background: rgba(0,0,0,0.6);
+      font-size: 12px;
+      padding: 2px;
+      color: white;
+    }
+
+    .preview-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 10px 20px;
+      overflow: hidden;
+    }
+
+    #selected-character {
+      font-size: 24px;
+      color: gold;
+      margin-bottom: 15px;
+    }
+
+    #preview-area {
+      border: 3px solid #333;
+      border-radius: 12px;
+      overflow: hidden;
+      width: 100%;
+      max-width: 100%;
+      background: none;
+      animation: fadeIn 0.5s ease-in-out;
+      display: none;
+    }
+
+    #character-video {
+      display: block;
+      width: 100%;
+      max-height: 70vh;
+      object-fit: contain;
+    }
+
+    #character-preview {
+      display: none;
+      height: auto;
+      max-height: 450px;
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+      margin: 0 auto;
+      padding: 20px 60px;
+      box-sizing: border-box;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+      opacity: 0;
+      animation: fadeInImage 0.8s ease forwards;
+    }
+
+    @keyframes fadeInImage {
+      from { opacity: 0; transform: scale(0.95); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <h1>Choose Your Fighter</h1>
+  <div class="layout">
+    <div class="character-list">
+      <div class="character-card" data-name="Scorpion" data-id="scorpion1">
+        <img src="/shared/Avatars/scorpion1.png" alt="Scorpion" />
+        <div class="char-name">Scorpion</div>
+      </div>
+      <div class="character-card" data-name="Sub-Zero" data-id="subzero1">
+        <img src="/shared/Avatars/subzero1.png" alt="Sub-Zero" />
+        <div class="char-name">Sub-Zero</div>
+      </div>
+      <!-- Add more characters as needed -->
+      <div class="character-card" data-name="Mileena" data-id="mileena1">
+        <img src="/shared/Avatars/mileena1.png" alt="Mileena" />
+        <div class="char-name">Mileena</div>
+      </div>
+      <div class="character-card" data-name="Kitana" data-id="kitana1">
+        <img src="/shared/Avatars/kitana1.png" alt="Kitana" />
+        <div class="char-name">Kitana</div>
+      </div>
+    </div>
+
+    <div class="preview-container">
+      <div id="selected-character">Select a fighter</div>
+      <div id="preview-area">
+        <video id="character-video" autoplay playsinline></video>
+        <img id="character-preview" src="" alt="Character Preview" />
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const previewArea = document.getElementById('preview-area');
+    const video = document.getElementById('character-video');
+    const previewImg = document.getElementById('character-preview');
+    const selectedText = document.getElementById('selected-character');
+
+    document.querySelectorAll('.character-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.character-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+
+        const name = card.getAttribute('data-name');
+        const id = card.getAttribute('data-id');
+
+        selectedText.textContent = `Selected: ${name}`;
+        previewArea.style.display = 'block';
+
+        const videoPath = `/shared/Avatars/Selected/Preview/${id}.mp4`;
+        const imagePath = `/shared/Avatars/Selected/${id}.png`;
+
+        previewImg.style.display = 'none';
+        video.style.display = 'block';
+        video.src = videoPath;
+        video.load();
+
+        video.muted = false;
+        video.volume = 1;
+        video.currentTime = 0;
+        video.play().catch(err => {
+          console.warn("Playback failed. Try clicking the page first.", err);
+        });
+
+        video.onended = () => {
+          video.style.display = 'none';
+          previewImg.src = imagePath;
+          previewImg.classList.remove('fade-in');
+          void previewImg.offsetWidth;
+          previewImg.classList.add('fade-in');
+          previewImg.style.display = 'block';
+        };
+      });
+    });
+  </script>
+</body>
+</html>
