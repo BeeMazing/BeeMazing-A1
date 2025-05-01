@@ -204,17 +204,28 @@ app.get('/get-users', async (req, res) => {
 
     const adminDoc = await adminUsers.findOne({ email: adminEmail });
 
+    console.log(`Fetched users for ${adminEmail}:`, {
+      users: adminDoc?.users || [],
+      avatars: adminDoc?.avatars || {}
+    });
+
     res.json({
       success: true,
       users: adminDoc?.users || [],
       permissions: adminDoc?.permissions || {},
-      avatars: adminDoc?.avatars || {} // ✅ Add this line
+      avatars: adminDoc?.avatars || {}
     });
   } catch (error) {
     console.error("🔥 Error in /get-users:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
+
+
+
+
+
 
 // ✅ ADD NEW USER TO SPECIFIC ADMIN
 app.post('/add-user', async (req, res) => {
@@ -1690,36 +1701,6 @@ app.get('/api/avatars', async (req, res) => {
 
 // chooseAvatar.html //
 
-app.post("/set-avatar", async (req, res) => {
-  const { adminEmail, userName, avatar } = req.body;
-
-  if (!adminEmail || !userName || !avatar) {
-    return res.status(400).json({ success: false, message: "Missing required data" });
-  }
-
-  try {
-    const db = await connectDB(); // ✅ FIXED
-    const users = db.collection("admins"); // ✅ You were saving avatars to "admins" elsewhere
-
-    const doc = await users.findOne({ email: adminEmail });
-    if (!doc) return res.status(404).json({ success: false, message: "Admin not found" });
-
-    const avatars = doc.avatars || {};
-    avatars[userName] = avatar;
-
-    await users.updateOne(
-      { email: adminEmail },
-      { $set: { avatars } }
-    );
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Error saving avatar:", err);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-
 
 
 // ✅ SET AVATAR FOR A USER
@@ -1734,6 +1715,9 @@ app.post('/set-avatar', async (req, res) => {
     const db = await connectDB();
     const adminUsers = db.collection('adminUsers');
 
+    // Log for debugging
+    console.log(`Saving avatar for ${userName} under ${adminEmail}: ${avatar}`);
+
     const admin = await adminUsers.findOne({ email: adminEmail }) || {};
     const avatars = admin.avatars || {};
 
@@ -1745,12 +1729,16 @@ app.post('/set-avatar', async (req, res) => {
       { upsert: true }
     );
 
-    res.json({ success: true });
+    console.log(`Successfully saved avatar for ${userName}`);
+
+    res.json({ success: true, message: "Avatar saved successfully" });
   } catch (err) {
     console.error("🔥 Error in /set-avatar:", err);
     res.status(500).json({ success: false, message: "Failed to set avatar" });
   }
 });
+
+
 
 
 // Endpoint chooseAvatar.html //

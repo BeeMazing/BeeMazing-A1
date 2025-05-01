@@ -182,87 +182,86 @@
     </div>
   </div>
 
+
+
+
   <script>
     const previewArea = document.getElementById('preview-area');
     const video = document.getElementById('character-video');
     const previewImg = document.getElementById('character-preview');
     const selectedText = document.getElementById('selected-character');
-
+    const confirmButton = document.getElementById("confirmButton");
+  
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminEmail = urlParams.get("admin");
+    const userName = urlParams.get("user");
+  
     document.querySelectorAll('.character-card').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.character-card').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
-
+  
         const name = card.getAttribute('data-name');
         const id = card.getAttribute('data-id');
-
+  
         selectedText.textContent = `Selected: ${name}`;
         previewArea.style.display = 'block';
-
+  
         const videoPath = `/BeeMazing-Y1/shared/Avatars/Selected/Preview/${id}.mp4`;
         const imagePath = `/BeeMazing-Y1/shared/Avatars/Selected/${id}.png`;
-
+  
         previewImg.style.display = 'none';
         video.style.display = 'block';
         video.src = videoPath;
         video.load();
-
+  
         video.muted = false;
         video.volume = 1;
         video.currentTime = 0;
         video.play().catch(err => {
-          console.warn("Playback failed. Try clicking the page first.", err);
+          console.warn("Video playback failed:", err);
         });
-
+  
         video.onended = () => {
-  video.style.display = 'none';
-  previewImg.src = imagePath;
-  previewImg.classList.remove('fade-in');
-  void previewImg.offsetWidth;
-  previewImg.classList.add('fade-in');
-  previewImg.style.display = 'block';
-
-  // Show confirm button
-  const confirmButton = document.getElementById("confirmButton");
-  confirmButton.style.display = "inline-block";
-
-  // Prepare info
-  const urlParams = new URLSearchParams(window.location.search);
-  const adminEmail = urlParams.get("admin");
-  const userName = urlParams.get("user");
-  const avatarPath = `/BeeMazing-Y1/shared/Avatars/${id}.png`;
-
-
-  confirmButton.onclick = () => {
-    // Save avatar to server
-    fetch("https://beemazing.onrender.com/set-avatar", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminEmail, userName, avatar: avatarPath })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        // Go to users.html for this user
-        window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-      } else {
-        alert("Failed to save avatar: " + (data.message || "Unknown error"));
-      }
-    })
-    .catch(err => {
-      console.error("Error saving avatar:", err);
-      alert("Error saving avatar. Please try again.");
-    });
-  };
-};
-
+          video.style.display = 'none';
+          previewImg.src = imagePath;
+          previewImg.classList.remove('fade-in');
+          void previewImg.offsetWidth;
+          previewImg.classList.add('fade-in');
+          previewImg.style.display = 'block';
+          confirmButton.style.display = "inline-block";
+  
+          const avatarPath = `/BeeMazing-Y1/shared/Avatars/${id}.png`;
+  
+          confirmButton.onclick = async () => {
+            try {
+              const res = await fetch("https://beemazing.onrender.com/set-avatar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ adminEmail, userName, avatar: avatarPath })
+              });
+              const data = await res.json();
+              if (data.success) {
+                console.log(`Avatar set successfully for ${userName}: ${avatarPath}`);
+                window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+              } else {
+                console.error("Failed to save avatar:", data.message);
+                alert(`Failed to save avatar: ${data.message || "Unknown error"}`);
+              }
+            } catch (err) {
+              console.error("Error saving avatar:", err);
+              alert("Error saving avatar. Please try again.");
+            }
+          };
+        };
       });
     });
-
-
-
-
-
   </script>
+
+
+
+
+
+
 </body>
 </html>

@@ -1134,7 +1134,7 @@
     <div class="footer">
       <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
           <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-          <span>a</span>
+          <span>11a</span>
       </a>
       <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
           <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -1332,19 +1332,30 @@ document.addEventListener("DOMContentLoaded", () => {
         loadOverallProgress(userName);
 
         document.getElementById("welcomeMessage").textContent = `Welcome, ${userName}!`;
+
+
+
         const avatarImg = document.getElementById("avatarImage");
 avatarImg.style.display = "none"; // Hide initially
 
 (async () => {
   try {
-    const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`, { cache: "no-store" });
     const data = await res.json();
-    if (res.ok && data.avatars && data.avatars[userName]) {
+    if (!res.ok) throw new Error(data.message || "Failed to fetch user data");
+    if (data.avatars && data.avatars[userName]) {
+      console.log(`Loading avatar for ${userName}: ${data.avatars[userName]}`);
       avatarImg.src = data.avatars[userName];
+      avatarImg.style.display = "block";
+    } else {
+      console.warn(`No avatar found for ${userName}`);
+      avatarImg.src = "/BeeMazing-Y1/shared/Avatars/default.png"; // Fallback image
       avatarImg.style.display = "block";
     }
   } catch (err) {
     console.error("Failed to fetch avatar from server:", err);
+    avatarImg.src = "/BeeMazing-Y1/shared/Avatars/default.png"; // Fallback image
+    avatarImg.style.display = "block";
   }
 })();
 
