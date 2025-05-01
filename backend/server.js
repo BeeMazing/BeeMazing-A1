@@ -1691,18 +1691,22 @@ app.get('/api/avatars', async (req, res) => {
 
 app.post("/set-avatar", async (req, res) => {
   const { adminEmail, userName, avatar } = req.body;
+
   if (!adminEmail || !userName || !avatar) {
     return res.status(400).json({ success: false, message: "Missing required data" });
   }
 
   try {
-    const doc = await db.collection("users").findOne({ email: adminEmail });
+    const db = await connectDB(); // ✅ FIXED
+    const users = db.collection("admins"); // ✅ You were saving avatars to "admins" elsewhere
+
+    const doc = await users.findOne({ email: adminEmail });
     if (!doc) return res.status(404).json({ success: false, message: "Admin not found" });
 
     const avatars = doc.avatars || {};
     avatars[userName] = avatar;
 
-    await db.collection("users").updateOne(
+    await users.updateOne(
       { email: adminEmail },
       { $set: { avatars } }
     );
@@ -1713,5 +1717,6 @@ app.post("/set-avatar", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
 
 // Endpoint chooseAvatar.html //
