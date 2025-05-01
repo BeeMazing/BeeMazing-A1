@@ -1226,17 +1226,20 @@ data.users.forEach(user => {
     li.style.background = "#2A2B32";
     li.style.border = "1px solid var(--border-dark)";
     li.style.borderRadius = "12px";
-    li.style.padding = "12px";
+    li.style.padding = "16px 12px";
+li.style.minHeight = "80px";
     li.style.gap = "15px";
     li.style.cursor = "pointer";
     li.style.transition = "background 0.2s ease";
 
     const avatar = document.createElement("img");
     avatar.src = data.avatars?.[user] || "/BeeMazing-Y1/shared/Avatars/default.png";
-    avatar.style.width = "48px";
-    avatar.style.height = "48px";
-    avatar.style.borderRadius = "50%";
-    avatar.style.objectFit = "cover";
+    avatar.style.width = "64px";
+avatar.style.height = "64px";
+avatar.style.borderRadius = "16px"; // Optional: keep circular if you want with "50%"
+avatar.style.objectFit = "contain";
+avatar.style.background = "#000"; // gives better contrast with transparent images
+
 
     const nameSpan = document.createElement("span");
     nameSpan.textContent = user;
