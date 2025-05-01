@@ -829,12 +829,13 @@
     color: var(--primary-color);
 }
 .user-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    height: 240px; /* Approx. 5 users at 48px each */
-    overflow-y: auto;
+  list-style: none;
+  padding: 0 10px;
+  margin: 0;
+  max-height: 60vh;
+  overflow-y: auto;
 }
+
 .user-list li {
     padding: 15px 20px;
     border-bottom: 1px solid var(--border-dark);
@@ -1032,7 +1033,6 @@
   height: 160px;
   object-fit: contain;
   border-radius: 16px;
-  box-shadow: 0 0 12px rgba(255, 193, 7, 0.4);
   transition: transform 0.3s ease;
 }
 
@@ -1210,79 +1210,109 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!res.ok || !data.users) throw new Error("Failed to fetch users");
 
             userList.innerHTML = "";
-            data.users.forEach(user => {
-                const li = document.createElement("li");
-                li.innerHTML = `
-  <span>${user}</span>
-  <img 
-    src="/BeeMazing-Y1/mobile/1-Home/EditIcon.png" 
-    alt="Edit User" 
-    class="edit-user-icon" 
-    title="Edit ${user}"
-    data-username="${user}"
-    style="width: 20px; height: 20px; margin-left: 10px; cursor: pointer; float: right;"
-  />
-`;
-
-                if (user === userName) {
-                    li.style.background = "#333540";
-                    li.style.fontWeight = "600";
-                }
-                li.addEventListener("click", async () => {
-    const isAdminUser = data.permissions?.[user] === "Admin"; // the user we're clicking
-    const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
-    const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+userList.style.display = "flex";
+userList.style.flexDirection = "column";
+userList.style.gap = "12px";
+userList.style.padding = "20px";
 
 
 
 
 
+data.users.forEach(user => {
+    const li = document.createElement("li");
+    li.style.display = "flex";
+    li.style.alignItems = "center";
+    li.style.background = "#2A2B32";
+    li.style.border = "1px solid var(--border-dark)";
+    li.style.borderRadius = "12px";
+    li.style.padding = "12px";
+    li.style.gap = "15px";
+    li.style.cursor = "pointer";
+    li.style.transition = "background 0.2s ease";
 
-    if (isAdminUser) {
-        if (isLoggedInAsAdmin) {
-            // Parent already logged in → no password needed
-            window.location.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
-        } else {
-            // Logged in as Child → ask for password
-            const enteredPassword = prompt("Enter Parent Password to access Admin profile:");
-            if (!enteredPassword) {
-                alert("Password is required to access Admin profile.");
-                return;
-            }
+    const avatar = document.createElement("img");
+    avatar.src = data.avatars?.[user] || "/BeeMazing-Y1/shared/Avatars/default.png";
+    avatar.style.width = "48px";
+    avatar.style.height = "48px";
+    avatar.style.borderRadius = "50%";
+    avatar.style.objectFit = "cover";
 
-            try {
-                const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email: adminEmail, password: enteredPassword }),
-                });
-                const data = await res.json();
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = user;
+    nameSpan.style.flex = "1";
+    nameSpan.style.color = "var(--text-color)";
+    nameSpan.style.fontSize = "16px";
+    nameSpan.style.fontWeight = "600";
 
-                if (res.ok && data.success) {
-                    window.location.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
-                } else {
-                    alert(data.message || "Incorrect password. Access denied.");
-                }
-            } catch (err) {
-                console.error("Error verifying admin password:", err);
-                alert("Failed to verify password. Please check your connection.");
-            }
-        }
-    } else {
-        // Normal Child user selected → no password needed
-        window.location.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+    const editIcon = document.createElement("img");
+    editIcon.src = "/BeeMazing-Y1/mobile/1-Home/EditIcon.png";
+    editIcon.alt = "Edit";
+    editIcon.title = "Edit " + user;
+    editIcon.dataset.username = user;
+    editIcon.style.width = "20px";
+    editIcon.style.height = "20px";
+    editIcon.style.cursor = "pointer";
+    editIcon.className = "edit-user-icon";
+
+    // Highlight current user
+    if (user === userName) {
+        li.style.background = "#333540";
+        nameSpan.style.fontWeight = "800";
     }
+
+    li.appendChild(avatar);
+    li.appendChild(nameSpan);
+    li.appendChild(editIcon);
+    userList.appendChild(li);
+
+    li.addEventListener("click", async () => {
+        const isAdminUser = data.permissions?.[user] === "Admin";
+        const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
+        const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+
+        if (isAdminUser) {
+            if (isLoggedInAsAdmin) {
+                window.location.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+            } else {
+                const enteredPassword = prompt("Enter Parent Password to access Admin profile:");
+                if (!enteredPassword) {
+                    alert("Password is required to access Admin profile.");
+                    return;
+                }
+                try {
+                    const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email: adminEmail, password: enteredPassword }),
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        window.location.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+                    } else {
+                        alert(data.message || "Incorrect password. Access denied.");
+                    }
+                } catch (err) {
+                    console.error("Error verifying admin password:", err);
+                    alert("Failed to verify password. Please check your connection.");
+                }
+            }
+        } else {
+            window.location.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+        }
+    });
+
+    editIcon.addEventListener("click", (e) => {
+        e.stopPropagation(); // prevent triggering li click
+        const userToEdit = e.target.dataset.username;
+        window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/chooseAvatar.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userToEdit)}`;
+    });
 });
 
-                userList.appendChild(li);
 
-                li.querySelector('.edit-user-icon').addEventListener('click', (e) => {
-  e.stopPropagation(); // Prevent triggering the user switch
-  const userToEdit = e.target.dataset.username;
-  window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/chooseAvatar.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userToEdit)}`;
-});
 
-            });
+
+
 
             userSelectModal.classList.add("show");
         } catch (err) {
