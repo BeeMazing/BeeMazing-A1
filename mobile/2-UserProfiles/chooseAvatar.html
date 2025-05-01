@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Choose Your Fighter</title>
+  <title>Choose your Avatar</title>
   <style>
     body {
       margin: 0;
@@ -151,7 +151,6 @@
 }
 
 
-
 /* screen size adjusting video to be bigger */
 
 
@@ -161,54 +160,104 @@
   }
 
   .character-list {
-    flex-direction: row;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    height: auto;
-    width: 100%;
-    padding: 10px;
-    gap: 10px;
-  }
+  flex-direction: row;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: auto;
+  width: 100%;
+  padding: 12px 12px 12px 12px; /* ⬅️ equal padding on both sides */
+  gap: 15px;
+  scroll-padding-right: 50px; /* ⬅️ ensures last card isn't cut */
+  box-sizing: border-box;
+}
 
+.character-list::-webkit-scrollbar {
+  display: none; /* hides the scrollbar for clean mobile look */
+}
+
+
+  
   .character-card {
-    width: 70px;
-    height: 70px;
-    border-radius: 8px;
+    width: 100px;
+    height: 100px;
+    border-radius: 12px;
     flex-shrink: 0;
   }
 
   .char-name {
-    font-size: 10px;
-    padding: 2px;
+    font-size: 12px;
+    padding: 4px 0;
   }
 
   .preview-container {
-    padding: 10px;
+    padding: 18px;
   }
 
   #character-video,
   #character-preview {
-    max-height: 50vh;
+    max-height: 55vh;
   }
 }
 
+/* -scroll bar for computers */
+@media (hover: hover) and (pointer: fine) {
+  .character-list::-webkit-scrollbar {
+    display: initial;
+    height: 6px;
+  }
 
-/* screen size adjusting video to be bigger */
+  .character-list::-webkit-scrollbar-track {
+    background: #1a1a1a; /* dark but visible track */
+  }
+
+  .character-list::-webkit-scrollbar-thumb {
+    background: #FFC107; /* yellow thumb */
+    border-radius: 3px;
+  }
+
+  .character-list::-webkit-scrollbar-thumb:hover {
+    background: #ffda44;
+  }
+}
+
+/* -End point scroll bar for computers */
+
+
+
+/* End point screen size adjusting video to be bigger */
 
 
   </style>
 </head>
 <body>
-  <h1>Choose Your Fighter</h1>
+    <button id="backButton" style="
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 2px 8px;
+  font-size: 14px;
+  background: transparent;
+  color: gold;
+  border: 2px solid gold;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Orbitron', sans-serif;
+  z-index: 1000;
+">←</button>
+
+<div class="page-content">
+  <h1>Choose Your Avatar</h1>
+  <div class="layout">
+
   <div class="layout">
     <div class="character-list">
       <div class="character-card" data-name="Scorpion" data-id="scorpion1">
-        <img src="/BeeMazing-Y1/shared/Avatars/scorpion1.png" alt="Scorpion" />
+        <img src="/shared/Avatars/scorpion1.png" alt="Scorpion" />
         <div class="char-name">Scorpion</div>
       </div>
       <div class="character-card" data-name="Sub-Zero" data-id="subzero1">
-        <img src="/BeeMazing-Y1/shared/Avatars/subzero1.png" alt="Sub-Zero" />
+        <img src="/shared/Avatars/subzero1.png" alt="Sub-Zero" />
         <div class="char-name">Sub-Zero</div>
       </div>
       <!-- Add more characters as needed -->
@@ -223,7 +272,7 @@
     </div>
 
     <div class="preview-container">
-        <div id="selected-character">Select a fighter</div>
+        <div id="selected-character">Select Your Character</div>
         <div id="preview-area">
             <video id="character-video" autoplay playsinline></video>
             <img id="character-preview" src="" alt="Character Preview" />
@@ -231,16 +280,17 @@
             
             <!-- ✅ Move button outside preview-area -->
             <button id="confirmButton" style="
-              margin-top: 25px;
-              padding: 12px 24px;
-              font-size: 18px;
-              font-weight: bold;
-              color: black;
-              background: gold;
-              border: none;
-              border-radius: 12px;
-              cursor: pointer;
-              display: none;
+  margin-top: 20px;
+  margin-bottom: 20px; /* 👈 Adds bottom gap */
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: black;
+  background: gold;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  display: none;
             ">Use this as my avatar</button>
             
         </div>
@@ -270,11 +320,11 @@
         const name = card.getAttribute('data-name');
         const id = card.getAttribute('data-id');
   
-        selectedText.textContent = `Selected: ${name}`;
+        selectedText.textContent = `${name}`;
         previewArea.style.display = 'block';
   
-        const videoPath = `/BeeMazing-Y1/shared/Avatars/Selected/Preview/${id}.mp4`;
-        const imagePath = `/BeeMazing-Y1/shared/Avatars/Selected/${id}.png`;
+        const videoPath = `/shared/Avatars/Selected/Preview/${id}.mp4`;
+        const imagePath = `/shared/Avatars/Selected/${id}.png`;
   
         previewImg.style.display = 'none';
         video.style.display = 'block';
@@ -324,6 +374,14 @@ confirmButton.style.display = "inline-block";
         };
       });
     });
+
+
+    // back button
+    document.getElementById("backButton").addEventListener("click", () => {
+  window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+});
+// back button
+
   </script>
 
 
