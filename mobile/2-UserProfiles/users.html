@@ -1437,57 +1437,63 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let monthOffset = 0;
         
+// tasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
+
         function generateScrollableDates(monthOffset = 0) {
-          const container = document.getElementById("dayScrollContainer");
-          container.innerHTML = "";
+  const container = document.getElementById("dayScrollContainer");
+  container.innerHTML = "";
+
+  const today = new Date();
+  today.setDate(1);
+  today.setMonth(today.getMonth() + monthOffset);
+
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+  document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
+    month: 'long',
+    year: 'numeric'
+  });
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const userName = urlParams.get('user');
+
+  for (let i = 1; i <= daysInMonth; i++) {
+    const date = new Date(currentYear, currentMonth, i);
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+    const btn = document.createElement("div");
+    btn.className = "day";
+    btn.textContent = i;
+    btn.dataset.date = dateStr;
+
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+      btn.classList.add("selected");
+      loadOverallProgress(userName); // Added to update progress on date change
+    });
+
+    const now = new Date();
+    const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    if (dateStr === nowStr) {
+      btn.classList.add("selected");
+    }
+
+    container.appendChild(btn);
+  }
+
+  setTimeout(() => {
+    const selected = document.querySelector(".day.selected");
+    if (selected) {
+      selected.scrollIntoView({ behavior: "smooth", inline: "center" });
+    }
+  }, 50);
+}
         
-          const today = new Date();
-          today.setDate(1);
-          today.setMonth(today.getMonth() + monthOffset);
-        
-          const currentMonth = today.getMonth();
-          const currentYear = today.getFullYear();
-          const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-        
-          document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
-            month: 'long',
-            year: 'numeric'
-          });
-        
-          const urlParams = new URLSearchParams(window.location.search);
-          const userName = urlParams.get('user');
-        
-          for (let i = 1; i <= daysInMonth; i++) {
-            const date = new Date(currentYear, currentMonth, i);
-            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        
-            const btn = document.createElement("div");
-            btn.className = "day";
-            btn.textContent = i;
-            btn.dataset.date = dateStr;
-        
-            btn.addEventListener("click", () => {
-              document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-              btn.classList.add("selected");
-            });
-        
-            const now = new Date();
-            const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-            if (dateStr === nowStr) {
-              btn.classList.add("selected");
-            }
-        
-            container.appendChild(btn);
-          }
-        
-          setTimeout(() => {
-            const selected = document.querySelector(".day.selected");
-            if (selected) {
-              selected.scrollIntoView({ behavior: "smooth", inline: "center" });
-            }
-          }, 50);
-        }
-        
+
+// tasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
+
         document.getElementById("prevMonth").addEventListener("click", () => {
           monthOffset--;
           generateScrollableDates(monthOffset);
@@ -1881,6 +1887,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
 
+// tasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
+
 
         async function loadOverallProgress(userName) {
   const adminEmail = localStorage.getItem("currentAdminEmail");
@@ -1913,23 +1921,29 @@ document.addEventListener("DOMContentLoaded", () => {
     totalTasks = todayTasks.length;
 
     todayTasks.forEach(task => {
-      const isRotation = task.settings === "Rotation";
-      let requiredTimes = 1;
+      const isRotation = task.settings?.includes("Rotation");
+      let turnData;
 
       if (isRotation) {
-        // Count turns assigned to userName in task.users sequence
-        requiredTimes = task.users.filter(user => user === userName).length;
+        if (typeof mixedTurnData !== 'function') {
+          console.error(`mixedTurnData is not defined for task: ${task.title}`);
+          turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+        } else {
+          turnData = mixedTurnData(task, selectedDay);
+        }
       } else {
-        if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-        if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-        if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+        if (typeof individualTurnData !== 'function') {
+          console.error(`individualTurnData is not defined for task: ${task.title}`);
+          turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+        } else {
+          turnData = individualTurnData(task, selectedDay);
+        }
       }
 
-      const completionsToday = task.completions?.[selectedDay] || [];
-      const pendingToday = task.pendingCompletions?.[selectedDay] || [];
-      const userCompletionCount = completionsToday.filter(u => u === userName).length;
-      const userPendingCount = pendingToday.filter(u => u === userName).length;
-      const userTotal = userCompletionCount + userPendingCount;
+      // Count user-specific turns and completions
+      const userTurns = turnData.turns.filter(turn => turn.user === userName);
+      const userTotal = userTurns.reduce((sum, turn) => sum + (turn.isCompleted || turn.isPending ? 1 : 0), 0);
+      const requiredTimes = isRotation ? userTurns.length : turnData.requiredTimes;
 
       totalDos += requiredTimes;
       completedDos += userTotal;
@@ -1950,9 +1964,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 }
 
-
-
-
+// tasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
 
         </script>
 
