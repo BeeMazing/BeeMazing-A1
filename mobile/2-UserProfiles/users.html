@@ -829,6 +829,7 @@
     color: var(--primary-color);
 }
 .user-list {
+  height: 400px;
   list-style: none;
   padding: 0 10px;
   margin: 0;
@@ -1220,43 +1221,43 @@ userList.style.padding = "20px";
 
 
 data.users.forEach(user => {
-    const li = document.createElement("li");
-    li.style.display = "flex";
-    li.style.alignItems = "center";
-    li.style.background = "#2A2B32";
-    li.style.border = "1px solid var(--border-dark)";
-    li.style.borderRadius = "12px";
-    li.style.padding = "16px 12px";
-li.style.minHeight = "80px";
-    li.style.gap = "15px";
-    li.style.cursor = "pointer";
-    li.style.transition = "background 0.2s ease";
+  const li = document.createElement("li");
+  li.style.display = "flex";
+  li.style.alignItems = "center";
+  li.style.background = "#2A2B32";
+  li.style.border = "2px solid var(--border-dark)";
+  li.style.borderRadius = "16px";
+  li.style.padding = "18px 16px";
+  li.style.gap = "20px";
+  li.style.margin = "10px";
+  li.style.cursor = "pointer";
+  li.style.transition = "background 0.2s ease";
 
-    const avatar = document.createElement("img");
-    avatar.src = data.avatars?.[user] || "/BeeMazing-Y1/shared/Avatars/default.png";
-    avatar.style.width = "64px";
-avatar.style.height = "64px";
-avatar.style.borderRadius = "16px"; // Optional: keep circular if you want with "50%"
-avatar.style.objectFit = "contain";
-avatar.style.background = "#000"; // gives better contrast with transparent images
+  const avatar = document.createElement("img");
+  avatar.src = data.avatars?.[user] || "/BeeMazing-Y1/shared/Avatars/default.png";
+  avatar.style.width = "80px";
+  avatar.style.height = "80px";
+  avatar.style.borderRadius = "20px"; // Optional: use "50%" if you want them circular
+  avatar.style.objectFit = "contain";
+  avatar.style.background = "#111";
+  avatar.style.flexShrink = "0";
 
+  const nameSpan = document.createElement("span");
+  nameSpan.textContent = user;
+  nameSpan.style.flex = "1";
+  nameSpan.style.color = "var(--text-color)";
+  nameSpan.style.fontSize = "20px";
+  nameSpan.style.fontWeight = "600";
 
-    const nameSpan = document.createElement("span");
-    nameSpan.textContent = user;
-    nameSpan.style.flex = "1";
-    nameSpan.style.color = "var(--text-color)";
-    nameSpan.style.fontSize = "16px";
-    nameSpan.style.fontWeight = "600";
-
-    const editIcon = document.createElement("img");
-    editIcon.src = "/BeeMazing-Y1/mobile/1-Home/EditIcon.png";
-    editIcon.alt = "Edit";
-    editIcon.title = "Edit " + user;
-    editIcon.dataset.username = user;
-    editIcon.style.width = "20px";
-    editIcon.style.height = "20px";
-    editIcon.style.cursor = "pointer";
-    editIcon.className = "edit-user-icon";
+  const editIcon = document.createElement("img");
+  editIcon.src = "/BeeMazing-Y1/mobile/1-Home/EditIcon.png";
+  editIcon.alt = "Edit";
+  editIcon.title = "Edit " + user;
+  editIcon.dataset.username = user;
+  editIcon.style.width = "28px";
+  editIcon.style.height = "28px";
+  editIcon.style.cursor = "pointer";
+  editIcon.className = "edit-user-icon";
 
     // Highlight current user
     if (user === userName) {
@@ -1265,9 +1266,9 @@ avatar.style.background = "#000"; // gives better contrast with transparent imag
     }
 
     li.appendChild(avatar);
-    li.appendChild(nameSpan);
-    li.appendChild(editIcon);
-    userList.appendChild(li);
+  li.appendChild(nameSpan);
+  li.appendChild(editIcon);
+  userList.appendChild(li);
 
     li.addEventListener("click", async () => {
         const isAdminUser = data.permissions?.[user] === "Admin";
@@ -1306,10 +1307,10 @@ avatar.style.background = "#000"; // gives better contrast with transparent imag
     });
 
     editIcon.addEventListener("click", (e) => {
-        e.stopPropagation(); // prevent triggering li click
-        const userToEdit = e.target.dataset.username;
-        window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/chooseAvatar.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userToEdit)}`;
-    });
+    e.stopPropagation();
+    const userToEdit = e.target.dataset.username;
+    window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/chooseAvatar.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userToEdit)}`;
+  });
 });
 
 
