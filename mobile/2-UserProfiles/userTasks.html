@@ -1230,6 +1230,26 @@ modalHTML += `<strong>Progress:</strong> ${isRotation ? turnData.completedCount 
         
 
 
+// for finish task button video preview
+
+        async function fetchAvatarPath(userName) {
+  const adminEmail = localStorage.getItem("currentAdminEmail");
+  try {
+    const res = await fetch(`https://beemazing.onrender.com/api/user-avatar?adminEmail=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`);
+    const data = await res.json();
+    return data.avatar; // should be a full path like "/BeeMazing-Y1/shared/Avatars/kitana1.png"
+  } catch (err) {
+    console.warn("Could not fetch avatar path:", err);
+    return null;
+  }
+}
+
+
+
+// for finish task button video preview
+
+
+
 
 
 
@@ -1239,9 +1259,10 @@ modalHTML += `<strong>Progress:</strong> ${isRotation ? turnData.completedCount 
   const button = event.target;
   button.disabled = true;
 
-  const avatarData = JSON.parse(localStorage.getItem("userAvatars") || "{}");
-  const avatarId = avatarData[currentUser]; // like "kitana1"
-  const videoPath = avatarId ? `/BeeMazing-Y1/shared/Avatars/Selected/Preview/${avatarId}.mp4` : null;
+  const avatarPath = await fetchAvatarPath(currentUser);
+const avatarId = avatarPath?.match(/\/([^/]+)\.png$/)?.[1]; // extract "kitana1" from full path
+const videoPath = avatarId ? `/BeeMazing-Y1/shared/Avatars/Selected/Preview/${avatarId}.mp4` : null;
+
 
   if (videoPath) {
     const overlay = document.getElementById("taskVideoOverlay");
