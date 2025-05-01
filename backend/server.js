@@ -337,9 +337,9 @@ app.get("/get-permission", async (req, res) => {
 
 
 
-// home.html ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// end point home.html ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// ✅ GET ALL TASKS FOR ADMIN (used in users.html)
+// ✅ GET ALL TASKS FOR ADMIN 
 
 
 
@@ -1632,4 +1632,86 @@ app.post("/api/cleanup-invalid-tasks", async (req, res) => {
 
 
 
-// users.html and tasks.html task details //
+// end point users.html and tasks.html task details //
+
+
+// users.html avatars //
+
+// ✅ Save avatars for an admin's users
+app.post('/api/avatars', async (req, res) => {
+  const { adminEmail, avatars } = req.body;
+
+  if (!adminEmail || !avatars) {
+    return res.status(400).json({ error: "Missing adminEmail or avatars" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { avatars } },
+      { upsert: true }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error saving avatars:", err);
+    res.status(500).json({ error: "Failed to save avatars" });
+  }
+});
+
+
+
+// ✅ Get avatars for an admin's users
+app.get('/api/avatars', async (req, res) => {
+  const { adminEmail } = req.query;
+
+  if (!adminEmail) {
+    return res.status(400).json({ error: "Missing adminEmail" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    res.json({ avatars: admin?.avatars || {} });
+  } catch (err) {
+    console.error("Error fetching avatars:", err);
+    res.status(500).json({ error: "Failed to fetch avatars" });
+  }
+});
+
+// End point users.html avatars //
+
+
+// chooseAvatar.html //
+
+app.post("/set-avatar", async (req, res) => {
+  const { adminEmail, userName, avatar } = req.body;
+  if (!adminEmail || !userName || !avatar) {
+    return res.status(400).json({ success: false, message: "Missing required data" });
+  }
+
+  try {
+    const doc = await db.collection("users").findOne({ email: adminEmail });
+    if (!doc) return res.status(404).json({ success: false, message: "Admin not found" });
+
+    const avatars = doc.avatars || {};
+    avatars[userName] = avatar;
+
+    await db.collection("users").updateOne(
+      { email: adminEmail },
+      { $set: { avatars } }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error saving avatar:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// Endpoint chooseAvatar.html //

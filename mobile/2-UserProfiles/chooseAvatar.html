@@ -142,30 +142,43 @@
   <div class="layout">
     <div class="character-list">
       <div class="character-card" data-name="Scorpion" data-id="scorpion1">
-        <img src="/shared/Avatars/scorpion1.png" alt="Scorpion" />
+        <img src="/BeeMazing-Y1/shared/Avatars/scorpion1.png" alt="Scorpion" />
         <div class="char-name">Scorpion</div>
       </div>
       <div class="character-card" data-name="Sub-Zero" data-id="subzero1">
-        <img src="/shared/Avatars/subzero1.png" alt="Sub-Zero" />
+        <img src="/BeeMazing-Y1/shared/Avatars/subzero1.png" alt="Sub-Zero" />
         <div class="char-name">Sub-Zero</div>
       </div>
       <!-- Add more characters as needed -->
       <div class="character-card" data-name="Mileena" data-id="mileena1">
-        <img src="/shared/Avatars/mileena1.png" alt="Mileena" />
+        <img src="/BeeMazing-Y1/shared/Avatars/mileena1.png" alt="Mileena" />
         <div class="char-name">Mileena</div>
       </div>
       <div class="character-card" data-name="Kitana" data-id="kitana1">
-        <img src="/shared/Avatars/kitana1.png" alt="Kitana" />
+        <img src="/BeeMazing-Y1/shared/Avatars/kitana1.png" alt="Kitana" />
         <div class="char-name">Kitana</div>
       </div>
     </div>
 
     <div class="preview-container">
-      <div id="selected-character">Select a fighter</div>
-      <div id="preview-area">
-        <video id="character-video" autoplay playsinline></video>
-        <img id="character-preview" src="" alt="Character Preview" />
-      </div>
+        <div id="selected-character">Select a fighter</div>
+        <div id="preview-area">
+          <video id="character-video" autoplay playsinline></video>
+          <img id="character-preview" src="" alt="Character Preview" />
+          <button id="confirmButton" style="
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: black;
+            background: gold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            display: none;
+          ">Use this as my avatar</button>
+        </div>
+        
     </div>
   </div>
 
@@ -186,8 +199,8 @@
         selectedText.textContent = `Selected: ${name}`;
         previewArea.style.display = 'block';
 
-        const videoPath = `/shared/Avatars/Selected/Preview/${id}.mp4`;
-        const imagePath = `/shared/Avatars/Selected/${id}.png`;
+        const videoPath = `/BeeMazing-Y1/shared/Avatars/Selected/Preview/${id}.mp4`;
+        const imagePath = `/BeeMazing-Y1/shared/Avatars/Selected/${id}.png`;
 
         previewImg.style.display = 'none';
         video.style.display = 'block';
@@ -202,15 +215,85 @@
         });
 
         video.onended = () => {
-          video.style.display = 'none';
-          previewImg.src = imagePath;
-          previewImg.classList.remove('fade-in');
-          void previewImg.offsetWidth;
-          previewImg.classList.add('fade-in');
-          previewImg.style.display = 'block';
-        };
+  video.style.display = 'none';
+  previewImg.src = imagePath;
+  previewImg.classList.remove('fade-in');
+  void previewImg.offsetWidth;
+  previewImg.classList.add('fade-in');
+  previewImg.style.display = 'block';
+
+  // Show confirm button
+  const confirmButton = document.getElementById("confirmButton");
+  confirmButton.style.display = "inline-block";
+
+  // Prepare info
+  const urlParams = new URLSearchParams(window.location.search);
+  const adminEmail = urlParams.get("admin");
+  const userName = urlParams.get("user");
+  const avatarPath = `/shared/Avatars/${id}.png`;
+
+  confirmButton.onclick = () => {
+    // Save avatar to server
+    fetch("https://beemazing.onrender.com/set-avatar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminEmail, userName, avatar: avatarPath })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Go to users.html for this user
+        window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+      } else {
+        alert("Failed to save avatar: " + (data.message || "Unknown error"));
+      }
+    })
+    .catch(err => {
+      console.error("Error saving avatar:", err);
+      alert("Error saving avatar. Please try again.");
+    });
+  };
+};
+
       });
     });
+
+
+
+// Save selected avatar to server
+const urlParams = new URLSearchParams(window.location.search);
+const adminEmail = urlParams.get("admin");
+const userName = urlParams.get("user");
+const avatarPath = `/BeeMazing-Y1/shared/Avatars/${id}.png`; // <- Save static image path
+
+if (adminEmail && userName) {
+  fetch("https://beemazing.onrender.com/set-avatar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      adminEmail,
+      userName,
+      avatar: avatarPath
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      console.log("Avatar updated successfully.");
+    } else {
+      console.warn("Failed to update avatar:", data.message);
+    }
+  })
+  .catch(err => console.error("Error updating avatar:", err));
+}
+
+
+
+
+
+
+
+
   </script>
 </body>
 </html>

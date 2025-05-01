@@ -1061,7 +1061,7 @@
             </button>
 
             <h2 id="welcomeMessage" style="color: var(--primary-color); margin-bottom: 10px; min-height: 1em;">Loading user...</h2>
-
+            <img id="avatarImage" src="" alt="User Avatar" style="width: 100px; height: 100px; object-fit: contain; border-radius: 12px; margin-bottom: 15px;" />
 
             <div class="modal" id="changePasswordModal" style="display: none;">
                 <div class="modal-content">
@@ -1134,6 +1134,7 @@
     <div class="footer">
       <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
           <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
+          <span>a1</span>
       </a>
       <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
           <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -1331,6 +1332,31 @@ document.addEventListener("DOMContentLoaded", () => {
         loadOverallProgress(userName);
 
         document.getElementById("welcomeMessage").textContent = `Welcome, ${userName}!`;
+        const avatarImg = document.getElementById("avatarImage");
+avatarImg.style.display = "none"; // Hide initially
+
+(async () => {
+  try {
+    const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const data = await res.json();
+    if (res.ok && data.avatars && data.avatars[userName]) {
+      avatarImg.src = data.avatars[userName];
+      avatarImg.style.display = "block";
+    }
+  } catch (err) {
+    console.error("Failed to fetch avatar from server:", err);
+  }
+})();
+
+
+
+
+
+
+
+
+
+
 
 
         if (addPoints > 0) {
