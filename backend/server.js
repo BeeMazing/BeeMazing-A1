@@ -1767,6 +1767,12 @@ app.get('/get-avatar', async (req, res) => {
     res.status(500).json({ success: false, message: "Server error retrieving avatar" });
   }
 });
+
+
+
+
+
+
 //-end point finish task to play avatar preview
 
 // Endpoint chooseAvatar.html //
