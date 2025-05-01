@@ -261,38 +261,6 @@
 
 
 
-// Save selected avatar to server
-const urlParams = new URLSearchParams(window.location.search);
-const adminEmail = urlParams.get("admin");
-const userName = urlParams.get("user");
-const avatarPath = `/BeeMazing-Y1/shared/Avatars/${id}.png`; // <- Save static image path
-
-if (adminEmail && userName) {
-  fetch("https://beemazing.onrender.com/set-avatar", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      adminEmail,
-      userName,
-      avatar: avatarPath
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      console.log("Avatar updated successfully.");
-    } else {
-      console.warn("Failed to update avatar:", data.message);
-    }
-  })
-  .catch(err => console.error("Error updating avatar:", err));
-}
-
-
-
-
-
-
 
 
   </script>

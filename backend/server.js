@@ -207,7 +207,8 @@ app.get('/get-users', async (req, res) => {
     res.json({
       success: true,
       users: adminDoc?.users || [],
-      permissions: adminDoc?.permissions || {}
+      permissions: adminDoc?.permissions || {},
+      avatars: adminDoc?.avatars || {} // ✅ Add this line
     });
   } catch (error) {
     console.error("🔥 Error in /get-users:", error);
