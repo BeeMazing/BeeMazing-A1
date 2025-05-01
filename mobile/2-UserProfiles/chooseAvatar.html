@@ -344,8 +344,8 @@
         selectedText.textContent = `${name}`;
         previewArea.style.display = 'block';
   
-        const videoPath = `/shared/Avatars/Selected/Preview/${id}.mp4`;
-        const imagePath = `/shared/Avatars/Selected/${id}.png`;
+        const videoPath = `/BeeMazing-Y1/shared/Avatars/Selected/Preview/${id}.mp4`;
+        const imagePath = `/BeeMazing-Y1/shared/Avatars/Selected/${id}.png`;
   
         previewImg.style.display = 'none';
         video.style.display = 'block';
@@ -353,8 +353,8 @@
         video.load();
         confirmButton.style.display = "none";
 
-  
-        video.muted = true;
+        
+        video.muted = false;
         video.volume = 1;
         video.currentTime = 0;
         video.play().catch(err => {
