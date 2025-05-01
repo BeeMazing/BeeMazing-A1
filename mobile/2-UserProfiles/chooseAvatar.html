@@ -19,6 +19,7 @@
     h1 {
       text-align: center;
       margin: 20px 0 10px;
+      font-size: 20px;
     }
 
     .layout {
@@ -86,10 +87,24 @@
     }
 
     #selected-character {
-      font-size: 24px;
-      color: gold;
-      margin-bottom: 15px;
-    }
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #FFD700, #FFAA00);
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+  text-shadow: 0 0 5px rgba(255, 215, 0, 0.4);
+  margin-bottom: 20px;
+  animation: pulseGlow 2s infinite;
+}
+
+
+
+
 
     #preview-area {
   display: flex;
@@ -160,17 +175,19 @@
   }
 
   .character-list {
-  flex-direction: row;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
-  height: auto;
-  width: 100%;
-  padding: 12px 12px 12px 12px; /* ⬅️ equal padding on both sides */
-  gap: 15px;
-  scroll-padding-right: 50px; /* ⬅️ ensures last card isn't cut */
-  box-sizing: border-box;
-}
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: auto;
+    width: 100%;
+    padding: 12px;
+    gap: 15px;
+    scroll-padding-right: 50px;
+    box-sizing: border-box;
+  }
+
+  
 
 .character-list::-webkit-scrollbar {
   display: none; /* hides the scrollbar for clean mobile look */
@@ -192,11 +209,15 @@
 
   .preview-container {
     padding: 18px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
   }
 
   #character-video,
   #character-preview {
-    max-height: 55vh;
+    max-height: 45vh; /* ⬅️ shrink to make room for button */
   }
 }
 
@@ -281,7 +302,7 @@
             <!-- ✅ Move button outside preview-area -->
             <button id="confirmButton" style="
   margin-top: 20px;
-  margin-bottom: 20px; /* 👈 Adds bottom gap */
+  margin-bottom: 12px; /* 👈 Adds bottom gap */
   padding: 10px 20px;
   font-size: 16px;
   font-weight: bold;
@@ -323,8 +344,8 @@
         selectedText.textContent = `${name}`;
         previewArea.style.display = 'block';
   
-        const videoPath = `/BeeMazing-Y1/shared/Avatars/Selected/Preview/${id}.mp4`;
-        const imagePath = `/BeeMazing-Y1/shared/Avatars/Selected/${id}.png`;
+        const videoPath = `/shared/Avatars/Selected/Preview/${id}.mp4`;
+        const imagePath = `/shared/Avatars/Selected/${id}.png`;
   
         previewImg.style.display = 'none';
         video.style.display = 'block';
