@@ -1025,6 +1025,20 @@
 /* logout button */
 
 
+.avatar-centered {
+  display: block;
+  margin: 0 auto 20px auto;
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  border-radius: 16px;
+  box-shadow: 0 0 12px rgba(255, 193, 7, 0.4);
+  transition: transform 0.3s ease;
+}
+
+.avatar-centered:hover {
+  transform: scale(1.05);
+}
 
 
 
@@ -1061,7 +1075,7 @@
             </button>
 
             <h2 id="welcomeMessage" style="color: var(--primary-color); margin-bottom: 10px; min-height: 1em;">Loading user...</h2>
-            <img id="avatarImage" src="" alt="User Avatar" style="width: 100px; height: 100px; object-fit: contain; border-radius: 12px; margin-bottom: 15px;" />
+            <img id="avatarImage" src="" alt="User Avatar" class="avatar-centered" />
 
             <div class="modal" id="changePasswordModal" style="display: none;">
                 <div class="modal-content">
