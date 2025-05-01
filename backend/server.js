@@ -1719,4 +1719,37 @@ app.post("/set-avatar", async (req, res) => {
 });
 
 
+
+
+// ✅ SET AVATAR FOR A USER
+app.post('/set-avatar', async (req, res) => {
+  const { adminEmail, userName, avatar } = req.body;
+
+  if (!adminEmail || !userName || !avatar) {
+    return res.status(400).json({ success: false, message: "Missing required data" });
+  }
+
+  try {
+    const db = await connectDB();
+    const adminUsers = db.collection('adminUsers');
+
+    const admin = await adminUsers.findOne({ email: adminEmail }) || {};
+    const avatars = admin.avatars || {};
+
+    avatars[userName] = avatar;
+
+    await adminUsers.updateOne(
+      { email: adminEmail },
+      { $set: { avatars } },
+      { upsert: true }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("🔥 Error in /set-avatar:", err);
+    res.status(500).json({ success: false, message: "Failed to set avatar" });
+  }
+});
+
+
 // Endpoint chooseAvatar.html //
