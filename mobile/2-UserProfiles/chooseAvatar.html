@@ -92,15 +92,24 @@
     }
 
     #preview-area {
-      border: 3px solid #333;
-      border-radius: 12px;
-      overflow: hidden;
-      width: 100%;
-      max-width: 100%;
-      background: none;
-      animation: fadeIn 0.5s ease-in-out;
-      display: none;
-    }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  animation: fadeIn 0.5s ease-in-out;
+  display: none;
+  gap: 20px; /* spacing between video/image and button */
+}
+
+
+    #character-video,
+#character-preview {
+  border: 3px solid #333;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
 
     #character-video {
       display: block;
@@ -135,6 +144,59 @@
       from { opacity: 0; transform: scale(0.95); }
       to   { opacity: 1; transform: scale(1); }
     }
+
+    #confirmButton:hover {
+  background: gold;
+  box-shadow: 0 0 10px gold, 0 0 20px gold;
+}
+
+
+
+/* screen size adjusting video to be bigger */
+
+
+@media (max-width: 600px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  .character-list {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: auto;
+    width: 100%;
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .character-card {
+    width: 70px;
+    height: 70px;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .char-name {
+    font-size: 10px;
+    padding: 2px;
+  }
+
+  .preview-container {
+    padding: 10px;
+  }
+
+  #character-video,
+  #character-preview {
+    max-height: 50vh;
+  }
+}
+
+
+/* screen size adjusting video to be bigger */
+
+
   </style>
 </head>
 <body>
@@ -163,20 +225,24 @@
     <div class="preview-container">
         <div id="selected-character">Select a fighter</div>
         <div id="preview-area">
-          <video id="character-video" autoplay playsinline></video>
-          <img id="character-preview" src="" alt="Character Preview" />
-          <button id="confirmButton" style="
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            color: black;
-            background: gold;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            display: none;
-          ">Use this as my avatar</button>
+            <video id="character-video" autoplay playsinline></video>
+            <img id="character-preview" src="" alt="Character Preview" />
+            </div> <!-- CLOSES #preview-area -->
+            
+            <!-- ✅ Move button outside preview-area -->
+            <button id="confirmButton" style="
+              margin-top: 25px;
+              padding: 12px 24px;
+              font-size: 18px;
+              font-weight: bold;
+              color: black;
+              background: gold;
+              border: none;
+              border-radius: 12px;
+              cursor: pointer;
+              display: none;
+            ">Use this as my avatar</button>
+            
         </div>
         
     </div>
@@ -229,7 +295,9 @@
           void previewImg.offsetWidth;
           previewImg.classList.add('fade-in');
           previewImg.style.display = 'block';
-          confirmButton.style.display = "inline-block";
+          confirmButton.textContent = `Use ${name} as my avatar`;
+confirmButton.style.display = "inline-block";
+
   
           const avatarPath = `/BeeMazing-Y1/shared/Avatars/${id}.png`;
   
