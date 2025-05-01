@@ -1149,7 +1149,7 @@
     <div class="footer">
       <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
           <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
-          <span>1</span>
+          <span>1aa</span>
       </a>
       <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
           <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
@@ -1224,22 +1224,20 @@ data.users.forEach(user => {
   const li = document.createElement("li");
   li.style.display = "flex";
   li.style.alignItems = "center";
-  li.style.background = "#2A2B32";
-  li.style.border = "2px solid var(--border-dark)";
-  li.style.borderRadius = "16px";
-  li.style.padding = "18px 16px";
-  li.style.gap = "20px";
-  li.style.margin = "10px";
+  li.style.background = "transparent"; // no dark card background
+  li.style.border = "none";
+  li.style.padding = "20px 10px";
+  li.style.gap = "18px";
   li.style.cursor = "pointer";
   li.style.transition = "background 0.2s ease";
-
+  li.style.borderBottom = "1px solid var(--border-dark)";
+  
   const avatar = document.createElement("img");
   avatar.src = data.avatars?.[user] || "/BeeMazing-Y1/shared/Avatars/default.png";
-  avatar.style.width = "80px";
-  avatar.style.height = "80px";
-  avatar.style.borderRadius = "20px"; // Optional: use "50%" if you want them circular
+  avatar.style.width = "90px";         // large like profile
+  avatar.style.height = "90px";
+  avatar.style.borderRadius = "20px";
   avatar.style.objectFit = "contain";
-  avatar.style.background = "#111";
   avatar.style.flexShrink = "0";
 
   const nameSpan = document.createElement("span");
