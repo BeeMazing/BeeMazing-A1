@@ -793,7 +793,6 @@ if (marketButton) {
 
 
 
-
 async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
     const userTasksDiv = document.getElementById("userTasks");
     userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
@@ -802,13 +801,11 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     let tasks = [];
 
     try {
-        // Use the same endpoint as tasks.html
         const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
         tasks = data.tasks || [];
 
-        // Log task data for debugging
         console.log("loadUserTasks tasks:", tasks.map(t => ({
             title: t.title,
             date: t.date,
@@ -822,7 +819,6 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         return;
     }
 
-    // Filter tasks by user and date
     const userTasks = filterTasksForDate(tasks, selectedDate).filter(task => {
         if (!task || !task.users || !task.title || !task.date) return false;
         return task.users.includes(userName);
@@ -838,36 +834,44 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         const taskDiv = document.createElement("div");
         taskDiv.className = "task-item";
 
-        const isRotation = task.settings === "Rotation";
-        const repeat = task.repeat || "Daily";
+        const isRotation = task.settings?.includes("Rotation");
+        let turnData;
 
-        let requiredTimes = 1;
-        if (!isRotation) {
-            if (repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-            if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-            if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+        if (isRotation) {
+            if (typeof mixedTurnData !== 'function') {
+                console.error(`mixedTurnData is not defined for task: ${task.title}`);
+                turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+            } else {
+                turnData = mixedTurnData(task, selectedDate);
+            }
         } else {
-            requiredTimes = task.users.length;
+            if (typeof individualTurnData !== 'function') {
+                console.error(`individualTurnData is not defined for task: ${task.title}`);
+                turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+            } else {
+                turnData = individualTurnData(task, selectedDate);
+            }
         }
 
-        const completionsToday = task.completions?.[selectedDate] || [];
-        const pendingToday = task.pendingCompletions?.[selectedDate] || [];
-        const userCompletionCount = completionsToday.filter(u => u === userName).length;
-        const userPendingCount = pendingToday.filter(u => u === userName).length;
-        const userTotal = userCompletionCount + userPendingCount;
-        const isCompleted = userTotal >= requiredTimes;
+        const userTurns = turnData.turns.filter(turn => turn.user === userName);
+        const userTotal = userTurns.reduce((sum, turn) => sum + (turn.isCompleted || turn.isPending ? 1 : 0), 0);
+        const isCompleted = userTotal >= turnData.requiredTimes;
 
         let taskHTML = `<strong>${task.title}</strong><br>`;
 
         if (isRotation) {
-            const turnInfo = calculateTurn(task, selectedDate);
-            taskHTML += turnInfo.currentTurn !== "All done!" 
-                ? `Turn: ${turnInfo.currentTurn}<br>Next: ${turnInfo.nextUser}<br>`
-                : `<span style="color: green;">Turn: All done!</span><br>`;
+            const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
+            if (activeTurn) {
+                const nextTurnIndex = (activeTurn.index + 1) % task.users.length;
+                const nextUser = turnData.turns.find(t => t.index === nextTurnIndex)?.user || task.users[nextTurnIndex] || "—";
+                taskHTML += `Turn: ${activeTurn.user}<br>Next: ${nextUser}<br>`;
+            } else {
+                taskHTML += `<span style="color: green;">Turn: All done!</span><br>`;
+            }
         }
 
         taskHTML += `Honey: ${task.reward || 0} 🍯<br>`;
-        taskHTML += `Progress: ${userTotal}/${requiredTimes}<br>`;
+        taskHTML += `Progress: ${userTotal}/${turnData.requiredTimes}<br>`;
 
         taskDiv.innerHTML = taskHTML;
 
@@ -877,10 +881,10 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         let canFinish = false;
         if (isToday && !isCompleted) {
             if (isRotation) {
-                const turnInfo = calculateTurn(task, selectedDate);
-                canFinish = turnInfo.currentTurn === userName;
+                const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
+                canFinish = activeTurn?.user === userName;
             } else {
-                canFinish = true;
+                canFinish = userTotal < turnData.requiredTimes;
             }
         }
 
@@ -899,8 +903,6 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         userTasksDiv.appendChild(taskDiv);
     }
 }
-
-
 
 
 
@@ -1005,20 +1007,29 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
 
 
 
+
+
+
+
         function showTaskDetails(task, selectedDate = new Date().toLocaleDateString("sv-SE")) {
-    const isRotation = task.settings === "Rotation";
-    const repeat = task.repeat || "Daily";
+    const isRotation = task.settings?.includes("Rotation");
+    let turnData;
 
-    let requiredTimes = 1;
-    if (!isRotation) {
-        if (repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-        if (repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-        if (repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+    if (isRotation) {
+        if (typeof mixedTurnData !== 'function') {
+            console.error(`mixedTurnData is not defined for task: ${task.title}`);
+            turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+        } else {
+            turnData = mixedTurnData(task, selectedDate);
+        }
     } else {
-        requiredTimes = task.users.length;
+        if (typeof individualTurnData !== 'function') {
+            console.error(`individualTurnData is not defined for task: ${task.title}`);
+            turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+        } else {
+            turnData = individualTurnData(task, selectedDate);
+        }
     }
-
-    const turnInfo = calculateTurn(task, selectedDate);
 
     let modalHTML = `<strong>Title:</strong> ${task.title}<br>`;
     if (task.notes) modalHTML += `<strong>Notes:</strong> ${task.notes}<br>`;
@@ -1030,9 +1041,12 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     if (isRotation) {
         modalHTML += `<strong>Rotation:</strong> Yes<br>`;
         modalHTML += `<strong>Users:</strong> ${task.users.join(", ")}<br>`;
-        if (turnInfo.currentTurn !== "All done!") {
-            modalHTML += `<strong>Current Turn:</strong> ${turnInfo.currentTurn}<br>`;
-            modalHTML += `<strong>Next:</strong> ${turnInfo.nextUser}<br>`;
+        const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
+        if (activeTurn) {
+            const nextTurnIndex = (activeTurn.index + 1) % task.users.length;
+            const nextUser = turnData.turns.find(t => t.index === nextTurnIndex)?.user || task.users[nextTurnIndex] || "—";
+            modalHTML += `<strong>Current Turn:</strong> ${activeTurn.user}<br>`;
+            modalHTML += `<strong>Next:</strong> ${nextUser}<br>`;
         } else {
             modalHTML += `<strong>All turns completed!</strong><br>`;
         }
@@ -1040,7 +1054,7 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         modalHTML += `<strong>Assigned Users:</strong> ${task.users.join(", ")}<br>`;
     }
 
-    modalHTML += `<strong>Progress:</strong> ${turnInfo.completedCount}/${turnInfo.repeatLimit}<br>`;
+    modalHTML += `<strong>Progress:</strong> ${turnData.completedCount}/${turnData.requiredTimes}<br>`;
 
     const modal = document.createElement("div");
     modal.className = "modal";
@@ -1059,96 +1073,6 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
 
 
 
-
-
-
-
-
-
-
-
-function calculateTurn(task, selectedDate) {
-    const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
-    const repeatLimit = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                       task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                       task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
-    const tempTurnReplacement = task.tempTurnReplacement?.[selectedDate] || {};
-    const assignedUsers = [...userOrder];
-    Object.entries(tempTurnReplacement).forEach(([index, user]) => {
-        assignedUsers[parseInt(index)] = user;
-    });
-
-    // Include both completions and pending completions
-    const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-    const pendingUsers = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
-    const completedCount = completedUsers.length + pendingUsers.length;
-    const completedSet = new Set([...completedUsers, ...pendingUsers]);
-
-    function parseLocalDate(dateStr) {
-        const [year, month, day] = dateStr.split("-").map(Number);
-        return new Date(year, month - 1, day);
-    }
-
-    const selected = parseLocalDate(selectedDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const startDate = parseLocalDate(task.date.split(" to ")[0]);
-
-    let currentTurn = null;
-    let nextUser = null;
-
-    if (completedCount >= repeatLimit) {
-        currentTurn = "All done!";
-        nextUser = "—";
-    } else {
-        // Find the last completion date before today
-        let lastCompletionDate = startDate;
-        let lastCompletedCount = 0;
-        if (task.completions) {
-            const completionDates = Object.keys(task.completions)
-                .map(date => parseLocalDate(date))
-                .filter(date => date < today)
-                .sort((a, b) => b - a);
-            if (completionDates.length > 0) {
-                lastCompletionDate = completionDates[0];
-                const lastDateStr = lastCompletionDate.toISOString().split("T")[0];
-                const lastCompletions = task.completions[lastDateStr] || [];
-                const lastPending = task.pendingCompletions?.[lastDateStr] || [];
-                lastCompletedCount = lastCompletions.length + lastPending.length;
-            }
-        }
-
-        if (selected < today) {
-            // Past date: Use actual completions
-            const currentIndex = completedCount % assignedUsers.length;
-            currentTurn = assignedUsers[currentIndex];
-            const nextIndex = (completedCount + 1) % assignedUsers.length;
-            nextUser = completedSet.has(assignedUsers[nextIndex]) ? "—" : assignedUsers[nextIndex];
-        } else if (selected.getTime() === today.getTime()) {
-            // Today: Continue from last completion
-            const totalCompletions = lastCompletedCount + completedCount;
-            const currentIndex = totalCompletions % assignedUsers.length;
-            currentTurn = assignedUsers[currentIndex];
-            const nextIndex = (totalCompletions + 1) % assignedUsers.length;
-            nextUser = assignedUsers[nextIndex];
-        } else {
-            // Future: Assume repeatLimit completions per day
-            const daysDiff = Math.floor((selected - lastCompletionDate) / (1000 * 60 * 60 * 24));
-            const totalCompletions = lastCompletedCount + (daysDiff - 1) * repeatLimit + completedCount;
-            const currentIndex = totalCompletions % assignedUsers.length;
-            currentTurn = assignedUsers[currentIndex];
-            const nextIndex = (totalCompletions + 1) % assignedUsers.length;
-            nextUser = assignedUsers[nextIndex];
-        }
-    }
-
-    return {
-        currentTurn: currentTurn || "All done!",
-        nextUser: nextUser || "—",
-        completedCount,
-        repeatLimit
-    };
-}
 
 
 
