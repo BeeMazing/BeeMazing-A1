@@ -18,8 +18,6 @@ function filterTasksForDate(tasks, selectedDate) {
     const selectedDateStr = selected.toISOString().split("T")[0];
     const selectedYear = selected.getFullYear();
     const selectedMonth = selected.getMonth();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
     return tasks.filter(task => {
         if (!task.date) return false;
@@ -30,34 +28,38 @@ function filterTasksForDate(tasks, selectedDate) {
         const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
         const inRange = selected >= from && selected <= to;
 
-        // ✅ Skip Monthly tasks *only on future dates in the same month* once completed enough
+        // ✅ Skip Monthly tasks after full completion in current month
         const isMonthly = task.repeat === "Monthly";
         const required = task.timesPerMonth || 1;
 
         if (isMonthly && required > 0 && (task.settings?.includes("Rotation") || task.settings?.includes("Individual"))) {
             let totalCompletions = 0;
+            let lastCompletionDate = null;
 
-            const addCompletionsFrom = (source) => {
+            const countAndTrackLastDate = (source) => {
                 if (!source || typeof source !== "object") return;
                 for (const dateStr in source) {
                     const d = parseLocalDate(dateStr);
                     if (d.getFullYear() === selectedYear && d.getMonth() === selectedMonth) {
-                        totalCompletions += Array.isArray(source[dateStr]) ? source[dateStr].length : 0;
+                        const entries = Array.isArray(source[dateStr]) ? source[dateStr].length : 0;
+                        totalCompletions += entries;
+                        if (entries > 0 && (!lastCompletionDate || d > lastCompletionDate)) {
+                            lastCompletionDate = d;
+                        }
                     }
                 }
             };
 
-            addCompletionsFrom(task.completions);
-            addCompletionsFrom(task.pendingCompletions);
+            countAndTrackLastDate(task.completions);
+            countAndTrackLastDate(task.pendingCompletions);
 
-            // ✅ If we're in the same month & year and target is met
             if (
                 totalCompletions >= required &&
-                selected.getFullYear() === today.getFullYear() &&
-                selected.getMonth() === today.getMonth() &&
-                selected > today // only hide on *upcoming* days
+                lastCompletionDate && selected > lastCompletionDate &&
+                selected.getFullYear() === selectedYear &&
+                selected.getMonth() === selectedMonth
             ) {
-                return false;
+                return false; // ✅ Hide after final completion day in same month
             }
         }
 
