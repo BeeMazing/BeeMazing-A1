@@ -16,60 +16,51 @@ function filterTasksForDate(tasks, selectedDate) {
 
     const selected = parseLocalDate(selectedDate);
     const selectedDateStr = selected.toISOString().split("T")[0];
-    const selectedYear = selected.getFullYear();
-    const selectedMonth = selected.getMonth();
 
     return tasks.filter(task => {
         if (!task.date) return false;
 
-        // Parse From-To range
         const range = task.date.split(" to ");
         const from = parseLocalDate(range[0]);
         const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
         const inRange = selected >= from && selected <= to;
 
-        // ✅ Skip Monthly tasks if already completed required times in the current month
-        const isMonthly = task.repeat === "Monthly";
-        const required = task.timesPerMonth || 1;
-
-        if (isMonthly && required > 0 && (task.settings?.includes("Rotation") || task.settings?.includes("Individual"))) {
-            let totalCompletions = 0;
-
-            const addCompletionsFrom = (source) => {
-                if (!source || typeof source !== "object") return;
-                for (const dateStr in source) {
-                    const d = parseLocalDate(dateStr);
-                    if (d.getFullYear() === selectedYear && d.getMonth() === selectedMonth) {
-                        totalCompletions += Array.isArray(source[dateStr]) ? source[dateStr].length : 0;
-                    }
-                }
-            };
-
-            addCompletionsFrom(task.completions);
-            addCompletionsFrom(task.pendingCompletions);
-
-            if (totalCompletions >= required) return false; // ✅ Hide task for current month
-        }
-
-        // Use Specific Dates first
+        // 1. Specific Dates
         if (task.specificDates) {
             const specificDates = task.specificDates.split(",").map(date => date.trim());
             return specificDates.includes(selectedDateStr);
         }
 
-        // Use Days of Week second
+        // 2. Days of the Week
         if (task.daysOfWeek && !task.daysOfWeek.includes("Any")) {
             let days = task.daysOfWeek;
             if (typeof days === "string") {
-                days = days.split(",").map(d => d.trim()).filter(d => d);
+                days = days.split(",").map(d => d.trim());
             }
-            if (Array.isArray(days) && days.length > 0) {
-                const dayOfWeek = selected.toLocaleDateString(undefined, { weekday: "long" });
-                return days.includes(dayOfWeek) && inRange;
+            const dayOfWeek = selected.toLocaleDateString(undefined, { weekday: "long" });
+            if (!days.includes(dayOfWeek)) return false;
+        }
+
+        // 3. Handle Monthly completion logic
+        if (task.repeat === "Monthly" && Array.isArray(task.users) && task.users.length > 0 && task.completions) {
+            const monthKey = selectedDateStr.slice(0, 7); // YYYY-MM
+            let completionsThisMonth = 0;
+
+            for (const [date, users] of Object.entries(task.completions)) {
+                if (date.startsWith(monthKey) && Array.isArray(users)) {
+                    completionsThisMonth += users.length;
+                }
+            }
+
+            const required = parseInt(task.timesPerMonth) || 1;
+
+            const isSameDay = selectedDateStr === selected.toISOString().split("T")[0];
+
+            if (selected > selected && completionsThisMonth >= required) {
+                return false; // future date & task already completed for this month
             }
         }
 
-        // Default: From-To
         return inRange;
     });
 }
