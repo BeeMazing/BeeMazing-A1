@@ -90,7 +90,6 @@ function filterTasksForDate(tasks, selectedDate) {
 // addtasks.html settings: Rotation Daily ////////////////////////////////////////////////////////////////////////
 
 
-
 function mixedTurnOffset(task, selectedDate) {
     const repeat = task.repeat || "Daily";
     const requiredTimes = repeat === "Monthly" ? (Number.isInteger(task.timesPerMonth) ? task.timesPerMonth : 1)
@@ -104,7 +103,6 @@ function mixedTurnOffset(task, selectedDate) {
     const selected = parseLocalDate(selectedDate);
     const selectedYear = selected.getFullYear();
     const selectedMonth = selected.getMonth();
-    const selectedWeek = getWeekNumber(selected);
 
     if (repeat === "Monthly") {
         // Step 1: Collect all completions in chronological order
@@ -157,16 +155,10 @@ function mixedTurnOffset(task, selectedDate) {
             if (!source) return;
             for (const dateStr in source) {
                 const d = parseLocalDate(dateStr);
-                const weekNumber = getWeekNumber(d);
-                if (
-                    d.getFullYear() < selectedYear ||
-                    (d.getFullYear() === selectedYear && weekNumber <= selectedWeek)
-                ) {
-                    const completions = Array.isArray(source[dateStr]) ? source[dateStr] : [];
-                    completions.forEach(user => {
-                        allCompletions.push({ date: d, user });
-                    });
-                }
+                const completions = Array.isArray(source[dateStr]) ? source[dateStr] : [];
+                completions.forEach(user => {
+                    allCompletions.push({ date: d, user });
+                });
             }
         };
 
@@ -178,17 +170,29 @@ function mixedTurnOffset(task, selectedDate) {
 
         // Step 2: Count completions up to the selected week
         let completionCount = 0;
+
+        // Calculate the start of the selected week (Monday)
+        const selectedWeekStart = new Date(selected);
+        selectedWeekStart.setHours(0, 0, 0, 0);
+        const selectedDayOfWeek = selectedWeekStart.getDay();
+        const daysToMonday = selectedDayOfWeek === 0 ? 6 : selectedDayOfWeek - 1;
+        selectedWeekStart.setDate(selectedWeekStart.getDate() - daysToMonday);
+
         for (const completion of allCompletions) {
-            const weekNumber = getWeekNumber(completion.date);
+            // Calculate the start of the completion's week (Monday)
+            const completionWeekStart = new Date(completion.date);
+            completionWeekStart.setHours(0, 0, 0, 0);
+            const completionDayOfWeek = completionWeekStart.getDay();
+            const completionDaysToMonday = completionDayOfWeek === 0 ? 6 : completionDayOfWeek - 1;
+            completionWeekStart.setDate(completionWeekStart.getDate() - completionDaysToMonday);
+
+            // Compare week starts
             if (
-                completion.date.getFullYear() < selectedYear ||
-                (completion.date.getFullYear() === selectedYear && weekNumber < selectedWeek)
-            ) {
-                completionCount++;
-            } else if (
-                completion.date.getFullYear() === selectedYear &&
-                weekNumber === selectedWeek &&
-                completion.date <= selected
+                completionWeekStart < selectedWeekStart ||
+                (
+                    completionWeekStart.getTime() === selectedWeekStart.getTime() &&
+                    completion.date <= selected
+                )
             ) {
                 completionCount++;
             }
@@ -232,16 +236,6 @@ function mixedTurnOffset(task, selectedDate) {
 
     return rotationOffset % assignedUsers.length;
 }
-
-// Helper function to get ISO week number (for addtasks.html Settings: Rotation/Individual, Frequency: Weekly)
-function getWeekNumber(date) {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
-    const week1 = new Date(d.getFullYear(), 0, 4);
-    return Math.round(((d - week1) / 86400000 + 1) / 7) + 1;
-}
-
 
 
 
