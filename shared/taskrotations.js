@@ -14,27 +14,50 @@ function parseLocalDate(dateStr) {
 function filterTasksForDate(tasks, selectedDate) {
     if (!Array.isArray(tasks)) return [];
 
-    // Convert selectedDate to a Date object and format as YYYY-MM-DD
     const selected = parseLocalDate(selectedDate);
     const selectedDateStr = selected.toISOString().split("T")[0];
+    const selectedYear = selected.getFullYear();
+    const selectedMonth = selected.getMonth();
 
     return tasks.filter(task => {
         if (!task.date) return false;
 
-        // Parse the From/To range
+        // Parse From-To range
         const range = task.date.split(" to ");
         const from = parseLocalDate(range[0]);
         const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
-
         const inRange = selected >= from && selected <= to;
 
-        // If Specific Dates exist, use that first
+        // ✅ Skip Monthly tasks if already completed required times in the current month
+        const isMonthly = task.repeat === "Monthly";
+        const required = task.timesPerMonth || 1;
+
+        if (isMonthly && required > 0 && (task.settings?.includes("Rotation") || task.settings?.includes("Individual"))) {
+            let totalCompletions = 0;
+
+            const addCompletionsFrom = (source) => {
+                if (!source || typeof source !== "object") return;
+                for (const dateStr in source) {
+                    const d = parseLocalDate(dateStr);
+                    if (d.getFullYear() === selectedYear && d.getMonth() === selectedMonth) {
+                        totalCompletions += Array.isArray(source[dateStr]) ? source[dateStr].length : 0;
+                    }
+                }
+            };
+
+            addCompletionsFrom(task.completions);
+            addCompletionsFrom(task.pendingCompletions);
+
+            if (totalCompletions >= required) return false; // ✅ Hide task for current month
+        }
+
+        // Use Specific Dates first
         if (task.specificDates) {
             const specificDates = task.specificDates.split(",").map(date => date.trim());
             return specificDates.includes(selectedDateStr);
         }
 
-        // If Days of Week exist, use that second
+        // Use Days of Week second
         if (task.daysOfWeek && !task.daysOfWeek.includes("Any")) {
             let days = task.daysOfWeek;
             if (typeof days === "string") {
@@ -42,18 +65,18 @@ function filterTasksForDate(tasks, selectedDate) {
             }
             if (Array.isArray(days) && days.length > 0) {
                 const dayOfWeek = selected.toLocaleDateString(undefined, { weekday: "long" });
-                return days.includes(dayOfWeek) && inRange; // Must be within From-To range
+                return days.includes(dayOfWeek) && inRange;
             }
         }
 
-        // Default case: From-To (if "Any" or no specific days)
+        // Default: From-To
         return inRange;
     });
 }
 
 
 
-// addtasks.html settings: Rotation ////////////////////////////////////////////////////////////////////////
+// addtasks.html settings: Rotation Daily ////////////////////////////////////////////////////////////////////////
 
 
 
@@ -68,7 +91,7 @@ function mixedTurnOffset(task, selectedDate) {
                       : 1;
 
     const range = task.date.split(" to ");
-    const taskStartDate = parseLocalDate(range[0]);
+    const taskStartDate = parseLocalDate(range[0]);filterTasksForDate
     const selected = parseLocalDate(selectedDate);
 
     if (isNaN(taskStartDate.getTime()) || isNaN(selected.getTime())) {
