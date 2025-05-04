@@ -91,12 +91,9 @@ function filterTasksForDate(tasks, selectedDate) {
 
 function mixedTurnOffset(task, selectedDate) {
     const repeat = task.repeat || "Daily";
-    const requiredTimes = repeat === "Monthly"
-        ? (Number.isInteger(task.timesPerMonth) ? task.timesPerMonth : 1)
-        : repeat === "Weekly"
-        ? (Number.isInteger(task.timesPerWeek) ? task.timesPerWeek : 1)
-        : repeat === "Daily"
-        ? (Number.isInteger(task.timesPerDay) ? task.timesPerDay : 1)
+    const requiredTimes = repeat === "Monthly" ? (Number.isInteger(task.timesPerMonth) ? task.timesPerMonth : 1)
+        : repeat === "Weekly" ? (Number.isInteger(task.timesPerWeek) ? task.timesPerWeek : 1)
+        : repeat === "Daily" ? (Number.isInteger(task.timesPerDay) ? task.timesPerDay : 1)
         : 1;
 
     const assignedUsers = task.users || [];
@@ -128,18 +125,16 @@ function mixedTurnOffset(task, selectedDate) {
         countByMonth(task.completions);
         countByMonth(task.pendingCompletions);
 
-        // Step 2: Count full completed months including the current one if complete
+        // Step 2: Count full completed months up to and including the selected month
         let fullMonthsCompleted = 0;
 
         for (const key in monthlyCounts) {
             const [y, m] = key.split("-").map(Number);
-            if (monthlyCounts[key] >= requiredTimes) {
-                if (
-                    y < selectedYear || (y === selectedYear && m < selectedMonth)
-                ) {
-                    fullMonthsCompleted++;
-                } else if (y === selectedYear && m === selectedMonth) {
-                    // ✅ Treat current month as rotated if fully completed
+            if (
+                y < selectedYear || 
+                (y === selectedYear && m <= selectedMonth)
+            ) {
+                if (monthlyCounts[key] >= requiredTimes) {
                     fullMonthsCompleted++;
                 }
             }
@@ -148,7 +143,7 @@ function mixedTurnOffset(task, selectedDate) {
         return fullMonthsCompleted % assignedUsers.length;
     }
 
-    // ✅ Fallback for daily/weekly tasks
+    // Fallback for daily/weekly tasks
     const range = task.date.split(" to ");
     const taskStartDate = parseLocalDate(range[0]);
     let rotationOffset = 0;
@@ -183,7 +178,6 @@ function mixedTurnOffset(task, selectedDate) {
 
     return rotationOffset % assignedUsers.length;
 }
-
 
 
 
