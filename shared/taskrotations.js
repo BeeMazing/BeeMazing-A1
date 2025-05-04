@@ -92,8 +92,6 @@ function filterTasksForDate(tasks, selectedDate) {
 
 
 
-
-
 function mixedTurnOffset(task, selectedDate) {
     const repeat = task.repeat || "Daily";
     const requiredTimes = repeat === "Daily" ? (Number.isInteger(task.timesPerDay) ? task.timesPerDay : 1)
@@ -102,21 +100,40 @@ function mixedTurnOffset(task, selectedDate) {
                       : 1;
 
     const range = task.date.split(" to ");
-    const taskStartDate = parseLocalDate(range[0]);filterTasksForDate
+    const taskStartDate = parseLocalDate(range[0]);
     const selected = parseLocalDate(selectedDate);
-
-    if (isNaN(taskStartDate.getTime()) || isNaN(selected.getTime())) {
-        return 0;
-    }
-
     const assignedUsers = task.users || [];
     if (assignedUsers.length === 0) return 0;
 
+    if (repeat === "Monthly") {
+        // ✅ Special handling for Monthly: count completed sets *before* selected month
+        let totalCompleted = 0;
+
+        const addMonthCompletions = (source) => {
+            if (!source) return;
+            for (const dateStr in source) {
+                const d = parseLocalDate(dateStr);
+                const monthKey = `${d.getFullYear()}-${d.getMonth()}`;
+                const sMonthKey = `${selected.getFullYear()}-${selected.getMonth()}`;
+
+                if (monthKey < sMonthKey && Array.isArray(source[dateStr])) {
+                    totalCompleted += source[dateStr].length;
+                }
+            }
+        };
+
+        addMonthCompletions(task.completions);
+        addMonthCompletions(task.pendingCompletions);
+
+        const completedSets = Math.floor(totalCompleted / requiredTimes);
+        return completedSets % assignedUsers.length;
+    }
+
+    // Original logic for Daily / Weekly
     let rotationOffset = 0;
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize to start of day
+    today.setHours(0, 0, 0, 0);
 
-    // Go from start date up to selected date (inclusive)
     for (
         let currentDate = new Date(taskStartDate);
         currentDate <= selected;
@@ -128,30 +145,25 @@ function mixedTurnOffset(task, selectedDate) {
         const isToday = currentDate.toDateString() === today.toDateString();
 
         let completedCount = 0;
-
-        // For past and current day, check actual completions
         if (!isFutureDate) {
             const completionsOnDay = Array.isArray(task.completions?.[dateStr]) ? task.completions[dateStr] : [];
             const pendingOnDay = Array.isArray(task.pendingCompletions?.[dateStr]) ? task.pendingCompletions[dateStr] : [];
             completedCount = completionsOnDay.length + pendingOnDay.length;
         }
 
-        // ✅ For future dates: Assume full completion (requiredTimes) for days before selectedDate
         if (isFutureDate && !isCurrentDate) {
             rotationOffset += requiredTimes;
-        }
-        // ✅ For past dates or today (if fully completed): Count full turns
-        else if (!isCurrentDate || (isToday && completedCount >= requiredTimes)) {
+        } else if (!isCurrentDate || (isToday && completedCount >= requiredTimes)) {
             rotationOffset += completedCount >= requiredTimes ? requiredTimes : completedCount;
-        }
-        // ✅ For selected date (if today or future): Include progress only if fully completed
-        else if (isCurrentDate && completedCount >= requiredTimes) {
+        } else if (isCurrentDate && completedCount >= requiredTimes) {
             rotationOffset += requiredTimes;
         }
     }
 
     return rotationOffset % assignedUsers.length;
 }
+
+
 
 
 
