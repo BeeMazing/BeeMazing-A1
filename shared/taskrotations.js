@@ -19,6 +19,20 @@ function filterTasksForDate(tasks, selectedDate) {
     const selectedYear = selected.getFullYear();
     const selectedMonth = selected.getMonth();
 
+    // Get start and end of the selected week (Monday to Sunday)
+    const getWeekRange = (date) => {
+        const day = date.getDay(); // Sunday = 0 ... Saturday = 6
+        const diffToMonday = (day === 0 ? -6 : 1) - day;
+        const monday = new Date(date);
+        monday.setDate(date.getDate() + diffToMonday);
+        monday.setHours(0, 0, 0, 0);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        return [monday, sunday];
+    };
+
+    const [weekStart, weekEnd] = getWeekRange(selected);
+
     return tasks.filter(task => {
         if (!task.date) return false;
 
@@ -28,15 +42,17 @@ function filterTasksForDate(tasks, selectedDate) {
         const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
         const inRange = selected >= from && selected <= to;
 
-        // ✅ Skip Monthly tasks after full completion in current month
         const isMonthly = task.repeat === "Monthly";
-        const required = task.timesPerMonth || 1;
+        const isWeekly = task.repeat === "Weekly";
+        const required = isMonthly ? (task.timesPerMonth || 1) : isWeekly ? (task.timesPerWeek || 1) : 1;
+        const isRotOrInd = task.settings?.includes("Rotation") || task.settings?.includes("Individual");
 
-        if (isMonthly && required > 0 && (task.settings?.includes("Rotation") || task.settings?.includes("Individual"))) {
+        // ✅ Monthly: Hide after fully completed for current month
+        if (isMonthly && required > 0 && isRotOrInd) {
             let totalCompletions = 0;
             let lastCompletionDate = null;
 
-            const countAndTrackLastDate = (source) => {
+            const countMonthly = (source) => {
                 if (!source || typeof source !== "object") return;
                 for (const dateStr in source) {
                     const d = parseLocalDate(dateStr);
@@ -50,16 +66,49 @@ function filterTasksForDate(tasks, selectedDate) {
                 }
             };
 
-            countAndTrackLastDate(task.completions);
-            countAndTrackLastDate(task.pendingCompletions);
+            countMonthly(task.completions);
+            countMonthly(task.pendingCompletions);
 
             if (
                 totalCompletions >= required &&
-                lastCompletionDate && selected > lastCompletionDate &&
-                selected.getFullYear() === selectedYear &&
-                selected.getMonth() === selectedMonth
+                lastCompletionDate &&
+                selected > lastCompletionDate &&
+                selected.getMonth() === selectedMonth &&
+                selected.getFullYear() === selectedYear
             ) {
-                return false; // ✅ Hide after final completion day in same month
+                return false;
+            }
+        }
+
+        // ✅ Weekly: Hide after fully completed for current week
+        if (isWeekly && required > 0 && isRotOrInd) {
+            let totalCompletions = 0;
+            let lastCompletionDate = null;
+
+            const countWeekly = (source) => {
+                if (!source || typeof source !== "object") return;
+                for (const dateStr in source) {
+                    const d = parseLocalDate(dateStr);
+                    if (d >= weekStart && d <= weekEnd) {
+                        const entries = Array.isArray(source[dateStr]) ? source[dateStr].length : 0;
+                        totalCompletions += entries;
+                        if (entries > 0 && (!lastCompletionDate || d > lastCompletionDate)) {
+                            lastCompletionDate = d;
+                        }
+                    }
+                }
+            };
+
+            countWeekly(task.completions);
+            countWeekly(task.pendingCompletions);
+
+            if (
+                totalCompletions >= required &&
+                lastCompletionDate &&
+                selected > lastCompletionDate &&
+                selected >= weekStart && selected <= weekEnd
+            ) {
+                return false;
             }
         }
 
@@ -85,6 +134,9 @@ function filterTasksForDate(tasks, selectedDate) {
         return inRange;
     });
 }
+
+
+
 
 
 // addtasks.html settings: Rotation Daily ////////////////////////////////////////////////////////////////////////
