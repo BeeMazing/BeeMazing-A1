@@ -91,10 +91,13 @@ function filterTasksForDate(tasks, selectedDate) {
 
 function mixedTurnOffset(task, selectedDate) {
     const repeat = task.repeat || "Daily";
-    const requiredTimes = repeat === "Monthly" ? (Number.isInteger(task.timesPerMonth) ? task.timesPerMonth : 1)
-                      : repeat === "Weekly" ? (Number.isInteger(task.timesPerWeek) ? task.timesPerWeek : 1)
-                      : repeat === "Daily" ? (Number.isInteger(task.timesPerDay) ? task.timesPerDay : 1)
-                      : 1;
+    const requiredTimes = repeat === "Monthly"
+        ? (Number.isInteger(task.timesPerMonth) ? task.timesPerMonth : 1)
+        : repeat === "Weekly"
+        ? (Number.isInteger(task.timesPerWeek) ? task.timesPerWeek : 1)
+        : repeat === "Daily"
+        ? (Number.isInteger(task.timesPerDay) ? task.timesPerDay : 1)
+        : 1;
 
     const assignedUsers = task.users || [];
     if (assignedUsers.length === 0) return 0;
@@ -104,6 +107,7 @@ function mixedTurnOffset(task, selectedDate) {
     const selectedMonth = selected.getMonth();
 
     if (repeat === "Monthly") {
+        // Step 1: Count completions grouped by month
         const monthlyCounts = {};
 
         const countByMonth = (source) => {
@@ -124,29 +128,27 @@ function mixedTurnOffset(task, selectedDate) {
         countByMonth(task.completions);
         countByMonth(task.pendingCompletions);
 
+        // Step 2: Count full completed months including the current one if complete
         let fullMonthsCompleted = 0;
 
         for (const key in monthlyCounts) {
             const [y, m] = key.split("-").map(Number);
-
-            // Only count months before selected month (or same month but selectedDate is after all completions)
-            const isBeforeSelectedMonth =
-                y < selectedYear || (y === selectedYear && m < selectedMonth);
-
-            const isSameMonthBeforeSelectedDay =
-                y === selectedYear && m === selectedMonth &&
-                new Date(selectedYear, selectedMonth, requiredTimes + 1) <= selected;
-
-            if ((isBeforeSelectedMonth || isSameMonthBeforeSelectedDay) &&
-                monthlyCounts[key] >= requiredTimes) {
-                fullMonthsCompleted++;
+            if (monthlyCounts[key] >= requiredTimes) {
+                if (
+                    y < selectedYear || (y === selectedYear && m < selectedMonth)
+                ) {
+                    fullMonthsCompleted++;
+                } else if (y === selectedYear && m === selectedMonth) {
+                    // ✅ Treat current month as rotated if fully completed
+                    fullMonthsCompleted++;
+                }
             }
         }
 
         return fullMonthsCompleted % assignedUsers.length;
     }
 
-    // ✅ Fallback for daily/weekly logic
+    // ✅ Fallback for daily/weekly tasks
     const range = task.date.split(" to ");
     const taskStartDate = parseLocalDate(range[0]);
     let rotationOffset = 0;
