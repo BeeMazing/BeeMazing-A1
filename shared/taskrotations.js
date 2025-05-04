@@ -104,6 +104,7 @@ function mixedTurnOffset(task, selectedDate) {
     const selected = parseLocalDate(selectedDate);
     const selectedYear = selected.getFullYear();
     const selectedMonth = selected.getMonth();
+    const selectedWeek = getWeekNumber(selected);
 
     if (repeat === "Monthly") {
         // Step 1: Collect all completions in chronological order
@@ -148,7 +149,55 @@ function mixedTurnOffset(task, selectedDate) {
         return completionCount % assignedUsers.length;
     }
 
-    // Fallback for daily/weekly tasks
+    if (repeat === "Weekly") {
+        // Step 1: Collect all completions in chronological order
+        const allCompletions = [];
+
+        const gatherCompletions = (source) => {
+            if (!source) return;
+            for (const dateStr in source) {
+                const d = parseLocalDate(dateStr);
+                const weekNumber = getWeekNumber(d);
+                if (
+                    d.getFullYear() < selectedYear ||
+                    (d.getFullYear() === selectedYear && weekNumber <= selectedWeek)
+                ) {
+                    const completions = Array.isArray(source[dateStr]) ? source[dateStr] : [];
+                    completions.forEach(user => {
+                        allCompletions.push({ date: d, user });
+                    });
+                }
+            }
+        };
+
+        gatherCompletions(task.completions);
+        gatherCompletions(task.pendingCompletions);
+
+        // Sort completions by date
+        allCompletions.sort((a, b) => a.date - b.date);
+
+        // Step 2: Count completions up to the selected week
+        let completionCount = 0;
+        for (const completion of allCompletions) {
+            const weekNumber = getWeekNumber(completion.date);
+            if (
+                completion.date.getFullYear() < selectedYear ||
+                (completion.date.getFullYear() === selectedYear && weekNumber < selectedWeek)
+            ) {
+                completionCount++;
+            } else if (
+                completion.date.getFullYear() === selectedYear &&
+                weekNumber === selectedWeek &&
+                completion.date <= selected
+            ) {
+                completionCount++;
+            }
+        }
+
+        return completionCount % assignedUsers.length;
+    }
+
+    // Fallback for daily tasks
     const range = task.date.split(" to ");
     const taskStartDate = parseLocalDate(range[0]);
     let rotationOffset = 0;
@@ -184,7 +233,14 @@ function mixedTurnOffset(task, selectedDate) {
     return rotationOffset % assignedUsers.length;
 }
 
-
+// Helper function to get ISO week number (for addtasks.html Settings: Rotation/Individual, Frequency: Weekly)
+function getWeekNumber(date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+    const week1 = new Date(d.getFullYear(), 0, 4);
+    return Math.round(((d - week1) / 86400000 + 1) / 7) + 1;
+}
 
 
 
