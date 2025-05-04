@@ -104,7 +104,6 @@ function mixedTurnOffset(task, selectedDate) {
     const selectedMonth = selected.getMonth();
 
     if (repeat === "Monthly") {
-        // Step 1: Count completions grouped by month
         const monthlyCounts = {};
 
         const countByMonth = (source) => {
@@ -125,24 +124,29 @@ function mixedTurnOffset(task, selectedDate) {
         countByMonth(task.completions);
         countByMonth(task.pendingCompletions);
 
-        // Step 2: Count full completed months *before* the selected month
         let fullMonthsCompleted = 0;
 
         for (const key in monthlyCounts) {
             const [y, m] = key.split("-").map(Number);
-            if (
-                y < selectedYear || (y === selectedYear && m < selectedMonth)
-            ) {
-                if (monthlyCounts[key] >= requiredTimes) {
-                    fullMonthsCompleted++;
-                }
+
+            // Only count months before selected month (or same month but selectedDate is after all completions)
+            const isBeforeSelectedMonth =
+                y < selectedYear || (y === selectedYear && m < selectedMonth);
+
+            const isSameMonthBeforeSelectedDay =
+                y === selectedYear && m === selectedMonth &&
+                new Date(selectedYear, selectedMonth, requiredTimes + 1) <= selected;
+
+            if ((isBeforeSelectedMonth || isSameMonthBeforeSelectedDay) &&
+                monthlyCounts[key] >= requiredTimes) {
+                fullMonthsCompleted++;
             }
         }
 
         return fullMonthsCompleted % assignedUsers.length;
     }
 
-    // ✅ Fallback for daily/weekly tasks
+    // ✅ Fallback for daily/weekly logic
     const range = task.date.split(" to ");
     const taskStartDate = parseLocalDate(range[0]);
     let rotationOffset = 0;
@@ -177,7 +181,6 @@ function mixedTurnOffset(task, selectedDate) {
 
     return rotationOffset % assignedUsers.length;
 }
-
 
 
 
