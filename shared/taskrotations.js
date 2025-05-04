@@ -89,7 +89,6 @@ function filterTasksForDate(tasks, selectedDate) {
 
 // addtasks.html settings: Rotation Daily ////////////////////////////////////////////////////////////////////////
 
-
 function mixedTurnOffset(task, selectedDate) {
     const repeat = task.repeat || "Daily";
     const requiredTimes = repeat === "Monthly" ? (Number.isInteger(task.timesPerMonth) ? task.timesPerMonth : 1)
@@ -97,42 +96,55 @@ function mixedTurnOffset(task, selectedDate) {
                       : repeat === "Daily" ? (Number.isInteger(task.timesPerDay) ? task.timesPerDay : 1)
                       : 1;
 
-    const range = task.date.split(" to ");
-    const taskStartDate = parseLocalDate(range[0]);
-    const selected = parseLocalDate(selectedDate);
     const assignedUsers = task.users || [];
     if (assignedUsers.length === 0) return 0;
 
+    const selected = parseLocalDate(selectedDate);
+    const selectedYear = selected.getFullYear();
+    const selectedMonth = selected.getMonth();
+
     if (repeat === "Monthly") {
-        // ✅ Count completed sets in months BEFORE selected month
-        let totalCompletionsBeforeMonth = 0;
+        // Step 1: Count completions grouped by month
+        const monthlyCounts = {};
 
-        const selectedYear = selected.getFullYear();
-        const selectedMonth = selected.getMonth();
-
-        const addPriorMonthCompletions = (source) => {
+        const countByMonth = (source) => {
             if (!source) return;
             for (const dateStr in source) {
                 const d = parseLocalDate(dateStr);
                 const y = d.getFullYear();
                 const m = d.getMonth();
+                const key = `${y}-${m}`;
 
-                // Only count completions from months before selected month
-                if (y < selectedYear || (y === selectedYear && m < selectedMonth)) {
-                    const arr = Array.isArray(source[dateStr]) ? source[dateStr] : [];
-                    totalCompletionsBeforeMonth += arr.length;
-                }
+                if (!monthlyCounts[key]) monthlyCounts[key] = 0;
+
+                const arr = Array.isArray(source[dateStr]) ? source[dateStr] : [];
+                monthlyCounts[key] += arr.length;
             }
         };
 
-        addPriorMonthCompletions(task.completions);
-        addPriorMonthCompletions(task.pendingCompletions);
+        countByMonth(task.completions);
+        countByMonth(task.pendingCompletions);
 
-        const fullRotations = Math.floor(totalCompletionsBeforeMonth / requiredTimes);
-        return fullRotations % assignedUsers.length;
+        // Step 2: Count full completed months *before* the selected month
+        let fullMonthsCompleted = 0;
+
+        for (const key in monthlyCounts) {
+            const [y, m] = key.split("-").map(Number);
+            if (
+                y < selectedYear || (y === selectedYear && m < selectedMonth)
+            ) {
+                if (monthlyCounts[key] >= requiredTimes) {
+                    fullMonthsCompleted++;
+                }
+            }
+        }
+
+        return fullMonthsCompleted % assignedUsers.length;
     }
 
-    // ✅ Fallback to daily/weekly logic
+    // ✅ Fallback for daily/weekly tasks
+    const range = task.date.split(" to ");
+    const taskStartDate = parseLocalDate(range[0]);
     let rotationOffset = 0;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -165,6 +177,11 @@ function mixedTurnOffset(task, selectedDate) {
 
     return rotationOffset % assignedUsers.length;
 }
+
+
+
+
+
 
 
 
