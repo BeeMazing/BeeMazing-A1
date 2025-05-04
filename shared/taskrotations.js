@@ -19,20 +19,6 @@ function filterTasksForDate(tasks, selectedDate) {
     const selectedYear = selected.getFullYear();
     const selectedMonth = selected.getMonth();
 
-    // Get start and end of the selected week (Monday to Sunday)
-    const getWeekRange = (date) => {
-        const day = date.getDay(); // Sunday = 0 ... Saturday = 6
-        const diffToMonday = (day === 0 ? -6 : 1) - day;
-        const monday = new Date(date);
-        monday.setDate(date.getDate() + diffToMonday);
-        monday.setHours(0, 0, 0, 0);
-        const sunday = new Date(monday);
-        sunday.setDate(monday.getDate() + 6);
-        return [monday, sunday];
-    };
-
-    const [weekStart, weekEnd] = getWeekRange(selected);
-
     return tasks.filter(task => {
         if (!task.date) return false;
 
@@ -42,17 +28,15 @@ function filterTasksForDate(tasks, selectedDate) {
         const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
         const inRange = selected >= from && selected <= to;
 
+        // ✅ Skip Monthly tasks after full completion in current month
         const isMonthly = task.repeat === "Monthly";
-        const isWeekly = task.repeat === "Weekly";
-        const required = isMonthly ? (task.timesPerMonth || 1) : isWeekly ? (task.timesPerWeek || 1) : 1;
-        const isRotOrInd = task.settings?.includes("Rotation") || task.settings?.includes("Individual");
+        const required = task.timesPerMonth || 1;
 
-        // ✅ Monthly: Hide after fully completed for current month
-        if (isMonthly && required > 0 && isRotOrInd) {
+        if (isMonthly && required > 0 && (task.settings?.includes("Rotation") || task.settings?.includes("Individual"))) {
             let totalCompletions = 0;
             let lastCompletionDate = null;
 
-            const countMonthly = (source) => {
+            const countAndTrackLastDate = (source) => {
                 if (!source || typeof source !== "object") return;
                 for (const dateStr in source) {
                     const d = parseLocalDate(dateStr);
@@ -66,49 +50,16 @@ function filterTasksForDate(tasks, selectedDate) {
                 }
             };
 
-            countMonthly(task.completions);
-            countMonthly(task.pendingCompletions);
+            countAndTrackLastDate(task.completions);
+            countAndTrackLastDate(task.pendingCompletions);
 
             if (
                 totalCompletions >= required &&
-                lastCompletionDate &&
-                selected > lastCompletionDate &&
-                selected.getMonth() === selectedMonth &&
-                selected.getFullYear() === selectedYear
+                lastCompletionDate && selected > lastCompletionDate &&
+                selected.getFullYear() === selectedYear &&
+                selected.getMonth() === selectedMonth
             ) {
-                return false;
-            }
-        }
-
-        // ✅ Weekly: Hide after fully completed for current week
-        if (isWeekly && required > 0 && isRotOrInd) {
-            let totalCompletions = 0;
-            let lastCompletionDate = null;
-
-            const countWeekly = (source) => {
-                if (!source || typeof source !== "object") return;
-                for (const dateStr in source) {
-                    const d = parseLocalDate(dateStr);
-                    if (d >= weekStart && d <= weekEnd) {
-                        const entries = Array.isArray(source[dateStr]) ? source[dateStr].length : 0;
-                        totalCompletions += entries;
-                        if (entries > 0 && (!lastCompletionDate || d > lastCompletionDate)) {
-                            lastCompletionDate = d;
-                        }
-                    }
-                }
-            };
-
-            countWeekly(task.completions);
-            countWeekly(task.pendingCompletions);
-
-            if (
-                totalCompletions >= required &&
-                lastCompletionDate &&
-                selected > lastCompletionDate &&
-                selected >= weekStart && selected <= weekEnd
-            ) {
-                return false;
+                return false; // ✅ Hide after final completion day in same month
             }
         }
 
@@ -134,9 +85,6 @@ function filterTasksForDate(tasks, selectedDate) {
         return inRange;
     });
 }
-
-
-
 
 
 // addtasks.html settings: Rotation Daily ////////////////////////////////////////////////////////////////////////
@@ -210,8 +158,6 @@ function mixedTurnOffset(task, selectedDate) {
 
 
 
-
-
 function mixedTurnData(task, selectedDate) {
     try {
         if (!task || typeof task !== "object" || !Array.isArray(task.users) || !task.date) {
@@ -220,13 +166,40 @@ function mixedTurnData(task, selectedDate) {
         }
 
         const repeat = task.repeat || "Daily";
-        const requiredTimes = repeat === "Daily" ? (Number.isInteger(task.timesPerDay) ? task.timesPerDay : 1)
-                          : repeat === "Weekly" ? (Number.isInteger(task.timesPerWeek) ? task.timesPerWeek : 1)
-                          : repeat === "Monthly" ? (Number.isInteger(task.timesPerMonth) ? task.timesPerMonth : 1)
-                          : 1;
+        const requiredTimes = repeat === "Monthly"
+            ? (Number.isInteger(task.timesPerMonth) ? task.timesPerMonth : 1)
+            : repeat === "Weekly"
+            ? (Number.isInteger(task.timesPerWeek) ? task.timesPerWeek : 1)
+            : repeat === "Daily"
+            ? (Number.isInteger(task.timesPerDay) ? task.timesPerDay : 1)
+            : 1;
 
-        const completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-        const pendingCompletions = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
+        const selected = parseLocalDate(selectedDate);
+        const selectedYear = selected.getFullYear();
+        const selectedMonth = selected.getMonth();
+
+        // ✅ For Monthly tasks, count completions for the whole month
+        let completions = [];
+        let pendingCompletions = [];
+
+        if (repeat === "Monthly") {
+            const gather = (source) => {
+                const list = [];
+                for (const dateStr in source || {}) {
+                    const d = parseLocalDate(dateStr);
+                    if (d.getFullYear() === selectedYear && d.getMonth() === selectedMonth) {
+                        list.push(...(Array.isArray(source[dateStr]) ? source[dateStr] : []));
+                    }
+                }
+                return list;
+            };
+            completions = gather(task.completions);
+            pendingCompletions = gather(task.pendingCompletions);
+        } else {
+            completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+            pendingCompletions = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
+        }
+
         const tempTurnReplacement = typeof task.tempTurnReplacement?.[selectedDate] === "object" ? task.tempTurnReplacement[selectedDate] : {};
 
         const turns = [];
@@ -244,7 +217,6 @@ function mixedTurnData(task, selectedDate) {
         const userOrder = [...task.users];
         const assignedUsers = [...userOrder];
 
-        // Apply temp replacements
         Object.entries(tempTurnReplacement).forEach(([index, user]) => {
             const i = parseInt(index);
             if (!isNaN(i) && i >= 0 && i < assignedUsers.length) {
@@ -252,7 +224,6 @@ function mixedTurnData(task, selectedDate) {
             }
         });
 
-        // ✅ Updated offset calculation
         const rotationOffset = mixedTurnOffset(task, selectedDate);
 
         for (let i = 0; i < requiredTimes; i++) {
@@ -296,6 +267,7 @@ function mixedTurnData(task, selectedDate) {
 
 
 
+
 // addtasks.html settings: Rotation ///////////////////////////////////////////////////////////////////////
 
 
@@ -303,15 +275,37 @@ function mixedTurnData(task, selectedDate) {
 
 
 
-
 function individualTurnData(task, selectedDate) {
     const repeat = task.repeat || "Daily";
-    let requiredTimes = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                       task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                       task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+    const requiredTimes = repeat === "Monthly" ? (task.timesPerMonth || 1)
+                      : repeat === "Weekly" ? (task.timesPerWeek || 1)
+                      : repeat === "Daily" ? (task.timesPerDay || 1)
+                      : 1;
 
-    const completions = (task.completions && task.completions[selectedDate]) || [];
-    const pendingCompletions = (task.pendingCompletions && task.pendingCompletions[selectedDate]) || [];
+    const selected = parseLocalDate(selectedDate);
+    const selectedYear = selected.getFullYear();
+    const selectedMonth = selected.getMonth();
+
+    const completions = [];
+    const pendingCompletions = [];
+
+    if (repeat === "Monthly") {
+        const gather = (source) => {
+            const list = [];
+            for (const dateStr in source || {}) {
+                const d = parseLocalDate(dateStr);
+                if (d.getFullYear() === selectedYear && d.getMonth() === selectedMonth) {
+                    list.push(...(Array.isArray(source[dateStr]) ? source[dateStr] : []));
+                }
+            }
+            return list;
+        };
+        completions.push(...gather(task.completions));
+        pendingCompletions.push(...gather(task.pendingCompletions));
+    } else {
+        completions.push(...(Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : []));
+        pendingCompletions.push(...(Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : []));
+    }
 
     const turns = [];
     const userCompletionCounts = {};
@@ -350,9 +344,13 @@ function individualTurnData(task, selectedDate) {
         }
     }
 
-    console.log("individualTurnData turns:", turns);
-    return { turns, completedCount: completions.length + pendingCompletions.length, requiredTimes };
+    return {
+        turns,
+        completedCount: completions.length + pendingCompletions.length,
+        requiredTimes
+    };
 }
+
 
 
 
@@ -361,15 +359,50 @@ function individualTurnData(task, selectedDate) {
 
 
 
+
 function calculateIndividualProgress(task, selectedDate, user) {
-    const completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-    const count = completions.filter(u => u === user).length;
-    const required = task.repeat === "Daily" ? task.timesPerDay || 1 :
-                    task.repeat === "Weekly" ? task.timesPerWeek || 1 :
-                    task.repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+    const repeat = task.repeat || "Daily";
+    const required = repeat === "Daily" ? task.timesPerDay || 1 :
+                    repeat === "Weekly" ? task.timesPerWeek || 1 :
+                    repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+
+    let count = 0;
+
+    if (repeat === "Monthly") {
+        const selected = parseLocalDate(selectedDate);
+        const year = selected.getFullYear();
+        const month = selected.getMonth();
+
+        for (const dateStr in task.completions || {}) {
+            const d = parseLocalDate(dateStr);
+            if (d.getFullYear() === year && d.getMonth() === month) {
+                const dayCompletions = task.completions[dateStr];
+                if (Array.isArray(dayCompletions)) {
+                    count += dayCompletions.filter(u => u === user).length;
+                }
+            }
+        }
+
+        for (const dateStr in task.pendingCompletions || {}) {
+            const d = parseLocalDate(dateStr);
+            if (d.getFullYear() === year && d.getMonth() === month) {
+                const dayPendings = task.pendingCompletions[dateStr];
+                if (Array.isArray(dayPendings)) {
+                    count += dayPendings.filter(u => u === user).length;
+                }
+            }
+        }
+    } else {
+        const completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+        const pendingCompletions = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
+        count = completions.filter(u => u === user).length + pendingCompletions.filter(u => u === user).length;
+    }
+
     return {
         count,
         required,
         isComplete: count >= required
     };
 }
+
+
