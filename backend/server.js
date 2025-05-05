@@ -1932,6 +1932,7 @@ app.post("/api/accept-offer", async (req, res) => {
 
 //- help notifications for userTasks.html 
 
+
 // POST /api/notifications - Create notifications for an offer
 app.post("/api/notifications", async (req, res) => {
   const { adminEmail, offer } = req.body;
@@ -2053,8 +2054,6 @@ app.delete("/api/notifications", async (req, res) => {
       res.status(500).json({ error: "Failed to clear notifications" });
   }
 });
-
-
 
 //- help notifications for userTasks.html
 
