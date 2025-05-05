@@ -1962,6 +1962,15 @@ app.post("/api/notifications", async (req, res) => {
       const users = Object.keys(adminUserDoc.permissions || {});
       console.log("POST /api/notifications - Users from permissions:", users);
 
+      // Filter users to exclude the offer creator
+      const notifiedUsers = users.filter(user => user !== offer.fromUser);
+      console.log(`POST /api/notifications - Notified users for ${offer.type}:`, notifiedUsers);
+
+      if (notifiedUsers.length === 0) {
+          console.log("POST /api/notifications - No users to notify after filtering");
+          return res.status(400).json({ success: false, error: "No users to notify" });
+      }
+
       // Prepare notification
       const notification = {
           offerType: offer.type,
@@ -1973,13 +1982,9 @@ app.post("/api/notifications", async (req, res) => {
       };
       admin.notifications = admin.notifications || [];
 
-      // Create notifications based on offer type
-      if (offer.type === "offerHelp") {
-          console.log("POST /api/notifications - Creating offerHelp notification for:", offer.fromUser);
-          admin.notifications.push({ ...notification, user: offer.fromUser });
-      } else if (offer.type === "needHelp") {
-          const notifiedUsers = users.filter(user => user !== offer.fromUser);
-          console.log("POST /api/notifications - Creating needHelp notifications for:", notifiedUsers);
+      // Create notifications for all notified users
+      if (offer.type === "offerHelp" || offer.type === "needHelp") {
+          console.log(`POST /api/notifications - Creating ${offer.type} notifications for:`, notifiedUsers);
           notifiedUsers.forEach(user => {
               admin.notifications.push({ ...notification, user });
           });
@@ -2002,8 +2007,6 @@ app.post("/api/notifications", async (req, res) => {
       return res.status(500).json({ success: false, error: err.message });
   }
 });
-
-
 
 
 
