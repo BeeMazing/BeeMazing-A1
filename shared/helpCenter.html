@@ -312,12 +312,12 @@
             text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         }
 
-        .type-selection, .setting-selection {
+        .type-selection {
             margin: 12px 0;
             text-align: left;
         }
 
-        .type-selection label, .setting-selection label {
+        .type-selection label {
             display: flex;
             align-items: center;
             margin: 10px 0;
@@ -327,6 +327,31 @@
             border-radius: 10px;
             transition: background 0.3s ease;
         }
+
+        .setting-selection {
+    margin: 12px 0;
+    text-align: left;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+
+.setting-selection label {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    font-size: 1rem;
+    padding: 8px;
+    border-radius: 10px;
+    transition: background 0.3s ease;
+    cursor: pointer;
+}
+
+
+
+
+
 
         .type-selection label:hover, .setting-selection label:hover {
             background: rgba(255, 202, 40, 0.15);
@@ -965,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center yeah1</div>
+        <div class="title">BeeMazing Help Center 1</div>
     </div>
 
     <div class="container">
@@ -1002,6 +1027,7 @@
                     </label>
                 </div>
                 <div id="offerForm" style="display: none;">
+                    <div id="helpModeSection" class="setting-selection" style="display: none;"></div>
                     <div class="task-selection" id="taskSelection"></div>
                     <select id="expireTime">
                         <option value="30">30 minutes</option>
@@ -1037,6 +1063,61 @@
 
 
     <script>
+
+        
+document.getElementById("submitOfferBtn").addEventListener("click", function () {
+    const selectedTasks = [];
+document.querySelectorAll('input[name="taskCheckbox"]:checked').forEach(checkbox => {
+  const title = checkbox.value;
+  const input = document.querySelector(`input[name="points_${title}"]`);
+  const reward = input ? parseInt(input.value) || 0 : 0;
+
+  selectedTasks.push({ title, reward });
+});
+
+if (selectedTasks.length === 0) {
+  alert("Please select at least one task.");
+  return;
+}
+
+  const selectedHelpType = localStorage.getItem("helpType"); // e.g. "offer" or "need"
+  const durationSelect = document.getElementById("durationSelect");
+  const durationMinutes = parseInt(durationSelect.value); // like 60 for 1 hour
+  const durationInMs = durationMinutes * 60 * 1000;
+
+  const offer = {
+    type: selectedHelpType,
+    tasks: selectedTasks,
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + durationInMs).toISOString(),
+    fromUser: localStorage.getItem("currentUserName") || "Anonymous"
+  };
+
+  const adminEmail = localStorage.getItem("currentAdminEmail");
+
+  fetch("https://your-backend.onrender.com/api/help-offers", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ adminEmail, offer })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      alert("Offer submitted!");
+      // Optionally: reset UI or redirect
+    } else {
+      alert("Error saving offer");
+    }
+  })
+  .catch(err => {
+    console.error("Error:", err);
+    alert("Failed to send offer");
+  });
+});
+
+
+
+
         document.addEventListener("DOMContentLoaded", () => {
             const addOfferBtn = document.getElementById("addOfferBtn");
             const addOfferModal = document.getElementById("addOfferModal");
@@ -1058,31 +1139,58 @@
             });
     
             cancelOfferBtn.addEventListener("click", () => {
-                addOfferModal.classList.remove("show");
-                offerForm.style.display = "none";
-            });
-    
-            proceedBtn.addEventListener("click", async () => {
-                const selectedType = document.querySelector('input[name="offerType"]:checked')?.value;
-                if (!selectedType) {
-                    alert("Please select Offer Help or Need Help");
-                    return;
-                }
-    
-                if (selectedType === "needHelp") {
-                    taskSelection.innerHTML = "<p>Loading your tasks...</p>";
-                    offerForm.style.display = "block";
-                    await loadTodaysTasks(currentUser);
-                } else {
-                    taskSelection.innerHTML = "<p>Loading available tasks to help with...</p>";
-                    offerForm.style.display = "block";
-                    await loadAllUncompletedTasks();
-                }
-    
-                submitOfferBtn.style.display = "inline-block";
-            });
-    
+    addOfferModal.classList.remove("show");
 
+    // Reset type selection
+    typeSelection.style.display = "block";
+    document.querySelectorAll('input[name="offerType"]').forEach(r => r.checked = false);
+
+    // Hide offer form and help mode
+    offerForm.style.display = "none";
+    helpModeSection.innerHTML = "";
+    helpModeSection.style.display = "none";
+
+    // Clear task selections and inputs
+    taskSelection.innerHTML = "";
+
+    // Hide buttons
+    proceedBtn.style.display = "inline-block";
+    submitOfferBtn.style.display = "none";
+});
+
+    
+            const helpModeSection = document.getElementById("helpModeSection");
+
+proceedBtn.addEventListener("click", async () => {
+    const selectedType = document.querySelector('input[name="offerType"]:checked')?.value;
+    if (!selectedType) {
+        alert("Please select Offer Help or Need Help");
+        return;
+    }
+
+    proceedBtn.style.display = "none";
+    typeSelection.style.display = "none";
+
+    // 🌟 Show the help/replace options dynamically
+    let html = "<label><input type='radio' name='helpMode' value='help'> ";
+    html += (selectedType === "offerHelp") ? "You can Help</label>" : "You need Help</label>";
+    html += "<label><input type='radio' name='helpMode' value='replace'> ";
+    html += (selectedType === "offerHelp") ? "You can Replace</label>" : "You need a Replacement</label>";
+    helpModeSection.innerHTML = html;
+    helpModeSection.style.display = "block";
+
+    if (selectedType === "needHelp") {
+        taskSelection.innerHTML = "<p>Loading your tasks...</p>";
+        offerForm.style.display = "block";
+        await loadTodaysTasks(currentUser);
+    } else {
+        taskSelection.innerHTML = "<p>Loading available tasks to help with...</p>";
+        offerForm.style.display = "block";
+        await loadAllUncompletedTasks();
+    }
+
+    submitOfferBtn.style.display = "inline-block";
+});
 
 
 
@@ -1188,9 +1296,11 @@ async function loadAllUncompletedTasks() {
                 const inputContainer = document.getElementById(`input_${checkbox.id}`);
                 if (checkbox.checked) {
                     inputContainer.style.display = "inline-block";
-                    inputContainer.innerHTML = `
-                        <input type="number" name="points_${checkbox.value}" min="0" style="width: 80px; margin-left: 5px;" placeholder="Get Points / Give Points" />
-                    `;
+                    const isNeedHelp = document.querySelector('input[name="offerType"]:checked')?.value === "needHelp";
+inputContainer.innerHTML = `
+    <input type="number" name="points_${checkbox.value}" min="0" style="width: 80px; margin-left: 5px;" placeholder="${isNeedHelp ? 'Give Points' : 'Get Points'}" />
+`;
+
                 } else {
                     inputContainer.innerHTML = "";
                     inputContainer.style.display = "none";

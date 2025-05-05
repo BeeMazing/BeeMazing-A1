@@ -1776,3 +1776,68 @@ app.get('/get-avatar', async (req, res) => {
 //-end point finish task to play avatar preview
 
 // Endpoint chooseAvatar.html //
+
+
+
+// StartPoint helpCenter.html //
+
+// ✅ Save a new help offer (Offer Help or Need Help)
+app.post("/api/help-offers", async (req, res) => {
+  const { adminEmail, offer } = req.body;
+
+  if (!adminEmail || !offer || !offer.type || !offer.description || !offer.expiresAt) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    const offers = admin?.helpOffers || [];
+
+    // Add the new offer
+    offers.push(offer);
+
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { helpOffers: offers } },
+      { upsert: true }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("🔥 Error saving help offer:", err);
+    res.status(500).json({ error: "Failed to save help offer" });
+  }
+});
+
+
+
+// ✅ Get all active help offers
+app.get("/api/help-offers", async (req, res) => {
+  const { adminEmail } = req.query;
+
+  if (!adminEmail) {
+    return res.status(400).json({ error: "Missing adminEmail" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+    const admin = await admins.findOne({ email: adminEmail });
+
+    const now = new Date();
+    const activeOffers = (admin?.helpOffers || []).filter(offer => {
+      return new Date(offer.expiresAt) > now;
+    });
+
+    res.json({ offers: activeOffers });
+  } catch (err) {
+    console.error("🔥 Error fetching help offers:", err);
+    res.status(500).json({ error: "Failed to fetch help offers" });
+  }
+});
+
+
+// Endpoint helpCenter.html //
