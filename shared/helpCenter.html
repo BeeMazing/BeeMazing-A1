@@ -746,7 +746,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 1</div>
+        <div class="title">BeeMazing Help Center 321312</div>
     </div>
 
     <div class="container">
@@ -924,64 +924,63 @@
                 return;
             }
 
+            let tasks = [];
             try {
-                const response = await fetch(`/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(currentUser)}`, {
+                const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
+                    cache: "no-store",
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
                     }
                 });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                if (!data.tasks || data.tasks.length === 0) {
-                    taskSelection.innerHTML = '<p>No tasks assigned to you today.</p>';
-                    return;
-                }
-
-                const today = new Date().toLocaleDateString('sv-SE');
-                const userTasks = data.tasks.filter(task => {
-                    const dateRange = task.date.split(' to ');
-                    const startDate = new Date(dateRange[0]);
-                    const endDate = new Date(dateRange[1] || '3000-01-01');
-                    const currentDate = new Date(today);
-                    return currentDate >= startDate && currentDate <= endDate && task.users.includes(currentUser);
-                });
-
-                if (userTasks.length === 0) {
-                    taskSelection.innerHTML = '<p>No tasks assigned to you today.</p>';
-                    return;
-                }
-
-                taskSelection.innerHTML = '';
-                userTasks.forEach(task => {
-                    const div = document.createElement('div');
-                    div.innerHTML = `
-                        <label>
-                            <input type="checkbox" value="${task.title}" data-date="${task.date}">
-                            ${task.title}
-                            <input type="number" min="1" placeholder="Points" style="display: none;">
-                        </label>
-                    `;
-                    taskSelection.appendChild(div);
-                });
-
-                taskSelection.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                    checkbox.addEventListener('change', (e) => {
-                        const pointsInput = e.target.nextElementSibling.nextElementSibling;
-                        pointsInput.style.display = e.target.checked ? 'inline-block' : 'none';
-                    });
-                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to fetch tasks');
+                tasks = data.tasks || [];
+                console.log('loadUserTasks tasks:', tasks.map(t => ({
+                    title: t.title,
+                    date: t.date,
+                    daysOfWeek: t.daysOfWeek,
+                    specificDays: t.specificDays,
+                    users: t.users
+                })));
             } catch (err) {
-                console.error('Error fetching tasks:', err);
+                console.error('Failed to fetch tasks from server:', err);
                 taskSelection.innerHTML = '<p>Failed to load tasks. Please try again later.</p>';
                 errorMessage.textContent = err.message || 'An error occurred while loading tasks.';
                 errorMessage.style.display = 'block';
+                return;
             }
+
+            const today = new Date().toLocaleDateString('sv-SE');
+            const userTasks = filterTasksForDate(tasks, today).filter(task => {
+                if (!task || !task.users || !task.title || !task.date) return false;
+                return task.users.includes(currentUser);
+            });
+
+            taskSelection.innerHTML = '';
+            if (userTasks.length === 0) {
+                taskSelection.innerHTML = '<p>No tasks assigned to you today.</p>';
+                return;
+            }
+
+            userTasks.forEach(task => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <label>
+                        <input type="checkbox" value="${task.title}" data-date="${task.date}">
+                        ${task.title}
+                        <input type="number" min="1" placeholder="Points" style="display: none;">
+                    </label>
+                `;
+                taskSelection.appendChild(div);
+            });
+
+            taskSelection.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    const pointsInput = e.target.nextElementSibling.nextElementSibling;
+                    pointsInput.style.display = e.target.checked ? 'inline-block' : 'none';
+                });
+            });
         }
 
         // Submit Offer
