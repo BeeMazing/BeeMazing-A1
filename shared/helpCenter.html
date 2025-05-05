@@ -990,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 888</div>
+        <div class="title">BeeMazing Help Center 1</div>
     </div>
 
     <div class="container">
@@ -1159,6 +1159,7 @@
         
             // Submit offer
 // Submit offer
+// Submit offer
 submitOfferBtn.addEventListener("click", async function () {
     const selectedTasks = [];
     document.querySelectorAll('input[name="taskCheckbox"]:checked').forEach(checkbox => {
@@ -1174,6 +1175,12 @@ submitOfferBtn.addEventListener("click", async function () {
     }
 
     const selectedHelpType = localStorage.getItem("helpType");
+    if (!selectedHelpType || !["offerHelp", "needHelp"].includes(selectedHelpType)) {
+        console.error("Invalid or missing help type:", selectedHelpType);
+        alert("Error: Invalid offer type. Please select Offer Help or Need Help and try again.");
+        return;
+    }
+
     const durationSelect = document.getElementById("expireTime");
     const durationMinutes = parseInt(durationSelect.value);
     const durationInMs = durationMinutes * 60 * 1000;
@@ -1186,6 +1193,11 @@ submitOfferBtn.addEventListener("click", async function () {
 
     if (!currentUser) {
         alert("Error: User not identified. Please return to the tasks page and try again.");
+        return;
+    }
+
+    if (!adminEmail) {
+        alert("Error: Admin email not found. Please log in again.");
         return;
     }
 
@@ -1202,12 +1214,21 @@ submitOfferBtn.addEventListener("click", async function () {
         fromUser: currentUser
     };
 
-    if (!adminEmail) {
-        alert("Error: Admin email not found. Please log in again.");
-        return;
-    }
+    const notificationPayload = {
+        adminEmail,
+        offer: {
+            type: selectedHelpType,
+            tasks: selectedTasks,
+            fromUser: currentUser,
+            expiresAt: offer.expiresAt
+        }
+    };
 
     try {
+        // Log the payload for debugging
+        console.log("Submitting offer with payload:", JSON.stringify({ adminEmail, offer }, null, 2));
+        console.log("Notification payload:", JSON.stringify(notificationPayload, null, 2));
+
         // Post the offer
         const offerRes = await fetch("https://beemazing.onrender.com/api/help-offers", {
             method: "POST",
@@ -1224,33 +1245,22 @@ submitOfferBtn.addEventListener("click", async function () {
         const notificationRes = await fetch("https://beemazing.onrender.com/api/notifications", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                adminEmail,
-                offer: {
-                    type: selectedHelpType,
-                    tasks: selectedTasks,
-                    fromUser: currentUser,
-                    expiresAt: offer.expiresAt
-                }
-            })
+            body: JSON.stringify(notificationPayload)
         });
         const notificationData = await notificationRes.json();
         console.log("Send notification response:", notificationData);
         if (!notificationRes.ok || !notificationData.success) {
-            console.warn("Notification failed to send:", notificationData.error);
-            // Continue even if notification fails
+            throw new Error(notificationData.error || "Failed to send notification");
         }
 
-        alert("Offer submitted!");
+        alert("Offer submitted successfully!");
         addOfferModal.classList.remove("show");
         loadOffers(selectedHelpType); // Reload offers for the current tab
     } catch (err) {
         console.error("Submit offer error:", err);
-        alert(`Failed to send offer: ${err.message}`);
+        alert(`Failed to submit offer: ${err.message}`);
     }
 });
-
-
 
 
 
