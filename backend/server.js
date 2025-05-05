@@ -1934,7 +1934,6 @@ app.post("/api/accept-offer", async (req, res) => {
 
 
 // POST /api/notifications - Create notifications for an offer
-// POST /api/notifications
 app.post("/api/notifications", async (req, res) => {
   const { adminEmail, offer } = req.body;
   try {
@@ -1947,10 +1946,7 @@ app.post("/api/notifications", async (req, res) => {
 
       const notifications = admin.notifications || [];
       const tasks = admin.tasks || [];
-      const users = Array.from(new Set(
-        (admin.tasks || []).flatMap(t => t.users || [])
-      ));
-      
+      const permissions = admin.permissions || {};
 
       const offerTasks = offer.tasks.map(t => t.title);
       const timestamp = new Date().toISOString();
@@ -1983,7 +1979,14 @@ app.post("/api/notifications", async (req, res) => {
               }
           }
       } else if (offer.type === "needHelp") {
-          for (const user of users) {
+          // Notify all non-admin users (including those not in any task)
+          const allUsers = Object.keys(permissions);
+          const nonAdminUsers = allUsers.filter(user => {
+              const perms = permissions[user];
+              return !(perms && perms.isAdmin);
+          });
+
+          for (const user of nonAdminUsers) {
               if (user !== offer.fromUser) {
                   notifications.push({
                       user,
@@ -2009,6 +2012,7 @@ app.post("/api/notifications", async (req, res) => {
       res.status(500).json({ error: "Failed to create notifications" });
   }
 });
+
 
 
 
