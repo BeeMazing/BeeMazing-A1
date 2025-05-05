@@ -965,7 +965,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center yeah</div>
+        <div class="title">BeeMazing Help Center yeah1</div>
     </div>
 
     <div class="container">
@@ -1087,8 +1087,8 @@
 
 
             async function loadTodaysTasks(userName) {
-    const today = new Date().toLocaleDateString("sv-SE"); // format: yyyy-mm-dd
-    taskSelection.innerHTML = ""; // clear previous
+    const today = new Date().toLocaleDateString("sv-SE");
+    taskSelection.innerHTML = "";
 
     try {
         const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
@@ -1101,7 +1101,6 @@
             task.date <= today
         );
 
-        // Deduplicate tasks by title
         const uniqueTasks = Array.from(new Map(
             todaysTasks.map(task => [task.title, task])
         ).values());
@@ -1122,19 +1121,17 @@
             taskSelection.appendChild(label);
         });
 
-        // Show input field for each selected task
-        const isNeedHelp = document.querySelector('input[name="offerType"]:checked')?.value === "needHelp";
+        // Hide the type selection after proceed
+        document.getElementById("typeSelection").style.display = "none";
 
+        // Set up checkbox listeners
         document.querySelectorAll('input[name="taskCheckbox"]').forEach(checkbox => {
             checkbox.addEventListener('change', () => {
                 const inputContainer = document.getElementById(`input_${checkbox.id}`);
                 if (checkbox.checked) {
                     inputContainer.style.display = "inline-block";
                     inputContainer.innerHTML = `
-                        <label>
-                            ${isNeedHelp ? "Give Points" : "Get Points"}:
-                            <input type="number" name="points_${checkbox.value}" min="0" style="width: 60px; margin-left: 5px;" />
-                        </label>
+                        <input type="number" name="points_${checkbox.value}" min="0" style="width: 80px; margin-left: 5px;" placeholder="Get Points / Give Points" />
                     `;
                 } else {
                     inputContainer.innerHTML = "";
@@ -1152,23 +1149,18 @@
 
 
 
-
-
-            
-
-            async function loadAllUncompletedTasks() {
+async function loadAllUncompletedTasks() {
     const today = new Date().toLocaleDateString("sv-SE");
-    taskSelection.innerHTML = ""; // Clear existing
+    taskSelection.innerHTML = "";
 
     try {
         const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
         const data = await res.json();
         const tasks = data.tasks || [];
 
+        // Remove duplicates by title
         const uniqueTasks = Array.from(new Map(
-            tasks
-                .filter(task => task.users && task.date && task.date <= today)
-                .map(task => [task.title, task])
+            tasks.filter(task => task.date && task.date <= today).map(task => [task.title, task])
         ).values());
 
         if (uniqueTasks.length === 0) {
@@ -1187,19 +1179,17 @@
             taskSelection.appendChild(label);
         });
 
-        // ✅ Add this block AFTER rendering checkboxes:
-        const isNeedHelp = document.querySelector('input[name="offerType"]:checked')?.value === "needHelp";
+        // Hide the type selection
+        document.getElementById("typeSelection").style.display = "none";
 
+        // Set up checkbox listeners
         document.querySelectorAll('input[name="taskCheckbox"]').forEach(checkbox => {
             checkbox.addEventListener('change', () => {
                 const inputContainer = document.getElementById(`input_${checkbox.id}`);
                 if (checkbox.checked) {
                     inputContainer.style.display = "inline-block";
                     inputContainer.innerHTML = `
-                        <label>
-                            ${isNeedHelp ? "Give Points" : "Get Points"}:
-                            <input type="number" name="points_${checkbox.value}" min="0" style="width: 60px; margin-left: 5px;" />
-                        </label>
+                        <input type="number" name="points_${checkbox.value}" min="0" style="width: 80px; margin-left: 5px;" placeholder="Get Points / Give Points" />
                     `;
                 } else {
                     inputContainer.innerHTML = "";
@@ -1214,6 +1204,7 @@
     }
 }
 
+            
 
 
 
