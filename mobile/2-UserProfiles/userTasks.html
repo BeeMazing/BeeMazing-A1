@@ -778,7 +778,7 @@ if (marketButton) {
 if (helpCenterBtn) {
   helpCenterBtn.addEventListener("click", () => {
     localStorage.setItem("lastHelpUser", userName);
-    const helpURL = `/BeeMazing-Y1/mobile/2-UserProfiles/helpCenter.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+    const helpURL = `/BeeMazing-Y1/shared/helpCenter.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
     window.location.href = helpURL;
   });
 }
