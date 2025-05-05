@@ -750,7 +750,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 1</div>
+        <div class="title">BeeMazing Help Center 777</div>
     </div>
 
     <div class="button-container">
@@ -877,12 +877,10 @@
         
 
 
-
             async function updateTaskSelection(offerType) {
     const tasks = await fetchTasks();
     const selectedDate = new Date().toISOString().split("T")[0];
     const currentUser = new URLSearchParams(window.location.search).get("user");
-
 
     taskSelection.innerHTML = "<h4>Select Tasks:</h4>";
 
@@ -909,34 +907,17 @@
             console.warn("Error computing turnData for task", task.title, e);
         }
 
-// Decide whether the task should be shown
-if (offerType === "offerHelp") {
-    // Show if not fully completed by anyone
-    showTask = !isFullyCompleted;
-} else if (offerType === "needHelp") {
-    // Show if this user is part of the task AND has uncompleted turns today
-    const userTurns = turnData.turns.filter(t => t.user === currentUser);
-    const uncompletedTurns = userTurns.filter(t => !t.isCompleted);
-    showTask = uncompletedTurns.length > 0;
-}
-
-
-        // Find current user's turn today
         let showTask = false;
 
-if (offerType === "offerHelp") {
-    showTask = !isFullyCompleted;
-} else if (offerType === "needHelp") {
-    const userTurns = turnData.turns.filter(t => t.user === currentUser);
-    if (userTurns.length > 0) {
-        // Show task if user has a turn today, even if not now, and hasn’t completed all turns
-        const notCompletedTurns = userTurns.filter(t => !t.isCompleted);
-        if (notCompletedTurns.length > 0) {
-            showTask = true;
+        if (offerType === "offerHelp") {
+            // Show if task is not fully completed
+            showTask = turnData.completedCount < turnData.requiredTimes;
+        } else if (offerType === "needHelp") {
+            // Show if current user has uncompleted turns
+            const userTurns = turnData.turns.filter(t => t.user === currentUser);
+            const uncompletedTurns = userTurns.filter(t => !t.isCompleted);
+            showTask = uncompletedTurns.length > 0;
         }
-    }
-}
-
 
         if (showTask) {
             const label = document.createElement("label");
@@ -951,14 +932,12 @@ if (offerType === "offerHelp") {
     }
 
     if (taskSelection.querySelectorAll('input[type="checkbox"]').length === 0) {
-
         const none = document.createElement("p");
         none.textContent = "No valid tasks available.";
         none.style.color = "#ccc";
         taskSelection.appendChild(none);
     }
 }
-
 
 
 
