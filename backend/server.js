@@ -1934,79 +1934,44 @@ app.post("/api/accept-offer", async (req, res) => {
 
 
 // POST /api/notifications - Create notifications for an offer
-// POST /api/notifications
 app.post("/api/notifications", async (req, res) => {
   const { adminEmail, offer } = req.body;
+  if (!adminEmail || !offer || !offer.type || !offer.fromUser || !offer.tasks) {
+      return res.status(400).json({ success: false, error: "Missing required fields" });
+  }
   try {
-      const db = await connectDB();
-      const admins = db.collection("admins");
-      const admin = await admins.findOne({ email: adminEmail });
+      const admin = await Admin.findOne({ email: adminEmail });
       if (!admin) {
-          return res.status(404).json({ error: "Admin not found" });
+          return res.status(404).json({ success: false, error: "Admin not found" });
       }
-
-      const notifications = admin.notifications || [];
-      const tasks = admin.tasks || [];
+      admin.notifications = admin.notifications || [];
       const users = Object.keys(admin.permissions || {});
-
-      const offerTasks = offer.tasks.map(t => t.title);
-      const timestamp = new Date().toISOString();
-
+      const notification = {
+          offerType: offer.type,
+          taskCount: offer.tasks.length,
+          tasks: offer.tasks,
+          offerUser: offer.fromUser,
+          timestamp: new Date(),
+          expiresAt: new Date(offer.expiresAt)
+      };
       if (offer.type === "offerHelp") {
-          const notifiedUsers = new Set();
-          for (const taskTitle of offerTasks) {
-              const task = tasks.find(t => t.title === taskTitle);
-              if (task && task.users) {
-                  for (const user of task.users) {
-                      if (user !== offer.fromUser && !notifiedUsers.has(user)) {
-                          const userTaskCount = offerTasks.filter(title => {
-                              const t = tasks.find(t => t.title === title);
-                              return t && t.users.includes(user);
-                          }).length;
-                          if (userTaskCount > 0) {
-                              notifications.push({
-                                  user,
-                                  offerType: offer.type,
-                                  taskCount: userTaskCount,
-                                  tasks: offerTasks,
-                                  offerUser: offer.fromUser,
-                                  timestamp,
-                                  expiresAt: offer.expiresAt
-                              });
-                              notifiedUsers.add(user);
-                          }
-                      }
-                  }
-              }
-          }
+          // Notify the offer creator only
+          admin.notifications.push({ ...notification, user: offer.fromUser });
       } else if (offer.type === "needHelp") {
-          for (const user of users) {
+          // Notify all users except the offer creator
+          users.forEach(user => {
               if (user !== offer.fromUser) {
-                  notifications.push({
-                      user,
-                      offerType: offer.type,
-                      taskCount: offerTasks.length,
-                      tasks: offerTasks,
-                      offerUser: offer.fromUser,
-                      timestamp,
-                      expiresAt: offer.expiresAt
-                  });
+                  admin.notifications.push({ ...notification, user });
               }
-          }
+          });
       }
-
-      await admins.updateOne(
-          { email: adminEmail },
-          { $set: { notifications } }
-      );
-
-      res.json({ success: true });
+      await admin.save();
+      return res.json({ success: true });
   } catch (err) {
-      console.error("Error creating notifications:", err);
-      res.status(500).json({ error: "Failed to create notifications" });
+      console.error("Error saving notification:", err);
+      return res.status(500).json({ success: false, error: err.message });
   }
 });
-
 
 
 

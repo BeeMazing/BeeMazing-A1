@@ -1382,12 +1382,15 @@ async function finishTask(currentUser, task, selectedDate) {
 
 
 
+
+
+
         async function loadNotifications(userName) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     const offerHelpBadge = document.getElementById("offerHelpBadge");
     const needHelpBadge = document.getElementById("needHelpBadge");
     if (!adminEmail || !userName) {
-        console.error("loadNotifications: Missing adminEmail or userName");
+        console.error("loadNotifications: Missing adminEmail or userName", { adminEmail, userName });
         offerHelpBadge.style.display = "none";
         needHelpBadge.style.display = "none";
         return;
@@ -1398,38 +1401,46 @@ async function finishTask(currentUser, task, selectedDate) {
             headers: { "Content-Type": "application/json" }
         });
         const data = await res.json();
-        console.log("Load notifications response:", data);
+        console.log("Load notifications response:", {
+            status: res.status,
+            success: data.success,
+            notifications: data.notifications?.map(n => ({
+                user: n.user,
+                offerType: n.offerType,
+                taskCount: n.taskCount,
+                expiresAt: n.expiresAt,
+                tasks: n.tasks
+            }))
+        });
         if (!res.ok) {
-            throw new Error(data.error || "Failed to fetch notifications");
+            throw new Error(data.error || `HTTP error ${res.status}`);
         }
-        const notifications = data.notifications || [];
+        const now = new Date();
+        const notifications = (data.notifications || []).filter(n => new Date(n.expiresAt) > now);
         if (notifications.length === 0) {
+            console.log("No valid notifications after filtering expired ones");
             offerHelpBadge.style.display = "none";
             needHelpBadge.style.display = "none";
             return;
         }
         const offerHelpNotifications = notifications.filter(n => n.offerType === "offerHelp");
         const needHelpNotifications = notifications.filter(n => n.offerType === "needHelp");
-        const offerHelpCount = offerHelpNotifications.reduce((sum, n) => sum + n.taskCount, 0);
-        const needHelpCount = needHelpNotifications.reduce((sum, n) => sum + n.taskCount, 0);
-        if (offerHelpCount > 0) {
-            offerHelpBadge.textContent = `(${offerHelpCount})`;
-            offerHelpBadge.style.display = "block";
-        } else {
-            offerHelpBadge.style.display = "none";
-        }
-        if (needHelpCount > 0) {
-            needHelpBadge.textContent = `(${needHelpCount})`;
-            needHelpBadge.style.display = "block";
-        } else {
-            needHelpBadge.style.display = "none";
-        }
+        const offerHelpCount = offerHelpNotifications.reduce((sum, n) => sum + (n.taskCount || 0), 0);
+        const needHelpCount = needHelpNotifications.reduce((sum, n) => sum + (n.taskCount || 0), 0);
+        console.log("Notification counts:", { offerHelpCount, needHelpCount });
+        offerHelpBadge.textContent = offerHelpCount > 0 ? `${offerHelpCount}` : "";
+        offerHelpBadge.style.display = offerHelpCount > 0 ? "block" : "none";
+        needHelpBadge.textContent = needHelpCount > 0 ? `${needHelpCount}` : "";
+        needHelpBadge.style.display = needHelpCount > 0 ? "block" : "none";
     } catch (err) {
         console.error("Failed to load notifications:", err.message);
         offerHelpBadge.style.display = "none";
         needHelpBadge.style.display = "none";
     }
 }
+
+
+
 
 
 
