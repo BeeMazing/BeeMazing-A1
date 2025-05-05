@@ -990,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 11</div>
+        <div class="title">BeeMazing Help Center AA1</div>
     </div>
 
     <div class="container">
@@ -1056,7 +1056,7 @@
     </div>
 
     <div class="footer">
-        <a href="userTasks.html" id="backLink">Back</a>
+        <a href="/BeeMazing-Y1/mobile/2-UserProfiles/userTasks.html?admin=${encodeURIComponent(localStorage.getItem('currentAdminEmail'))}&user=${encodeURIComponent(new URLSearchParams(window.location.search).get('user'))}" id="backLink">Back</a>
     </div>
 
 
@@ -1158,9 +1158,7 @@
             });
         
             // Submit offer
-// Submit offer
-// Submit offer
-submitOfferBtn.addEventListener("click", async function () {
+            submitOfferBtn.addEventListener("click", async function () {
     const selectedTasks = [];
     document.querySelectorAll('input[name="taskCheckbox"]:checked').forEach(checkbox => {
         const title = checkbox.value;
@@ -1255,13 +1253,13 @@ submitOfferBtn.addEventListener("click", async function () {
 
         alert("Offer submitted successfully!");
         addOfferModal.classList.remove("show");
-        loadOffers(selectedHelpType); // Reload offers for the current tab
+        const userTasksURL = `/BeeMazing-Y1/mobile/2-UserProfiles/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(currentUser)}&refreshNotifications=true`;
+        window.location.href = userTasksURL;
     } catch (err) {
         console.error("Submit offer error:", err);
         alert(`Failed to submit offer: ${err.message}`);
     }
 });
-
 
 
 

@@ -636,6 +636,9 @@
 
 /* Help Center notifications */
 
+
+
+/* Help Center notifications */
 #offerHelpBadge, #needHelpBadge {
     display: none;
     position: absolute;
@@ -649,18 +652,21 @@
     font-weight: 600;
     text-align: center;
     padding: 0 6px;
+    z-index: 10; /* Ensure badges are above button */
 }
 #offerHelpBadge {
     right: 20px;
     background: var(--cayenne-blue);
 }
 #needHelpBadge {
-    right: -10px;
+    right: -30px; /* Move further right to avoid overlap */
     background: var(--danger-color);
 }
 #offerHelpBadge.pulse, #needHelpBadge.pulse {
     animation: pulse 1s ease-in-out infinite;
 }
+
+
 @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.2); }
@@ -714,7 +720,7 @@
               <p><strong>Buzz Points:</strong> <span id="rewardAmount">0</span> 🍯</p>
           </div>
 
-          <div style="position: relative; display: inline-block; margin-bottom: 16px;">
+          <div style="position: relative; display: inline-block; margin-bottom: 16px; padding-right: 40px;">
             <button id="helpCenterBtn" class="finished-btn">Help Center</button>
             <span id="offerHelpBadge" class="pulse"></span>
             <span id="needHelpBadge" class="pulse"></span>
@@ -756,6 +762,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let adminEmail = urlParams.get('admin') || localStorage.getItem("currentAdminEmail");
     const userName = urlParams.get('user');
     const addPoints = Number(urlParams.get('addPoints')) || 0;
+    const refreshNotifications = urlParams.get('refreshNotifications') === 'true';
 
     if (adminEmail && adminEmail !== "null") {
         localStorage.setItem("currentAdminEmail", adminEmail);
@@ -797,6 +804,10 @@ document.addEventListener("DOMContentLoaded", () => {
         loadUserTasks(userName);
         loadUserReward(userName);
         loadNotifications(userName); // Load notifications on page load
+        if (refreshNotifications) {
+            console.log("DOMContentLoaded: Forcing notification reload due to refreshNotifications=true");
+            loadNotifications(userName); // Force reload if coming from helpCenter.html
+        }
 
         const helpCenterBtn = document.getElementById("helpCenterBtn");
         if (helpCenterBtn) {
@@ -1378,7 +1389,18 @@ async function finishTask(currentUser, task, selectedDate) {
         });
 
 
-
+// Handle cached pages (e.g., back button navigation)
+window.addEventListener("pageshow", (event) => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userName = urlParams.get('user');
+    const adminEmail = urlParams.get('admin') || localStorage.getItem("currentAdminEmail");
+    if (event.persisted || performance.getEntriesByType("navigation")[0]?.type === "back_forward") {
+        console.log("pageshow: Reloading notifications due to back/forward navigation");
+        if (userName && adminEmail) {
+            loadNotifications(userName);
+        }
+    }
+});
 
 
 
