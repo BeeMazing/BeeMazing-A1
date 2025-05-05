@@ -1118,12 +1118,14 @@ if (editTask.specificDates) {
     // For non-edit mode, initialize user list
     populateUsers();
     // Set default date mode to From - To
-    document.getElementById("dateModeSelection").value = "from-to";
-    document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
-    document.querySelector(".mode-btn[data-mode='from-to']").classList.add("active");
-    document.getElementById("fromToDateGroup").style.display = "block";
-    document.getElementById("specificDatesGroup").style.display = "none";
-    document.getElementById("specificDaysGroup").style.display = "none";
+// ✅ Set default date mode to "Date" (not "from-to")
+document.getElementById("dateModeSelection").value = "date";
+document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
+document.querySelector(".mode-btn[data-mode='date']").classList.add("active");
+document.getElementById("fromToDateGroup").style.display = "block";
+document.getElementById("specificDatesGroup").style.display = "none";
+document.getElementById("specificDaysGroup").style.display = "block";
+
 }
 });
 
