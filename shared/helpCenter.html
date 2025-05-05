@@ -965,7 +965,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center aAAAA</div>
+        <div class="title">BeeMazing Help Center 1</div>
     </div>
 
     <div class="container">
@@ -1036,11 +1036,88 @@
 
 
 
-     <script>
-
-
-
-     </script>   
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const addOfferBtn = document.getElementById("addOfferBtn");
+            const addOfferModal = document.getElementById("addOfferModal");
+            const cancelOfferBtn = document.getElementById("cancelOfferBtn");
+            const typeSelection = document.getElementById("typeSelection");
+            const offerForm = document.getElementById("offerForm");
+            const proceedBtn = document.getElementById("proceedBtn");
+            const taskSelection = document.getElementById("taskSelection");
+            const submitOfferBtn = document.getElementById("submitOfferBtn");
+        
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentUser = urlParams.get("user");
+            const adminEmail = urlParams.get("admin");
+        
+            addOfferBtn.addEventListener("click", () => {
+                addOfferModal.classList.add("show");
+                offerForm.style.display = "none";
+                document.querySelectorAll('input[name="offerType"]').forEach(r => r.checked = false);
+            });
+        
+            cancelOfferBtn.addEventListener("click", () => {
+                addOfferModal.classList.remove("show");
+                offerForm.style.display = "none";
+            });
+        
+            proceedBtn.addEventListener("click", async () => {
+                const selectedType = document.querySelector('input[name="offerType"]:checked')?.value;
+                if (!selectedType) {
+                    alert("Please select Offer Help or Need Help");
+                    return;
+                }
+        
+                if (selectedType === "needHelp") {
+                    taskSelection.innerHTML = "<p>Loading your tasks...</p>";
+                    offerForm.style.display = "block";
+                    await loadTodaysTasks(currentUser);
+                } else {
+                    taskSelection.innerHTML = "<p>Coming soon: Custom Offer Help form</p>";
+                    offerForm.style.display = "block";
+                }
+        
+                submitOfferBtn.style.display = "inline-block";
+            });
+        
+            async function loadTodaysTasks(userName) {
+                const today = new Date().toLocaleDateString("sv-SE"); // format: yyyy-mm-dd
+                taskSelection.innerHTML = ""; // clear previous
+        
+                try {
+                    const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+                    const data = await res.json();
+                    const tasks = data.tasks || [];
+        
+                    const todaysTasks = tasks.filter(task =>
+                        task.users.includes(userName) &&
+                        task.date &&
+                        task.date <= today // assuming tasks show up on or after their start date
+                    );
+        
+                    if (todaysTasks.length === 0) {
+                        taskSelection.innerHTML = "<p>No tasks found for today.</p>";
+                        return;
+                    }
+        
+                    todaysTasks.forEach(task => {
+                        const taskId = `task_${task.title.replace(/\s+/g, "_")}`;
+                        const label = document.createElement("label");
+                        label.innerHTML = `
+                            <input type="checkbox" name="taskCheckbox" value="${task.title}" id="${taskId}">
+                            ${task.title} — ${task.reward || 0} 🍯
+                        `;
+                        taskSelection.appendChild(label);
+                    });
+                } catch (err) {
+                    console.error("Failed to load tasks:", err);
+                    taskSelection.innerHTML = "<p>Error loading tasks.</p>";
+                }
+            }
+        });
+        </script>
+        
 
 
 
