@@ -750,7 +750,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 2</div>
+        <div class="title">BeeMazing Help Center 5</div>
     </div>
 
     <div class="button-container">
@@ -885,7 +885,8 @@ if (currentUser) {
             async function updateTaskSelection(offerType) {
     const tasks = await fetchTasks();
     const selectedDate = new Date().toISOString().split("T")[0]; // use today
-    const currentUser = localStorage.getItem("currentUser");
+    const currentUser = new URLSearchParams(window.location.search).get("user");
+
 
     taskSelection.innerHTML = "<h4>Select Tasks:</h4>";
 
