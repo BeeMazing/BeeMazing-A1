@@ -744,11 +744,13 @@
             transform: translateY(-3px);
             box-shadow: 0 6px 12px rgba(255, 202, 40, 0.4);
         }
+
+        /* /////////////////////////////////////////////////////////////////////////////////////////// */
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center</div>
+        <div class="title">BeeMazing Help Center 1</div>
     </div>
 
     <div class="button-container">
@@ -874,60 +876,66 @@
 
 
             async function updateTaskSelection(offerType) {
-    const tasks = await fetchTasks();
-    taskSelection.innerHTML = "";
-    const title = document.createElement("h4");
-    title.textContent = "Select Tasks:";
-    taskSelection.appendChild(title);
-
+    const tasks = await fetchTasks(); // your backend call
     const selectedDate = document.querySelector(".day.selected")?.dataset.date;
-    const visibleTasks = [];
+    const currentUser = localStorage.getItem("currentUser"); // or however you get it
+    taskSelection.innerHTML = "<h4>Select Tasks:</h4>";
+
+    const adminEmail = localStorage.getItem("currentAdminEmail");
 
     for (const task of tasks) {
         if (!task || !task.title || !task.date || !Array.isArray(task.users) || task.users.length === 0) continue;
 
-        const completions = task.completions?.[selectedDate] || [];
-        const hasUserCompleted = completions.includes(currentUser);
-        const totalCompletions = completions.length;
+        let turnData = { requiredTimes: 1, completedCount: 0, turns: [] };
 
-        // Determine required completions
-        let required = 1;
-        if (task.repeat === "Daily") required = task.timesPerDay || 1;
-        if (task.repeat === "Weekly") required = task.timesPerWeek || 1;
-        if (task.repeat === "Monthly") required = task.timesPerMonth || 1;
-
-        let shouldInclude = false;
-
-        if (offerType === "offerHelp") {
-            // Only show if NOT fully completed by anyone
-            shouldInclude = totalCompletions < required;
-        } else if (offerType === "needHelp") {
-            // Only show if currentUser hasn't completed it
-            shouldInclude = task.users.includes(currentUser) && !hasUserCompleted;
+        try {
+            if (task.settings?.includes("Rotation") && typeof mixedTurnData === "function") {
+                turnData = mixedTurnData(task, selectedDate);
+            } else if (task.settings?.includes("Individual") && typeof individualTurnData === "function") {
+                turnData = individualTurnData(task, selectedDate);
+            } else {
+                const completions = task.completions?.[selectedDate] || [];
+                turnData.completedCount = completions.length;
+                turnData.requiredTimes = 1;
+            }
+        } catch (e) {
+            console.warn("Error computing turnData for task", task.title, e);
         }
 
-        if (shouldInclude) visibleTasks.push(task);
+        const isFullyCompleted = turnData.completedCount >= turnData.requiredTimes;
+        const hasUserCompleted = turnData.turns?.some(t => t.user === currentUser && (t.isCompleted || t.isPending));
+
+        // Show only relevant tasks
+        let showTask = false;
+        if (offerType === "offerHelp") {
+            showTask = !isFullyCompleted;
+        } else if (offerType === "needHelp") {
+            showTask = task.users.includes(currentUser) && !hasUserCompleted;
+        }
+
+        if (showTask) {
+            const label = document.createElement("label");
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.name = "selectedTasks";
+            checkbox.value = task.title;
+            label.appendChild(checkbox);
+            label.append(` ${task.title} ${task.reward ? `(${task.reward} 🍯)` : ""}`);
+            taskSelection.appendChild(label);
+        }
     }
 
-    if (visibleTasks.length === 0) {
+    if (taskSelection.children.length === 1) {
         const none = document.createElement("p");
         none.textContent = "No valid tasks available.";
         none.style.color = "#ccc";
         taskSelection.appendChild(none);
-        return;
-    }
-
-    for (const task of visibleTasks) {
-        const label = document.createElement("label");
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.name = "selectedTasks";
-        checkbox.value = task.title;
-        label.appendChild(checkbox);
-        label.append(` ${task.title} ${task.reward ? `(${task.reward} 🍯)` : ""}`);
-        taskSelection.appendChild(label);
     }
 }
+
+
+
+
 
 
 
