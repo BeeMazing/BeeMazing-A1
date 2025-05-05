@@ -750,7 +750,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 77</div>
+        <div class="title">BeeMazing Help Center 1</div>
     </div>
 
     <div class="button-container">
@@ -909,7 +909,17 @@
             console.warn("Error computing turnData for task", task.title, e);
         }
 
-        const isFullyCompleted = turnData.completedCount >= turnData.requiredTimes;
+// Decide whether the task should be shown
+if (offerType === "offerHelp") {
+    // Show if not fully completed by anyone
+    showTask = !isFullyCompleted;
+} else if (offerType === "needHelp") {
+    // Show if this user is part of the task AND has uncompleted turns today
+    const userTurns = turnData.turns.filter(t => t.user === currentUser);
+    const uncompletedTurns = userTurns.filter(t => !t.isCompleted);
+    showTask = uncompletedTurns.length > 0;
+}
+
 
         // Find current user's turn today
         let showTask = false;
@@ -940,7 +950,8 @@ if (offerType === "offerHelp") {
         }
     }
 
-    if (taskSelection.children.length === 1) {
+    if (taskSelection.querySelectorAll('input[type="checkbox"]').length === 0) {
+
         const none = document.createElement("p");
         none.textContent = "No valid tasks available.";
         none.style.color = "#ccc";
