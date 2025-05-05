@@ -990,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 11111</div>
+        <div class="title">BeeMazing Help Center 1</div>
     </div>
 
     <div class="container">
@@ -1080,8 +1080,9 @@
             const currentUser = urlParams.get("user");
             const adminEmail = urlParams.get("admin") || localStorage.getItem("currentAdminEmail");
         
-            // Log adminEmail for debugging
+            // Log for debugging
             console.log("Admin Email:", adminEmail);
+            console.log("Current User:", currentUser);
         
             // Initialize offers on page load
             loadOffers();
@@ -1192,7 +1193,7 @@
                     description: description,
                     createdAt: new Date().toISOString(),
                     expiresAt: new Date(Date.now() + durationInMs).toISOString(),
-                    fromUser: localStorage.getItem("currentUserName") || "Anonymous"
+                    fromUser: currentUser || "Anonymous" // Use currentUser directly
                 };
         
                 if (!adminEmail) {
@@ -1329,7 +1330,7 @@
                 }, { once: true });
             }
         
-            // Function to delete an offer (optional, implement if needed)
+            // Function to delete an offer
             async function deleteOffer(index, tab) {
                 if (!adminEmail) {
                     alert("Error: Admin email not found.");
@@ -1490,7 +1491,6 @@
             }
         });
         </script>
-
 
 
 </body>
