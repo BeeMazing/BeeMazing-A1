@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#FFC107">
+    <title>BeeMazing Help Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #FFC107;
+            --secondary-color: #212121;
+            --accent-color: #2C2F3A;
+            --light-bg: #1E1F26;
+            --text-color: #FFFFFF;
+            --danger-color: #D32F2F;
+            --secondary-accent: #FFCA28;
+            --modal-bg: rgba(33, 33, 33, 0.85);
+            --modal-blur: blur(5px);
+            --header-height: 64px;
+            --footer-height: 70px;
+            --border-dark: #444754;
+            --light-text: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Inter', 'Poppins', Arial, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            min-height: 100vh;
+            overflow-y: auto;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .header {
+            background: linear-gradient(180deg, var(--secondary-color), #2A2B32);
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: var(--header-height);
+            z-index: 100;
+        }
+
+        .title {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--primary-color);
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        .title:hover {
+            transform: scale(1.05);
+        }
+
+        .title::before {
+            content: '🐝 ';
+            font-size: 28px;
+            margin-right: 8px;
+        }
+
+        .container {
+            padding: 0 24px 24px;
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+            margin: calc(var(--header-height) + 24px) auto calc(var(--footer-height) + 24px) auto;
+        }
+
+        .button-container {
+            position: relative;
+            text-align: center;
+            margin-bottom: 2.5rem;
+            padding-top: 16px;
+            z-index: 150;
+        }
+
+
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin: 1.2rem 0;
+            color: var(--primary-color);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .add-offer-btn {
+            display: block;
+            margin: 48px auto 0;
+            padding: 14px 28px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-accent));
+            color: var(--secondary-color);
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        .add-offer-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(255, 202, 40, 0.4);
+        }
+
+        .tab-container {
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .tab-button {
+            flex: 1;
+            min-width: 130px;
+            padding: 10px 18px;
+            background: linear-gradient(45deg, var(--secondary-color), #2A2B32);
+            color: var(--primary-color);
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+            box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .tab-button.active {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-accent));
+            color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(255, 202, 40, 0.4);
+        }
+
+        .tab-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(255, 202, 40, 0.3);
+        }
+
+        .tab-underline {
+            position: absolute;
+            bottom: 0;
+            height: 3px;
+            background: var(--secondary-accent);
+            transition: left 0.3s ease, width 0.3s ease;
+        }
+
+        .tab-content {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .no-offers {
+            font-size: 1rem;
+            color: var(--text-color);
+            opacity: 0.7;
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 202, 40, 0.05);
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .offer-list {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+        }
+
+        .offer-list-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            background: #2A2B32;
+            padding: 16px;
+            margin: 12px 0;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            position: relative;
+        }
+
+        .offer-list-item::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 14px;
+            background: linear-gradient(45deg, var(--primary-color), transparent);
+            z-index: -1;
+        }
+
+        .offer-list-item:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 20px rgba(255, 202, 40, 0.3);
+        }
+
+        .offer-content {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            text-align: left;
+        }
+
+        .timer {
+            font-size: 0.95rem;
+            color: var(--primary-color);
+            margin-left: 12px;
+            white-space: nowrap;
+            animation: tick 1s infinite;
+        }
+
+        .delete-offer-btn {
+            background: var(--danger-color);
+            color: var(--text-color);
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 28px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .delete-offer-btn:hover {
+            background: #B71C1C;
+            transform: rotate(90deg);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-bg);
+            backdrop-filter: var(--modal-blur);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: radial-gradient(circle at center, #2A2B32, #35373F);
+            padding: 24px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 75vh;
+            overflow-y: auto;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(255, 202, 40, 0.2);
+            border: 2px solid var(--primary-color);
+            color: var(--text-color);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .modal.show .modal-content {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .modal-content h3 {
+            color: var(--primary-color);
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 18px;
+            letter-spacing: 0.5px;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .type-selection, .setting-selection {
+            margin: 12px 0;
+            text-align: left;
+        }
+
+        .type-selection label, .setting-selection label {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 1rem;
+            color: var(--text-color);
+            padding: 8px;
+            border-radius: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .type-selection label:hover, .setting-selection label:hover {
+            background: rgba(255, 202, 40, 0.15);
+        }
+
+        .type-selection input[type="radio"], .setting-selection input[type="radio"] {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            background: #3A3D4A;
+            border: 2px solid var(--border-dark);
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            transition: border-color 0.3s ease;
+        }
+
+        .type-selection input[type="radio"]:checked::before, .setting-selection input[type="radio"]:checked::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: var(--secondary-accent);
+            border-radius: 50%;
+        }
+
+        .task-selection {
+            margin: 12px 0;
+            text-align: left;
+        }
+
+        .task-selection label {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 1rem;
+            color: var(--text-color);
+            padding: 8px;
+            border-radius: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .task-selection label:hover {
+            background: rgba(255, 202, 40, 0.15);
+        }
+
+        .task-selection input[type="checkbox"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    background: #3A3D4A;
+    border: 2px solid var(--border-dark);
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.task-selection input[type="checkbox"]:checked {
+    background: var(--secondary-accent);
+    border-color: var(--secondary-accent);
+}
+
+.task-selection input[type="checkbox"]:checked::before {
+    content: '\2714';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--secondary-color);
+    font-size: 14px;
+    font-weight: bold;
+}
+
+        .task-selection input[type="number"] {
+            width: 130px;
+            padding: 12px;
+            margin-left: 14px;
+            background: #3A3D4A;
+            color: var(--text-color);
+            border: 2px solid var(--border-dark);
+            border-radius: 10px;
+            outline: none;
+            font-size: 0.95rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .task-selection input[type="number"]::placeholder {
+            font-size: 0.95rem;
+            color: #BBBBBB;
+        }
+
+        .task-selection input[type="number"]:focus,
+        .task-selection input[type="number"]:hover {
+            border-color: var(--secondary-accent);
+            box-shadow: 0 0 8px rgba(255, 202, 40, 0.3);
+        }
+
+        .modal-content select {
+            width: 100%;
+            padding: 12px;
+            margin: 12px 0;
+            background: #3A3D4A;
+            color: var(--text-color);
+            border: 2px solid var(--border-dark);
+            border-radius: 10px;
+            font-size: 1rem;
+            outline: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .modal-content select:focus,
+        .modal-content select:hover {
+            border-color: var(--secondary-accent);
+            box-shadow: 0 0 8px rgba(255, 202, 40, 0.3);
+        }
+
+        .modal-content #errorMessage {
+            color: var(--danger-color);
+            font-size: 0.9rem;
+            background: rgba(211, 47, 47, 0.25);
+            padding: 8px;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .modal-content .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .modal-content button {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .modal-content #submitOfferBtn, .modal-content #proceedBtn {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-accent));
+            color: var(--secondary-color);
+        }
+
+        .modal-content #submitOfferBtn:hover, .modal-content #proceedBtn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(255, 202, 40, 0.4);
+        }
+
+        .modal-content #cancelOfferBtn {
+            background: var(--danger-color);
+            color: #FFFFFF;
+        }
+
+        .modal-content #cancelOfferBtn:hover {
+            background: #B71C1C;
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(211, 47, 47, 0.4);
+        }
+
+        .modal-content #viewOfferTitle {
+            color: var(--primary-color);
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 18px;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-content #viewOfferTasks {
+            margin: 12px 0;
+            text-align: left;
+        }
+
+        .modal-content .accept-task-btn {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-accent));
+            color: var(--secondary-color);
+        }
+
+        .modal-content .accept-task-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(255, 202, 40, 0.4);
+        }
+
+        .modal-content #closeOfferBtn {
+            background: linear-gradient(45deg, var(--secondary-color), #2A2B32);
+            color: var(--primary-color);
+        }
+
+        .modal-content #closeOfferBtn:hover {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-accent));
+            color: var(--secondary-color);
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(255, 202, 40, 0.4);
+        }
+
+        .task-details {
+            display: flex;
+            flex-direction: column;
+            margin: 12px 0;
+            text-align: left;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255, 202, 40, 0.05);
+        }
+
+        .task-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .task-points {
+            font-size: 0.95rem;
+            color: var(--primary-color);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .you-receive {
+            font-size: 0.95rem;
+            color: var(--danger-color);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .accept-task-btn {
+            padding: 10px 20px;
+            margin-top: 10px;
+            font-size: 0.95rem;
+            border-radius: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 202, 40, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(255, 202, 40, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 202, 40, 0); }
+        }
+
+        @keyframes tick {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes listItemEnter {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 0 16px 16px;
+            }
+
+            .modal-content {
+                padding: 18px;
+                width: 92%;
+                border-radius: 12px;
+                max-width: 360px;
+            }
+
+            .modal-content h3,
+            .modal-content #viewOfferTitle {
+                font-size: 1.4rem;
+            }
+
+            .type-selection label,
+            .setting-selection label,
+            .task-selection label {
+                font-size: 0.95rem;
+                padding: 6px;
+            }
+
+            .type-selection input[type="radio"],
+            .setting-selection input[type="radio"],
+            .task-selection input[type="checkbox"] {
+                width: 18px;
+                height: 18px;
+            }
+
+            .task-selection input[type="number"] {
+                width: 120px;
+                padding: 10px;
+                font-size: 0.9rem;
+            }
+
+            .task-selection input[type="number"]::placeholder {
+                font-size: 0.9rem;
+            }
+
+            .modal-content select {
+                padding: 10px;
+                font-size: 0.95rem;
+            }
+
+            .modal-content .button-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .modal-content button {
+                padding: 12px 24px;
+                font-size: 0.95rem;
+            }
+
+            .accept-task-btn {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+
+            .offer-list-item {
+                padding: 12px;
+            }
+
+            .task-name {
+                font-size: 1rem;
+            }
+
+            .task-points,
+            .you-receive {
+                font-size: 0.9rem;
+            }
+
+            .timer {
+                font-size: 0.85rem;
+            }
+
+            .add-offer-btn {
+                margin: 20px auto 0;
+                padding: 12px 24px;
+                font-size: 0.95rem;
+            }
+
+            .button-container {
+                position: relative;
+                text-align: center;
+                padding-top: 64px;
+                z-index: 150;
+            }
+
+            .user-select {
+                width: 100px;
+                margin: 2px;
+                font-size: 0.9rem;
+                padding: 10px 12px;
+                z-index: 200;
+            }
+
+            .tab-button {
+                min-width: 110px;
+                padding: 8px 12px;
+                font-size: 0.9rem;
+            }
+
+            .header {
+                padding: 16px;
+            }
+
+            .title {
+                font-size: 24px;
+            }
+        }
+
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(180deg, #2A2B32, var(--secondary-color));
+            padding: 12px 0;
+            box-shadow: 0 -6px 12px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            height: var(--footer-height);
+        }
+
+        .footer a {
+            padding: 14px 28px;
+            background: linear-gradient(45deg, var(--secondary-color), #2A2B32);
+            color: var(--primary-color);
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .footer a:hover {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-accent));
+            color: var(--secondary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(255, 202, 40, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">BeeMazing Help Center</div>
+    </div>
+
+    <div class="button-container">
+        <button class="add-offer-btn" id="addOfferBtn">Add Offer</button>
+    </div>
+    
+        <h2>Active Offers</h2>
+        <div class="tab-container">
+            <button class="tab-button active" data-tab="offerHelp">Offers Help</button>
+            <button class="tab-button" data-tab="needHelp">Needs Help</button>
+            <div class="tab-underline"></div>
+        </div>
+        <div class="tab-content active" id="offerHelpList">
+            <ul class="offer-list"></ul>
+            <div class="no-offers" style="display: none;">No offers available</div>
+        </div>
+        <div class="tab-content" id="needHelpList">
+            <ul class="offer-list"></ul>
+            <div class="no-offers" style="display: none;">No offers available</div>
+        </div>
+    </div>
+
+    <div class="modal" id="addOfferModal">
+        <div class="modal-content">
+            <form id="addOfferForm">
+                <h3>Add Offer</h3>
+                <div class="type-selection" id="typeSelection">
+                    <label>
+                        <input type="radio" name="offerType" value="offerHelp"> Offer Help
+                    </label>
+                    <label>
+                        <input type="radio" name="offerType" value="needHelp"> Need Help
+                    </label>
+                </div>
+                <div id="offerForm" style="display: none;">
+                    <div class="setting-selection" id="settingSelection"></div>                    <div class="task-selection" id="taskSelection"></div>
+                    <select id="expireTime">
+                        <option value="30">30 minutes</option>
+                        <option value="60">1 hour</option>
+                        <option value="120">2 hours</option>
+                        <option value="360">6 hours</option>
+                        <option value="1440">24 hours</option>
+                    </select>
+                    <p id="errorMessage" style="display: none;"></p>
+                </div>
+                <div class="button-group">
+                    <button type="button" id="proceedBtn" style="display: none;">Proceed</button>
+                    <button type="button" id="submitOfferBtn" style="display: none;">Submit Offer</button>
+                    <button type="button" id="cancelOfferBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="footer" id="footer">
+        <a href="#" id="backLink">Back</a>
+    </div>
+ 
+    <div class="modal" id="viewOfferModal">
+        <div class="modal-content">
+            <h3 id="viewOfferTitle">Offer Details</h3>
+            <div id="viewOfferTasks"></div>
+            <button id="closeOfferBtn">Close</button>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const typeRadios = document.querySelectorAll('input[name="offerType"]');
+            const settingSelection = document.getElementById("settingSelection");
+            const taskSelection = document.getElementById("taskSelection");
+            const offerForm = document.getElementById("offerForm");
+            const proceedBtn = document.getElementById("proceedBtn");
+            const submitOfferBtn = document.getElementById("submitOfferBtn");
+            const cancelOfferBtn = document.getElementById("cancelOfferBtn");
+            const addOfferBtn = document.getElementById("addOfferBtn");
+            const addOfferModal = document.getElementById("addOfferModal");
+        
+            const currentUser = new URLSearchParams(window.location.search).get("user");
+            const currentAdmin = localStorage.getItem("currentAdminEmail");
+        
+            if (!currentAdmin) {
+                const email = prompt("Please enter your admin email:");
+                if (email) localStorage.setItem("currentAdminEmail", email.trim());
+            }
+        
+            addOfferBtn.addEventListener("click", () => {
+                addOfferModal.classList.add("show");
+                offerForm.style.display = "none";
+                proceedBtn.style.display = "none";
+                submitOfferBtn.style.display = "none";
+                typeRadios.forEach(r => r.checked = false);
+                taskSelection.innerHTML = "";
+                settingSelection.innerHTML = "";
+            });
+        
+            cancelOfferBtn.addEventListener("click", () => {
+                addOfferModal.classList.remove("show");
+            });
+        
+            proceedBtn.addEventListener("click", async () => {
+                offerForm.style.display = "block";
+                submitOfferBtn.style.display = "inline-block";
+                proceedBtn.style.display = "none";
+        
+                const offerType = document.querySelector('input[name="offerType"]:checked')?.value;
+                if (offerType) {
+                    await updateTaskSelection(offerType);
+                }
+            });
+        
+            async function fetchTasks() {
+                const adminEmail = localStorage.getItem("currentAdminEmail");
+                if (!adminEmail) return [];
+        
+                const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+                const data = await res.json();
+                return data.tasks || [];
+            }
+        
+            async function updateTaskSelection(offerType) {
+                const tasks = await fetchTasks();
+                taskSelection.innerHTML = "";
+                const title = document.createElement("h4");
+                title.textContent = "Select Tasks:";
+                taskSelection.appendChild(title);
+        
+                const filteredTasks = tasks.filter(task => {
+                    if (!task || !Array.isArray(task.users)) return false;
+                    return offerType === "offerHelp" || task.users.includes(currentUser);
+                });
+        
+                if (filteredTasks.length === 0) {
+                    const none = document.createElement("p");
+                    none.textContent = "No tasks available.";
+                    none.style.color = "#ccc";
+                    taskSelection.appendChild(none);
+                    return;
+                }
+        
+                for (const task of filteredTasks) {
+                    const label = document.createElement("label");
+                    const checkbox = document.createElement("input");
+                    checkbox.type = "checkbox";
+                    checkbox.name = "selectedTasks";
+                    checkbox.value = task.title;
+                    label.appendChild(checkbox);
+                    label.append(` ${task.title} ${task.reward ? `(${task.reward} 🍯)` : ""}`);
+                    taskSelection.appendChild(label);
+                }
+            }
+        
+            typeRadios.forEach(radio => {
+                radio.addEventListener("change", () => {
+                    proceedBtn.style.display = "inline-block";
+                    offerForm.style.display = "none";
+                    submitOfferBtn.style.display = "none";
+                });
+            });
+        
+            submitOfferBtn.addEventListener("click", async () => {
+                const offerType = document.querySelector('input[name="offerType"]:checked')?.value;
+                if (!offerType) return alert("Please select offer type");
+        
+                const selectedTasks = [...document.querySelectorAll('input[name="selectedTasks"]:checked')].map(cb => cb.value);
+                const expireTime = document.getElementById("expireTime").value;
+        
+                if (selectedTasks.length === 0) return alert("Please select at least one task");
+        
+                const newOffer = {
+                    type: offerType,
+                    tasks: selectedTasks,
+                    user: currentUser,
+                    adminEmail: currentAdmin,
+                    expireInMinutes: parseInt(expireTime)
+                };
+        
+                console.log("Submitting offer:", newOffer);
+                // TODO: send to backend if needed
+        
+                addOfferModal.classList.remove("show");
+                alert("Offer created successfully!");
+            });
+        });
+        </script>
+        
+
+    
+
+
+</body>
+</html>
