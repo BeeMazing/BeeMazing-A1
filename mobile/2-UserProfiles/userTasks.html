@@ -674,6 +674,9 @@
             <div class="reward-container">
               <p><strong>Buzz Points:</strong> <span id="rewardAmount">0</span> 🍯</p>
           </div>
+
+          <button id="helpCenterBtn" class="finished-btn" style="margin-bottom: 16px;">Help Center</button>
+
           
             <h3>Assigned Tasks:</h3>
             <div id="userTasks" class="task-list">
@@ -768,6 +771,19 @@ if (marketButton) {
 
     loadUserTasks(userName);
     loadUserReward(userName);
+
+
+
+    const helpCenterBtn = document.getElementById("helpCenterBtn");
+if (helpCenterBtn) {
+  helpCenterBtn.addEventListener("click", () => {
+    localStorage.setItem("lastHelpUser", userName);
+    const helpURL = `/BeeMazing-Y1/mobile/2-UserProfiles/helpCenter.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+    window.location.href = helpURL;
+  });
+}
+
+
 
 
     if (addPoints > 0) {
@@ -1323,6 +1339,11 @@ async function finishTask(currentUser, task, selectedDate) {
             showAdminControlsIfNeeded();
           }
         });
+
+
+
+
+
         </script>
 
 
