@@ -990,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center AA1</div>
+        <div class="title">BeeMazing Help Center 7</div>
     </div>
 
     <div class="container">
@@ -1056,7 +1056,7 @@
     </div>
 
     <div class="footer">
-        <a href="/BeeMazing-Y1/mobile/2-UserProfiles/userTasks.html?admin=${encodeURIComponent(localStorage.getItem('currentAdminEmail'))}&user=${encodeURIComponent(new URLSearchParams(window.location.search).get('user'))}" id="backLink">Back</a>
+        <a href="userTasks.html" id="backLink">Back</a>
     </div>
 
 
@@ -1158,7 +1158,8 @@
             });
         
             // Submit offer
-            submitOfferBtn.addEventListener("click", async function () {
+// Submit offer
+submitOfferBtn.addEventListener("click", async function () {
     const selectedTasks = [];
     document.querySelectorAll('input[name="taskCheckbox"]:checked').forEach(checkbox => {
         const title = checkbox.value;
@@ -1173,12 +1174,6 @@
     }
 
     const selectedHelpType = localStorage.getItem("helpType");
-    if (!selectedHelpType || !["offerHelp", "needHelp"].includes(selectedHelpType)) {
-        console.error("Invalid or missing help type:", selectedHelpType);
-        alert("Error: Invalid offer type. Please select Offer Help or Need Help and try again.");
-        return;
-    }
-
     const durationSelect = document.getElementById("expireTime");
     const durationMinutes = parseInt(durationSelect.value);
     const durationInMs = durationMinutes * 60 * 1000;
@@ -1191,11 +1186,6 @@
 
     if (!currentUser) {
         alert("Error: User not identified. Please return to the tasks page and try again.");
-        return;
-    }
-
-    if (!adminEmail) {
-        alert("Error: Admin email not found. Please log in again.");
         return;
     }
 
@@ -1212,21 +1202,12 @@
         fromUser: currentUser
     };
 
-    const notificationPayload = {
-        adminEmail,
-        offer: {
-            type: selectedHelpType,
-            tasks: selectedTasks,
-            fromUser: currentUser,
-            expiresAt: offer.expiresAt
-        }
-    };
+    if (!adminEmail) {
+        alert("Error: Admin email not found. Please log in again.");
+        return;
+    }
 
     try {
-        // Log the payload for debugging
-        console.log("Submitting offer with payload:", JSON.stringify({ adminEmail, offer }, null, 2));
-        console.log("Notification payload:", JSON.stringify(notificationPayload, null, 2));
-
         // Post the offer
         const offerRes = await fetch("https://beemazing.onrender.com/api/help-offers", {
             method: "POST",
@@ -1243,23 +1224,34 @@
         const notificationRes = await fetch("https://beemazing.onrender.com/api/notifications", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(notificationPayload)
+            body: JSON.stringify({
+                adminEmail,
+                offer: {
+                    type: selectedHelpType,
+                    tasks: selectedTasks,
+                    fromUser: currentUser,
+                    expiresAt: offer.expiresAt
+                }
+            })
         });
         const notificationData = await notificationRes.json();
         console.log("Send notification response:", notificationData);
         if (!notificationRes.ok || !notificationData.success) {
-            throw new Error(notificationData.error || "Failed to send notification");
+            console.warn("Notification failed to send:", notificationData.error);
+            // Continue even if notification fails
         }
 
-        alert("Offer submitted successfully!");
+        alert("Offer submitted!");
         addOfferModal.classList.remove("show");
-        const userTasksURL = `/BeeMazing-Y1/mobile/2-UserProfiles/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(currentUser)}&refreshNotifications=true`;
-        window.location.href = userTasksURL;
+        loadOffers(selectedHelpType); // Reload offers for the current tab
     } catch (err) {
         console.error("Submit offer error:", err);
-        alert(`Failed to submit offer: ${err.message}`);
+        alert(`Failed to send offer: ${err.message}`);
     }
 });
+
+
+
 
 
 

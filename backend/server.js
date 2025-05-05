@@ -1779,7 +1779,7 @@ app.get('/get-avatar', async (req, res) => {
 
 
 
-// StartPoint helpCenter.html ////////////////////////////////////////////////////////////////////////////////
+// StartPoint helpCenter.html //
 
 // ✅ Save a new help offer (Offer Help or Need Help)
 app.post("/api/help-offers", async (req, res) => {
@@ -1934,85 +1934,78 @@ app.post("/api/accept-offer", async (req, res) => {
 
 
 // POST /api/notifications - Create notifications for an offer
-
+// POST /api/notifications
 app.post("/api/notifications", async (req, res) => {
   const { adminEmail, offer } = req.body;
-  if (!adminEmail || !offer || !offer.type || !offer.fromUser || !offer.tasks || !offer.expiresAt) {
-      console.log("POST /api/notifications - Missing fields:", { adminEmail, offer });
-      return res.status(400).json({ success: false, error: "Missing required fields" });
-  }
   try {
       const db = await connectDB();
       const admins = db.collection("admins");
-      const adminUsers = db.collection("adminUsers");
-
-      // Fetch admin document to store notifications
-      const admin = await admins.findOne({ email: adminEmail }) || { notifications: [] };
-      console.log("POST /api/notifications - Admin document fetched:", { email: adminEmail, notificationsCount: admin.notifications?.length });
-
-      // Fetch permissions from adminUsers collection
-      const adminUserDoc = await adminUsers.findOne({ email: adminEmail }) || {};
-      const users = Object.keys(adminUserDoc.permissions || {});
-      console.log("POST /api/notifications - Users from permissions:", users);
-
-      // Filter users to exclude the offer creator
-      const notifiedUsers = users.filter(user => user !== offer.fromUser);
-      console.log(`POST /api/notifications - Notified users for ${offer.type}:`, notifiedUsers);
-
-      if (notifiedUsers.length === 0) {
-          console.log("POST /api/notifications - No users to notify after filtering");
-          return res.json({ success: true }); // Success, as no notifications needed
+      const admin = await admins.findOne({ email: adminEmail });
+      if (!admin) {
+          return res.status(404).json({ error: "Admin not found" });
       }
 
-      // Prepare notification
-      const notification = {
-          offerType: offer.type,
-          taskCount: offer.tasks.length,
-          tasks: offer.tasks,
-          offerUser: offer.fromUser,
-          timestamp: new Date(),
-          expiresAt: new Date(offer.expiresAt)
-      };
-      admin.notifications = admin.notifications || [];
+      const notifications = admin.notifications || [];
+      const tasks = admin.tasks || [];
+      const users = Object.keys(admin.permissions || {});
 
-      // Create notifications for all notified users
-      if (offer.type === "offerHelp" || offer.type === "needHelp") {
-          console.log(`POST /api/notifications - Creating ${offer.type} notifications for:`, notifiedUsers);
-          notifiedUsers.forEach(user => {
-              admin.notifications.push({ ...notification, user });
-          });
-      } else {
-          console.log("POST /api/notifications - Invalid offer type:", offer.type);
-          return res.status(400).json({ success: false, error: "Invalid offer type" });
+      const offerTasks = offer.tasks.map(t => t.title);
+      const timestamp = new Date().toISOString();
+
+      if (offer.type === "offerHelp") {
+          const notifiedUsers = new Set();
+          for (const taskTitle of offerTasks) {
+              const task = tasks.find(t => t.title === taskTitle);
+              if (task && task.users) {
+                  for (const user of task.users) {
+                      if (user !== offer.fromUser && !notifiedUsers.has(user)) {
+                          const userTaskCount = offerTasks.filter(title => {
+                              const t = tasks.find(t => t.title === title);
+                              return t && t.users.includes(user);
+                          }).length;
+                          if (userTaskCount > 0) {
+                              notifications.push({
+                                  user,
+                                  offerType: offer.type,
+                                  taskCount: userTaskCount,
+                                  tasks: offerTasks,
+                                  offerUser: offer.fromUser,
+                                  timestamp,
+                                  expiresAt: offer.expiresAt
+                              });
+                              notifiedUsers.add(user);
+                          }
+                      }
+                  }
+              }
+          }
+      } else if (offer.type === "needHelp") {
+          for (const user of users) {
+              if (user !== offer.fromUser) {
+                  notifications.push({
+                      user,
+                      offerType: offer.type,
+                      taskCount: offerTasks.length,
+                      tasks: offerTasks,
+                      offerUser: offer.fromUser,
+                      timestamp,
+                      expiresAt: offer.expiresAt
+                  });
+              }
+          }
       }
 
-      // Save notifications
-      console.log("POST /api/notifications - Saving notifications:", admin.notifications.length);
-      const result = await admins.updateOne(
+      await admins.updateOne(
           { email: adminEmail },
-          { $set: { notifications: admin.notifications } },
-          { upsert: true }
+          { $set: { notifications } }
       );
-      console.log("POST /api/notifications - Update result:", {
-          matchedCount: result.matchedCount,
-          modifiedCount: result.modifiedCount,
-          upsertedCount: result.upsertedCount || 0
-      });
 
-      if (result.matchedCount === 0 && result.upsertedCount === 0) {
-          console.log("POST /api/notifications - Failed to update or upsert admin document:", adminEmail);
-          return res.status(500).json({ success: false, error: "Failed to update admin document" });
-      }
-
-      console.log("POST /api/notifications - Notifications saved successfully");
-      return res.json({ success: true });
+      res.json({ success: true });
   } catch (err) {
-      console.error("POST /api/notifications - Error:", err.message);
-      return res.status(500).json({ success: false, error: err.message });
+      console.error("Error creating notifications:", err);
+      res.status(500).json({ error: "Failed to create notifications" });
   }
 });
-
-
 
 
 
@@ -2046,41 +2039,24 @@ app.get("/api/notifications", async (req, res) => {
 // DELETE /api/notifications - Clear notifications for a user
 app.delete("/api/notifications", async (req, res) => {
   const { adminEmail, user } = req.body;
-  if (!adminEmail || !user) {
-      console.log("DELETE /api/notifications - Missing adminEmail or user:", { adminEmail, user });
-      return res.status(400).json({ success: false, error: "Missing adminEmail or user" });
-  }
   try {
       const db = await connectDB();
       const admins = db.collection("admins");
       const admin = await admins.findOne({ email: adminEmail });
       if (!admin) {
-          console.log("DELETE /api/notifications - Admin not found:", adminEmail);
-          return res.status(404).json({ success: false, error: "Admin not found" });
+          return res.status(404).json({ error: "Admin not found" });
       }
 
       const notifications = (admin.notifications || []).filter(n => n.user !== user);
-      console.log("DELETE /api/notifications - Notifications before:", admin.notifications?.length || 0, "after:", notifications.length);
-      const result = await admins.updateOne(
+      await admins.updateOne(
           { email: adminEmail },
           { $set: { notifications } }
       );
-      console.log("DELETE /api/notifications - Update result:", {
-          adminEmail,
-          user,
-          matchedCount: result.matchedCount,
-          modifiedCount: result.modifiedCount
-      });
-
-      if (result.matchedCount === 0) {
-          console.log("DELETE /api/notifications - No admin document matched:", adminEmail);
-          return res.status(404).json({ success: false, error: "Admin document not found" });
-      }
 
       res.json({ success: true });
   } catch (err) {
-      console.error("DELETE /api/notifications - Error:", err.message);
-      return res.status(500).json({ success: false, error: err.message });
+      console.error("Error clearing notifications:", err);
+      res.status(500).json({ error: "Failed to clear notifications" });
   }
 });
 

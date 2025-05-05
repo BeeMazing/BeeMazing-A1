@@ -636,9 +636,6 @@
 
 /* Help Center notifications */
 
-
-
-/* Help Center notifications */
 #offerHelpBadge, #needHelpBadge {
     display: none;
     position: absolute;
@@ -652,21 +649,18 @@
     font-weight: 600;
     text-align: center;
     padding: 0 6px;
-    z-index: 10; /* Ensure badges are above button */
 }
 #offerHelpBadge {
     right: 20px;
     background: var(--cayenne-blue);
 }
 #needHelpBadge {
-    right: -30px; /* Move further right to avoid overlap */
+    right: -10px;
     background: var(--danger-color);
 }
 #offerHelpBadge.pulse, #needHelpBadge.pulse {
     animation: pulse 1s ease-in-out infinite;
 }
-
-
 @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.2); }
@@ -720,7 +714,7 @@
               <p><strong>Buzz Points:</strong> <span id="rewardAmount">0</span> 🍯</p>
           </div>
 
-          <div style="position: relative; display: inline-block; margin-bottom: 16px; padding-right: 40px;">
+          <div style="position: relative; display: inline-block; margin-bottom: 16px;">
             <button id="helpCenterBtn" class="finished-btn">Help Center</button>
             <span id="offerHelpBadge" class="pulse"></span>
             <span id="needHelpBadge" class="pulse"></span>
@@ -762,7 +756,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let adminEmail = urlParams.get('admin') || localStorage.getItem("currentAdminEmail");
     const userName = urlParams.get('user');
     const addPoints = Number(urlParams.get('addPoints')) || 0;
-    const refreshNotifications = urlParams.get('refreshNotifications') === 'true';
 
     if (adminEmail && adminEmail !== "null") {
         localStorage.setItem("currentAdminEmail", adminEmail);
@@ -804,10 +797,6 @@ document.addEventListener("DOMContentLoaded", () => {
         loadUserTasks(userName);
         loadUserReward(userName);
         loadNotifications(userName); // Load notifications on page load
-        if (refreshNotifications) {
-            console.log("DOMContentLoaded: Forcing notification reload due to refreshNotifications=true");
-            loadNotifications(userName); // Force reload if coming from helpCenter.html
-        }
 
         const helpCenterBtn = document.getElementById("helpCenterBtn");
         if (helpCenterBtn) {
@@ -1389,20 +1378,6 @@ async function finishTask(currentUser, task, selectedDate) {
         });
 
 
-// Handle cached pages (e.g., back button navigation)
-window.addEventListener("pageshow", (event) => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const userName = urlParams.get('user');
-    const adminEmail = urlParams.get('admin') || localStorage.getItem("currentAdminEmail");
-    if (event.persisted || performance.getEntriesByType("navigation")[0]?.type === "back_forward") {
-        console.log("pageshow: Reloading notifications due to back/forward navigation");
-        if (userName && adminEmail) {
-            loadNotifications(userName);
-        }
-    }
-});
-
-
 
 
 
@@ -1412,7 +1387,7 @@ window.addEventListener("pageshow", (event) => {
     const offerHelpBadge = document.getElementById("offerHelpBadge");
     const needHelpBadge = document.getElementById("needHelpBadge");
     if (!adminEmail || !userName) {
-        console.error("loadNotifications: Missing adminEmail or userName", { adminEmail, userName });
+        console.error("loadNotifications: Missing adminEmail or userName");
         offerHelpBadge.style.display = "none";
         needHelpBadge.style.display = "none";
         return;
@@ -1423,46 +1398,38 @@ window.addEventListener("pageshow", (event) => {
             headers: { "Content-Type": "application/json" }
         });
         const data = await res.json();
-        console.log("Load notifications response:", {
-            status: res.status,
-            success: data.success,
-            notifications: data.notifications?.map(n => ({
-                user: n.user,
-                offerType: n.offerType,
-                taskCount: n.taskCount,
-                expiresAt: n.expiresAt,
-                tasks: n.tasks
-            }))
-        });
+        console.log("Load notifications response:", data);
         if (!res.ok) {
-            throw new Error(data.error || `HTTP error ${res.status}`);
+            throw new Error(data.error || "Failed to fetch notifications");
         }
-        const now = new Date();
-        const notifications = (data.notifications || []).filter(n => new Date(n.expiresAt) > now);
+        const notifications = data.notifications || [];
         if (notifications.length === 0) {
-            console.log("No valid notifications after filtering expired ones");
             offerHelpBadge.style.display = "none";
             needHelpBadge.style.display = "none";
             return;
         }
         const offerHelpNotifications = notifications.filter(n => n.offerType === "offerHelp");
         const needHelpNotifications = notifications.filter(n => n.offerType === "needHelp");
-        const offerHelpCount = offerHelpNotifications.reduce((sum, n) => sum + (n.taskCount || 0), 0);
-        const needHelpCount = needHelpNotifications.reduce((sum, n) => sum + (n.taskCount || 0), 0);
-        console.log("Notification counts:", { offerHelpCount, needHelpCount });
-        offerHelpBadge.textContent = offerHelpCount > 0 ? `${offerHelpCount}` : "";
-        offerHelpBadge.style.display = offerHelpCount > 0 ? "block" : "none";
-        needHelpBadge.textContent = needHelpCount > 0 ? `${needHelpCount}` : "";
-        needHelpBadge.style.display = needHelpCount > 0 ? "block" : "none";
+        const offerHelpCount = offerHelpNotifications.reduce((sum, n) => sum + n.taskCount, 0);
+        const needHelpCount = needHelpNotifications.reduce((sum, n) => sum + n.taskCount, 0);
+        if (offerHelpCount > 0) {
+            offerHelpBadge.textContent = `${offerHelpCount}`;
+            offerHelpBadge.style.display = "block";
+        } else {
+            offerHelpBadge.style.display = "none";
+        }
+        if (needHelpCount > 0) {
+            needHelpBadge.textContent = `${needHelpCount}`;
+            needHelpBadge.style.display = "block";
+        } else {
+            needHelpBadge.style.display = "none";
+        }
     } catch (err) {
         console.error("Failed to load notifications:", err.message);
         offerHelpBadge.style.display = "none";
         needHelpBadge.style.display = "none";
     }
 }
-
-
-
 
 
 
