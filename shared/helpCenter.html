@@ -750,7 +750,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 7</div>
+        <div class="title">BeeMazing Help Center 77</div>
     </div>
 
     <div class="button-container">
@@ -834,10 +834,6 @@
             const addOfferModal = document.getElementById("addOfferModal");
         
             const currentUser = new URLSearchParams(window.location.search).get("user");
-if (currentUser) {
-    localStorage.setItem("currentUser", currentUser);
-}
-
             const currentAdmin = localStorage.getItem("currentAdminEmail");
         
             if (!currentAdmin) {
@@ -882,76 +878,71 @@ if (currentUser) {
 
 
 
-
-
             async function updateTaskSelection(offerType) {
-    const taskSelection = document.getElementById("taskSelection");
     const tasks = await fetchTasks();
-    const urlParams = new URLSearchParams(window.location.search);
-    const currentUser = urlParams.get("user");
-    const todayStr = new Date().toISOString().split("T")[0];
+    const selectedDate = new Date().toISOString().split("T")[0];
+    const currentUser = localStorage.getItem("currentUser");
 
     taskSelection.innerHTML = "<h4>Select Tasks:</h4>";
 
     for (const task of tasks) {
-        if (!task || !task.title || !task.users?.includes(currentUser)) continue;
+        if (!task || !task.title || !Array.isArray(task.users) || task.users.length === 0) continue;
 
         let turnData = { requiredTimes: 1, completedCount: 0, turns: [] };
 
         try {
             if (task.settings?.includes("Rotation") && typeof mixedTurnData === "function") {
-                turnData = mixedTurnData(task, todayStr);
+                turnData = mixedTurnData(task, selectedDate);
             } else if (task.settings?.includes("Individual") && typeof individualTurnData === "function") {
-                turnData = individualTurnData(task, todayStr);
+                turnData = individualTurnData(task, selectedDate);
+            } else {
+                const completions = task.completions?.[selectedDate] || [];
+                turnData.completedCount = completions.length;
+                turnData.requiredTimes = 1;
+                turnData.turns = task.users.map(user => ({
+                    user,
+                    isCompleted: completions.includes(user)
+                }));
             }
         } catch (e) {
-            console.warn("Turn data error for task", task.title, e);
+            console.warn("Error computing turnData for task", task.title, e);
         }
 
-        const userTurns = turnData.turns.filter(t => t.user === currentUser);
-        const userCompleted = userTurns.filter(t => t.isCompleted || t.isPending).length;
+        const isFullyCompleted = turnData.completedCount >= turnData.requiredTimes;
 
-        const isRotation = task.settings?.includes("Rotation");
-        const isCompleted = isRotation
-            ? userCompleted >= userTurns.length
-            : userCompleted >= turnData.requiredTimes;
+        // Find current user's turn today
+        const userTurn = turnData.turns?.find(t => t.user === currentUser);
+        const hasUserTurnToday = !!userTurn;
+        const userAlreadyCompleted = userTurn?.isCompleted;
 
-        let show = false;
+        let showTask = false;
 
-        if (offerType === "needHelp") {
-            const userHasTurn = userTurns.length > 0;
-            const userNotDone = userCompleted < (isRotation ? userTurns.length : turnData.requiredTimes);
-            show = userHasTurn && userNotDone;
-        } else if (offerType === "offerHelp") {
-            const taskNotDone = turnData.completedCount < turnData.requiredTimes;
-            show = taskNotDone;
+        if (offerType === "offerHelp") {
+            showTask = !isFullyCompleted;
+        } else if (offerType === "needHelp") {
+            // Show task if user is scheduled to act today and hasn't completed yet
+            showTask = hasUserTurnToday && !userAlreadyCompleted;
         }
 
-        if (show) {
+        if (showTask) {
             const label = document.createElement("label");
             const checkbox = document.createElement("input");
             checkbox.type = "checkbox";
             checkbox.name = "selectedTasks";
             checkbox.value = task.title;
             label.appendChild(checkbox);
-            label.append(` ${task.title} (${task.reward || 0} 🍯)`);
+            label.append(` ${task.title} ${task.reward ? `(${task.reward} 🍯)` : ""}`);
             taskSelection.appendChild(label);
         }
     }
 
-    if (taskSelection.querySelectorAll("label").length === 0) {
+    if (taskSelection.children.length === 1) {
         const none = document.createElement("p");
-        none.textContent = "No tasks found for this category.";
+        none.textContent = "No valid tasks available.";
         none.style.color = "#ccc";
         taskSelection.appendChild(none);
     }
 }
-
-
-
-
-
-
 
 
 
