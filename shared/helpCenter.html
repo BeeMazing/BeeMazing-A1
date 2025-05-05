@@ -990,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 1</div>
+        <div class="title">BeeMazing Help Center 11</div>
     </div>
 
     <div class="container">
@@ -1134,215 +1134,388 @@ document.getElementById("submitOfferBtn").addEventListener("click", function () 
 
 
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const addOfferBtn = document.getElementById("addOfferBtn");
-            const addOfferModal = document.getElementById("addOfferModal");
-            const cancelOfferBtn = document.getElementById("cancelOfferBtn");
-            const typeSelection = document.getElementById("typeSelection");
-            const offerForm = document.getElementById("offerForm");
-            const proceedBtn = document.getElementById("proceedBtn");
-            const taskSelection = document.getElementById("taskSelection");
-            const submitOfferBtn = document.getElementById("submitOfferBtn");
-    
-            const urlParams = new URLSearchParams(window.location.search);
-            const currentUser = urlParams.get("user");
-            const adminEmail = urlParams.get("admin");
-    
-            addOfferBtn.addEventListener("click", () => {
-                addOfferModal.classList.add("show");
-                offerForm.style.display = "none";
-                document.querySelectorAll('input[name="offerType"]').forEach(r => r.checked = false);
-            });
-    
-            cancelOfferBtn.addEventListener("click", () => {
-    addOfferModal.classList.remove("show");
-
-    // Reset type selection
-    typeSelection.style.display = "block";
-    document.querySelectorAll('input[name="offerType"]').forEach(r => r.checked = false);
-
-    // Hide offer form and help mode
-    offerForm.style.display = "none";
-    helpModeSection.innerHTML = "";
-    helpModeSection.style.display = "none";
-
-    // Clear task selections and inputs
-    taskSelection.innerHTML = "";
-
-    // Hide buttons
-    proceedBtn.style.display = "inline-block";
-    submitOfferBtn.style.display = "none";
-});
-
-    
-            const helpModeSection = document.getElementById("helpModeSection");
 
 
+document.addEventListener("DOMContentLoaded", () => {
+    const addOfferBtn = document.getElementById("addOfferBtn");
+    const addOfferModal = document.getElementById("addOfferModal");
+    const cancelOfferBtn = document.getElementById("cancelOfferBtn");
+    const typeSelection = document.getElementById("typeSelection");
+    const offerForm = document.getElementById("offerForm");
+    const proceedBtn = document.getElementById("proceedBtn");
+    const taskSelection = document.getElementById("taskSelection");
+    const submitOfferBtn = document.getElementById("submitOfferBtn");
+    const helpModeSection = document.getElementById("helpModeSection");
+    const tabButtons = document.querySelectorAll(".tab-button");
+    const tabContents = document.querySelectorAll(".tab-content");
 
-            proceedBtn.addEventListener("click", async () => {
-  const selectedType = document.querySelector('input[name="offerType"]:checked')?.value;
-  if (!selectedType) {
-    alert("Please select Offer Help or Need Help");
-    return;
-  }
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentUser = urlParams.get("user");
+    const adminEmail = urlParams.get("admin");
 
-  localStorage.setItem("helpType", selectedType); // Add this line
+    // Initialize offers on page load
+    loadOffers();
 
-  proceedBtn.style.display = "none";
-  typeSelection.style.display = "none";
+    // Tab switching logic
+    tabButtons.forEach(button => {
+        button.addEventListener("click", () => {
+            tabButtons.forEach(btn => btn.classList.remove("active"));
+            tabContents.forEach(content => content.classList.remove("active"));
+            button.classList.add("active");
+            document.getElementById(`${button.dataset.tab}List`).classList.add("active");
+            loadOffers(button.dataset.tab); // Reload offers for the selected tab
+        });
+    });
 
-  let html = "<label><input type='radio' name='helpMode' value='help'> ";
-  html += (selectedType === "offerHelp") ? "You can Help</label>" : "You need Help</label>";
-  html += "<label><input type='radio' name='helpMode' value='replace'> ";
-  html += (selectedType === "offerHelp") ? "You can Replace</label>" : "You need a Replacement</label>";
-  helpModeSection.innerHTML = html;
-  helpModeSection.style.display = "block";
+    // Open the Add Offer modal
+    addOfferBtn.addEventListener("click", () => {
+        addOfferModal.classList.add("show");
+        offerForm.style.display = "none";
+        document.querySelectorAll('input[name="offerType"]').forEach(r => r.checked = false);
+        typeSelection.style.display = "block";
+        helpModeSection.innerHTML = "";
+        helpModeSection.style.display = "none";
+        taskSelection.innerHTML = "";
+        proceedBtn.style.display = "inline-block";
+        submitOfferBtn.style.display = "none";
+    });
 
-  if (selectedType === "needHelp") {
-    taskSelection.innerHTML = "<p>Loading your tasks...</p>";
-    offerForm.style.display = "block";
-    await loadTodaysTasks(currentUser);
-  } else {
-    taskSelection.innerHTML = "<p>Loading available tasks to help with...</p>";
-    offerForm.style.display = "block";
-    await loadAllUncompletedTasks();
-  }
+    // Cancel button to close and reset the modal
+    cancelOfferBtn.addEventListener("click", () => {
+        addOfferModal.classList.remove("show");
+        typeSelection.style.display = "block";
+        document.querySelectorAll('input[name="offerType"]').forEach(r => r.checked = false);
+        offerForm.style.display = "none";
+        helpModeSection.innerHTML = "";
+        helpModeSection.style.display = "none";
+        taskSelection.innerHTML = "";
+        proceedBtn.style.display = "inline-block";
+        submitOfferBtn.style.display = "none";
+    });
 
-  submitOfferBtn.style.display = "inline-block";
-});
-
-
-
-
-            async function loadTodaysTasks(userName) {
-    const today = new Date().toLocaleDateString("sv-SE");
-    taskSelection.innerHTML = "";
-
-    try {
-        const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
-        const data = await res.json();
-        const tasks = data.tasks || [];
-
-        const todaysTasks = tasks.filter(task =>
-            task.users.includes(userName) &&
-            task.date &&
-            task.date <= today
-        );
-
-        const uniqueTasks = Array.from(new Map(
-            todaysTasks.map(task => [task.title, task])
-        ).values());
-
-        if (uniqueTasks.length === 0) {
-            taskSelection.innerHTML = "<p>No tasks found for today.</p>";
+    // Proceed button to show help mode and tasks
+    proceedBtn.addEventListener("click", async () => {
+        const selectedType = document.querySelector('input[name="offerType"]:checked')?.value;
+        if (!selectedType) {
+            alert("Please select Offer Help or Need Help");
             return;
         }
 
-        uniqueTasks.forEach(task => {
-            const taskId = `task_${task.title.replace(/\s+/g, "_")}`;
-            const label = document.createElement("label");
-            label.innerHTML = `
-                <input type="checkbox" name="taskCheckbox" value="${task.title}" id="${taskId}">
-                ${task.title} — ${task.reward || 0} 🍯
-                <div class="points-input" id="input_${taskId}" style="display:none; margin-left: 10px;"></div>
-            `;
-            taskSelection.appendChild(label);
+        localStorage.setItem("helpType", selectedType);
+
+        proceedBtn.style.display = "none";
+        typeSelection.style.display = "none";
+
+        let html = "<label><input type='radio' name='helpMode' value='help'> ";
+        html += (selectedType === "offerHelp") ? "You can Help</label>" : "You need Help</label>";
+        html += "<label><input type='radio' name='helpMode' value='replace'> ";
+        html += (selectedType === "offerHelp") ? "You can Replace</label>" : "You need a Replacement</label>";
+        helpModeSection.innerHTML = html;
+        helpModeSection.style.display = "block";
+
+        if (selectedType === "needHelp") {
+            taskSelection.innerHTML = "<p>Loading your tasks...</p>";
+            offerForm.style.display = "block";
+            await loadTodaysTasks(currentUser);
+        } else {
+            taskSelection.innerHTML = "<p>Loading available tasks to help with...</p>";
+            offerForm.style.display = "block";
+            await loadAllUncompletedTasks();
+        }
+
+        submitOfferBtn.style.display = "inline-block";
+    });
+
+    // Submit offer
+    document.getElementById("submitOfferBtn").addEventListener("click", function () {
+        const selectedTasks = [];
+        document.querySelectorAll('input[name="taskCheckbox"]:checked').forEach(checkbox => {
+            const title = checkbox.value;
+            const input = document.querySelector(`input[name="points_${title}"]`);
+            const reward = input ? parseInt(input.value) || 0 : 0;
+            selectedTasks.push({ title, reward });
         });
 
-        // Hide the type selection after proceed
-        document.getElementById("typeSelection").style.display = "none";
-
-        // Set up checkbox listeners
-        document.querySelectorAll('input[name="taskCheckbox"]').forEach(checkbox => {
-            checkbox.addEventListener('change', () => {
-                const inputContainer = document.getElementById(`input_${checkbox.id}`);
-                if (checkbox.checked) {
-                    inputContainer.style.display = "inline-block";
-                    inputContainer.innerHTML = `
-                        <input type="number" name="points_${checkbox.value}" min="0" style="width: 80px; margin-left: 5px;" placeholder="Get Points / Give Points" />
-                    `;
-                } else {
-                    inputContainer.innerHTML = "";
-                    inputContainer.style.display = "none";
-                }
-            });
-        });
-
-    } catch (err) {
-        console.error("Failed to load tasks:", err);
-        taskSelection.innerHTML = "<p>Error loading tasks.</p>";
-    }
-}
-
-
-
-
-async function loadAllUncompletedTasks() {
-    const today = new Date().toLocaleDateString("sv-SE");
-    taskSelection.innerHTML = "";
-
-    try {
-        const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
-        const data = await res.json();
-        const tasks = data.tasks || [];
-
-        // Remove duplicates by title
-        const uniqueTasks = Array.from(new Map(
-            tasks.filter(task => task.date && task.date <= today).map(task => [task.title, task])
-        ).values());
-
-        if (uniqueTasks.length === 0) {
-            taskSelection.innerHTML = "<p>No available tasks to help with today.</p>";
+        if (selectedTasks.length === 0) {
+            alert("Please select at least one task.");
             return;
         }
 
-        uniqueTasks.forEach(task => {
-            const taskId = `task_${task.title.replace(/\s+/g, "_")}`;
-            const label = document.createElement("label");
-            label.innerHTML = `
-                <input type="checkbox" name="taskCheckbox" value="${task.title}" id="${taskId}">
-                ${task.title} — ${task.reward || 0} 🍯
-                <div class="points-input" id="input_${taskId}" style="display:none; margin-left: 10px;"></div>
-            `;
-            taskSelection.appendChild(label);
-        });
+        const selectedHelpType = localStorage.getItem("helpType");
+        const durationSelect = document.getElementById("expireTime");
+        const durationMinutes = parseInt(durationSelect.value);
+        const durationInMs = durationMinutes * 60 * 1000;
 
-        // Hide the type selection
-        document.getElementById("typeSelection").style.display = "none";
+        const helpMode = document.querySelector('input[name="helpMode"]:checked')?.value;
+        if (!helpMode) {
+            alert("Please select how you want to help/receive help.");
+            return;
+        }
 
-        // Set up checkbox listeners
-        document.querySelectorAll('input[name="taskCheckbox"]').forEach(checkbox => {
-            checkbox.addEventListener('change', () => {
-                const inputContainer = document.getElementById(`input_${checkbox.id}`);
-                if (checkbox.checked) {
-                    inputContainer.style.display = "inline-block";
-                    const isNeedHelp = document.querySelector('input[name="offerType"]:checked')?.value === "needHelp";
-inputContainer.innerHTML = `
-    <input type="number" name="points_${checkbox.value}" min="0" style="width: 80px; margin-left: 5px;" placeholder="${isNeedHelp ? 'Give Points' : 'Get Points'}" />
-`;
+        const taskTitles = selectedTasks.map(task => task.title).join(", ");
+        const description = `${selectedHelpType === "offerHelp" ? "Offering" : "Needing"} help with: ${taskTitles}`;
 
+        const offer = {
+            type: selectedHelpType,
+            helpMode,
+            tasks: selectedTasks,
+            description: description,
+            createdAt: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + durationInMs).toISOString(),
+            fromUser: localStorage.getItem("currentUserName") || "Anonymous"
+        };
+
+        const adminEmail = localStorage.getItem("currentAdminEmail");
+        if (!adminEmail) {
+            alert("Error: Admin email not found. Please log in again.");
+            return;
+        }
+
+        fetch("https://beemazing.onrender.com/api/help-offers", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ adminEmail, offer })
+        })
+            .then(async res => {
+                const data = await res.json();
+                console.log("Server response:", data);
+                if (res.ok && data.success) {
+                    alert("Offer submitted!");
+                    addOfferModal.classList.remove("show");
+                    loadOffers(selectedHelpType); // Reload offers for the current tab
                 } else {
-                    inputContainer.innerHTML = "";
-                    inputContainer.style.display = "none";
+                    alert(`Error saving offer: ${data.error || "Unknown error"}`);
                 }
+            })
+            .catch(err => {
+                console.error("Error:", err);
+                alert("Failed to send offer: Network error");
             });
-        });
+    });
 
-    } catch (err) {
-        console.error("Failed to load all tasks:", err);
-        taskSelection.innerHTML = "<p>Error loading tasks to help with.</p>";
+    // Function to load and display offers
+    async function loadOffers(tab = "offerHelp") {
+        const offerList = document.querySelector(`#${tab}List .offer-list`);
+        const noOffers = document.querySelector(`#${tab}List .no-offers`);
+        offerList.innerHTML = "";
+
+        try {
+            const res = await fetch(`https://beemazing.onrender.com/api/help-offers?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+            const data = await res.json();
+            const offers = data.offers || [];
+
+            // Filter offers based on the tab
+            const filteredOffers = offers.filter(offer => offer.type === tab);
+
+            if (filteredOffers.length === 0) {
+                noOffers.style.display = "block";
+                return;
+            }
+
+            noOffers.style.display = "none";
+
+            filteredOffers.forEach(offer => {
+                const li = document.createElement("li");
+                li.className = "offer-list-item";
+                const taskTitles = offer.tasks.map(task => task.title).join(", ");
+                const expiresAt = new Date(offer.expiresAt);
+                const now = new Date();
+                const timeLeft = Math.max(0, Math.floor((expiresAt - now) / 1000));
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+
+                li.innerHTML = `
+                    <div class="offer-content">
+                        <div>
+                            <strong>${taskTitles}</strong><br>
+                            From: ${offer.fromUser}<br>
+                            Mode: ${offer.helpMode === "help" ? "Help" : "Replace"}<br>
+                            ${offer.description}
+                        </div>
+                        <div class="timer">${minutes}m ${seconds}s</div>
+                    </div>
+                    <button class="delete-offer-btn" data-offer-index="${offers.indexOf(offer)}">×</button>
+                `;
+                offerList.appendChild(li);
+
+                // Add click event to view offer details
+                li.querySelector(".offer-content").addEventListener("click", () => {
+                    showOfferDetails(offer);
+                });
+            });
+
+            // Add delete button listeners
+            document.querySelectorAll(".delete-offer-btn").forEach(btn => {
+                btn.addEventListener("click", async () => {
+                    const index = btn.dataset.offerIndex;
+                    await deleteOffer(index, tab);
+                });
+            });
+        } catch (err) {
+            console.error("Failed to load offers:", err);
+            noOffers.textContent = "Error loading offers.";
+            noOffers.style.display = "block";
+        }
     }
-}
 
-            
+    // Function to show offer details in a modal
+    function showOfferDetails(offer) {
+        const viewOfferModal = document.getElementById("viewOfferModal");
+        const viewOfferTitle = document.getElementById("viewOfferTitle");
+        const viewOfferTasks = document.getElementById("viewOfferTasks");
+        const closeOfferBtn = document.getElementById("closeOfferBtn");
 
+        viewOfferTitle.textContent = offer.type === "offerHelp" ? "Offer Help Details" : "Need Help Details";
+        viewOfferTasks.innerHTML = `
+            <div class="task-details">
+                <span class="task-name">Tasks: ${offer.tasks.map(task => task.title).join(", ")}</span>
+                <span class="task-points">Points: ${offer.tasks.map(task => task.reward).join(", ")} 🍯</span>
+                <span>From: ${offer.fromUser}</span>
+                <span>Mode: ${offer.helpMode === "help" ? "Help" : "Replace"}</span>
+                <span>Description: ${offer.description}</span>
+                <span>Expires: ${new Date(offer.expiresAt).toLocaleString()}</span>
+            </div>
+        `;
 
+        viewOfferModal.classList.add("show");
 
+        closeOfferBtn.addEventListener("click", () => {
+            viewOfferModal.classList.remove("show");
+        }, { once: true });
+    }
 
-        });
+    // Function to delete an offer (optional, implement if needed)
+    async function deleteOffer(index, tab) {
+        try {
+            const res = await fetch(`https://beemazing.onrender.com/api/help-offers?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const data = await res.json();
+            const offers = data.offers || [];
+            offers.splice(index, 1);
 
+            await fetch(`https://beemazing.onrender.com/api/help-offers`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ adminEmail, offers })
+            });
 
+            loadOffers(tab); // Reload offers after deletion
+        } catch (err) {
+            console.error("Failed to delete offer:", err);
+            alert("Error deleting offer.");
+        }
+    }
 
+    // Load tasks for "Need Help"
+    async function loadTodaysTasks(userName) {
+        const today = new Date().toLocaleDateString("sv-SE");
+        taskSelection.innerHTML = "";
+
+        try {
+            const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+            const data = await res.json();
+            const tasks = data.tasks || [];
+
+            const todaysTasks = tasks.filter(task =>
+                task.users.includes(userName) &&
+                task.date &&
+                task.date <= today
+            );
+
+            const uniqueTasks = Array.from(new Map(
+                todaysTasks.map(task => [task.title, task])
+            ).values());
+
+            if (uniqueTasks.length === 0) {
+                taskSelection.innerHTML = "<p>No tasks found for today.</p>";
+                return;
+            }
+
+            uniqueTasks.forEach(task => {
+                const taskId = `task_${task.title.replace(/\s+/g, "_")}`;
+                const label = document.createElement("label");
+                label.innerHTML = `
+                    <input type="checkbox" name="taskCheckbox" value="${task.title}" id="${taskId}">
+                    ${task.title} — ${task.reward || 0} 🍯
+                    <div class="points-input" id="input_${taskId}" style="display:none; margin-left: 10px;"></div>
+                `;
+                taskSelection.appendChild(label);
+            });
+
+            document.getElementById("typeSelection").style.display = "none";
+
+            document.querySelectorAll('input[name="taskCheckbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    const inputContainer = document.getElementById(`input_${checkbox.id}`);
+                    if (checkbox.checked) {
+                        inputContainer.style.display = "inline-block";
+                        inputContainer.innerHTML = `
+                            <input type="number" name="points_${checkbox.value}" min="0" style="width: 80px; margin-left: 5px;" placeholder="Give Points" />
+                        `;
+                    } else {
+                        inputContainer.innerHTML = "";
+                        inputContainer.style.display = "none";
+                    }
+                });
+            });
+        } catch (err) {
+            console.error("Failed to load tasks:", err);
+            taskSelection.innerHTML = "<p>Error loading tasks.</p>";
+        }
+    }
+
+    // Load tasks for "Offer Help"
+    async function loadAllUncompletedTasks() {
+        const today = new Date().toLocaleDateString("sv-SE");
+        taskSelection.innerHTML = "";
+
+        try {
+            const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+            const data = await res.json();
+            const tasks = data.tasks || [];
+
+            const uniqueTasks = Array.from(new Map(
+                tasks.filter(task => task.date && task.date <= today).map(task => [task.title, task])
+            ).values());
+
+            if (uniqueTasks.length === 0) {
+                taskSelection.innerHTML = "<p>No available tasks to help with today.</p>";
+                return;
+            }
+
+            uniqueTasks.forEach(task => {
+                const taskId = `task_${task.title.replace(/\s+/g, "_")}`;
+                const label = document.createElement("label");
+                label.innerHTML = `
+                    <input type="checkbox" name="taskCheckbox" value="${task.title}" id="${taskId}">
+                    ${task.title} — ${task.reward || 0} 🍯
+                    <div class="points-input" id="input_${taskId}" style="display:none; margin-left: 10px;"></div>
+                `;
+                taskSelection.appendChild(label);
+            });
+
+            document.getElementById("typeSelection").style.display = "none";
+
+            document.querySelectorAll('input[name="taskCheckbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    const inputContainer = document.getElementById(`input_${checkbox.id}`);
+                    if (checkbox.checked) {
+                        inputContainer.style.display = "inline-block";
+                        const isNeedHelp = document.querySelector('input[name="offerType"]:checked')?.value === "needHelp";
+                        inputContainer.innerHTML = `
+                            <input type="number" name="points_${checkbox.value}" min="0" style="width: 80px; margin-left: 5px;" placeholder="${isNeedHelp ? 'Give Points' : 'Get Points'}" />
+                        `;
+                    } else {
+                        inputContainer.innerHTML = "";
+                        inputContainer.style.display = "none";
+                    }
+                });
+            });
+        } catch (err) {
+            console.error("Failed to load all tasks:", err);
+            taskSelection.innerHTML = "<p>Error loading tasks to help with.</p>";
+        }
+    }
+});
 
 
 

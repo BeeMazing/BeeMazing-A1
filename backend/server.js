@@ -1840,4 +1840,25 @@ app.get("/api/help-offers", async (req, res) => {
 });
 
 
+
+app.put("/api/help-offers", async (req, res) => {
+  const { adminEmail, offers } = req.body;
+  if (!adminEmail || !Array.isArray(offers)) {
+      return res.status(400).json({ error: "Missing adminEmail or offers" });
+  }
+  try {
+      const db = await connectDB();
+      const admins = db.collection("admins");
+      await admins.updateOne(
+          { email: adminEmail },
+          { $set: { helpOffers: offers } },
+          { upsert: true }
+      );
+      res.json({ success: true });
+  } catch (err) {
+      console.error("🔥 Error updating help offers:", err);
+      res.status(500).json({ error: "Failed to update help offers" });
+  }
+});
+
 // Endpoint helpCenter.html //
