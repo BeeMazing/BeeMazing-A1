@@ -870,38 +870,52 @@
                 return data.tasks || [];
             }
         
+
+
+
             async function updateTaskSelection(offerType) {
-                const tasks = await fetchTasks();
-                taskSelection.innerHTML = "";
-                const title = document.createElement("h4");
-                title.textContent = "Select Tasks:";
-                taskSelection.appendChild(title);
-        
-                const filteredTasks = tasks.filter(task => {
-                    if (!task || !Array.isArray(task.users)) return false;
-                    return offerType === "offerHelp" || task.users.includes(currentUser);
-                });
-        
-                if (filteredTasks.length === 0) {
-                    const none = document.createElement("p");
-                    none.textContent = "No tasks available.";
-                    none.style.color = "#ccc";
-                    taskSelection.appendChild(none);
-                    return;
-                }
-        
-                for (const task of filteredTasks) {
-                    const label = document.createElement("label");
-                    const checkbox = document.createElement("input");
-                    checkbox.type = "checkbox";
-                    checkbox.name = "selectedTasks";
-                    checkbox.value = task.title;
-                    label.appendChild(checkbox);
-                    label.append(` ${task.title} ${task.reward ? `(${task.reward} 🍯)` : ""}`);
-                    taskSelection.appendChild(label);
-                }
-            }
-        
+    const tasks = await fetchTasks();
+    taskSelection.innerHTML = "";
+    const title = document.createElement("h4");
+    title.textContent = "Select Tasks:";
+    taskSelection.appendChild(title);
+
+    const filteredTasks = tasks.filter(task => {
+        const valid = task && task.title && task.date && Array.isArray(task.users) && task.users.length > 0;
+        if (!valid) {
+            console.warn("Skipping invalid task:", task);
+            return false;
+        }
+
+        if (offerType === "offerHelp") return true;
+        return task.users.includes(currentUser);
+    });
+
+    if (filteredTasks.length === 0) {
+        const none = document.createElement("p");
+        none.textContent = "No valid tasks available.";
+        none.style.color = "#ccc";
+        taskSelection.appendChild(none);
+        return;
+    }
+
+    for (const task of filteredTasks) {
+        const label = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.name = "selectedTasks";
+        checkbox.value = task.title;
+        label.appendChild(checkbox);
+        label.append(` ${task.title} ${task.reward ? `(${task.reward} 🍯)` : ""}`);
+        taskSelection.appendChild(label);
+    }
+}
+
+
+
+
+
+
             typeRadios.forEach(radio => {
                 radio.addEventListener("change", () => {
                     proceedBtn.style.display = "inline-block";

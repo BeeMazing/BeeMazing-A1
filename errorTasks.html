@@ -2,144 +2,145 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Error Tasks - BeeMazing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Error Tasks Viewer</title>
   <style>
     body {
-      background-color: #1E1F26;
-      color: white;
+      background: #1e1f26;
+      color: #fff;
       font-family: 'Poppins', sans-serif;
       padding: 20px;
     }
-    .task {
-      background: #2A2B32;
-      border: 1px solid #444754;
-      border-radius: 10px;
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #ffc107;
+    }
+
+    .task-item {
+      background: #2a2b32;
+      border: 2px solid #444754;
+      border-radius: 12px;
       padding: 15px;
-      margin-bottom: 12px;
+      margin-bottom: 15px;
     }
-    .task-title {
-      font-weight: bold;
-      margin-bottom: 6px;
+
+    .task-item strong {
+      color: #ffc107;
     }
-    .task-meta {
-      font-size: 14px;
-      color: #ccc;
-    }
-    .delete-btn {
-      margin-top: 10px;
-      background: #D32F2F;
-      color: white;
+
+    .task-item button {
+      background: #d32f2f;
+      color: #fff;
       border: none;
-      padding: 6px 12px;
+      padding: 8px 14px;
       border-radius: 6px;
+      font-weight: bold;
+      margin-top: 10px;
       cursor: pointer;
+      transition: background 0.2s ease;
     }
-    .delete-btn:hover {
-      background: #B71C1C;
+
+    .task-item button:hover {
+      background: #b71c1c;
+    }
+
+    .note {
+      color: #bbb;
+      font-size: 14px;
+      margin-bottom: 20px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <h2>🛠 Error Tasks Viewer 11</h2>
-  <div id="taskList">Loading tasks...</div>
+
+  <h1>Errored Tasks</h1>
+  <div class="note">These are all tasks, even broken ones. You can attempt to delete them manually.</div>
+  <div id="taskList">Loading...</div>
 
   <script>
-    const adminEmail = localStorage.getItem("currentAdminEmail");
-
-    async function loadAllTasks() {
+    async function fetchAndDisplayAllTasks() {
+      const adminEmail = localStorage.getItem("currentAdminEmail");
       const taskList = document.getElementById("taskList");
-      taskList.innerHTML = "Loading...";
+
+      if (!adminEmail) {
+        taskList.innerHTML = "<p style='color:#ccc;'>No admin email found. Please set it in localStorage as 'currentAdminEmail'.</p>";
+        return;
+      }
 
       try {
         const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
           cache: "no-store"
         });
+        const data = await res.json();
 
-        const result = await res.json();
-        const tasks = result.tasks || [];
-
-        if (tasks.length === 0) {
-          taskList.innerHTML = "<p>No tasks found.</p>";
-          return;
-        }
+        if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
 
         taskList.innerHTML = "";
 
-        tasks.forEach(task => {
-  if (!task.title || !task.date) {
-    console.warn("⚠️ Skipping task with missing title/date:", task);
-    return;
-  }
-          const div = document.createElement("div");
-          div.className = "task";
+        if (!Array.isArray(data.tasks) || data.tasks.length === 0) {
+          taskList.innerHTML = "<p style='color:#ccc;'>No tasks found.</p>";
+          return;
+        }
 
-          div.innerHTML = `
-            <div class="task-title">${task.title || "(no title)"}</div>
-            <div class="task-meta">
-              Date: ${task.date || "—"}<br>
-              Users: ${(Array.isArray(task.users) ? task.users.join(", ") : "Invalid") || "—"}
-            </div>
-            <button class="delete-btn">Delete</button>
+        data.tasks.forEach(task => {
+          const taskDiv = document.createElement("div");
+          taskDiv.className = "task-item";
+
+          const safeTitle = task.title || "(No title)";
+          const safeDate = task.date || "(No date)";
+          const safeUsers = Array.isArray(task.users) ? task.users.join(", ") : "(Invalid or missing)";
+
+          taskDiv.innerHTML = `
+            <strong>Title:</strong> ${safeTitle}<br>
+            <strong>Date:</strong> ${safeDate}<br>
+            <strong>Users:</strong> ${safeUsers}<br>
+            <button onclick="deleteTask('${safeTitle.replace(/'/g, "\\'")}', '${safeDate}')">Delete</button>
           `;
 
-          div.querySelector(".delete-btn").addEventListener("click", async () => {
-            if (confirm(`Delete task "${task.title}"?`)) {
-              await deleteTask(task.title, task.date);
-              loadAllTasks();
-            }
-          });
-
-          taskList.appendChild(div);
+          taskList.appendChild(taskDiv);
         });
 
       } catch (err) {
-        taskList.innerHTML = `<p style="color:red;">Error loading tasks: ${err.message}</p>`;
+        console.error("Error loading tasks:", err);
+        taskList.innerHTML = `<p style="color:#ff4444;">Error loading tasks: ${err.message}</p>`;
       }
     }
 
     async function deleteTask(title, date) {
-        const startDate = (date || "").split(" to ")[0];
+      const adminEmail = localStorage.getItem("currentAdminEmail");
+      const startDate = (date || "").split(" to ")[0];
 
-console.log("🧹 Deleting task with:", {
-  adminEmail,
-  title,
-  startDate
-});
+      if (!adminEmail || !title || !startDate) {
+        alert("Missing adminEmail, title, or date. Cannot delete.");
+        return;
+      }
 
-if (!adminEmail || !title || !startDate) {
-  alert("Missing adminEmail, title, or date. Cannot delete.");
-  return;
-}
+      if (!confirm(`Are you sure you want to delete task "${title}"?`)) return;
 
-try {
-  const res = await fetch(
-    `https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(title)}&date=${encodeURIComponent(startDate)}`,
-    { method: "DELETE", headers: { "Content-Type": "application/json" } }
-  );
+      try {
+        const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(title)}&date=${encodeURIComponent(startDate)}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" }
+        });
 
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error || res.statusText);
+          const err = await res.json();
+          throw new Error(err.error || "Delete failed");
         }
 
-        alert(`Deleted: ${title}`);
+        alert(`Deleted task: ${title}`);
+        fetchAndDisplayAllTasks(); // refresh list
       } catch (err) {
+        console.error("Delete failed:", err);
         alert(`Failed to delete: ${err.message}`);
       }
     }
 
-    if (!adminEmail) {
-      const email = prompt("Enter your admin email:");
-      if (email) {
-        localStorage.setItem("currentAdminEmail", email.trim());
-        location.reload();
-      } else {
-        document.getElementById("taskList").innerHTML = "Admin email required.";
-      }
-    } else {
-      loadAllTasks();
-    }
+    fetchAndDisplayAllTasks();
   </script>
+
 </body>
 </html>
