@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error Tasks - BeeMazing</title>
+  <style>
+    body {
+      background-color: #1E1F26;
+      color: white;
+      font-family: 'Poppins', sans-serif;
+      padding: 20px;
+    }
+    .task {
+      background: #2A2B32;
+      border: 1px solid #444754;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 12px;
+    }
+    .task-title {
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+    .task-meta {
+      font-size: 14px;
+      color: #ccc;
+    }
+    .delete-btn {
+      margin-top: 10px;
+      background: #D32F2F;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .delete-btn:hover {
+      background: #B71C1C;
+    }
+  </style>
+</head>
+<body>
+  <h2>🛠 Error Tasks Viewer</h2>
+  <div id="taskList">Loading tasks...</div>
+
+  <script>
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+
+    async function loadAllTasks() {
+      const taskList = document.getElementById("taskList");
+      taskList.innerHTML = "Loading...";
+
+      try {
+        const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
+          cache: "no-store"
+        });
+
+        const result = await res.json();
+        const tasks = result.tasks || [];
+
+        if (tasks.length === 0) {
+          taskList.innerHTML = "<p>No tasks found.</p>";
+          return;
+        }
+
+        taskList.innerHTML = "";
+
+        tasks.forEach(task => {
+          const div = document.createElement("div");
+          div.className = "task";
+
+          div.innerHTML = `
+            <div class="task-title">${task.title || "(no title)"}</div>
+            <div class="task-meta">
+              Date: ${task.date || "—"}<br>
+              Users: ${(Array.isArray(task.users) ? task.users.join(", ") : "Invalid") || "—"}
+            </div>
+            <button class="delete-btn">Delete</button>
+          `;
+
+          div.querySelector(".delete-btn").addEventListener("click", async () => {
+            if (confirm(`Delete task "${task.title}"?`)) {
+              await deleteTask(task.title, task.date);
+              loadAllTasks();
+            }
+          });
+
+          taskList.appendChild(div);
+        });
+
+      } catch (err) {
+        taskList.innerHTML = `<p style="color:red;">Error loading tasks: ${err.message}</p>`;
+      }
+    }
+
+    async function deleteTask(title, date) {
+      const startDate = (date || "").split(" to ")[0];
+      try {
+        const res = await fetch(
+          `https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(title)}&date=${encodeURIComponent(startDate)}`,
+          { method: "DELETE", headers: { "Content-Type": "application/json" } }
+        );
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || res.statusText);
+        }
+
+        alert(`Deleted: ${title}`);
+      } catch (err) {
+        alert(`Failed to delete: ${err.message}`);
+      }
+    }
+
+    if (!adminEmail) {
+      const email = prompt("Enter your admin email:");
+      if (email) {
+        localStorage.setItem("currentAdminEmail", email.trim());
+        location.reload();
+      } else {
+        document.getElementById("taskList").innerHTML = "Admin email required.";
+      }
+    } else {
+      loadAllTasks();
+    }
+  </script>
+</body>
+</html>
