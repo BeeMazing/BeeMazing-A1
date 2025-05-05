@@ -990,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 111</div>
+        <div class="title">BeeMazing Help Center 4</div>
     </div>
 
     <div class="container">
@@ -1109,15 +1109,16 @@ const offer = {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ adminEmail, offer })
   })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      alert("Offer submitted!");
-      // Optionally: reset UI or redirect
-    } else {
-      alert("Error saving offer");
-    }
-  })
+  .then(async res => {
+  const data = await res.json();
+  console.log("Server response:", data); // 🔍 Add this
+  if (data.success) {
+    alert("Offer submitted!");
+  } else {
+    alert("Error saving offer: " + (data.message || "Unknown error")); // 🔍 Improve error visibility
+  }
+})
+
   .catch(err => {
     console.error("Error:", err);
     alert("Failed to send offer");
