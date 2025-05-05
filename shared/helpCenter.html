@@ -990,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 7</div>
+        <div class="title">BeeMazing Help Center 78</div>
     </div>
 
     <div class="container">
@@ -1572,65 +1572,67 @@ async function deleteOffer(index, tab) {
         
             // Load tasks for "Offer Help"
             async function loadAllUncompletedTasks() {
-                const today = new Date().toLocaleDateString("sv-SE");
-                taskSelection.innerHTML = "";
-        
-                if (!adminEmail) {
-                    taskSelection.innerHTML = "<p>Error: Admin email not found.</p>";
-                    return;
-                }
-        
-                try {
-                    const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
-                    if (!res.ok) {
-                        throw new Error(`HTTP error! Status: ${res.status}`);
-                    }
-                    const data = await res.json();
-                    const tasks = data.tasks || [];
-        
-                    const uniqueTasks = Array.from(new Map(
-                        tasks.filter(task => task.date && task.date <= today).map(task => [task.title, task])
-                    ).values());
-        
-                    if (uniqueTasks.length === 0) {
-                        taskSelection.innerHTML = "<p>No available tasks to help with today.</p>";
-                        return;
-                    }
-        
-                    uniqueTasks.forEach(task => {
-                        const taskId = `task_${task.title.replace(/\s+/g, "_")}`;
-                        const label = document.createElement("label");
-                        label.innerHTML = `
-                            <input type="checkbox" name="taskCheckbox" value="${task.title}" id="${taskId}">
-                            ${task.title} — ${task.reward || 0} 🍯
-                            <div class="points-input" id="input_${taskId}" style="display:none; margin-left: 10px;"></div>
-                        `;
-                        taskSelection.appendChild(label);
-                    });
-        
-                    document.getElementById("typeSelection").style.display = "none";
-        
-                    document.querySelectorAll('input[name="taskCheckbox"]').forEach(checkbox => {
-                        checkbox.addEventListener('change', () => {
-                            const inputContainer = document.getElementById(`input_${checkbox.id}`);
-                            if (checkbox.checked) {
-                                inputContainer.style.display = "inline-block";
-                                const isNeedHelp = document.querySelector('input[name="offerType"]:checked')?.value === "needHelp";
-                                inputContainer.innerHTML = `
-                                    <input type="number" name="points_${checkbox.value}" min="0" style="width: 80px; margin-left: 5px;" placeholder="${isNeedHelp ? 'Give Points' : 'Get Points'}" />
-                                `;
-                            } else {
-                                inputContainer.innerHTML = "";
-                                inputContainer.style.display = "none";
-                            }
-                        });
-                    });
-                } catch (err) {
-                    console.error("Failed to load all tasks:", err.message);
-                    taskSelection.innerHTML = `<p>Error loading tasks: ${err.message}</p>`;
-                }
-            }
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    if (!adminEmail) {
+        alert("Admin not found. Please log in again.");
+        return;
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+
+    try {
+        const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+        const data = await response.json();
+        const tasks = data.tasks || [];
+
+        const uncompletedTasks = tasks.filter(task => {
+            const completions = task.completions?.[today] || [];
+            return !completions.includes(currentUser);
         });
+
+        if (uncompletedTasks.length === 0) {
+            taskSelection.innerHTML = "<p>No tasks available to help with.</p>";
+            return;
+        }
+
+        let html = "";
+        uncompletedTasks.forEach(task => {
+            const title = task.title;
+            html += `
+                <label>
+                    <input type="checkbox" name="taskCheckbox" value="${title}">
+                    ${title}
+                    <input type="number" name="points_${title}" placeholder="Points" />
+                </label>
+            `;
+        });
+
+        taskSelection.innerHTML = html;
+    } catch (err) {
+        console.error("Failed to fetch tasks for help offer:", err);
+        taskSelection.innerHTML = "<p>Error loading tasks. Please try again.</p>";
+    }
+}
+
+        
+        
+        
+        
+        
+        
+        
+        
+        });
+
+
+
+
+
+
+
+
+
+        
         </script>
 
 
