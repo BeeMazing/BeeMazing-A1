@@ -750,7 +750,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 1</div>
+        <div class="title">BeeMazing Help Center 7</div>
     </div>
 
     <div class="button-container">
@@ -885,27 +885,24 @@ if (currentUser) {
 
 
             async function updateTaskSelection(offerType) {
-    const taskSelection = document.getElementById("taskSelection"); // Ensure this is defined
+    const taskSelection = document.getElementById("taskSelection");
     const tasks = await fetchTasks();
     const urlParams = new URLSearchParams(window.location.search);
     const currentUser = urlParams.get("user");
-    const selected = document.querySelector(".day.selected");
-    const selectedDate = selected?.dataset.date || new Date().toISOString().split("T")[0];
-
-    const filteredTasks = filterTasksForDate(tasks, selectedDate);
+    const todayStr = new Date().toISOString().split("T")[0];
 
     taskSelection.innerHTML = "<h4>Select Tasks:</h4>";
 
-    for (const task of filteredTasks) {
+    for (const task of tasks) {
         if (!task || !task.title || !task.users?.includes(currentUser)) continue;
 
         let turnData = { requiredTimes: 1, completedCount: 0, turns: [] };
 
         try {
             if (task.settings?.includes("Rotation") && typeof mixedTurnData === "function") {
-                turnData = mixedTurnData(task, selectedDate);
+                turnData = mixedTurnData(task, todayStr);
             } else if (task.settings?.includes("Individual") && typeof individualTurnData === "function") {
-                turnData = individualTurnData(task, selectedDate);
+                turnData = individualTurnData(task, todayStr);
             }
         } catch (e) {
             console.warn("Turn data error for task", task.title, e);
@@ -949,6 +946,10 @@ if (currentUser) {
         taskSelection.appendChild(none);
     }
 }
+
+
+
+
 
 
 
