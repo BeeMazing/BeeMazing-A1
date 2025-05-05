@@ -990,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 78</div>
+        <div class="title">BeeMazing Help Center 1</div>
     </div>
 
     <div class="container">
@@ -1523,10 +1523,10 @@ async function deleteOffer(index, tab) {
                     const tasks = data.tasks || [];
         
                     const todaysTasks = tasks.filter(task =>
-                        task.users.includes(userName) &&
-                        task.date &&
-                        task.date <= today
-                    );
+    task.users.includes(userName) &&
+    (!task.date || task.date <= today)
+);
+
         
                     const uniqueTasks = Array.from(new Map(
                         todaysTasks.map(task => [task.title, task])
@@ -1595,19 +1595,40 @@ async function deleteOffer(index, tab) {
             return;
         }
 
-        let html = "";
-        uncompletedTasks.forEach(task => {
-            const title = task.title;
-            html += `
-                <label>
-                    <input type="checkbox" name="taskCheckbox" value="${title}">
-                    ${title}
-                    <input type="number" name="points_${title}" placeholder="Points" />
-                </label>
-            `;
-        });
 
-        taskSelection.innerHTML = html;
+
+        taskSelection.innerHTML = "";
+
+uncompletedTasks.forEach(task => {
+    const taskId = `task_${task.title.replace(/\s+/g, "_")}`;
+    const label = document.createElement("label");
+    label.innerHTML = `
+        <input type="checkbox" name="taskCheckbox" value="${task.title}" id="${taskId}">
+        ${task.title} — ${task.reward || 0} 🍯
+        <div class="points-input" id="input_${taskId}" style="display:none; margin-left: 10px;"></div>
+    `;
+    taskSelection.appendChild(label);
+});
+
+document.querySelectorAll('input[name="taskCheckbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+        const inputContainer = document.getElementById(`input_${checkbox.id}`);
+        if (checkbox.checked) {
+            inputContainer.style.display = "inline-block";
+            inputContainer.innerHTML = `
+                <input type="number" name="points_${checkbox.value}" min="0" style="width: 80px; margin-left: 5px;" placeholder="Ask Points" />
+            `;
+        } else {
+            inputContainer.innerHTML = "";
+            inputContainer.style.display = "none";
+        }
+    });
+});
+
+
+
+
+
     } catch (err) {
         console.error("Failed to fetch tasks for help offer:", err);
         taskSelection.innerHTML = "<p>Error loading tasks. Please try again.</p>";
