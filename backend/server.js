@@ -1934,18 +1934,35 @@ app.post("/api/accept-offer", async (req, res) => {
 
 
 // POST /api/notifications - Create notifications for an offer
+
 app.post("/api/notifications", async (req, res) => {
   const { adminEmail, offer } = req.body;
-  if (!adminEmail || !offer || !offer.type || !offer.fromUser || !offer.tasks) {
+  if (!adminEmail || !offer || !offer.type || !offer.fromUser || !offer.tasks || !offer.expiresAt) {
+      console.log("POST /api/notifications - Missing fields:", { adminEmail, offer });
       return res.status(400).json({ success: false, error: "Missing required fields" });
   }
   try {
-      const admin = await Admin.findOne({ email: adminEmail });
+      const db = await connectDB();
+      const admins = db.collection("admins");
+      const adminUsers = db.collection("adminUsers");
+
+      // Fetch admin document to store notifications
+      const admin = await admins.findOne({ email: adminEmail });
       if (!admin) {
+          console.log("POST /api/notifications - Admin not found:", adminEmail);
           return res.status(404).json({ success: false, error: "Admin not found" });
       }
-      admin.notifications = admin.notifications || [];
-      const users = Object.keys(admin.permissions || {});
+
+      // Fetch permissions from adminUsers collection
+      const adminUserDoc = await adminUsers.findOne({ email: adminEmail });
+      if (!adminUserDoc) {
+          console.log("POST /api/notifications - Admin user document not found:", adminEmail);
+          return res.status(404).json({ success: false, error: "Admin user document not found" });
+      }
+      const users = Object.keys(adminUserDoc.permissions || {});
+      console.log("POST /api/notifications - Users from permissions:", users);
+
+      // Prepare notification
       const notification = {
           offerType: offer.type,
           taskCount: offer.tasks.length,
@@ -1954,24 +1971,43 @@ app.post("/api/notifications", async (req, res) => {
           timestamp: new Date(),
           expiresAt: new Date(offer.expiresAt)
       };
+      admin.notifications = admin.notifications || [];
+
+      // Create notifications based on offer type
       if (offer.type === "offerHelp") {
-          // Notify the offer creator only
+          console.log("POST /api/notifications - Creating offerHelp notification for:", offer.fromUser);
           admin.notifications.push({ ...notification, user: offer.fromUser });
       } else if (offer.type === "needHelp") {
-          // Notify all users except the offer creator
-          users.forEach(user => {
-              if (user !== offer.fromUser) {
-                  admin.notifications.push({ ...notification, user });
-              }
+          const notifiedUsers = users.filter(user => user !== offer.fromUser);
+          console.log("POST /api/notifications - Creating needHelp notifications for:", notifiedUsers);
+          notifiedUsers.forEach(user => {
+              admin.notifications.push({ ...notification, user });
           });
+      } else {
+          console.log("POST /api/notifications - Invalid offer type:", offer.type);
+          return res.status(400).json({ success: false, error: "Invalid offer type" });
       }
-      await admin.save();
+
+      // Save notifications
+      console.log("POST /api/notifications - Saving notifications:", admin.notifications.length);
+      await admins.updateOne(
+          { email: adminEmail },
+          { $set: { notifications: admin.notifications } }
+      );
+
+      console.log("POST /api/notifications - Notifications saved successfully");
       return res.json({ success: true });
   } catch (err) {
-      console.error("Error saving notification:", err);
+      console.error("POST /api/notifications - Error:", err);
       return res.status(500).json({ success: false, error: err.message });
   }
 });
+
+
+
+
+
+
 
 
 
