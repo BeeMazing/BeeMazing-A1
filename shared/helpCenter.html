@@ -750,7 +750,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 1</div>
+        <div class="title">BeeMazing Help Center 7</div>
     </div>
 
     <div class="button-container">
@@ -911,18 +911,21 @@
         const isFullyCompleted = turnData.completedCount >= turnData.requiredTimes;
 
         // Find current user's turn today
-        const userTurnsToday = (turnData.turns || []).filter(t => t.user === currentUser);
-const hasUserTurnToday = userTurnsToday.length > 0;
-const userAlreadyCompleted = userTurnsToday.every(t => t.isCompleted);
-
-
         let showTask = false;
 
-        if (offerType === "offerHelp") {
-            showTask = !isFullyCompleted;
-        } else if (offerType === "needHelp") {
-    showTask = hasUserTurnToday && !userAlreadyCompleted;
+if (offerType === "offerHelp") {
+    showTask = !isFullyCompleted;
+} else if (offerType === "needHelp") {
+    const userTurns = turnData.turns.filter(t => t.user === currentUser);
+    if (userTurns.length > 0) {
+        // Show task if user has a turn today, even if not now, and hasn’t completed all turns
+        const notCompletedTurns = userTurns.filter(t => !t.isCompleted);
+        if (notCompletedTurns.length > 0) {
+            showTask = true;
+        }
+    }
 }
+
 
         if (showTask) {
             const label = document.createElement("label");
