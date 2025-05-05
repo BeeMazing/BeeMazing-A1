@@ -990,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 1</div>
+        <div class="title">BeeMazing Help Center 111</div>
     </div>
 
     <div class="container">
@@ -1158,71 +1158,79 @@
             });
         
             // Submit offer
-            submitOfferBtn.addEventListener("click", function () {
-                const selectedTasks = [];
-                document.querySelectorAll('input[name="taskCheckbox"]:checked').forEach(checkbox => {
-                    const title = checkbox.value;
-                    const input = document.querySelector(`input[name="points_${title}"]`);
-                    const reward = input ? parseInt(input.value) || 0 : 0;
-                    selectedTasks.push({ title, reward });
-                });
-        
-                if (selectedTasks.length === 0) {
-                    alert("Please select at least one task.");
-                    return;
-                }
-        
-                const selectedHelpType = localStorage.getItem("helpType");
-                const durationSelect = document.getElementById("expireTime");
-                const durationMinutes = parseInt(durationSelect.value);
-                const durationInMs = durationMinutes * 60 * 1000;
-        
-                const helpMode = document.querySelector('input[name="helpMode"]:checked')?.value;
-                if (!helpMode) {
-                    alert("Please select how you want to help/receive help.");
-                    return;
-                }
-        
-                const taskTitles = selectedTasks.map(task => task.title).join(", ");
-                const description = `${selectedHelpType === "offerHelp" ? "Offering" : "Needing"} help with: ${taskTitles}`;
-        
-                const offer = {
-                    type: selectedHelpType,
-                    helpMode,
-                    tasks: selectedTasks,
-                    description: description,
-                    createdAt: new Date().toISOString(),
-                    expiresAt: new Date(Date.now() + durationInMs).toISOString(),
-                    fromUser: currentUser || "Anonymous" // Use currentUser directly
-                };
-        
-                if (!adminEmail) {
-                    alert("Error: Admin email not found. Please log in again.");
-                    return;
-                }
-        
-                fetch("https://beemazing.onrender.com/api/help-offers", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ adminEmail, offer })
-                })
-                    .then(async res => {
-                        const data = await res.json();
-                        console.log("Submit offer response:", data);
-                        if (res.ok && data.success) {
-                            alert("Offer submitted!");
-                            addOfferModal.classList.remove("show");
-                            loadOffers(selectedHelpType); // Reload offers for the current tab
-                        } else {
-                            alert(`Error saving offer: ${data.error || "Unknown error"}`);
-                        }
-                    })
-                    .catch(err => {
-                        console.error("Submit offer error:", err);
-                        alert("Failed to send offer: Network error");
-                    });
-            });
-        
+// Submit offer
+submitOfferBtn.addEventListener("click", function () {
+    const selectedTasks = [];
+    document.querySelectorAll('input[name="taskCheckbox"]:checked').forEach(checkbox => {
+        const title = checkbox.value;
+        const input = document.querySelector(`input[name="points_${title}"]`);
+        const reward = input ? parseInt(input.value) || 0 : 0;
+        selectedTasks.push({ title, reward });
+    });
+
+    if (selectedTasks.length === 0) {
+        alert("Please select at least one task.");
+        return;
+    }
+
+    const selectedHelpType = localStorage.getItem("helpType");
+    const durationSelect = document.getElementById("expireTime");
+    const durationMinutes = parseInt(durationSelect.value);
+    const durationInMs = durationMinutes * 60 * 1000;
+
+    const helpMode = document.querySelector('input[name="helpMode"]:checked')?.value;
+    if (!helpMode) {
+        alert("Please select how you want to help/receive help.");
+        return;
+    }
+
+    const taskTitles = selectedTasks.map(task => task.title).join(", ");
+    const description = `${selectedHelpType === "offerHelp" ? "Offering" : "Needing"} help with: ${taskTitles}`;
+
+    const offer = {
+        type: selectedHelpType,
+        helpMode,
+        tasks: selectedTasks,
+        description: description,
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + durationInMs).toISOString(),
+        fromUser: currentUser || "Anonymous" // Use currentUser directly
+    };
+
+    if (!adminEmail) {
+        alert("Error: Admin email not found. Please log in again.");
+        return;
+    }
+
+    fetch("https://beemazing.onrender.com/api/help-offers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail, offer })
+    })
+        .then(async res => {
+            const data = await res.json();
+            console.log("Submit offer response:", data);
+            if (res.ok && data.success) {
+                alert("Offer submitted!");
+                addOfferModal.classList.remove("show");
+                loadOffers(selectedHelpType); // Reload offers for the current tab
+            } else {
+                alert(`Error saving offer: ${data.error || "Unknown error"}`);
+            }
+        })
+        .catch(err => {
+            console.error("Submit offer error:", err);
+            alert("Failed to send offer: Network error");
+        });
+});
+
+
+
+
+
+
+
+
             // Function to load and display offers
             async function loadOffers(tab = "offerHelp") {
                 const offerList = document.querySelector(`#${tab}List .offer-list`);
