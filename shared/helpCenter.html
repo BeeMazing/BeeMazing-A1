@@ -965,7 +965,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 11</div>
+        <div class="title">BeeMazing Help Center 777</div>
     </div>
 
     <div class="container">
@@ -1046,63 +1046,62 @@
             const proceedBtn = document.getElementById("proceedBtn");
             const taskSelection = document.getElementById("taskSelection");
             const submitOfferBtn = document.getElementById("submitOfferBtn");
-        
+    
             const urlParams = new URLSearchParams(window.location.search);
             const currentUser = urlParams.get("user");
             const adminEmail = urlParams.get("admin");
-        
+    
             addOfferBtn.addEventListener("click", () => {
                 addOfferModal.classList.add("show");
                 offerForm.style.display = "none";
                 document.querySelectorAll('input[name="offerType"]').forEach(r => r.checked = false);
             });
-        
+    
             cancelOfferBtn.addEventListener("click", () => {
                 addOfferModal.classList.remove("show");
                 offerForm.style.display = "none";
             });
-        
+    
             proceedBtn.addEventListener("click", async () => {
                 const selectedType = document.querySelector('input[name="offerType"]:checked')?.value;
                 if (!selectedType) {
                     alert("Please select Offer Help or Need Help");
                     return;
                 }
-        
+    
                 if (selectedType === "needHelp") {
                     taskSelection.innerHTML = "<p>Loading your tasks...</p>";
                     offerForm.style.display = "block";
                     await loadTodaysTasks(currentUser);
                 } else {
-    taskSelection.innerHTML = "<p>Loading available tasks to help with...</p>";
-    offerForm.style.display = "block";
-    await loadAllUncompletedTasks();
-}
-
-        
+                    taskSelection.innerHTML = "<p>Loading available tasks to help with...</p>";
+                    offerForm.style.display = "block";
+                    await loadAllUncompletedTasks();
+                }
+    
                 submitOfferBtn.style.display = "inline-block";
             });
-        
+    
             async function loadTodaysTasks(userName) {
-                const today = new Date().toLocaleDateString("sv-SE"); // format: yyyy-mm-dd
-                taskSelection.innerHTML = ""; // clear previous
-        
+                const today = new Date().toLocaleDateString("sv-SE");
+                taskSelection.innerHTML = "";
+    
                 try {
                     const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
                     const data = await res.json();
                     const tasks = data.tasks || [];
-        
+    
                     const todaysTasks = tasks.filter(task =>
                         task.users.includes(userName) &&
                         task.date &&
-                        task.date <= today // assuming tasks show up on or after their start date
+                        task.date <= today
                     );
-        
+    
                     if (todaysTasks.length === 0) {
                         taskSelection.innerHTML = "<p>No tasks found for today.</p>";
                         return;
                     }
-        
+    
                     todaysTasks.forEach(task => {
                         const taskId = `task_${task.title.replace(/\s+/g, "_")}`;
                         const label = document.createElement("label");
@@ -1117,57 +1116,46 @@
                     taskSelection.innerHTML = "<p>Error loading tasks.</p>";
                 }
             }
+    
+            async function loadAllUncompletedTasks() {
+                const today = new Date().toLocaleDateString("sv-SE");
+                taskSelection.innerHTML = "";
+    
+                try {
+                    const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+                    const data = await res.json();
+                    const tasks = data.tasks || [];
+    
+                    const allTasks = tasks.filter(task =>
+                        task.users &&
+                        task.date &&
+                        task.date <= today
+                    );
+    
+                    if (allTasks.length === 0) {
+                        taskSelection.innerHTML = "<p>No available tasks to help with today.</p>";
+                        return;
+                    }
+    
+                    allTasks.forEach(task => {
+                        task.users.forEach(user => {
+                            const taskId = `task_${task.title.replace(/\s+/g, "_")}_${user}`;
+                            const label = document.createElement("label");
+                            label.innerHTML = `
+                                <input type="checkbox" name="taskCheckbox" value="${task.title}|${user}" id="${taskId}">
+                                ${task.title} for <strong>${user}</strong> — ${task.reward || 0} 🍯
+                            `;
+                            taskSelection.appendChild(label);
+                        });
+                    });
+                } catch (err) {
+                    console.error("Failed to load all tasks:", err);
+                    taskSelection.innerHTML = "<p>Error loading tasks to help with.</p>";
+                }
+            }
         });
-
-
-
-
-        async function loadAllUncompletedTasks() {
-    const today = new Date().toLocaleDateString("sv-SE");
-    taskSelection.innerHTML = ""; // Clear existing
-
-    try {
-        const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
-        const data = await res.json();
-        const tasks = data.tasks || [];
-
-        const allTasks = tasks.filter(task =>
-            task.users &&
-            task.date &&
-            task.date <= today
-        );
-
-        if (allTasks.length === 0) {
-            taskSelection.innerHTML = "<p>No available tasks to help with today.</p>";
-            return;
-        }
-
-        allTasks.forEach(task => {
-            task.users.forEach(user => {
-                const taskId = `task_${task.title.replace(/\s+/g, "_")}_${user}`;
-                const label = document.createElement("label");
-                label.innerHTML = `
-                    <input type="checkbox" name="taskCheckbox" value="${task.title}|${user}" id="${taskId}">
-                    ${task.title} for <strong>${user}</strong> — ${task.reward || 0} 🍯
-                `;
-                taskSelection.appendChild(label);
-            });
-        });
-    } catch (err) {
-        console.error("Failed to load all tasks:", err);
-        taskSelection.innerHTML = "<p>Error loading tasks to help with.</p>";
-    }
-}
-
-
-
-
-
-
-
-        </script>
-        
-
+    </script>
+    
 
 
 
