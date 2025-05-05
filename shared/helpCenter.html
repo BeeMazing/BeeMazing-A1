@@ -965,7 +965,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 1</div>
+        <div class="title">BeeMazing Help Center 11</div>
     </div>
 
     <div class="container">
@@ -1074,9 +1074,11 @@
                     offerForm.style.display = "block";
                     await loadTodaysTasks(currentUser);
                 } else {
-                    taskSelection.innerHTML = "<p>Coming soon: Custom Offer Help form</p>";
-                    offerForm.style.display = "block";
-                }
+    taskSelection.innerHTML = "<p>Loading available tasks to help with...</p>";
+    offerForm.style.display = "block";
+    await loadAllUncompletedTasks();
+}
+
         
                 submitOfferBtn.style.display = "inline-block";
             });
@@ -1116,6 +1118,53 @@
                 }
             }
         });
+
+
+
+
+        async function loadAllUncompletedTasks() {
+    const today = new Date().toLocaleDateString("sv-SE");
+    taskSelection.innerHTML = ""; // Clear existing
+
+    try {
+        const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+        const data = await res.json();
+        const tasks = data.tasks || [];
+
+        const allTasks = tasks.filter(task =>
+            task.users &&
+            task.date &&
+            task.date <= today
+        );
+
+        if (allTasks.length === 0) {
+            taskSelection.innerHTML = "<p>No available tasks to help with today.</p>";
+            return;
+        }
+
+        allTasks.forEach(task => {
+            task.users.forEach(user => {
+                const taskId = `task_${task.title.replace(/\s+/g, "_")}_${user}`;
+                const label = document.createElement("label");
+                label.innerHTML = `
+                    <input type="checkbox" name="taskCheckbox" value="${task.title}|${user}" id="${taskId}">
+                    ${task.title} for <strong>${user}</strong> — ${task.reward || 0} 🍯
+                `;
+                taskSelection.appendChild(label);
+            });
+        });
+    } catch (err) {
+        console.error("Failed to load all tasks:", err);
+        taskSelection.innerHTML = "<p>Error loading tasks to help with.</p>";
+    }
+}
+
+
+
+
+
+
+
         </script>
         
 
