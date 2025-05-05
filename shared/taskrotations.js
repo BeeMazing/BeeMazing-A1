@@ -19,6 +19,13 @@ function filterTasksForDate(tasks, selectedDate) {
     const selectedYear = selected.getFullYear();
     const selectedMonth = selected.getMonth();
 
+    // Calculate the start of the selected week (Monday)
+    const selectedWeekStart = new Date(selected);
+    selectedWeekStart.setHours(0, 0, 0, 0);
+    const selectedDayOfWeek = selectedWeekStart.getDay();
+    const daysToMonday = selectedDayOfWeek === 0 ? 6 : selectedDayOfWeek - 1;
+    selectedWeekStart.setDate(selectedWeekStart.getDate() - daysToMonday);
+
     return tasks.filter(task => {
         if (!task.date) return false;
 
@@ -28,11 +35,11 @@ function filterTasksForDate(tasks, selectedDate) {
         const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
         const inRange = selected >= from && selected <= to;
 
-        // ✅ Skip Monthly tasks after full completion in current month
+        // Skip Monthly tasks after full completion in current month
         const isMonthly = task.repeat === "Monthly";
-        const required = task.timesPerMonth || 1;
+        const monthlyRequired = task.timesPerMonth || 1;
 
-        if (isMonthly && required > 0 && (task.settings?.includes("Rotation") || task.settings?.includes("Individual"))) {
+        if (isMonthly && monthlyRequired > 0 && (task.settings?.includes("Rotation") || task.settings?.includes("Individual"))) {
             let totalCompletions = 0;
             let lastCompletionDate = null;
 
@@ -54,12 +61,52 @@ function filterTasksForDate(tasks, selectedDate) {
             countAndTrackLastDate(task.pendingCompletions);
 
             if (
-                totalCompletions >= required &&
+                totalCompletions >= monthlyRequired &&
                 lastCompletionDate && selected > lastCompletionDate &&
                 selected.getFullYear() === selectedYear &&
                 selected.getMonth() === selectedMonth
             ) {
-                return false; // ✅ Hide after final completion day in same month
+                return false; // Hide after final completion day in same month
+            }
+        }
+
+        // Skip Weekly tasks after full completion in current week
+        const isWeekly = task.repeat === "Weekly";
+        const weeklyRequired = task.timesPerWeek || 1;
+
+        if (isWeekly && weeklyRequired > 0 && (task.settings?.includes("Rotation") || task.settings?.includes("Individual"))) {
+            let totalCompletions = 0;
+            let lastCompletionDate = null;
+
+            const countAndTrackLastDate = (source) => {
+                if (!source || typeof source !== "object") return;
+                for (const dateStr in source) {
+                    const d = parseLocalDate(dateStr);
+                    const weekStart = new Date(d);
+                    weekStart.setHours(0, 0, 0, 0);
+                    const dayOfWeek = weekStart.getDay();
+                    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                    weekStart.setDate(weekStart.getDate() - daysToMonday);
+
+                    if (weekStart.getTime() === selectedWeekStart.getTime()) {
+                        const entries = Array.isArray(source[dateStr]) ? source[dateStr].length : 0;
+                        totalCompletions += entries;
+                        if (entries > 0 && (!lastCompletionDate || d > lastCompletionDate)) {
+                            lastCompletionDate = d;
+                        }
+                    }
+                }
+            };
+
+            countAndTrackLastDate(task.completions);
+            countAndTrackLastDate(task.pendingCompletions);
+
+            if (
+                totalCompletions >= weeklyRequired &&
+                lastCompletionDate && selected > lastCompletionDate &&
+                selected.getTime() >= selectedWeekStart.getTime()
+            ) {
+                return false; // Hide after final completion day in same week
             }
         }
 
@@ -85,6 +132,10 @@ function filterTasksForDate(tasks, selectedDate) {
         return inRange;
     });
 }
+
+
+
+
 
 
 // addtasks.html settings: Rotation Daily ////////////////////////////////////////////////////////////////////////
