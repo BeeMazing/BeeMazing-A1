@@ -1842,23 +1842,93 @@ app.get("/api/help-offers", async (req, res) => {
 
 
 app.put("/api/help-offers", async (req, res) => {
-  const { adminEmail, offers } = req.body;
-  if (!adminEmail || !Array.isArray(offers)) {
-      return res.status(400).json({ error: "Missing adminEmail or offers" });
-  }
+  const { adminEmail, offers, currentUser } = req.body;
   try {
       const db = await connectDB();
       const admins = db.collection("admins");
-      await admins.updateOne(
-          { email: adminEmail },
-          { $set: { helpOffers: offers } },
-          { upsert: true }
-      );
+      const admin = await admins.findOne({ email: adminEmail });
+      if (!admin) {
+          return res.status(404).json({ error: "Admin not found" });
+      }
+      // Ensure only the offer's creator can delete
+      const validOffers = offers.filter((offer, index) => {
+          const originalOffer = admin.helpOffers[index];
+          return !originalOffer || originalOffer.fromUser === currentUser;
+      });
+      await admins.updateOne({ email: adminEmail }, { $set: { helpOffers: validOffers } });
       res.json({ success: true });
   } catch (err) {
-      console.error("🔥 Error updating help offers:", err);
-      res.status(500).json({ error: "Failed to update help offers" });
+      console.error("Error updating offers:", err);
+      res.status(500).json({ error: "Failed to update offers" });
   }
 });
+
+
+
+
+app.post("/api/accept-offer", async (req, res) => {
+  const { adminEmail, offerIndex, taskTitle, offerUser, acceptUser, pointsOffered, offerType, helpMode } = req.body;
+  try {
+      const db = await connectDB();
+      const admins = db.collection("admins");
+      const admin = await admins.findOne({ email: adminEmail });
+      if (!admin) {
+          return res.status(404).json({ error: "Admin not found" });
+      }
+
+      const offers = admin.helpOffers || [];
+      const offer = offers[offerIndex];
+      if (!offer || offer.fromUser !== offerUser) {
+          return res.status(400).json({ error: "Invalid offer" });
+      }
+
+      // Find the task in the offer
+      const task = offer.tasks.find(t => t.title === taskTitle);
+      if (!task || task.reward !== pointsOffered) {
+          return res.status(400).json({ error: "Invalid task" });
+      }
+
+      // Update tasks
+      const tasks = admin.tasks || [];
+      const taskToUpdate = tasks.find(t => t.title === taskTitle);
+      if (!taskToUpdate) {
+          return res.status(400).json({ error: "Task not found" });
+      }
+
+      if (offerType === "offerHelp") {
+          // For offerHelp: Assign task to acceptUser
+          if (!taskToUpdate.users.includes(acceptUser)) {
+              taskToUpdate.users.push(acceptUser);
+          }
+          // Update points (example logic)
+          // Deduct pointsOffered from acceptUser, add to offerUser
+      } else if (offerType === "needHelp") {
+          // For needHelp: Reassign task from offerUser to acceptUser
+          taskToUpdate.users = taskToUpdate.users.filter(u => u !== offerUser);
+          if (!taskToUpdate.users.includes(acceptUser)) {
+              taskToUpdate.users.push(acceptUser);
+          }
+          // Update points (example logic)
+          // Deduct pointsOffered from offerUser, add to acceptUser
+      }
+
+      // Remove the offer
+      offers.splice(offerIndex, 1);
+
+      // Update admin document
+      await admins.updateOne(
+          { email: adminEmail },
+          { $set: { tasks, helpOffers: offers } }
+      );
+
+      res.json({ success: true });
+  } catch (err) {
+      console.error("Error accepting offer:", err);
+      res.status(500).json({ error: "Failed to accept offer" });
+  }
+});
+
+
+
 
 // Endpoint helpCenter.html //
