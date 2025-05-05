@@ -750,7 +750,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center awaw</div>
+        <div class="title">BeeMazing Help Center 1</div>
     </div>
 
     <div class="button-container">
@@ -819,6 +819,7 @@
 
 
         
+    
     <script src="/BeeMazing-Y1/shared/taskrotations.js?t=${Date.now()}"></script>
     <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -882,6 +883,7 @@
     
             for (const task of tasks) {
                 if (!task || !task.title || !Array.isArray(task.users) || task.users.length === 0) continue;
+                if (!task.users.includes(currentUser)) continue; // ✅ Only show tasks assigned to current user
     
                 let turnData = { requiredTimes: 1, completedCount: 0, turns: [] };
     
@@ -903,7 +905,6 @@
                     console.warn("Error computing turnData for task", task.title, e);
                 }
     
-                // Show the task if it's not fully completed (for both offerHelp and needHelp)
                 const showTask = turnData.completedCount < turnData.requiredTimes;
     
                 if (showTask) {
@@ -920,7 +921,7 @@
     
             if (taskSelection.querySelectorAll('input[type="checkbox"]').length === 0) {
                 const none = document.createElement("p");
-                none.textContent = "No valid tasks available.";
+                none.textContent = "No valid tasks assigned to you.";
                 none.style.color = "#ccc";
                 taskSelection.appendChild(none);
             }
@@ -960,7 +961,7 @@
     });
     </script>
     
-    
+
 
 
 </body>
