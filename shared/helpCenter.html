@@ -990,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center a</div>
+        <div class="title">BeeMazing Help Center 111</div>
     </div>
 
     <div class="container">
@@ -1086,13 +1086,21 @@ const durationMinutes = parseInt(durationSelect.value); // like 60 for 1 hour
 
   const durationInMs = durationMinutes * 60 * 1000;
 
-  const offer = {
-    type: selectedHelpType,
-    tasks: selectedTasks,
-    createdAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + durationInMs).toISOString(),
-    fromUser: localStorage.getItem("currentUserName") || "Anonymous"
-  };
+  const helpMode = document.querySelector('input[name="helpMode"]:checked')?.value;
+if (!helpMode) {
+  alert("Please select how you want to help/receive help.");
+  return;
+}
+
+const offer = {
+  type: selectedHelpType,
+  helpMode,
+  tasks: selectedTasks,
+  createdAt: new Date().toISOString(),
+  expiresAt: new Date(Date.now() + durationInMs).toISOString(),
+  fromUser: localStorage.getItem("currentUserName") || "Anonymous"
+};
+
 
   const adminEmail = localStorage.getItem("currentAdminEmail");
 
