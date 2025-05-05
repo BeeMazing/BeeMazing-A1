@@ -750,7 +750,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 1</div>
+        <div class="title">BeeMazing Help Center 11</div>
     </div>
 
     <div class="button-container">
@@ -883,7 +883,9 @@
     
             for (const task of tasks) {
                 if (!task || !task.title || !Array.isArray(task.users) || task.users.length === 0) continue;
-                if (!task.users.includes(currentUser)) continue; // ✅ Only show tasks assigned to current user
+
+// Only skip tasks not assigned to user for "Need Help"
+if (offerType === "needHelp" && !task.users.includes(currentUser)) continue;
     
                 let turnData = { requiredTimes: 1, completedCount: 0, turns: [] };
     
