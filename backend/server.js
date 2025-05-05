@@ -1934,6 +1934,7 @@ app.post("/api/accept-offer", async (req, res) => {
 
 
 // POST /api/notifications - Create notifications for an offer
+// POST /api/notifications
 app.post("/api/notifications", async (req, res) => {
   const { adminEmail, offer } = req.body;
   try {
@@ -1952,7 +1953,6 @@ app.post("/api/notifications", async (req, res) => {
       const timestamp = new Date().toISOString();
 
       if (offer.type === "offerHelp") {
-          // Notify users assigned to any of the offer's tasks
           const notifiedUsers = new Set();
           for (const taskTitle of offerTasks) {
               const task = tasks.find(t => t.title === taskTitle);
@@ -1980,7 +1980,6 @@ app.post("/api/notifications", async (req, res) => {
               }
           }
       } else if (offer.type === "needHelp") {
-          // Notify all users except the offer creator
           for (const user of users) {
               if (user !== offer.fromUser) {
                   notifications.push({
@@ -2008,7 +2007,12 @@ app.post("/api/notifications", async (req, res) => {
   }
 });
 
+
+
+
+
 // GET /api/notifications - Retrieve notifications for a user
+
 app.get("/api/notifications", async (req, res) => {
   const { adminEmail, user } = req.query;
   try {
@@ -2020,7 +2024,6 @@ app.get("/api/notifications", async (req, res) => {
       }
 
       const notifications = (admin.notifications || []).filter(n => n.user === user);
-      // Filter out expired notifications
       const now = new Date();
       const validNotifications = notifications.filter(n => new Date(n.expiresAt) > now);
 
@@ -2030,6 +2033,8 @@ app.get("/api/notifications", async (req, res) => {
       res.status(500).json({ error: "Failed to fetch notifications" });
   }
 });
+
+
 
 // DELETE /api/notifications - Clear notifications for a user
 app.delete("/api/notifications", async (req, res) => {

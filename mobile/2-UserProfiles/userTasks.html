@@ -23,6 +23,7 @@
             --footer-height: 70px;
             --border-dark: #444754; /* 👈 Add this if not already present */
             --card-bg: #2A2B32;
+            --cayenne-blue: #00B7EB;
         }
         body {
             font-family: 'Poppins', Arial, sans-serif;
@@ -635,13 +636,29 @@
 
 /* Help Center notifications */
 
-#notificationBadge.cayenne {
-    background: #C71585; /* Cayenne for offerHelp */
+#offerHelpBadge, #needHelpBadge {
+    display: none;
+    position: absolute;
+    top: -10px;
+    min-width: 20px;
+    height: 20px;
+    line-height: 20px;
+    border-radius: 50%;
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    padding: 0 6px;
 }
-#notificationBadge.red {
-    background: #D32F2F; /* Red for needHelp */
+#offerHelpBadge {
+    right: 20px;
+    background: var(--cayenne-blue);
 }
-#notificationBadge.pulse {
+#needHelpBadge {
+    right: -10px;
+    background: var(--danger-color);
+}
+#offerHelpBadge.pulse, #needHelpBadge.pulse {
     animation: pulse 1s ease-in-out infinite;
 }
 @keyframes pulse {
@@ -699,7 +716,8 @@
 
           <div style="position: relative; display: inline-block; margin-bottom: 16px;">
             <button id="helpCenterBtn" class="finished-btn">Help Center</button>
-            <span id="notificationBadge" style="display: none; position: absolute; top: -10px; right: -10px; min-width: 20px; height: 20px; line-height: 20px; border-radius: 50%; background: #D32F2F; color: #FFFFFF; font-size: 12px; font-weight: 600; text-align: center; padding: 0 6px;"></span>
+            <span id="offerHelpBadge" class="pulse"></span>
+            <span id="needHelpBadge" class="pulse"></span>
         </div>
 
           
@@ -1366,13 +1384,14 @@ async function finishTask(currentUser, task, selectedDate) {
 
         async function loadNotifications(userName) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
-    const badge = document.getElementById("notificationBadge");
+    const offerHelpBadge = document.getElementById("offerHelpBadge");
+    const needHelpBadge = document.getElementById("needHelpBadge");
     if (!adminEmail || !userName) {
         console.error("loadNotifications: Missing adminEmail or userName");
-        badge.style.display = "none";
+        offerHelpBadge.style.display = "none";
+        needHelpBadge.style.display = "none";
         return;
     }
-
     try {
         const res = await fetch(`https://beemazing.onrender.com/api/notifications?adminEmail=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}&t=${Date.now()}`, {
             method: "GET",
@@ -1383,27 +1402,34 @@ async function finishTask(currentUser, task, selectedDate) {
         if (!res.ok) {
             throw new Error(data.error || "Failed to fetch notifications");
         }
-
         const notifications = data.notifications || [];
         if (notifications.length === 0) {
-            badge.style.display = "none";
+            offerHelpBadge.style.display = "none";
+            needHelpBadge.style.display = "none";
             return;
         }
-
-        // Prioritize needHelp notifications (red) over offerHelp (cayenne)
-        const hasNeedHelp = notifications.some(n => n.offerType === "needHelp");
-        const totalTaskCount = notifications.reduce((sum, n) => sum + n.taskCount, 0);
-
-        badge.textContent = totalTaskCount;
-        badge.className = hasNeedHelp ? "red pulse" : "cayenne pulse";
-        badge.style.display = "block";
+        const offerHelpNotifications = notifications.filter(n => n.offerType === "offerHelp");
+        const needHelpNotifications = notifications.filter(n => n.offerType === "needHelp");
+        const offerHelpCount = offerHelpNotifications.reduce((sum, n) => sum + n.taskCount, 0);
+        const needHelpCount = needHelpNotifications.reduce((sum, n) => sum + n.taskCount, 0);
+        if (offerHelpCount > 0) {
+            offerHelpBadge.textContent = `(${offerHelpCount})`;
+            offerHelpBadge.style.display = "block";
+        } else {
+            offerHelpBadge.style.display = "none";
+        }
+        if (needHelpCount > 0) {
+            needHelpBadge.textContent = `(${needHelpCount})`;
+            needHelpBadge.style.display = "block";
+        } else {
+            needHelpBadge.style.display = "none";
+        }
     } catch (err) {
         console.error("Failed to load notifications:", err.message);
-        badge.style.display = "none";
+        offerHelpBadge.style.display = "none";
+        needHelpBadge.style.display = "none";
     }
 }
-
-
 
 
 
