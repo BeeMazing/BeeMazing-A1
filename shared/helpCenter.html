@@ -750,7 +750,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 1</div>
+        <div class="title">BeeMazing Help Center 2</div>
     </div>
 
     <div class="button-container">
@@ -834,6 +834,10 @@
             const addOfferModal = document.getElementById("addOfferModal");
         
             const currentUser = new URLSearchParams(window.location.search).get("user");
+if (currentUser) {
+    localStorage.setItem("currentUser", currentUser);
+}
+
             const currentAdmin = localStorage.getItem("currentAdminEmail");
         
             if (!currentAdmin) {
