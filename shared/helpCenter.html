@@ -750,7 +750,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center</div>
+        <div class="title">BeeMazing Help Center 1</div>
     </div>
 
     <div class="button-container">
@@ -915,9 +915,12 @@
             // Show only if task still has incomplete progress overall
             showTask = !isFullyCompleted;
         } else if (offerType === "needHelp") {
-            // Show only if this user still has a pending task
-            showTask = hasUserTurn && !hasUserCompleted;
-        }
+    // Show if the user is in today's turn rotation and hasn't completed yet
+    const scheduledToday = turnData.turns?.some(t => t.user === currentUser);
+    const alreadyCompleted = turnData.turns?.some(t => t.user === currentUser && t.isCompleted);
+    showTask = scheduledToday && !alreadyCompleted;
+}
+
 
         if (showTask) {
             const label = document.createElement("label");
