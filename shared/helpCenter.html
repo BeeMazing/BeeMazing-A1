@@ -990,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 1</div>
+        <div class="title">BeeMazing Help Center 7</div>
     </div>
 
     <div class="container">
@@ -1158,76 +1158,107 @@
             });
         
             // Submit offer
-            submitOfferBtn.addEventListener("click", function () {
-                const selectedTasks = [];
-                document.querySelectorAll('input[name="taskCheckbox"]:checked').forEach(checkbox => {
-                    const title = checkbox.value;
-                    const input = document.querySelector(`input[name="points_${title}"]`);
-                    const reward = input ? parseInt(input.value) || 0 : 0;
-                    selectedTasks.push({ title, reward });
-                });
-        
-                if (selectedTasks.length === 0) {
-                    alert("Please select at least one task.");
-                    return;
-                }
-        
-                const selectedHelpType = localStorage.getItem("helpType");
-                const durationSelect = document.getElementById("expireTime");
-                const durationMinutes = parseInt(durationSelect.value);
-                const durationInMs = durationMinutes * 60 * 1000;
-        
-                const helpMode = document.querySelector('input[name="helpMode"]:checked')?.value;
-                if (!helpMode) {
-                    alert("Please select how you want to help/receive help.");
-                    return;
-                }
-        
-                if (!currentUser) {
-                    alert("Error: User not identified. Please return to the tasks page and try again.");
-                    return;
-                }
-        
-                const taskTitles = selectedTasks.map(task => task.title).join(", ");
-                const description = `${selectedHelpType === "offerHelp" ? "Offering" : "Needing"} help with: ${taskTitles}`;
-        
-                const offer = {
+// Submit offer
+submitOfferBtn.addEventListener("click", async function () {
+    const selectedTasks = [];
+    document.querySelectorAll('input[name="taskCheckbox"]:checked').forEach(checkbox => {
+        const title = checkbox.value;
+        const input = document.querySelector(`input[name="points_${title}"]`);
+        const reward = input ? parseInt(input.value) || 0 : 0;
+        selectedTasks.push({ title, reward });
+    });
+
+    if (selectedTasks.length === 0) {
+        alert("Please select at least one task.");
+        return;
+    }
+
+    const selectedHelpType = localStorage.getItem("helpType");
+    const durationSelect = document.getElementById("expireTime");
+    const durationMinutes = parseInt(durationSelect.value);
+    const durationInMs = durationMinutes * 60 * 1000;
+
+    const helpMode = document.querySelector('input[name="helpMode"]:checked')?.value;
+    if (!helpMode) {
+        alert("Please select how you want to help/receive help.");
+        return;
+    }
+
+    if (!currentUser) {
+        alert("Error: User not identified. Please return to the tasks page and try again.");
+        return;
+    }
+
+    const taskTitles = selectedTasks.map(task => task.title).join(", ");
+    const description = `${selectedHelpType === "offerHelp" ? "Offering" : "Needing"} help with: ${taskTitles}`;
+
+    const offer = {
+        type: selectedHelpType,
+        helpMode,
+        tasks: selectedTasks,
+        description: description,
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + durationInMs).toISOString(),
+        fromUser: currentUser
+    };
+
+    if (!adminEmail) {
+        alert("Error: Admin email not found. Please log in again.");
+        return;
+    }
+
+    try {
+        // Post the offer
+        const offerRes = await fetch("https://beemazing.onrender.com/api/help-offers", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ adminEmail, offer })
+        });
+        const offerData = await offerRes.json();
+        console.log("Submit offer response:", offerData);
+        if (!offerRes.ok || !offerData.success) {
+            throw new Error(offerData.error || "Failed to save offer");
+        }
+
+        // Send notification
+        const notificationRes = await fetch("https://beemazing.onrender.com/api/notifications", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                adminEmail,
+                offer: {
                     type: selectedHelpType,
-                    helpMode,
                     tasks: selectedTasks,
-                    description: description,
-                    createdAt: new Date().toISOString(),
-                    expiresAt: new Date(Date.now() + durationInMs).toISOString(),
-                    fromUser: currentUser
-                };
-        
-                if (!adminEmail) {
-                    alert("Error: Admin email not found. Please log in again.");
-                    return;
+                    fromUser: currentUser,
+                    expiresAt: offer.expiresAt
                 }
-        
-                fetch("https://beemazing.onrender.com/api/help-offers", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ adminEmail, offer })
-                })
-                    .then(async res => {
-                        const data = await res.json();
-                        console.log("Submit offer response:", data);
-                        if (res.ok && data.success) {
-                            alert("Offer submitted!");
-                            addOfferModal.classList.remove("show");
-                            loadOffers(selectedHelpType); // Reload offers for the current tab
-                        } else {
-                            alert(`Error saving offer: ${data.error || "Unknown error"}`);
-                        }
-                    })
-                    .catch(err => {
-                        console.error("Submit offer error:", err);
-                        alert("Failed to send offer: Network error");
-                    });
-            });
-        
+            })
+        });
+        const notificationData = await notificationRes.json();
+        console.log("Send notification response:", notificationData);
+        if (!notificationRes.ok || !notificationData.success) {
+            console.warn("Notification failed to send:", notificationData.error);
+            // Continue even if notification fails
+        }
+
+        alert("Offer submitted!");
+        addOfferModal.classList.remove("show");
+        loadOffers(selectedHelpType); // Reload offers for the current tab
+    } catch (err) {
+        console.error("Submit offer error:", err);
+        alert(`Failed to send offer: ${err.message}`);
+    }
+});
+
+
+
+
+
+
+
+
+
+
             // Function to load and display offers
 // Function to load and display offers
 async function loadOffers(tab = "offerHelp") {

@@ -1930,5 +1930,132 @@ app.post("/api/accept-offer", async (req, res) => {
 
 
 
+//- help notifications for userTasks.html 
+
+// POST /api/notifications - Create notifications for an offer
+app.post("/api/notifications", async (req, res) => {
+  const { adminEmail, offer } = req.body;
+  try {
+      const db = await connectDB();
+      const admins = db.collection("admins");
+      const admin = await admins.findOne({ email: adminEmail });
+      if (!admin) {
+          return res.status(404).json({ error: "Admin not found" });
+      }
+
+      const notifications = admin.notifications || [];
+      const tasks = admin.tasks || [];
+      const users = Object.keys(admin.permissions || {});
+
+      const offerTasks = offer.tasks.map(t => t.title);
+      const timestamp = new Date().toISOString();
+
+      if (offer.type === "offerHelp") {
+          // Notify users assigned to any of the offer's tasks
+          const notifiedUsers = new Set();
+          for (const taskTitle of offerTasks) {
+              const task = tasks.find(t => t.title === taskTitle);
+              if (task && task.users) {
+                  for (const user of task.users) {
+                      if (user !== offer.fromUser && !notifiedUsers.has(user)) {
+                          const userTaskCount = offerTasks.filter(title => {
+                              const t = tasks.find(t => t.title === title);
+                              return t && t.users.includes(user);
+                          }).length;
+                          if (userTaskCount > 0) {
+                              notifications.push({
+                                  user,
+                                  offerType: offer.type,
+                                  taskCount: userTaskCount,
+                                  tasks: offerTasks,
+                                  offerUser: offer.fromUser,
+                                  timestamp,
+                                  expiresAt: offer.expiresAt
+                              });
+                              notifiedUsers.add(user);
+                          }
+                      }
+                  }
+              }
+          }
+      } else if (offer.type === "needHelp") {
+          // Notify all users except the offer creator
+          for (const user of users) {
+              if (user !== offer.fromUser) {
+                  notifications.push({
+                      user,
+                      offerType: offer.type,
+                      taskCount: offerTasks.length,
+                      tasks: offerTasks,
+                      offerUser: offer.fromUser,
+                      timestamp,
+                      expiresAt: offer.expiresAt
+                  });
+              }
+          }
+      }
+
+      await admins.updateOne(
+          { email: adminEmail },
+          { $set: { notifications } }
+      );
+
+      res.json({ success: true });
+  } catch (err) {
+      console.error("Error creating notifications:", err);
+      res.status(500).json({ error: "Failed to create notifications" });
+  }
+});
+
+// GET /api/notifications - Retrieve notifications for a user
+app.get("/api/notifications", async (req, res) => {
+  const { adminEmail, user } = req.query;
+  try {
+      const db = await connectDB();
+      const admins = db.collection("admins");
+      const admin = await admins.findOne({ email: adminEmail });
+      if (!admin) {
+          return res.status(404).json({ error: "Admin not found" });
+      }
+
+      const notifications = (admin.notifications || []).filter(n => n.user === user);
+      // Filter out expired notifications
+      const now = new Date();
+      const validNotifications = notifications.filter(n => new Date(n.expiresAt) > now);
+
+      res.json({ notifications: validNotifications });
+  } catch (err) {
+      console.error("Error fetching notifications:", err);
+      res.status(500).json({ error: "Failed to fetch notifications" });
+  }
+});
+
+// DELETE /api/notifications - Clear notifications for a user
+app.delete("/api/notifications", async (req, res) => {
+  const { adminEmail, user } = req.body;
+  try {
+      const db = await connectDB();
+      const admins = db.collection("admins");
+      const admin = await admins.findOne({ email: adminEmail });
+      if (!admin) {
+          return res.status(404).json({ error: "Admin not found" });
+      }
+
+      const notifications = (admin.notifications || []).filter(n => n.user !== user);
+      await admins.updateOne(
+          { email: adminEmail },
+          { $set: { notifications } }
+      );
+
+      res.json({ success: true });
+  } catch (err) {
+      console.error("Error clearing notifications:", err);
+      res.status(500).json({ error: "Failed to clear notifications" });
+  }
+});
+
+
+
+//- help notifications for userTasks.html
 
 // Endpoint helpCenter.html //

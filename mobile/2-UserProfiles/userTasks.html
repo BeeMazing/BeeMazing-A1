@@ -631,6 +631,28 @@
 }
 
 
+
+
+/* Help Center notifications */
+
+#notificationBadge.cayenne {
+    background: #C71585; /* Cayenne for offerHelp */
+}
+#notificationBadge.red {
+    background: #D32F2F; /* Red for needHelp */
+}
+#notificationBadge.pulse {
+    animation: pulse 1s ease-in-out infinite;
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+
+/* Help Center notifications */
+
     </style>
 </head>
 <body>
@@ -675,7 +697,10 @@
               <p><strong>Buzz Points:</strong> <span id="rewardAmount">0</span> 🍯</p>
           </div>
 
-          <button id="helpCenterBtn" class="finished-btn" style="margin-bottom: 16px;">Help Center</button>
+          <div style="position: relative; display: inline-block; margin-bottom: 16px;">
+            <button id="helpCenterBtn" class="finished-btn">Help Center</button>
+            <span id="notificationBadge" style="display: none; position: absolute; top: -10px; right: -10px; min-width: 20px; height: 20px; line-height: 20px; border-radius: 50%; background: #D32F2F; color: #FFFFFF; font-size: 12px; font-weight: 600; text-align: center; padding: 0 6px;"></span>
+        </div>
 
           
             <h3>Assigned Tasks:</h3>
@@ -707,6 +732,7 @@
 
 
     <script>
+
 document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     let adminEmail = urlParams.get('admin') || localStorage.getItem("currentAdminEmail");
@@ -714,95 +740,88 @@ document.addEventListener("DOMContentLoaded", () => {
     const addPoints = Number(urlParams.get('addPoints')) || 0;
 
     if (adminEmail && adminEmail !== "null") {
-    localStorage.setItem("currentAdminEmail", adminEmail);
-}
-
-if (userName && adminEmail) {
-    // Check if user is admin
-    const userData = JSON.parse(localStorage.getItem("userData")) || {};
-    const permissions = userData[adminEmail]?.permissions || {};
-    const isUserAdmin = permissions[userName] === "Admin";
-
-    // Set footer button links
-   
-
-
-
-    const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
-const homeButton = document.getElementById("homeButton");
-const tasksButton = document.getElementById("tasksButton");
-const marketButton = document.getElementById("marketButton");
-
-if (homeButton) {
-    homeButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-}
-if (tasksButton) {
-    tasksButton.href = `${basePath}/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-}
-if (marketButton) {
-    marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // Set active state
-    document.querySelectorAll('.footer a').forEach(link => {
-        const currentPath = window.location.pathname.replace(/\/$/, '');
-        const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
-        if (currentPath === linkPath) {
-            link.classList.add('active');
-        } else {
-            link.classList.remove('active');
-        }
-    });
-
-
-    loadUserTasks(userName);
-    loadUserReward(userName);
-
-
-
-    const helpCenterBtn = document.getElementById("helpCenterBtn");
-if (helpCenterBtn) {
-  helpCenterBtn.addEventListener("click", () => {
-    localStorage.setItem("lastHelpUser", userName);
-    const helpURL = `/BeeMazing-Y1/shared/helpCenter.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-    window.location.href = helpURL;
-  });
-}
-
-
-
-
-    if (addPoints > 0) {
-        setTimeout(async () => {
-            await updateUserReward(userName, addPoints);
-            triggerHoneyRain(addPoints);
-            loadUserReward(userName);
-        }, 500);
+        localStorage.setItem("currentAdminEmail", adminEmail);
     }
-} else {
-    document.getElementById('userTasks').innerHTML = "<p>Error: Missing user or admin email. Please log in again.</p>";
-    document.getElementById('userName').textContent = "Error";
-}
+
+    if (userName && adminEmail) {
+        // Check if user is admin
+        const userData = JSON.parse(localStorage.getItem("userData")) || {};
+        const permissions = userData[adminEmail]?.permissions || {};
+        const isUserAdmin = permissions[userName] === "Admin";
+
+        // Set footer button links
+        const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
+        const homeButton = document.getElementById("homeButton");
+        const tasksButton = document.getElementById("tasksButton");
+        const marketButton = document.getElementById("marketButton");
+
+        if (homeButton) {
+            homeButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+        }
+        if (tasksButton) {
+            tasksButton.href = `${basePath}/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+        }
+        if (marketButton) {
+            marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+        }
+
+        // Set active state
+        document.querySelectorAll('.footer a').forEach(link => {
+            const currentPath = window.location.pathname.replace(/\/$/, '');
+            const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
+            if (currentPath === linkPath) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
+        });
+
+        loadUserTasks(userName);
+        loadUserReward(userName);
+        loadNotifications(userName); // Load notifications on page load
+
+        const helpCenterBtn = document.getElementById("helpCenterBtn");
+        if (helpCenterBtn) {
+            helpCenterBtn.addEventListener("click", async () => {
+                localStorage.setItem("lastHelpUser", userName);
+                const helpURL = `/BeeMazing-Y1/shared/helpCenter.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                
+                // Clear notifications for this user
+                try {
+                    const res = await fetch("https://beemazing.onrender.com/api/notifications", {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ adminEmail, user: userName })
+                    });
+                    const data = await res.json();
+                    console.log("Clear notifications response:", data);
+                    if (!res.ok) {
+                        console.warn("Failed to clear notifications:", data.error);
+                    }
+                } catch (err) {
+                    console.error("Error clearing notifications:", err.message);
+                }
+
+                window.location.href = helpURL;
+            });
+        }
+
+        if (addPoints > 0) {
+            setTimeout(async () => {
+                await updateUserReward(userName, addPoints);
+                triggerHoneyRain(addPoints);
+                loadUserReward(userName);
+            }, 500);
+        }
+    } else {
+        document.getElementById('userTasks').innerHTML = "<p>Error: Missing user or admin email. Please log in again.</p>";
+        document.getElementById('userName').textContent = "Error";
+    }
 
     adjustContentTop();
     generateScrollableDates();
     showAdminControlsIfNeeded();
 });
-
 
 
 
@@ -1339,6 +1358,51 @@ async function finishTask(currentUser, task, selectedDate) {
             showAdminControlsIfNeeded();
           }
         });
+
+
+
+
+
+
+        async function loadNotifications(userName) {
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    const badge = document.getElementById("notificationBadge");
+    if (!adminEmail || !userName) {
+        console.error("loadNotifications: Missing adminEmail or userName");
+        badge.style.display = "none";
+        return;
+    }
+
+    try {
+        const res = await fetch(`https://beemazing.onrender.com/api/notifications?adminEmail=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}&t=${Date.now()}`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" }
+        });
+        const data = await res.json();
+        console.log("Load notifications response:", data);
+        if (!res.ok) {
+            throw new Error(data.error || "Failed to fetch notifications");
+        }
+
+        const notifications = data.notifications || [];
+        if (notifications.length === 0) {
+            badge.style.display = "none";
+            return;
+        }
+
+        // Prioritize needHelp notifications (red) over offerHelp (cayenne)
+        const hasNeedHelp = notifications.some(n => n.offerType === "needHelp");
+        const totalTaskCount = notifications.reduce((sum, n) => sum + n.taskCount, 0);
+
+        badge.textContent = totalTaskCount;
+        badge.className = hasNeedHelp ? "red pulse" : "cayenne pulse";
+        badge.style.display = "block";
+    } catch (err) {
+        console.error("Failed to load notifications:", err.message);
+        badge.style.display = "none";
+    }
+}
+
 
 
 
