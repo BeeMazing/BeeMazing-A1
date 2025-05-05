@@ -41,7 +41,7 @@
   </style>
 </head>
 <body>
-  <h2>🛠 Error Tasks Viewer</h2>
+  <h2>🛠 Error Tasks Viewer 11</h2>
   <div id="taskList">Loading tasks...</div>
 
   <script>
@@ -67,6 +67,10 @@
         taskList.innerHTML = "";
 
         tasks.forEach(task => {
+  if (!task.title || !task.date) {
+    console.warn("⚠️ Skipping task with missing title/date:", task);
+    return;
+  }
           const div = document.createElement("div");
           div.className = "task";
 
@@ -95,12 +99,24 @@
     }
 
     async function deleteTask(title, date) {
-      const startDate = (date || "").split(" to ")[0];
-      try {
-        const res = await fetch(
-          `https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(title)}&date=${encodeURIComponent(startDate)}`,
-          { method: "DELETE", headers: { "Content-Type": "application/json" } }
-        );
+        const startDate = (date || "").split(" to ")[0];
+
+console.log("🧹 Deleting task with:", {
+  adminEmail,
+  title,
+  startDate
+});
+
+if (!adminEmail || !title || !startDate) {
+  alert("Missing adminEmail, title, or date. Cannot delete.");
+  return;
+}
+
+try {
+  const res = await fetch(
+    `https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(title)}&date=${encodeURIComponent(startDate)}`,
+    { method: "DELETE", headers: { "Content-Type": "application/json" } }
+  );
 
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
