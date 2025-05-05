@@ -1779,7 +1779,7 @@ app.get('/get-avatar', async (req, res) => {
 
 
 
-// StartPoint helpCenter.html //
+// StartPoint helpCenter.html //////////////////////////////////////////////////////////////////////////////
 
 // ✅ Save a new help offer (Offer Help or Need Help)
 app.post("/api/help-offers", async (req, res) => {
@@ -1947,7 +1947,10 @@ app.post("/api/notifications", async (req, res) => {
 
       const notifications = admin.notifications || [];
       const tasks = admin.tasks || [];
-      const users = Object.keys(admin.permissions || {});
+      const users = Array.from(new Set(
+        (admin.tasks || []).flatMap(t => t.users || [])
+      ));
+      
 
       const offerTasks = offer.tasks.map(t => t.title);
       const timestamp = new Date().toISOString();
