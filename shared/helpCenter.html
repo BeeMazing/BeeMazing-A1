@@ -990,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 11</div>
+        <div class="title">BeeMazing Help Center a</div>
     </div>
 
     <div class="container">
@@ -1096,7 +1096,7 @@ const durationMinutes = parseInt(durationSelect.value); // like 60 for 1 hour
 
   const adminEmail = localStorage.getItem("currentAdminEmail");
 
-  fetch("https://your-backend.onrender.com/api/help-offers", {
+  fetch("https://beemazing.onrender.com/api/help-offers", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ adminEmail, offer })
