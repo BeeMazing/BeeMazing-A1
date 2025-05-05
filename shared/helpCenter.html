@@ -581,6 +581,225 @@
             100% { box-shadow: 0 0 0 0 rgba(255, 202, 40, 0); }
         }
 
+        .task-selection label {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 1rem;
+            color: var(--text-color);
+            padding: 8px;
+            border-radius: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .task-selection label:hover {
+            background: rgba(255, 202, 40, 0.15);
+        }
+
+        .task-selection input[type="checkbox"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            background: #3A3D4A;
+            border: 2px solid var(--border-dark);
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .task-selection input[type="checkbox"]:checked {
+            background: var(--secondary-accent);
+            border-color: var(--secondary-accent);
+        }
+
+        .task-selection input[type="checkbox"]:checked::before {
+            content: '\2714';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--secondary-color);
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .task-selection input[type="number"] {
+            width: 130px;
+            padding: 12px;
+            margin-left: 14px;
+            background: #3A3D4A;
+            color: var(--text-color);
+            border: 2px solid var(--border-dark);
+            border-radius: 10px;
+            outline: none;
+            font-size: 0.95rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .task-selection input[type="number"]::placeholder {
+            font-size: 0.95rem;
+            color: #BBBBBB;
+        }
+
+        .task-selection input[type="number"]:focus,
+        .task-selection input[type="number"]:hover {
+            border-color: var(--secondary-accent);
+            box-shadow: 0 0 8px rgba(255, 202, 40, 0.3);
+        }
+
+        .modal-content select {
+            width: 100%;
+            padding: 12px;
+            margin: 12px 0;
+            background: #3A3D4A;
+            color: var(--text-color);
+            border: 2px solid var(--border-dark);
+            border-radius: 10px;
+            font-size: 1rem;
+            outline: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .modal-content select:focus,
+        .modal-content select:hover {
+            border-color: var(--secondary-accent);
+            box-shadow: 0 0 8px rgba(255, 202, 40, 0.3);
+        }
+
+        .modal-content #errorMessage {
+            color: var(--danger-color);
+            font-size: 0.9rem;
+            background: rgba(211, 47, 47, 0.25);
+            padding: 8px;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .modal-content .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .modal-content button {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .modal-content #submitOfferBtn, .modal-content #proceedBtn {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-accent));
+            color: var(--secondary-color);
+        }
+
+        .modal-content #submitOfferBtn:hover, .modal-content #proceedBtn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(255, 202, 40, 0.4);
+        }
+
+        .modal-content #cancelOfferBtn {
+            background: var(--danger-color);
+            color: #FFFFFF;
+        }
+
+        .modal-content #cancelOfferBtn:hover {
+            background: #B71C1C;
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(211, 47, 47, 0.4);
+        }
+
+        .modal-content #viewOfferTitle {
+            color: var(--primary-color);
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 18px;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-content #viewOfferTasks {
+            margin: 12px 0;
+            text-align: left;
+        }
+
+        .modal-content .accept-task-btn {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-accent));
+            color: var(--secondary-color);
+        }
+
+        .modal-content .accept-task-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(255, 202, 40, 0.4);
+        }
+
+        .modal-content #closeOfferBtn {
+            background: linear-gradient(45deg, var(--secondary-color), #2A2B32);
+            color: var(--primary-color);
+        }
+
+        .modal-content #closeOfferBtn:hover {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-accent));
+            color: var(--secondary-color);
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(255, 202, 40, 0.4);
+        }
+
+        .task-details {
+            display: flex;
+            flex-direction: column;
+            margin: 12px 0;
+            text-align: left;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255, 202, 40, 0.05);
+        }
+
+        .task-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .task-points {
+            font-size: 0.95rem;
+            color: var(--primary-color);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .you-receive {
+            font-size: 0.95rem;
+            color: var(--danger-color);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .accept-task-btn {
+            padding: 10px 20px;
+            margin-top: 10px;
+            font-size: 0.95rem;
+            border-radius: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 202, 40, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(255, 202, 40, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 202, 40, 0); }
+        }
+
         @keyframes tick {
             0% { opacity: 1; }
             50% { opacity: 0.7; }
@@ -746,7 +965,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 321312</div>
+        <div class="title">BeeMazing Help Center awgawgawawgawgawgaw</div>
     </div>
 
     <div class="container">
@@ -814,357 +1033,52 @@
         <a href="userTasks.html" id="backLink">Back</a>
     </div>
 
-    <script>
-        const addOfferBtn = document.getElementById('addOfferBtn');
-        const addOfferModal = document.getElementById('addOfferModal');
-        const cancelOfferBtn = document.getElementById('cancelOfferBtn');
-        const proceedBtn = document.getElementById('proceedBtn');
-        const submitOfferBtn = document.getElementById('submitOfferBtn');
-        const offerForm = document.getElementById('offerForm');
-        const typeSelection = document.getElementById('typeSelection');
-        const taskSelection = document.getElementById('taskSelection');
-        const errorMessage = document.getElementById('errorMessage');
-        const viewOfferModal = document.getElementById('viewOfferModal');
-        const closeOfferBtn = document.getElementById('closeOfferBtn');
-        const viewOfferTasks = document.getElementById('viewOfferTasks');
-        const tabButtons = document.querySelectorAll('.tab-button');
-        const tabContents = document.querySelectorAll('.tab-content');
-        const tabUnderline = document.querySelector('.tab-underline');
 
-        let adminEmail = localStorage.getItem('adminEmail') || '';
-        let currentUser = localStorage.getItem('currentUser') || '';
-        let selectedTasks = [];
 
-        // Initialize tabs
-        function initializeTabs() {
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    tabContents.forEach(content => content.classList.remove('active'));
-                    button.classList.add('active');
-                    document.getElementById(`${button.dataset.tab}List`).classList.add('active');
-                    updateTabUnderline();
-                });
-            });
-            updateTabUnderline();
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const addOfferBtn = document.getElementById('addOfferBtn');
+    const addOfferModal = document.getElementById('addOfferModal');
+    const typeSelection = document.getElementById('typeSelection');
+    const offerForm = document.getElementById('offerForm');
+    const cancelOfferBtn = document.getElementById('cancelOfferBtn');
+    const proceedBtn = document.getElementById('proceedBtn');
+    const submitOfferBtn = document.getElementById('submitOfferBtn');
+
+    // Show modal on "Add Offer" button click
+    addOfferBtn.addEventListener('click', () => {
+        addOfferModal.classList.add('show');
+        offerForm.style.display = 'none';
+        submitOfferBtn.style.display = 'none';
+        proceedBtn.style.display = 'inline-block';
+        document.querySelectorAll('input[name="offerType"]').forEach(r => r.checked = false);
+    });
+
+    // Hide modal
+    cancelOfferBtn.addEventListener('click', () => {
+        addOfferModal.classList.remove('show');
+    });
+
+    // Proceed button - show rest of form
+    proceedBtn.addEventListener('click', () => {
+        const selected = document.querySelector('input[name="offerType"]:checked');
+        if (!selected) {
+            alert("Please choose Offer Help or Need Help first.");
+            return;
         }
+        offerForm.style.display = 'block';
+        proceedBtn.style.display = 'none';
+        submitOfferBtn.style.display = 'inline-block';
+    });
+});
+</script>
 
-        function updateTabUnderline() {
-            const activeTab = document.querySelector('.tab-button.active');
-            if (activeTab) {
-                tabUnderline.style.width = `${activeTab.offsetWidth}px`;
-                tabUnderline.style.left = `${activeTab.offsetLeft}px`;
-            }
-        }
 
-        // Modal controls
-        function showModal(modal) {
-            modal.classList.add('show');
-        }
 
-        function hideModal(modal) {
-            modal.classList.remove('show');
-        }
 
-        // Open Add Offer modal
-        addOfferBtn.addEventListener('click', () => {
-            if (!adminEmail || !currentUser) {
-                errorMessage.textContent = 'Please log in to access the Help Center.';
-                errorMessage.style.display = 'block';
-                return;
-            }
-            showModal(addOfferModal);
-            resetOfferForm();
-        });
 
-        // Cancel Offer
-        cancelOfferBtn.addEventListener('click', () => {
-            hideModal(addOfferModal);
-            resetOfferForm();
-        });
 
-        // Reset Offer Form
-        function resetOfferForm() {
-            typeSelection.querySelectorAll('input').forEach(input => input.checked = false);
-            offerForm.style.display = 'none';
-            proceedBtn.style.display = 'block';
-            submitOfferBtn.style.display = 'none';
-            taskSelection.innerHTML = '';
-            errorMessage.style.display = 'none';
-            selectedTasks = [];
-        }
 
-        // Proceed Button
-        proceedBtn.addEventListener('click', async () => {
-            const selectedType = typeSelection.querySelector('input[name="offerType"]:checked');
-            if (!selectedType) {
-                errorMessage.textContent = 'Please select an offer type';
-                errorMessage.style.display = 'block';
-                return;
-            }
-
-            offerForm.style.display = 'block';
-            proceedBtn.style.display = 'none';
-            submitOfferBtn.style.display = 'block';
-
-            if (selectedType.value === 'needHelp') {
-                await loadUserTasks();
-            } else {
-                taskSelection.innerHTML = '<p>Select tasks you can help with later.</p>';
-            }
-        });
-
-        // Load User Tasks for Need Help
-        async function loadUserTasks() {
-            taskSelection.innerHTML = '<p>Loading tasks...</p>';
-            if (!adminEmail || !currentUser) {
-                taskSelection.innerHTML = '<p>Please log in to view your tasks.</p>';
-                errorMessage.textContent = 'User session invalid. Please log in again.';
-                errorMessage.style.display = 'block';
-                return;
-            }
-
-            let tasks = [];
-            try {
-                const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
-                    cache: "no-store",
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-                    }
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Failed to fetch tasks');
-                tasks = data.tasks || [];
-                console.log('loadUserTasks tasks:', tasks.map(t => ({
-                    title: t.title,
-                    date: t.date,
-                    daysOfWeek: t.daysOfWeek,
-                    specificDays: t.specificDays,
-                    users: t.users
-                })));
-            } catch (err) {
-                console.error('Failed to fetch tasks from server:', err);
-                taskSelection.innerHTML = '<p>Failed to load tasks. Please try again later.</p>';
-                errorMessage.textContent = err.message || 'An error occurred while loading tasks.';
-                errorMessage.style.display = 'block';
-                return;
-            }
-
-            const today = new Date().toLocaleDateString('sv-SE');
-            const userTasks = filterTasksForDate(tasks, today).filter(task => {
-                if (!task || !task.users || !task.title || !task.date) return false;
-                return task.users.includes(currentUser);
-            });
-
-            taskSelection.innerHTML = '';
-            if (userTasks.length === 0) {
-                taskSelection.innerHTML = '<p>No tasks assigned to you today.</p>';
-                return;
-            }
-
-            userTasks.forEach(task => {
-                const div = document.createElement('div');
-                div.innerHTML = `
-                    <label>
-                        <input type="checkbox" value="${task.title}" data-date="${task.date}">
-                        ${task.title}
-                        <input type="number" min="1" placeholder="Points" style="display: none;">
-                    </label>
-                `;
-                taskSelection.appendChild(div);
-            });
-
-            taskSelection.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                checkbox.addEventListener('change', (e) => {
-                    const pointsInput = e.target.nextElementSibling.nextElementSibling;
-                    pointsInput.style.display = e.target.checked ? 'inline-block' : 'none';
-                });
-            });
-        }
-
-        // Submit Offer
-        submitOfferBtn.addEventListener('click', async () => {
-            const selectedType = typeSelection.querySelector('input[name="offerType"]:checked').value;
-            const expireTime = document.getElementById('expireTime').value;
-
-            selectedTasks = [];
-            taskSelection.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
-                const pointsInput = checkbox.nextElementSibling.nextElementSibling;
-                const points = parseInt(pointsInput.value) || 0;
-                if (points > 0) {
-                    selectedTasks.push({
-                        title: checkbox.value,
-                        date: checkbox.dataset.date,
-                        points
-                    });
-                }
-            });
-
-            if (selectedType === 'needHelp' && selectedTasks.length === 0) {
-                errorMessage.textContent = 'Please select at least one task and specify points';
-                errorMessage.style.display = 'block';
-                return;
-            }
-
-            const offer = {
-                type: selectedType,
-                user: currentUser,
-                tasks: selectedTasks,
-                expiry: new Date(Date.now() + expireTime * 60 * 1000).toISOString(),
-                createdAt: new Date().toISOString()
-            };
-
-            try {
-                const response = await fetch('/api/offers', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-                    },
-                    body: JSON.stringify({ adminEmail, offer })
-                });
-                const data = await response.json();
-                if (data.success) {
-                    hideModal(addOfferModal);
-                    resetOfferForm();
-                    loadOffers();
-                } else {
-                    errorMessage.textContent = data.message || 'Failed to submit offer';
-                    errorMessage.style.display = 'block';
-                }
-            } catch (err) {
-                console.error('Error submitting offer:', err);
-                errorMessage.textContent = 'Failed to submit offer';
-                errorMessage.style.display = 'block';
-            }
-        });
-
-        // Load Offers
-        async function loadOffers() {
-            try {
-                const response = await fetch(`/api/offers?adminEmail=${encodeURIComponent(adminEmail)}`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-                    }
-                });
-                const data = await response.json();
-                if (!data.offers) {
-                    document.querySelectorAll('.no-offers').forEach(el => el.style.display = 'block');
-                    document.querySelectorAll('.offer-list').forEach(list => list.innerHTML = '');
-                    return;
-                }
-
-                const offerHelpList = document.querySelector('#offerHelpList .offer-list');
-                const needHelpList = document.querySelector('#needHelpList .offer-list');
-                offerHelpList.innerHTML = '';
-                needHelpList.innerHTML = '';
-
-                data.offers.forEach(offer => {
-                    const list = offer.type === 'offerHelp' ? offerHelpList : needHelpList;
-                    const li = document.createElement('li');
-                    li.classList.add('offer-list-item');
-                    const taskTitles = offer.tasks.map(task => task.title).join(', ');
-                    li.innerHTML = `
-                        <div class="offer-content">
-                            <div>
-                                <div class="task-name">${taskTitles || 'General Help'}</div>
-                                <div class="task-points">By: ${offer.user}</div>
-                            </div>
-                            <div class="timer" data-expiry="${offer.expiry}"></div>
-                        </div>
-                        <button class="delete-offer-btn" data-id="${offer._id}" style="${offer.user !== currentUser ? 'display: none;' : ''}">×</button>
-                    `;
-                    li.addEventListener('click', () => viewOffer(offer));
-                    list.appendChild(li);
-                });
-
-                document.querySelectorAll('.no-offers').forEach(el => {
-                    el.style.display = el.parentElement.querySelector('.offer-list').children.length === 0 ? 'block' : 'none';
-                });
-
-                updateTimers();
-            } catch (err) {
-                console.error('Error loading offers:', err);
-            }
-        }
-
-        // View Offer Details
-        function viewOffer(offer) {
-            viewOfferTasks.innerHTML = '';
-            viewOfferTitle.textContent = `${offer.user}'s ${offer.type === 'offerHelp' ? 'Offer' : 'Request'}`;
-            offer.tasks.forEach(task => {
-                const div = document.createElement('div');
-                div.classList.add('task-details');
-                div.innerHTML = `
-                    <div class="task-name">${task.title}</div>
-                    <div class="task-points">${task.points} points</div>
-                    ${offer.type === 'offerHelp' && offer.user !== currentUser ? '<button class="accept-task-btn">Accept Offer</button>' : ''}
-                `;
-                viewOfferTasks.appendChild(div);
-            });
-            showModal(viewOfferModal);
-        }
-
-        // Close View Offer Modal
-        closeOfferBtn.addEventListener('click', () => {
-            hideModal(viewOfferModal);
-        });
-
-        // Update Timers
-        function updateTimers() {
-            document.querySelectorAll('.timer').forEach(timer => {
-                const expiry = new Date(timer.dataset.expiry);
-                const update = () => {
-                    const now = new Date();
-                    const diff = expiry - now;
-                    if (diff <= 0) {
-                        timer.parentElement.parentElement.remove();
-                        document.querySelectorAll('.no-offers').forEach(el => {
-                            el.style.display = el.parentElement.querySelector('.offer-list').children.length === 0 ? 'block' : 'none';
-                        });
-                        return;
-                    }
-                    const hours = Math.floor(diff / (1000 * 60 * 60));
-                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                    timer.textContent = `${hours}h ${minutes}m ${seconds}s`;
-                };
-                update();
-                setInterval(update, 1000);
-            });
-        }
-
-        // Delete Offer
-        document.addEventListener('click', async (e) => {
-            if (e.target.classList.contains('delete-offer-btn')) {
-                const offerId = e.target.dataset.id;
-                try {
-                    const response = await fetch('/api/offers', {
-                        method: 'DELETE',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-                        },
-                        body: JSON.stringify({ adminEmail, offerId })
-                    });
-                    const data = await response.json();
-                    if (data.success) {
-                        loadOffers();
-                    } else {
-                        console.error('Failed to delete offer:', data.message);
-                    }
-                } catch (err) {
-                    console.error('Error deleting offer:', err);
-                }
-            }
-        });
-
-        // Initialize
-        initializeTabs();
-        loadOffers();
-        window.addEventListener('resize', updateTabUnderline);
-    </script>
 </body>
 </html>
