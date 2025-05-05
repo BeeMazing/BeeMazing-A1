@@ -750,7 +750,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 1</div>
+        <div class="title">BeeMazing Help Center awaw</div>
     </div>
 
     <div class="button-container">
@@ -877,7 +877,6 @@
         async function updateTaskSelection(offerType) {
             const tasks = await fetchTasks();
             const selectedDate = new Date().toISOString().split("T")[0];
-            const currentUser = new URLSearchParams(window.location.search).get("user");
     
             taskSelection.innerHTML = "<h4>Select Tasks:</h4>";
     
@@ -904,15 +903,8 @@
                     console.warn("Error computing turnData for task", task.title, e);
                 }
     
-                let showTask = false;
-    
-                if (offerType === "offerHelp") {
-                    showTask = turnData.completedCount < turnData.requiredTimes;
-                } else if (offerType === "needHelp") {
-                    const userTurns = turnData.turns.filter(t => t.user === currentUser);
-                    const uncompletedTurns = userTurns.filter(t => !t.isCompleted);
-                    showTask = uncompletedTurns.length > 0;
-                }
+                // Show the task if it's not fully completed (for both offerHelp and needHelp)
+                const showTask = turnData.completedCount < turnData.requiredTimes;
     
                 if (showTask) {
                     const label = document.createElement("label");
@@ -960,7 +952,7 @@
             };
     
             console.log("Submitting offer:", newOffer);
-            // TODO: send to backend if needed
+            // TODO: Send offer to backend if needed
     
             addOfferModal.classList.remove("show");
             alert("Offer created successfully!");
