@@ -40,29 +40,29 @@
         }
 
         .header {
-            background: linear-gradient(180deg, var(--secondary-color), #2A2B32);
-            padding: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-            position: fixed;
-            top: 0;
-            width: 100%;
-            height: var(--header-height);
-            z-index: 100;
-        }
+    background: linear-gradient(180deg, var(--secondary-color), #2A2B32);
+    padding: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: var(--header-height);
+    z-index: 100;
+}
 
-        .title {
-            font-size: 26px;
-            font-weight: 700;
-            color: var(--primary-color);
-            letter-spacing: 0.5px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            display: flex;
-            align-items: center;
-            transition: transform 0.3s ease;
-        }
+.title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--primary-color);
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s ease;
+}
 
         .title:hover {
             transform: scale(1.05);
@@ -75,12 +75,13 @@
         }
 
         .container {
-            padding: 0 24px 24px;
-            text-align: center;
-            width: 90%;
-            max-width: 600px;
-            margin: calc(var(--header-height) + 24px) auto calc(var(--footer-height) + 24px) auto;
-        }
+    padding: 0 24px 24px;
+    text-align: center;
+    width: 90%;
+    max-width: 600px;
+    margin: calc(var(--header-height) + 24px) auto 24px auto;
+    position: relative;
+}
 
         .button-container {
             position: relative;
@@ -986,6 +987,39 @@
             transform: translateY(-3px);
             box-shadow: 0 6px 12px rgba(255, 202, 40, 0.4);
         }
+
+
+        .back-btn-container {
+    position: absolute;
+    top: 0;
+    left: 24px;
+    z-index: 150;
+}
+
+.back-btn {
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.back-btn:hover {
+    transform: scale(1.1);
+    opacity: 0.9;
+}
+
+@media (max-width: 600px) {
+    .back-btn-container {
+        left: 16px;
+    }
+    .back-btn {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+
+        
     </style>
 </head>
 <body>
@@ -994,6 +1028,11 @@
     </div>
 
     <div class="container">
+        <div class="back-btn-container">
+            <a href="userTasks.html" id="backLink">
+                <img src="/BeeMazing-Y1/mobile/1-Home/BackBtn.png" alt="Back" class="back-btn">
+            </a>
+        </div>
         <div class="button-container">
             <button class="add-offer-btn" id="addOfferBtn">Add Offer</button>
         </div>
@@ -1055,9 +1094,6 @@
         </div>
     </div>
 
-    <div class="footer">
-        <a href="userTasks.html" id="backLink">Back</a>
-    </div>
 
 
 
@@ -1123,40 +1159,55 @@
                 proceedBtn.style.display = "inline-block";
                 submitOfferBtn.style.display = "none";
             });
+
+
+// Back button navigation
+const backLink = document.getElementById("backLink");
+backLink.href = `userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(currentUser)}`;
+
         
             // Proceed button to show help mode and tasks
-            proceedBtn.addEventListener("click", async () => {
-                const selectedType = document.querySelector('input[name="offerType"]:checked')?.value;
-                if (!selectedType) {
-                    alert("Please select Offer Help or Need Help");
-                    return;
-                }
-        
-                localStorage.setItem("helpType", selectedType);
-        
-                proceedBtn.style.display = "none";
-                typeSelection.style.display = "none";
-        
-                let html = "<label><input type='radio' name='helpMode' value='help'> ";
-                html += (selectedType === "offerHelp") ? "You can Help</label>" : "You need Help</label>";
-                html += "<label><input type='radio' name='helpMode' value='replace'> ";
-                html += (selectedType === "offerHelp") ? "You can Replace</label>" : "You need a Replacement</label>";
-                helpModeSection.innerHTML = html;
-                helpModeSection.style.display = "block";
-        
-                if (selectedType === "needHelp") {
-                    taskSelection.innerHTML = "<p>Loading your tasks...</p>";
-                    offerForm.style.display = "block";
-                    await loadTodaysTasks(currentUser);
-                } else {
-                    taskSelection.innerHTML = "<p>Loading available tasks to help with...</p>";
-                    offerForm.style.display = "block";
-                    await loadAllUncompletedTasks();
-                }
-        
-                submitOfferBtn.style.display = "inline-block";
-            });
-        
+// Proceed button to show tasks first, then help mode
+proceedBtn.addEventListener("click", async () => {
+    const selectedType = document.querySelector('input[name="offerType"]:checked')?.value;
+    if (!selectedType) {
+        alert("Please select Offer Help or Need Help");
+        return;
+    }
+
+    localStorage.setItem("helpType", selectedType);
+
+    proceedBtn.style.display = "none";
+    typeSelection.style.display = "none";
+    offerForm.style.display = "block";
+
+    // Clear previous content
+    helpModeSection.innerHTML = "";
+    helpModeSection.style.display = "none";
+    taskSelection.innerHTML = "<p>Loading tasks...</p>";
+
+    // Load tasks based on offer type
+    if (selectedType === "needHelp") {
+        await loadTodaysTasks(currentUser);
+    } else {
+        await loadAllUncompletedTasks();
+    }
+
+    // After tasks are loaded, show help mode selection
+    if (document.querySelectorAll('input[name="taskCheckbox"]').length > 0) {
+        let html = "<label><input type='radio' name='helpMode' value='help'> ";
+        html += (selectedType === "offerHelp") ? "You can Help</label>" : "You need Help</label>";
+        html += "<label><input type='radio' name='helpMode' value='replace'> ";
+        html += (selectedType === "offerHelp") ? "You can Replace</label>" : "You need a Replacement</label>";
+        helpModeSection.innerHTML = html;
+        helpModeSection.style.display = "block";
+    }
+
+    submitOfferBtn.style.display = "inline-block";
+});
+
+
+
             // Submit offer
 // Submit offer
 submitOfferBtn.addEventListener("click", async function () {
@@ -1255,16 +1306,38 @@ submitOfferBtn.addEventListener("click", async function () {
 
 
 
+// Function to format time remaining as HH:MM:SS
+function formatTimeRemaining(expiresAt) {
+    const now = new Date();
+    const expires = new Date(expiresAt);
+    const diffMs = expires - now;
+    if (diffMs <= 0) return "Expired";
+    const hours = Math.floor(diffMs / (1000 * 60 * 60)).toString().padStart(2, "0");
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, "0");
+    const seconds = Math.floor((diffMs % (1000 * 60)) / 1000).toString().padStart(2, "0");
+    return `${hours}:${minutes}:${seconds}`;
+}
+
+
+
 
 
 
 
             // Function to load and display offers
 // Function to load and display offers
+
+// Function to load and display offers
 async function loadOffers(tab = "offerHelp") {
     const offerList = document.querySelector(`#${tab}List .offer-list`);
     const noOffers = document.querySelector(`#${tab}List .no-offers`);
     offerList.innerHTML = "";
+
+    // Clear any existing timers to prevent memory leaks
+    if (window.offerTimers) {
+        window.offerTimers.forEach(timer => clearInterval(timer));
+    }
+    window.offerTimers = [];
 
     if (!adminEmail) {
         noOffers.textContent = "Error: Admin email not found.";
@@ -1286,8 +1359,8 @@ async function loadOffers(tab = "offerHelp") {
 
         const offers = data.offers || [];
 
-        // Filter offers based on the tab
-        const filteredOffers = offers.filter(offer => offer.type === tab);
+        // Filter offers based on the tab and ensure they haven't expired
+        const filteredOffers = offers.filter(offer => offer.type === tab && new Date(offer.expiresAt) > new Date());
 
         if (filteredOffers.length === 0) {
             noOffers.textContent = "No offers available";
@@ -1302,21 +1375,41 @@ async function loadOffers(tab = "offerHelp") {
             const li = document.createElement("li");
             li.className = "offer-list-item";
             const offerText = `${offer.fromUser}'s ${offer.type === "offerHelp" ? "Offer to" : "Request for"} ${offer.helpMode === "help" ? "Help" : "Replace"}`;
+            const timerId = `timer_${offer.index}`;
 
             // Conditionally add delete button only if the current user is the offer creator
             const deleteButton = currentUser && offer.fromUser === currentUser
-                ? `<button class="delete-offer-btn" data-offer-index="${offers.indexOf(offer)}">×</button>`
+                ? `<button class="delete-offer-btn" data-offer-index="${offer.index}">×</button>`
                 : '';
 
             li.innerHTML = `
                 <div class="offer-content">
                     <div>
                         <strong>${offerText}</strong>
+                        <span class="timer" id="${timerId}">${formatTimeRemaining(offer.expiresAt)}</span>
                     </div>
                 </div>
                 ${deleteButton}
             `;
             offerList.appendChild(li);
+
+            // Update timer every second
+            const timerInterval = setInterval(() => {
+                const timerElement = document.getElementById(timerId);
+                if (timerElement) {
+                    const timeRemaining = formatTimeRemaining(offer.expiresAt);
+                    timerElement.textContent = timeRemaining;
+                    if (timeRemaining === "Expired") {
+                        clearInterval(timerInterval);
+                        li.remove(); // Remove expired offer from the list
+                        if (offerList.children.length === 0) {
+                            noOffers.textContent = "No offers available";
+                            noOffers.style.display = "block";
+                        }
+                    }
+                }
+            }, 1000);
+            window.offerTimers.push(timerInterval);
 
             // Add click event to view offer details
             li.querySelector(".offer-content").addEventListener("click", () => {
@@ -1337,6 +1430,7 @@ async function loadOffers(tab = "offerHelp") {
         noOffers.style.display = "block";
     }
 }
+
 
 
 
