@@ -990,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center a1111</div>
+        <div class="title">BeeMazing Help Center 1</div>
     </div>
 
     <div class="container">
@@ -1221,19 +1221,16 @@ submitOfferBtn.addEventListener("click", async function () {
         }
 
         // Send notification
-        const notificationRes = await fetch("https://beemazing.onrender.com/api/notifications", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                adminEmail,
-                offer: {
-                    type: selectedHelpType,
-                    tasks: selectedTasks,
-                    fromUser: currentUser,
-                    expiresAt: offer.expiresAt
-                }
-            })
-        });
+// Send notification
+const notificationRes = await fetch("https://beemazing.onrender.com/api/notifications", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+        adminEmail,
+        offer // <-- send the full `offer` object including `type`, `tasks`, `helpMode`, etc.
+    })
+});
+
         const notificationData = await notificationRes.json();
         console.log("Send notification response:", notificationData);
         if (!notificationRes.ok || !notificationData.success) {
