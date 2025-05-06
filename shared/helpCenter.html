@@ -990,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center haha</div>
+        <div class="title">BeeMazing Help Center a111</div>
     </div>
 
     <div class="container">
@@ -1261,7 +1261,6 @@ submitOfferBtn.addEventListener("click", async function () {
 
             // Function to load and display offers
 // Function to load and display offers
-
 async function loadOffers(tab = "offerHelp") {
     const offerList = document.querySelector(`#${tab}List .offer-list`);
     const noOffers = document.querySelector(`#${tab}List .no-offers`);
@@ -1272,25 +1271,6 @@ async function loadOffers(tab = "offerHelp") {
         noOffers.style.display = "block";
         console.error("loadOffers: Admin email is missing");
         return;
-    }
-
-    // Get URL parameters for filtering offers
-    const urlParams = new URLSearchParams(window.location.search);
-    const offerUser = urlParams.get("offerUser");
-    const tasksParam = urlParams.get("tasks");
-    const tasksFilter = tasksParam ? tasksParam.split(",") : null;
-    const requestedTab = urlParams.get("tab") || tab;
-
-    // Ensure the correct tab is active
-    if (requestedTab !== tab) {
-        tabButtons.forEach(btn => btn.classList.remove("active"));
-        tabContents.forEach(content => content.classList.remove("active"));
-        const targetButton = document.querySelector(`.tab-button[data-tab="${requestedTab}"]`);
-        if (targetButton) {
-            targetButton.classList.add("active");
-            document.getElementById(`${requestedTab}List`).classList.add("active");
-        }
-        tab = requestedTab;
     }
 
     try {
@@ -1304,18 +1284,10 @@ async function loadOffers(tab = "offerHelp") {
         const data = await res.json();
         console.log("Load offers response:", data);
 
-        let offers = data.offers || [];
+        const offers = data.offers || [];
 
         // Filter offers based on the tab
-        let filteredOffers = offers.filter(offer => offer.type === tab);
-
-        // Further filter by offerUser and tasks if provided
-        if (offerUser && tasksFilter) {
-            filteredOffers = filteredOffers.filter(offer => {
-                const offerTasks = offer.tasks.map(t => t.title);
-                return offer.fromUser === offerUser && tasksFilter.every(task => offerTasks.includes(task));
-            });
-        }
+        const filteredOffers = offers.filter(offer => offer.type === tab);
 
         if (filteredOffers.length === 0) {
             noOffers.textContent = "No offers available";
@@ -1359,18 +1331,12 @@ async function loadOffers(tab = "offerHelp") {
                 await deleteOffer(index, tab);
             });
         });
-
-        // Auto-open the offer details if filtered to a specific offer
-        if (offerUser && tasksFilter && filteredOffers.length === 1) {
-            showOfferDetails(filteredOffers[0]);
-        }
     } catch (err) {
         console.error("Failed to load offers:", err.message);
         noOffers.textContent = `Error loading offers: ${err.message}`;
         noOffers.style.display = "block";
     }
 }
-
 
 
 
