@@ -1958,18 +1958,24 @@ app.post("/api/notifications", async (req, res) => {
           console.log(`🔍 Task ${task.title} users:`, task.users || []);
       });
 
-      // Check for admin.users field
-      if (admin.users) {
-          users = Array.from(new Set([...users, ...(admin.users || [])]));
-          console.log("🔍 Added users from admin.users:", admin.users);
-      } else {
-          console.warn("⚠️ No admin.users field found");
+      // Check for user-related fields in admin document
+      const possibleUserFields = ['users', 'registeredUsers', 'allUsers', 'members', 'userList'];
+      let registeredUsers = [];
+      for (const field of possibleUserFields) {
+          if (admin[field]) {
+              registeredUsers = Array.from(new Set(admin[field]));
+              console.log(`🔍 Found users in admin.${field}:`, registeredUsers);
+              users = Array.from(new Set([...users, ...registeredUsers]));
+          } else {
+              console.log(`ℹ️ No admin.${field} field found`);
+          }
       }
 
-      // Temporary hardcoded users to ensure User 3 and User 4 are included
-      const hardcodedUsers = ['User 1', 'User 2', 'User 3', 'User 4'];
-      users = Array.from(new Set([...users, ...hardcodedUsers]));
-      console.log("🔍 Users after adding hardcoded users:", users);
+      // Fallback if no users found
+      if (users.length === 0) {
+          console.warn("⚠️ No users found, using fallback hardcoded users");
+          users = ['User 1', 'User 2', 'User 3', 'User 4'];
+      }
 
       console.log("👥 Total users after retrieval:", users.length, users);
       if (!users.includes(offer.fromUser)) {
@@ -2056,6 +2062,8 @@ app.post("/api/notifications", async (req, res) => {
       res.status(500).json({ error: "Failed to create notifications" });
   }
 });
+
+
 
 
 
