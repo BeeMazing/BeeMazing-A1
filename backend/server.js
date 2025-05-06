@@ -1947,7 +1947,8 @@ app.post("/api/notifications", async (req, res) => {
 
       const notifications = admin.notifications || [];
       const tasks = admin.tasks || [];
-      const users = admin.users || []; // get all registered users
+      const users = (admin.users || []).map(u => typeof u === "string" ? u : u.name);
+
 
       
 
