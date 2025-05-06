@@ -1947,12 +1947,36 @@ app.post("/api/notifications", async (req, res) => {
           return res.status(404).json({ error: "Admin not found" });
       }
 
+      // Attempt to fetch users from a users collection or admin.users field
+      let users = [];
+      try {
+          const usersCollection = db.collection("users");
+          const usersData = await usersCollection.find({ adminEmail }).toArray();
+          users = usersData.map(user => user.username); // Adjust field name if different
+          console.log("🔍 Fetched users from users collection:", users);
+      } catch (err) {
+          console.warn("⚠️ No users collection found or error:", err.message);
+          // Fallback to admin.users field if available
+          if (admin.users) {
+              users = Array.from(new Set(admin.users));
+              console.log("🔍 Fetched users from admin.users field:", users);
+          } else {
+              // Fallback to task-assigned users
+              users = Array.from(new Set(
+                  (admin.tasks || []).flatMap(t => t.users || [])
+              ));
+              console.log("🔍 Fallback: Fetched users from tasks:", users);
+          }
+      }
+
+      console.log("👥 Total users after retrieval:", users.length, users);
+      if (!users.includes(offer.fromUser)) {
+          console.warn("⚠️ fromUser not found in users list:", offer.fromUser);
+      }
+
       const notifications = admin.notifications || [];
       const tasks = admin.tasks || [];
-      const users = Array.from(new Set(
-          (admin.tasks || []).flatMap(t => t.users || [])
-      ));
-      console.log("👥 Total users found:", users.length, users);
+      console.log("📋 Tasks available:", tasks.map(t => t.title));
 
       const offerTasks = offer.tasks.map(t => t.title);
       const timestamp = new Date().toISOString();
@@ -1982,6 +2006,8 @@ app.post("/api/notifications", async (req, res) => {
                               });
                               notifiedUsers.add(user);
                               console.log(`✅ Added offerHelp notification for user: ${user}, taskCount: ${userTaskCount}`);
+                          } else {
+                              console.log(`ℹ️ User ${user} not notified for offerHelp: no matching tasks`);
                           }
                       }
                   }
@@ -2006,6 +2032,8 @@ app.post("/api/notifications", async (req, res) => {
                   });
                   notificationCount++;
                   console.log(`✅ Added needHelp notification for user: ${user}, taskCount: ${offerTasks.length}`);
+              } else {
+                  console.log(`ℹ️ Skipped needHelp notification for fromUser: ${user}`);
               }
           }
           console.log(`📬 Total needHelp notifications sent: ${notificationCount}`);
@@ -2013,7 +2041,7 @@ app.post("/api/notifications", async (req, res) => {
           console.warn("⚠️ Invalid offer type:", offer.type);
       }
 
-      console.log("💾 Updating notifications in database");
+      console.log("💾 Updating notifications in database, total notifications:", notifications.length);
       await admins.updateOne(
           { email: adminEmail },
           { $set: { notifications } }
@@ -2026,7 +2054,6 @@ app.post("/api/notifications", async (req, res) => {
       res.status(500).json({ error: "Failed to create notifications" });
   }
 });
-
 
 
 
