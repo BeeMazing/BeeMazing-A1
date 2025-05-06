@@ -990,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 111</div>
+        <div class="title">BeeMazing Help Center a1</div>
     </div>
 
     <div class="container">
@@ -1221,22 +1221,27 @@ submitOfferBtn.addEventListener("click", async function () {
         }
 
         // Send notification
-        console.log("Sending notification for offer:", offer);
         const notificationRes = await fetch("https://beemazing.onrender.com/api/notifications", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ adminEmail, offer })
+            body: JSON.stringify({
+                adminEmail,
+                offer: {
+                    type: selectedHelpType,
+                    tasks: selectedTasks,
+                    fromUser: currentUser,
+                    expiresAt: offer.expiresAt
+                }
+            })
         });
         const notificationData = await notificationRes.json();
         console.log("Send notification response:", notificationData);
         if (!notificationRes.ok || !notificationData.success) {
-            console.error("Notification failed to send:", notificationData.error);
-            alert("Offer submitted, but notifications may not have been sent to all users: " + (notificationData.error || "Unknown error"));
-        } else {
-            console.log("Notifications sent successfully");
+            console.warn("Notification failed to send:", notificationData.error);
+            // Continue even if notification fails
         }
 
-        alert("Offer submitted successfully!");
+        alert("Offer submitted!");
         addOfferModal.classList.remove("show");
         loadOffers(selectedHelpType); // Reload offers for the current tab
     } catch (err) {
@@ -1244,6 +1249,9 @@ submitOfferBtn.addEventListener("click", async function () {
         alert(`Failed to send offer: ${err.message}`);
     }
 });
+
+
+
 
 
 

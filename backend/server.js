@@ -1936,33 +1936,34 @@ app.post("/api/accept-offer", async (req, res) => {
 // POST /api/notifications - Create notifications for an offer
 app.post("/api/notifications", async (req, res) => {
   const { adminEmail, offer } = req.body;
+  console.log("📩 Received notification request:", { adminEmail, offerType: offer.type, fromUser: offer.fromUser });
+
   try {
       const db = await connectDB();
       const admins = db.collection("admins");
       const admin = await admins.findOne({ email: adminEmail });
       if (!admin) {
-          console.error(`Admin not found for email: ${adminEmail}`);
+          console.error("🚫 Admin not found for email:", adminEmail);
           return res.status(404).json({ error: "Admin not found" });
       }
 
       const notifications = admin.notifications || [];
       const tasks = admin.tasks || [];
-      // Use permissions to get all users, including those without tasks
-      const users = Object.keys(admin.permissions || {});
-      console.log(`Creating notifications for offer type: ${offer.type}, users: ${users.join(", ")}`);
-
-      if (users.length === 0) {
-          console.warn(`No users found in permissions for admin: ${adminEmail}`);
-      }
+      const users = Array.from(new Set(
+          (admin.tasks || []).flatMap(t => t.users || [])
+      ));
+      console.log("👥 Total users found:", users.length, users);
 
       const offerTasks = offer.tasks.map(t => t.title);
       const timestamp = new Date().toISOString();
 
       if (offer.type === "offerHelp") {
+          console.log("📢 Processing offerHelp notifications for tasks:", offerTasks);
           const notifiedUsers = new Set();
           for (const taskTitle of offerTasks) {
               const task = tasks.find(t => t.title === taskTitle);
               if (task && task.users) {
+                  console.log(`🔍 Task ${taskTitle} has users:`, task.users);
                   for (const user of task.users) {
                       if (user !== offer.fromUser && !notifiedUsers.has(user)) {
                           const userTaskCount = offerTasks.filter(title => {
@@ -1980,14 +1981,18 @@ app.post("/api/notifications", async (req, res) => {
                                   expiresAt: offer.expiresAt
                               });
                               notifiedUsers.add(user);
-                              console.log(`Added offerHelp notification for user: ${user}, tasks: ${offerTasks.join(", ")}`);
+                              console.log(`✅ Added offerHelp notification for user: ${user}, taskCount: ${userTaskCount}`);
                           }
                       }
                   }
+              } else {
+                  console.warn(`⚠️ Task ${taskTitle} not found or has no users`);
               }
           }
+          console.log(`📬 Total offerHelp notifications sent: ${notifiedUsers.size}`);
       } else if (offer.type === "needHelp") {
-          // Send notification to all users from permissions except the offer creator
+          console.log("📢 Processing needHelp notifications for tasks:", offerTasks);
+          let notificationCount = 0;
           for (const user of users) {
               if (user !== offer.fromUser) {
                   notifications.push({
@@ -1999,26 +2004,28 @@ app.post("/api/notifications", async (req, res) => {
                       timestamp,
                       expiresAt: offer.expiresAt
                   });
-                  console.log(`Added needHelp notification for user: ${user}, tasks: ${offerTasks.join(", ")}`);
+                  notificationCount++;
+                  console.log(`✅ Added needHelp notification for user: ${user}, taskCount: ${offerTasks.length}`);
               }
           }
+          console.log(`📬 Total needHelp notifications sent: ${notificationCount}`);
+      } else {
+          console.warn("⚠️ Invalid offer type:", offer.type);
       }
 
-      console.log(`Saving ${notifications.length} notifications for admin: ${adminEmail}`);
+      console.log("💾 Updating notifications in database");
       await admins.updateOne(
           { email: adminEmail },
           { $set: { notifications } }
       );
+      console.log("✅ Notifications successfully saved");
 
       res.json({ success: true });
   } catch (err) {
-      console.error("Error creating notifications:", err);
+      console.error("🔥 Error creating notifications:", err);
       res.status(500).json({ error: "Failed to create notifications" });
   }
 });
-
-
-
 
 
 
