@@ -1380,13 +1380,14 @@ async function finishTask(currentUser, task, selectedDate) {
 
 
 
-        async function loadNotifications() {
+
+        async function loadNotifications(currentUser) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     const offerHelpBadge = document.getElementById("offerHelpBadge");
     const needHelpBadge = document.getElementById("needHelpBadge");
 
-    if (!adminEmail) {
-        console.error("loadNotifications: Missing adminEmail");
+    if (!adminEmail || !currentUser) {
+        console.error("loadNotifications: Missing adminEmail or currentUser");
         offerHelpBadge.style.display = "none";
         needHelpBadge.style.display = "none";
         return;
@@ -1402,25 +1403,34 @@ async function finishTask(currentUser, task, selectedDate) {
 
         const notifications = data.notifications || [];
 
-        const offerHelpCount = notifications
-            .filter(n => n.offerType === "offerHelp")
-            .reduce((sum, n) => sum + n.taskCount, 0);
+        let offerHelpCount = 0;
+        let needHelpCount = 0;
 
-        const needHelpCount = notifications
-            .filter(n => n.offerType === "needHelp")
-            .reduce((sum, n) => sum + n.taskCount, 0);
+        for (const notif of notifications) {
+            if (notif.user === currentUser) {
+                if (notif.offerType === "offerHelp") {
+                    offerHelpCount += notif.taskCount || 0;
+                }
+                if (notif.offerType === "needHelp") {
+                    needHelpCount += notif.taskCount || 0;
+                }
+            }
+        }
 
         offerHelpBadge.textContent = offerHelpCount > 0 ? `${offerHelpCount}` : "";
         offerHelpBadge.style.display = offerHelpCount > 0 ? "block" : "none";
 
         needHelpBadge.textContent = needHelpCount > 0 ? `${needHelpCount}` : "";
         needHelpBadge.style.display = needHelpCount > 0 ? "block" : "none";
+
     } catch (err) {
         console.error("Failed to load notifications:", err.message);
         offerHelpBadge.style.display = "none";
         needHelpBadge.style.display = "none";
     }
 }
+
+
 
 
 

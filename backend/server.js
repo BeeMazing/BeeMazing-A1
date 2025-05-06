@@ -1986,19 +1986,16 @@ app.post("/api/notifications", async (req, res) => {
               }
           }
       } else if (offer.type === "needHelp") {
-          for (const user of users) {
-              if (user !== offer.fromUser) {
-                  notifications.push({
-                      user,
-                      offerType: offer.type,
-                      taskCount: offerTasks.length,
-                      tasks: offerTasks,
-                      offerUser: offer.fromUser,
-                      timestamp,
-                      expiresAt: offer.expiresAt
-                  });
-              }
-          }
+        notifications.push({
+          user: "ALL",
+          offerType: offer.type,
+          taskCount: offerTasks.length,
+          tasks: offerTasks,
+          offerUser: offer.fromUser,
+          timestamp,
+          expiresAt: offer.expiresAt
+      });
+      
       }
 
       await admins.updateOne(
@@ -2019,6 +2016,7 @@ app.post("/api/notifications", async (req, res) => {
 
 // GET /api/notifications - Retrieve notifications for a user
 
+
 app.get("/api/notifications", async (req, res) => {
   const { adminEmail, user } = req.query;
   try {
@@ -2029,16 +2027,24 @@ app.get("/api/notifications", async (req, res) => {
           return res.status(404).json({ error: "Admin not found" });
       }
 
-      const notifications = (admin.notifications || []).filter(n => n.user === user);
       const now = new Date();
-      const validNotifications = notifications.filter(n => new Date(n.expiresAt) > now);
+      let notifications = (admin.notifications || []).filter(n => new Date(n.expiresAt) > now);
 
-      res.json({ notifications: validNotifications });
+      notifications = notifications.filter(n => {
+        if (n.offerType === "needHelp") return n.user === user || n.user === "ALL";
+        if (n.offerType === "offerHelp") return n.user === user;
+        return false;
+      });
+
+      res.json({ notifications });
   } catch (err) {
       console.error("Error fetching notifications:", err);
       res.status(500).json({ error: "Failed to fetch notifications" });
   }
 });
+
+
+
 
 
 
