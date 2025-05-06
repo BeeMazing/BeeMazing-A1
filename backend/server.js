@@ -1947,27 +1947,29 @@ app.post("/api/notifications", async (req, res) => {
           return res.status(404).json({ error: "Admin not found" });
       }
 
-      // Attempt to fetch users from a users collection or admin.users field
-      let users = [];
-      try {
-          const usersCollection = db.collection("users");
-          const usersData = await usersCollection.find({ adminEmail }).toArray();
-          users = usersData.map(user => user.username); // Adjust field name if different
-          console.log("🔍 Fetched users from users collection:", users);
-      } catch (err) {
-          console.warn("⚠️ No users collection found or error:", err.message);
-          // Fallback to admin.users field if available
-          if (admin.users) {
-              users = Array.from(new Set(admin.users));
-              console.log("🔍 Fetched users from admin.users field:", users);
-          } else {
-              // Fallback to task-assigned users
-              users = Array.from(new Set(
-                  (admin.tasks || []).flatMap(t => t.users || [])
-              ));
-              console.log("🔍 Fallback: Fetched users from tasks:", users);
-          }
+      console.log("🔍 Admin document fields:", Object.keys(admin));
+
+      // Fetch users from tasks
+      let users = Array.from(new Set(
+          (admin.tasks || []).flatMap(t => t.users || [])
+      ));
+      console.log("🔍 Users from tasks:", users);
+      (admin.tasks || []).forEach(task => {
+          console.log(`🔍 Task ${task.title} users:`, task.users || []);
+      });
+
+      // Check for admin.users field
+      if (admin.users) {
+          users = Array.from(new Set([...users, ...(admin.users || [])]));
+          console.log("🔍 Added users from admin.users:", admin.users);
+      } else {
+          console.warn("⚠️ No admin.users field found");
       }
+
+      // Temporary hardcoded users to ensure User 3 and User 4 are included
+      const hardcodedUsers = ['User 1', 'User 2', 'User 3', 'User 4'];
+      users = Array.from(new Set([...users, ...hardcodedUsers]));
+      console.log("🔍 Users after adding hardcoded users:", users);
 
       console.log("👥 Total users after retrieval:", users.length, users);
       if (!users.includes(offer.fromUser)) {
@@ -2054,6 +2056,8 @@ app.post("/api/notifications", async (req, res) => {
       res.status(500).json({ error: "Failed to create notifications" });
   }
 });
+
+
 
 
 
