@@ -1381,54 +1381,31 @@ async function finishTask(currentUser, task, selectedDate) {
 
 
 
+        async function loadNotifications() {
+  const adminEmail = localStorage.getItem("currentAdminEmail");
+  const currentUser = localStorage.getItem("currentUserName");
+  if (!adminEmail || !currentUser) return;
 
-        async function loadNotifications(userName) {
-    const adminEmail = localStorage.getItem("currentAdminEmail");
+  try {
+    const res = await fetch(`https://beemazing.onrender.com/api/notifications?adminEmail=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(currentUser)}`);
+    const data = await res.json();
+    const hasOfferHelp = data.notifications.some(n => n.offerType === "offerHelp");
+    const hasNeedHelp = data.notifications.some(n => n.offerType === "needHelp");
+
     const offerHelpBadge = document.getElementById("offerHelpBadge");
     const needHelpBadge = document.getElementById("needHelpBadge");
-    if (!adminEmail || !userName) {
-        console.error("loadNotifications: Missing adminEmail or userName");
-        offerHelpBadge.style.display = "none";
-        needHelpBadge.style.display = "none";
-        return;
+
+    if (hasOfferHelp) {
+      offerHelpBadge.style.display = "inline-block";
+      offerHelpBadge.classList.add("pulse");
     }
-    try {
-        const res = await fetch(`https://beemazing.onrender.com/api/notifications?adminEmail=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}&t=${Date.now()}`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" }
-        });
-        const data = await res.json();
-        console.log("Load notifications response:", data);
-        if (!res.ok) {
-            throw new Error(data.error || "Failed to fetch notifications");
-        }
-        const notifications = data.notifications || [];
-        if (notifications.length === 0) {
-            offerHelpBadge.style.display = "none";
-            needHelpBadge.style.display = "none";
-            return;
-        }
-        const offerHelpNotifications = notifications.filter(n => n.offerType === "offerHelp");
-        const needHelpNotifications = notifications.filter(n => n.offerType === "needHelp");
-        const offerHelpCount = offerHelpNotifications.reduce((sum, n) => sum + n.taskCount, 0);
-        const needHelpCount = needHelpNotifications.reduce((sum, n) => sum + n.taskCount, 0);
-        if (offerHelpCount > 0) {
-            offerHelpBadge.textContent = `${offerHelpCount}`;
-            offerHelpBadge.style.display = "block";
-        } else {
-            offerHelpBadge.style.display = "none";
-        }
-        if (needHelpCount > 0) {
-            needHelpBadge.textContent = `${needHelpCount}`;
-            needHelpBadge.style.display = "block";
-        } else {
-            needHelpBadge.style.display = "none";
-        }
-    } catch (err) {
-        console.error("Failed to load notifications:", err.message);
-        offerHelpBadge.style.display = "none";
-        needHelpBadge.style.display = "none";
+    if (hasNeedHelp) {
+      needHelpBadge.style.display = "inline-block";
+      needHelpBadge.classList.add("pulse");
     }
+  } catch (err) {
+    console.error("Failed to load notifications:", err.message);
+  }
 }
 
 

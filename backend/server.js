@@ -1938,88 +1938,77 @@ app.post("/api/accept-offer", async (req, res) => {
 app.post("/api/notifications", async (req, res) => {
   const { adminEmail, offer } = req.body;
   try {
-    const db = await connectDB();
-    const admins = db.collection("admins");
-    const admin = await admins.findOne({ email: adminEmail });
-    if (!admin) {
-      return res.status(404).json({ error: "Admin not found" });
-    }
+      const db = await connectDB();
+      const admins = db.collection("admins");
+      const admin = await admins.findOne({ email: adminEmail });
+      if (!admin) {
+          return res.status(404).json({ error: "Admin not found" });
+      }
 
-    const notifications = admin.notifications || [];
-    const tasks = admin.tasks || [];
+      const notifications = admin.notifications || [];
+      const tasks = admin.tasks || [];
+      const users = Array.from(new Set(
+        (admin.tasks || []).flatMap(t => t.users || [])
+      ));
+      
 
-    // Get all unique users from tasks or a users collection
-    let users = Array.from(new Set(
-      (admin.tasks || []).flatMap(t => t.users || [])
-    ));
+      const offerTasks = offer.tasks.map(t => t.title);
+      const timestamp = new Date().toISOString();
 
-    // Fallback: Fetch all users from a users collection if tasks are empty
-    if (users.length === 0) {
-      const usersCollection = db.collection("users");
-      const allUsers = await usersCollection.find({ adminEmail }).toArray();
-      users = allUsers.map(u => u.username);
-    }
-
-    const offerTasks = offer.tasks.map(t => t.title);
-    const timestamp = new Date().toISOString();
-
-    if (offer.type === "offerHelp") {
-      const notifiedUsers = new Set();
-      for (const taskTitle of offerTasks) {
-        const task = tasks.find(t => t.title === taskTitle);
-        if (task && task.users) {
-          for (const user of task.users) {
-            if (user !== offer.fromUser && !notifiedUsers.has(user)) {
-              const userTaskCount = offerTasks.filter(title => {
-                const t = tasks.find(t => t.title === title);
-                return t && t.users.includes(user);
-              }).length;
-              if (userTaskCount > 0) {
-                notifications.push({
-                  user,
-                  offerType: offer.type,
-                  taskCount: userTaskCount,
-                  tasks: offerTasks,
-                  offerUser: offer.fromUser,
-                  timestamp,
-                  expiresAt: offer.expiresAt
-                });
-                notifiedUsers.add(user);
+      if (offer.type === "offerHelp") {
+          const notifiedUsers = new Set();
+          for (const taskTitle of offerTasks) {
+              const task = tasks.find(t => t.title === taskTitle);
+              if (task && task.users) {
+                  for (const user of task.users) {
+                      if (user !== offer.fromUser && !notifiedUsers.has(user)) {
+                          const userTaskCount = offerTasks.filter(title => {
+                              const t = tasks.find(t => t.title === title);
+                              return t && t.users.includes(user);
+                          }).length;
+                          if (userTaskCount > 0) {
+                              notifications.push({
+                                  user,
+                                  offerType: offer.type,
+                                  taskCount: userTaskCount,
+                                  tasks: offerTasks,
+                                  offerUser: offer.fromUser,
+                                  timestamp,
+                                  expiresAt: offer.expiresAt
+                              });
+                              notifiedUsers.add(user);
+                          }
+                      }
+                  }
               }
-            }
           }
-        }
+      } else if (offer.type === "needHelp") {
+          for (const user of users) {
+              if (user !== offer.fromUser) {
+                  notifications.push({
+                      user,
+                      offerType: offer.type,
+                      taskCount: offerTasks.length,
+                      tasks: offerTasks,
+                      offerUser: offer.fromUser,
+                      timestamp,
+                      expiresAt: offer.expiresAt
+                  });
+              }
+          }
       }
-    } else if (offer.type === "needHelp") {
-      for (const user of users) {
-        if (user !== offer.fromUser) {
-          notifications.push({
-            user,
-            offerType: offer.type,
-            taskCount: offerTasks.length,
-            tasks: offerTasks,
-            offerUser: offer.fromUser,
-            timestamp,
-            expiresAt: offer.expiresAt
-          });
-        }
-      }
-    }
 
-    await admins.updateOne(
-      { email: adminEmail },
-      { $set: { notifications } }
-    );
+      await admins.updateOne(
+          { email: adminEmail },
+          { $set: { notifications } }
+      );
 
-    res.json({ success: true });
+      res.json({ success: true });
   } catch (err) {
-    console.error("Error creating notifications:", err);
-    res.status(500).json({ error: "Failed to create notifications" });
+      console.error("Error creating notifications:", err);
+      res.status(500).json({ error: "Failed to create notifications" });
   }
 });
-
-
-
 
 
 
