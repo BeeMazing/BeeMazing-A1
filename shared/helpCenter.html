@@ -1055,7 +1055,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center</div>
+        <div class="title">BeeMazing Help Center Y8</div>
         <div class="back-btn-container">
             <button onclick="goBack()" class="back-btn-text">← Back</button>
         </div>
@@ -1143,15 +1143,10 @@
             const tabButtons = document.querySelectorAll(".tab-button");
             const tabContents = document.querySelectorAll(".tab-content");
         
-            const backLink = document.getElementById("backLink");
             const urlParams = new URLSearchParams(window.location.search);
             const currentUser = urlParams.get("user");
             const adminEmail = urlParams.get("admin") || localStorage.getItem("currentAdminEmail");
         
-// Set back link with parameters
-if (currentUser && adminEmail) {
-    backLink.href = `userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(currentUser)}`;
-}
             
             // Log for debugging
             console.log("Admin Email:", adminEmail);
@@ -1198,16 +1193,7 @@ if (currentUser && adminEmail) {
             });
 
 
-// Back button navigation
-function goBack() {
-    const currentUser = new URLSearchParams(window.location.search).get("user");
-    const adminEmail = new URLSearchParams(window.location.search).get("admin") || localStorage.getItem("currentAdminEmail");
-    if (currentUser && adminEmail) {
-        window.location.href = `userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(currentUser)}`;
-    } else {
-        window.history.back();
-    }
-}
+
 
         
             // Proceed button to show help mode and tasks
@@ -1783,13 +1769,18 @@ document.querySelectorAll('input[name="taskCheckbox"]').forEach(checkbox => {
         });
 
 
-
-
-
-
-
-
-
+        function goBack() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminEmail = urlParams.get("admin") || localStorage.getItem("currentAdminEmail");
+    const userName = urlParams.get("user") || localStorage.getItem("lastHelpUser");
+    
+    if (adminEmail && userName) {
+        const backURL = `/BeeMazing-Y1/mobile/2-UserProfiles/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+        window.location.href = backURL;
+    } else {
+        alert("Error: Missing admin or user information. Please return to the tasks page manually.");
+    }
+}
         
         </script>
 
