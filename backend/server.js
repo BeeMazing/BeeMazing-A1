@@ -1941,42 +1941,51 @@ app.post("/api/notifications", async (req, res) => {
   try {
       const db = await connectDB();
       const admins = db.collection("admins");
+      const adminUsers = db.collection("adminUsers");
+
+      // Fetch admin document
       const admin = await admins.findOne({ email: adminEmail });
       if (!admin) {
           console.error("🚫 Admin not found for email:", adminEmail);
           return res.status(404).json({ error: "Admin not found" });
       }
-
       console.log("🔍 Admin document fields:", Object.keys(admin));
 
-      // Fetch users from tasks
-      let users = Array.from(new Set(
-          (admin.tasks || []).flatMap(t => t.users || [])
-      ));
-      console.log("🔍 Users from tasks:", users);
-      (admin.tasks || []).forEach(task => {
-          console.log(`🔍 Task ${task.title} users:`, task.users || []);
-      });
+      // Fetch all registered users from adminUsers
+      const adminUserDoc = await adminUsers.findOne({ email: adminEmail });
+      let users = Array.from(new Set(adminUserDoc?.users || []));
+      console.log("🔍 Registered users from adminUsers.users:", users);
 
-      // Check for user-related fields in admin document
+      // If no users found in adminUsers, log warning
+      if (users.length === 0) {
+          console.warn("⚠️ No registered users found in adminUsers for email:", adminEmail);
+      }
+
+      // For offerHelp, also fetch task-assigned users
+      let taskUsers = [];
+      if (offer.type === "offerHelp") {
+          taskUsers = Array.from(new Set(
+              (admin.tasks || []).flatMap(t => t.users || [])
+          ));
+          console.log("🔍 Task-assigned users from admin.tasks:", taskUsers);
+          (admin.tasks || []).forEach(task => {
+              console.log(`🔍 Task ${task.title} users:`, task.users || []);
+          });
+      }
+
+      // Check admin document for user-related fields (for debugging)
       const possibleUserFields = ['users', 'registeredUsers', 'allUsers', 'members', 'userList'];
-      let registeredUsers = [];
       for (const field of possibleUserFields) {
           if (admin[field]) {
-              registeredUsers = Array.from(new Set(admin[field]));
-              console.log(`🔍 Found users in admin.${field}:`, registeredUsers);
-              users = Array.from(new Set([...users, ...registeredUsers]));
+              const fieldUsers = Array.from(new Set(admin[field]));
+              console.log(`🔍 Found users in admin.${field}:`, fieldUsers);
+              users = Array.from(new Set([...users, ...fieldUsers]));
           } else {
               console.log(`ℹ️ No admin.${field} field found`);
           }
       }
 
-      // Fallback if no users found
-      if (users.length === 0) {
-          console.warn("⚠️ No users found, using fallback hardcoded users");
-          users = ['User 1', 'User 2', 'User 3', 'User 4'];
-      }
-
+      // Log total users
       console.log("👥 Total users after retrieval:", users.length, users);
       if (!users.includes(offer.fromUser)) {
           console.warn("⚠️ fromUser not found in users list:", offer.fromUser);
@@ -2062,6 +2071,8 @@ app.post("/api/notifications", async (req, res) => {
       res.status(500).json({ error: "Failed to create notifications" });
   }
 });
+
+
 
 
 
