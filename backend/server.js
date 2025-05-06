@@ -1940,18 +1940,17 @@ app.post("/api/notifications", async (req, res) => {
   try {
       const db = await connectDB();
       const admins = db.collection("admins");
-      const adminUsers = db.collection("adminUsers");
-
       const admin = await admins.findOne({ email: adminEmail });
-      const adminDoc = await adminUsers.findOne({ email: adminEmail });
-
       if (!admin) {
           return res.status(404).json({ error: "Admin not found" });
       }
 
-      const permissions = adminDoc?.permissions || {};
       const notifications = admin.notifications || [];
       const tasks = admin.tasks || [];
+      const users = Array.from(new Set(
+        (admin.tasks || []).flatMap(t => t.users || [])
+      ));
+      
 
       const offerTasks = offer.tasks.map(t => t.title);
       const timestamp = new Date().toISOString();
@@ -1984,11 +1983,7 @@ app.post("/api/notifications", async (req, res) => {
               }
           }
       } else if (offer.type === "needHelp") {
-          // Notify all non-admin users (including those not in any task)
-          const allUsers = Object.keys(permissions);
-          const nonAdminUsers = allUsers.filter(user => permissions[user] !== "Admin");
-
-          for (const user of nonAdminUsers) {
+          for (const user of users) {
               if (user !== offer.fromUser) {
                   notifications.push({
                       user,
@@ -2014,6 +2009,7 @@ app.post("/api/notifications", async (req, res) => {
       res.status(500).json({ error: "Failed to create notifications" });
   }
 });
+
 
 
 
