@@ -991,10 +991,13 @@
 
         .back-btn-container {
     position: absolute;
-    top: 0;
-    left: 24px;
+    top: calc(100% + 4px); /* 4px space below header */
+    left: 16px;
     z-index: 150;
 }
+
+
+
 
 .back-btn {
     width: 32px;
@@ -1019,20 +1022,48 @@
 }
 
 
-        
+
+
+
+
+
+.back-btn-container {
+    position: absolute;
+    top: calc(var(--header-height) + 8px); /* appears just below the header */
+    left: 16px;
+    z-index: 90; /* lower than the header's z-index of 100 */
+}
+
+
+.back-btn-text {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+}
+
+.back-btn-text:hover {
+    background: rgba(255, 202, 40, 0.1);
+}
+  
     </style>
 </head>
 <body>
     <div class="header">
         <div class="title">BeeMazing Help Center</div>
-    </div>
-
-    <div class="container">
         <div class="back-btn-container">
-            <a href="userTasks.html" id="backLink">
-                <img src="/BeeMazing-Y1/mobile/1-Home/BackBtnNEW.png" alt="Back" class="back-btn">
-            </a>
+            <button onclick="goBack()" class="back-btn-text">← Back</button>
         </div>
+    </div>
+    
+    <div class="container">
+    
+        
         <div class="button-container">
             <button class="add-offer-btn" id="addOfferBtn">Add Offer</button>
         </div>
@@ -1168,6 +1199,15 @@ if (currentUser && adminEmail) {
 
 
 // Back button navigation
+function goBack() {
+    const currentUser = new URLSearchParams(window.location.search).get("user");
+    const adminEmail = new URLSearchParams(window.location.search).get("admin") || localStorage.getItem("currentAdminEmail");
+    if (currentUser && adminEmail) {
+        window.location.href = `userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(currentUser)}`;
+    } else {
+        window.history.back();
+    }
+}
 
         
             // Proceed button to show help mode and tasks
