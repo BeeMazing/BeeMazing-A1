@@ -668,6 +668,59 @@
 }
 
 
+
+
+#notificationContainer {
+    margin: 20px 0;
+    text-align: left;
+}
+
+#notificationContainer h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+}
+
+.notification-item {
+    background: var(--card-bg);
+    border: 2px solid var(--border-dark);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.notification-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
+}
+
+.notification-item div {
+    font-size: 0.95rem;
+    color: var(--text-color);
+    margin-bottom: 10px;
+}
+
+.view-offer-btn {
+    background: var(--primary-color);
+    color: var(--secondary-color);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.view-offer-btn:hover {
+    background: #FFD54F;
+    transform: scale(1.05);
+}
+
+
+
 /* Help Center notifications */
 
     </style>
@@ -690,37 +743,36 @@
 
     <div class="content">
         <div class="profile-card">
-
             <button id="changePasswordBtn" class="change-password-btn" style="display: none; margin-bottom: 20px;">
                 Change Admin Password
             </button>
-
+        
             <div class="modal" id="changePasswordModal" style="display: none;">
                 <div class="modal-content">
-                  <h3>Change Admin Password</h3>
-                  <input type="password" id="newAdminPassword" placeholder="Enter new password" />
-                  <button id="confirmChangePasswordBtn">Update Password</button>
+                    <h3>Change Admin Password</h3>
+                    <input type="password" id="newAdminPassword" placeholder="Enter new password" />
+                    <button id="confirmChangePasswordBtn">Update Password</button>
                 </div>
-              </div>
-
-              
-
+            </div>
+        
             <p>Good Luck!<span id="userName"></span>.</p>
-
-
-
-  
+        
             <div class="reward-container">
-              <p><strong>Buzz Points:</strong> <span id="rewardAmount">0</span> 🍯</p>
-          </div>
-
-          <div style="position: relative; display: inline-block; margin-bottom: 16px;">
-            <button id="helpCenterBtn" class="finished-btn">Help Center</button>
-            <span id="offerHelpBadge" class="pulse"></span>
-            <span id="needHelpBadge" class="pulse"></span>
-        </div>
-
-          
+                <p><strong>Buzz Points:</strong> <span id="rewardAmount">0</span> 🍯</p>
+            </div>
+        
+            <div style="position: relative; display: inline-block; margin-bottom: 16px;">
+                <button id="helpCenterBtn" class="finished-btn">Help Center</button>
+                <span id="offerHelpBadge" class="pulse"></span>
+                <span id="needHelpBadge" class="pulse"></span>
+            </div>
+        
+            <!-- Add Notification Container -->
+            <div id="notificationContainer">
+                <h3>Notifications</h3>
+                <div id="notificationList"></div>
+            </div>
+        
             <h3>Assigned Tasks:</h3>
             <div id="userTasks" class="task-list">
                 <!-- Tasks will be displayed here -->
@@ -1386,12 +1438,16 @@ async function finishTask(currentUser, task, selectedDate) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     const offerHelpBadge = document.getElementById("offerHelpBadge");
     const needHelpBadge = document.getElementById("needHelpBadge");
+    const notificationList = document.getElementById("notificationList");
+    
     if (!adminEmail || !userName) {
         console.error("loadNotifications: Missing adminEmail or userName");
         offerHelpBadge.style.display = "none";
         needHelpBadge.style.display = "none";
+        notificationList.innerHTML = "<p>Error: Missing admin email or user.</p>";
         return;
     }
+
     try {
         const res = await fetch(`https://beemazing.onrender.com/api/notifications?adminEmail=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}&t=${Date.now()}`, {
             method: "GET",
@@ -1402,16 +1458,22 @@ async function finishTask(currentUser, task, selectedDate) {
         if (!res.ok) {
             throw new Error(data.error || "Failed to fetch notifications");
         }
+
         const notifications = data.notifications || [];
         if (notifications.length === 0) {
             offerHelpBadge.style.display = "none";
             needHelpBadge.style.display = "none";
+            notificationList.innerHTML = "<p>No notifications available.</p>";
             return;
         }
+
+        // Calculate badge counts
         const offerHelpNotifications = notifications.filter(n => n.offerType === "offerHelp");
         const needHelpNotifications = notifications.filter(n => n.offerType === "needHelp");
         const offerHelpCount = offerHelpNotifications.reduce((sum, n) => sum + n.taskCount, 0);
         const needHelpCount = needHelpNotifications.reduce((sum, n) => sum + n.taskCount, 0);
+
+        // Update badges
         if (offerHelpCount > 0) {
             offerHelpBadge.textContent = `${offerHelpCount}`;
             offerHelpBadge.style.display = "block";
@@ -1424,12 +1486,48 @@ async function finishTask(currentUser, task, selectedDate) {
         } else {
             needHelpBadge.style.display = "none";
         }
+
+        // Populate notification list
+        notificationList.innerHTML = "";
+        const ul = document.createElement("ul");
+        ul.style.listStyle = "none";
+        ul.style.padding = "0";
+
+        notifications.forEach(notification => {
+            const li = document.createElement("li");
+            li.className = "notification-item";
+            const message = notification.offerType === "needHelp"
+                ? `${notification.offerUser} needs help with ${notification.taskCount} task(s): ${notification.tasks.join(", ")}. Expires at ${new Date(notification.expiresAt).toLocaleString()}`
+                : `${notification.offerUser} is offering help with ${notification.taskCount} task(s): ${notification.tasks.join(", ")}. Expires at ${new Date(notification.expiresAt).toLocaleString()}`;
+
+            li.innerHTML = `
+                <div>${message}</div>
+                <button class="view-offer-btn" data-offer-user="${notification.offerUser}" data-tasks="${notification.tasks.join(",")}" data-offer-type="${notification.offerType}">View Offer</button>
+            `;
+            ul.appendChild(li);
+        });
+
+        notificationList.appendChild(ul);
+
+        // Add event listeners for "View Offer" buttons
+        document.querySelectorAll(".view-offer-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const offerUser = btn.dataset.offerUser;
+                const tasks = btn.dataset.tasks;
+                const offerType = btn.dataset.offerType;
+                // Redirect to helpCenter.html with parameters
+                window.location.href = `/BeeMazing-Y1/shared/helpCenter.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}&offerUser=${encodeURIComponent(offerUser)}&tasks=${encodeURIComponent(tasks)}&tab=${encodeURIComponent(offerType)}`;
+            });
+        });
     } catch (err) {
         console.error("Failed to load notifications:", err.message);
         offerHelpBadge.style.display = "none";
         needHelpBadge.style.display = "none";
+        notificationList.innerHTML = `<p>Error loading notifications: ${err.message}</p>`;
     }
 }
+
+
 
 
 
