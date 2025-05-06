@@ -1952,8 +1952,7 @@ app.post("/api/notifications", async (req, res) => {
       ));
       
 
-      const offerTasks = Array.isArray(offer.tasks) ? offer.tasks.map(t => t.title) : [];
-
+      const offerTasks = offer.tasks.map(t => t.title);
       const timestamp = new Date().toISOString();
 
       if (offer.type === "offerHelp") {
