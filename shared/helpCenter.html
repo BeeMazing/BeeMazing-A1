@@ -990,7 +990,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 177</div>
+        <div class="title">BeeMazing Help Center a</div>
     </div>
 
     <div class="container">
@@ -1287,7 +1287,22 @@ async function loadOffers(tab = "offerHelp") {
         const offers = data.offers || [];
 
         // Filter offers based on the tab
-        const filteredOffers = offers.filter(offer => offer.type === tab);
+        const filteredOffers = offers.filter(offer => {
+    if (offer.type !== tab) return false;
+
+    if (tab === "offerHelp") {
+        // For offerHelp, show only offers related to tasks the current user could help with
+        return offer.tasks.some(task => {
+            return !task.completions || !task.completions.includes(currentUser);
+        });
+    } else if (tab === "needHelp") {
+        // Show all "needHelp" offers not created by the current user
+        return offer.fromUser !== currentUser;
+    }
+
+    return false;
+});
+
 
         if (filteredOffers.length === 0) {
             noOffers.textContent = "No offers available";
