@@ -1024,7 +1024,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">BeeMazing Help Center 1</div>
+        <div class="title">BeeMazing Help Center</div>
     </div>
 
     <div class="container">
@@ -1112,10 +1112,16 @@
             const tabButtons = document.querySelectorAll(".tab-button");
             const tabContents = document.querySelectorAll(".tab-content");
         
+            const backLink = document.getElementById("backLink");
             const urlParams = new URLSearchParams(window.location.search);
             const currentUser = urlParams.get("user");
             const adminEmail = urlParams.get("admin") || localStorage.getItem("currentAdminEmail");
         
+// Set back link with parameters
+if (currentUser && adminEmail) {
+    backLink.href = `userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(currentUser)}`;
+}
+            
             // Log for debugging
             console.log("Admin Email:", adminEmail);
             console.log("Current User:", currentUser);
@@ -1162,8 +1168,6 @@
 
 
 // Back button navigation
-const backLink = document.getElementById("backLink");
-backLink.href = `userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(currentUser)}`;
 
         
             // Proceed button to show help mode and tasks
