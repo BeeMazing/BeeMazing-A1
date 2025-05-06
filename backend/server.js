@@ -1941,6 +1941,7 @@ app.post("/api/notifications", async (req, res) => {
       const admins = db.collection("admins");
       const admin = await admins.findOne({ email: adminEmail });
       if (!admin) {
+          console.error(`Admin not found for email: ${adminEmail}`);
           return res.status(404).json({ error: "Admin not found" });
       }
 
@@ -1948,6 +1949,11 @@ app.post("/api/notifications", async (req, res) => {
       const tasks = admin.tasks || [];
       // Use permissions to get all users, including those without tasks
       const users = Object.keys(admin.permissions || {});
+      console.log(`Creating notifications for offer type: ${offer.type}, users: ${users.join(", ")}`);
+
+      if (users.length === 0) {
+          console.warn(`No users found in permissions for admin: ${adminEmail}`);
+      }
 
       const offerTasks = offer.tasks.map(t => t.title);
       const timestamp = new Date().toISOString();
@@ -1974,6 +1980,7 @@ app.post("/api/notifications", async (req, res) => {
                                   expiresAt: offer.expiresAt
                               });
                               notifiedUsers.add(user);
+                              console.log(`Added offerHelp notification for user: ${user}, tasks: ${offerTasks.join(", ")}`);
                           }
                       }
                   }
@@ -1992,10 +1999,12 @@ app.post("/api/notifications", async (req, res) => {
                       timestamp,
                       expiresAt: offer.expiresAt
                   });
+                  console.log(`Added needHelp notification for user: ${user}, tasks: ${offerTasks.join(", ")}`);
               }
           }
       }
 
+      console.log(`Saving ${notifications.length} notifications for admin: ${adminEmail}`);
       await admins.updateOne(
           { email: adminEmail },
           { $set: { notifications } }
@@ -2007,6 +2016,11 @@ app.post("/api/notifications", async (req, res) => {
       res.status(500).json({ error: "Failed to create notifications" });
   }
 });
+
+
+
+
+
 
 
 // GET /api/notifications - Retrieve notifications for a user
