@@ -1947,7 +1947,10 @@ app.post("/api/notifications", async (req, res) => {
 
       const notifications = admin.notifications || [];
       const tasks = admin.tasks || [];
-      const users = (admin.users || []).map(u => typeof u === "string" ? u : u.name);
+      const taskUsers = (admin.tasks || []).flatMap(t => t.users || []);
+      const registeredUsers = (admin.users || []).map(u => typeof u === "string" ? u : u.name);
+      const users = Array.from(new Set([...taskUsers, ...registeredUsers])).filter(u => u !== offer.fromUser);
+      
 
 
       
