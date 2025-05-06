@@ -1947,11 +1947,13 @@ app.post("/api/notifications", async (req, res) => {
 
       const notifications = admin.notifications || [];
       const tasks = admin.tasks || [];
-      const users = Object.keys(admin.users || {});
-
+      const users = Array.from(new Set(
+        (admin.tasks || []).flatMap(t => t.users || [])
+      ));
       
 
-      const offerTasks = offer.tasks.map(t => t.title);
+      const offerTasks = Array.isArray(offer.tasks) ? offer.tasks.map(t => t.title) : [];
+
       const timestamp = new Date().toISOString();
 
       if (offer.type === "offerHelp") {
