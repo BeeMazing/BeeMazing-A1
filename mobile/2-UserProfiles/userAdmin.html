@@ -798,9 +798,28 @@
 /* Logout Button ****************************************************/
 
 
+/* Selecting Parent/Child Bee */
 
+.radio-group {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.radio-option {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: var(--text-color);
+  gap: 10px;
+}
+.radio-option input[type="radio"] {
+  accent-color: var(--primary-color);
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
 
-
+/* Selecting Parent/Child Bee */
 
   </style>
 
@@ -876,6 +895,16 @@
     <h3>Add New User</h3>
     <input type="text" id="usernameInput" placeholder="Enter username" />
     <div class="error-message" id="errorMessage">Please enter a username.</div>
+    <div class="radio-group">
+      <label class="radio-option">
+        <input type="radio" name="beeRole" value="Admin">
+        <span>Parent Bee</span>
+      </label>
+      <label class="radio-option">
+        <input type="radio" name="beeRole" value="User" checked>
+        <span>Child Bee</span>
+      </label>
+    </div>    
     <div class="add-user-modal-actions">
       <button class="cancel-btn" id="cancelUserBtn">Cancel</button>
       <button class="submit-btn" id="submitUserBtn">Submit</button>
@@ -1051,15 +1080,17 @@ document.getElementById("submitUserBtn").addEventListener("click", async () => {
   }
 
   errorMessage.style.display = "none";
+  const role = document.querySelector('input[name="beeRole"]:checked').value;
 
   try {
     const res = await fetch("https://beemazing.onrender.com/add-user", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        adminEmail,
-        newUser: username
-      })
+  adminEmail,
+  newUser: username,
+  role: role
+})
     });
 
     const result = await res.json();
