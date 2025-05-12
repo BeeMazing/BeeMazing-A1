@@ -300,6 +300,31 @@ body {
 
 
 
+        /* Text Add a Bee button isntead of the '+' button */
+        .add-user-btn-text {
+    position: fixed;
+    bottom: calc(var(--footer-height) + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary-color);
+    color: var(--secondary-color);
+    padding: 14px 26px;
+    font-size: 18px;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 99;
+    transition: all 0.3s ease;
+}
+.add-user-btn-text:hover {
+    background: #FFB300;
+    transform: translateX(-50%) scale(1.05);
+}
+
+        /* Text Add a Bee button isntead of the '+' button */
+
 
 
         #confirmModal .modal-content button {
@@ -461,7 +486,7 @@ body {
   
 
 
-    <a href="#" class="add-user-btn" id="addUserBtn" aria-label="Add User">+</a>
+  <button id="addUserBtn" class="add-user-btn-text">Add a Bee</button>
     <div class="footer" id="footer">
    
     </div>
