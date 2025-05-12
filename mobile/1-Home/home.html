@@ -383,10 +383,16 @@ body {
         <div class="modal-content">
             <h3>Add a Bee</h3>
             <input type="text" id="usernameInput" placeholder="Bee name" />
-            <div style="margin-top: 10px; text-align: left;">
-              <label><input type="radio" name="beeRole" value="Admin" style="margin-right: 8px;" /> Parent Bee</label><br>
-              <label><input type="radio" name="beeRole" value="User" style="margin-right: 8px;" checked /> Child Bee</label>
-            </div>            
+            <div style="margin-top: 10px; display: flex; gap: 20px;">
+                <label style="display: flex; align-items: center; gap: 8px;">
+                  <input type="radio" name="beeRole" value="Admin" />
+                  Parent Bee
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px;">
+                  <input type="radio" name="beeRole" value="User" checked />
+                  Child Bee
+                </label>
+              </div>                    
             <p id="errorMessage" style="color: var(--danger-color); font-size: 14px; display: none;">Please enter a valid name</p>
             <button id="submitUserBtn">Add</button>
         </div>
