@@ -228,8 +228,9 @@ app.get('/get-users', async (req, res) => {
 
 
 // ✅ ADD NEW USER TO SPECIFIC ADMIN
+// ✅ ADD NEW USER TO SPECIFIC ADMIN
 app.post('/add-user', async (req, res) => {
-  const { adminEmail, newUser } = req.body;
+  const { adminEmail, newUser, role } = req.body;
 
   if (!adminEmail || !newUser) {
     return res.status(400).json({ success: false, message: "Missing data" });
@@ -239,10 +240,17 @@ app.post('/add-user', async (req, res) => {
     const db = await connectDB();
     const adminUsers = db.collection('adminUsers');
 
+    // Add user to the users array (if not already added)
     await adminUsers.updateOne(
       { email: adminEmail },
       { $addToSet: { users: newUser } }, // avoids duplicates
       { upsert: true }
+    );
+
+    // Set their role in permissions
+    await adminUsers.updateOne(
+      { email: adminEmail },
+      { $set: { [`permissions.${newUser}`]: role || "User" } }
     );
 
     res.json({ success: true });
@@ -251,6 +259,13 @@ app.post('/add-user', async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to save user" });
   }
 });
+
+
+
+
+
+
+
 
 // ✅ HEALTH CHECK
 app.get("/", (req, res) => {

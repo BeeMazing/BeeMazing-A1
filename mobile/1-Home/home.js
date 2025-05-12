@@ -60,15 +60,17 @@ const currentAdmin = localStorage.getItem("currentAdminEmail");
     }
 
     errorMessage.style.display = "none";
+    const selectedRole = document.querySelector('input[name="beeRole"]:checked')?.value || "User";
 
     try {
       const res = await fetch("https://beemazing.onrender.com/add-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          adminEmail: currentAdmin,
-          newUser: username,
-        }),
+body: JSON.stringify({
+  adminEmail: currentAdmin,
+  newUser: username,
+  role: selectedRole, // either "Admin" or "User"
+}),
       });
 
       const result = await res.json();
@@ -84,6 +86,7 @@ const currentAdmin = localStorage.getItem("currentAdminEmail");
 
         usernameInput.value = "";
         addUserModal.classList.remove("show");
+        document.querySelector('input[name="beeRole"][value="User"]').checked = true;
         await fetchUsersFromServer(currentAdmin); // 🔥 re-fetch fresh data from server
       } else {
         alert("Failed to add user: " + result.message);
