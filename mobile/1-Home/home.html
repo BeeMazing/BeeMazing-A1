@@ -360,12 +360,43 @@ body {
     min-width: 90px; /* Prevent "Admin" truncation */
 }
 
+
+
+/* Selecting Parent/Child Bee */
+
+.modal-content input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--primary-color);
+  border-radius: 50%;
+  margin-right: 8px;
+  position: relative;
+  cursor: pointer;
+  background-color: transparent;
+}
+
+.modal-content input[type="radio"]:checked::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background-color: var(--primary-color);
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+}
+/* Selecting Parent/Child Bee */
+
+
     </style>
 </head>
 <body>
     <div class="header">
         <i class="fas fa-bars menu-icon" aria-label="Menu"></i>
-        <div class="title">BeeMazing 6</div>
+        <div class="title">BeeMazing 7</div>
     </div>
 
     <div id="logoutContainer" class="logout-container">
@@ -387,12 +418,12 @@ body {
        
 
             <div style="margin-top: 10px;">
-                <label style="font-size: 16px; cursor: pointer; display: block; margin-bottom: 8px;">
-                  <input type="radio" name="beeRole" value="Admin" style="vertical-align: middle; margin-right: 8px; accent-color: var(--primary-color);" />
+                <label style="font-size: 16px; cursor: pointer; display: flex; align-items: center; margin-bottom: 10px;">
+                  <input type="radio" name="beeRole" value="Admin" />
                   Parent Bee
                 </label>
-                <label style="font-size: 16px; cursor: pointer; display: block;">
-                  <input type="radio" name="beeRole" value="User" checked style="vertical-align: middle; margin-right: 8px; accent-color: var(--primary-color);" />
+                <label style="font-size: 16px; cursor: pointer; display: flex; align-items: center;">
+                  <input type="radio" name="beeRole" value="User" checked />
                   Child Bee
                 </label>
               </div>
