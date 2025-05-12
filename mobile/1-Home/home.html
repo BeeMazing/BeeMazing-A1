@@ -365,7 +365,7 @@ body {
 <body>
     <div class="header">
         <i class="fas fa-bars menu-icon" aria-label="Menu"></i>
-        <div class="title">BeeMazing 1y</div>
+        <div class="title">BeeMazing 3</div>
     </div>
 
     <div id="logoutContainer" class="logout-container">
@@ -383,7 +383,7 @@ body {
         <div class="modal-content">
             <h3>Add a Bee</h3>
             <input type="text" id="usernameInput" placeholder="Bee name" />
-            <div style="margin-top: 10px; display: flex; gap: 20px;">
+            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
                 <label style="display: flex; align-items: center; gap: 8px;">
                   <input type="radio" name="beeRole" value="Admin" />
                   Parent Bee
@@ -392,7 +392,7 @@ body {
                   <input type="radio" name="beeRole" value="User" checked />
                   Child Bee
                 </label>
-              </div>                    
+              </div>                          
             <p id="errorMessage" style="color: var(--danger-color); font-size: 14px; display: none;">Please enter a valid name</p>
             <button id="submitUserBtn">Add</button>
         </div>
