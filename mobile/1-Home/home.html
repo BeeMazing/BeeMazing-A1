@@ -66,7 +66,7 @@ body {
         .content {
     position: absolute;
     top: calc(var(--header-height) + 60px); /* added 60px to push below logout */
-    bottom: var(--footer-height);
+    bottom: 80px; /* enough space for button */
     width: 100%;
     padding: 20px;
     overflow-y: auto;
@@ -303,12 +303,12 @@ body {
         /* Text Add a Bee button isntead of the '+' button */
         .add-user-btn-text {
     position: fixed;
-    bottom: calc(var(--footer-height) + 10px);
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
     background: var(--primary-color);
     color: var(--secondary-color);
-    padding: 10px 20px; /* tighter padding */
+    padding: 12px 24px;
     font-size: 16px;
     font-weight: 600;
     border: none;
@@ -316,13 +316,14 @@ body {
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     z-index: 99;
-    white-space: nowrap; /* prevent wrapping */
+    white-space: nowrap;
     transition: all 0.3s ease;
 }
 .add-user-btn-text:hover {
     background: #FFB300;
     transform: translateX(-50%) scale(1.05);
 }
+
 
 
         /* Text Add a Bee button isntead of the '+' button */
@@ -489,9 +490,7 @@ body {
 
 
   <button id="addUserBtn" class="add-user-btn-text">Add a Bee</button>
-    <div class="footer" id="footer">
-   
-    </div>
+
 
     <script>
         // Dynamically highlight the active footer icon
