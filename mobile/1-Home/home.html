@@ -362,35 +362,25 @@ body {
 
 
 
-/* Selecting Parent/Child Bee */
-
-.modal-content input[type="radio"] {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--primary-color);
-  border-radius: 50%;
-  display: inline-block;
-  position: relative;
-  margin-right: 8px;
-  vertical-align: middle;
-  background-color: transparent;
+.radio-group {
+    text-align: left;
+    margin: 15px 0;
 }
 
-.modal-content input[type="radio"]:checked::after {
-  content: "";
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 8px;
-  height: 8px;
-  background-color: var(--primary-color);
-  border-radius: 50%;
+.radio-group label {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    color: var(--text-color);
 }
 
-/* Selecting Parent/Child Bee */
+.radio-group input[type="radio"] {
+    margin-right: 10px;
+    accent-color: var(--primary-color);
+    transform: scale(1.2);
+}
+
 
 
     </style>
@@ -398,7 +388,7 @@ body {
 <body>
     <div class="header">
         <i class="fas fa-bars menu-icon" aria-label="Menu"></i>
-        <div class="title">BeeMazing 8</div>
+        <div class="title">BeeMazing 7</div>
     </div>
 
     <div id="logoutContainer" class="logout-container">
@@ -419,16 +409,17 @@ body {
 
        
 
-            <div style="margin-top: 10px;">
-                <label style="display: flex; align-items: center; font-size: 16px; margin-bottom: 10px; cursor: pointer;">
-                  <input type="radio" name="beeRole" value="Admin" />
-                  <span>Parent Bee</span>
+            <div class="radio-group">
+                <label>
+                    <input type="radio" name="beeRole" value="Admin">
+                    Parent Bee
                 </label>
-                <label style="display: flex; align-items: center; font-size: 16px; cursor: pointer;">
-                  <input type="radio" name="beeRole" value="User" checked />
-                  <span>Child Bee</span>
+                <label>
+                    <input type="radio" name="beeRole" value="User" checked>
+                    Child Bee
                 </label>
-              </div>
+            </div>
+            
               
 
               
