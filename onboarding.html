@@ -58,9 +58,11 @@
   <div id="step4" class="step">
     <h2>Step 4: Create First Task</h2>
     <input type="text" id="taskTitle" placeholder="Task Title"><br>
+    <input type="number" id="taskReward" placeholder="Reward (e.g. 10)"><br>
     <button onclick="createTask()">Create Task</button>
     <button onclick="skipStep(5)">Skip</button>
   </div>
+  
 
   <div id="step5" class="step">
     <h2>Step 5: Create First Reward</h2>
@@ -126,26 +128,47 @@
       });
     }
 
-    function createTask() {
-      const title = document.getElementById("taskTitle").value.trim();
-      if (!title) return alert("Enter a task");
-      const today = new Date().toISOString().split("T")[0];
-      const task = {
-        title,
-        date: today,
-        users: [document.getElementById("childName").value.trim()],
-        repeat: "Daily",
-        reward: 10
-      };
-      fetch("https://beemazing.onrender.com/api/tasks", {
+
+    async function createTask() {
+    const title = document.getElementById("taskTitle").value.trim();
+    const childName = document.getElementById("childName").value.trim();
+    const email = localStorage.getItem("currentAdminEmail");
+
+    if (!title) return alert("Enter a task");
+    if (!childName) return alert("Child user not found");
+
+    const today = new Date().toISOString().split("T")[0];
+    const task = {
+      title,
+      users: [childName],
+      date: `${today} to 3000-01-01`,
+      repeat: "Daily",
+      settings: "Individual",
+      reminder: false,
+      reward: parseInt(document.getElementById("taskReward").value.trim()) || 10,
+      timesPerDay: 1,
+      daysOfWeek: ["Any"]
+    };
+
+    try {
+      const response = await fetch("https://beemazing.onrender.com/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminEmail: email, task })
-      }).then(res => res.json()).then(data => {
-        if (data.success) showStep(5);
-        else alert("Failed to save task");
       });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || "Failed to save task");
+
+      showStep(5); // proceed to next step
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save task: " + err.message);
     }
+  }
+
+
+
 
     function createReward() {
       const rewardTitle = document.getElementById("rewardTitle").value.trim();
