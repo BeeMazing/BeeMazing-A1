@@ -534,8 +534,13 @@ setTimeout(() => {
         localStorage.setItem("currentAdminEmail", email);
         authForm.reset();
         setTimeout(() => {
-          window.location.href = "onboarding.html";
-        }, 1000);
+  if (isRegistering) {
+    window.location.href = "onboarding.html"; // ✅ first-time registration
+  } else {
+    window.location.href = "login.html"; // ✅ normal login
+  }
+}, 1000);
+
       }
     } else {
       message.style.color = "#D32F2F";
