@@ -1141,6 +1141,7 @@ document.getElementById("submitUserBtn").addEventListener("click", async () => {
         allUserData[adminEmail] = { users: [], permissions: {} };
       }
       allUserData[adminEmail].users.push(username);
+      allUserData[adminEmail].permissions[username] = role;
       localStorage.setItem("userData", JSON.stringify(allUserData));
 
       // Refresh user list in modal
