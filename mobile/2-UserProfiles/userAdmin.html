@@ -800,6 +800,8 @@
 
 /* Selecting Parent/Child Bee */
 
+
+/* Selecting Parent/Child Bee */
 .radio-group {
   margin-top: 10px;
   margin-bottom: 10px;
@@ -812,7 +814,7 @@
   margin-bottom: 10px;
   font-size: 16px;
   color: var(--text-color);
-  line-height: 1.2; /* Helps with vertical alignment */
+  line-height: 1; /* Helps center text next to custom radio */
 }
 
 .radio-option input[type="radio"] {
@@ -827,18 +829,33 @@
   cursor: pointer;
   display: inline-block;
   vertical-align: middle;
+  margin: 0;
 }
 
-.radio-option input[type="radio"]:checked::before {
+.radio-option input[type="radio"]::before {
   content: '';
   position: absolute;
-  top: 3px;
+  top: 3px; /* Adjust this to perfectly center the dot */
   left: 3px;
   width: 8px;
   height: 8px;
   background: var(--primary-color);
   border-radius: 50%;
+  display: none;
 }
+
+.radio-option input[type="radio"]:checked::before {
+  display: block;
+}
+
+.radio-option span {
+  vertical-align: middle;
+  display: inline-block;
+  line-height: 1;
+}
+/* Selecting Parent/Child Bee */
+
+
 
 
 
