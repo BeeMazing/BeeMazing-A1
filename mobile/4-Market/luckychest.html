@@ -465,14 +465,27 @@ document.addEventListener("DOMContentLoaded", () => {
       { name: "Special Buzz Off", quote: "You’re too cool for chores today.", effect: "➡ Skip all tasks today.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Special.jpg", isCustom: false }
     ];
 
-    const rewardOptions = [
-      "The Key",
-      "Double Trouble",
-      "Dance Party",
-      "Bee-Witched!",
-      "Special Buzz Off",
-      "Buzz Points"
-    ];
+  
+
+    async function getDiceRewardOptions() {
+  try {
+    const res = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to fetch market rewards");
+
+    const marketRewards = data.rewards || [];
+    const rewardNames = marketRewards.map(r => r.name);
+    rewardNames.push("Buzz Points"); // Always include this
+    return rewardNames;
+  } catch (err) {
+    console.error("Failed to load reward options:", err);
+    return ["Buzz Points"];
+  }
+}
+
+
+
+
 
     const defaultChestImage = "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png";
 
@@ -697,16 +710,19 @@ async function assignChest(userName, requiredPoints) {
 
 
 
-    async function openDiceModal() {
+async function openDiceModal() {
   try {
-    const response = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
-    const data = await response.json();
-    if (!response.ok || !data.success) throw new Error(data.message || "Failed to fetch users");
-    const users = data.users || [];
+    const usersRes = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const usersData = await usersRes.json();
+    if (!usersRes.ok || !usersData.success) throw new Error(usersData.message || "Failed to fetch users");
+
+    const users = usersData.users || [];
     diceUserSelect.innerHTML = users.map(u => `<option value="${u}">${u}</option>`).join("");
+
+    const rewardOptions = await getDiceRewardOptions();
     diceRewards.innerHTML = "";
     for (let i = 1; i <= 6; i++) {
-      const defaultReward = rewardOptions[i - 1];
+      const defaultReward = rewardOptions[i - 1] || "Buzz Points";
       diceRewards.innerHTML += `
         <div class="form-group">
           <label>Reward for ${i}:</label>
@@ -715,16 +731,22 @@ async function assignChest(userName, requiredPoints) {
               <option value="${opt}" ${opt === defaultReward ? 'selected' : ''}>${opt}</option>
             `).join("")}
           </select>
-          <input type="text" id="extraInput${i}" placeholder="Enter value..." style="display:${defaultReward === 'Honey (amount)' ? 'block' : 'none'}; margin-top:5px;" />
+          <input type="text" id="extraInput${i}" placeholder="Enter value..." style="display:${defaultReward === 'Buzz Points' ? 'block' : 'none'}; margin-top:5px;" />
         </div>
       `;
     }
+
     diceModal.classList.add("show");
   } catch (err) {
-    console.error("Error loading users:", err);
-    alert("Failed to load users. Please try again.");
+    console.error("Error loading dice modal:", err);
+    alert("Failed to load users or rewards. Please try again.");
   }
 }
+
+
+
+
+
 
     function toggleExtraInput(selectEl, index) {
       const extraInput = document.getElementById("extraInput" + index);
