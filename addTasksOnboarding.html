@@ -1,0 +1,2017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeeMazing Add Task</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    :root {
+    --primary-color: #E0B018; /* softened gold */
+    --secondary-color: #212121;
+    --accent-color: #2C2F3A;
+    --light-bg: #1E1F26;
+    --text-color: #FFFFFF;
+    --danger-color: #D32F2F;
+    --muted-button: #3A3D4B;
+    --hover-accent: #3F4353;
+    --border-dark: #444754; /* subtle dark gray-blue border */
+    --selection-border: #555555; /* darker gray border for selected states */
+    --selection-bg: #3A3D4B;      /* muted highlight */
+}
+
+
+    html, body {
+        height: 100%;
+        width: 100%;
+        overflow-x: hidden;
+        font-family: 'Poppins', Arial, sans-serif;
+        background-color: var(--light-bg);
+        color: var(--text-color);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .header {
+    position: relative;
+    display: flex;
+    justify-content: center; /* Center the title */
+    align-items: center;
+    background: var(--secondary-color);
+    padding: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.menu-icon {
+    position: absolute;
+    left: 15px;
+    font-size: 24px;
+    color: var(--text-color); /* fix: use white instead of black */
+    cursor: pointer;
+}
+
+    .title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-color); /* white text */
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+    .content {
+        padding: 20px;
+        padding-bottom: 110px;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .form-group, .form-group-full {
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border-dark); /* subtle divider */
+}
+
+
+    .form-group {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    label {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    input, textarea {
+    background: var(--accent-color);
+    color: var(--text-color);
+    border: 2px solid var(--border-dark);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 16px;
+    width: 100%; /* 👈 Add this line to make inputs full width */
+}
+
+
+    textarea {
+        resize: vertical;
+        height: 100px;
+    }
+
+    ::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .select-btn {
+    background: var(--muted-button);
+    border: 2px solid var(--border-dark);
+    color: var(--text-color);
+    font-size: 16px;
+    font-weight: 600;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.select-btn:hover {
+    background: #FFB300;
+}
+
+/* New class for the circular + button */
+.plus-btn {
+    background: var(--primary-color);
+    border: none;
+    color: var(--secondary-color);
+    font-size: 20px;
+    font-weight: 600;
+    width: 32px;
+    height: 32px;
+    line-height: 32px; /* Centers the + vertically */
+    border-radius: 50%; /* Fully circular */
+    cursor: pointer;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.plus-btn:hover {
+    background: #FFB300; /* Brighter gold on hover */
+    transform: translateY(-2px); /* Slight lift */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); /* Enhanced shadow */
+}
+
+.plus-btn:active {
+    transform: translateY(0); /* Pressed effect */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); /* Reduced shadow */
+}
+
+    .date-display {
+        background: var(--accent-color);
+        border: 2px solid var(--border-dark);
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-color);
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .date-display:hover {
+        background: var(--primary-color);
+        color: var(--secondary-color);
+    }
+
+    .date-flex-row {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .date-flex-row label {
+        width: 80px;
+        margin: 0;
+    }
+
+    .date-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .date-input {
+        display: none;
+    }
+
+    .save-btn {
+        width: 100%;
+        padding: 15px;
+        margin-top: 20px;
+        background: var(--primary-color);
+        color: var(--secondary-color);
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .save-btn:hover {
+        background: #FFB300;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal.show {
+        display: flex;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .modal.hide {
+        animation: fadeOut 0.3s ease-out;
+        pointer-events: none;
+    }
+
+    .modal-content {
+        background: var(--accent-color);
+        padding: 20px;
+        border-radius: 15px;
+        border: 2px solid var(--primary-color);
+        width: 80%;
+        max-width: 400px;
+        text-align: center;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        color: var(--text-color);
+    }
+
+    .modal-content h3 {
+        color: var(--text-color);
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+
+    .modal-content ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .modal-content ul li {
+        padding: 10px;
+        margin: 5px 0;
+        background: var(--light-bg);
+        color: var(--text-color);
+        border: 2px solid var(--border-dark);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .modal-content ul li:hover {
+        background: var(--primary-color);
+        color: var(--secondary-color);
+    }
+
+    .close-btn {
+        margin-top: 15px;
+        padding: 10px 20px;
+        background: var(--danger-color);
+        color: var(--text-color);
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .close-btn:hover {
+        background: #B71C1C;
+    }
+
+    .footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    background: var(--secondary-color); /* Changed to black */
+    padding: 10px 0;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    height: var(--footer-height);
+}
+
+.footer a {
+    text-decoration: none;
+    color: var(--accent-color); /* Changed to white for text */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.3s ease;
+}
+
+
+
+
+    .footer img {
+        width: 40px;
+        height: 40px;
+        filter: invert(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)); /* Default: white */
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 34px;
+        height: 20px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #444;
+        transition: 0.4s;
+        border-radius: 20px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 14px;
+        width: 14px;
+        left: 3px;
+        bottom: 3px;
+        background-color: var(--accent-color);
+        transition: 0.4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .slider {
+        background-color: var(--primary-color);
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(14px);
+    }
+
+    .fancy-input {
+        padding: 8px 12px;
+        font-size: 14px;
+        border: 2px solid var(--border-dark);
+        border-radius: 8px;
+        background: var(--light-bg);
+        color: var(--text-color);
+        width: 80%;
+        margin: 0 auto;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .fancy-input:focus {
+        border-color: #FFB300;
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.5);
+        outline: none;
+    }
+
+    .btn-save {
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        background: var(--primary-color);
+        color: var(--secondary-color);
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: transform 0.2s ease, background-color 0.3s ease;
+    }
+
+    .btn-save:hover {
+        transform: translateY(-3px);
+        background: #FFB300;
+    }
+
+    .btn-cancel {
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        background: var(--danger-color);
+        color: var(--text-color);
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .btn-cancel:hover {
+        background: #B71C1C;
+        transform: translateY(-3px);
+    }
+
+    @keyframes fadeIn {
+        0% { opacity: 0; transform: scale(0.9); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes fadeOut {
+        0% { opacity: 1; transform: scale(1); }
+        100% { opacity: 0; transform: scale(0.9); }
+    }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+
+    /* Styling for date chips */
+.date-chip {
+    background: var(--accent-color);
+    color: var(--text-color);
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--border-dark);
+    transition: background-color 0.3s ease;
+}
+
+.date-chip:hover {
+    background: var(--hover-accent);
+}
+
+.date-chip-remove {
+    cursor: pointer;
+    color: var(--danger-color);
+    font-size: 16px;
+    line-height: 1;
+}
+
+.date-chip-remove:hover {
+    color: #B71C1C;
+}
+
+/* Ensure calendar in modal is centered and sized appropriately */
+#specificDatesCalendar .flatpickr-calendar {
+    background: var(--light-bg);
+    border: 2px solid var(--border-dark);
+    border-radius: 8px;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+#specificDatesCalendar .flatpickr-day.selected,
+#specificDatesCalendar .flatpickr-day.startRange,
+#specificDatesCalendar .flatpickr-day.endRange {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--secondary-color);
+}
+
+#specificDatesCalendar .flatpickr-day.inRange {
+    background: rgba(224, 176, 24, 0.3); /* Semi-transparent gold for range */
+    border-color: var(--border-dark);
+    color: var(--text-color);
+}
+
+#specificDatesCalendar .flatpickr-day:hover {
+    background: var(--hover-accent);
+    border-color: var(--border-dark);
+}
+
+
+
+/* Add spacing and alignment for the specific dates group */
+#specificDatesGroup {
+    display: flex;
+    flex-direction: column; /* Stack label, button, and chips vertically */
+    align-items: flex-start; /* Align items to the left */
+    gap: 15px; /* Space between label/button and chips */
+}
+
+/* Ensure the button and label are aligned nicely */
+#specificDatesGroup .button-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between label and + button */
+}
+
+/* Adjust container spacing */
+#selectedDatesContainer {
+    margin-top: 15px; /* Increased from 10px for more breathing room */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* Slightly more gap between chips */
+    width: 100%; /* Full width for better alignment */
+}
+
+#removeEndDateBtn:hover {
+  color: #B71C1C;
+  transform: scale(1.1);
+}
+
+
+
+
+
+
+
+
+/* Date Mode Selector */
+#selectDateMode {
+    width: 100%;
+    text-align: left;
+}
+
+/* Specific Days Checkboxes */
+#specificDaysCheckboxes label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    color: var(--text-color);
+}
+
+#specificDaysCheckboxes input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+}
+
+/* Selected Days Display */
+#selectedDaysDisplay {
+    max-width: 100%;
+    overflow-wrap: break-word;
+}
+
+
+
+/* Date Section */
+.date-section {
+    padding: 15px;
+    background: var(--light-bg);
+    border-radius: 10px;
+    border: 1px solid var(--border-dark);
+}
+
+.section-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 10px;
+}
+
+/* Date Mode Selector (Segmented Buttons) */
+.date-mode-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    background: var(--accent-color);
+    padding: 5px;
+    border-radius: 8px;
+    border: 1px solid var(--border-dark);
+}
+
+.mode-btn {
+    flex: 1;
+    background: var(--muted-button);
+    border: none;
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.mode-btn.active {
+    background: var(--primary-color);
+    color: var(--secondary-color);
+}
+
+.mode-btn:hover {
+    background: var(--hover-accent);
+}
+
+.mode-btn.active:hover {
+    background: #FFB300;
+}
+
+/* Date Group (From/To, Specific Dates, Specific Days) */
+.date-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    background: var(--accent-color);
+    border-radius: 8px;
+    border: 1px solid var(--border-dark);
+}
+
+.date-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.date-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-color);
+    min-width: 50px;
+}
+
+.add-end-date {
+    color: var(--primary-color);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.add-end-date:hover {
+    color: #FFB300;
+}
+
+.remove-btn {
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--danger-color);
+    transition: color 0.3s ease, transform 0.1s ease;
+}
+
+.remove-btn:hover {
+    color: #B71C1C;
+    transform: scale(1.1);
+}
+
+/* Container for Day Buttons */
+.day-buttons-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.day-buttons-container {
+    justify-content: center;
+}
+
+
+/* Day Buttons for Specific Days (Original Styles) */
+.day-btn {
+    position: relative;
+    background: var(--muted-button);
+    border: 2px solid var(--border-dark);
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    min-width: 50px;
+    text-align: center;
+}
+
+.day-btn.selected {
+    background: var(--primary-color);
+    color: var(--secondary-color);
+}
+
+
+
+.day-btn:hover {
+    background: var(--hover-accent);
+}
+
+.day-btn.selected:hover {
+    background: #FFB300; /* Brighter gold */
+    color: var(--secondary-color);
+}
+
+
+</style>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="header">
+        <i class="fas fa-bars menu-icon"></i>
+        <div class="title">Add Task</div>
+    </div>
+
+    <div class="content">
+        <form id="addTaskForm">
+            <div class="form-group-full">
+                <label for="taskTitle"></label>
+                <input type="text" id="taskTitle" placeholder="Enter task title" required>
+            </div>
+            <div class="form-group-full">
+                <label for="taskNotes"></label>
+                <textarea id="taskNotes" placeholder="Enter any additional notes"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Room</label>
+                <button type="button" id="selectRoom" class="select-btn">Select</button>
+                <input type="hidden" id="roomSelection" value="">
+            </div>
+            <div class="form-group">
+                <label>Frequency</label>
+                <button type="button" id="selectRepeat" class="select-btn">Select</button>
+                <input type="hidden" id="repeatSelection" value="">
+            </div>
+            
+            <!-- NEW: Times Per Day input (only shown when Daily is selected) -->
+            <div class="form-group" id="timesPerDayGroup" style="display: none;">
+                <label>Times per Day</label>
+                <input type="text" id="timesPerDayInput" value="1" readonly
+    style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--primary-color); border-radius: 8px; background: var(--accent-color); font-size: 16px; cursor: pointer;">
+            </div>
+
+
+
+            <!-- Weekly Frequency Input -->
+<div class="form-group" id="timesPerWeekGroup" style="display: none;">
+    <label>Times per Week</label>
+    <input type="text" id="timesPerWeekInput" value="1" readonly
+    style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--primary-color); border-radius: 8px; background: var(--accent-color); font-size: 16px; cursor: pointer;">
+    
+
+</div>
+
+<!-- Monthly Frequency Input -->
+<div class="form-group" id="timesPerMonthGroup" style="display: none;">
+    <label>Times per Month</label>
+    <input type="text" id="timesPerMonthInput" value="1" readonly
+style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--primary-color); border-radius: 8px; background: var(--accent-color); font-size: 16px; cursor: pointer;">
+
+
+</div>
+
+            
+            <div class="form-group">
+                <label>Settings</label>
+                <button type="button" id="selectSettings" class="select-btn">Select</button>
+                <input type="hidden" id="settingsSelection" value="">
+            </div>
+            <div class="form-group-full date-section">
+                <label class="section-label"></label>
+                <div class="date-mode-selector">
+                    <button type="button" class="mode-btn active" data-mode="date">Date</button>
+                    <button type="button" class="mode-btn" data-mode="specific-dates">Specific Dates</button>
+                    <input type="hidden" id="dateModeSelection" value="date">
+                </div>
+                
+            
+                <!-- From - To Date UI -->
+                <div id="fromToDateGroup" class="date-group">
+                    <div class="date-row">
+                        <span class="date-label">From</span>
+                        <div id="dateDisplay" class="date-display">Today</div>
+                    </div>
+                    <div class="date-row" id="dateToWrapper" style="display: none;">
+                        <span class="date-label">To</span>
+                        <div id="dateDisplayTo" class="date-display">To Date</div>
+                        <span id="removeEndDateBtn" class="remove-btn">✖</span>
+                    </div>
+                    <span id="addEndDateBtn" class="add-end-date">+ Add End Date</span>
+                </div>
+            
+                <!-- Specific Dates UI -->
+                <div id="specificDatesGroup" class="date-group" style="display: none;">
+                    <div class="date-row">
+                        <span class="date-label">Dates</span>
+                        <button type="button" id="selectSpecificDates" class="plus-btn">+</button>
+                    </div>
+                    <div id="selectedDatesContainer" style="margin-top: 10px;"></div>
+                </div>
+            
+                <!-- Specific Days UI -->
+<!-- Day Selection UI (for Date mode) -->
+<div id="specificDaysGroup" class="date-group">
+    <div class="date-row">
+        <span class="date-label">Days</span>
+        <div id="specificDaysButtons" class="day-buttons-container">
+            <button type="button" class="day-btn" data-day="Any">Any</button>
+            <button type="button" class="day-btn" data-day="Mon">Mon</button>
+            <button type="button" class="day-btn" data-day="Tue">Tue</button>
+            <button type="button" class="day-btn" data-day="Wed">Wed</button>
+            <button type="button" class="day-btn" data-day="Thu">Thu</button>
+            <button type="button" class="day-btn" data-day="Fri">Fri</button>
+            <button type="button" class="day-btn" data-day="Sat">Sat</button>
+            <button type="button" class="day-btn" data-day="Sun">Sun</button>
+        </div>
+    </div>
+</div>
+
+            
+                <!-- Hidden inputs -->
+                <input type="text" id="taskDate" class="date-input" />
+                <input type="text" id="taskDateTo" class="date-input" />
+                <input type="hidden" id="specificDatesInput" value="">
+                <input type="hidden" id="specificDaysInput" value="">
+            </div>
+                
+            
+            
+            <div class="form-group">
+                <label>Reminder</label>
+                <label class="switch">
+                    <input type="checkbox" id="taskReminder">
+                    <span class="slider"></span>
+                </label>
+                <button type="button" id="addAlarmBtn" class="select-btn" style="display: none; margin-left: 10px;">+ Add Alarm</button>
+            </div>
+            <div id="alarmContainer" style="margin-top: 10px;"></div>
+            <div class="form-group">
+                <label>
+                    <span id="assignedToDisplay" class="select-btn">Select users</span>
+                    <input type="hidden" id="assignedToSelection" value="">
+                </label>
+            </div>
+            <div class="form-group">
+                <label>
+                    <span id="selectReward" class="select-btn">Reward</span>
+                    <input type="hidden" id="RewardValue" value="">
+                </label>
+                <div class="modal" id="rewardModal">
+                    <div class="modal-content fancy-modal">
+                        <h3>Reward 🍯</h3>
+                        <input type="number" id="rewardInput" placeholder="      Enter Honey Amount" min="1" class="fancy-input smaller-input">
+                        <div style="margin-top: 10px;">
+                            <button id="saveRewardBtn" class="btn-save">Save</button>
+                            <button id="closeRewardModal" class="btn-cancel">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="save-btn">Save</button>
+        </form>
+    </div>
+
+    <div class="footer">
+        <a href="tasks.html" class="footer-icon" aria-label="Back">
+            <img src="/BeeMazing-Y1/mobile/1-Home/BackBtn.png" alt="Back" style="width: 40px; height: 40px;" />
+            <span></span>
+        </a>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="userModal">
+        <div class="modal-content">
+            <h3>Choose User</h3>
+            <ul id="userList"></ul>
+            <button class="close-btn" id="closeUserModal">Close</button>
+        </div>
+    </div>
+    <div class="modal" id="roomModal">
+        <div class="modal-content">
+            <h3>Choose Room</h3>
+            <ul>
+                <li data-value="Entire Home">Entire Home</li>
+                <li data-value="Living Room">Living Room</li>
+                <li data-value="Bedroom">Bedroom</li>
+                <li data-value="Kitchen">Kitchen</li>
+                <li data-value="Bathroom">Bathroom</li>
+                <li data-value="Laundry">Laundry</li>
+                <li data-value="Garden">Garden</li>
+                <li data-value="Outside">Outside</li>
+                <li data-value="Other">Other</li>
+            </ul>
+        </div>
+    </div>
+    <div class="modal" id="repeatModal">
+        <div class="modal-content">
+            <h3>Choose Repeat</h3>
+            <ul>
+                <li data-value="Daily">Daily</li>
+                <li data-value="Weekly">Weekly</li>
+                <li data-value="Monthly">Monthly</li>
+            </ul>
+        </div>
+    </div>
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <h3>Choose Settings</h3>
+            <ul>
+                <li data-value="Rotation">Rotation</li>
+                <li data-value="Team Work">Team Work</li>
+                <li data-value="Individual">Individual</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="modal" id="timesPerDayModal">
+        <div class="modal-content fancy-modal">
+            <h3>How many times per day?</h3>
+            <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin: 10px 0;">
+                <button class="btn-save" data-value="1">1</button>
+                <button class="btn-save" data-value="2">2</button>
+                <button class="btn-save" data-value="3">3</button>
+                <button class="btn-save" data-value="4">4</button>
+                <button class="btn-save" data-value="5">5</button>
+            </div>
+            <input type="number" id="customTimesInput" placeholder="Or enter your own" min="1" class="fancy-input smaller-input">
+            <div style="margin-top: 10px;">
+                <button id="saveCustomTimesBtn" class="btn-save">Save</button>
+                <button class="btn-cancel" id="closeTimesModal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="timesPerWeekModal">
+        <div class="modal-content fancy-modal">
+            <h3>How many times per week?</h3>
+            <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin: 10px 0;">
+                <button class="btn-save" data-value="1">1</button>
+                <button class="btn-save" data-value="2">2</button>
+                <button class="btn-save" data-value="3">3</button>
+                <button class="btn-save" data-value="4">4</button>
+                <button class="btn-save" data-value="5">5</button>
+            </div>
+            <input type="number" id="customTimesWeekInput" placeholder="Or enter your own" min="1" class="fancy-input smaller-input">
+            <div style="margin-top: 10px;">
+                <button id="saveCustomTimesWeekBtn" class="btn-save">Save</button>
+                <button id="closeTimesWeekModal" class="btn-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+<div class="modal" id="timesPerMonthModal">
+    <div class="modal-content fancy-modal">
+        <h3>How many times per month?</h3>
+        <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin: 10px 0;">
+            <button class="btn-save" data-value="1">1</button>
+            <button class="btn-save" data-value="2">2</button>
+            <button class="btn-save" data-value="3">3</button>
+            <button class="btn-save" data-value="4">4</button>
+            <button class="btn-save" data-value="5">5</button>
+        </div>
+        <input type="number" id="customTimesMonthInput" placeholder="Or enter your own" min="1" class="fancy-input smaller-input">
+        <div style="margin-top: 10px;">
+            <button id="saveCustomTimesMonthBtn" class="btn-save">Save</button>
+            <button id="closeTimesMonthModal" class="btn-cancel">Cancel</button>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal" id="specificDatesModal">
+    <div class="modal-content fancy-modal">
+        <h3>Select Specific Dates</h3>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 15px;">Choose dates for the task or leave empty for every day.</p>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <button id="clearSpecificDates" class="btn-cancel">Clear</button>
+            <button id="saveSpecificDates" class="btn-save">Save</button>
+        </div>
+        <div id="specificDatesCalendar" style="margin: 20px 0;"></div>
+    </div>
+</div>
+   
+
+
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="/BeeMazing-Y1/shared/taskrotations.js?t=${Date.now()}"></script>
+    <script>
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const currentAdmin = localStorage.getItem("currentAdminEmail");
+    if (!currentAdmin) {
+        alert("Admin not logged in!");
+        return;
+    }
+
+    const editTask = JSON.parse(localStorage.getItem("familyApp_editTask"));
+    if (editTask) {
+        document.getElementById("taskTitle").value = editTask.title || "";
+        document.getElementById("taskNotes").value = editTask.notes || "";
+        document.getElementById("roomSelection").value = editTask.room || "";
+        document.getElementById("selectRoom").textContent = editTask.room || "Select";
+        document.getElementById("repeatSelection").value = editTask.repeat || "";
+        document.getElementById("selectRepeat").textContent = editTask.repeat || "Select";
+        document.getElementById("settingsSelection").value = editTask.settings || "";
+        document.getElementById("selectSettings").textContent = editTask.settings || "Select";
+        document.getElementById("taskReminder").checked = !!editTask.reminder;
+        document.getElementById("addAlarmBtn").style.display = editTask.reminder ? "inline-block" : "none";
+        document.getElementById("RewardValue").value = editTask.reward || "";
+        document.getElementById("selectReward").textContent = editTask.reward ? `Reward: ${editTask.reward} 🍯` : "Reward";
+
+        // Handle times per day/week/month
+        document.getElementById("timesPerDayInput").value = editTask.timesPerDay || "1";
+        document.getElementById("timesPerWeekInput").value = editTask.timesPerWeek || "1";
+        document.getElementById("timesPerMonthInput").value = editTask.timesPerMonth || "1";
+        document.getElementById("timesPerDayGroup").style.display = editTask.repeat === "Daily" ? "flex" : "none";
+        document.getElementById("timesPerWeekGroup").style.display = editTask.repeat === "Weekly" ? "flex" : "none";
+        document.getElementById("timesPerMonthGroup").style.display = editTask.repeat === "Monthly" ? "flex" : "none";
+
+// Handle date mode
+if (editTask.specificDates) {
+    // Specific Dates mode
+    document.getElementById("dateModeSelection").value = "specific-dates";
+    document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
+    document.querySelector(".mode-btn[data-mode='specific-dates']").classList.add("active");
+    document.getElementById("specificDatesGroup").style.display = "block";
+    document.getElementById("fromToDateGroup").style.display = "none";
+    document.getElementById("specificDaysGroup").style.display = "none";
+    selectedDates = editTask.specificDates.split(",").map(date => new Date(date));
+    specificDatesInput.value = editTask.specificDates;
+    flatpickrSpecific.setDate(selectedDates);
+    updateSelectedDatesDisplay();
+} else if (editTask.date) {
+    // From-To mode with Days
+    document.getElementById("dateModeSelection").value = "date";
+    document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
+    document.querySelector(".mode-btn[data-mode='date']").classList.add("active");
+    document.getElementById("fromToDateGroup").style.display = "block";
+    document.getElementById("specificDatesGroup").style.display = "none";
+    document.getElementById("specificDaysGroup").style.display = "block";
+
+    const [from, to] = editTask.date.split(" to ");
+    document.getElementById("taskDate").value = from || "";
+    flatpickrFrom.setDate(from);
+    document.getElementById("dateDisplay").textContent = new Date(from).toLocaleDateString(undefined, {
+        month: "long",
+        day: "numeric",
+    });
+    if (to && to !== "3000-01-01") {
+        document.getElementById("taskDateTo").value = to;
+        flatpickrTo.setDate(to);
+        document.getElementById("dateDisplayTo").textContent = new Date(to).toLocaleDateString(undefined, {
+            month: "long",
+            day: "numeric",
+        });
+        dateToWrapper.style.display = "flex";
+        addEndDateBtn.style.display = "none";
+        dateMode = "from-to";
+    } else {
+        document.getElementById("taskDateTo").value = "";
+        document.getElementById("dateDisplayTo").textContent = "To Date";
+        dateToWrapper.style.display = "none";
+        addEndDateBtn.style.display = "block";
+        dateMode = "from";
+    }
+
+    // Handle Days of the Week
+    selectedDays = editTask.daysOfWeek || ["Any"];
+    updateSelectedDaysDisplay();
+}
+
+
+        // Handle users
+        if (editTask.users) {
+            selectedUsers = [...editTask.users].map(u => u.trim()).filter(u => u);
+            updateSelectedUsersDisplay();
+            populateUsers();
+        }
+
+        // Handle alarms
+        if (editTask.alarms?.length) {
+            alarms = [...editTask.alarms];
+            alarms.forEach((time) => {
+                const alarmWrapper = document.createElement("div");
+                alarmWrapper.style.marginBottom = "10px";
+                alarmWrapper.style.display = "flex";
+                alarmWrapper.style.alignItems = "center";
+                const alarmInput = document.createElement("input");
+                alarmInput.type = "time";
+                alarmInput.value = time;
+                alarmInput.style.marginRight = "10px";
+                alarmInput.style.padding = "10px";
+                alarmInput.style.border = "2px solid var(--primary-color)";
+                alarmInput.style.borderRadius = "8px";
+                alarmInput.style.background = "var(--accent-color)";
+                const removeButton = document.createElement("button");
+                removeButton.textContent = "Remove";
+                removeButton.style.padding = "5px 10px";
+                removeButton.style.backgroundColor = "var(--danger-color)";
+                removeButton.style.color = "var(--accent-color)";
+                removeButton.style.border = "none";
+                removeButton.style.borderRadius = "8px";
+                removeButton.addEventListener("click", () => {
+                    alarmWrapper.remove();
+                    alarms = alarms.filter((a) => a !== time);
+                });
+                alarmWrapper.appendChild(alarmInput);
+                alarmWrapper.appendChild(removeButton);
+                alarmContainer.appendChild(alarmWrapper);
+            });
+        }
+    } else {
+    // For non-edit mode, initialize user list
+    populateUsers();
+    // Set default date mode to From - To
+// ✅ Set default date mode to "Date" (not "from-to")
+document.getElementById("dateModeSelection").value = "date";
+document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
+document.querySelector(".mode-btn[data-mode='date']").classList.add("active");
+document.getElementById("fromToDateGroup").style.display = "block";
+document.getElementById("specificDatesGroup").style.display = "none";
+document.getElementById("specificDaysGroup").style.display = "block";
+
+}
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // Show modal with smooth transition
+        function showModal(modal) {
+            modal.classList.remove('hide');
+            modal.classList.add('show');
+            modal.style.display = 'flex';
+        }
+    
+        // Hide modal with smooth transition
+        function hideModal(modal) {
+            modal.classList.remove('show');
+            modal.classList.add('hide');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl) {
+    // Open modal on focus
+    inputEl.addEventListener("focus", () => {
+        customInputEl.value = "";
+        showModal(modalEl);
+    });
+
+    // Quick pick buttons
+    modalEl.querySelectorAll("button[data-value]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            inputEl.value = btn.getAttribute("data-value");
+            hideModal(modalEl);
+        });
+    });
+
+    // Save custom value
+    saveBtnEl.addEventListener("click", () => {
+        let val = parseInt(customInputEl.value.trim());
+        if (val && val > 0) {
+            val = Math.min(val, 100);
+            inputEl.value = val;
+            hideModal(modalEl);
+        }
+    });
+
+    // Close modal
+    closeBtnEl.addEventListener("click", () => {
+        hideModal(modalEl);
+    });
+}
+
+    
+        // User Modal Logic
+        const userModal = document.getElementById("userModal");
+        const assignedToDisplay = document.getElementById("assignedToDisplay");
+        const userList = document.getElementById("userList");
+        const assignedToSelection = document.getElementById("assignedToSelection");
+    
+        let selectedUsers = [];
+        const populateUsers = () => {
+    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+    const currentAdmin = localStorage.getItem("currentAdminEmail");
+    const users = allUserData[currentAdmin]?.users || [];
+
+    userList.innerHTML = "";
+    users.forEach((user) => {
+        const userItem = document.createElement("li");
+        userItem.textContent = user;
+        userItem.style.padding = "10px";
+        userItem.style.margin = "5px 0";
+        userItem.style.border = "1px solid var(--selection-border)";
+        userItem.style.borderRadius = "8px";
+        userItem.style.cursor = "pointer";
+        userItem.style.textAlign = "center";
+
+        // Set initial background based on selectedUsers
+        if (selectedUsers.includes(user)) {
+            userItem.style.backgroundColor = "var(--primary-color)";
+            userItem.style.color = "var(--secondary-color)";
+        } else {
+            userItem.style.backgroundColor = "var(--light-bg)";
+            userItem.style.color = "var(--text-color)";
+        }
+
+        userItem.addEventListener("mouseover", () => {
+            userItem.style.backgroundColor = "var(--primary-color)";
+            userItem.style.color = "var(--secondary-color)";
+        });
+        userItem.addEventListener("mouseout", () => {
+            if (selectedUsers.includes(user)) {
+                userItem.style.backgroundColor = "var(--primary-color)";
+                userItem.style.color = "var(--secondary-color)";
+            } else {
+                userItem.style.backgroundColor = "var(--light-bg)";
+                userItem.style.color = "var(--text-color)";
+            }
+        });
+        userItem.addEventListener("click", () => {
+            if (selectedUsers.includes(user)) {
+                selectedUsers = selectedUsers.filter((u) => u !== user);
+                userItem.style.backgroundColor = "var(--light-bg)";
+                userItem.style.color = "var(--text-color)";
+            } else {
+                selectedUsers.push(user);
+                userItem.style.backgroundColor = "var(--primary-color)";
+                userItem.style.color = "var(--secondary-color)";
+            }
+            updateSelectedUsersDisplay();
+        });
+        userList.appendChild(userItem);
+    });
+};
+    
+        const updateSelectedUsersDisplay = () => {
+    // Clean the selectedUsers array just in case
+    selectedUsers = selectedUsers.map(u => u.trim()).filter(u => u);
+
+    // Set value and display cleanly
+    assignedToSelection.value = selectedUsers.join(", ");
+    assignedToDisplay.textContent = selectedUsers.length > 0
+        ? `Selected: ${selectedUsers.join(", ")}`
+        : "Select users";
+};
+
+
+    
+        assignedToDisplay.addEventListener("click", () => {
+            showModal(userModal);
+        });
+    
+        window.addEventListener("click", (e) => {
+            if (e.target === userModal) {
+                hideModal(userModal);
+            }
+        });
+    
+        document.getElementById("closeUserModal").addEventListener("click", () => {
+            hideModal(userModal);
+        });
+    
+        // Reward Modal Logic
+        const rewardModal = document.getElementById("rewardModal");
+        const selectRewardButton = document.getElementById("selectReward");
+        const rewardValueInput = document.getElementById("RewardValue");
+        const rewardInput = document.getElementById("rewardInput");
+        const saveRewardButton = document.getElementById("saveRewardBtn");
+        const closeRewardButton = document.getElementById("closeRewardModal");
+    
+        selectRewardButton.addEventListener("click", () => {
+            showModal(rewardModal);
+        });
+    
+        saveRewardButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            const reward = rewardInput.value;
+            if (reward) {
+                rewardValueInput.value = reward;
+                selectRewardButton.textContent = `Reward: ${reward} 🍯`;
+            }
+            hideModal(rewardModal);
+        });
+    
+        closeRewardButton.addEventListener("click", () => {
+            hideModal(rewardModal);
+        });
+    
+        // Generic Modal Setup
+        function setupModal(modalId, buttonId, inputId) {
+            const modal = document.getElementById(modalId);
+            const button = document.getElementById(buttonId);
+            const input = document.getElementById(inputId);
+    
+            button.addEventListener('click', () => {
+                showModal(modal);
+            });
+    
+            window.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    hideModal(modal);
+                }
+            });
+    
+            modal.addEventListener('click', (e) => {
+                if (e.target.tagName === 'LI') {
+                    input.value = e.target.getAttribute('data-value');
+                    button.textContent = e.target.getAttribute('data-value');
+                    hideModal(modal);
+                }
+            });
+        }
+    
+        setupModal('roomModal', 'selectRoom', 'roomSelection');
+        setupModal('settingsModal', 'selectSettings', 'settingsSelection');
+
+        const repeatModal = document.getElementById('repeatModal');
+const repeatButton = document.getElementById('selectRepeat');
+const repeatInput = document.getElementById('repeatSelection');
+const timesPerDayGroup = document.getElementById('timesPerDayGroup');
+const timesPerWeekGroup = document.getElementById('timesPerWeekGroup');
+const timesPerMonthGroup = document.getElementById('timesPerMonthGroup');
+
+
+repeatButton.addEventListener('click', () => {
+    showModal(repeatModal);
+});
+
+window.addEventListener('click', (e) => {
+    if (e.target === repeatModal) {
+        hideModal(repeatModal);
+    }
+});
+
+repeatModal.addEventListener('click', (e) => {
+    if (e.target.tagName === 'LI') {
+        const selected = e.target.getAttribute('data-value');
+        repeatInput.value = selected;
+        repeatButton.textContent = selected;
+        hideModal(repeatModal);
+
+        // Show/hide correct "x times" groups (Specific Dates no longer tied to Daily)
+        timesPerDayGroup.style.display = selected === "Daily" ? "flex" : "none";
+        timesPerWeekGroup.style.display = selected === "Weekly" ? "flex" : "none";
+        timesPerMonthGroup.style.display = selected === "Monthly" ? "flex" : "none";
+
+        // Set initial value to 1
+        if (selected === "Daily") timesPerDayInput.value = "1";
+        if (selected === "Weekly") document.getElementById("timesPerWeekInput").value = "1";
+        if (selected === "Monthly") document.getElementById("timesPerMonthInput").value = "1";
+    }
+});
+
+
+const timesPerDayInput = document.getElementById("timesPerDayInput");
+const timesPerDayModal = document.getElementById("timesPerDayModal");
+const closeTimesModal = document.getElementById("closeTimesModal");
+const saveCustomTimesBtn = document.getElementById("saveCustomTimesBtn");
+const customTimesInput = document.getElementById("customTimesInput");
+
+// Open modal when input clicked
+timesPerDayInput.addEventListener("focus", () => {
+    customTimesInput.value = ""; // Clear previous custom input
+    showModal(timesPerDayModal);
+});
+
+
+// Quick pick buttons (1–5)
+timesPerDayModal.querySelectorAll("button[data-value]").forEach(btn => {
+    btn.addEventListener("click", () => {
+        timesPerDayInput.value = btn.getAttribute("data-value");
+        hideModal(timesPerDayModal);
+    });
+});
+
+// Custom input save
+saveCustomTimesBtn.addEventListener("click", () => {
+    let val = customTimesInput.value.trim();
+    if (val && parseInt(val) > 0) {
+        val = Math.min(parseInt(val), 100); // cap at 100
+        timesPerDayInput.value = val;
+        hideModal(timesPerDayModal);
+    }
+});
+
+
+// Close modal
+closeTimesModal.addEventListener("click", () => {
+    hideModal(timesPerDayModal);
+});
+
+
+// Existing setup for Daily
+setupTimesModal(
+    document.getElementById("timesPerDayInput"),
+    document.getElementById("timesPerDayModal"),
+    document.getElementById("closeTimesModal"),
+    document.getElementById("customTimesInput"),
+    document.getElementById("saveCustomTimesBtn")
+);
+
+// Existing setup for Monthly
+setupTimesModal(
+    document.getElementById("timesPerMonthInput"),
+    document.getElementById("timesPerMonthModal"),
+    document.getElementById("closeTimesMonthModal"),
+    document.getElementById("customTimesMonthInput"),
+    document.getElementById("saveCustomTimesMonthBtn")
+);
+
+// NEW: Setup for Weekly
+setupTimesModal(
+    document.getElementById("timesPerWeekInput"),
+    document.getElementById("timesPerWeekModal"),
+    document.getElementById("closeTimesWeekModal"),
+    document.getElementById("customTimesWeekInput"),
+    document.getElementById("saveCustomTimesWeekBtn")
+);
+
+// Close times modals when clicking outside
+window.addEventListener('click', (e) => {
+    if (e.target === timesPerDayModal) hideModal(timesPerDayModal);
+    if (e.target === document.getElementById("timesPerWeekModal")) hideModal(document.getElementById("timesPerWeekModal"));
+    if (e.target === document.getElementById("timesPerMonthModal")) hideModal(document.getElementById("timesPerMonthModal"));
+});
+
+
+
+
+    
+        // Date Mode Toggle Logic
+        const dateDisplay = document.getElementById("dateDisplay");
+const dateDisplayTo = document.getElementById("dateDisplayTo");
+const dateInputFrom = document.getElementById("taskDate");
+const dateInputTo = document.getElementById("taskDateTo");
+const addEndDateBtn = document.getElementById("addEndDateBtn");
+
+let dateMode = "from"; // default
+
+const dateToWrapper = document.getElementById("dateToWrapper");
+const removeEndDateBtn = document.getElementById("removeEndDateBtn");
+
+addEndDateBtn.addEventListener("click", () => {
+  flatpickrTo.open();
+});
+
+
+removeEndDateBtn.addEventListener("click", () => {
+  dateMode = "from";
+  document.getElementById("taskDateTo").value = "";
+  document.getElementById("dateDisplayTo").textContent = "To Date";
+  dateToWrapper.style.display = "none";
+  addEndDateBtn.style.display = "inline-block";
+});
+
+
+    
+        const flatpickrFrom = flatpickr("#taskDate", {
+            dateFormat: "Y-m-d",
+            defaultDate: "today",
+            disableMobile: true,
+            onChange: function (selectedDates) {
+                const formatted = new Date(selectedDates[0]).toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
+                dateDisplay.textContent = formatted;
+            },
+            positionElement: dateDisplay,
+            appendTo: document.body
+        });
+    
+        const flatpickrTo = flatpickr("#taskDateTo", {
+  dateFormat: "Y-m-d",
+  disableMobile: true,
+  onChange: function (selectedDates) {
+    if (selectedDates.length > 0) {
+      const toDate = selectedDates[0];
+      const formatted = toDate.toLocaleDateString(undefined, { month: "long", day: "numeric" });
+      dateInputTo.value = toDate.toISOString().split("T")[0];
+      dateDisplayTo.textContent = formatted;
+      dateToWrapper.style.display = "flex";
+      addEndDateBtn.style.display = "none";
+      dateMode = "from-to";
+    }
+  },
+  positionElement: addEndDateBtn,
+  appendTo: document.body
+});
+
+
+
+   
+        
+
+
+
+// Date Mode Logic
+// Date Mode Logic
+const dateModeInput = document.getElementById("dateModeSelection");
+const modeButtons = document.querySelectorAll(".mode-btn");
+
+modeButtons.forEach(button => {
+    button.addEventListener("click", () => {
+        const mode = button.getAttribute("data-mode");
+        dateModeInput.value = mode;
+
+        // Update active state
+        modeButtons.forEach(btn => btn.classList.remove("active"));
+        button.classList.add("active");
+
+        // Show/hide UI based on mode
+        document.getElementById("fromToDateGroup").style.display = mode === "date" ? "block" : "none";
+        document.getElementById("specificDatesGroup").style.display = mode === "specific-dates" ? "block" : "none";
+        document.getElementById("specificDaysGroup").style.display = mode === "date" ? "block" : "none";
+
+        // Clear irrelevant fields
+        if (mode === "specific-dates") {
+            document.getElementById("taskDate").value = "";
+            document.getElementById("taskDateTo").value = "";
+            document.getElementById("dateDisplay").textContent = "Today";
+            document.getElementById("dateDisplayTo").textContent = "To Date";
+            document.getElementById("dateToWrapper").style.display = "none";
+            document.getElementById("addEndDateBtn").style.display = "block";
+            selectedDays = [];
+            updateSelectedDaysDisplay();
+        } else if (mode === "date") {
+            document.getElementById("specificDatesInput").value = "";
+            selectedDates = [];
+            flatpickrSpecific.clear();
+            updateSelectedDatesDisplay();
+        }
+    });
+});
+   
+
+
+
+
+// Specific Days Logic
+const specificDaysInput = document.getElementById("specificDaysInput");
+let selectedDays = ["Any"]; // Default selected
+
+const dayMapping = {
+    "Any": "Any",
+    "Mon": "Monday",
+    "Tue": "Tuesday",
+    "Wed": "Wednesday",
+    "Thu": "Thursday",
+    "Fri": "Friday",
+    "Sat": "Saturday",
+    "Sun": "Sunday"
+};
+
+function updateSelectedDaysDisplay() {
+    const buttons = document.querySelectorAll("#specificDaysButtons .day-btn");
+    buttons.forEach(button => {
+        const shortDay = button.getAttribute("data-day");
+        const fullDay = dayMapping[shortDay];
+        if (selectedDays.includes(fullDay)) {
+            button.classList.add("selected");
+        } else {
+            button.classList.remove("selected");
+        }
+    });
+    specificDaysInput.value = selectedDays.join(",");
+}
+
+// Add click event listeners to day buttons
+document.querySelectorAll("#specificDaysButtons .day-btn").forEach(button => {
+    button.addEventListener("click", () => {
+        const shortDay = button.getAttribute("data-day");
+        const fullDay = dayMapping[shortDay];
+
+        if (fullDay === "Any") {
+            selectedDays = ["Any"];
+        } else {
+            selectedDays = selectedDays.filter(day => day !== "Any"); // Remove Any if selecting specific day
+            if (selectedDays.includes(fullDay)) {
+                selectedDays = selectedDays.filter(day => day !== fullDay);
+                if (selectedDays.length === 0) selectedDays = ["Any"]; // Re-select Any if none selected
+            } else {
+                selectedDays.push(fullDay);
+            }
+        }
+        updateSelectedDaysDisplay();
+    });
+});
+
+// Initialize display
+updateSelectedDaysDisplay();
+
+
+
+
+
+
+
+
+        const specificDatesButton = document.getElementById("selectSpecificDates");
+const specificDatesModal = document.getElementById("specificDatesModal");
+const specificDatesInput = document.getElementById("specificDatesInput");
+const selectedDatesContainer = document.getElementById("selectedDatesContainer");
+const saveSpecificDatesBtn = document.getElementById("saveSpecificDates");
+const clearSpecificDatesBtn = document.getElementById("clearSpecificDates");
+const specificDatesGroup = document.getElementById("specificDatesGroup");
+
+let selectedDates = [];
+let isDragging = false;
+let startDate = null;
+let dragMode = null; // 'select' or 'deselect'
+let selectedDatesAtDragStart = [];
+
+const flatpickrSpecific = flatpickr("#specificDatesCalendar", {
+    dateFormat: "Y-m-d",
+    mode: "multiple",
+    disableMobile: true,
+    inline: true,
+    enable: [
+        function(date) {
+            return true; // Allow all dates
+        }
+    ],
+    onReady: function(_, __, instance) {
+        const calendar = instance.calendarContainer;
+
+        calendar.addEventListener("mousedown", (e) => {
+            const dayElem = e.target.closest(".flatpickr-day");
+            if (dayElem && !dayElem.classList.contains("disabled")) {
+                isDragging = true;
+                startDate = new Date(dayElem.getAttribute("aria-label"));
+                const startIsSelected = selectedDates.some(d => d.getTime() === startDate.getTime());
+                dragMode = startIsSelected ? "deselect" : "select";
+                selectedDatesAtDragStart = [...selectedDates]; // snapshot current selection
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+
+        calendar.addEventListener("mousemove", (e) => {
+            if (!isDragging || !dragMode) return;
+            const dayElem = e.target.closest(".flatpickr-day");
+            if (dayElem && !dayElem.classList.contains("disabled")) {
+                const endDate = new Date(dayElem.getAttribute("aria-label"));
+                const datesInRange = getDatesInRange(startDate, endDate);
+
+                let newDates = [...selectedDatesAtDragStart];
+                if (dragMode === "select") {
+                    newDates = [...new Set([
+                        ...newDates,
+                        ...datesInRange
+                    ].map(d => d.getTime()))].map(t => new Date(t));
+                } else if (dragMode === "deselect") {
+                    newDates = newDates.filter(d =>
+                        !datesInRange.some(r => r.getTime() === d.getTime())
+                    );
+                }
+
+                selectedDates = newDates.sort((a, b) => a - b);
+                instance.setDate(selectedDates, false);
+            }
+        });
+
+        calendar.addEventListener("mouseup", (e) => {
+            if (isDragging) {
+                isDragging = false;
+                startDate = null;
+                dragMode = null;
+                selectedDatesAtDragStart = [];
+                e.stopPropagation();
+            }
+        });
+
+        calendar.addEventListener("click", (e) => {
+            const dayElem = e.target.closest(".flatpickr-day");
+            if (dayElem && !dayElem.classList.contains("disabled")) {
+                if (!isDragging && !startDate) {
+                    const date = new Date(dayElem.getAttribute("aria-label"));
+                    const index = selectedDates.findIndex(d => d.getTime() === date.getTime());
+                    if (index >= 0) {
+                        selectedDates.splice(index, 1);
+                    } else {
+                        selectedDates.push(date);
+                    }
+                    selectedDates.sort((a, b) => a - b);
+                    instance.setDate(selectedDates, false);
+                }
+            }
+        });
+    },
+    onChange: function(dates, text, instance) {
+        if (!isDragging) {
+            selectedDates = dates.sort((a, b) => a - b);
+        }
+    }
+});
+
+function getDatesInRange(start, end) {
+    const dates = [];
+    const current = new Date(Math.min(start, end));
+    const max = new Date(Math.max(start, end));
+    while (current <= max) {
+        dates.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+    }
+    return dates;
+}
+
+
+
+function updateSelectedDatesDisplay() {
+    selectedDatesContainer.innerHTML = "";
+    console.log("Selected Dates (raw):", selectedDates); // Debug
+    if (selectedDates.length === 0) {
+        specificDatesInput.value = "";
+        const placeholder = document.createElement("span");
+        placeholder.textContent = "Every day";
+        placeholder.style.color = "rgba(255, 255, 255, 0.7)";
+        placeholder.style.fontSize = "14px";
+        selectedDatesContainer.appendChild(placeholder);
+    } else {
+        specificDatesInput.value = selectedDates.map(date => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }).join(",");
+        console.log("specificDatesInput.value:", specificDatesInput.value); // Debug
+        selectedDates.forEach(date => {
+            const chip = document.createElement("div");
+            chip.className = "date-chip";
+            const dateText = document.createElement("span");
+            dateText.textContent = date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+            const removeBtn = document.createElement("span");
+            removeBtn.className = "date-chip-remove";
+            removeBtn.textContent = "×";
+            removeBtn.addEventListener("click", () => {
+                selectedDates = selectedDates.filter(d => d.getTime() !== date.getTime());
+                flatpickrSpecific.setDate(selectedDates);
+                updateSelectedDatesDisplay();
+            });
+            chip.appendChild(dateText);
+            chip.appendChild(removeBtn);
+            selectedDatesContainer.appendChild(chip);
+        });
+    }
+}
+
+
+
+
+
+specificDatesButton.addEventListener("click", () => {
+    showModal(specificDatesModal);
+});
+
+saveSpecificDatesBtn.addEventListener("click", () => {
+    updateSelectedDatesDisplay();
+    hideModal(specificDatesModal);
+});
+
+clearSpecificDatesBtn.addEventListener("click", () => {
+    selectedDates = [];
+    flatpickrSpecific.clear();
+    updateSelectedDatesDisplay();
+    hideModal(specificDatesModal);
+});
+
+window.addEventListener("click", (e) => {
+    if (e.target === specificDatesModal) {
+        hideModal(specificDatesModal);
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+        dateDisplay.addEventListener("click", () => {
+            flatpickrFrom.open();
+        });
+    
+        dateDisplayTo.addEventListener("click", () => {
+            if (dateMode === "date") {
+    const fromDate = dateFrom;
+    const toDate = dateTo || "3000-01-01";
+    dateValue = `${fromDate} to ${toDate}`;
+}
+       });
+    
+        // Reminder and Alarm Logic
+        const reminderToggle = document.getElementById('taskReminder');
+        const addAlarmBtn = document.getElementById('addAlarmBtn');
+        const alarmContainer = document.getElementById('alarmContainer');
+        let alarms = [];
+    
+        reminderToggle.addEventListener('change', () => {
+            if (reminderToggle.checked) {
+                addAlarmBtn.style.display = 'inline-block';
+            } else {
+                addAlarmBtn.style.display = 'none';
+                alarmContainer.innerHTML = '';
+                alarms = [];
+            }
+        });
+    
+        addAlarmBtn.addEventListener('click', () => {
+            const alarmWrapper = document.createElement('div');
+            alarmWrapper.style.marginBottom = '10px';
+            alarmWrapper.style.display = 'flex';
+            alarmWrapper.style.alignItems = 'center';
+    
+            const alarmInput = document.createElement('input');
+            alarmInput.type = 'time';
+            alarmInput.style.marginRight = '10px';
+            alarmInput.style.padding = '10px';
+            alarmInput.style.border = '2px solid var(--primary-color)';
+            alarmInput.style.borderRadius = '8px';
+            alarmInput.style.background = 'var(--accent-color)';
+    
+            const removeButton = document.createElement('button');
+            removeButton.textContent = 'Remove';
+            removeButton.style.padding = '5px 10px';
+            removeButton.style.backgroundColor = 'var(--danger-color)';
+            removeButton.style.color = 'var(--accent-color)';
+            removeButton.style.border = 'none';
+            removeButton.style.borderRadius = '8px';
+    
+            removeButton.addEventListener('click', () => {
+                alarmWrapper.remove();
+                alarms = alarms.filter(a => a !== alarmInput.value);
+            });
+    
+            alarmInput.addEventListener('input', () => {
+                if (!alarms.includes(alarmInput.value)) {
+                    alarms.push(alarmInput.value);
+                }
+            });
+    
+            alarmWrapper.appendChild(alarmInput);
+            alarmWrapper.appendChild(removeButton);
+            alarmContainer.appendChild(alarmWrapper);
+        });
+    
+
+
+
+
+
+
+
+
+        document.getElementById("addTaskForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const title = document.getElementById("taskTitle").value.trim();
+    const notes = document.getElementById("taskNotes").value.trim();
+    const room = document.getElementById("roomSelection").value;
+    const repeat = document.getElementById("repeatSelection").value;
+    const settings = document.getElementById("settingsSelection").value;
+    const dateFrom = document.getElementById("taskDate").value;
+    const dateTo = document.getElementById("taskDateTo").value;
+    const dateMode = document.getElementById("dateModeSelection").value;
+    const reminder = document.getElementById("taskReminder").checked;
+    const users = document.getElementById("assignedToSelection").value
+        .split(",")
+        .map(u => u.trim())
+        .filter(u => u);
+    const reward = document.getElementById("RewardValue").value;
+    let timesPerDay = parseInt(document.getElementById("timesPerDayInput").value) || null;
+    let timesPerWeek = parseInt(document.getElementById("timesPerWeekInput").value) || null;
+    let timesPerMonth = parseInt(document.getElementById("timesPerMonthInput").value) || null;
+    const specificDates = document.getElementById("specificDatesInput").value;
+
+    // Validations
+    if (!title) {
+        alert("Task title is required!");
+        return;
+    }
+    if (users.length === 0) {
+        alert("Please assign at least one user.");
+        return;
+    }
+    if (dateMode === "date" && !dateFrom) {
+    alert("Please select a start date.");
+    return;
+}
+if (dateMode === "specific-dates" && !specificDates) {
+    alert("Please select at least one date.");
+    return;
+}
+
+
+    // Cap and sanitize
+    if (timesPerDay > 100) timesPerDay = 100;
+    if (timesPerWeek > 100) timesPerWeek = 100;
+    if (timesPerMonth > 100) timesPerMonth = 100;
+    if (timesPerDay !== null && timesPerDay < 1) timesPerDay = 1;
+    if (timesPerWeek !== null && timesPerWeek < 1) timesPerWeek = 1;
+    if (timesPerMonth !== null && timesPerMonth < 1) timesPerMonth = 1;
+
+
+    let dateValue = "";
+if (dateMode === "date") {
+    const fromDate = dateFrom;
+    const toDate = dateTo || "3000-01-01";
+    dateValue = `${fromDate} to ${toDate}`;
+} else if (dateMode === "specific-dates" && specificDates) {
+    const dates = specificDates.split(",").map(d => d.trim()).filter(d => d);
+    dateValue = `${dates[0]} to ${dates[dates.length - 1]}`;
+} else {
+    const today = new Date().toISOString().split("T")[0];
+    dateValue = `${today} to 3000-01-01`;
+}
+
+
+    const task = {
+        title,
+        notes: notes || undefined,
+        room: room || undefined,
+        repeat: repeat || undefined,
+        settings: settings || undefined,
+        date: dateValue,
+        reminder: reminder || undefined,
+        users,
+        reward: reward || undefined,
+        alarms: alarms.length > 0 ? alarms : undefined,
+        timesPerDay: repeat === "Daily" ? timesPerDay : undefined,
+        timesPerWeek: repeat === "Weekly" ? timesPerWeek : undefined,
+        timesPerMonth: repeat === "Monthly" ? timesPerMonth : undefined,
+        specificDates: dateMode === "specific-dates" ? specificDates : undefined,
+daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? selectedDays : ["Any"]) : undefined
+    };
+
+    console.log("Task being saved:", JSON.stringify(task, null, 2));
+
+    const currentAdmin = localStorage.getItem("currentAdminEmail");
+    const editTask = JSON.parse(localStorage.getItem("familyApp_editTask"));
+
+    try {
+        const url = "https://beemazing.onrender.com/api/tasks";
+        const body = editTask
+            ? {
+                  adminEmail: currentAdmin,
+                  task,
+                  originalTitle: editTask.title,
+                  originalDate: editTask.date
+              }
+            : { adminEmail: currentAdmin, task };
+
+        const response = await fetch(url, {
+            method: editTask ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
+
+        console.log("Server response:", data);
+        localStorage.removeItem("familyApp_editTask");
+        localStorage.removeItem("familyApp_editTask_index");
+        alert("Task saved successfully!");
+        window.location.href = "onboarding.html#step5";
+
+    } catch (error) {
+        console.error("Error saving task:", error);
+        alert(`Failed to save task: ${error.message}`);
+    }
+});
+
+
+
+
+    </script>    
+
+
+
+
+</body>
+</html>
