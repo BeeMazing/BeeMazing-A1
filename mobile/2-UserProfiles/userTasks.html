@@ -1098,12 +1098,15 @@ if (task.notes) modalHTML += `<strong>Notes:</strong> ${task.notes}<br>`;
 if (task.room) modalHTML += `<strong>Room:</strong> ${task.room}<br>`;
 modalHTML += `<strong>Reward:</strong> ${task.reward || 0} 🍯<br>`;
 modalHTML += `<strong>Repeat:</strong> ${task.repeat || "Daily"}<br>`;
-if (task.date && new Date(task.date).getFullYear() < 3000) {
-    modalHTML += `<strong>From:</strong> ${new Date(task.date).toLocaleDateString()}<br>`;
+const [fromDate, toDate] = (task.date || "").split(" to ");
+if (!fromDate) {
+    modalHTML += `<strong>Date:</strong> Unknown<br>`;
+} else if (!toDate || toDate === "3000-01-01" || toDate === fromDate) {
+    modalHTML += `<strong>Date:</strong> ${fromDate}<br>`;
+} else {
+    modalHTML += `<strong>Date:</strong> ${fromDate} to ${toDate}<br>`;
 }
-if (task.to && new Date(task.to).getFullYear() < 3000) {
-    modalHTML += `<strong>To:</strong> ${new Date(task.to).toLocaleDateString()}<br>`;
-}
+
 
 
 
