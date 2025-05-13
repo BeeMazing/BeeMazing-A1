@@ -324,6 +324,18 @@
     height: 16px;
     accent-color: var(--primary-color);
 }
+
+
+
+
+.disabled-chest {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(100%);
+  cursor: not-allowed;
+}
+
+
   </style>
 </head>
 <body>
@@ -400,7 +412,7 @@
         <input type="text" id="newChestEffect" placeholder="Reward effect" />
       </div>
       <div class="form-group">
-        <label>Honey (optional):</label>
+        <label>Buzz Points (optional):</label>
         <input type="number" id="newChestHoney" min="0" placeholder="e.g. 50" />
       </div>
       <div class="form-group">
@@ -445,11 +457,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     let chests = [
-      { name: "The Key", quote: "You hold the key to the path of others.", effect: "➡ Transfer one of your tasks to another user. You get the honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Keyy.gif", isCustom: false },
-      { name: "Double Trouble", quote: "Today’s efforts are worth double.", effect: "➡ Next task = double honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/DoubleTrouble.png", isCustom: false },
+      { name: "The Key", quote: "You hold the key to the path of others.", effect: "➡ Transfer one of your tasks to another user. You get the Buzz Points.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Keyy.gif", isCustom: false },
+      { name: "Double Trouble", quote: "Today’s efforts are worth double.", effect: "➡ Next task = double Buzz Points.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/DoubleTrouble.png", isCustom: false },
       { name: "Roll the Dice", quote: "Test your Luck", effect: "➡ Get a surprise reward.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/dice.gif", isCustom: false },
-      { name: "Dance Party", quote: "Feel the rhythm!", effect: "➡ Dance after a task. If someone joins, both get honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Dance.jpg", isCustom: false },
-      { name: "Bee-Witched!", quote: "Your magical aura changes the rules...", effect: "➡ Make a silly rule. Others who follow it get honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Bee-Witched.jpg", isCustom: false },
+      { name: "Dance Party", quote: "Feel the rhythm!", effect: "➡ Dance after a task. If someone joins, both get Buzz Points.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Dance.jpg", isCustom: false },
+      { name: "Bee-Witched!", quote: "Your magical aura changes the rules...", effect: "➡ Make a silly rule. Others who follow it get Buzz Points.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Bee-Witched.jpg", isCustom: false },
       { name: "Special Buzz Off", quote: "You’re too cool for chores today.", effect: "➡ Skip all tasks today.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Special.jpg", isCustom: false }
     ];
 
@@ -459,7 +471,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "Dance Party",
       "Bee-Witched!",
       "Special Buzz Off",
-      "Honey (amount)"
+      "Buzz Points"
     ];
 
     const defaultChestImage = "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png";
@@ -516,21 +528,37 @@ document.addEventListener("DOMContentLoaded", () => {
          });
      });
 
-    function createChestCard(chest) {
-      const card = document.createElement("div");
-      card.className = "chest-card";
-      card.innerHTML = `
-        <img src="${chest.image}" alt="${chest.name}" />
-        <h4>${chest.name}${chest.honey !== undefined ? ` + ${chest.honey} Honey` : ''}</h4>
-        <div class="quote">"${chest.quote || 'No quote provided'}"</div>
-        <div class="effect">${chest.effect || 'No effect provided'}</div>
-      `;
-      card.addEventListener("click", () => {
-        selectedChest = chest;
-        chest.name === "Roll the Dice" ? openDiceModal() : openAssignModal();
-      });
-      return card;
-    }
+
+     function createChestCard(chest) {
+  const fadedOutNames = ["Double Trouble", "Dance Party", "Bee-Witched!", "Special Buzz Off"];
+  const isDisabled = fadedOutNames.includes(chest.name);
+
+  const card = document.createElement("div");
+  card.className = "chest-card";
+  if (isDisabled) {
+    card.classList.add("disabled-chest");
+  }
+
+  card.innerHTML = `
+    <img src="${chest.image}" alt="${chest.name}" />
+    <h4>${chest.name}${chest.honey !== undefined ? ` + ${chest.honey} Honey` : ''}</h4>
+    <div class="quote">"${chest.quote || 'No quote provided'}"</div>
+    <div class="effect">${chest.effect || 'No effect provided'}</div>
+  `;
+
+  if (!isDisabled) {
+    card.addEventListener("click", () => {
+      selectedChest = chest;
+      chest.name === "Roll the Dice" ? openDiceModal() : openAssignModal();
+    });
+  }
+
+  return card;
+}
+
+
+
+
 
     async function loadChests() {
       chestContainer.innerHTML = "<p>Loading chests...</p>";
@@ -700,7 +728,7 @@ async function assignChest(userName, requiredPoints) {
 
     function toggleExtraInput(selectEl, index) {
       const extraInput = document.getElementById("extraInput" + index);
-      extraInput.style.display = (selectEl.value === "Honey (amount)" || selectEl.value === "Custom") ? "block" : "none";
+      extraInput.style.display = (selectEl.value === "Buzz Points" || selectEl.value === "Custom") ? "block" : "none";
       if (extraInput.style.display === "none") extraInput.value = "";
     }
 
@@ -717,7 +745,7 @@ async function assignChest(userName, requiredPoints) {
       for (let i = 1; i <= 6; i++) {
         const type = document.getElementById(`rewardSelect${i}`).value;
         const value = document.getElementById(`extraInput${i}`).value;
-        if ((type === "Honey (amount)" || type === "Custom") && !value) {
+        if ((type === "Buzz Points" || type === "Custom") && !value) {
           return alert(`Please fill in value for dice ${i}`);
         }
         outcomes.push({ type, value: value || null });
@@ -775,7 +803,7 @@ async function assignChest(userName, requiredPoints) {
       }
 
       if (!name && honeyValue === "") {
-        alert("Please provide at least a Name or a Honey amount");
+        alert("Please provide at least a Name or a Buzz Point amount");
         return;
       }
 
