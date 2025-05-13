@@ -132,8 +132,12 @@ window.addEventListener("DOMContentLoaded", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminEmail: email, newUser: name, role: "Admin" })
       }).then(res => res.json()).then(data => {
-        if (data.success) showStep(3);
-        else alert("Failed to create parent");
+        if (data.success) {
+  fetchUsersFromServer(email).then(() => showStep(3));
+} else {
+  alert("Failed to create parent");
+}
+
       });
     }
 
@@ -145,8 +149,12 @@ window.addEventListener("DOMContentLoaded", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminEmail: email, newUser: name, role: "User" })
       }).then(res => res.json()).then(data => {
-        if (data.success) showStep(4);
-        else alert("Failed to create child");
+        if (data.success) {
+  fetchUsersFromServer(email).then(() => showStep(4));
+} else {
+  alert("Failed to create child");
+}
+
       });
     }
 
@@ -190,6 +198,31 @@ window.addEventListener("DOMContentLoaded", () => {
   localStorage.setItem("onboardingReturn", "true");       // flag to resume onboarding
   window.location.href = "addTasksOnboarding.html";
 }
+
+
+
+
+async function fetchUsersFromServer(email) {
+  try {
+    const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(email)}`);
+    const data = await res.json();
+
+    if (data.success) {
+      const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+      if (!allUserData[email]) {
+        allUserData[email] = { users: [], permissions: {} };
+      }
+
+      allUserData[email].users = data.users || [];
+      allUserData[email].permissions = data.permissions || {};
+
+      localStorage.setItem("userData", JSON.stringify(allUserData));
+    }
+  } catch (err) {
+    console.error("❌ Failed to fetch user list from server:", err);
+  }
+}
+
 
   </script>
 </body>
