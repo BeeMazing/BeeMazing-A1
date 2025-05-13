@@ -199,11 +199,14 @@ window.addEventListener("DOMContentLoaded", () => {
   const adminUsers = allUserData[email]?.users || [];
   const permissions = allUserData[email]?.permissions || {};
 
-  const lastUser = adminUsers[adminUsers.length - 1]; // most recent user
-  const lastUserRole = permissions[lastUser];
+  // ✅ Find the first user with Admin role (the parent)
+  const parentUser = adminUsers.find(u => permissions[u] === "Admin");
 
-  const profilePage = lastUserRole === "Admin" ? "userAdmin.html" : "users.html";
-  window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/${profilePage}?admin=${encodeURIComponent(email)}&user=${encodeURIComponent(lastUser)}`;
+  if (email && parentUser) {
+    window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(email)}&user=${encodeURIComponent(parentUser)}`;
+  } else {
+    alert("Error: Could not find parent profile.");
+  }
 }
 
 
