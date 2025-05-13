@@ -84,7 +84,7 @@
 
   <div id="step6" class="step">
     <h2>All set! 🎉</h2>
-    <button onclick="finishSetup()">Go to Dashboard</button>
+    <button onclick="finishSetup()">Go to your Profile</button>
   </div>
 
   <script>
@@ -190,24 +190,23 @@ window.addEventListener("DOMContentLoaded", () => {
       showStep(stepNum);
     }
 
+
+
+
     function finishSetup() {
   const email = localStorage.getItem("currentAdminEmail");
   const allUserData = JSON.parse(localStorage.getItem("userData") || "{}");
   const adminUsers = allUserData[email]?.users || [];
   const permissions = allUserData[email]?.permissions || {};
 
-  const adminUser = adminUsers.find(u => permissions[u] === "Admin");
+  const lastUser = adminUsers[adminUsers.length - 1]; // most recent user
+  const lastUserRole = permissions[lastUser];
 
-  if (email && adminUser) {
-    // Detect if we’re on mobile or web
-    const isMobile = window.location.pathname.includes("/BeeMazing-Y1/mobile/");
-    const basePath = isMobile ? "/BeeMazing-Y1/mobile" : "/web";
-    
-    window.location.href = `${basePath}/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(email)}&user=${encodeURIComponent(adminUser)}`;
-  } else {
-    alert("Error: Could not find admin profile.");
-  }
+  const profilePage = lastUserRole === "Admin" ? "userAdmin.html" : "users.html";
+  window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/${profilePage}?admin=${encodeURIComponent(email)}&user=${encodeURIComponent(lastUser)}`;
 }
+
+
 
 
 
