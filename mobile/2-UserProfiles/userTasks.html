@@ -1098,7 +1098,14 @@ if (task.notes) modalHTML += `<strong>Notes:</strong> ${task.notes}<br>`;
 if (task.room) modalHTML += `<strong>Room:</strong> ${task.room}<br>`;
 modalHTML += `<strong>Reward:</strong> ${task.reward || 0} 🍯<br>`;
 modalHTML += `<strong>Repeat:</strong> ${task.repeat || "Daily"}<br>`;
-modalHTML += `<strong>Date:</strong> ${task.date}<br>`;
+if (task.date && task.date !== "3000-01-01") {
+    modalHTML += `<strong>From:</strong> ${task.date}<br>`;
+}
+if (task.to && task.to !== "3000-01-01") {
+    modalHTML += `<strong>To:</strong> ${task.to}<br>`;
+}
+
+
 
 if (isRotation) {
     modalHTML += `<strong>Rotation:</strong> Yes<br>`;
