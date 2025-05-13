@@ -87,9 +87,17 @@ input::placeholder {
 
   <div id="step3" class="step">
     <h2>Step 3: Create Child Account</h2>
-    <input type="text" id="childName" placeholder="Child Name"><br>
+    <div id="childInputs">
+      <input type="text" class="child-name" placeholder="Child Name"><br>
+    </div>
+  
+    <button onclick="addChildInput()" style="background: none; color: #fff; font-size: 16px; border: none; text-decoration: underline; cursor: pointer;">
+      + Add more...
+    </button><br>
+  
     <button onclick="createChild()">Continue</button>
   </div>
+  
 
 
   
@@ -183,25 +191,54 @@ window.addEventListener("DOMContentLoaded", () => {
       });
     }
 
+
+
+
     function createChild() {
-      const name = document.getElementById("childName").value.trim();
-      if (!name) return alert("Enter a name");
-      fetch("https://beemazing.onrender.com/add-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminEmail: email, newUser: name, role: "User" })
-      }).then(res => res.json()).then(data => {
-        if (data.success) {
-  fetchUsersFromServer(email).then(() => showStep(4));
-} else {
-  alert("Failed to create child");
+  const inputEls = document.querySelectorAll(".child-name");
+  const names = Array.from(inputEls).map(input => input.value.trim()).filter(Boolean);
+
+  if (names.length === 0) {
+    alert("Enter at least one child name");
+    return;
+  }
+
+  const createPromises = names.map(name => {
+    return fetch("https://beemazing.onrender.com/add-user", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminEmail: email, newUser: name, role: "User" })
+    }).then(res => res.json());
+  });
+
+  Promise.all(createPromises)
+    .then(results => {
+      const allSucceeded = results.every(r => r.success);
+      if (allSucceeded) {
+        fetchUsersFromServer(email).then(() => showStep(4));
+      } else {
+        alert("Some users failed to create. Please try again.");
+      }
+    })
+    .catch(err => {
+      console.error("Error creating children:", err);
+      alert("Something went wrong. Please try again.");
+    });
 }
 
-      });
-    }
 
 
 
+
+    function addChildInput() {
+  const container = document.getElementById("childInputs");
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = "Child Name";
+  input.className = "child-name";
+  input.style.marginTop = "10px";
+  container.appendChild(input);
+}
 
 
 
