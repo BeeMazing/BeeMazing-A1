@@ -605,14 +605,14 @@ document.querySelectorAll('.footer a').forEach(link => {
                         <div class="reward-card-front text-center">
                             <span class="purchase-indicator" data-count="${userRewardCount}"></span>
                             <h3 class="text-lg font-semibold">${rewardName}</h3>
-                            <p class="text-[var(--text-color)]">Honey: ${rewardCost} 🍯</p>
+                            <p class="text-[var(--text-color)]">Buzz Points: ${rewardCost} 🍯</p>
                             <button class="mt-2 px-3 py-1 rounded font-semibold ${canAfford ? 'btn-primary' : 'btn-disabled'}" 
                                 ${canAfford ? '' : 'disabled'} 
                                 onclick="claimReward('${userName}', '${rewardName}', '${rewardType}', ${rewardCost}, '${JSON.stringify(outcomes)}')">Get It</button>
                         </div>
                         <div class="reward-card-back text-center">
                             <h3 class="text-lg font-semibold">${rewardName}</h3>
-                            ${isFromUserRewardsOnly ? '' : `<p class="text-[var(--card-back-text)]">Honey: ${rewardCost} 🍯</p>`}
+                            ${isFromUserRewardsOnly ? '' : `<p class="text-[var(--card-back-text)]">Buzz Points: ${rewardCost} 🍯</p>`}
                             ${backContent}
                         </div>
                     </div>
@@ -734,7 +734,7 @@ document.querySelectorAll('.footer a').forEach(link => {
               const userHoney = await getUserHoney(userName);
               console.log(`claimReward: user=${userName}, reward=${rewardName}, userHoney=${userHoney}, cost=${honey}, rewardType=${rewardType}, outcomes=`, outcomes);
               if (userHoney < honey) {
-                  alert("Not enough honey to claim this reward!");
+                  alert("Not enough Buzz Points to claim this reward!");
                   return;
               }
   
