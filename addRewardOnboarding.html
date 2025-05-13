@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>BeeMazing - Add Reward</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    :root {
+      --primary-color: #ffc107;
+      --secondary-color: #212121;
+      --accent-color: #ffffff;
+      --light-bg: #1e1f26;
+      --card-bg: #2a2b32;
+      --border-dark: #444754;
+      --text-color: #ffffff;
+      --header-height: 58px;
+      --footer-height: 70px;
+    }
+    body {
+      font-family: "Poppins", Arial, sans-serif;
+      background-color: var(--light-bg);
+      color: var(--text-color);
+      height: 100vh;
+      overflow: hidden;
+    }
+    .header {
+      background: var(--secondary-color);
+      padding: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      position: fixed;
+      top: 0;
+      width: 100%;
+      height: var(--header-height);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--accent-color);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-align: center;
+    }
+    .content {
+      position: absolute;
+      top: var(--header-height);
+      bottom: var(--footer-height);
+      width: 100%;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: url('data:image/svg+xml,%3Csvg width="40" height="40" viewBox="0 0 40 40" xmlns="" fill="%23FFC107" fill-opacity="0.05"/%3E%3C/svg%3E') repeat;
+    }
+    .form-container {
+      background: var(--card-bg);
+      padding: 25px;
+      border: 2px solid var(--border-dark);
+      border-radius: 15px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 400px;
+    }
+    .form-container label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: var(--accent-color);
+    }
+    .form-container input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 2px solid var(--border-dark);
+      border-radius: 8px;
+      font-size: 16px;
+      background-color: var(--light-bg);
+      color: var(--text-color);
+    }
+    .form-container input::placeholder {
+      color: #aaa;
+    }
+    .form-container button {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary-color);
+      color: var(--secondary-color);
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .form-container button:hover {
+      background: #ffb300;
+    }
+    .footer {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      height: var(--footer-height);
+      background: var(--secondary-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+      z-index: 100;
+    }
+    .footer a {
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--accent-color);
+    }
+    .footer img {
+      width: 40px;
+      height: 40px;
+      filter: invert(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+
+    #rewardTo {
+  cursor: pointer; /* Show normal pointer cursor */
+}
+
+
+
+
+
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">Add Reward</div>
+  </div>
+
+  <div class="content">
+    <div class="form-container">
+      <label for="rewardName">Reward:</label>
+      <input type="text" id="rewardName" placeholder="Enter reward" />
+      <label for="rewardDiamonds">Buzz Points:</label>
+      <input type="number" id="rewardDiamonds" placeholder="Enter Buzz point cost" min="1" />
+      <label for="rewardTo">To:</label>
+      <input type="text" id="rewardTo" value="Everyone" readonly onclick="openUserSelectModal()" />
+
+
+
+      <button onclick="saveReward()">Save</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="market.html" id="backLink" aria-label="Back">
+      <img src="/BeeMazing-Y1/mobile/1-Home/BackBtn.png" alt="Back" />
+    </a>
+  </div>
+
+
+  <div id="userSelectModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:999; align-items:center; justify-content:center;">
+    <div style="background:#2A2B32; padding:20px; border-radius:12px; width:85%; max-width:400px; max-height:80%; overflow-y:auto;">
+      <strong style="display:block; margin-bottom:10px;">Select Users</strong>
+      <div id="userList"></div>
+      <div style="margin-top:15px; text-align:right;">
+        <button onclick="saveUserSelection()" style="background:var(--primary-color); color:var(--secondary-color); border:none; border-radius:6px; padding:8px 12px; font-weight:bold; margin-right:10px;">Save</button>
+        <button onclick="closeUserSelectModal()" style="background:var(--secondary-color); color:var(--accent-color); border:none; border-radius:6px; padding:8px 12px;">Close</button>
+      </div>
+    </div>
+  </div>
+  
+
+  <script>
+    // Get adminEmail from URL query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminEmail = urlParams.get('adminEmail');
+    let selectedUsers = []; // initially empty
+
+
+
+
+    if (!adminEmail) {
+      console.error("No adminEmail provided in URL");
+      alert("Error: No admin email provided.");
+      document.querySelector('.form-container button').disabled = true;
+    }
+
+    // Update the back link to include adminEmail
+    const backLink = document.getElementById('backLink');
+    backLink.href = `/BeeMazing-Y1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}`;
+
+    // Function to fetch existing rewards from MongoDB
+    async function fetchRewards() {
+      try {
+        const response = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to fetch rewards");
+        }
+        return data.rewards || [];
+      } catch (err) {
+        console.error("Error fetching rewards:", err);
+        throw err;
+      }
+    }
+
+    // Function to save rewards to MongoDB
+    async function saveRewards(rewards) {
+      try {
+        const response = await fetch("https://beemazing.onrender.com/api/market-rewards", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ adminEmail, rewards })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to save rewards");
+        }
+      } catch (err) {
+        console.error("Error saving rewards:", err);
+        throw err;
+      }
+    }
+
+    // Function to save a new reward
+    async function saveReward() {
+      const rewardName = document.getElementById("rewardName").value.trim();
+      const rewardDiamonds = Number(document.getElementById("rewardDiamonds").value);
+
+      if (!rewardName || rewardDiamonds <= 0) {
+        alert("Please enter a valid reward and honey amount.");
+        return;
+      }
+
+      try {
+        // Fetch existing rewards
+        const rewards = await fetchRewards();
+
+        // Add the new reward
+        rewards.push({
+  name: rewardName,
+  diamonds: rewardDiamonds,
+  assignedUsers: selectedUsers.length > 0 ? selectedUsers : undefined
+});
+
+
+        // Save the updated rewards to MongoDB
+        await saveRewards(rewards);
+
+
+// Return to onboarding reward step
+window.location.href = `onboarding.html?step=6`;
+
+
+      } catch (err) {
+        alert("Failed to save reward. Please try again.");
+      }
+    }
+
+
+
+
+
+
+
+
+
+
+    function openUserSelectModal() {
+  const userListDiv = document.getElementById('userList');
+  userListDiv.innerHTML = "";
+
+  const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+  const currentAdmin = localStorage.getItem("currentAdminEmail");
+  const users = allUserData[currentAdmin]?.users || [];
+
+  // Add "Everyone" option
+  createUserItem("Everyone", userListDiv);
+
+  // Add users
+  users.forEach(user => {
+    createUserItem(user, userListDiv);
+  });
+
+  document.getElementById('userSelectModal').style.display = 'flex';
+}
+
+
+
+function createUserItem(user, container) {
+  const userItem = document.createElement("div");
+  userItem.textContent = user;
+  userItem.style.padding = "10px";
+  userItem.style.marginBottom = "8px";
+  userItem.style.border = "1px solid var(--border-dark)";
+  userItem.style.borderRadius = "8px";
+  userItem.style.cursor = "pointer";
+  userItem.style.textAlign = "center";
+
+  updateUserItemStyle(userItem, user);
+
+  userItem.addEventListener("click", () => {
+    toggleUserSelection(user);
+    updateUserItemStyle(userItem, user);
+    if (user === "Everyone") {
+      // If clicked Everyone, deselect others visually too
+      document.querySelectorAll("#userList div").forEach(div => {
+        if (div.textContent !== "Everyone") {
+          div.style.backgroundColor = "var(--light-bg)";
+          div.style.color = "var(--text-color)";
+        }
+      });
+    }
+  });
+
+  container.appendChild(userItem);
+}
+
+
+
+function toggleUserSelection(user) {
+  if (user === "Everyone") {
+    if (selectedUsers.includes("Everyone")) {
+      selectedUsers = [];
+    } else {
+      selectedUsers = ["Everyone"];
+    }
+  } else {
+    if (selectedUsers.includes("Everyone")) {
+      selectedUsers = [];
+    }
+    if (selectedUsers.includes(user)) {
+      selectedUsers = selectedUsers.filter(u => u !== user);
+    } else {
+      selectedUsers.push(user);
+    }
+  }
+}
+
+function updateUserItemStyle(div, user) {
+  if ((user === "Everyone" && selectedUsers.includes("Everyone")) || selectedUsers.includes(user)) {
+    div.style.backgroundColor = "var(--primary-color)";
+    div.style.color = "var(--secondary-color)";
+  } else {
+    div.style.backgroundColor = "var(--light-bg)";
+    div.style.color = "var(--text-color)";
+  }
+}
+
+
+
+
+
+
+function updateRewardToDisplay() {
+  if (selectedUsers.length === 0 || selectedUsers.includes("Everyone")) {
+    document.getElementById("rewardTo").value = "Everyone";
+  } else {
+    document.getElementById("rewardTo").value = selectedUsers.join(", ");
+  }
+}
+
+
+
+
+
+function saveUserSelection() {
+  if (selectedUsers.length === 0) {
+    selectedUsers = ["Everyone"];
+  }
+
+  if (selectedUsers.includes("Everyone")) {
+    document.getElementById("rewardTo").value = "Everyone";
+  } else {
+    document.getElementById("rewardTo").value = selectedUsers.join(", ");
+  }
+
+  closeUserSelectModal();
+}
+
+
+
+
+
+
+
+
+function closeUserSelectModal() {
+  document.getElementById('userSelectModal').style.display = 'none';
+}
+
+
+
+// Close user select modal when clicking outside the box
+window.addEventListener("click", (e) => {
+  const modal = document.getElementById('userSelectModal');
+  if (e.target === modal) {
+    closeUserSelectModal();
+  }
+});
+
+  </script>
+</body>
+</html>

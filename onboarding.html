@@ -70,11 +70,17 @@
 
   <div id="step5" class="step">
     <h2>Step 5: Create First Reward</h2>
-    <input type="text" id="rewardTitle" placeholder="Reward Title"><br>
-    <input type="number" id="rewardAmount" placeholder="Reward Amount"><br>
-    <button onclick="createReward()">Create Reward</button>
+    <button onclick="goToAddRewardPage()">Create First Reward</button>
     <button onclick="skipStep(6)">Skip</button>
   </div>
+  
+
+
+
+
+
+
+
 
   <div id="step6" class="step">
     <h2>All set! 🎉</h2>
@@ -185,8 +191,24 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     function finishSetup() {
-      window.location.href = "userAdmin.html";
-    }
+  const email = localStorage.getItem("currentAdminEmail");
+  const allUserData = JSON.parse(localStorage.getItem("userData") || "{}");
+  const adminUsers = allUserData[email]?.users || [];
+  const permissions = allUserData[email]?.permissions || {};
+
+  const adminUser = adminUsers.find(u => permissions[u] === "Admin");
+
+  if (email && adminUser) {
+    // Detect if we’re on mobile or web
+    const isMobile = window.location.pathname.includes("/BeeMazing-Y1/mobile/");
+    const basePath = isMobile ? "/BeeMazing-Y1/mobile" : "/web";
+    
+    window.location.href = `${basePath}/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(email)}&user=${encodeURIComponent(adminUser)}`;
+  } else {
+    alert("Error: Could not find admin profile.");
+  }
+}
+
 
 
 
@@ -222,6 +244,15 @@ async function fetchUsersFromServer(email) {
     console.error("❌ Failed to fetch user list from server:", err);
   }
 }
+
+
+
+
+function goToAddRewardPage() {
+  localStorage.setItem("onboardingReturn", "true"); // To return to onboarding.html step 6
+  window.location.href = `addRewardOnboarding.html?adminEmail=${encodeURIComponent(email)}`;
+}
+
 
 
   </script>
