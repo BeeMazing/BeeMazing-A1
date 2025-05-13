@@ -287,14 +287,23 @@ window.addEventListener("DOMContentLoaded", () => {
 
 
 
-    function goToAddTaskPage() {
-  const childName = document.getElementById("childName").value.trim();
-  if (!childName) return alert("You must first create a child account");
+function goToAddTaskPage() {
+  const firstChildInput = document.querySelector(".child-name");
+  const childName = firstChildInput?.value.trim();
 
-  localStorage.setItem("onboardingChildName", childName); // pass child name
+  if (!childName) {
+    alert("You must first create a child account");
+    return;
+  }
+
+  localStorage.setItem("onboardingChildName", childName); // pass first child name
   localStorage.setItem("onboardingReturn", "true");       // flag to resume onboarding
   window.location.href = "addTasksOnboarding.html";
 }
+
+
+
+
 
 
 
