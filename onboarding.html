@@ -31,6 +31,42 @@
     button:hover {
       background-color: #FFB300;
     }
+
+
+    input {
+  width: 100%;
+  max-width: 300px;
+  padding: 12px;
+  margin: 10px 0;
+  border: 2px solid #444754; /* matches --border-dark */
+  border-radius: 8px;
+  background-color: #1E1F26; /* matches --light-bg */
+  color: #fff; /* text color */
+  font-size: 16px;
+}
+
+input::placeholder {
+  color: #aaa;
+}
+
+.skip-btn {
+  background: none;
+  color: #fff;
+  border: none;
+  font-size: 16px;
+  margin-top: 10px;
+  padding: 6px 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.skip-btn:hover {
+  text-decoration: none;
+  opacity: 0.8;
+}
+
+
+
   </style>
 </head>
 <body>
@@ -60,7 +96,7 @@
   <div id="step4" class="step">
     <h2>Step 4: Create First Task</h2>
     <button onclick="goToAddTaskPage()">Create First Task</button>
-    <button onclick="skipStep(5)">Skip</button>
+    <button class="skip-btn" onclick="skipStep(5)">Skip</button>
   </div>
   
 
@@ -71,7 +107,7 @@
   <div id="step5" class="step">
     <h2>Step 5: Create First Reward</h2>
     <button onclick="goToAddRewardPage()">Create First Reward</button>
-    <button onclick="skipStep(6)">Skip</button>
+    <button class="skip-btn" onclick="skipStep(6)">Skip</button>
   </div>
   
 
