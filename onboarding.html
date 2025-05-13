@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Onboarding - BeeMazing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background-color: #1E1F26;
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      padding: 2rem;
+      text-align: center;
+    }
+    .step {
+      display: none;
+    }
+    .step.active {
+      display: block;
+    }
+    button {
+      background-color: #FFC107;
+      color: #212121;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 10px;
+    }
+    button:hover {
+      background-color: #FFB300;
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome to BeeMazing!</h1>
+
+  <div id="step1" class="step active">
+    <h2>Step 1: Set Parent Password</h2>
+    <input type="password" id="parentPassword" placeholder="Enter Password"><br>
+    <input type="password" id="confirmParentPassword" placeholder="Confirm Password"><br>
+    <button onclick="saveParentPassword()">Continue</button>
+  </div>
+
+  <div id="step2" class="step">
+    <h2>Step 2: Create Parent Account</h2>
+    <input type="text" id="adminName" placeholder="Parent Name"><br>
+    <button onclick="createParent()">Continue</button>
+  </div>
+
+  <div id="step3" class="step">
+    <h2>Step 3: Create Child Account</h2>
+    <input type="text" id="childName" placeholder="Child Name"><br>
+    <button onclick="createChild()">Continue</button>
+  </div>
+
+  <div id="step4" class="step">
+    <h2>Step 4: Create First Task</h2>
+    <input type="text" id="taskTitle" placeholder="Task Title"><br>
+    <button onclick="createTask()">Create Task</button>
+    <button onclick="skipStep(5)">Skip</button>
+  </div>
+
+  <div id="step5" class="step">
+    <h2>Step 5: Create First Reward</h2>
+    <input type="text" id="rewardTitle" placeholder="Reward Title"><br>
+    <input type="number" id="rewardAmount" placeholder="Reward Amount"><br>
+    <button onclick="createReward()">Create Reward</button>
+    <button onclick="skipStep(6)">Skip</button>
+  </div>
+
+  <div id="step6" class="step">
+    <h2>All set! 🎉</h2>
+    <button onclick="finishSetup()">Go to Dashboard</button>
+  </div>
+
+  <script>
+    const email = localStorage.getItem("currentAdminEmail");
+
+    function showStep(stepNum) {
+      document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+      document.getElementById(`step${stepNum}`).classList.add('active');
+    }
+
+    function saveParentPassword() {
+      const password = document.getElementById("parentPassword").value.trim();
+      const confirm = document.getElementById("confirmParentPassword").value.trim();
+      if (!password || password !== confirm) {
+        alert("Passwords must match.");
+        return;
+      }
+      fetch("https://beemazing.onrender.com/set-admin-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      }).then(res => res.json()).then(data => {
+        if (data.success) showStep(2);
+        else alert(data.message || "Failed to save password");
+      });
+    }
+
+    function createParent() {
+      const name = document.getElementById("adminName").value.trim();
+      if (!name) return alert("Enter a name");
+      fetch("https://beemazing.onrender.com/add-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail: email, newUser: name, role: "Admin" })
+      }).then(res => res.json()).then(data => {
+        if (data.success) showStep(3);
+        else alert("Failed to create parent");
+      });
+    }
+
+    function createChild() {
+      const name = document.getElementById("childName").value.trim();
+      if (!name) return alert("Enter a name");
+      fetch("https://beemazing.onrender.com/add-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail: email, newUser: name, role: "User" })
+      }).then(res => res.json()).then(data => {
+        if (data.success) showStep(4);
+        else alert("Failed to create child");
+      });
+    }
+
+    function createTask() {
+      const title = document.getElementById("taskTitle").value.trim();
+      if (!title) return alert("Enter a task");
+      const today = new Date().toISOString().split("T")[0];
+      const task = {
+        title,
+        date: today,
+        users: [document.getElementById("childName").value.trim()],
+        repeat: "Daily",
+        reward: 10
+      };
+      fetch("https://beemazing.onrender.com/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail: email, task })
+      }).then(res => res.json()).then(data => {
+        if (data.success) showStep(5);
+        else alert("Failed to save task");
+      });
+    }
+
+    function createReward() {
+      const rewardTitle = document.getElementById("rewardTitle").value.trim();
+      const rewardAmount = parseInt(document.getElementById("rewardAmount").value.trim());
+      if (!rewardTitle || isNaN(rewardAmount)) return alert("Enter valid reward");
+      fetch("https://beemazing.onrender.com/api/market-rewards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail: email, rewards: [{ title: rewardTitle, cost: rewardAmount }] })
+      }).then(res => res.json()).then(data => {
+        if (data.success) showStep(6);
+        else alert("Failed to save reward");
+      });
+    }
+
+    function skipStep(stepNum) {
+      showStep(stepNum);
+    }
+
+    function finishSetup() {
+      window.location.href = "userAdmin.html";
+    }
+  </script>
+</body>
+</html>
