@@ -66,7 +66,7 @@
 
     .content {
         padding: 20px;
-        padding-bottom: 110px;
+        padding-bottom: 100px;
         flex: 1;
         overflow-y: auto;
     }
@@ -300,6 +300,21 @@
     box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
     z-index: 100;
     height: var(--footer-height);
+}
+
+
+
+#skipButton {
+    width: 90%;
+    max-width: 400px;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    background: var(--secondary-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
 }
 
 .footer a {
@@ -704,6 +719,9 @@
 }
 
 
+
+
+
 </style>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -865,11 +883,11 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
     </div>
 
     <div class="footer">
-        <a href="tasks.html" class="footer-icon" aria-label="Back">
-            <img src="/BeeMazing-Y1/mobile/1-Home/BackBtn.png" alt="Back" style="width: 40px; height: 40px;" />
-            <span></span>
-        </a>
-    </div>
+        <button id="skipButton">Skip</button>
+      </div>
+      
+
+    
 
     <!-- Modals -->
     <div class="modal" id="userModal">
@@ -2006,6 +2024,9 @@ daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? selectedDays : ["An
 });
 
 
+document.getElementById("skipButton").addEventListener("click", () => {
+    window.location.href = "onboarding.html#step5";
+});
 
 
     </script>    
