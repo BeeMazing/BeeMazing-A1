@@ -1044,9 +1044,22 @@
 
 
 
+/* Transition from page to page */
+.fade-out {
+  animation: fadeOut 0.4s ease-in-out forwards;
+}
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; transform: scale(0.98); }
+}
+/* Transition from page to page */
+
+
+
     </style>
 </head>
 <body>
+  <div id="pageContainer">
 
     <div class="date-header">
       <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" id="profileIcon" alt="Select User" class="profile-icon" />
@@ -1354,15 +1367,33 @@ li.style.marginBottom = "10px"; // Adds space between cards
         const tasksButton = document.getElementById("tasksButton");
         const marketButton = document.getElementById("marketButton");
 
+
+
         if (homeButton) {
-            homeButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-        }
-        if (tasksButton) {
-            tasksButton.href = `${basePath}/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-        }
-        if (marketButton) {
-            marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-        }
+    homeButton.addEventListener("click", (e) => {
+        e.preventDefault();
+        const targetURL = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+        smoothNavigateTo(targetURL);
+    });
+}
+if (tasksButton) {
+    tasksButton.addEventListener("click", (e) => {
+        e.preventDefault();
+        const targetURL = `${basePath}/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+        smoothNavigateTo(targetURL);
+    });
+}
+if (marketButton) {
+    marketButton.addEventListener("click", (e) => {
+        e.preventDefault();
+        const targetURL = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+        smoothNavigateTo(targetURL);
+    });
+}
+
+
+
+
 
         // Set active state
         document.querySelectorAll('.footer a').forEach(link => {
@@ -2079,6 +2110,27 @@ avatarImg.style.display = "none"; // Hide initially
 
 // addtasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
 
+
+
+
+// /* Transition from page to page */ //////////////////////////////////////////////////////////////////////////////////////////
+
+function smoothNavigateTo(url) {
+  const container = document.getElementById("pageContainer");
+  if (!container) {
+    window.location.href = url;
+    return;
+  }
+  container.classList.add("fade-out");
+  setTimeout(() => {
+    window.location.href = url;
+  }, 400); // Match the CSS animation duration
+}
+
+
+// /* Transition from page to page */ //////////////////////////////////////////////////////////////////////////////////////////
+
+
         </script>
 
 
@@ -2133,6 +2185,6 @@ Your browser does not support the video tag.
 
 
 
-
+</div>
 </body>
 </html>

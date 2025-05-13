@@ -670,9 +670,28 @@
 
 /* Help Center notifications */
 
+
+
+
+/* smooth transition between pages (fade in) */
+
+#pageContainer {
+  opacity: 0;
+  animation: fadeIn 0.4s ease-in-out forwards;
+}
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+
+/* smooth transition between pages (fade in) */
+
     </style>
 </head>
 <body>
+    <div id="pageContainer">
 
     <div class="date-header">
         <div class="month-nav">
@@ -1509,6 +1528,6 @@ Your browser does not support the video tag.
 </div>
 
 
-
+</div>
 </body>
 </html>
