@@ -159,11 +159,42 @@
         padding-top: 80px;
       }
     }
+
+
+    .top-bar {
+  position: absolute;
+  top: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 10;
+}
+
+.top-bar button {
+  background-color: var(--primary-color);
+  color: var(--secondary-color);
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.top-bar button:hover {
+  background-color: #FFB300;
+}
+
   </style>
 </head>
 <body>
 
-  <div class="top-left" id="setPasswordBtn" style="display: none;">Set Parent Password</div>
+  <div class="top-bar">
+    <button id="logoutBtn">Logout</button>
+    <button id="setPasswordBtn" style="display: none;">Set Parent Password</button>
+  </div>
+  
 
   <div class="wrapper">
     <h1>BeeMazing A1</h1> <!-- whaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-->
@@ -409,6 +440,14 @@
     });
 
     // Close modal if clicked outside
+
+    // Logout button
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  localStorage.clear(); // Clear everything
+  window.location.href = "register.html";
+});
+
+
     adminModal.addEventListener("click", (e) => {
       if (e.target === adminModal) {
         adminModal.classList.remove("show");
