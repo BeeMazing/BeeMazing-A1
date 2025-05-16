@@ -846,13 +846,13 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
             </div>
             <div class="form-group">
                 <label>
-                    <span id="selectReward" class="select-btn">Reward</span>
+                    <span id="selectReward" class="select-btn">Buzz Points</span>
                     <input type="hidden" id="RewardValue" value="">
                 </label>
                 <div class="modal" id="rewardModal">
                     <div class="modal-content fancy-modal">
-                        <h3>Reward 🍯</h3>
-                        <input type="number" id="rewardInput" placeholder="      Enter Honey Amount" min="1" class="fancy-input smaller-input">
+                        <h3>Buzz Points 🍯</h3>
+                        <input type="number" id="rewardInput" placeholder="      Enter Point Amount" min="1" class="fancy-input smaller-input">
                         <div style="margin-top: 10px;">
                             <button id="saveRewardBtn" class="btn-save">Save</button>
                             <button id="closeRewardModal" class="btn-cancel">Cancel</button>
@@ -1012,7 +1012,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("taskReminder").checked = !!editTask.reminder;
         document.getElementById("addAlarmBtn").style.display = editTask.reminder ? "inline-block" : "none";
         document.getElementById("RewardValue").value = editTask.reward || "";
-        document.getElementById("selectReward").textContent = editTask.reward ? `Reward: ${editTask.reward} 🍯` : "Reward";
+        document.getElementById("selectReward").textContent = editTask.reward ? `Buzz Points: ${editTask.reward} 🍯` : "Reward";
 
         // Handle times per day/week/month
         document.getElementById("timesPerDayInput").value = editTask.timesPerDay || "1";
@@ -1296,7 +1296,7 @@ document.getElementById("specificDaysGroup").style.display = "block";
             const reward = rewardInput.value;
             if (reward) {
                 rewardValueInput.value = reward;
-                selectRewardButton.textContent = `Reward: ${reward} 🍯`;
+                selectRewardButton.textContent = `Buzz Points: ${reward} 🍯`;
             }
             hideModal(rewardModal);
         });
