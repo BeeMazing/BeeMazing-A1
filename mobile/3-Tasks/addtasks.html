@@ -81,7 +81,16 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 12px;
     }
+
+
+    .form-group label {
+    margin-right: 12px; /* Adjust the spacing */
+}
+
+
+
 
     label {
         font-size: 16px;
@@ -730,6 +739,8 @@
                 <button type="button" id="selectRoom" class="select-btn">Select</button>
                 <input type="hidden" id="roomSelection" value="">
             </div>
+            
+            
             <div class="form-group">
                 <label>Frequency</label>
                 <button type="button" id="selectRepeat" class="select-btn">Select</button>
@@ -879,10 +890,11 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
             <button class="close-btn" id="closeUserModal">Close</button>
         </div>
     </div>
+
     <div class="modal" id="roomModal">
         <div class="modal-content">
-            <h3>Choose Room</h3>
-            <ul>
+            <h3>Choose Rooms</h3>
+            <ul id="roomList">
                 <li data-value="Entire Home">Entire Home</li>
                 <li data-value="Living Room">Living Room</li>
                 <li data-value="Bedroom">Bedroom</li>
@@ -893,8 +905,13 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
                 <li data-value="Outside">Outside</li>
                 <li data-value="Other">Other</li>
             </ul>
+            <button class="close-btn" id="closeRoomModal">Close</button>
         </div>
     </div>
+    
+
+
+
     <div class="modal" id="repeatModal">
         <div class="modal-content">
             <h3>Choose Repeat</h3>
@@ -1003,8 +1020,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (editTask) {
         document.getElementById("taskTitle").value = editTask.title || "";
         document.getElementById("taskNotes").value = editTask.notes || "";
-        document.getElementById("roomSelection").value = editTask.room || "";
-        document.getElementById("selectRoom").textContent = editTask.room || "Select";
+        if (editTask.room) {
+    selectedRooms = editTask.room.split(",").map(r => r.trim());
+    document.getElementById("roomSelection").value = selectedRooms.join(", ");
+    document.getElementById("selectRoom").textContent = `Selected: ${selectedRooms.join(", ")}`;
+}
+
         document.getElementById("repeatSelection").value = editTask.repeat || "";
         document.getElementById("selectRepeat").textContent = editTask.repeat || "Select";
         document.getElementById("settingsSelection").value = editTask.settings || "";
@@ -1330,8 +1351,63 @@ document.getElementById("specificDaysGroup").style.display = "block";
             });
         }
     
-        setupModal('roomModal', 'selectRoom', 'roomSelection');
         setupModal('settingsModal', 'selectSettings', 'settingsSelection');
+
+
+
+
+        const roomModal = document.getElementById("roomModal");
+const roomList = document.getElementById("roomList");
+const roomInput = document.getElementById("roomSelection");
+const roomButton = document.getElementById("selectRoom");
+const closeRoomModal = document.getElementById("closeRoomModal");
+
+let selectedRooms = [];
+
+roomButton.addEventListener("click", () => {
+    showModal(roomModal);
+});
+
+roomList.querySelectorAll("li").forEach(item => {
+    item.style.cursor = "pointer";
+    item.style.padding = "10px";
+    item.style.margin = "5px 0";
+    item.style.border = "1px solid var(--selection-border)";
+    item.style.borderRadius = "8px";
+    item.style.textAlign = "center";
+
+    item.addEventListener("click", () => {
+        const value = item.getAttribute("data-value");
+        if (selectedRooms.includes(value)) {
+            selectedRooms = selectedRooms.filter(r => r !== value);
+            item.style.backgroundColor = "var(--light-bg)";
+            item.style.color = "var(--text-color)";
+        } else {
+            selectedRooms.push(value);
+            item.style.backgroundColor = "var(--primary-color)";
+            item.style.color = "var(--secondary-color)";
+        }
+        roomInput.value = selectedRooms.join(", ");
+        roomButton.textContent = selectedRooms.length > 0
+            ? `Selected: ${selectedRooms.join(", ")}`
+            : "Select";
+    });
+});
+
+closeRoomModal.addEventListener("click", () => {
+    hideModal(roomModal);
+});
+
+window.addEventListener("click", (e) => {
+    if (e.target === roomModal) {
+        hideModal(roomModal);
+    }
+});
+
+
+
+
+
 
         const repeatModal = document.getElementById('repeatModal');
 const repeatButton = document.getElementById('selectRepeat');
