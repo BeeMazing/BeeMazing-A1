@@ -877,11 +877,14 @@ ${(() => {
         if (e.target.classList.contains("task-modal")) modal.remove();
     });
 
+
     document.getElementById("editTaskBtn").addEventListener("click", () => {
-        localStorage.setItem("familyApp_editTask", JSON.stringify(task));
-        localStorage.setItem("familyApp_editTask_index", task.title + "-" + task.date);
-        window.location.href = "/BeeMazing-Y1/mobile/3-Tasks/addtasks.html";
-    });
+    const encodedTitle = encodeURIComponent(task.title);
+    const encodedDate = encodeURIComponent(task.date.split(" to ")[0]); // Use start date
+    window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/addtasks.html?editTitle=${encodedTitle}&editDate=${encodedDate}`;
+});
+
+
 }
 
 
