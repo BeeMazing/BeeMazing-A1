@@ -721,7 +721,7 @@
 <body>
     <div class="header">
         <i class="fas fa-bars menu-icon"></i>
-        <div class="title">Add Task 1</div>
+        <div class="title">Add Task</div>
     </div>
 
     <div class="content">
@@ -1017,15 +1017,15 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
 
 
 
-
-
-
 document.addEventListener("DOMContentLoaded", async () => {
     const currentAdmin = localStorage.getItem("currentAdminEmail");
     if (!currentAdmin) {
         alert("Admin not logged in!");
         return;
     }
+
+    // Declare editTaskFullDate at higher scope
+    let editTaskFullDate = null; // Initialize as null
 
     // Check if in edit mode via URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -1056,8 +1056,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (editTask) {
-        // Store the full date range for the PUT request
-        let editTaskFullDate = editTask.date; // Added line
+        // Set the full date range for the PUT request
+        editTaskFullDate = editTask.date; // Assign value here
         // Populate form for editing
         document.getElementById("taskTitle").value = editTask.title || "";
         document.getElementById("taskNotes").value = editTask.notes || "";
@@ -1180,6 +1180,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("specificDaysGroup").style.display = "block";
     }
 });
+
 
 
 
@@ -1987,6 +1988,8 @@ window.addEventListener("click", (e) => {
 
 
 
+
+
         document.getElementById("addTaskForm").addEventListener("submit", async function (event) {
     event.preventDefault();
 
@@ -2080,7 +2083,7 @@ window.addEventListener("click", (e) => {
                   adminEmail: currentAdmin,
                   task,
                   originalTitle: editTitle,
-                  originalDate: editTaskFullDate // Changed line
+                  originalDate: editTaskFullDate // This will now work
               }
             : { adminEmail: currentAdmin, task };
 
