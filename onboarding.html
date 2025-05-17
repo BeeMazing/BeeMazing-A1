@@ -202,6 +202,11 @@ window.addEventListener("DOMContentLoaded", () => {
   if (stepNum === 3) {
     restoreChildInputs();
   }
+
+  if (stepNum === 2) {
+  restoreParentInputs();
+}
+
 }
 
 
@@ -291,6 +296,10 @@ function saveParentPassword() {
   const inputEls = document.querySelectorAll(".admin-name");
   const names = Array.from(inputEls).map(input => input.value.trim()).filter(Boolean);
 
+// Save to localStorage so we can restore on return
+localStorage.setItem(`onboardingParentNames_${email}`, JSON.stringify(names));
+
+
   if (names.length === 0) {
     alert("Enter at least one parent name");
     return;
@@ -329,11 +338,16 @@ function addAdminInput() {
   input.className = "admin-name";
   input.style.marginTop = "10px";
 
-  const br = document.createElement("br");
+  input.addEventListener("input", () => {
+    const names = Array.from(document.querySelectorAll(".admin-name"))
+      .map(el => el.value.trim()).filter(Boolean);
+    localStorage.setItem(`onboardingParentNames_${email}`, JSON.stringify(names));
+  });
 
   container.appendChild(input);
-  container.appendChild(br);
+  container.appendChild(document.createElement("br"));
 }
+
 
 
 
@@ -590,6 +604,35 @@ function updateStep5Rewards() {
     rewardList.innerHTML = "";
     document.querySelector("#addRewardBtn").textContent = "Create First Reward";
     document.querySelector("#skipRewardBtn").textContent = "Skip";
+  }
+}
+
+
+
+function restoreParentInputs() {
+  const savedNames = JSON.parse(localStorage.getItem(`onboardingParentNames_${email}`) || "[]");
+  const container = document.getElementById("adminInputs");
+  container.innerHTML = ""; // Clear existing inputs
+
+  if (savedNames.length === 0) {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.placeholder = "Parent Name";
+    input.className = "admin-name";
+    input.style.marginTop = "10px";
+    container.appendChild(input);
+    container.appendChild(document.createElement("br"));
+  } else {
+    savedNames.forEach(name => {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.placeholder = "Parent Name";
+      input.className = "admin-name";
+      input.style.marginTop = "10px";
+      input.value = name;
+      container.appendChild(input);
+      container.appendChild(document.createElement("br"));
+    });
   }
 }
 
