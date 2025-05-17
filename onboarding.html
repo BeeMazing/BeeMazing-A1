@@ -484,7 +484,6 @@ function goToAddTaskPage() {
 
 
 
-
 async function fetchUsersFromServer(email) {
   try {
     const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(email)}`);
@@ -496,16 +495,17 @@ async function fetchUsersFromServer(email) {
         allUserData[email] = { users: [], permissions: {} };
       }
 
-      const savedOrder = JSON.parse(localStorage.getItem(`onboardingChildNames_${email}`) || "[]");
-
-      // Reorder users to match saved onboarding order
       const allServerUsers = data.users || [];
-      const reordered = savedOrder.filter(name => allServerUsers.includes(name));
-      const others = allServerUsers.filter(name => !reordered.includes(name));
-      const finalUserOrder = [...reordered, ...others];
+      const permissions = data.permissions || {};
+
+      // ⬆️ Sort: Admins first, then Users
+      const admins = allServerUsers.filter(name => permissions[name] === "Admin");
+      const users = allServerUsers.filter(name => permissions[name] === "User");
+
+      const finalUserOrder = [...admins, ...users];
 
       allUserData[email].users = finalUserOrder;
-      allUserData[email].permissions = data.permissions || {};
+      allUserData[email].permissions = permissions;
 
       localStorage.setItem("userData", JSON.stringify(allUserData));
     }
@@ -513,6 +513,8 @@ async function fetchUsersFromServer(email) {
     console.error("❌ Failed to fetch user list from server:", err);
   }
 }
+
+
 
 
 

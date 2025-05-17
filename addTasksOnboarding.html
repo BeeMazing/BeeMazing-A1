@@ -721,6 +721,25 @@
 
 
 
+/* Dark cancel button for main form (below Save) */
+.btn-cancel-dark {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    background: var(--muted-button);
+    color: var(--text-color);
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-cancel-dark:hover {
+    background: var(--hover-accent);
+    transform: translateY(-3px);
+}
+
+
 
 </style>
 
@@ -881,10 +900,11 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
      <!-- Save Button -->
 <button type="submit" class="save-btn">Save</button>
 
-<!-- Cancel Button (below Save) -->
-<button type="button" id="cancelTaskBtn" class="btn-cancel" style="width: 100%; margin-top: 10px;">
+<!-- Cancel Button (below Save) - Dark Style -->
+<button type="button" id="cancelTaskBtn" class="btn-cancel-dark" style="width: 100%; margin-top: 10px;">
     Cancel
 </button>
+
 
               
         </form>

@@ -158,17 +158,13 @@
 
 
       <button onclick="saveReward()">Save</button>
+      <button onclick="cancelReward()" style="margin-top: 10px; padding: 10px 20px; border-radius: 20px; background: transparent; color: var(--accent-color); border: 2px solid var(--border-dark);">Cancel</button>
+      
     </div>
   </div>
 
 
 
-
-  <div class="footer">
-    <button onclick="window.location.href='onboarding.html?step=6'" style="background: none; border: none; color: var(--accent-color); font-size: 18px; font-weight: bold; cursor: pointer;">
-      Skip
-    </button>
-  </div>
   
 
 
@@ -422,6 +418,13 @@ window.addEventListener("click", (e) => {
   }
 });
 
+
+
+function cancelReward() {
+  // Clean return to step 5 of onboarding
+  localStorage.setItem("onboardingReturn", "step5");
+  window.location.href = "onboarding.html";
+}
 
 
   </script>
