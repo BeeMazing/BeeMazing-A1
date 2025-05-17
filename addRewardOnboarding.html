@@ -163,7 +163,7 @@
 
 
 
-  
+
   <div class="footer">
     <button onclick="window.location.href='onboarding.html?step=6'" style="background: none; border: none; color: var(--accent-color); font-size: 18px; font-weight: bold; cursor: pointer;">
       Skip
@@ -262,8 +262,17 @@
         await saveRewards(rewards);
 
 
-// Return to onboarding reward step
-window.location.href = `onboarding.html?step=6`;
+// Save reward title to onboarding localStorage
+const existingTitles = JSON.parse(localStorage.getItem("onboardingRewardTitles") || "[]");
+existingTitles.push(rewardName);
+localStorage.setItem("onboardingRewardTitles", JSON.stringify(existingTitles));
+
+// Flag to return to step 5
+localStorage.setItem("onboardingReturn", "step5");
+
+// Go back to onboarding step 5
+window.location.href = `onboarding.html`;
+
 
 
       } catch (err) {
@@ -412,6 +421,8 @@ window.addEventListener("click", (e) => {
     closeUserSelectModal();
   }
 });
+
+
 
   </script>
 </body>
