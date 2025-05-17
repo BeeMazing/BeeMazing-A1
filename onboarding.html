@@ -444,20 +444,23 @@ function addChildInput() {
 
 
 function goToAddTaskPage() {
-  const firstChildInput = document.querySelector(".child-name");
-  const childName = firstChildInput?.value.trim();
+  const email = localStorage.getItem("currentAdminEmail");
+  const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+  const users = userData[email]?.users || [];
+  const permissions = userData[email]?.permissions || {};
 
-  if (!childName) {
+  // Find first user with role "User" (child)
+  const firstChild = users.find(u => permissions[u] === "User");
+
+  if (!firstChild) {
     alert("You must first create a child account");
     return;
   }
 
-  localStorage.setItem("onboardingChildName", childName); // pass first child name
-  localStorage.setItem("onboardingReturn", "true");       // flag to resume onboarding
+  localStorage.setItem("onboardingChildName", firstChild);
+  localStorage.setItem("onboardingReturn", "step4");
   window.location.href = "addTasksOnboarding.html";
 }
-
-
 
 
 
@@ -475,7 +478,15 @@ async function fetchUsersFromServer(email) {
         allUserData[email] = { users: [], permissions: {} };
       }
 
-      allUserData[email].users = data.users || [];
+      const savedOrder = JSON.parse(localStorage.getItem("onboardingChildNames") || "[]");
+
+      // Reorder users to match saved onboarding order
+      const allServerUsers = data.users || [];
+      const reordered = savedOrder.filter(name => allServerUsers.includes(name));
+      const others = allServerUsers.filter(name => !reordered.includes(name));
+      const finalUserOrder = [...reordered, ...others];
+
+      allUserData[email].users = finalUserOrder;
       allUserData[email].permissions = data.permissions || {};
 
       localStorage.setItem("userData", JSON.stringify(allUserData));
@@ -484,6 +495,8 @@ async function fetchUsersFromServer(email) {
     console.error("❌ Failed to fetch user list from server:", err);
   }
 }
+
+
 
 
 

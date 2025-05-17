@@ -1150,6 +1150,16 @@ document.getElementById("specificDatesGroup").style.display = "none";
 document.getElementById("specificDaysGroup").style.display = "block";
 
 }
+
+document.getElementById("cancelTaskBtn").addEventListener("click", () => {
+  const confirmCancel = confirm("Are you sure you want to cancel? The task won't be saved.");
+  if (confirmCancel) {
+    localStorage.removeItem("familyApp_editTask");
+    localStorage.removeItem("familyApp_editTask_index");
+    window.location.href = "onboarding.html#step4";
+  }
+});
+
 });
 
 
@@ -2040,16 +2050,6 @@ document.getElementById("skipButton").addEventListener("click", () => {
 });
 
 
-
-
-document.getElementById("cancelTaskBtn").addEventListener("click", () => {
-  const confirmCancel = confirm("Are you sure you want to cancel? The task won't be saved.");
-  if (confirmCancel) {
-    localStorage.removeItem("familyApp_editTask");
-    localStorage.removeItem("familyApp_editTask_index");
-    window.location.href = "onboarding.html#step4";
-  }
-});
 
 
     </script>    
