@@ -878,7 +878,15 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
                     </div>
                 </div>
             </div>
-            <button type="submit" class="save-btn">Save</button>
+     <!-- Save Button -->
+<button type="submit" class="save-btn">Save</button>
+
+<!-- Cancel Button (below Save) -->
+<button type="button" id="cancelTaskBtn" class="btn-cancel" style="width: 100%; margin-top: 10px;">
+    Cancel
+</button>
+
+              
         </form>
     </div>
 
@@ -2032,6 +2040,18 @@ window.location.href = "onboarding.html";
 
 document.getElementById("skipButton").addEventListener("click", () => {
     window.location.href = "onboarding.html#step5";
+});
+
+
+
+
+document.getElementById("cancelTaskBtn").addEventListener("click", () => {
+  const confirmCancel = confirm("Are you sure you want to cancel? The task won't be saved.");
+  if (confirmCancel) {
+    localStorage.removeItem("familyApp_editTask");
+    localStorage.removeItem("familyApp_editTask_index");
+    window.location.href = "onboarding.html#step4";
+  }
 });
 
 

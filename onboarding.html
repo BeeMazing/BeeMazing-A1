@@ -120,7 +120,7 @@ input::placeholder {
   
     <div class="step-controls">
       <button class="back-btn" onclick="showStep(2)">Back</button>
-      <button onclick="createChild()">Continue</button>
+      <button onclick="createChild()">Next</button>
     </div>
   </div>
   
@@ -198,7 +198,34 @@ window.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
   document.getElementById(`step${stepNum}`).classList.add('active');
   updateNavigationButtons(stepNum);
+
+  if (stepNum === 3) {
+    restoreChildInputs();
+  }
 }
+
+
+function restoreChildInputs() {
+  const savedNames = JSON.parse(localStorage.getItem("onboardingChildNames") || "[]");
+  const container = document.getElementById("childInputs");
+  container.innerHTML = ""; // Clear existing inputs
+
+  savedNames.forEach(name => {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.placeholder = "Child Name";
+    input.className = "child-name";
+    input.style.marginTop = "10px";
+    input.value = name;
+
+    const br = document.createElement("br");
+
+    container.appendChild(input);
+    container.appendChild(br);
+  });
+}
+
+
 
 
 
@@ -297,6 +324,9 @@ function addAdminInput() {
     alert("Enter at least one child name");
     return;
   }
+  
+ // 🔁 Save to localStorage so we can reload these names later
+ localStorage.setItem("onboardingChildNames", JSON.stringify(names));
 
   const createPromises = names.map(name => {
     return fetch("https://beemazing.onrender.com/add-user", {
@@ -338,7 +368,16 @@ function addChildInput() {
 
   container.appendChild(input);
   container.appendChild(br);
+
+  // Auto-update storage when new inputs are added
+  input.addEventListener("input", () => {
+    const names = Array.from(document.querySelectorAll(".child-name"))
+      .map(el => el.value.trim())
+      .filter(Boolean);
+    localStorage.setItem("onboardingChildNames", JSON.stringify(names));
+  });
 }
+
 
 
 
