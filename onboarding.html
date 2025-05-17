@@ -576,10 +576,15 @@ function updateStep4Tasks() {
 window.addEventListener("DOMContentLoaded", () => {
   const onboardingReturn = localStorage.getItem("onboardingReturn");
 
+
+
   if (onboardingReturn === "step4") {
-    localStorage.removeItem("onboardingReturn");
-    showStep(4);
-  } else if (onboardingReturn === "step5") {
+  localStorage.removeItem("onboardingReturn");
+  showStep(4);
+  updateStep4Tasks();
+}
+
+else if (onboardingReturn === "step5") {
     localStorage.removeItem("onboardingReturn");
     showStep(5);
   }

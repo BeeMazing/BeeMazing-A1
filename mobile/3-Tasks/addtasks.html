@@ -2089,7 +2089,8 @@ daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? selectedDays : ["An
         const from = urlParams.get("from");
 
         if (from === "onboarding") {
-            window.location.href = "/BeeMazing-Y1/onboarding.html#step4";
+    localStorage.setItem("onboarding_task_title", title);
+    window.location.href = "/BeeMazing-Y1/onboarding.html#step4";
         } else {
             window.location.href = "tasks.html";
         }
