@@ -721,7 +721,7 @@
 <body>
     <div class="header">
         <i class="fas fa-bars menu-icon"></i>
-        <div class="title">Add Task</div>
+        <div class="title">Add Task 1</div>
     </div>
 
     <div class="content">
@@ -2082,8 +2082,21 @@ daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? selectedDays : ["An
         console.log("Server response:", data);
         localStorage.removeItem("familyApp_editTask");
         localStorage.removeItem("familyApp_editTask_index");
+
         alert("Task saved successfully!");
-        window.location.href = "tasks.html";
+
+// Check if coming from onboarding
+const urlParams = new URLSearchParams(window.location.search);
+const from = urlParams.get("from");
+
+if (from === "onboarding") {
+    window.location.href = "/BeeMazing-Y1/onboarding.html#step4";
+} else {
+    window.location.href = "tasks.html";
+}
+
+
+
     } catch (error) {
         console.error("Error saving task:", error);
         alert(`Failed to save task: ${error.message}`);
@@ -2098,7 +2111,7 @@ function handleCancel() {
   const from = urlParams.get("from");
 
   if (from === "onboarding") {
-    window.location.href = "/BeeMazing-Y1/mobile/onboarding.html#step4";
+    window.location.href = "/BeeMazing-Y1/onboarding.html#step4";
   } else {
     window.location.href = "tasks.html";
   }
