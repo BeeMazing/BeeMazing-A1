@@ -210,20 +210,36 @@ function restoreChildInputs() {
   const container = document.getElementById("childInputs");
   container.innerHTML = ""; // Clear existing inputs
 
-  savedNames.forEach(name => {
+  if (savedNames.length === 0) {
+    // No saved names? Add one blank input
     const input = document.createElement("input");
     input.type = "text";
     input.placeholder = "Child Name";
     input.className = "child-name";
     input.style.marginTop = "10px";
-    input.value = name;
 
     const br = document.createElement("br");
 
     container.appendChild(input);
     container.appendChild(br);
-  });
+  } else {
+    // Restore each saved name
+    savedNames.forEach(name => {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.placeholder = "Child Name";
+      input.className = "child-name";
+      input.style.marginTop = "10px";
+      input.value = name;
+
+      const br = document.createElement("br");
+
+      container.appendChild(input);
+      container.appendChild(br);
+    });
+  }
 }
+
 
 
 
