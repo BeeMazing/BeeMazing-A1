@@ -872,15 +872,20 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
                 </div>
             </div>
             <button type="submit" class="save-btn">Save</button>
+           
+            <button
+            type="button"
+            class="btn-cancel"
+            style="width: 100%; margin-top: 10px;"
+            onclick="handleCancel()"
+          >
+            Cancel
+          </button>
+          
+
         </form>
     </div>
 
-    <div class="footer">
-        <a href="tasks.html" class="footer-icon" aria-label="Back">
-            <img src="/BeeMazing-Y1/mobile/1-Home/BackBtn.png" alt="Back" style="width: 40px; height: 40px;" />
-            <span></span>
-        </a>
-    </div>
 
     <!-- Modals -->
     <div class="modal" id="userModal">
@@ -2086,6 +2091,18 @@ daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? selectedDays : ["An
 });
 
 
+
+
+function handleCancel() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const from = urlParams.get("from");
+
+  if (from === "onboarding") {
+    window.location.href = "/BeeMazing-Y1/mobile/onboarding.html#step4";
+  } else {
+    window.location.href = "tasks.html";
+  }
+}
 
 
     </script>    
