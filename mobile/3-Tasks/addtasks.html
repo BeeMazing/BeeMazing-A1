@@ -2082,28 +2082,8 @@ daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? selectedDays : ["An
         console.log("Server response:", data);
         localStorage.removeItem("familyApp_editTask");
         localStorage.removeItem("familyApp_editTask_index");
-
-
         alert("Task saved successfully!");
-        const urlParams = new URLSearchParams(window.location.search);
-        const from = urlParams.get("from");
-
-
-
-        if (from === "onboarding") {
-    localStorage.setItem("onboarding_task_title", title);
-
-    // Delay to ensure localStorage is flushed before navigation
-    setTimeout(() => {
-        window.location.href = "/BeeMazing-Y1/onboarding.html#step4";
-    }, 100);
-} else {
-    window.location.href = "tasks.html";
-}
-
-
-
-
+        window.location.href = "tasks.html";
     } catch (error) {
         console.error("Error saving task:", error);
         alert(`Failed to save task: ${error.message}`);
@@ -2118,12 +2098,11 @@ function handleCancel() {
   const from = urlParams.get("from");
 
   if (from === "onboarding") {
-    window.location.href = "/BeeMazing-Y1/onboarding.html#step4";
+    window.location.href = "/BeeMazing-Y1/mobile/onboarding.html#step4";
   } else {
     window.location.href = "tasks.html";
   }
 }
-
 
 
     </script>    
