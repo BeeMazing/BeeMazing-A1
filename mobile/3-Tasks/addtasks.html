@@ -721,7 +721,7 @@
 <body>
     <div class="header">
         <i class="fas fa-bars menu-icon"></i>
-        <div class="title">Add Task</div>
+        <div class="title">Add Task 1</div>
     </div>
 
     <div class="content">
@@ -1015,7 +1015,7 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
     <script>
 
 
-
+let editTaskFullDate = null; // Initialize as null
 
 document.addEventListener("DOMContentLoaded", async () => {
     const currentAdmin = localStorage.getItem("currentAdminEmail");
@@ -1024,8 +1024,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
     }
 
-    // Declare editTaskFullDate at higher scope
-    let editTaskFullDate = null; // Initialize as null
 
     // Check if in edit mode via URL parameters
     const urlParams = new URLSearchParams(window.location.search);
