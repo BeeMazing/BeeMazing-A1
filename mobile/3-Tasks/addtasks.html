@@ -721,7 +721,7 @@
 <body>
     <div class="header">
         <i class="fas fa-bars menu-icon"></i>
-        <div class="title">Add Task 1</div>
+        <div class="title">Add Task</div>
     </div>
 
     <div class="content">
@@ -2085,9 +2085,19 @@ daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? selectedDays : ["An
 
         alert("Task saved successfully!");
 
-// Check if coming from onboarding
+        // Check if coming from onboarding
+// Store task title in localStorage if coming from onboarding
 const urlParams = new URLSearchParams(window.location.search);
 const from = urlParams.get("from");
+if (from === "onboarding") {
+    const existingTitles = JSON.parse(localStorage.getItem("onboardingTaskTitles") || "[]");
+    if (!existingTitles.includes(title)) {
+        existingTitles.push(title);
+        localStorage.setItem("onboardingTaskTitles", JSON.stringify(existingTitles));
+    }
+}
+
+
 
 if (from === "onboarding") {
     window.location.href = "/BeeMazing-Y1/onboarding.html#step4";
