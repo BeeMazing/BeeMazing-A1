@@ -2088,12 +2088,20 @@ daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? selectedDays : ["An
         const urlParams = new URLSearchParams(window.location.search);
         const from = urlParams.get("from");
 
+
+
         if (from === "onboarding") {
     localStorage.setItem("onboarding_task_title", title);
-    window.location.href = "/BeeMazing-Y1/onboarding.html#step4";
-        } else {
-            window.location.href = "tasks.html";
-        }
+
+    // Delay to ensure localStorage is flushed before navigation
+    setTimeout(() => {
+        window.location.href = "/BeeMazing-Y1/onboarding.html#step4";
+    }, 100);
+} else {
+    window.location.href = "tasks.html";
+}
+
+
 
 
     } catch (error) {
