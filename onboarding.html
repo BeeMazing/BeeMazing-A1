@@ -457,6 +457,7 @@ function addChildInput() {
   if (email && parentUser) {
     // 🧼 Clean up onboarding data
     localStorage.removeItem(`onboardingChildNames_${email}`);
+    localStorage.removeItem(`onboardingParentNames_${email}`);
     localStorage.removeItem("onboardingReturn");
     localStorage.removeItem("onboardingTaskTitles");
     localStorage.removeItem("onboardingRewardTitles");
@@ -513,10 +514,21 @@ async function fetchUsersFromServer(email) {
       const permissions = data.permissions || {};
 
       // ⬆️ Sort: Admins first, then Users
-      const admins = allServerUsers.filter(name => permissions[name] === "Admin");
-      const users = allServerUsers.filter(name => permissions[name] === "User");
+      const parentNames = JSON.parse(localStorage.getItem(`onboardingParentNames_${email}`) || "[]");
+      const childNames = JSON.parse(localStorage.getItem(`onboardingChildNames_${email}`) || "[]");
 
-      const finalUserOrder = [...admins, ...users];
+      // Only include users that still exist on server (ignore deleted ones)
+      const allServerUsersSet = new Set(allServerUsers);
+
+      const finalUserOrder = [
+        ...parentNames.filter(name => allServerUsersSet.has(name)),
+        ...childNames.filter(name => allServerUsersSet.has(name)),
+      ];
+
+
+
+
+
 
       allUserData[email].users = finalUserOrder;
       allUserData[email].permissions = permissions;
