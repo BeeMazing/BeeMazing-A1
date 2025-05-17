@@ -1017,6 +1017,9 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
 
 
 
+
+
+
 document.addEventListener("DOMContentLoaded", async () => {
     const currentAdmin = localStorage.getItem("currentAdminEmail");
     if (!currentAdmin) {
@@ -1053,6 +1056,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (editTask) {
+        // Store the full date range for the PUT request
+        let editTaskFullDate = editTask.date; // Added line
         // Populate form for editing
         document.getElementById("taskTitle").value = editTask.title || "";
         document.getElementById("taskNotes").value = editTask.notes || "";
@@ -1175,6 +1180,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("specificDaysGroup").style.display = "block";
     }
 });
+
 
 
 
@@ -1979,6 +1985,8 @@ window.addEventListener("click", (e) => {
 
 
 
+
+
         document.getElementById("addTaskForm").addEventListener("submit", async function (event) {
     event.preventDefault();
 
@@ -2072,7 +2080,7 @@ window.addEventListener("click", (e) => {
                   adminEmail: currentAdmin,
                   task,
                   originalTitle: editTitle,
-                  originalDate: editDate
+                  originalDate: editTaskFullDate // Changed line
               }
             : { adminEmail: currentAdmin, task };
 
@@ -2109,6 +2117,8 @@ window.addEventListener("click", (e) => {
         alert(`Failed to save task: ${error.message}`);
     }
 });
+
+
 
 
 
