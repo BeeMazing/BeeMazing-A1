@@ -206,7 +206,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
 
 function restoreChildInputs() {
-  const savedNames = JSON.parse(localStorage.getItem("onboardingChildNames") || "[]");
+    const savedNames = JSON.parse(localStorage.getItem(`onboardingChildNames_${email}`) || "[]");
   const container = document.getElementById("childInputs");
   container.innerHTML = ""; // Clear existing inputs
 
@@ -260,22 +260,30 @@ function updateNavigationButtons(currentStep) {
 
 
 
-    function saveParentPassword() {
-      const password = document.getElementById("parentPassword").value.trim();
-      const confirm = document.getElementById("confirmParentPassword").value.trim();
-      if (!password || password !== confirm) {
-        alert("Passwords must match.");
-        return;
-      }
-      fetch("https://beemazing.onrender.com/set-admin-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      }).then(res => res.json()).then(data => {
-        if (data.success) showStep(2);
-        else alert(data.message || "Failed to save password");
-      });
-    }
+function saveParentPassword() {
+  const password = document.getElementById("parentPassword").value.trim();
+  const confirm = document.getElementById("confirmParentPassword").value.trim();
+  if (!password || password !== confirm) {
+    alert("Passwords must match.");
+    return;
+  }
+
+  // 🧼 Clear onboarding leftovers for this admin
+  localStorage.removeItem(`onboardingChildNames_${email}`);
+  localStorage.removeItem("onboardingReturn");
+  localStorage.removeItem("onboardingTaskTitles");
+  localStorage.removeItem("onboardingRewardTitles");
+
+  fetch("https://beemazing.onrender.com/set-admin-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  }).then(res => res.json()).then(data => {
+    if (data.success) showStep(2);
+    else alert(data.message || "Failed to save password");
+  });
+}
+
 
 
 
@@ -342,7 +350,8 @@ function addAdminInput() {
   }
   
  // 🔁 Save to localStorage so we can reload these names later
- localStorage.setItem("onboardingChildNames", JSON.stringify(names));
+ localStorage.setItem(`onboardingChildNames_${email}`, JSON.stringify(names));
+
 
   const createPromises = names.map(name => {
     return fetch("https://beemazing.onrender.com/add-user", {
@@ -390,7 +399,7 @@ function addChildInput() {
     const names = Array.from(document.querySelectorAll(".child-name"))
       .map(el => el.value.trim())
       .filter(Boolean);
-    localStorage.setItem("onboardingChildNames", JSON.stringify(names));
+      localStorage.setItem(`onboardingChildNames_${email}`, JSON.stringify(names));
   });
 }
 
@@ -432,11 +441,20 @@ function addChildInput() {
   const parentUser = adminUsers.find(u => permissions[u] === "Admin");
 
   if (email && parentUser) {
+    // 🧼 Clean up onboarding data
+    localStorage.removeItem(`onboardingChildNames_${email}`);
+    localStorage.removeItem("onboardingReturn");
+    localStorage.removeItem("onboardingTaskTitles");
+    localStorage.removeItem("onboardingRewardTitles");
+    localStorage.removeItem("onboardingChildName");
+
+    // ✅ Redirect to user profile
     window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(email)}&user=${encodeURIComponent(parentUser)}`;
   } else {
     alert("Error: Could not find parent profile.");
   }
 }
+
 
 
 
@@ -478,7 +496,7 @@ async function fetchUsersFromServer(email) {
         allUserData[email] = { users: [], permissions: {} };
       }
 
-      const savedOrder = JSON.parse(localStorage.getItem("onboardingChildNames") || "[]");
+      const savedOrder = JSON.parse(localStorage.getItem(`onboardingChildNames_${email}`) || "[]");
 
       // Reorder users to match saved onboarding order
       const allServerUsers = data.users || [];
