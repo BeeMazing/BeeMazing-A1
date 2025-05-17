@@ -194,6 +194,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
     const email = localStorage.getItem("currentAdminEmail");
 
+
+
     function showStep(stepNum) {
   document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
   document.getElementById(`step${stepNum}`).classList.add('active');
@@ -204,10 +206,21 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   if (stepNum === 2) {
-  restoreParentInputs();
+    restoreParentInputs();
+  }
+
+  if (stepNum === 4) {
+    // ✅ Show the task title saved during onboarding
+    const title = localStorage.getItem("onboarding_task_title");
+    const taskTitleList = document.getElementById("taskTitleList");
+    taskTitleList.innerHTML = title
+      ? `<div style="background:#2C2F3A;padding:10px;border-radius:8px;">✅ Task created: <strong>${title}</strong></div>`
+      : `<div style="color:#ccc;">No task created yet.</div>`;
+  }
 }
 
-}
+
+
 
 
 function restoreChildInputs() {
@@ -462,6 +475,7 @@ function addChildInput() {
     localStorage.removeItem("onboardingTaskTitles");
     localStorage.removeItem("onboardingRewardTitles");
     localStorage.removeItem("onboardingChildName");
+    localStorage.removeItem("onboarding_task_title");
 
     // ✅ Redirect to user profile
     window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(email)}&user=${encodeURIComponent(parentUser)}`;
