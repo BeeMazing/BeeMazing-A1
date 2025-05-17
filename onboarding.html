@@ -65,7 +65,9 @@ input::placeholder {
   opacity: 0.8;
 }
 
-
+.step-controls {
+  margin-top: 20px;
+}
 
   </style>
 </head>
@@ -77,13 +79,34 @@ input::placeholder {
     <input type="password" id="parentPassword" placeholder="Enter Password"><br>
     <input type="password" id="confirmParentPassword" placeholder="Confirm Password"><br>
     <button onclick="saveParentPassword()">Continue</button>
+    <div class="step-controls">
+      <!-- Only Next -->
+      <button class="next-btn" onclick="showStep(2)">Next</button>
+    </div>
   </div>
+  
+  
 
   <div id="step2" class="step">
     <h2>Step 2: Create Parent Account</h2>
-    <input type="text" id="adminName" placeholder="Parent Name"><br>
-    <button onclick="createParent()">Continue</button>
+
+    <div id="adminInputs">
+        <input type="text" class="admin-name" placeholder="Parent Name"><br>
+      </div>
+      
+      <button onclick="addAdminInput()" style="background: none; color: #fff; font-size: 16px; border: none; text-decoration: underline; cursor: pointer;">
+        + Add more...
+      </button><br>
+      
+      <button onclick="createParent()">Continue</button>
+      
+
+    <div class="step-controls">
+      <button class="back-btn" onclick="showStep(1)">Back</button>
+      <button class="next-btn" onclick="showStep(3)">Next</button>
+    </div>
   </div>
+  
 
   <div id="step3" class="step">
     <h2>Step 3: Create Child Account</h2>
@@ -116,7 +139,12 @@ input::placeholder {
     <h2>Step 5: Create First Reward</h2>
     <button onclick="goToAddRewardPage()">Create First Reward</button>
     <button class="skip-btn" onclick="skipStep(6)">Skip</button>
+    <div class="step-controls">
+      <button class="back-btn" onclick="showStep(4)">Back</button>
+    </div>
   </div>
+  
+  
   
 
 
@@ -153,9 +181,27 @@ window.addEventListener("DOMContentLoaded", () => {
     const email = localStorage.getItem("currentAdminEmail");
 
     function showStep(stepNum) {
-      document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
-      document.getElementById(`step${stepNum}`).classList.add('active');
-    }
+  document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+  document.getElementById(`step${stepNum}`).classList.add('active');
+  updateNavigationButtons(stepNum);
+}
+
+
+
+function updateNavigationButtons(currentStep) {
+  const steps = document.querySelectorAll('.step');
+  steps.forEach((stepEl, index) => {
+    const backBtn = stepEl.querySelector(".back-btn");
+    const nextBtn = stepEl.querySelector(".next-btn");
+
+    if (backBtn) backBtn.style.display = currentStep > 1 && currentStep < 6 ? "inline-block" : "none";
+    if (nextBtn) nextBtn.style.display = currentStep >= 1 && currentStep < 5 ? "inline-block" : "none";
+  });
+}
+
+
+
+
 
     function saveParentPassword() {
       const password = document.getElementById("parentPassword").value.trim();
@@ -174,22 +220,51 @@ window.addEventListener("DOMContentLoaded", () => {
       });
     }
 
+
+
     function createParent() {
-      const name = document.getElementById("adminName").value.trim();
-      if (!name) return alert("Enter a name");
-      fetch("https://beemazing.onrender.com/add-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminEmail: email, newUser: name, role: "Admin" })
-      }).then(res => res.json()).then(data => {
-        if (data.success) {
-  fetchUsersFromServer(email).then(() => showStep(3));
-} else {
-  alert("Failed to create parent");
+  const inputEls = document.querySelectorAll(".admin-name");
+  const names = Array.from(inputEls).map(input => input.value.trim()).filter(Boolean);
+
+  if (names.length === 0) {
+    alert("Enter at least one parent name");
+    return;
+  }
+
+  const createPromises = names.map(name => {
+    return fetch("https://beemazing.onrender.com/add-user", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminEmail: email, newUser: name, role: "Admin" })
+    }).then(res => res.json());
+  });
+
+  Promise.all(createPromises)
+    .then(results => {
+      const allSucceeded = results.every(r => r.success);
+      if (allSucceeded) {
+        fetchUsersFromServer(email).then(() => showStep(3));
+      } else {
+        alert("Some parent accounts failed to create. Please try again.");
+      }
+    })
+    .catch(err => {
+      console.error("Error creating parents:", err);
+      alert("Something went wrong. Please try again.");
+    });
 }
 
-      });
-    }
+
+function addAdminInput() {
+  const container = document.getElementById("adminInputs");
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = "Parent Name";
+  input.className = "admin-name";
+  input.style.marginTop = "10px";
+  container.appendChild(input);
+}
+
 
 
 
