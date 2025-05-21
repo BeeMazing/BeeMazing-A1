@@ -1774,12 +1774,16 @@ async function loadTasks() {
                     ` : turn.isCompleted ? `
                       <button class="revert-btn" onclick="handleRevert('${task.title}', '${task.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
                     ` : `
+
+                    <!-- replace user -->
                       <select id="replace-select-${turn.index}">
                         <option value="">Select User</option>
                         ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
                       </select>
                       <button class="replace-btn" onclick="handleReplace('${task.title}', '${task.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
-                    `}
+                    <!-- replace user -->
+                    
+                      `}
                   </div>
                 `).join('')
                 : task.users.map(user => {
@@ -1795,8 +1799,16 @@ async function loadTasks() {
                           ` : turn.isCompleted ? `
                             <button class="revert-btn" onclick="handleRevert('${task.title}', '${task.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
                           ` : `
-                      
-                          `}
+
+                          <!-- replace user -->
+                            <select id="replace-select-${turn.index}">
+                              <option value="">Select User</option>
+                              ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
+                            </select>
+                            <button class="replace-btn" onclick="handleReplace('${task.title}', '${task.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
+                             <!-- replace user -->
+                          
+                            `}
                         </div>
                       `).join('')}
                     `;
