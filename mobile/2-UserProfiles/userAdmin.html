@@ -20,11 +20,11 @@
     }
 
 :root {
-    --primary-color: #FFC107;
-    --secondary-color: #212121;
+    --primary-color: #131312;
+    --secondary-color: #e4e3e0;
     --accent-color: #FFFFFF;
     --light-bg: #1E1F26;
-    --text-color: #FFFFFF;
+    --text-color: #000000;
     --footer-height: 70px;
     --modal-bg: rgba(33, 33, 33, 0.7); /* Added */
     --border-dark: #444754; /* Added */
@@ -38,14 +38,14 @@
 
     body {
       font-family: 'Poppins', sans-serif;
-      background-color: #1E1F26;
+      background-color: #faf9f5;
       color: #FFFFFF;
       margin: 0;
       padding: 0;
     }
 
     .header {
-    background: linear-gradient(135deg, var(--primary-color), #FFB300);
+    background: linear-gradient(135deg, var(--primary-color), #181816);
     padding: 15px;
     display: flex;
     align-items: center;
@@ -66,6 +66,7 @@
     z-index: 50;
     padding: 5px 0;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    color: black;
 }
     .month-nav {
         display: flex;
@@ -78,15 +79,15 @@
     }
     .month-nav button {
       margin: 0 10px;
-      background: #FFC107;
-      color: #212121;
+      background: #181816;
+      color: #e4e3e0;
       border: none;
       padding: 5px 10px;
       border-radius: 6px;
       cursor: pointer;
     }
     .month-nav button:hover {
-      background: #FFD54F;
+      background: #181816;
     }
     .day-scroll-wrapper {
       display: flex;
@@ -95,8 +96,8 @@
       overflow: hidden;
     }
     .scroll-btn {
-      background: #212121;
-      color: #fff;
+      background: #e4e3e0;
+      color: #181816;
       border: none;
       font-size: 20px;
       padding: 5px 10px;
@@ -120,8 +121,8 @@
       cursor: pointer;
     }
     .day.selected {
-      background: #FFC107;
-      color: #212121;
+      background: #131311;
+      color: #fff;
     }
     .task-entry {
       background: #2A2B32;
@@ -861,6 +862,68 @@
 
 /* Selecting Parent/Child Bee */
 
+
+
+
+
+#adminSections {
+  margin-top: 130px;
+  padding-bottom: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 15px 80px;
+}
+
+.admin-card {
+  background: #fff;
+  color: #212121;
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.admin-card:hover {
+  transform: scale(1.01);
+}
+
+.card-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-icon {
+  font-size: 20px;
+}
+
+.card-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #444;
+}
+
+.card-count {
+  font-weight: 500;
+}
+
+.card-arrow {
+  font-size: 18px;
+}
+
+
+
+
+
+
   </style>
 
 
@@ -887,8 +950,55 @@
                 <button class="scroll-btn" id="scrollRight">></button>
             </div>
         </div>
+        
 
-  <div id="taskContainer">Loading tasks...</div>
+        <div id="adminSections">
+          <div class="admin-card">
+            <div class="card-left">
+              <span class="card-icon">🕒</span>
+              <span class="card-title">Tasks Needing Approval</span>
+            </div>
+            <div class="card-right">
+              <span class="card-count" id="approvalCount">(0)</span>
+              <span class="card-arrow">›</span>
+            </div>
+          </div>
+        
+          <div class="admin-card">
+            <div class="card-left">
+              <span class="card-icon">⚠️</span>
+              <span class="card-title">Overdue Tasks</span>
+            </div>
+            <div class="card-right">
+              <span class="card-count" id="overdueCount">(0)</span>
+              <span class="card-arrow">›</span>
+            </div>
+          </div>
+        
+          <div class="admin-card">
+            <div class="card-left">
+              <span class="card-icon">🎁</span>
+              <span class="card-title">Rewards Needing Approval</span>
+            </div>
+            <div class="card-right">
+              <span class="card-count" id="rewardCount">(0)</span>
+              <span class="card-arrow">›</span>
+            </div>
+          </div>
+        
+          <div class="admin-card">
+            <div class="card-left">
+              <span class="card-icon">👤</span>
+              <span class="card-title">Your Tasks</span>
+            </div>
+            <div class="card-right">
+              <span class="card-count" id="yourTaskCount">(0)</span>
+              <span class="card-arrow">›</span>
+            </div>
+          </div>
+        </div>
+        
+        
 
 <!-- User Selection ----------------------------->
 <div class="bottom-sheet" id="userSelectModal">
@@ -1775,7 +1885,13 @@ async function loadTasks() {
                       <button class="revert-btn" onclick="handleRevert('${task.title}', '${task.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
                     ` : `
 
-
+                    <!-- replace user -->
+                      <select id="replace-select-${turn.index}">
+                        <option value="">Select User</option>
+                        ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
+                      </select>
+                      <button class="replace-btn" onclick="handleReplace('${task.title}', '${task.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
+                    <!-- replace user -->
                     
                       `}
                   </div>
@@ -1794,7 +1910,13 @@ async function loadTasks() {
                             <button class="revert-btn" onclick="handleRevert('${task.title}', '${task.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
                           ` : `
 
-      
+                          <!-- replace user -->
+                            <select id="replace-select-${turn.index}">
+                              <option value="">Select User</option>
+                              ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
+                            </select>
+                            <button class="replace-btn" onclick="handleReplace('${task.title}', '${task.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
+                             <!-- replace user -->
                           
                             `}
                         </div>
@@ -1866,12 +1988,14 @@ function generateScrollableDates(monthOffset = 0) {
   btn.classList.add("selected");
   selectedDate = btn.dataset.date;
   loadTasks();
+  loadOverdueTasks(); // 🐝 New line
 });
 
     if (btn.dataset.date === todayStr) {
   btn.classList.add("selected");
   selectedDate = btn.dataset.date;
   loadTasks();
+  loadOverdueTasks(); // 🐝 New line
 }
 
     container.appendChild(btn);
@@ -1921,6 +2045,46 @@ document.getElementById("scrollRight").addEventListener("click", () => {
   });
 });
 
+
+
+
+
+async function loadOverdueTasks() {
+  try {
+    const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
+      cache: "no-store"
+    });
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const { tasks } = await res.json();
+
+    const overdueTasks = [];
+
+    for (const task of tasks) {
+      if (!task.title || !task.date || !Array.isArray(task.users)) continue;
+
+      const taskDate = task.date.split(" to ")[0];
+      if (taskDate !== selectedDate) continue;
+
+      const requiredUsers = Array.isArray(task.users) ? task.users : [];
+      const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+
+      // If at least one user from the required list has NOT completed
+      const incomplete = requiredUsers.some(user => !completedUsers.includes(user));
+      if (incomplete) {
+        overdueTasks.push(task);
+      }
+    }
+
+    // ✅ Update the count display
+    document.getElementById("overdueCount").textContent = `(${overdueTasks.length})`;
+
+    // Optional: render them somewhere if needed
+    // console.log("Overdue tasks:", overdueTasks);
+  } catch (err) {
+    console.error("Error loading overdue tasks:", err);
+    document.getElementById("overdueCount").textContent = `(0)`;
+  }
+}
 
 
   </script>
