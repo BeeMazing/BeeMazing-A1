@@ -1956,6 +1956,12 @@ async function loadOverdueTasks() {
       if (!task || !task.users || !task.title || !task.date) return false;
       if (!filterTasksForDate([task], todayStr).length) return false;
 
+      if (!Array.isArray(task.users) || task.users.length === 0) {
+  task.users = ["Unknown"];
+}
+
+
+
       let turnData;
       if (task.settings?.includes("Rotation")) {
         turnData = typeof mixedTurnData === "function" ? mixedTurnData(task, todayStr) : null;
