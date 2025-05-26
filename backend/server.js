@@ -1414,12 +1414,13 @@ app.get("/api/admin-tasks", async (req, res) => {
 
 
 
+//  taskrotations.js
 
 app.post('/api/review-task', async (req, res) => {
-  const { adminEmail, title, date, selectedDate, user, decision } = req.body;
+  const { adminEmail, title, date, selectedDate, user, decision, index, repetition } = req.body;
 
   try {
-    if (!adminEmail || !title || !date || !selectedDate || !user || !decision) {
+    if (!adminEmail || !title || !date || !selectedDate || !user || !decision || repetition === undefined) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -1445,25 +1446,30 @@ app.post('/api/review-task', async (req, res) => {
 
     const pending = task.pendingCompletions[selectedDate];
     const completions = task.completions[selectedDate];
-    const pendingIndex = pending.indexOf(user);
 
-    if (pendingIndex === -1 && decision === 'decline') {
-      return res.status(400).json({ error: 'User has not submitted this task for review' });
+    // Find the pending entry for this user and repetition
+    const pendingEntryIndex = pending.findIndex(p => p.user === user && p.repetition === repetition);
+    if (pendingEntryIndex === -1 && decision === 'accept') {
+      return res.status(400).json({ error: 'User has not submitted this task for this repetition' });
     }
 
     let rewardAmount = 0;
+    const requiredTimes = task.timesPerDay || 1;
+
     if (decision === 'accept') {
-      if (pendingIndex === -1) {
-        return res.status(400).json({ error: 'User has not submitted this task for review' });
+      // Count current completions for this user
+      const userCompletions = completions.filter(c => c.user === user).length;
+      if (userCompletions >= requiredTimes) {
+        return res.status(400).json({ error: 'User has already completed the maximum number of tasks for this day' });
       }
+
       // Move from pending to completions
-      pending.splice(pendingIndex, 1);
-      if (!completions.includes(user)) {
-        completions.push(user);
-      }
-      // Award reward
+      const pendingEntry = pending.splice(pendingEntryIndex, 1)[0];
+      completions.push({ user, repetition });
+
+      // Award reward only if this is a new completion
       rewardAmount = Number(task.reward || 0);
-      if (rewardAmount > 0) {
+      if (rewardAmount > 0 && userCompletions < requiredTimes) {
         const rewards = admin.rewards || {};
         rewards[user] = (rewards[user] || 0) + rewardAmount;
         await admins.updateOne(
@@ -1473,7 +1479,9 @@ app.post('/api/review-task', async (req, res) => {
       }
     } else if (decision === 'decline') {
       // Remove from pending
-      pending.splice(pendingIndex, 1);
+      if (pendingEntryIndex !== -1) {
+        pending.splice(pendingEntryIndex, 1);
+      }
     }
 
     tasks[taskIndex] = task;
@@ -1492,7 +1500,6 @@ app.post('/api/review-task', async (req, res) => {
 
 
 
-
 // userAdmin.html ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1503,6 +1510,7 @@ app.post('/api/review-task', async (req, res) => {
 
 
 
+// taskrotations.js
 
 app.post("/api/complete-task", async (req, res) => {
   const { adminEmail, taskTitle, user, date } = req.body;
@@ -1547,21 +1555,21 @@ app.post("/api/complete-task", async (req, res) => {
     task.completions = task.completions || {};
     task.completions[normalizedDate] = task.completions[normalizedDate] || [];
 
-// Count total submissions (pending + completed) by this user on this date
-const pendingCount = task.pendingCompletions[normalizedDate].filter(u => u === user).length;
-const completedCount = task.completions[normalizedDate].filter(u => u === user).length;
-const totalCount = pendingCount + completedCount;
+    // Count total submissions (pending + completed) by this user on this date
+    const pendingCount = task.pendingCompletions[normalizedDate].filter(p => p.user === user).length;
+    const completedCount = task.completions[normalizedDate].filter(c => c.user === user).length;
+    const totalCount = pendingCount + completedCount;
 
-// Determine how many times this task can be completed per day
-let requiredTimes = 1;
-if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+    // Determine how many times this task can be completed per day
+    let requiredTimes = 1;
+    if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+    if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+    if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-// Block if they've already completed enough times
-if (totalCount >= requiredTimes) {
-  return res.status(400).json({ error: "Task already submitted maximum times today" });
-}
+    // Block if they've already submitted enough times
+    if (totalCount >= requiredTimes) {
+      return res.status(400).json({ error: "Task already submitted maximum times today" });
+    }
 
     // Check if user is assigned (in task.users or tempTurnReplacement)
     const userList = task.users || [];
@@ -1571,7 +1579,9 @@ if (totalCount >= requiredTimes) {
       return res.status(400).json({ error: "User not assigned to this task" });
     }
 
-    task.pendingCompletions[normalizedDate].push(user);
+    // Add to pendingCompletions with repetition
+    const repetition = totalCount + 1; // 1 for first attempt, 2 for second, etc.
+    task.pendingCompletions[normalizedDate].push({ user, repetition });
 
     // Update currentTurnIndex based on assigned users (including tempTurnReplacement)
     const assignedUsers = [...new Set([...userList, ...Object.values(tempTurnReplacement)])];
@@ -1580,10 +1590,10 @@ if (totalCount >= requiredTimes) {
       if (task.currentTurnIndex === -1) task.currentTurnIndex = 0;
     }
 
-// Calculate total completions (pending + completed)
-const totalCompletions = task.pendingCompletions[normalizedDate].length + task.completions[normalizedDate].length;
-// Advance turn to the next user in rotation
-task.currentTurnIndex = totalCompletions % assignedUsers.length;
+    // Calculate total completions (pending + completed)
+    const totalCompletions = task.pendingCompletions[normalizedDate].length + task.completions[normalizedDate].length;
+    // Advance turn to the next user in rotation
+    task.currentTurnIndex = totalCompletions % assignedUsers.length;
 
     tasks[taskIndex] = task;
 
@@ -1610,6 +1620,9 @@ task.currentTurnIndex = totalCompletions % assignedUsers.length;
     res.status(500).json({ error: `Server error: ${err.message}` });
   }
 });
+
+
+
 
 
 

@@ -417,81 +417,101 @@ function mixedTurnData(task, selectedDate) {
 
 
 
+
 function individualTurnData(task, selectedDate) {
-    const repeat = task.repeat || "Daily";
-    const requiredTimes = repeat === "Monthly" ? (task.timesPerMonth || 1)
-                      : repeat === "Weekly" ? (task.timesPerWeek || 1)
-                      : repeat === "Daily" ? (task.timesPerDay || 1)
-                      : 1;
-
-    const selected = parseLocalDate(selectedDate);
-    const selectedYear = selected.getFullYear();
-    const selectedMonth = selected.getMonth();
-
-    const completions = [];
-    const pendingCompletions = [];
-
-    if (repeat === "Monthly") {
-        const gather = (source) => {
-            const list = [];
-            for (const dateStr in source || {}) {
-                const d = parseLocalDate(dateStr);
-                if (d.getFullYear() === selectedYear && d.getMonth() === selectedMonth) {
-                    list.push(...(Array.isArray(source[dateStr]) ? source[dateStr] : []));
-                }
-            }
-            return list;
-        };
-        completions.push(...gather(task.completions));
-        pendingCompletions.push(...gather(task.pendingCompletions));
-    } else {
-        completions.push(...(Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : []));
-        pendingCompletions.push(...(Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : []));
-    }
-
-    const turns = [];
-    const userCompletionCounts = {};
-    const userPendingCounts = {};
-
-    completions.forEach(u => {
-        userCompletionCounts[u] = (userCompletionCounts[u] || 0) + 1;
-    });
-
-    pendingCompletions.forEach(u => {
-        userPendingCounts[u] = (userPendingCounts[u] || 0) + 1;
-    });
-
-    const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
-
-    for (const user of userOrder) {
-        for (let rep = 1; rep <= requiredTimes; rep++) {
-            let isCompleted = false;
-            let isPending = false;
-
-            if (userCompletionCounts[user] && userCompletionCounts[user] > 0) {
-                isCompleted = true;
-                userCompletionCounts[user]--;
-            } else if (userPendingCounts[user] && userPendingCounts[user] > 0) {
-                isPending = true;
-                userPendingCounts[user]--;
-            }
-
-            turns.push({
-                user,
-                repetition: rep,
-                isCompleted,
-                isPending,
-                index: (userOrder.indexOf(user) * requiredTimes) + (rep - 1)
-            });
+    try {
+        if (!task || typeof task !== "object" || !Array.isArray(task.users) || !task.date) {
+            console.error("Invalid task input in individualTurnData:", task);
+            return { turns: [], completedCount: 0, requiredTimes: 1 };
         }
-    }
 
-    return {
-        turns,
-        completedCount: completions.length + pendingCompletions.length,
-        requiredTimes
-    };
+        const repeat = task.repeat || "Daily";
+        const requiredTimes = repeat === "Monthly" ? (task.timesPerMonth || 1)
+                          : repeat === "Weekly" ? (task.timesPerWeek || 1)
+                          : repeat === "Daily" ? (task.timesPerDay || 1)
+                          : 1;
+
+        const selected = parseLocalDate(selectedDate);
+        const selectedYear = selected.getFullYear();
+        const selectedMonth = selected.getMonth();
+
+        let completions = [];
+        let pendingCompletions = [];
+
+        if (repeat === "Monthly") {
+            const gather = (source) => {
+                const list = [];
+                for (const dateStr in source || {}) {
+                    const d = parseLocalDate(dateStr);
+                    if (d.getFullYear() === selectedYear && d.getMonth() === selectedMonth) {
+                        list.push(...(Array.isArray(source[dateStr]) ? source[dateStr] : []));
+                    }
+                }
+                return list;
+            };
+            completions = gather(task.completions);
+            pendingCompletions = gather(task.pendingCompletions);
+        } else {
+            completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
+            pendingCompletions = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
+        }
+
+        const turns = [];
+        const userCompletionCounts = {};
+        const userPendingCounts = {};
+
+        // Count completions and pending per user and repetition
+        completions.forEach(c => {
+            if (c.user) {
+                userCompletionCounts[c.user] = (userCompletionCounts[c.user] || 0) + 1;
+            }
+        });
+        pendingCompletions.forEach(p => {
+            if (p.user) {
+                userPendingCounts[p.user] = (userPendingCounts[p.user] || 0) + 1;
+            }
+        });
+
+        const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
+
+        let globalIndex = 0;
+        for (const user of userOrder) {
+            for (let rep = 1; rep <= requiredTimes; rep++) {
+                let isCompleted = false;
+                let isPending = false;
+
+                // Check if this repetition is completed or pending
+                const completedReps = completions.filter(c => c.user === user && c.repetition === rep).length;
+                const pendingReps = pendingCompletions.filter(p => p.user === user && p.repetition === rep).length;
+                if (completedReps > 0) {
+                    isCompleted = true;
+                } else if (pendingReps > 0) {
+                    isPending = true;
+                }
+
+                turns.push({
+                    user,
+                    repetition: rep,
+                    isCompleted,
+                    isPending,
+                    index: globalIndex
+                });
+                globalIndex++;
+            }
+        }
+
+        return {
+            turns,
+            completedCount: completions.length + pendingCompletions.length,
+            requiredTimes: requiredTimes * userOrder.length
+        };
+    } catch (err) {
+        console.error("Error in individualTurnData:", err);
+        return { turns: [], completedCount: 0, requiredTimes: 1 };
+    }
 }
+
+
 
 
 
