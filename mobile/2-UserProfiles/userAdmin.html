@@ -36,6 +36,7 @@
 }
 
 
+
     body {
       font-family: 'Poppins', sans-serif;
       background-color: #faf9f5;
@@ -43,6 +44,7 @@
       margin: 0;
       padding: 0;
     }
+
 
     .header {
     background: linear-gradient(135deg, var(--primary-color), #181816);
@@ -216,6 +218,7 @@
     position: fixed;
     bottom: 0;
     width: 100%;
+    left: 0;
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -1053,8 +1056,9 @@
             </div>
             <div id="overdueTasks" class="task-list" style="display: none; padding: 0 10px 10px;"></div>
           </div>
+  
         
-          <div class="admin-card" id="rewardApprovalCard" style="flex-direction: column; align-items: stretch;">
+          <div class="admin-card" id="rewardCard" style="flex-direction: column; align-items: stretch;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div class="card-left">
                 <span class="card-icon">🎁</span>
@@ -1065,12 +1069,10 @@
                 <span class="card-arrow" id="rewardArrow">›</span>
               </div>
             </div>
-            <div id="rewardApprovalTasks" class="task-list" style="display: none; padding: 0 10px 10px;">
-              <!-- Will load reward approvals here later -->
-            </div>
+            <div id="rewardTasks" class="task-list" style="display: none; padding: 0 10px 10px;"></div>
           </div>
           
-          <div class="admin-card" id="yourTasksCard" style="flex-direction: column; align-items: stretch;">
+          <div class="admin-card" id="yourCard" style="flex-direction: column; align-items: stretch;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div class="card-left">
                 <span class="card-icon">👤</span>
@@ -1081,12 +1083,11 @@
                 <span class="card-arrow" id="yourArrow">›</span>
               </div>
             </div>
-            <div id="yourTasksList" class="task-list" style="display: none; padding: 0 10px 10px;">
-              <!-- Will load your tasks here later -->
-            </div>
+            <div id="yourTasks" class="task-list" style="display: none; padding: 0 10px 10px;"></div>
           </div>
           
-        
+
+
 
         
         
@@ -2293,29 +2294,37 @@ approvalCard.addEventListener("click", () => {
 
 
 
-// Rewards Needing Approval Expand/Collapse
-const rewardApprovalCard = document.getElementById("rewardApprovalCard");
-const rewardTasksContainer = document.getElementById("rewardApprovalTasks");
+
+
+// Expand/collapse for Rewards Needing Approval
+const rewardCard = document.getElementById("rewardCard");
+const rewardTasksContainer = document.getElementById("rewardTasks");
 const rewardArrow = document.getElementById("rewardArrow");
 let rewardVisible = false;
 
-rewardApprovalCard.addEventListener("click", () => {
+rewardCard.addEventListener("click", () => {
   rewardVisible = !rewardVisible;
   rewardTasksContainer.style.display = rewardVisible ? "block" : "none";
   rewardArrow.textContent = rewardVisible ? "⌄" : "›";
 });
 
-// Your Tasks Expand/Collapse
-const yourTasksCard = document.getElementById("yourTasksCard");
-const yourTasksContainer = document.getElementById("yourTasksList");
+// Expand/collapse for Your Tasks
+const yourCard = document.getElementById("yourCard");
+const yourTasksContainer = document.getElementById("yourTasks");
 const yourArrow = document.getElementById("yourArrow");
-let yourTasksVisible = false;
+let yourVisible = false;
 
-yourTasksCard.addEventListener("click", () => {
-  yourTasksVisible = !yourTasksVisible;
-  yourTasksContainer.style.display = yourTasksVisible ? "block" : "none";
-  yourArrow.textContent = yourTasksVisible ? "⌄" : "›";
+yourCard.addEventListener("click", () => {
+  yourVisible = !yourVisible;
+  yourTasksContainer.style.display = yourVisible ? "block" : "none";
+  yourArrow.textContent = yourVisible ? "⌄" : "›";
 });
+
+
+
+
+
+
 
 
   </script>
