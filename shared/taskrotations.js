@@ -462,58 +462,41 @@ function individualTurnData(task, selectedDate) {
 
         let globalIndex = 0;
         for (const user of userOrder) {
-            let userCompletedCount = 0;
-            let userPendingCount = 0;
-
-            // Count completions and pending for this user
-            completions.forEach(c => {
-                if (c.user === user) {
-                    userCompletedCount++;
-                }
-            });
-            pendingCompletions.forEach(p => {
-                if (p.user === user) {
-                    userPendingCount++;
-                }
-            });
+            const userCompletions = completions.filter(c => c.user === user);
+            const userPendings = pendingCompletions.filter(p => p.user === user);
 
             for (let rep = 1; rep <= requiredTimes; rep++) {
-                let isCompleted = false;
-                let isPending = false;
-
-                // Check if this repetition is completed or pending
-                const completedReps = completions.filter(c => c.user === user && c.repetition === rep).length;
-                const pendingReps = pendingCompletions.filter(p => p.user === user && p.repetition === rep).length;
-                if (completedReps > 0) {
-                    isCompleted = true;
-                } else if (pendingReps > 0) {
-                    isPending = true;
-                }
+                const isCompleted = userCompletions.some(c => c.repetition === rep);
+                const isPending = !isCompleted && userPendings.some(p => p.repetition === rep);
 
                 turns.push({
                     user,
                     repetition: rep,
                     isCompleted,
                     isPending,
-                    index: globalIndex
+                    index: globalIndex++
                 });
-                globalIndex++;
             }
         }
 
-        // completedCount is the total for all users (for admin views)
+        // completedCount is global, but only for admin/debug views
         const completedCount = completions.length + pendingCompletions.length;
 
         return {
             turns,
             completedCount,
-            requiredTimes // Per user, not multiplied by user count
+            requiredTimes // Per-user requirement
         };
     } catch (err) {
         console.error("Error in individualTurnData:", err);
         return { turns: [], completedCount: 0, requiredTimes: 1 };
     }
 }
+
+
+
+
+
 
 
 
