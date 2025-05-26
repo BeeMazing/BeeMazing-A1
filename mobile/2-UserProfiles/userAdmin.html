@@ -1771,13 +1771,6 @@ async function handleDecision(title, date, index, decision, user, event) {
     const reviewData = await response.json();
     if (!response.ok) throw new Error(reviewData.error || "Failed to process decision");
 
-    // Only award points if the user hasn't completed the required number of turns
-    if (decision === "accept" && reviewData.rewardAmount > 0 && userCompletions < requiredTimes) {
-      await updateLuckyChestProgress(user, reviewData.rewardAmount);
-      await updateUserReward(user, reviewData.rewardAmount);
-      await saveTaskHistory(user, { title });
-    }
-
     setTimeout(() => {
       loadTasks();
       loadPendingTasks();
