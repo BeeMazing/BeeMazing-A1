@@ -1033,7 +1033,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div class="card-left">
                 <span class="card-icon">🕒</span>
-                <span class="card-title">Tasks Needing Approval 1</span>
+                <span class="card-title">Tasks Needing Approval 7</span>
               </div>
               <div class="card-right">
                 <span class="card-count" id="approvalCount">(0)</span>
@@ -1175,48 +1175,7 @@
   <script>
 
 
-async function migrateTaskData() {
-  const db = await connectDB();
-  const admins = db.collection("admins");
-  const adminCursor = admins.find();
 
-  while (await adminCursor.hasNext()) {
-    const admin = await adminCursor.next();
-    const tasks = admin.tasks || [];
-
-    for (const task of tasks) {
-      for (const date in task.completions) {
-        const oldCompletions = task.completions[date];
-        if (oldCompletions.length > 0 && typeof oldCompletions[0] === "string") {
-          const newCompletions = [];
-          const userCounts = {};
-          oldCompletions.forEach(user => {
-            userCounts[user] = (userCounts[user] || 0) + 1;
-            newCompletions.push({ user, repetition: userCounts[user] });
-          });
-          task.completions[date] = newCompletions;
-        }
-      }
-      for (const date in task.pendingCompletions) {
-        const oldPending = task.pendingCompletions[date];
-        if (oldPending.length > 0 && typeof oldPending[0] === "string") {
-          const newPending = [];
-          const userCounts = {};
-          oldPending.forEach(user => {
-            userCounts[user] = (userCounts[user] || 0) + 1;
-            newPending.push({ user, repetition: userCounts[user] });
-          });
-          task.pendingCompletions[date] = newPending;
-        }
-      }
-    }
-
-    await admins.updateOne(
-      { email: admin.email },
-      { $set: { tasks } }
-    );
-  }
-}
 
 
 

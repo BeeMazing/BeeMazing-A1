@@ -851,6 +851,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // addtasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
 
 
+
 async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
     const userTasksDiv = document.getElementById("userTasks");
     userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
@@ -893,43 +894,44 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         taskDiv.className = "task-item";
 
         const isRotation = task.settings?.includes("Rotation");
-let turnData;
+        let turnData;
 
-if (isRotation) {
-    if (typeof mixedTurnData !== 'function') {
-        console.error(`mixedTurnData is not defined for task: ${task.title}`);
-        turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
-    } else {
-        turnData = mixedTurnData(task, selectedDate);
-    }
-} else {
-    if (typeof individualTurnData !== 'function') {
-        console.error(`individualTurnData is not defined for task: ${task.title}`);
-        turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
-    } else {
-        turnData = individualTurnData(task, selectedDate);
-    }
-}
+        if (isRotation) {
+            if (typeof mixedTurnData !== 'function') {
+                console.error(`mixedTurnData is not defined for task: ${task.title}`);
+                turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+            } else {
+                turnData = mixedTurnData(task, selectedDate);
+            }
+        } else {
+            if (typeof individualTurnData !== 'function') {
+                console.error(`individualTurnData is not defined for task: ${task.title}`);
+                turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+            } else {
+                turnData = individualTurnData(task, selectedDate);
+            }
+        }
 
-const userTurns = turnData.turns.filter(turn => turn.user === userName);
-const userTotal = userTurns.reduce((sum, turn) => sum + (turn.isCompleted || turn.isPending ? 1 : 0), 0);
-const isCompleted = isRotation ? userTotal >= userTurns.length : userTotal >= turnData.requiredTimes;
+        const userTurns = turnData.turns.filter(turn => turn.user === userName);
+        const userTotal = userTurns.reduce((sum, turn) => sum + (turn.isCompleted || turn.isPending ? 1 : 0), 0);
+        const userRequiredTimes = isRotation ? userTurns.length : turnData.requiredTimes;
+        const isCompleted = userTotal >= userRequiredTimes;
 
-let taskHTML = `<strong>${task.title}</strong><br>`;
+        let taskHTML = `<strong>${task.title}</strong><br>`;
 
-if (isRotation) {
-    const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
-    if (activeTurn) {
-        const nextTurnIndex = (activeTurn.index + 1) % task.users.length;
-        const nextUser = turnData.turns.find(t => t.index === nextTurnIndex)?.user || task.users[nextTurnIndex] || "—";
-        taskHTML += `Turn: ${activeTurn.user}<br>Next: ${nextUser}<br>`;
-    } else {
-        taskHTML += `<span style="color: green;">Turn: All done!</span><br>`;
-    }
-}
+        if (isRotation) {
+            const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
+            if (activeTurn) {
+                const nextTurnIndex = (activeTurn.index + 1) % task.users.length;
+                const nextUser = turnData.turns.find(t => t.index === nextTurnIndex)?.user || task.users[nextTurnIndex] || "—";
+                taskHTML += `Turn: ${activeTurn.user}<br>Next: ${nextUser}<br>`;
+            } else {
+                taskHTML += `<span style="color: green;">Turn: All done!</span><br>`;
+            }
+        }
 
-taskHTML += `Buzz Points: ${task.reward || 0} 🍯<br>`;
-taskHTML += `Progress: ${isRotation ? turnData.completedCount : userTotal}/${turnData.requiredTimes}<br>`;
+        taskHTML += `Buzz Points: ${task.reward || 0} 🍯<br>`;
+        taskHTML += `Progress: ${userTotal}/${userRequiredTimes}<br>`;
 
         taskDiv.innerHTML = taskHTML;
 
@@ -942,7 +944,7 @@ taskHTML += `Progress: ${isRotation ? turnData.completedCount : userTotal}/${tur
                 const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
                 canFinish = activeTurn?.user === userName;
             } else {
-                canFinish = userTotal < turnData.requiredTimes;
+                canFinish = userTotal < userRequiredTimes;
             }
         }
 
@@ -961,6 +963,9 @@ taskHTML += `Progress: ${isRotation ? turnData.completedCount : userTotal}/${tur
         userTasksDiv.appendChild(taskDiv);
     }
 }
+
+
+
 
 
 // addtasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
@@ -1025,64 +1030,61 @@ taskHTML += `Progress: ${isRotation ? turnData.completedCount : userTotal}/${tur
 // addtasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
 
 
-        function showTaskDetails(task, selectedDate = new Date().toLocaleDateString("sv-SE")) {
-          const isRotation = task.settings?.includes("Rotation");
-let turnData;
+function showTaskDetails(task, selectedDate = new Date().toLocaleDateString("sv-SE")) {
+    const isRotation = task.settings?.includes("Rotation");
+    let turnData;
 
-if (isRotation) {
-    if (typeof mixedTurnData !== 'function') {
-        console.error(`mixedTurnData is not defined for task: ${task.title}`);
-        turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+    if (isRotation) {
+        if (typeof mixedTurnData !== 'function') {
+            console.error(`mixedTurnData is not defined for task: ${task.title}`);
+            turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+        } else {
+            turnData = mixedTurnData(task, selectedDate);
+        }
     } else {
-        turnData = mixedTurnData(task, selectedDate);
+        if (typeof individualTurnData !== 'function') {
+            console.error(`individualTurnData is not defined for task: ${task.title}`);
+            turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+        } else {
+            turnData = individualTurnData(task, selectedDate);
+        }
     }
-} else {
-    if (typeof individualTurnData !== 'function') {
-        console.error(`individualTurnData is not defined for task: ${task.title}`);
-        turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+
+    const userTurns = turnData.turns.filter(turn => turn.user === userName);
+    const userTotal = userTurns.reduce((sum, turn) => sum + (turn.isCompleted || turn.isPending ? 1 : 0), 0);
+    const userRequiredTimes = isRotation ? userTurns.length : turnData.requiredTimes;
+
+    let modalHTML = `<strong>Title:</strong> ${task.title}<br>`;
+    if (task.notes) modalHTML += `<strong>Notes:</strong> ${task.notes}<br>`;
+    if (task.room) modalHTML += `<strong>Room:</strong> ${task.room}<br>`;
+    modalHTML += `<strong>Reward:</strong> ${task.reward || 0} 🍯<br>`;
+    modalHTML += `<strong>Repeat:</strong> ${task.repeat || "Daily"}<br>`;
+    const [fromDate, toDate] = (task.date || "").split(" to ");
+    if (!fromDate) {
+        modalHTML += `<strong>Date:</strong> Unknown<br>`;
+    } else if (!toDate || toDate === "3000-01-01" || toDate === fromDate) {
+        modalHTML += `<strong>Date:</strong> ${fromDate}<br>`;
     } else {
-        turnData = individualTurnData(task, selectedDate);
+        modalHTML += `<strong>Date:</strong> ${fromDate} to ${toDate}<br>`;
     }
-}
 
-const userTurns = turnData.turns.filter(turn => turn.user === userName);
-const userTotal = userTurns.reduce((sum, turn) => sum + (turn.isCompleted || turn.isPending ? 1 : 0), 0);
-
-let modalHTML = `<strong>Title:</strong> ${task.title}<br>`;
-if (task.notes) modalHTML += `<strong>Notes:</strong> ${task.notes}<br>`;
-if (task.room) modalHTML += `<strong>Room:</strong> ${task.room}<br>`;
-modalHTML += `<strong>Reward:</strong> ${task.reward || 0} 🍯<br>`;
-modalHTML += `<strong>Repeat:</strong> ${task.repeat || "Daily"}<br>`;
-const [fromDate, toDate] = (task.date || "").split(" to ");
-if (!fromDate) {
-    modalHTML += `<strong>Date:</strong> Unknown<br>`;
-} else if (!toDate || toDate === "3000-01-01" || toDate === fromDate) {
-    modalHTML += `<strong>Date:</strong> ${fromDate}<br>`;
-} else {
-    modalHTML += `<strong>Date:</strong> ${fromDate} to ${toDate}<br>`;
-}
-
-
-
-
-
-if (isRotation) {
-    modalHTML += `<strong>Rotation:</strong> Yes<br>`;
-    modalHTML += `<strong>Users:</strong> ${task.users.join(", ")}<br>`;
-    const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
-    if (activeTurn) {
-        const nextTurnIndex = (activeTurn.index + 1) % task.users.length;
-        const nextUser = turnData.turns.find(t => t.index === nextTurnIndex)?.user || task.users[nextTurnIndex] || "—";
-        modalHTML += `<strong>Current Turn:</strong> ${activeTurn.user}<br>`;
-        modalHTML += `<strong>Next:</strong> ${nextUser}<br>`;
+    if (isRotation) {
+        modalHTML += `<strong>Rotation:</strong> Yes<br>`;
+        modalHTML += `<strong>Users:</strong> ${task.users.join(", ")}<br>`;
+        const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
+        if (activeTurn) {
+            const nextTurnIndex = (activeTurn.index + 1) % task.users.length;
+            const nextUser = turnData.turns.find(t => t.index === nextTurnIndex)?.user || task.users[nextTurnIndex] || "—";
+            modalHTML += `<strong>Current Turn:</strong> ${activeTurn.user}<br>`;
+            modalHTML += `<strong>Next:</strong> ${nextUser}<br>`;
+        } else {
+            modalHTML += `<strong>All turns completed!</strong><br>`;
+        }
     } else {
-        modalHTML += `<strong>All turns completed!</strong><br>`;
+        modalHTML += `<strong>Assigned Users:</strong> ${task.users.join(", ")}<br>`;
     }
-} else {
-    modalHTML += `<strong>Assigned Users:</strong> ${task.users.join(", ")}<br>`;
-}
 
-modalHTML += `<strong>Progress:</strong> ${isRotation ? turnData.completedCount : userTotal}/${turnData.requiredTimes}<br>`;
+    modalHTML += `<strong>Progress:</strong> ${userTotal}/${userRequiredTimes}<br>`;
 
     const modal = document.createElement("div");
     modal.className = "modal";
@@ -1095,8 +1097,6 @@ modalHTML += `<strong>Progress:</strong> ${isRotation ? turnData.completedCount 
         }
     });
 }
-
-
 
 // addtasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
 

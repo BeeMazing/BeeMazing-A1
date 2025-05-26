@@ -418,6 +418,7 @@ function mixedTurnData(task, selectedDate) {
 
 
 
+
 function individualTurnData(task, selectedDate) {
     try {
         if (!task || typeof task !== "object" || !Array.isArray(task.users) || !task.date) {
@@ -457,25 +458,25 @@ function individualTurnData(task, selectedDate) {
         }
 
         const turns = [];
-        const userCompletionCounts = {};
-        const userPendingCounts = {};
-
-        // Count completions and pending per user and repetition
-        completions.forEach(c => {
-            if (c.user) {
-                userCompletionCounts[c.user] = (userCompletionCounts[c.user] || 0) + 1;
-            }
-        });
-        pendingCompletions.forEach(p => {
-            if (p.user) {
-                userPendingCounts[p.user] = (userPendingCounts[p.user] || 0) + 1;
-            }
-        });
-
         const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
 
         let globalIndex = 0;
         for (const user of userOrder) {
+            let userCompletedCount = 0;
+            let userPendingCount = 0;
+
+            // Count completions and pending for this user
+            completions.forEach(c => {
+                if (c.user === user) {
+                    userCompletedCount++;
+                }
+            });
+            pendingCompletions.forEach(p => {
+                if (p.user === user) {
+                    userPendingCount++;
+                }
+            });
+
             for (let rep = 1; rep <= requiredTimes; rep++) {
                 let isCompleted = false;
                 let isPending = false;
@@ -500,10 +501,13 @@ function individualTurnData(task, selectedDate) {
             }
         }
 
+        // completedCount is the total for all users (for admin views)
+        const completedCount = completions.length + pendingCompletions.length;
+
         return {
             turns,
-            completedCount: completions.length + pendingCompletions.length,
-            requiredTimes: requiredTimes * userOrder.length
+            completedCount,
+            requiredTimes // Per user, not multiplied by user count
         };
     } catch (err) {
         console.error("Error in individualTurnData:", err);
@@ -516,17 +520,20 @@ function individualTurnData(task, selectedDate) {
 
 
 
-// addtasks.html settings: Individual ///////////////////////////////////////////////////////////////////////
 
+
+
+
+// addtasks.html settings: Individual ///////////////////////////////////////////////////////////////////////
 
 
 
 
 function calculateIndividualProgress(task, selectedDate, user) {
     const repeat = task.repeat || "Daily";
-    const required = repeat === "Daily" ? task.timesPerDay || 1 :
-                    repeat === "Weekly" ? task.timesPerWeek || 1 :
-                    repeat === "Monthly" ? task.timesPerMonth || 1 : 1;
+    const required = repeat === "Daily" ? (task.timesPerDay || 1) :
+                    repeat === "Weekly" ? (task.timesPerWeek || 1) :
+                    repeat === "Monthly" ? (task.timesPerMonth || 1) : 1;
 
     let count = 0;
 
@@ -540,7 +547,7 @@ function calculateIndividualProgress(task, selectedDate, user) {
             if (d.getFullYear() === year && d.getMonth() === month) {
                 const dayCompletions = task.completions[dateStr];
                 if (Array.isArray(dayCompletions)) {
-                    count += dayCompletions.filter(u => u === user).length;
+                    count += dayCompletions.filter(c => c.user === user).length;
                 }
             }
         }
@@ -550,14 +557,14 @@ function calculateIndividualProgress(task, selectedDate, user) {
             if (d.getFullYear() === year && d.getMonth() === month) {
                 const dayPendings = task.pendingCompletions[dateStr];
                 if (Array.isArray(dayPendings)) {
-                    count += dayPendings.filter(u => u === user).length;
+                    count += dayPendings.filter(p => p.user === user).length;
                 }
             }
         }
     } else {
         const completions = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
         const pendingCompletions = Array.isArray(task.pendingCompletions?.[selectedDate]) ? task.pendingCompletions[selectedDate] : [];
-        count = completions.filter(u => u === user).length + pendingCompletions.filter(u => u === user).length;
+        count = completions.filter(c => c.user === user).length + pendingCompletions.filter(p => p.user === user).length;
     }
 
     return {
@@ -566,6 +573,11 @@ function calculateIndividualProgress(task, selectedDate, user) {
         isComplete: count >= required
     };
 }
+
+
+
+
+
 
 
 async function updateUserReward(userName, amount) {
