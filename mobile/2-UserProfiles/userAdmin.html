@@ -239,7 +239,7 @@
 .footer-icon img {
     width: 40px;
     height: 40px;
-    filter: grayscale(100%) brightness(100%) opacity(0.6);
+    filter: grayscale(100%) brightness(50%) opacity(0.6);
     transition: filter 0.3s ease;
 }
 
@@ -1834,7 +1834,131 @@ async function handleRevert(title, date, index, user, event) {
 
 // addtasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
 
+async function loadTasks() {
+  try {
+    const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
+      cache: "no-store"
+    });
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const { tasks } = await res.json();
 
+    // Filter tasks using filterTasksForDate from taskrotations.js
+    const filteredTasks = filterTasksForDate(tasks, selectedDate);
+
+    const container = document.getElementById("taskContainer");
+    container.innerHTML = ""; // Clear UI
+
+    if (filteredTasks.length === 0) {
+      container.innerHTML = "<p>No tasks for this date.</p>";
+      return;
+    }
+
+    filteredTasks.forEach(task => {
+      if (!task.title || !task.users || !task.date) {
+        console.warn(`Skipping invalid task:`, task);
+        return;
+      }
+
+      let turnData;
+      if (task.settings?.includes("Rotation")) {
+        if (typeof mixedTurnData !== 'function') {
+          console.error(`mixedTurnData is not defined for task: ${task.title}`);
+          turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+        } else {
+          turnData = mixedTurnData(task, selectedDate);
+        }
+      } else if (task.settings?.includes("Individual")) {
+        if (typeof individualTurnData !== 'function') {
+          console.error(`individualTurnData is not defined for task: ${task.title}`);
+          turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+        } else {
+          turnData = individualTurnData(task, selectedDate);
+        }
+      } else {
+        console.warn(`Unsupported task settings for ${task.title}: ${task.settings}`);
+        turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+      }
+
+      const pendingCount = turnData.turns.filter(t => t.isPending).length;
+      const div = document.createElement("div");
+      div.className = "task-entry";
+      div.dataset.title = task.title;
+      div.dataset.date = task.date;
+      div.innerHTML = `
+        <h3 class="task-title">${task.title}${pendingCount > 0 ? `<span class="notification-bubble">${pendingCount}</span>` : ''}</h3>
+        <div class="task-details${expandedTasks.has(task.title) ? ' show' : ''}">
+          ${
+            turnData.turns.length && turnData.turns[0].repetition !== undefined && turnData.turns[0].user !== undefined
+              ? (task.settings.includes("Rotation")
+                ? turnData.turns.map(turn => `
+                  <div class="turn-entry" data-index="${turn.index}" data-user="${turn.user}">
+                    <p>Turn ${turn.index + 1}: ${turn.user} - ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
+                    ${turn.isPending && !turn.isCompleted ? `
+                      <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
+                      <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
+                    ` : turn.isCompleted ? `
+                      <button class="revert-btn" onclick="handleRevert('${task.title}', '${task.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
+                    ` : `
+
+                    <!-- replace user -->
+                      <select id="replace-select-${turn.index}">
+                        <option value="">Select User</option>
+                        ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
+                      </select>
+                      <button class="replace-btn" onclick="handleReplace('${task.title}', '${task.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
+                    <!-- replace user -->
+                    
+                      `}
+                  </div>
+                `).join('')
+                : task.users.map(user => {
+                    const userTurns = turnData.turns.filter(t => t.user === user);
+                    return `
+                      <h4 style="margin-top: 10px;">${user}</h4>
+                      ${userTurns.map(turn => `
+                        <div class="turn-entry" draggable="false" data-index="${turn.index}" data-user="${turn.user}">
+                          <p>Attempt ${turn.repetition}: ${turn.isCompleted ? 'Accepted' : turn.isPending ? 'Waiting for Review' : 'Pending'}</p>
+                          ${turn.isPending && !turn.isCompleted ? `
+                            <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
+                            <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
+                          ` : turn.isCompleted ? `
+                            <button class="revert-btn" onclick="handleRevert('${task.title}', '${task.date}', ${turn.index}, '${turn.user}', event)">Revert</button>
+                          ` : `
+
+                          <!-- replace user -->
+                            <select id="replace-select-${turn.index}">
+                              <option value="">Select User</option>
+                              ${allUsers.map(u => `<option value="${u}">${u}</option>`).join('')}
+                            </select>
+                            <button class="replace-btn" onclick="handleReplace('${task.title}', '${task.date}', ${turn.index}, '${turn.user}', event)">Replace</button>
+                             <!-- replace user -->
+                          
+                            `}
+                        </div>
+                      `).join('')}
+                    `;
+                  }).join(''))
+              : '<p>No turns assigned.</p>'
+          }
+        </div>
+      `;
+      container.appendChild(div);
+
+      div.querySelector(".task-title").addEventListener("click", () => {
+        const details = div.querySelector(".task-details");
+        details.classList.toggle("show");
+        if (details.classList.contains("show")) {
+          expandedTasks.add(task.title);
+        } else {
+          expandedTasks.delete(task.title);
+        }
+      });
+    });
+  } catch (err) {
+    console.error("Error loading tasks:", err);
+    document.getElementById("taskContainer").innerHTML = "<p>Error loading tasks. Please try again.</p>";
+  }
+}
 
 // addtasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
 
