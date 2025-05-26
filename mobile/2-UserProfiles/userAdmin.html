@@ -239,12 +239,14 @@
 .footer-icon img {
     width: 40px;
     height: 40px;
-    filter: invert(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    filter: brightness(70%) grayscale(100%) contrast(90%);
+    transition: filter 0.3s ease;
 }
+
 .footer a.active img {
-    filter: invert(77%) sepia(88%) saturate(900%) hue-rotate(0deg)
-        brightness(100%) contrast(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+    filter: brightness(40%) grayscale(100%) contrast(120%) !important;
 }
+
 .footer-icon span {
     font-size: 12px;
     margin-top: 5px;
@@ -283,7 +285,7 @@
     cursor: pointer;
     z-index: 202;
     transition: transform 0.3s ease;
-    filter: invert(100%) brightness(200%);
+    filter: none;
 }
 
 .profile-icon:hover {
@@ -788,7 +790,7 @@
 .logout-icon {
     width: 30px;
     height: 30px;
-    filter: invert(100%) brightness(150%);
+    filter: none;
     transition: transform 0.3s ease;
 }
 
@@ -997,6 +999,9 @@
             </div>
           </div>
         </div>
+
+
+        <div id="overdueTasks" class="task-list" style="padding: 0 15px;"></div>
         
         
 
@@ -2050,41 +2055,65 @@ document.getElementById("scrollRight").addEventListener("click", () => {
 
 
 async function loadOverdueTasks() {
+  const adminEmail = localStorage.getItem("currentAdminEmail");
+  const overdueContainer = document.getElementById("overdueTasks");
+  overdueContainer.innerHTML = "<p>Loading...</p>";
+
   try {
-    const res = await fetch(`https://beemazing.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
-      cache: "no-store"
-    });
-    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-    const { tasks } = await res.json();
+    const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to load tasks");
 
-    const overdueTasks = [];
+    const allTasks = data.tasks || [];
+    const todayStr = new Date().toLocaleDateString("sv-SE");
 
-    for (const task of tasks) {
-      if (!task.title || !task.date || !Array.isArray(task.users)) continue;
+    const overdueTasks = allTasks.filter(task => {
+      if (!task || !task.users || !task.title || !task.date) return false;
+      if (!filterTasksForDate([task], todayStr).length) return false;
 
-      const taskDate = task.date.split(" to ")[0];
-      if (taskDate !== selectedDate) continue;
+      let turnData;
+      if (task.settings?.includes("Rotation")) {
+        turnData = typeof mixedTurnData === "function" ? mixedTurnData(task, todayStr) : null;
+        if (!turnData) return false;
+        return turnData.completedCount < turnData.requiredTimes;
+      } else if (task.settings?.includes("Individual")) {
+        turnData = typeof individualTurnData === "function" ? individualTurnData(task, todayStr) : null;
+        if (!turnData) return false;
 
-      const requiredUsers = Array.isArray(task.users) ? task.users : [];
-      const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-
-      // If at least one user from the required list has NOT completed
-      const incomplete = requiredUsers.some(user => !completedUsers.includes(user));
-      if (incomplete) {
-        overdueTasks.push(task);
+        const usersNotDone = task.users.filter(user => {
+          const turns = turnData.turns.filter(t => t.user === user);
+          const completed = turns.filter(t => t.isCompleted || t.isPending).length;
+          return completed < turnData.requiredTimes;
+        });
+        return usersNotDone.length > 0;
       }
-    }
+      return false;
+    });
 
-    // ✅ Update the count display
     document.getElementById("overdueCount").textContent = `(${overdueTasks.length})`;
 
-    // Optional: render them somewhere if needed
-    // console.log("Overdue tasks:", overdueTasks);
+    if (overdueTasks.length === 0) {
+      overdueContainer.innerHTML = "<p>No overdue tasks 🎉</p>";
+    } else {
+      overdueContainer.innerHTML = "";
+      overdueTasks.forEach(task => {
+        const div = document.createElement("div");
+        div.className = "task-item";
+        div.innerHTML = `
+          <strong>${task.title}</strong><br>
+          <span>${task.settings?.includes("Rotation") ? "Rotation" : "Individual"} Task</span><br>
+          <span>Reward: ${task.reward || 0} 🍯</span>
+        `;
+        overdueContainer.appendChild(div);
+      });
+    }
+
   } catch (err) {
     console.error("Error loading overdue tasks:", err);
-    document.getElementById("overdueCount").textContent = `(0)`;
+    overdueContainer.innerHTML = "<p>Error loading overdue tasks</p>";
   }
 }
+
 
 
   </script>
