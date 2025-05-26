@@ -548,3 +548,88 @@ function calculateIndividualProgress(task, selectedDate, user) {
 }
 
 
+async function updateUserReward(userName, amount) {
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    try {
+      const response = await fetch("https://beemazing.onrender.com/api/rewards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail, user: userName, amount })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to update rewards");
+    } catch (err) {
+      console.error("Error updating user reward:", err);
+      throw err;
+    }
+  }
+  
+  async function saveTaskHistory(userName, task) {
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    const now = new Date();
+    const month = now.toLocaleString("default", { month: "long" });
+    const date = now.getDate();
+    const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const dateString = now.toLocaleDateString();
+  
+    try {
+      const response = await fetch(`https://beemazing.onrender.com/api/history?adminEmail=${encodeURIComponent(adminEmail)}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to fetch history");
+      const history = data.history || {};
+  
+      if (!history[month]) history[month] = {};
+      if (!history[month][date]) history[month][date] = [];
+      history[month][date].push({
+        title: task.title,
+        user: userName,
+        timestamp: `${dateString} at ${time}`,
+      });
+  
+      await fetch("https://beemazing.onrender.com/api/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail, history })
+      });
+    } catch (err) {
+      console.error("Error saving task history:", err);
+    }
+  }
+  
+  async function updateLuckyChestProgress(userName, earnedHoney) {
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    try {
+      const response = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
+      const allChests = data.luckyChests || {};
+      const userChests = allChests[userName] || [];
+  
+      let updated = false;
+      userChests.forEach(chest => {
+        if (chest.progress < chest.requiredPoints) {
+          chest.progress += earnedHoney;
+          if (chest.progress > chest.requiredPoints) {
+            chest.progress = chest.requiredPoints;
+          }
+          updated = true;
+        }
+      });
+  
+      if (updated) {
+        allChests[userName] = userChests;
+        await fetch("https://beemazing.onrender.com/api/lucky-chests", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ adminEmail, luckyChests: allChests })
+        });
+      }
+    } catch (err) {
+      console.error("Error updating lucky chest progress:", err);
+    }
+  }
+  
+  // Export for use in HTML
+  window.updateUserReward = updateUserReward;
+  window.saveTaskHistory = saveTaskHistory;
+  window.updateLuckyChestProgress = updateLuckyChestProgress;

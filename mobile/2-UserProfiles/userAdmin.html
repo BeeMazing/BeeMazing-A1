@@ -965,6 +965,37 @@
 }
 
 
+
+.pending-task {
+  background: #2A2B32;
+  border: 1px solid var(--border-dark);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  color: white;
+  font-size: 14px;
+}
+.pending-task .task-title {
+  font-weight: 600;
+  font-size: 15px;
+  margin: 0;
+}
+.pending-task .task-info {
+  font-style: italic;
+  font-size: 13px;
+  color: #ccc;
+  margin-top: 4px;
+}
+.pending-task .task-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+
+
+
+
   </style>
 
 
@@ -993,20 +1024,22 @@
         </div>
         
 
+ 
         <div id="adminSections">
-          <div class="admin-card">
-            <div class="card-left">
-              <span class="card-icon">🕒</span>
-              <span class="card-title">Tasks Needing Approval 3</span>
+          <div class="admin-card" id="approvalCard" style="flex-direction: column; align-items: stretch;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div class="card-left">
+                <span class="card-icon">🕒</span>
+                <span class="card-title">Tasks Needing Approval</span>
+              </div>
+              <div class="card-right">
+                <span class="card-count" id="approvalCount">(0)</span>
+                <span class="card-arrow" id="approvalArrow">›</span>
+              </div>
             </div>
-            <div class="card-right">
-              <span class="card-count" id="approvalCount">(0)</span>
-              <span class="card-arrow">›</span>
-            </div>
+            <div id="pendingTasks" class="task-list" style="display: none; padding: 0 10px 10px;"></div>
           </div>
         
-   
-
           <div class="admin-card" id="overdueCard" style="flex-direction: column; align-items: stretch;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div class="card-left">
@@ -1020,35 +1053,40 @@
             </div>
             <div id="overdueTasks" class="task-list" style="display: none; padding: 0 10px 10px;"></div>
           </div>
-          
-          
-
-
-
         
-          <div class="admin-card">
-            <div class="card-left">
-              <span class="card-icon">🎁</span>
-              <span class="card-title">Rewards Needing Approval</span>
+          <div class="admin-card" id="rewardApprovalCard" style="flex-direction: column; align-items: stretch;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div class="card-left">
+                <span class="card-icon">🎁</span>
+                <span class="card-title">Rewards Needing Approval</span>
+              </div>
+              <div class="card-right">
+                <span class="card-count" id="rewardCount">(0)</span>
+                <span class="card-arrow" id="rewardArrow">›</span>
+              </div>
             </div>
-            <div class="card-right">
-              <span class="card-count" id="rewardCount">(0)</span>
-              <span class="card-arrow">›</span>
+            <div id="rewardApprovalTasks" class="task-list" style="display: none; padding: 0 10px 10px;">
+              <!-- Will load reward approvals here later -->
             </div>
           </div>
-        
-          <div class="admin-card">
-            <div class="card-left">
-              <span class="card-icon">👤</span>
-              <span class="card-title">Your Tasks</span>
+          
+          <div class="admin-card" id="yourTasksCard" style="flex-direction: column; align-items: stretch;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div class="card-left">
+                <span class="card-icon">👤</span>
+                <span class="card-title">Your Tasks</span>
+              </div>
+              <div class="card-right">
+                <span class="card-count" id="yourTaskCount">(0)</span>
+                <span class="card-arrow" id="yourArrow">›</span>
+              </div>
             </div>
-            <div class="card-right">
-              <span class="card-count" id="yourTaskCount">(0)</span>
-              <span class="card-arrow">›</span>
+            <div id="yourTasksList" class="task-list" style="display: none; padding: 0 10px 10px;">
+              <!-- Will load your tasks here later -->
             </div>
           </div>
-        </div>
-
+          
+        
 
         
         
@@ -1671,40 +1709,6 @@ fetchUsersFromServer(adminEmail).then(users => {
 
 
 
-async function updateLuckyChestProgress(userName, earnedHoney) {
-  const adminEmail = localStorage.getItem("currentAdminEmail");
-  try {
-    const response = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
-    const allChests = data.luckyChests || {};
-    const userChests = allChests[userName] || [];
-
-    let updated = false;
-
-    userChests.forEach(chest => {
-      if (chest.progress < chest.requiredPoints) {
-        chest.progress += earnedHoney;
-        if (chest.progress > chest.requiredPoints) {
-          chest.progress = chest.requiredPoints;
-        }
-        updated = true;
-      }
-    });
-
-    if (updated) {
-      allChests[userName] = userChests;
-      await fetch("https://beemazing.onrender.com/api/lucky-chests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminEmail, luckyChests: allChests })
-      });
-    }
-  } catch (err) {
-    console.error("Error updating lucky chest progress:", err);
-  }
-}
-
 
 
 
@@ -1712,10 +1716,12 @@ async function updateLuckyChestProgress(userName, earnedHoney) {
 // addtasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
 
 
+
+
 async function handleDecision(title, date, index, decision, user, event) {
   try {
     const button = event.target;
-    const taskEntry = button.closest(".task-entry");
+    const taskEntry = button.closest(".pending-task") || button.closest(".task-entry");
     const buttons = taskEntry.querySelectorAll("button");
     buttons.forEach(btn => {
       btn.disabled = true;
@@ -1738,12 +1744,17 @@ async function handleDecision(title, date, index, decision, user, event) {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to process decision");
 
-    // If task is accepted, update Lucky Chest progress
     if (decision === "accept" && data.rewardAmount > 0) {
       await updateLuckyChestProgress(user, data.rewardAmount);
+      await updateUserReward(user, data.rewardAmount);
+      await saveTaskHistory(user, { title });
     }
 
-    setTimeout(() => loadTasks(), 500);
+    setTimeout(() => {
+      loadTasks();
+      loadPendingTasks();
+      loadOverdueTasks();
+    }, 500);
   } catch (err) {
     console.error("Error processing decision:", err);
     const errorDiv = document.createElement("div");
@@ -1757,6 +1768,8 @@ async function handleDecision(title, date, index, decision, user, event) {
     setTimeout(() => errorDiv.remove(), 3000);
   }
 }
+
+
 
 
 
@@ -2040,6 +2053,7 @@ function generateScrollableDates(monthOffset = 0) {
   selectedDate = btn.dataset.date;
   loadTasks();
   loadOverdueTasks(); // 🐝 New line
+  loadPendingTasks();
 });
 
     if (btn.dataset.date === todayStr) {
@@ -2047,6 +2061,7 @@ function generateScrollableDates(monthOffset = 0) {
   selectedDate = btn.dataset.date;
   loadTasks();
   loadOverdueTasks(); // 🐝 New line
+  loadPendingTasks();
 }
 
     container.appendChild(btn);
@@ -2178,7 +2193,6 @@ overdueContainer.appendChild(div);
 
 
 
-
 // Toggle Overdue Task List
 const overdueCard = document.getElementById("overdueCard");
 const overdueTasksContainer = document.getElementById("overdueTasks");
@@ -2190,6 +2204,117 @@ overdueCard.addEventListener("click", () => {
   overdueVisible = !overdueVisible;
   overdueTasksContainer.style.display = overdueVisible ? "block" : "none";
   overdueArrow.textContent = overdueVisible ? "⌄" : "›"; // Down arrow vs right
+});
+
+
+
+
+
+
+async function loadPendingTasks() {
+  const adminEmail = localStorage.getItem("currentAdminEmail");
+  const pendingContainer = document.getElementById("pendingTasks");
+  pendingContainer.innerHTML = "<p>Loading...</p>";
+
+  try {
+    const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to load tasks");
+
+    const allTasks = data.tasks || [];
+    const todayStr = selectedDate;
+
+    const pendingTasks = allTasks.filter(task => {
+      if (!task || !task.users || !task.title || !task.date) return false;
+      if (!filterTasksForDate([task], todayStr).length) return false;
+
+      let turnData;
+      if (task.settings?.includes("Rotation")) {
+        turnData = typeof mixedTurnData === "function" ? mixedTurnData(task, todayStr) : null;
+      } else if (task.settings?.includes("Individual")) {
+        turnData = typeof individualTurnData === "function" ? individualTurnData(task, todayStr) : null;
+      }
+      if (!turnData) return false;
+
+      const pendingTurns = turnData.turns.filter(turn => turn.isPending && !turn.isCompleted);
+      return pendingTurns.length > 0;
+    });
+
+    document.getElementById("approvalCount").textContent = `(${pendingTasks.length})`;
+
+    if (pendingTasks.length === 0) {
+      pendingContainer.innerHTML = "<p>No tasks needing approval 🎉</p>";
+    } else {
+      pendingContainer.innerHTML = "";
+      pendingTasks.forEach(task => {
+        let turnData;
+        if (task.settings?.includes("Rotation")) {
+          turnData = typeof mixedTurnData === "function" ? mixedTurnData(task, todayStr) : { turns: [] };
+        } else {
+          turnData = typeof individualTurnData === "function" ? individualTurnData(task, todayStr) : { turns: [] };
+        }
+
+        turnData.turns.filter(turn => turn.isPending && !turn.isCompleted).forEach(turn => {
+          const div = document.createElement("div");
+          div.className = "pending-task";
+          div.innerHTML = `
+            <div class="task-title">${task.title}</div>
+            <div class="task-info">Submitted by: ${turn.user}</div>
+            <div class="task-actions">
+              <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', ${turn.index}, 'accept', '${turn.user}', event)">Accept</button>
+              <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', ${turn.index}, 'decline', '${turn.user}', event)">Decline</button>
+            </div>
+          `;
+          pendingContainer.appendChild(div);
+        });
+      });
+    }
+  } catch (err) {
+    console.error("Error loading pending tasks:", err);
+    pendingContainer.innerHTML = "<p>Error loading pending tasks</p>";
+  }
+}
+
+
+const approvalCard = document.getElementById("approvalCard");
+const pendingTasksContainer = document.getElementById("pendingTasks");
+const approvalArrow = document.getElementById("approvalArrow");
+
+let approvalVisible = false;
+
+approvalCard.addEventListener("click", () => {
+  approvalVisible = !approvalVisible;
+  pendingTasksContainer.style.display = approvalVisible ? "block" : "none";
+  approvalArrow.textContent = approvalVisible ? "⌄" : "›";
+});
+
+
+
+
+
+
+// Rewards Needing Approval Expand/Collapse
+const rewardApprovalCard = document.getElementById("rewardApprovalCard");
+const rewardTasksContainer = document.getElementById("rewardApprovalTasks");
+const rewardArrow = document.getElementById("rewardArrow");
+let rewardVisible = false;
+
+rewardApprovalCard.addEventListener("click", () => {
+  rewardVisible = !rewardVisible;
+  rewardTasksContainer.style.display = rewardVisible ? "block" : "none";
+  rewardArrow.textContent = rewardVisible ? "⌄" : "›";
+});
+
+// Your Tasks Expand/Collapse
+const yourTasksCard = document.getElementById("yourTasksCard");
+const yourTasksContainer = document.getElementById("yourTasksList");
+const yourArrow = document.getElementById("yourArrow");
+let yourTasksVisible = false;
+
+yourTasksCard.addEventListener("click", () => {
+  yourTasksVisible = !yourTasksVisible;
+  yourTasksContainer.style.display = yourTasksVisible ? "block" : "none";
+  yourArrow.textContent = yourTasksVisible ? "⌄" : "›";
 });
 
 
