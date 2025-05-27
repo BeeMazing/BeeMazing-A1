@@ -1249,6 +1249,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 
+
+
+
         async function populateUsers() {
     const currentAdmin = localStorage.getItem("currentAdminEmail");
     if (!currentAdmin) {
@@ -1272,13 +1275,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const { users = [], permissions = {} } = data;
 
-        // Filter non-admin users
-        const nonAdminUsers = users.filter(user => permissions[user] !== "Admin");
+        // Use all users (no filtering for Admin)
+        const allUsers = users;
 
         // Update localStorage to sync with backend
         const allUserData = JSON.parse(localStorage.getItem("userData") || "{}");
         allUserData[currentAdmin] = allUserData[currentAdmin] || { users: [], permissions: {} };
-        allUserData[currentAdmin].users = nonAdminUsers;
+        allUserData[currentAdmin].users = allUsers;
         allUserData[currentAdmin].permissions = permissions;
         localStorage.setItem("userData", JSON.stringify(allUserData));
 
@@ -1286,9 +1289,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         userList.innerHTML = "";
 
         // Populate user list
-        nonAdminUsers.forEach(user => {
+        allUsers.forEach(user => {
             const userItem = document.createElement("li");
-            userItem.textContent = user;
+            // Display user email with permission label
+            const permission = permissions[user] || "User";
+            userItem.textContent = `${user} (${permission})`; // e.g., "admin@example.com (Admin)"
             userItem.style.padding = "10px";
             userItem.style.margin = "5px 0";
             userItem.style.border = "1px solid var(--selection-border)";
@@ -1334,13 +1339,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // Update display
         updateSelectedUsersDisplay();
-        assignedToDisplay.textContent = nonAdminUsers.length ? "Select users" : "No users available";
+        assignedToDisplay.textContent = allUsers.length ? "Select users" : "No users available";
 
     } catch (error) {
         console.error("Error fetching users:", error);
         assignedToDisplay.textContent = "Error loading users";
     }
 }
+
+
+
+
+
+
 
 
 
