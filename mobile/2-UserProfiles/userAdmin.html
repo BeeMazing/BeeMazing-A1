@@ -1479,10 +1479,16 @@ document.getElementById("submitUserBtn").addEventListener("click", async () => {
             li.style.background = "#333540";
             li.style.fontWeight = "600";
           }
+
+
           li.addEventListener("click", () => {
-            const page = userPermissions[user] === "Admin" ? "userAdmin.html" : "users.html";
-            window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
-          });
+    localStorage.setItem("currentUser", user); // ✅ Save selected user
+    const page = userPermissions[user] === "Admin" ? "userAdmin.html" : "users.html";
+    window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+});
+
+
+
           userList.appendChild(li);
         });
       }
@@ -2123,22 +2129,29 @@ async function loadTasks() {
 
 
 
+
 async function loadYourTasks() {
     let adminEmail = localStorage.getItem("currentAdminEmail");
     const urlParams = new URLSearchParams(window.location.search);
-    let currentUser = urlParams.get("user");
+    let currentUser = urlParams.get("user") || localStorage.getItem("currentUser");
+
     const yourContainer = document.getElementById("yourTasks");
     yourContainer.innerHTML = "<p>Loading...</p>";
 
-    // Fallbacks for missing parameters
+    // Save current user to localStorage if found
+    if (currentUser) {
+        localStorage.setItem("currentUser", currentUser);
+    } else {
+        yourContainer.innerHTML = "<p>Error: No user selected. Please select a user.</p>";
+        return;
+    }
+
+    // Fallback for adminEmail
     if (!adminEmail) {
         adminEmail = urlParams.get("admin");
         if (adminEmail) {
             localStorage.setItem("currentAdminEmail", adminEmail);
         }
-    }
-    if (!currentUser) {
-        currentUser = adminEmail;
     }
 
     if (!adminEmail || !currentUser) {
@@ -2157,19 +2170,17 @@ async function loadYourTasks() {
         const allTasks = data.tasks || [];
         const todayStr = selectedDate || new Date().toISOString().split("T")[0];
 
-        // Check if user is Admin
+        // Get user permissions to check if current user is an admin
         const userRes = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
         const userData = await userRes.json();
         const isAdmin = userData.permissions?.[currentUser] === "Admin";
 
-        // Filter tasks assigned to the current user
+        // Filter for tasks assigned to the current user
         const yourTasks = allTasks.filter(task => {
-            if (!task || !task.users || !task.title || !task.date) {
-                console.warn("Invalid task:", task);
-                return false;
-            }
+            if (!task || !task.users || !task.title || !task.date) return false;
             if (!filterTasksForDate([task], todayStr).length) return false;
-            return task.users.includes(currentUser) || (task.tempTurnReplacement?.[todayStr] && Object.values(task.tempTurnReplacement[todayStr]).includes(currentUser));
+            return task.users.includes(currentUser) ||
+                (task.tempTurnReplacement?.[todayStr] && Object.values(task.tempTurnReplacement[todayStr]).includes(currentUser));
         });
 
         document.getElementById("yourTaskCount").textContent = `(${yourTasks.length})`;
@@ -2217,6 +2228,8 @@ async function loadYourTasks() {
         yourContainer.innerHTML = "<p>Error loading your tasks: " + err.message + "</p>";
     }
 }
+
+
 
 
 
