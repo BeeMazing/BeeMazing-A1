@@ -999,6 +999,37 @@
 
 
 
+.pending-reward {
+  background: #2A2B32;
+  border: 1px solid var(--border-dark);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  color: white;
+  font-size: 14px;
+}
+.pending-reward .reward-title {
+  font-weight: 600;
+  font-size: 15px;
+  margin: 0;
+}
+.pending-reward .reward-info {
+  font-style: italic;
+  font-size: 13px;
+  color: #ccc;
+  margin-top: 4px;
+}
+.pending-reward .reward-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+
+
+
+
+
   </style>
 
 
@@ -1775,6 +1806,7 @@ async function handleDecision(title, date, index, decision, user, event) {
       loadTasks();
       loadPendingTasks();
       loadOverdueTasks();
+      loadPendingRewards();
     }, 500);
   } catch (err) {
     console.error("Error processing decision:", err);
@@ -2075,6 +2107,7 @@ function generateScrollableDates(monthOffset = 0) {
   loadTasks();
   loadOverdueTasks(); // 🐝 New line
   loadPendingTasks();
+  loadPendingRewards();
 });
 
     if (btn.dataset.date === todayStr) {
@@ -2083,6 +2116,7 @@ function generateScrollableDates(monthOffset = 0) {
   loadTasks();
   loadOverdueTasks(); // 🐝 New line
   loadPendingTasks();
+  loadPendingRewards();
 }
 
     container.appendChild(btn);
@@ -2304,6 +2338,134 @@ async function loadPendingTasks() {
     pendingContainer.innerHTML = "<p>Error loading pending tasks</p>";
   }
 }
+
+
+
+
+
+async function loadPendingRewards() {
+  const pendingContainer = document.getElementById("rewardTasks");
+  pendingContainer.innerHTML = "<p>Loading...</p>";
+
+  try {
+    const res = await fetch(`https://beemazing.onrender.com/api/pending-rewards?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to load pending rewards");
+
+    const pendingRewards = data.pendingRewards || [];
+    document.getElementById("rewardCount").textContent = `(${pendingRewards.length})`;
+
+    if (pendingRewards.length === 0) {
+      pendingContainer.innerHTML = "<p>No rewards needing approval 🎉</p>";
+    } else {
+      pendingContainer.innerHTML = "";
+      pendingRewards.forEach((reward, index) => {
+        const div = document.createElement("div");
+        div.className = "pending-reward";
+        div.innerHTML = `
+          <div class="reward-title">${reward.rewardName}</div>
+          <div class="reward-info">Requested by: ${reward.userName} on ${new Date(reward.timestamp).toLocaleString()}</div>
+          <div class="reward-actions">
+            <button class="accept-btn" onclick="handleRewardDecision(${index}, 'approve')">Approve</button>
+            <button class="decline-btn" onclick="handleRewardDecision(${index}, 'decline')">Decline</button>
+          </div>
+        `;
+        pendingContainer.appendChild(div);
+      });
+    }
+  } catch (err) {
+    console.error("Error loading pending rewards:", err);
+    pendingContainer.innerHTML = "<p>Error loading pending rewards</p>";
+  }
+}
+
+
+
+
+
+
+async function handleRewardDecision(index, decision) {
+  try {
+    const res = await fetch(`https://beemazing.onrender.com/api/pending-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to fetch pending rewards");
+    const pendingRewards = data.pendingRewards || [];
+    const reward = pendingRewards[index];
+    if (!reward) throw new Error("Reward not found");
+
+    const { userName, rewardName, rewardType, rewardCost, claimType } = reward;
+
+    if (decision === "approve") {
+      const userResponse = await fetch(`https://beemazing.onrender.com/api/users?adminEmail=${encodeURIComponent(adminEmail)}`);
+      const userData = await userResponse.json();
+      if (!userResponse.ok) throw new Error(userData.error || "Failed to fetch user data");
+      const users = userData.users || {};
+      const user = users[userName];
+      if (!user) throw new Error("User not found");
+      if (user.points < rewardCost) throw new Error("Not enough Buzz Points");
+
+      const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+      const userRewardsData = await userRewardsResponse.json();
+      if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
+      const userRewards = userRewardsData.userRewards || {};
+      if (!userRewards[userName]) userRewards[userName] = [];
+
+      user.points -= rewardCost;
+      userRewards[userName].push({
+        name: rewardName,
+        type: rewardType,
+        points: rewardCost,
+        outcomes: claimType,
+        date: new Date().toLocaleString()
+      });
+
+      await fetch("https://beemazing.onrender.com/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail, users })
+      });
+      await fetch("https://beemazing.onrender.com/api/user-rewards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail, userRewards })
+      });
+    }
+
+    const historyResponse = await fetch(`https://beemazing.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const historyData = await historyResponse.json();
+    if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
+    const rewardHistory = historyData.rewardHistory || {};
+    if (!rewardHistory[userName]) rewardHistory[userName] = [];
+
+    rewardHistory[userName].push({
+      name: rewardName,
+      type: rewardType,
+      points: rewardCost,
+      outcomes: claimType,
+      date: new Date().toLocaleString(),
+      status: decision === "approve" ? "Approved" : "Declined"
+    });
+
+    await fetch("https://beemazing.onrender.com/api/reward-history", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminEmail, rewardHistory })
+    });
+
+    pendingRewards.splice(index, 1);
+    await fetch("https://beemazing.onrender.com/api/pending-rewards", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminEmail, pendingRewards })
+    });
+
+    loadPendingRewards();
+  } catch (err) {
+    console.error("Error processing reward decision:", err);
+    alert(`Error: ${err.message}`);
+  }
+}
+
 
 
 

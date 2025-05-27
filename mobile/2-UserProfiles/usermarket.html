@@ -535,11 +535,15 @@ if (userRewardCount > 0 && (isTheKey || isDiceChest)) {
         </button>
     `;
 } else {
+
+
     buttonContent = `
-        <button class="mt-2 px-3 py-1 rounded font-semibold ${canAfford ? 'btn-primary' : 'btn-disabled'}" 
-            ${canAfford ? '' : 'disabled'} 
-            onclick="claimReward('${userName}', '${rewardName}', '${rewardType}', ${rewardCost}, '${JSON.stringify(outcomes)}')">Get It</button>
-    `;
+    <button class="mt-2 px-3 py-1 rounded font-semibold ${canAfford ? 'btn-primary' : 'btn-disabled'}" 
+        ${canAfford ? '' : 'disabled'} 
+        onclick="claimReward('${userName}', '${rewardName}', '${rewardType}', ${rewardCost}, '${outcomes}')">Get It</button>
+`;
+
+
 }
 
 card.innerHTML = `
@@ -585,10 +589,12 @@ card.dataset.historyId = actualIndex;
 card.innerHTML = `
     <h3 class="text-lg font-semibold">${reward.name}</h3>
     <p class="text-[var(--text-color)]">Collected on: ${reward.date}</p>
+    <p class="text-[var(--text-color)]">Status: ${reward.status || 'N/A'}</p>
     <button class="delete-btn" onclick="deleteReward('${userName}', ${actualIndex})">Delete</button>
 `;
 historyGrid.appendChild(card);
 
+// Swipe event listeners
 let startX = 0;
 let currentX = 0;
 let isSwiping = false;
@@ -635,7 +641,30 @@ card.addEventListener("mouseup", () => isSwiping = false);
 
 
 
-
+async function claimReward(userName, rewardName, rewardType, rewardCost, claimType) {
+  try {
+    const response = await fetch("https://beemazing.onrender.com/api/pending-rewards", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        adminEmail,
+        userName,
+        rewardName,
+        rewardType,
+        rewardCost,
+        claimType,
+        timestamp: new Date().toISOString()
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to submit reward for approval");
+    alert(`Reward ${rewardName} sent for approval!`);
+    loadRewards(userName);
+  } catch (err) {
+    console.error("Error submitting reward for approval:", err);
+    alert(`Failed to submit ${rewardName}: ${err.message}`);
+  }
+}
 
 
 
@@ -650,98 +679,10 @@ card.addEventListener("mouseup", () => isSwiping = false);
 
 
       
-      async function claimReward(userName, rewardName, rewardType, honey, outcomes) {
-          try {
-              // Fetch user honey balance
-              const userHoney = await getUserHoney(userName);
-              console.log(`claimReward: user=${userName}, reward=${rewardName}, userHoney=${userHoney}, cost=${honey}, rewardType=${rewardType}, outcomes=`, outcomes);
-              if (userHoney < honey) {
-                  alert("Not enough Buzz Points to claim this reward!");
-                  return;
-              }
-  
-              // Fetch current rewards
-              console.log('claimReward: Fetching /api/rewards');
-              const rewardsResponse = await fetch(`https://beemazing.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-              const rewardsData = await rewardsResponse.json();
-              console.log('claimReward: /api/rewards response=', rewardsData);
-              if (!rewardsResponse.ok) throw new Error(rewardsData.error || "Failed to fetch rewards");
-              const rewards = rewardsData.rewards || {};
-  
-              // Validate user balance
-              if (!rewards[userName] && rewards[userName] !== 0) {
-                  throw new Error("Invalid rewards data: user balance is undefined");
-              }
-  
-              // Update honey balance (use old payload format)
-              const rewardsPayload = { adminEmail, user: userName, amount: -honey };
-              console.log('claimReward: Posting to /api/rewards with body=', rewardsPayload);
-              let updateRewardsResponse;
-              for (let attempt = 1; attempt <= 2; attempt++) {
-                  updateRewardsResponse = await fetch("https://beemazing.onrender.com/api/rewards", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify(rewardsPayload)
-                  });
-                  if (updateRewardsResponse.ok) break;
-                  console.warn(`claimReward: /api/rewards POST attempt ${attempt} failed, status=${updateRewardsResponse.status}`);
-                  if (attempt === 2) {
-                      const errorData = await updateRewardsResponse.json();
-                      throw new Error(errorData.error || `Failed to update rewards after ${attempt} attempts`);
-                  }
-              }
-              const updateRewardsData = await updateRewardsResponse.json();
-              console.log('claimReward: /api/rewards POST response=', updateRewardsData);
-  
-              // Fetch current user rewards
-              console.log('claimReward: Fetching /api/user-rewards');
-              const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-              const userRewardsData = await userRewardsResponse.json();
-              console.log('claimReward: /api/user-rewards response=', userRewardsData);
-              if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
-              const userRewards = userRewardsData.userRewards || {};
-  
-              // Add the claimed reward (simplified structure)
-              if (!userRewards[userName]) userRewards[userName] = [];
-              userRewards[userName].push({
-                  name: rewardName,
-                  date: new Date().toLocaleString()
-              });
-              console.log(`claimReward: Added reward for ${rewardName}=`, { name: rewardName, date: new Date().toLocaleString() });
-  
-              // Validate userRewards payload
-              if (!Array.isArray(userRewards[userName])) {
-                  throw new Error("Invalid userRewards data: user rewards is not an array");
-              }
-  
-              // Save updated user rewards
-              const userRewardsPayload = { adminEmail, userRewards };
-              console.log('claimReward: Posting to /api/user-rewards with body=', userRewardsPayload);
-              let updateUserRewardsResponse;
-              for (let attempt = 1; attempt <= 2; attempt++) {
-                  updateUserRewardsResponse = await fetch("https://beemazing.onrender.com/api/user-rewards", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify(userRewardsPayload)
-                  });
-                  if (updateUserRewardsResponse.ok) break;
-                  console.warn(`claimReward: /api/user-rewards POST attempt ${attempt} failed, status=${updateUserRewardsResponse.status}`);
-                  if (attempt === 2) {
-                      const errorData = await updateUserRewardsResponse.json();
-                      throw new Error(errorData.error || `Failed to save user rewards after ${attempt} attempts`);
-                  }
-              }
-              const updateUserRewardsData = await updateUserRewardsResponse.json();
-              console.log('claimReward: /api/user-rewards POST response=', updateUserRewardsData);
-  
-              showRewardEffect(rewardName, userName);
-              loadRewards(userName);
-          } catch (err) {
-              console.error(`Error claiming reward for ${rewardName}:`, err);
-              alert(`Failed to claim ${rewardName}: ${err.message}. Please try again or contact support.`);
-          }
-      }
-  
+
+
+
+
       function showRewardEffect(rewardName, userName) {
           const overlay = document.getElementById("rewardOverlay");
           const rewardMessage = document.getElementById("claimedRewardName");
