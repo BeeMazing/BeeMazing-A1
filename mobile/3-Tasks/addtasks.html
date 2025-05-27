@@ -2040,7 +2040,6 @@ window.addEventListener("click", (e) => {
 
 
 
-
         document.getElementById("addTaskForm").addEventListener("submit", async function (event) {
     event.preventDefault();
 
@@ -2127,7 +2126,7 @@ window.addEventListener("click", (e) => {
     const editTitle = urlParams.get("editTitle");
     const editDate = urlParams.get("editDate");
     const from = urlParams.get("from");
-    const originalUser = urlParams.get("user"); // Get the original user from URL
+    const originalUser = urlParams.get("user") || localStorage.getItem("currentUser") || users[0];
 
     try {
         const url = "https://beemazing.onrender.com/api/tasks";
@@ -2163,7 +2162,7 @@ window.addEventListener("click", (e) => {
         }
 
         // Redirect back to the original user's tasks.html or onboarding
-        const adminEmail = encodeURIComponent(currentAdmin);
+        const adminEmail = encodeURIComponent(currentAdmin || "");
         if (from === "onboarding") {
             window.location.href = `/BeeMazing-Y1/onboarding.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}#step4`;
         } else {
@@ -2186,14 +2185,19 @@ function handleCancel() {
     const urlParams = new URLSearchParams(window.location.search);
     const from = urlParams.get("from");
     const adminEmail = encodeURIComponent(localStorage.getItem("currentAdminEmail") || "");
-    const originalUser = urlParams.get("user");
+    const originalUser = urlParams.get("user") || localStorage.getItem("currentUser") || "";
 
     if (from === "onboarding") {
         window.location.href = `/BeeMazing-Y1/onboarding.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}#step4`;
-    } else {
+    } else if (originalUser) {
         window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}`;
+    } else {
+        alert("User information missing. Please return to the user selection page.");
+        window.location.href = "/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html";
     }
 }
+
+
 
 
     </script>    

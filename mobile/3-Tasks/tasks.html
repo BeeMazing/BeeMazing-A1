@@ -517,8 +517,7 @@ body {
         <!-- Tasks will be loaded dynamically here -->
     </div>
 
-    <a href="/BeeMazing-Y1/mobile/3-Tasks/addtasks.html" class="add-task-btn" aria-label="Add Task" onclick="localStorage.removeItem('familyApp_editTask'); localStorage.removeItem('familyApp_editTask_index');">+</a>
-
+    <a href="#" class="add-task-btn" aria-label="Add Task" id="addTaskBtn">+</a>
 
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
@@ -559,6 +558,23 @@ if (!admin || !user) {
         console.warn("Admin or user missing for homeLink", { admin, user });
     }
 });
+
+
+
+
+
+document.getElementById("addTaskBtn").addEventListener("click", () => {
+    localStorage.removeItem('familyApp_editTask');
+    localStorage.removeItem('familyApp_editTask_index');
+    const admin = localStorage.getItem("currentAdminEmail");
+    const user = localStorage.getItem("currentUser");
+    if (admin && user) {
+        window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/addtasks.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
+    } else {
+        alert("Admin or user information missing. Please log in again.");
+    }
+});
+
 
 
 
@@ -883,11 +899,21 @@ async function showTaskDetails(task) {
         if (e.target.classList.contains("task-modal")) modal.remove();
     });
 
+
+
     document.getElementById("editTaskBtn").addEventListener("click", () => {
-        const encodedTitle = encodeURIComponent(task.title);
-        const encodedDate = encodeURIComponent(task.date.split(" to ")[0]); // Use start date
-        window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/addtasks.html?editTitle=${encodedTitle}&editDate=${encodedDate}`;
-    });
+    const encodedTitle = encodeURIComponent(task.title);
+    const encodedDate = encodeURIComponent(task.date.split(" to ")[0]); // Use start date
+    const admin = localStorage.getItem("currentAdminEmail");
+    const user = localStorage.getItem("currentUser");
+    if (admin && user) {
+        window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/addtasks.html?editTitle=${encodedTitle}&editDate=${encodedDate}&admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
+    } else {
+        alert("Admin or user information missing. Please log in again.");
+    }
+});
+
+
 }
 
 
