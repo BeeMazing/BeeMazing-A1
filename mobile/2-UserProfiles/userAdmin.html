@@ -1267,16 +1267,25 @@
 // Dynamically set footer button links and active state
 const urlParams = new URLSearchParams(window.location.search);
 const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
-const userName = urlParams.get('user') || '';
+let currentUser = urlParams.get('user') || adminEmail; // Global currentUser
 const basePath = '/BeeMazing-Y1/mobile/2-UserProfiles';
 
+// Persist URL parameters
+if (adminEmail && currentUser) {
+    const newParams = new URLSearchParams();
+    newParams.set('admin', adminEmail);
+    newParams.set('user', currentUser);
+    window.history.replaceState({}, '', `${window.location.pathname}?${newParams}`);
+    localStorage.setItem('currentAdminEmail', adminEmail);
+}
+
 const homeButton = document.getElementById('homeButton');
-const tasksButton = document.querySelector('a[href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html"]');
-const marketButton = document.querySelector('a[href="/BeeMazing-Y1/mobile/4-Market/market.html"]');
-if (adminEmail && userName) {
-    homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-    tasksButton.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-    marketButton.href = `/BeeMazing-Y1/mobile/4-Market/market.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+const tasksButton = document.querySelector('a[href*="/BeeMazing-Y1/mobile/3-Tasks/tasks.html"]');
+const marketButton = document.querySelector('a[href*="/BeeMazing-Y1/mobile/4-Market/market.html"]');
+if (adminEmail && currentUser) {
+    homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(currentUser)}`;
+    tasksButton.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(currentUser)}`;
+    marketButton.href = `/BeeMazing-Y1/mobile/4-Market/market.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(currentUser)}`;
 }
 
 
@@ -2122,24 +2131,9 @@ async function loadTasks() {
 
 
 
-
-async function loadYourTasks() {
-    let adminEmail = localStorage.getItem("currentAdminEmail");
-    const urlParams = new URLSearchParams(window.location.search);
-    let currentUser = urlParams.get("user");
+async function loadYourTasks(retryCount = 0, maxRetries = 3) {
     const yourContainer = document.getElementById("yourTasks");
     yourContainer.innerHTML = "<p>Loading...</p>";
-
-    // Fallbacks for missing parameters
-    if (!adminEmail) {
-        adminEmail = urlParams.get("admin");
-        if (adminEmail) {
-            localStorage.setItem("currentAdminEmail", adminEmail);
-        }
-    }
-    if (!currentUser) {
-        currentUser = adminEmail;
-    }
 
     if (!adminEmail || !currentUser) {
         yourContainer.innerHTML = "<p>Error: Unable to load tasks. Please log in again.</p>";
@@ -2171,6 +2165,14 @@ async function loadYourTasks() {
             if (!filterTasksForDate([task], todayStr).length) return false;
             return task.users.includes(currentUser) || (task.tempTurnReplacement?.[todayStr] && Object.values(task.tempTurnReplacement[todayStr]).includes(currentUser));
         });
+
+        console.log("loadYourTasks - Current User:", currentUser, "Tasks:", yourTasks); // Debug
+
+        if (yourTasks.length === 0 && retryCount < maxRetries) {
+            console.log(`No tasks found, retrying (${retryCount + 1}/${maxRetries})...`);
+            setTimeout(() => loadYourTasks(retryCount + 1, maxRetries), 1000);
+            return;
+        }
 
         document.getElementById("yourTaskCount").textContent = `(${yourTasks.length})`;
 
@@ -2214,10 +2216,14 @@ async function loadYourTasks() {
         }
     } catch (err) {
         console.error("Error loading your tasks:", err);
+        if (retryCount < maxRetries) {
+            console.log(`Error occurred, retrying (${retryCount + 1}/${maxRetries})...`);
+            setTimeout(() => loadYourTasks(retryCount + 1, maxRetries), 1000);
+            return;
+        }
         yourContainer.innerHTML = "<p>Error loading your tasks: " + err.message + "</p>";
     }
 }
-
 
 
 
