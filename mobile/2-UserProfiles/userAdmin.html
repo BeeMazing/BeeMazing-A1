@@ -1045,6 +1045,27 @@
 
 
 
+.your-task {
+    background: #2A2B32;
+    border: 1px solid var(--border-dark);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    color: white;
+    font-size: 14px;
+}
+.your-task .task-title {
+    font-weight: 600;
+    font-size: 15px;
+    margin: 0;
+}
+.your-task .task-info {
+    font-style: italic;
+    font-size: 13px;
+    color: #ccc;
+    margin-top: 4px;
+}
+
 
   </style>
 
@@ -2084,66 +2105,133 @@ async function loadTasks() {
 
 
 
+async function loadYourTasks() {
+    const adminEmail = localStorage.getItem("currentAdminEmail");
+    const yourContainer = document.getElementById("yourTasks");
+    const currentUser = urlParams.get("user"); // Current Admin user
+    yourContainer.innerHTML = "<p>Loading...</p>";
+
+    try {
+        const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
+            cache: "no-store"
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to load tasks");
+
+        const allTasks = data.tasks || [];
+        const todayStr = selectedDate;
+
+        // Filter tasks assigned to the current Admin user
+        const yourTasks = allTasks.filter(task => {
+            if (!task || !task.users || !task.title || !task.date) return false;
+            if (!filterTasksForDate([task], todayStr).length) return false;
+            return task.users.includes(currentUser);
+        });
+
+        document.getElementById("yourTaskCount").textContent = `(${yourTasks.length})`;
+
+        if (yourTasks.length === 0) {
+            yourContainer.innerHTML = "<p>No tasks assigned to you 🎉</p>";
+        } else {
+            yourContainer.innerHTML = "";
+            yourTasks.forEach(task => {
+                let turnData;
+                if (task.settings?.includes("Rotation")) {
+                    turnData = typeof mixedTurnData === "function" ? mixedTurnData(task, todayStr) : { turns: [] };
+                } else if (task.settings?.includes("Individual")) {
+                    turnData = typeof individualTurnData === "function" ? individualTurnData(task, todayStr) : { turns: [] };
+                } else {
+                    turnData = { turns: [] };
+                }
+
+                // Get turns for the current user
+                const userTurns = turnData.turns.filter(t => t.user === currentUser);
+                const div = document.createElement("div");
+                div.className = "your-task"; // Changed from "pending-task"
+                div.innerHTML = `
+                    <div class="task-title">${task.title}</div>
+                    <div class="task-info">
+                        Status: ${
+                            userTurns.length > 0
+                                ? userTurns.map(t => t.isCompleted ? "Completed" : t.isPending ? "Pending Review" : "Not Started").join(", ")
+                                : "Not Started"
+                        }
+                    </div>
+                    <div class="task-info">Date: ${new Date(todayStr).toLocaleDateString()}</div>
+                `;
+                yourContainer.appendChild(div);
+            });
+        }
+    } catch (err) {
+        console.error("Error loading your tasks:", err);
+        yourContainer.innerHTML = "<p>Error loading your tasks</p>";
+    }
+}
+
+
+
 
 
 
 
 
 function generateScrollableDates(monthOffset = 0) {
-  const container = document.getElementById("dayScrollContainer");
-  container.innerHTML = "";
+    const container = document.getElementById("dayScrollContainer");
+    container.innerHTML = "";
 
-  const today = new Date();
-  today.setDate(1);
-  today.setMonth(today.getMonth() + monthOffset);
+    const today = new Date();
+    today.setDate(1);
+    today.setMonth(today.getMonth() + monthOffset);
 
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-  document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
-    month: 'long',
-    year: 'numeric',
-  });
+    document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
+        month: "long",
+        year: "numeric",
+    });
 
-  const todayStr = new Date().toLocaleDateString("sv-SE");
+    const todayStr = new Date().toLocaleDateString("sv-SE");
 
-  for (let i = 1; i <= daysInMonth; i++) {
-    const date = new Date(currentYear, currentMonth, i);
-    const btn = document.createElement("div");
-    btn.className = "day";
-    btn.textContent = i;
-    btn.dataset.date = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    for (let i = 1; i <= daysInMonth; i++) {
+        const date = new Date(currentYear, currentMonth, i);
+        const btn = document.createElement("div");
+        btn.className = "day";
+        btn.textContent = i;
+        btn.dataset.date = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
-    btn.addEventListener("click", () => {
-  document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-  btn.classList.add("selected");
-  selectedDate = btn.dataset.date;
-  loadTasks();
-  loadOverdueTasks(); // 🐝 New line
-  loadPendingTasks();
-});
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+            btn.classList.add("selected");
+            selectedDate = btn.dataset.date;
+            loadTasks();
+            loadOverdueTasks();
+            loadPendingTasks();
+            loadYourTasks(); // Add this
+            loadPendingRewardRequests();
+        });
 
-    if (btn.dataset.date === todayStr) {
-  btn.classList.add("selected");
-  selectedDate = btn.dataset.date;
-  loadTasks();
-  loadOverdueTasks(); // 🐝 New line
-  loadPendingTasks();
-}
+        if (btn.dataset.date === todayStr) {
+            btn.classList.add("selected");
+            selectedDate = btn.dataset.date;
+            loadTasks();
+            loadOverdueTasks();
+            loadPendingTasks();
+            loadYourTasks(); // Add this
+            loadPendingRewardRequests();
+        }
 
-    container.appendChild(btn);
-  }
-
-  setTimeout(() => {
-    const selected = document.querySelector(".day.selected");
-    if (selected) {
-      selected.scrollIntoView({ behavior: "smooth", inline: "center" });
+        container.appendChild(btn);
     }
-  }, 50);
+
+    setTimeout(() => {
+        const selected = document.querySelector(".day.selected");
+        if (selected) {
+            selected.scrollIntoView({ behavior: "smooth", inline: "center" });
+        }
+    }, 50);
 }
-
-
 
 
 
