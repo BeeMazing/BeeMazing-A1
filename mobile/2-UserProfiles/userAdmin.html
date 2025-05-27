@@ -2138,7 +2138,7 @@ async function loadYourTasks() {
     const yourContainer = document.getElementById("yourTasks");
     yourContainer.innerHTML = "<p>Loading...</p>";
 
-    // Save current user to localStorage if found
+    // Save current user if provided
     if (currentUser) {
         localStorage.setItem("currentUser", currentUser);
     } else {
@@ -2146,7 +2146,7 @@ async function loadYourTasks() {
         return;
     }
 
-    // Fallback for adminEmail
+    // Save admin email from URL if localStorage is missing it
     if (!adminEmail) {
         adminEmail = urlParams.get("admin");
         if (adminEmail) {
@@ -2155,8 +2155,7 @@ async function loadYourTasks() {
     }
 
     if (!adminEmail || !currentUser) {
-        yourContainer.innerHTML = "<p>Error: Unable to load tasks. Please log in again.</p>";
-        console.error("Missing adminEmail or currentUser", { adminEmail, currentUser });
+        yourContainer.innerHTML = "<p>Error: Missing admin or user info.</p>";
         return;
     }
 
@@ -2170,12 +2169,12 @@ async function loadYourTasks() {
         const allTasks = data.tasks || [];
         const todayStr = selectedDate || new Date().toISOString().split("T")[0];
 
-        // Get user permissions to check if current user is an admin
+        // Get user permissions to detect if currentUser is admin
         const userRes = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
         const userData = await userRes.json();
         const isAdmin = userData.permissions?.[currentUser] === "Admin";
 
-        // Filter for tasks assigned to the current user
+        // Filter for tasks assigned to this user
         const yourTasks = allTasks.filter(task => {
             if (!task || !task.users || !task.title || !task.date) return false;
             if (!filterTasksForDate([task], todayStr).length) return false;
@@ -2228,6 +2227,8 @@ async function loadYourTasks() {
         yourContainer.innerHTML = "<p>Error loading your tasks: " + err.message + "</p>";
     }
 }
+
+
 
 
 
