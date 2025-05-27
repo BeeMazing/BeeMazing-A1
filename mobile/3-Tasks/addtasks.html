@@ -1249,39 +1249,53 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 
-        const populateUsers = () => {
-    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+        async function populateUsers() {
     const currentAdmin = localStorage.getItem("currentAdminEmail");
-    const users = allUserData[currentAdmin]?.users || [];
-    const permissions = allUserData[currentAdmin]?.permissions || {};
+    if (!currentAdmin) {
+        console.error("No admin email found in localStorage");
+        assignedToDisplay.textContent = "Error: No admin logged in";
+        return;
+    }
 
-    // Include all users and Admins
-    const allUsers = [...new Set([...users, ...Object.keys(permissions).filter(u => permissions[u] === "Admin")])];
+    try {
+        const response = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(currentAdmin)}`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" }
+        });
 
-    userList.innerHTML = "";
-    allUsers.forEach((user) => {
-        const userItem = document.createElement("li");
-        userItem.textContent = user;
-        userItem.style.padding = "10px";
-        userItem.style.margin = "5px 0";
-        userItem.style.border = "1px solid var(--selection-border)";
-        userItem.style.borderRadius = "8px";
-        userItem.style.cursor = "pointer";
-        userItem.style.textAlign = "center";
+        const data = await response.json();
+        console.log("Fetched users:", data); // Debug log
 
-        if (selectedUsers.includes(user)) {
-            userItem.style.backgroundColor = "var(--primary-color)";
-            userItem.style.color = "var(--secondary-color)";
-        } else {
-            userItem.style.backgroundColor = "var(--light-bg)";
-            userItem.style.color = "var(--text-color)";
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || `HTTP ${response.status}`);
         }
 
-        userItem.addEventListener("mouseover", () => {
-            userItem.style.backgroundColor = "var(--primary-color)";
-            userItem.style.color = "var(--secondary-color)";
-        });
-        userItem.addEventListener("mouseout", () => {
+        const { users = [], permissions = {} } = data;
+
+        // Filter non-admin users
+        const nonAdminUsers = users.filter(user => permissions[user] !== "Admin");
+
+        // Update localStorage to sync with backend
+        const allUserData = JSON.parse(localStorage.getItem("userData") || "{}");
+        allUserData[currentAdmin] = allUserData[currentAdmin] || { users: [], permissions: {} };
+        allUserData[currentAdmin].users = nonAdminUsers;
+        allUserData[currentAdmin].permissions = permissions;
+        localStorage.setItem("userData", JSON.stringify(allUserData));
+
+        // Clear existing user list
+        userList.innerHTML = "";
+
+        // Populate user list
+        nonAdminUsers.forEach(user => {
+            const userItem = document.createElement("li");
+            userItem.textContent = user;
+            userItem.style.padding = "10px";
+            userItem.style.margin = "5px 0";
+            userItem.style.border = "1px solid var(--selection-border)";
+            userItem.style.borderRadius = "8px";
+            userItem.style.cursor = "pointer";
+            userItem.style.textAlign = "center";
+
             if (selectedUsers.includes(user)) {
                 userItem.style.backgroundColor = "var(--primary-color)";
                 userItem.style.color = "var(--secondary-color)";
@@ -1289,25 +1303,44 @@ document.addEventListener("DOMContentLoaded", async () => {
                 userItem.style.backgroundColor = "var(--light-bg)";
                 userItem.style.color = "var(--text-color)";
             }
-        });
-        userItem.addEventListener("click", () => {
-            if (selectedUsers.includes(user)) {
-                selectedUsers = selectedUsers.filter((u) => u !== user);
-                userItem.style.backgroundColor = "var(--light-bg)";
-                userItem.style.color = "var(--text-color)";
-            } else {
-                selectedUsers.push(user);
+
+            userItem.addEventListener("mouseover", () => {
                 userItem.style.backgroundColor = "var(--primary-color)";
                 userItem.style.color = "var(--secondary-color)";
-            }
-            updateSelectedUsersDisplay();
+            });
+            userItem.addEventListener("mouseout", () => {
+                if (selectedUsers.includes(user)) {
+                    userItem.style.backgroundColor = "var(--primary-color)";
+                    userItem.style.color = "var(--secondary-color)";
+                } else {
+                    userItem.style.backgroundColor = "var(--light-bg)";
+                    userItem.style.color = "var(--text-color)";
+                }
+            });
+            userItem.addEventListener("click", () => {
+                if (selectedUsers.includes(user)) {
+                    selectedUsers = selectedUsers.filter(u => u !== user);
+                    userItem.style.backgroundColor = "var(--light-bg)";
+                    userItem.style.color = "var(--text-color)";
+                } else {
+                    selectedUsers.push(user);
+                    userItem.style.backgroundColor = "var(--primary-color)";
+                    userItem.style.color = "var(--secondary-color)";
+                }
+                updateSelectedUsersDisplay();
+            });
+            userList.appendChild(userItem);
         });
-        userList.appendChild(userItem);
-    });
-};
 
+        // Update display
+        updateSelectedUsersDisplay();
+        assignedToDisplay.textContent = nonAdminUsers.length ? "Select users" : "No users available";
 
-
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        assignedToDisplay.textContent = "Error loading users";
+    }
+}
 
 
 
