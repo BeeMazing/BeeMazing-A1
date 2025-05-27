@@ -1267,25 +1267,16 @@
 // Dynamically set footer button links and active state
 const urlParams = new URLSearchParams(window.location.search);
 const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
-let currentUser = urlParams.get('user') || adminEmail; // Global currentUser
+const userName = urlParams.get('user') || '';
 const basePath = '/BeeMazing-Y1/mobile/2-UserProfiles';
 
-// Persist URL parameters
-if (adminEmail && currentUser) {
-    const newParams = new URLSearchParams();
-    newParams.set('admin', adminEmail);
-    newParams.set('user', currentUser);
-    window.history.replaceState({}, '', `${window.location.pathname}?${newParams}`);
-    localStorage.setItem('currentAdminEmail', adminEmail);
-}
-
 const homeButton = document.getElementById('homeButton');
-const tasksButton = document.querySelector('a[href*="/BeeMazing-Y1/mobile/3-Tasks/tasks.html"]');
-const marketButton = document.querySelector('a[href*="/BeeMazing-Y1/mobile/4-Market/market.html"]');
-if (adminEmail && currentUser) {
-    homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(currentUser)}`;
-    tasksButton.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(currentUser)}`;
-    marketButton.href = `/BeeMazing-Y1/mobile/4-Market/market.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(currentUser)}`;
+const tasksButton = document.querySelector('a[href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html"]');
+const marketButton = document.querySelector('a[href="/BeeMazing-Y1/mobile/4-Market/market.html"]');
+if (adminEmail && userName) {
+    homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+    tasksButton.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+    marketButton.href = `/BeeMazing-Y1/mobile/4-Market/market.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
 }
 
 
@@ -1517,6 +1508,12 @@ const profileIcon = document.getElementById("profileIcon");
 const userSelectModal = document.getElementById("userSelectModal");
 const userList = document.getElementById("userList");
 const closeModalBtn = document.getElementById("closeModalBtn");
+
+
+
+
+
+
 profileIcon.addEventListener("click", async () => {
     if (!adminEmail) {
         alert("Admin email not found. Please log in again.");
@@ -1527,7 +1524,6 @@ profileIcon.addEventListener("click", async () => {
     const userPermissions = allUserData[adminEmail]?.permissions || {};
     userList.innerHTML = '';
     if (users.length === 0) {
-        alert("No users found for this admin.");
         userList.innerHTML = '<li style="padding: 15px 20px; color: #D32F2F;">No users available</li>';
     } else {
         users.forEach(user => {
@@ -1568,19 +1564,30 @@ profileIcon.addEventListener("click", async () => {
                 actionsContainer.appendChild(removeBtn);
                 li.appendChild(actionsContainer);
             }
-            if (user === userName) {
+            if (user === currentUser) {
                 li.style.background = "#333540";
                 li.style.fontWeight = "600";
             }
             li.addEventListener("click", () => {
-                const page = userPermissions[user] === "Admin" ? "userAdmin.html" : "users.html";
-                window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+                currentUser = user; // Update global currentUser
+                const newParams = new URLSearchParams();
+                newParams.set('admin', adminEmail);
+                newParams.set('user', currentUser);
+                window.history.replaceState({}, '', `${window.location.pathname}?${newParams}`);
+                loadYourTasks(); // Reload tasks for new user
+                userSelectModal.classList.remove("show"); // Close modal
             });
             userList.appendChild(li);
         });
     }
     userSelectModal.classList.add("show");
 });
+
+
+
+
+
+
 userSelectModal.addEventListener("click", (e) => {
     if (e.target === userSelectModal) {
         userSelectModal.classList.remove("show");
@@ -1791,15 +1798,10 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-        let selectedDate = new Date().toLocaleDateString("sv-SE");
+let selectedDate = new Date().toLocaleDateString("sv-SE");
 let allUsers = [];
 const expandedTasks = new Set();
 
-
-fetchUsersFromServer(adminEmail).then(users => {
-    allUsers = users;
-    generateScrollableDates();
-});
 
 
 
@@ -2131,6 +2133,8 @@ async function loadTasks() {
 
 
 
+
+
 async function loadYourTasks(retryCount = 0, maxRetries = 3) {
     const yourContainer = document.getElementById("yourTasks");
     yourContainer.innerHTML = "<p>Loading...</p>";
@@ -2224,6 +2228,8 @@ async function loadYourTasks(retryCount = 0, maxRetries = 3) {
         yourContainer.innerHTML = "<p>Error loading your tasks: " + err.message + "</p>";
     }
 }
+
+
 
 
 

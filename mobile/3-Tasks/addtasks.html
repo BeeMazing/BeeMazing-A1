@@ -721,7 +721,7 @@
 <body>
     <div class="header">
         <i class="fas fa-bars menu-icon"></i>
-        <div class="title">Add Task 11</div>
+        <div class="title">Add Task 1</div>
     </div>
 
     <div class="content">
@@ -2183,25 +2183,19 @@ if (from === "onboarding") {
 
 
 
+
+
+
 function handleCancel() {
   const urlParams = new URLSearchParams(window.location.search);
   const from = urlParams.get("from");
-  const currentAdmin = localStorage.getItem("currentAdminEmail");
-  const user = encodeURIComponent(urlParams.get("user") || currentAdmin);
 
   if (from === "onboarding") {
-    const adminEmail = encodeURIComponent(currentAdmin);
-    window.location.href = `/BeeMazing-Y1/onboarding.html?admin=${adminEmail}&user=${user}#step4`;
+    window.location.href = "/BeeMazing-Y1/onboarding.html#step4";
   } else {
-    const adminEmail = encodeURIComponent(currentAdmin);
-    window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${user}`;
+    window.location.href = "tasks.html";
   }
 }
-
-
-
-
-
 
 
     </script>    
