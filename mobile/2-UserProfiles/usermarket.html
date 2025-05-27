@@ -63,37 +63,6 @@
             font-weight: bold;
             display: none;
         }
-        .history-item {
-            position: relative;
-            overflow: hidden;
-        }
-        .history-item.swiped {
-            transform: translateX(-100px);
-        }
-        .delete-btn {
-            position: absolute;
-            right: -100px;
-            top: 0;
-            height: 100%;
-            background: var(--danger-color);
-            color: white;
-            border: none;
-            border-radius: 0 10px 10px 0;
-            padding: 0 20px;
-            font-size: 16px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: right 0.3s ease, background-color 0.3s ease;
-        }
-        .history-item.swiped .delete-btn {
-            right: 0;
-        }
-        .delete-btn:hover {
-            background: #B71C1C;
-        }
         .btn-primary {
             background-color: var(--primary-color);
             color: var(--secondary-color);
@@ -535,15 +504,11 @@ if (userRewardCount > 0 && (isTheKey || isDiceChest)) {
         </button>
     `;
 } else {
-
-
     buttonContent = `
-    <button class="mt-2 px-3 py-1 rounded font-semibold ${canAfford ? 'btn-primary' : 'btn-disabled'}" 
-        ${canAfford ? '' : 'disabled'} 
-        onclick="claimReward('${userName}', '${rewardName}', '${rewardType}', ${rewardCost}, '${outcomes}')">Get It</button>
-`;
-
-
+        <button class="mt-2 px-3 py-1 rounded font-semibold ${canAfford ? 'btn-primary' : 'btn-disabled'}" 
+            ${canAfford ? '' : 'disabled'} 
+            onclick="claimReward('${userName}', '${rewardName}', '${rewardType}', ${rewardCost}, '${JSON.stringify(outcomes)}')">Get It</button>
+    `;
 }
 
 card.innerHTML = `
@@ -567,34 +532,37 @@ indicator.textContent = userRewardCount;
             });
         }
 
-        // Load reward history (unchanged from your version)
-        const historyResponse = await fetch(`https://beemazing.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}`);
-        const historyData = await historyResponse.json();
-        if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
-        const rewardHistory = (historyData.rewardHistory || {})[userName] || [];
 
-        historyGrid.innerHTML = "";
-        if (rewardHistory.length === 0) {
-            historyGrid.innerHTML = "<p class='text-center'>No rewards received yet.</p>";
-        } else {
-            const reversedHistory = [...rewardHistory].reverse();
-            reversedHistory.forEach((reward, index) => {
-                const actualIndex = rewardHistory.length - 1 - index;
+        
+// Load reward history
+const historyResponse = await fetch(`https://beemazing.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}`);
+const historyData = await historyResponse.json();
+if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
+const rewardHistory = (historyData.rewardHistory || {})[userName] || [];
+
+historyGrid.innerHTML = "";
+if (rewardHistory.length === 0) {
+    historyGrid.innerHTML = "<p class='text-center'>No rewards received yet.</p>";
+} else {
+    const reversedHistory = [...rewardHistory].reverse();
+    reversedHistory.forEach((reward) => {
+        const card = document.createElement("div");
+        card.className = "reward-card";
+        card.innerHTML = `
+            <h3 class="text-lg font-semibold">${reward.rewardName}</h3>
+            <p class="text-[var(--text-color)]">Cost: ${reward.rewardCost} 🍯</p>
+            <p class="text-[var(--text-color)]">Status: ${reward.status}</p>
+            <p class="text-[var(--text-color)]">Date: ${new Date(reward.timestamp).toLocaleString()}</p>
+        `;
+        historyGrid.appendChild(card);
 
 
 
-                const card = document.createElement("div");
-card.className = "reward-card history-item";
-card.dataset.historyId = actualIndex;
-card.innerHTML = `
-    <h3 class="text-lg font-semibold">${reward.name}</h3>
-    <p class="text-[var(--text-color)]">Collected on: ${reward.date}</p>
-    <p class="text-[var(--text-color)]">Status: ${reward.status || 'N/A'}</p>
-    <button class="delete-btn" onclick="deleteReward('${userName}', ${actualIndex})">Delete</button>
-`;
-historyGrid.appendChild(card);
 
-// Swipe event listeners
+
+
+
+
 let startX = 0;
 let currentX = 0;
 let isSwiping = false;
@@ -641,29 +609,38 @@ card.addEventListener("mouseup", () => isSwiping = false);
 
 
 
-async function claimReward(userName, rewardName, rewardType, rewardCost, claimType) {
-  try {
-    const response = await fetch("https://beemazing.onrender.com/api/pending-rewards", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        adminEmail,
-        userName,
-        rewardName,
-        rewardType,
-        rewardCost,
-        claimType,
-        timestamp: new Date().toISOString()
-      })
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to submit reward for approval");
-    alert(`Reward ${rewardName} sent for approval!`);
-    loadRewards(userName);
-  } catch (err) {
-    console.error("Error submitting reward for approval:", err);
-    alert(`Failed to submit ${rewardName}: ${err.message}`);
-  }
+
+
+async function claimReward(userName, rewardName, rewardType, honey, outcomes) {
+    try {
+        // Fetch user honey balance
+        const userHoney = await getUserHoney(userName);
+        console.log(`claimReward: user=${userName}, reward=${rewardName}, userHoney=${userHoney}, cost=${honey}, rewardType=${rewardType}, outcomes=`, outcomes);
+        if (userHoney < honey) {
+            alert("Not enough Buzz Points to claim this reward!");
+            return;
+        }
+
+        // Send reward request
+        const response = await fetch("https://beemazing.onrender.com/api/reward-request", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                adminEmail,
+                user: userName,
+                rewardName,
+                rewardCost: honey
+            })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to submit reward request");
+
+        alert("Reward request submitted for approval!");
+        loadRewards(userName); // Refresh rewards and history
+    } catch (err) {
+        console.error(`Error requesting reward for ${rewardName}:`, err);
+        alert(`Failed to request ${rewardName}: ${err.message}. Please try again or contact support.`);
+    }
 }
 
 
@@ -671,14 +648,15 @@ async function claimReward(userName, rewardName, rewardType, rewardCost, claimTy
 
 
 
-
-
       
 
 
 
 
       
+
+
+
 
 
 
@@ -873,34 +851,10 @@ async function claimReward(userName, rewardName, rewardType, rewardCost, claimTy
 
 
 
-      async function deleteReward(userName, index) {
-          try {
-              const response = await fetch(`https://beemazing.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}`);
-              const data = await response.json();
-              if (!response.ok) throw new Error(data.error || "Failed to fetch reward history");
-              const rewardHistory = data.rewardHistory || {};
-              const history = rewardHistory[userName] || [];
-  
-              if (history[index]) {
-                  history.splice(index, 1);
-                  if (history.length === 0) {
-                      delete rewardHistory[userName];
-                  } else {
-                      rewardHistory[userName] = history;
-                  }
-                  await fetch("https://beemazing.onrender.com/api/reward-history", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ adminEmail, rewardHistory })
-                  });
-                  loadRewards(userName);
-              }
-          } catch (err) {
-              console.error("Error deleting reward:", err);
-              alert("Failed to delete reward. Please try again.");
-          }
-      }
-  
+
+
+
+
       document.getElementById("keyPopup").addEventListener("click", function(e) {
           if (e.target === this) {
               this.style.display = "none";

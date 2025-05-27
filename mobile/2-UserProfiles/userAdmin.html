@@ -997,34 +997,50 @@
 
 
 
-
-
-.pending-reward {
-  background: #2A2B32;
-  border: 1px solid var(--border-dark);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-top: 8px;
-  color: white;
-  font-size: 14px;
+/* Reward Request Styles */
+.reward-request {
+    background: #2A2B32;
+    border: 1px solid var(--border-dark);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    color: white;
+    font-size: 14px;
 }
-.pending-reward .reward-title {
-  font-weight: 600;
-  font-size: 15px;
-  margin: 0;
+.reward-request .request-title {
+    font-weight: 600;
+    font-size: 15px;
+    margin: 0;
 }
-.pending-reward .reward-info {
-  font-style: italic;
-  font-size: 13px;
-  color: #ccc;
-  margin-top: 4px;
+.reward-request .request-info {
+    font-style: italic;
+    font-size: 13px;
+    color: #ccc;
+    margin-top: 4px;
 }
-.pending-reward .reward-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 8px;
+.reward-request .request-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
 }
-
+.reward-request .approve-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+.reward-request .decline-btn {
+    background-color: #D32F2F;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
 
 
 
@@ -1091,17 +1107,17 @@
         
           <div class="admin-card" id="rewardCard" style="flex-direction: column; align-items: stretch;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div class="card-left">
-                <span class="card-icon">🎁</span>
-                <span class="card-title">Rewards Needing Approval</span>
-              </div>
-              <div class="card-right">
-                <span class="card-count" id="rewardCount">(0)</span>
-                <span class="card-arrow" id="rewardArrow">›</span>
-              </div>
+                <div class="card-left">
+                    <span class="card-icon">🎁</span>
+                    <span class="card-title">Rewards Needing Approval</span>
+                </div>
+                <div class="card-right">
+                    <span class="card-count" id="rewardCount">(0)</span>
+                    <span class="card-arrow" id="rewardArrow">›</span>
+                </div>
             </div>
             <div id="rewardTasks" class="task-list" style="display: none; padding: 0 10px 10px;"></div>
-          </div>
+        </div>
           
           <div class="admin-card" id="yourCard" style="flex-direction: column; align-items: stretch;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1806,7 +1822,6 @@ async function handleDecision(title, date, index, decision, user, event) {
       loadTasks();
       loadPendingTasks();
       loadOverdueTasks();
-      loadPendingRewards();
     }, 500);
   } catch (err) {
     console.error("Error processing decision:", err);
@@ -2107,7 +2122,6 @@ function generateScrollableDates(monthOffset = 0) {
   loadTasks();
   loadOverdueTasks(); // 🐝 New line
   loadPendingTasks();
-  loadPendingRewards();
 });
 
     if (btn.dataset.date === todayStr) {
@@ -2116,7 +2130,6 @@ function generateScrollableDates(monthOffset = 0) {
   loadTasks();
   loadOverdueTasks(); // 🐝 New line
   loadPendingTasks();
-  loadPendingRewards();
 }
 
     container.appendChild(btn);
@@ -2343,131 +2356,84 @@ async function loadPendingTasks() {
 
 
 
-async function loadPendingRewards() {
-  const pendingContainer = document.getElementById("rewardTasks");
-  pendingContainer.innerHTML = "<p>Loading...</p>";
 
-  try {
-    const res = await fetch(`https://beemazing.onrender.com/api/pending-rewards?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to load pending rewards");
 
-    const pendingRewards = data.pendingRewards || [];
-    document.getElementById("rewardCount").textContent = `(${pendingRewards.length})`;
+async function loadPendingRewardRequests() {
+    const rewardContainer = document.getElementById("rewardTasks");
+    rewardContainer.innerHTML = "<p>Loading...</p>";
 
-    if (pendingRewards.length === 0) {
-      pendingContainer.innerHTML = "<p>No rewards needing approval 🎉</p>";
-    } else {
-      pendingContainer.innerHTML = "";
-      pendingRewards.forEach((reward, index) => {
-        const div = document.createElement("div");
-        div.className = "pending-reward";
-        div.innerHTML = `
-          <div class="reward-title">${reward.rewardName}</div>
-          <div class="reward-info">Requested by: ${reward.userName} on ${new Date(reward.timestamp).toLocaleString()}</div>
-          <div class="reward-actions">
-            <button class="accept-btn" onclick="handleRewardDecision(${index}, 'approve')">Approve</button>
-            <button class="decline-btn" onclick="handleRewardDecision(${index}, 'decline')">Decline</button>
-          </div>
-        `;
-        pendingContainer.appendChild(div);
-      });
+    try {
+        const response = await fetch(`https://beemazing.onrender.com/api/reward-requests?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
+            cache: "no-store"
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to fetch reward requests");
+
+        const pendingRequests = (data.requests || []).filter(req => req.status === "pending");
+        document.getElementById("rewardCount").textContent = `(${pendingRequests.length})`;
+
+        if (pendingRequests.length === 0) {
+            rewardContainer.innerHTML = "<p>No rewards needing approval 🎉</p>";
+        } else {
+            rewardContainer.innerHTML = "";
+            pendingRequests.forEach((request, index) => {
+                const div = document.createElement("div");
+                div.className = "reward-request";
+                div.innerHTML = `
+                    <div class="request-title">${request.rewardName}</div>
+                    <div class="request-info">Requested by: ${request.user} (${request.rewardCost} 🍯)</div>
+                    <div class="request-actions">
+                        <button class="approve-btn" onclick="reviewReward(${index}, 'approve')">Approve</button>
+                        <button class="decline-btn" onclick="reviewReward(${index}, 'decline')">Decline</button>
+                    </div>
+                `;
+                rewardContainer.appendChild(div);
+            });
+        }
+    } catch (err) {
+        console.error("Error loading pending reward requests:", err);
+        rewardContainer.innerHTML = "<p>Error loading reward requests</p>";
     }
-  } catch (err) {
-    console.error("Error loading pending rewards:", err);
-    pendingContainer.innerHTML = "<p>Error loading pending rewards</p>";
-  }
 }
 
+async function reviewReward(requestIndex, decision) {
+    try {
+        const buttons = document.querySelectorAll(`.reward-request button`);
+        buttons.forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+        });
 
+        const response = await fetch("https://beemazing.onrender.com/api/review-reward", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ adminEmail, requestIndex, decision })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to process reward request");
 
-
-
-
-async function handleRewardDecision(index, decision) {
-  try {
-    const res = await fetch(`https://beemazing.onrender.com/api/pending-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to fetch pending rewards");
-    const pendingRewards = data.pendingRewards || [];
-    const reward = pendingRewards[index];
-    if (!reward) throw new Error("Reward not found");
-
-    const { userName, rewardName, rewardType, rewardCost, claimType } = reward;
-
-    if (decision === "approve") {
-      const userResponse = await fetch(`https://beemazing.onrender.com/api/users?adminEmail=${encodeURIComponent(adminEmail)}`);
-      const userData = await userResponse.json();
-      if (!userResponse.ok) throw new Error(userData.error || "Failed to fetch user data");
-      const users = userData.users || {};
-      const user = users[userName];
-      if (!user) throw new Error("User not found");
-      if (user.points < rewardCost) throw new Error("Not enough Buzz Points");
-
-      const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-      const userRewardsData = await userRewardsResponse.json();
-      if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
-      const userRewards = userRewardsData.userRewards || {};
-      if (!userRewards[userName]) userRewards[userName] = [];
-
-      user.points -= rewardCost;
-      userRewards[userName].push({
-        name: rewardName,
-        type: rewardType,
-        points: rewardCost,
-        outcomes: claimType,
-        date: new Date().toLocaleString()
-      });
-
-      await fetch("https://beemazing.onrender.com/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminEmail, users })
-      });
-      await fetch("https://beemazing.onrender.com/api/user-rewards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminEmail, userRewards })
-      });
+        alert(`Reward ${decision}d successfully!`);
+        loadPendingRewardRequests(); // Refresh list
+    } catch (err) {
+        console.error("Error reviewing reward:", err);
+        alert(`Failed to process reward request: ${err.message}`);
+    } finally {
+        const buttons = document.querySelectorAll(`.reward-request button`);
+        buttons.forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = "1";
+        });
     }
-
-    const historyResponse = await fetch(`https://beemazing.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}`);
-    const historyData = await historyResponse.json();
-    if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
-    const rewardHistory = historyData.rewardHistory || {};
-    if (!rewardHistory[userName]) rewardHistory[userName] = [];
-
-    rewardHistory[userName].push({
-      name: rewardName,
-      type: rewardType,
-      points: rewardCost,
-      outcomes: claimType,
-      date: new Date().toLocaleString(),
-      status: decision === "approve" ? "Approved" : "Declined"
-    });
-
-    await fetch("https://beemazing.onrender.com/api/reward-history", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminEmail, rewardHistory })
-    });
-
-    pendingRewards.splice(index, 1);
-    await fetch("https://beemazing.onrender.com/api/pending-rewards", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminEmail, pendingRewards })
-    });
-
-    loadPendingRewards();
-  } catch (err) {
-    console.error("Error processing reward decision:", err);
-    alert(`Error: ${err.message}`);
-  }
 }
 
-
-
+// Call on page load and date change
+document.addEventListener("DOMContentLoaded", loadPendingRewardRequests);
+// Also call when selectedDate changes
+const originalGenerateScrollableDates = generateScrollableDates;
+generateScrollableDates = function(monthOffset = 0) {
+    originalGenerateScrollableDates(monthOffset);
+    loadPendingRewardRequests();
+};
 
 
 
