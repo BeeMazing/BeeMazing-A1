@@ -2257,8 +2257,6 @@ async function submitTaskCompletion(title, date, user) {
 
 
 
-
-
 function generateScrollableDates(monthOffset = 0) {
     const container = document.getElementById("dayScrollContainer");
     container.innerHTML = "";
@@ -2292,21 +2290,25 @@ function generateScrollableDates(monthOffset = 0) {
             loadTasks();
             loadOverdueTasks();
             loadPendingTasks();
-            loadYourTasks(); // Add this
+            loadYourTasks();
             loadPendingRewardRequests();
         });
 
         if (btn.dataset.date === todayStr) {
             btn.classList.add("selected");
             selectedDate = btn.dataset.date;
-            loadTasks();
-            loadOverdueTasks();
-            loadPendingTasks();
-            loadYourTasks(); // Add this
-            loadPendingRewardRequests();
         }
 
         container.appendChild(btn);
+    }
+
+    // Ensure tasks are loaded for the selected date
+    if (selectedDate) {
+        loadTasks();
+        loadOverdueTasks();
+        loadPendingTasks();
+        loadYourTasks();
+        loadPendingRewardRequests();
     }
 
     setTimeout(() => {
@@ -2316,6 +2318,7 @@ function generateScrollableDates(monthOffset = 0) {
         }
     }, 50);
 }
+
 
 
 
@@ -2631,12 +2634,45 @@ async function reviewReward(requestIndex, decision) {
 
 
 // Call on page load and date change
-document.addEventListener("DOMContentLoaded", loadPendingRewardRequests);
+// Call on page load and date change
+document.addEventListener("DOMContentLoaded", () => {
+    // Ensure adminEmail and currentUser are set
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
+    const currentUser = urlParams.get('user') || adminEmail;
+
+    if (!adminEmail || !currentUser) {
+        console.error("Missing adminEmail or currentUser", { adminEmail, currentUser });
+        document.getElementById("yourTasks").innerHTML = "<p>Error: Unable to load tasks. Please log in again.</p>";
+        return;
+    }
+
+    // Store adminEmail in localStorage
+    if (adminEmail) {
+        localStorage.setItem("currentAdminEmail", adminEmail);
+    }
+
+    // Load pending reward requests
+    loadPendingRewardRequests();
+
+    // Ensure selectedDate is set to today
+    selectedDate = new Date().toLocaleDateString("sv-SE");
+
+    // Load users and initialize date picker
+    fetchUsersFromServer(adminEmail).then(users => {
+        allUsers = users;
+        generateScrollableDates();
+        loadYourTasks(); // Explicitly load tasks
+    });
+});
+
+
+
+
 // Also call when selectedDate changes
 const originalGenerateScrollableDates = generateScrollableDates;
 generateScrollableDates = function(monthOffset = 0) {
     originalGenerateScrollableDates(monthOffset);
-    loadPendingRewardRequests();
 };
 
 
