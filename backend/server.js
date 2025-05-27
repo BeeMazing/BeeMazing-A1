@@ -837,43 +837,77 @@ app.get("/api/market-rewards", async (req, res) => {
 });
 
 // ✅ Delete a specific market reward for an admin
+
 app.delete("/api/market-rewards", async (req, res) => {
   const { adminEmail, index } = req.query;
 
   if (!adminEmail || index === undefined) {
-    return res.status(400).json({ error: "Missing adminEmail or index" });
+      return res.status(400).json({ error: "Missing adminEmail or index" });
   }
 
   try {
-    const db = await connectDB();
-    const admins = db.collection("admins");
+      const db = await connectDB();
+      const admins = db.collection("admins");
 
-    const admin = await admins.findOne({ email: adminEmail });
-    if (!admin) {
-      return res.status(404).json({ error: "Admin not found" });
-    }
+      const admin = await admins.findOne({ email: adminEmail });
+      if (!admin) {
+          return res.status(404).json({ error: "Admin not found" });
+      }
 
-    const rewards = admin.marketRewards || [];
-    if (index < 0 || index >= rewards.length) {
-      return res.status(400).json({ error: "Invalid index" });
-    }
+      const marketRewards = admin.marketRewards || [];
+      if (index < 0 || index >= marketRewards.length) {
+          return res.status(400).json({ error: "Invalid reward index" });
+      }
 
-    rewards.splice(index, 1); // Remove the reward at the specified index
+      // Get the reward to be deleted
+      const deletedReward = marketRewards[index];
+      const rewardName = deletedReward.name;
 
-    await admins.updateOne(
-      { email: adminEmail },
-      { $set: { marketRewards: rewards } }
-    );
+      // Remove from marketRewards
+      marketRewards.splice(index, 1);
 
-    res.json({ success: true });
+      // Clean up userRewards
+      const userRewards = admin.userRewards || {};
+      for (const user in userRewards) {
+          userRewards[user] = userRewards[user].filter(reward => reward.name !== rewardName);
+          if (userRewards[user].length === 0) {
+              delete userRewards[user];
+          }
+      }
+
+      // Clean up rewardHistory
+      const rewardHistory = admin.rewardHistory || {};
+      for (const user in rewardHistory) {
+          rewardHistory[user] = rewardHistory[user].filter(history => history.rewardName !== rewardName);
+          if (rewardHistory[user].length === 0) {
+              delete rewardHistory[user];
+          }
+      }
+
+      // Clean up pendingRewardRequests
+      const pendingRewardRequests = admin.pendingRewardRequests || [];
+      const updatedPendingRequests = pendingRewardRequests.filter(req => req.rewardName !== rewardName);
+
+      // Refund points for deleted pending requests
+      const rewards = admin.rewards || {};
+      const deletedRequests = pendingRewardRequests.filter(req => req.rewardName === rewardName);
+      for (const req of deletedRequests) {
+          if (req.status === "pending") {
+              rewards[req.user] = (rewards[req.user] || 0) + req.rewardCost;
+          }
+      }
+
+      await admins.updateOne(
+          { email: adminEmail },
+          { $set: { marketRewards, userRewards, rewardHistory, pendingRewardRequests: updatedPendingRequests, rewards } }
+      );
+
+      res.json({ success: true, message: "Reward deleted successfully" });
   } catch (err) {
-    console.error("Error deleting market reward:", err);
-    res.status(500).json({ error: "Failed to delete market reward" });
+      console.error("Error deleting reward:", err);
+      res.status(500).json({ error: "Failed to delete reward" });
   }
 });
-
-
-
 
 
 
