@@ -852,117 +852,130 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+
 async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateString("sv-SE")) {
-    const userTasksDiv = document.getElementById("userTasks");
-    userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
+  const userTasksDiv = document.getElementById("userTasks");
+  userTasksDiv.innerHTML = "<p>Loading tasks...</p>";
 
-    const adminEmail = localStorage.getItem("currentAdminEmail");
-    let tasks = [];
+  const adminEmail = localStorage.getItem("currentAdminEmail");
+  let tasks = [];
 
-    try {
-        const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
-        tasks = data.tasks || [];
+  try {
+    const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
+    tasks = data.tasks || [];
 
-        console.log("loadUserTasks tasks:", tasks.map(t => ({
-            title: t.title,
-            date: t.date,
-            daysOfWeek: t.daysOfWeek,
-            specificDays: t.specificDays,
-            users: t.users
-        })));
-    } catch (err) {
-        console.error("Failed to fetch tasks from server:", err);
-        userTasksDiv.innerHTML = "<p>Failed to load tasks. Please try again later.</p>";
-        return;
+    console.log("loadUserTasks tasks:", tasks.map(t => ({
+      title: t.title,
+      date: t.date,
+      daysOfWeek: t.daysOfWeek,
+      specificDays: t.specificDays,
+      users: t.users
+    })));
+  } catch (err) {
+    console.error("Failed to fetch tasks from server:", err);
+    userTasksDiv.innerHTML = "<p>Failed to load tasks. Please try again later.</p>";
+    return;
+  }
+
+  const userTasks = filterTasksForDate(tasks, selectedDate).filter(task => {
+    if (!task || !task.users || !task.title || !task.date) return false;
+    return task.users.includes(userName);
+  });
+
+  userTasksDiv.innerHTML = "";
+  if (userTasks.length === 0) {
+    userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
+    return;
+  }
+
+  for (const task of userTasks) {
+    const taskDiv = document.createElement("div");
+    taskDiv.className = "task-item";
+
+    const isRotation = task.settings?.includes("Rotation");
+    let turnData;
+
+    if (isRotation) {
+      if (typeof mixedTurnData !== 'function') {
+        console.error(`mixedTurnData is not defined for task: ${task.title}`);
+        turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+      } else {
+        turnData = mixedTurnData(task, selectedDate);
+      }
+    } else {
+      if (typeof individualTurnData !== 'function') {
+        console.error(`individualTurnData is not defined for task: ${task.title}`);
+        turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
+      } else {
+        turnData = individualTurnData(task, selectedDate);
+      }
     }
 
-    const userTasks = filterTasksForDate(tasks, selectedDate).filter(task => {
-        if (!task || !task.users || !task.title || !task.date) return false;
-        return task.users.includes(userName);
-    });
+    const userTurns = turnData.turns.filter(turn => turn.user === userName);
+    const userTotal = userTurns.reduce((sum, turn) => sum + (turn.isCompleted || turn.isPending ? 1 : 0), 0);
+    const userRequiredTimes = turnData.requiredTimes;
+    const isCompleted = userTotal >= userRequiredTimes;
 
-    userTasksDiv.innerHTML = "";
-    if (userTasks.length === 0) {
-        userTasksDiv.innerHTML = "<p>No tasks assigned to this bee.</p>";
-        return;
+    let taskHTML = `<strong>${task.title}</strong><br>`;
+
+    if (isRotation) {
+      const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending && turn.user === userName);
+      const pendingTurn = userTurns.find(turn => turn.isPending);
+      if (pendingTurn) {
+        taskHTML += `<span style="color: orange;">Pending approval</span><br>`;
+      } else if (activeTurn) {
+        const nextTurnIndex = (activeTurn.index + 1) % task.users.length;
+        const nextUser = turnData.turns.find(t => t.index === nextTurnIndex)?.user || task.users[nextTurnIndex] || "—";
+        taskHTML += `Your Turn (Repetition ${activeTurn.repetition})<br>Next: ${nextUser}<br>`;
+      } else if (isCompleted) {
+        taskHTML += `<span style="color: green;">All done!</span><br>`;
+      } else {
+        taskHTML += `<span style="color: gray;">Waiting for your turn</span><br>`;
+      }
+    } else {
+      if (userTurns.some(turn => turn.isPending)) {
+        taskHTML += `<span style="color: orange;">Pending approval</span><br>`;
+      }
     }
 
-    for (const task of userTasks) {
-        const taskDiv = document.createElement("div");
-        taskDiv.className = "task-item";
+    taskHTML += `Buzz Points: ${task.reward || 0} 🍯<br>`;
+    taskHTML += `Progress: ${userTotal}/${userRequiredTimes}<br>`;
 
-        const isRotation = task.settings?.includes("Rotation");
-        let turnData;
+    taskDiv.innerHTML = taskHTML;
 
-        if (isRotation) {
-            if (typeof mixedTurnData !== 'function') {
-                console.error(`mixedTurnData is not defined for task: ${task.title}`);
-                turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
-            } else {
-                turnData = mixedTurnData(task, selectedDate);
-            }
-        } else {
-            if (typeof individualTurnData !== 'function') {
-                console.error(`individualTurnData is not defined for task: ${task.title}`);
-                turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
-            } else {
-                turnData = individualTurnData(task, selectedDate);
-            }
-        }
+    const todayStr = new Date().toLocaleDateString("sv-SE");
+    const isToday = selectedDate === todayStr;
 
-        const userTurns = turnData.turns.filter(turn => turn.user === userName);
-        const userTotal = userTurns.reduce((sum, turn) => sum + (turn.isCompleted || turn.isPending ? 1 : 0), 0);
-        const userRequiredTimes = isRotation ? userTurns.length : turnData.requiredTimes;
-        const isCompleted = userTotal >= userRequiredTimes;
-
-        let taskHTML = `<strong>${task.title}</strong><br>`;
-
-        if (isRotation) {
-            const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
-            if (activeTurn) {
-                const nextTurnIndex = (activeTurn.index + 1) % task.users.length;
-                const nextUser = turnData.turns.find(t => t.index === nextTurnIndex)?.user || task.users[nextTurnIndex] || "—";
-                taskHTML += `Turn: ${activeTurn.user}<br>Next: ${nextUser}<br>`;
-            } else {
-                taskHTML += `<span style="color: green;">Turn: All done!</span><br>`;
-            }
-        }
-
-        taskHTML += `Buzz Points: ${task.reward || 0} 🍯<br>`;
-        taskHTML += `Progress: ${userTotal}/${userRequiredTimes}<br>`;
-
-        taskDiv.innerHTML = taskHTML;
-
-        const todayStr = new Date().toLocaleDateString("sv-SE");
-        const isToday = selectedDate === todayStr;
-
-        let canFinish = false;
-        if (isToday && !isCompleted) {
-            if (isRotation) {
-                const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
-                canFinish = activeTurn?.user === userName;
-            } else {
-                canFinish = userTotal < userRequiredTimes;
-            }
-        }
-
-        if (canFinish) {
-            const finishBtn = document.createElement("button");
-            finishBtn.className = "finished-btn";
-            finishBtn.textContent = "Finish Task";
-            finishBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                finishTask(userName, task, selectedDate);
-            });
-            taskDiv.appendChild(finishBtn);
-        }
-
-        taskDiv.addEventListener("click", () => showTaskDetails(task, selectedDate));
-        userTasksDiv.appendChild(taskDiv);
+    let canFinish = false;
+    if (isToday && !isCompleted && !userTurns.some(turn => turn.isPending)) {
+      if (isRotation) {
+        const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending && turn.user === userName);
+        canFinish = !!activeTurn;
+      } else {
+        canFinish = userTotal < userRequiredTimes;
+      }
     }
+
+    if (canFinish) {
+      const finishBtn = document.createElement("button");
+      finishBtn.className = "finished-btn";
+      finishBtn.textContent = "Finish Task";
+      finishBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        finishTask(userName, task, selectedDate);
+      });
+      taskDiv.appendChild(finishBtn);
+    }
+
+    taskDiv.addEventListener("click", () => showTaskDetails(task, selectedDate));
+    userTasksDiv.appendChild(taskDiv);
+  }
 }
+
+
+
 
 
 
@@ -1274,9 +1287,6 @@ async function fetchAvatarPath(userName) {
 // for finish task button video preview
 
 
-
-
-
 async function finishTask(currentUser, task, selectedDate) {
   const today = selectedDate || new Date().toISOString().split("T")[0];
   const adminEmail = localStorage.getItem("currentAdminEmail");
@@ -1312,10 +1322,26 @@ async function finishTask(currentUser, task, selectedDate) {
   document.body.appendChild(popup);
 
   try {
+    let requestBody = {
+      adminEmail,
+      taskTitle: task.title.trim(),
+      user: currentUser,
+      date: today
+    };
+
+    // For Rotation tasks, include the repetition
+    if (task.settings?.includes("Rotation")) {
+      const turnData = typeof mixedTurnData === "function" ? mixedTurnData(task, today) : null;
+      if (!turnData) throw new Error("Unable to load turn data for Rotation task");
+      const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending && turn.user === currentUser);
+      if (!activeTurn) throw new Error("No active turn available for this user");
+      requestBody.repetition = activeTurn.repetition; // Use repetition instead of turnIndex
+    }
+
     const response = await fetch("https://beemazing.onrender.com/api/complete-task", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminEmail, taskTitle: task.title.trim(), user: currentUser, date: today })
+      body: JSON.stringify(requestBody)
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
@@ -1330,7 +1356,6 @@ async function finishTask(currentUser, task, selectedDate) {
     button.disabled = false;
   }
 }
-
 
 
 
