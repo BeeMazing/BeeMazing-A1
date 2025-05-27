@@ -1570,6 +1570,7 @@ profileIcon.addEventListener("click", async () => {
                 li.style.fontWeight = "600";
             }
             li.addEventListener("click", () => {
+              localStorage.setItem("currentUser", user);
                 const page = userPermissions[user] === "Admin" ? "userAdmin.html" : "users.html";
                 window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
             });
@@ -1644,6 +1645,7 @@ confirmYesBtn.addEventListener("click", async () => {
                     li.style.fontWeight = "600";
                 }
                 li.addEventListener("click", () => {
+                  localStorage.setItem("currentUser", user);
                     const page = userPermissions[user] === "Admin" ? "userAdmin.html" : "users.html";
                     window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
                 });
@@ -1741,6 +1743,7 @@ savePermissionBtn.addEventListener("click", async () => {
                 li.style.fontWeight = "600";
             }
             li.addEventListener("click", () => {
+              localStorage.setItem("currentUser", user);
                 const page = userPermissions[user] === "Admin" ? "userAdmin.html" : "users.html";
                 window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
             });
