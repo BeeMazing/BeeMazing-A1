@@ -1246,12 +1246,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     
         let selectedUsers = [];
 
-        // Try to prefill selectedUsers if editing a task
-const editTask = JSON.parse(localStorage.getItem("familyApp_editTask"));
-if (editTask && editTask.users && editTask.users.length > 0) {
-  selectedUsers = editTask.users;
-  localStorage.setItem("currentUser", selectedUsers[0]);
-}
 
 
 
@@ -2047,8 +2041,6 @@ window.addEventListener("click", (e) => {
 
 
 
-
-
         document.getElementById("addTaskForm").addEventListener("submit", async function (event) {
     event.preventDefault();
 
@@ -2134,6 +2126,8 @@ window.addEventListener("click", (e) => {
     const urlParams = new URLSearchParams(window.location.search);
     const editTitle = urlParams.get("editTitle");
     const editDate = urlParams.get("editDate");
+    const from = urlParams.get("from");
+    const originalUser = urlParams.get("user"); // Get the original user from URL
 
     try {
         const url = "https://beemazing.onrender.com/api/tasks";
@@ -2142,7 +2136,7 @@ window.addEventListener("click", (e) => {
                   adminEmail: currentAdmin,
                   task,
                   originalTitle: editTitle,
-                  originalDate: editTaskFullDate // This will now work
+                  originalDate: editTaskFullDate
               }
             : { adminEmail: currentAdmin, task };
 
@@ -2160,7 +2154,6 @@ window.addEventListener("click", (e) => {
         alert("Task saved successfully!");
 
         // Store task title in localStorage if coming from onboarding
-        const from = urlParams.get("from");
         if (from === "onboarding") {
             const existingTitles = JSON.parse(localStorage.getItem("onboardingTaskTitles") || "[]");
             if (!existingTitles.includes(title)) {
@@ -2169,19 +2162,13 @@ window.addEventListener("click", (e) => {
             }
         }
 
-
-
+        // Redirect back to the original user's tasks.html or onboarding
         const adminEmail = encodeURIComponent(currentAdmin);
-const user = encodeURIComponent(users[0]); // first user from assigned list
-localStorage.setItem("currentUser", users[0]);
-
-if (from === "onboarding") {
-    window.location.href = `/BeeMazing-Y1/onboarding.html?admin=${adminEmail}&user=${user}#step4`;
-} else {
-    window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${user}`;
-}
-
-
+        if (from === "onboarding") {
+            window.location.href = `/BeeMazing-Y1/onboarding.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}#step4`;
+        } else {
+            window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}`;
+        }
 
     } catch (error) {
         console.error("Error saving task:", error);
@@ -2195,16 +2182,17 @@ if (from === "onboarding") {
 
 
 
-
 function handleCancel() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const from = urlParams.get("from");
+    const urlParams = new URLSearchParams(window.location.search);
+    const from = urlParams.get("from");
+    const adminEmail = encodeURIComponent(localStorage.getItem("currentAdminEmail") || "");
+    const originalUser = urlParams.get("user");
 
-  if (from === "onboarding") {
-    window.location.href = "/BeeMazing-Y1/onboarding.html#step4";
-  } else {
-    window.location.href = "tasks.html";
-}
+    if (from === "onboarding") {
+        window.location.href = `/BeeMazing-Y1/onboarding.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}#step4`;
+    } else {
+        window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}`;
+    }
 }
 
 
