@@ -1017,62 +1017,63 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
 
 let editTaskFullDate = null; // Initialize as null
 
-
-
-
-
 document.addEventListener("DOMContentLoaded", async () => {
-    // Check if admin is logged in
     const currentAdmin = localStorage.getItem("currentAdminEmail");
     if (!currentAdmin) {
         alert("Admin not logged in!");
         return;
     }
 
-    // Initialize global variables
-    let editTaskFullDate = null; // Store full date range for PUT request in edit mode
-    let editTask = null; // Store task data if editing
 
     // Check if in edit mode via URL parameters
     const urlParams = new URLSearchParams(window.location.search);
-    const editTaskId = urlParams.get("editTaskId"); // Changed to editTaskId to match your backend
+    const editTitle = urlParams.get("editTitle");
+    const editDate = urlParams.get("editDate");
 
-    if (editTaskId) {
-        // Fetch task data for editing
+    let editTask = null;
+    if (editTitle && editDate) {
+        // Fetch all tasks from server and find the matching task
         try {
-            const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(currentAdmin)}&taskId=${encodeURIComponent(editTaskId)}`, {
+            const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(currentAdmin)}`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" }
             });
             const data = await response.json();
-            if (response.ok && data.task) {
-                editTask = data.task;
+            if (response.ok && data.tasks) {
+                // Find task by title and date (date matches start date of range)
+                editTask = data.tasks.find(task => task.title === editTitle && task.date.startsWith(editDate));
+                if (!editTask) {
+                    console.error(`Task not found: title=${editTitle}, date=${editDate}`);
+                }
             } else {
-                console.error("Failed to fetch task:", data.error || "No task returned");
+                console.error("Failed to fetch tasks:", data.error || "No tasks returned");
             }
         } catch (error) {
-            console.error("Error fetching task:", error);
+            console.error("Error fetching tasks:", error);
         }
     }
 
     if (editTask) {
+        // Set the full date range for the PUT request
+        editTaskFullDate = editTask.date; // Assign value here
         // Populate form for editing
-        editTaskFullDate = editTask.date; // Store original date range for PUT request
         document.getElementById("taskTitle").value = editTask.title || "";
         document.getElementById("taskNotes").value = editTask.notes || "";
-        
-        // Rooms
         if (editTask.room) {
-            selectedRooms = editTask.room.split(",").map(r => r.trim()).filter(r => r);
+            selectedRooms = editTask.room.split(",").map(r => r.trim());
             document.getElementById("roomSelection").value = selectedRooms.join(", ");
             document.getElementById("selectRoom").textContent = `Selected: ${selectedRooms.join(", ")}`;
         }
-
-        // Repeat
         document.getElementById("repeatSelection").value = editTask.repeat || "";
         document.getElementById("selectRepeat").textContent = editTask.repeat || "Select";
-        
-        // Times per day/week/month
+        document.getElementById("settingsSelection").value = editTask.settings || "";
+        document.getElementById("selectSettings").textContent = editTask.settings || "Select";
+        document.getElementById("taskReminder").checked = !!editTask.reminder;
+        document.getElementById("addAlarmBtn").style.display = editTask.reminder ? "inline-block" : "none";
+        document.getElementById("RewardValue").value = editTask.reward || "";
+        document.getElementById("selectReward").textContent = editTask.reward ? `Buzz Points: ${editTask.reward} 🍯` : "Reward";
+
+        // Handle times per day/week/month
         document.getElementById("timesPerDayInput").value = editTask.timesPerDay || "1";
         document.getElementById("timesPerWeekInput").value = editTask.timesPerWeek || "1";
         document.getElementById("timesPerMonthInput").value = editTask.timesPerMonth || "1";
@@ -1080,13 +1081,61 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("timesPerWeekGroup").style.display = editTask.repeat === "Weekly" ? "flex" : "none";
         document.getElementById("timesPerMonthGroup").style.display = editTask.repeat === "Monthly" ? "flex" : "none";
 
-        // Settings
-        document.getElementById("settingsSelection").value = editTask.settings || "";
-        document.getElementById("selectSettings").textContent = editTask.settings || "Select";
+        // Handle date mode
+        if (editTask.specificDates) {
+            document.getElementById("dateModeSelection").value = "specific-dates";
+            document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
+            document.querySelector(".mode-btn[data-mode='specific-dates']").classList.add("active");
+            document.getElementById("specificDatesGroup").style.display = "block";
+            document.getElementById("fromToDateGroup").style.display = "none";
+            document.getElementById("specificDaysGroup").style.display = "none";
+            selectedDates = editTask.specificDates.split(",").map(date => new Date(date));
+            specificDatesInput.value = editTask.specificDates;
+            flatpickrSpecific.setDate(selectedDates);
+            updateSelectedDatesDisplay();
+        } else if (editTask.date) {
+            document.getElementById("dateModeSelection").value = "date";
+            document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
+            document.querySelector(".mode-btn[data-mode='date']").classList.add("active");
+            document.getElementById("fromToDateGroup").style.display = "block";
+            document.getElementById("specificDatesGroup").style.display = "none";
+            document.getElementById("specificDaysGroup").style.display = "block";
 
-        // Reminder and alarms
-        document.getElementById("taskReminder").checked = !!editTask.reminder;
-        document.getElementById("addAlarmBtn").style.display = editTask.reminder ? "inline-block" : "none";
+            const [from, to] = editTask.date.split(" to ");
+            document.getElementById("taskDate").value = from || "";
+            flatpickrFrom.setDate(from);
+            document.getElementById("dateDisplay").textContent = new Date(from).toLocaleDateString(undefined, {
+                month: "long",
+                day: "numeric",
+            });
+            if (to && to !== "3000-01-01") {
+                document.getElementById("taskDateTo").value = to;
+                flatpickrTo.setDate(to);
+                document.getElementById("dateDisplayTo").textContent = new Date(to).toLocaleDateString(undefined, {
+                    month: "long",
+                    day: "numeric",
+                });
+                dateToWrapper.style.display = "flex";
+                addEndDateBtn.style.display = "none";
+                dateMode = "from-to";
+            } else {
+                document.getElementById("taskDateTo").value = "";
+                document.getElementById("dateDisplayTo").textContent = "To Date";
+                dateToWrapper.style.display = "none";
+                addEndDateBtn.style.display = "block";
+                dateMode = "from";
+            }
+
+            selectedDays = editTask.daysOfWeek || ["Any"];
+            updateSelectedDaysDisplay();
+        }
+
+        if (editTask.users) {
+            selectedUsers = [...editTask.users].map(u => u.trim()).filter(u => u);
+            updateSelectedUsersDisplay();
+            populateUsers();
+        }
+
         if (editTask.alarms?.length) {
             alarms = [...editTask.alarms];
             alarms.forEach((time) => {
@@ -1115,89 +1164,26 @@ document.addEventListener("DOMContentLoaded", async () => {
                 });
                 alarmWrapper.appendChild(alarmInput);
                 alarmWrapper.appendChild(removeButton);
-                document.getElementById("alarmContainer").appendChild(alarmWrapper);
+                alarmContainer.appendChild(alarmWrapper);
             });
-        }
-
-        // Reward
-        document.getElementById("RewardValue").value = editTask.reward || "";
-        document.getElementById("selectReward").textContent = editTask.reward ? `Buzz Points: ${editTask.reward} 🍯` : "Buzz Points";
-
-        // Date mode
-        if (editTask.specificDates) {
-            // Specific Dates mode
-            document.getElementById("dateModeSelection").value = "specific-dates";
-            document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
-            document.querySelector(".mode-btn[data-mode='specific-dates']").classList.add("active");
-            document.getElementById("specificDatesGroup").style.display = "block";
-            document.getElementById("fromToDateGroup").style.display = "none";
-            document.getElementById("specificDaysGroup").style.display = "none";
-            selectedDates = editTask.specificDates.split(",").map(date => new Date(date));
-            document.getElementById("specificDatesInput").value = editTask.specificDates;
-            flatpickrSpecific.setDate(selectedDates);
-            updateSelectedDatesDisplay();
-        } else {
-            // From-To Date mode
-            document.getElementById("dateModeSelection").value = "date";
-            document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
-            document.querySelector(".mode-btn[data-mode='date']").classList.add("active");
-            document.getElementById("fromToDateGroup").style.display = "block";
-            document.getElementById("specificDatesGroup").style.display = "none";
-            document.getElementById("specificDaysGroup").style.display = "block";
-
-            const [from, to] = editTask.date.split(" to ");
-            document.getElementById("taskDate").value = from || "";
-            flatpickrFrom.setDate(from);
-            document.getElementById("dateDisplay").textContent = new Date(from).toLocaleDateString(undefined, {
-                month: "long",
-                day: "numeric",
-            });
-            if (to && to !== "3000-01-01") {
-                document.getElementById("taskDateTo").value = to;
-                flatpickrTo.setDate(to);
-                document.getElementById("dateDisplayTo").textContent = new Date(to).toLocaleDateString(undefined, {
-                    month: "long",
-                    day: "numeric",
-                });
-                document.getElementById("dateToWrapper").style.display = "flex";
-                document.getElementById("addEndDateBtn").style.display = "none";
-                dateMode = "from-to";
-            } else {
-                document.getElementById("taskDateTo").value = "";
-                document.getElementById("dateDisplayTo").textContent = "To Date";
-                document.getElementById("dateToWrapper").style.display = "none";
-                document.getElementById("addEndDateBtn").style.display = "block";
-                dateMode = "from";
-            }
-
-            // Days of week
-            selectedDays = editTask.daysOfWeek || ["Any"];
-            updateSelectedDaysDisplay();
-        }
-
-        // Users
-        if (editTask.users) {
-            selectedUsers = [...editTask.users].map(u => u.trim()).filter(u => u);
-            updateSelectedUsersDisplay();
         }
     } else {
         // Initialize form for new task
+        populateUsers();
         document.getElementById("dateModeSelection").value = "date";
         document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
         document.querySelector(".mode-btn[data-mode='date']").classList.add("active");
         document.getElementById("fromToDateGroup").style.display = "block";
         document.getElementById("specificDatesGroup").style.display = "none";
         document.getElementById("specificDaysGroup").style.display = "block";
-        document.getElementById("timesPerDayInput").value = "1";
-        document.getElementById("timesPerWeekInput").value = "1";
-        document.getElementById("timesPerMonthInput").value = "1";
-        selectedDays = ["Any"];
-        updateSelectedDaysDisplay();
     }
-
-    // Populate users (called for both new and edit modes)
-    await populateUsers();
 });
+
+
+
+
+
+
 
 
 
@@ -1263,91 +1249,63 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 
-
-        async function populateUsers() {
+        const populateUsers = () => {
+    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
     const currentAdmin = localStorage.getItem("currentAdminEmail");
-    if (!currentAdmin) {
-        console.error("No admin email found in localStorage");
-        document.getElementById("selectUsers").textContent = "Error: No admin logged in";
-        return;
-    }
+    const users = allUserData[currentAdmin]?.users || [];
+    const permissions = allUserData[currentAdmin]?.permissions || {};
 
-    try {
-        const response = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(currentAdmin)}`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" }
-        });
+    // Include all users and Admins
+    const allUsers = [...new Set([...users, ...Object.keys(permissions).filter(u => permissions[u] === "Admin")])];
 
-        const data = await response.json();
-        console.log("Fetched users:", data); // Debug log
+    userList.innerHTML = "";
+    allUsers.forEach((user) => {
+        const userItem = document.createElement("li");
+        userItem.textContent = user;
+        userItem.style.padding = "10px";
+        userItem.style.margin = "5px 0";
+        userItem.style.border = "1px solid var(--selection-border)";
+        userItem.style.borderRadius = "8px";
+        userItem.style.cursor = "pointer";
+        userItem.style.textAlign = "center";
 
-        if (!response.ok || !data.success) {
-            throw new Error(data.message || `HTTP ${response.status}`);
+        if (selectedUsers.includes(user)) {
+            userItem.style.backgroundColor = "var(--primary-color)";
+            userItem.style.color = "var(--secondary-color)";
+        } else {
+            userItem.style.backgroundColor = "var(--light-bg)";
+            userItem.style.color = "var(--text-color)";
         }
 
-        const { users = [], permissions = {} } = data;
-
-        // Filter non-admin users
-        const nonAdminUsers = users.filter(user => permissions[user] !== "Admin");
-
-        // Update localStorage
-        let storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
-        storedUsers = storedUsers.filter(user => nonAdminUsers.includes(user)); // Remove deleted users
-        nonAdminUsers.forEach(user => {
-            if (!storedUsers.includes(user)) storedUsers.push(user); // Add new users
+        userItem.addEventListener("mouseover", () => {
+            userItem.style.backgroundColor = "var(--primary-color)";
+            userItem.style.color = "var(--secondary-color)";
         });
-        localStorage.setItem("users", JSON.stringify(storedUsers));
-
-        // Clear existing user options
-        const userOptionsContainer = document.getElementById("userOptions");
-        if (!userOptionsContainer) {
-            console.error("userOptions container not found");
-            return;
-        }
-        userOptionsContainer.innerHTML = "";
-
-        // Populate user options
-        nonAdminUsers.forEach(user => {
-            const label = document.createElement("label");
-            label.style.display = "flex";
-            label.style.alignItems = "center";
-            label.style.padding = "10px";
-            label.style.margin = "5px 0";
-            label.style.background = selectedUsers.includes(user) ? "var(--primary-color)" : "var(--accent-color)";
-            label.style.borderRadius = "8px";
-            label.style.cursor = "pointer";
-
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.value = user;
-            checkbox.checked = selectedUsers.includes(user);
-            checkbox.style.marginRight = "10px";
-            checkbox.style.accentColor = "var(--primary-color)";
-            checkbox.addEventListener("change", () => {
-                if (checkbox.checked) {
-                    if (!selectedUsers.includes(user)) selectedUsers.push(user);
-                    label.style.background = "var(--primary-color)";
-                } else {
-                    selectedUsers = selectedUsers.filter(u => u !== user);
-                    label.style.background = "var(--accent-color)";
-                }
-                updateSelectedUsersDisplay();
-            });
-
-            label.appendChild(checkbox);
-            label.appendChild(document.createTextNode(user));
-            userOptionsContainer.appendChild(label);
+        userItem.addEventListener("mouseout", () => {
+            if (selectedUsers.includes(user)) {
+                userItem.style.backgroundColor = "var(--primary-color)";
+                userItem.style.color = "var(--secondary-color)";
+            } else {
+                userItem.style.backgroundColor = "var(--light-bg)";
+                userItem.style.color = "var(--text-color)";
+            }
         });
+        userItem.addEventListener("click", () => {
+            if (selectedUsers.includes(user)) {
+                selectedUsers = selectedUsers.filter((u) => u !== user);
+                userItem.style.backgroundColor = "var(--light-bg)";
+                userItem.style.color = "var(--text-color)";
+            } else {
+                selectedUsers.push(user);
+                userItem.style.backgroundColor = "var(--primary-color)";
+                userItem.style.color = "var(--secondary-color)";
+            }
+            updateSelectedUsersDisplay();
+        });
+        userList.appendChild(userItem);
+    });
+};
 
-        // Update display
-        updateSelectedUsersDisplay();
-        document.getElementById("selectUsers").textContent = nonAdminUsers.length ? "Select" : "No users available";
-
-    } catch (error) {
-        console.error("Error fetching users:", error);
-        document.getElementById("selectUsers").textContent = "Error loading users";
-    }
-}
 
 
 
