@@ -1803,6 +1803,11 @@ let allUsers = [];
 const expandedTasks = new Set();
 
 
+fetchUsersFromServer(adminEmail).then(users => {
+    allUsers = users;
+    generateScrollableDates();
+});
+
 
 
 
