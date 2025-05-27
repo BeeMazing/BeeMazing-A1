@@ -2105,11 +2105,18 @@ async function loadTasks() {
 
 
 
+
+
 async function loadYourTasks() {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     const yourContainer = document.getElementById("yourTasks");
     const currentUser = urlParams.get("user"); // Current Admin user
     yourContainer.innerHTML = "<p>Loading...</p>";
+
+    if (!adminEmail || !currentUser) {
+        yourContainer.innerHTML = "<p>Error: Admin or user not logged in</p>";
+        return;
+    }
 
     try {
         const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
@@ -2123,7 +2130,10 @@ async function loadYourTasks() {
 
         // Filter tasks assigned to the current Admin user
         const yourTasks = allTasks.filter(task => {
-            if (!task || !task.users || !task.title || !task.date) return false;
+            if (!task || !task.users || !task.title || !task.date) {
+                console.warn("Invalid task:", task);
+                return false;
+            }
             if (!filterTasksForDate([task], todayStr).length) return false;
             return task.users.includes(currentUser);
         });
@@ -2135,29 +2145,31 @@ async function loadYourTasks() {
         } else {
             yourContainer.innerHTML = "";
             yourTasks.forEach(task => {
-                let turnData;
+                let turnData = { turns: [], requiredTimes: task.timesPerDay || 1 };
                 if (task.settings?.includes("Rotation")) {
-                    turnData = typeof mixedTurnData === "function" ? mixedTurnData(task, todayStr) : { turns: [] };
+                    turnData = typeof mixedTurnData === "function" ? mixedTurnData(task, todayStr) : turnData;
                 } else if (task.settings?.includes("Individual")) {
-                    turnData = typeof individualTurnData === "function" ? individualTurnData(task, todayStr) : { turns: [] };
-                } else {
-                    turnData = { turns: [] };
+                    turnData = typeof individualTurnData === "function" ? individualTurnData(task, todayStr) : turnData;
                 }
 
                 // Get turns for the current user
                 const userTurns = turnData.turns.filter(t => t.user === currentUser);
+                const completedTurns = userTurns.filter(t => t.isCompleted).length;
+                const pendingTurns = userTurns.filter(t => t.isPending && !t.isCompleted).length;
+
                 const div = document.createElement("div");
-                div.className = "your-task"; // Changed from "pending-task"
+                div.className = "your-task";
                 div.innerHTML = `
                     <div class="task-title">${task.title}</div>
-                    <div class="task-info">
-                        Status: ${
-                            userTurns.length > 0
-                                ? userTurns.map(t => t.isCompleted ? "Completed" : t.isPending ? "Pending Review" : "Not Started").join(", ")
-                                : "Not Started"
-                        }
-                    </div>
-                    <div class="task-info">Date: ${new Date(todayStr).toLocaleDateString()}</div>
+                    <div class="task-info">${task.description || "No description provided"}</div>
+                    <div class="task-info">Due: ${new Date(todayStr).toLocaleDateString()}</div>
+                    <div class="task-info">Status: ${
+                        userTurns.length === 0
+                            ? "Not Started"
+                            : `${completedTurns}/${turnData.requiredTimes} Completed` +
+                              (pendingTurns > 0 ? `, ${pendingTurns} Pending Review` : "")
+                    }</div>
+                    <div class="task-info">Assigned to: ${task.users.join(", ")}</div>
                 `;
                 yourContainer.appendChild(div);
             });
@@ -2167,6 +2179,8 @@ async function loadYourTasks() {
         yourContainer.innerHTML = "<p>Error loading your tasks</p>";
     }
 }
+
+
 
 
 

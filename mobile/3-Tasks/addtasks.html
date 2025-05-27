@@ -1291,9 +1291,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Populate user list
         allUsers.forEach(user => {
             const userItem = document.createElement("li");
-            // Display user email with permission label
-            const permission = permissions[user] || "User";
-            userItem.textContent = `${user} (${permission})`; // e.g., "admin@example.com (Admin)"
+            userItem.textContent = user; // Display only the user email
             userItem.style.padding = "10px";
             userItem.style.margin = "5px 0";
             userItem.style.border = "1px solid var(--selection-border)";
@@ -1346,8 +1344,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         assignedToDisplay.textContent = "Error loading users";
     }
 }
-
-
 
 
 
