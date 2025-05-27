@@ -413,8 +413,6 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-
-
       async function loadRewards(userName) {
     const rewardsGrid = document.getElementById("rewards-grid");
     const historyGrid = document.getElementById("history-grid");
@@ -426,19 +424,19 @@ document.querySelectorAll('.footer a').forEach(link => {
         document.getElementById('honeyBalance').textContent = userHoney;
 
         // Fetch market rewards
-        const marketResponse = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const marketResponse = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
         const marketData = await marketResponse.json();
         if (!marketResponse.ok) throw new Error(marketData.error || "Failed to fetch market rewards");
         const marketRewards = marketData.rewards || [];
 
         // Fetch user rewards
-        const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const userRewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
         const userRewardsData = await userRewardsResponse.json();
-        if (!userRewardsResponse) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
+        if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
         const userRewards = (userRewardsData.userRewards || {})[userName] || [];
 
         // Fetch pending reward requests
-        const pendingResponse = await fetch(`https://beemazing.onrender.com/api/reward-requests?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const pendingResponse = await fetch(`https://beemazing.onrender.com/api/reward-requests?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
         const pendingData = await pendingResponse.json();
         if (!pendingResponse.ok) throw new Error(pendingData.error || "Failed to fetch pending reward requests");
         const pendingRequests = (pendingData.requests || []).filter(req => req.user === userName && req.status === "pending");
@@ -450,7 +448,8 @@ document.querySelectorAll('.footer a').forEach(link => {
                 honey: reward.honey || 0,
                 diamonds: reward.diamonds || 0,
                 type: reward.type || 'normal',
-                outcomes: reward.outcomes || []
+                outcomes: reward.outcomes || [],
+                assignedUsers: reward.assignedUsers || []
             };
         });
 
@@ -471,9 +470,12 @@ document.querySelectorAll('.footer a').forEach(link => {
             return reward.assignedUsers.includes(userName);
         });
 
+        // Only show rewards that are in marketRewards or are usable (The Key or dice) in userRewards
         const allRewardNames = [...new Set([
             ...filteredRewards.map(r => r.name),
-            ...Object.keys(rewardCounts)
+            ...userRewards
+                .filter(r => r.name === "The Key" || r.type === "dice")
+                .map(r => r.name)
         ])];
 
         // Render rewards
@@ -490,7 +492,6 @@ document.querySelectorAll('.footer a').forEach(link => {
                 const outcomes = marketInfo.outcomes || userRewardInfo.outcomes || [];
                 const isTheKey = rewardName === "The Key";
                 const isDiceChest = rewardType === "dice";
-                const isFromUserRewardsOnly = !marketRewardMap[rewardName] && userRewardCount > 0;
                 const canAfford = userHoney >= rewardCost;
 
                 const card = document.createElement("div");
@@ -535,7 +536,7 @@ document.querySelectorAll('.footer a').forEach(link => {
         }
 
         // Load reward history (including pending requests)
-        const historyResponse = await fetch(`https://beemazing.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const historyResponse = await fetch(`https://beemazing.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
         const historyData = await historyResponse.json();
         if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
         const rewardHistory = (historyData.rewardHistory || {})[userName] || [];

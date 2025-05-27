@@ -884,11 +884,8 @@ app.delete("/api/market-rewards", async (req, res) => {
           }
       }
 
-      // Clean up pendingRewardRequests
+      // Clean up pendingRewardRequests and refund points
       const pendingRewardRequests = admin.pendingRewardRequests || [];
-      const updatedPendingRequests = pendingRewardRequests.filter(req => req.rewardName !== rewardName);
-
-      // Refund points for deleted pending requests
       const rewards = admin.rewards || {};
       const deletedRequests = pendingRewardRequests.filter(req => req.rewardName === rewardName);
       for (const req of deletedRequests) {
@@ -896,6 +893,7 @@ app.delete("/api/market-rewards", async (req, res) => {
               rewards[req.user] = (rewards[req.user] || 0) + req.rewardCost;
           }
       }
+      const updatedPendingRequests = pendingRewardRequests.filter(req => req.rewardName !== rewardName);
 
       await admins.updateOne(
           { email: adminEmail },
@@ -908,8 +906,6 @@ app.delete("/api/market-rewards", async (req, res) => {
       res.status(500).json({ error: "Failed to delete reward" });
   }
 });
-
-
 
 
 
