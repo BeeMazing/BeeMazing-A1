@@ -2164,7 +2164,7 @@ async function loadYourTasks() {
 
         // Filter tasks assigned to the current user
         const yourTasks = allTasks.filter(task => {
-            if (!task || !task.users || !task.title || !task.date) {
+            if (!task || !task.title || !task.date) {
                 console.warn("Invalid task:", task);
                 return false;
             }
@@ -2217,6 +2217,8 @@ async function loadYourTasks() {
         yourContainer.innerHTML = "<p>Error loading your tasks: " + err.message + "</p>";
     }
 }
+
+
 
 
 
