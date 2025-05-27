@@ -1508,16 +1508,6 @@ const profileIcon = document.getElementById("profileIcon");
 const userSelectModal = document.getElementById("userSelectModal");
 const userList = document.getElementById("userList");
 const closeModalBtn = document.getElementById("closeModalBtn");
-
-
-
-
-
-
-
-// :)
-
-
 profileIcon.addEventListener("click", async () => {
     if (!adminEmail) {
         alert("Admin email not found. Please log in again.");
@@ -1527,29 +1517,61 @@ profileIcon.addEventListener("click", async () => {
     const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
     const userPermissions = allUserData[adminEmail]?.permissions || {};
     userList.innerHTML = '';
-    users.forEach(user => {
-        const li = document.createElement("li");
-        li.textContent = user;
-        li.style.cursor = "pointer";
-        li.style.padding = "10px";
-        li.style.margin = "5px 0";
-        li.style.border = "1px solid #ccc";
-        li.style.borderRadius = "8px";
-        li.style.textAlign = "center";
-        li.addEventListener("click", () => {
-            localStorage.setItem("currentUser", user); // Store selected user
-            const page = userPermissions[user] === "Admin" ? "userAdmin.html" : "users.html";
-            window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+    if (users.length === 0) {
+        alert("No users found for this admin.");
+        userList.innerHTML = '<li style="padding: 15px 20px; color: #D32F2F;">No users available</li>';
+    } else {
+        users.forEach(user => {
+            const li = document.createElement("li");
+            const nameContainer = document.createElement("div");
+            nameContainer.classList.add("user-list-item");
+            const userNameSpan = document.createElement("span");
+            userNameSpan.textContent = user;
+            nameContainer.appendChild(userNameSpan);
+            if (userPermissions[user] === "Admin") {
+                const checkmark = document.createElement("span");
+                checkmark.textContent = "✓";
+                checkmark.style.color = "#00C4B4";
+                checkmark.style.fontSize = "16px";
+                checkmark.style.fontWeight = "bold";
+                checkmark.title = "Admin";
+                nameContainer.appendChild(checkmark);
+            }
+            li.appendChild(nameContainer);
+            if (isAdmin) {
+                const actionsContainer = document.createElement("div");
+                actionsContainer.classList.add("user-list-actions");
+                const editBtn = document.createElement("button");
+                editBtn.classList.add("edit-user-btn");
+                editBtn.innerHTML = "⚙️";
+                editBtn.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    showPermissionModal(user);
+                });
+                const removeBtn = document.createElement("button");
+                removeBtn.classList.add("remove-user-btn");
+                removeBtn.textContent = "X";
+                removeBtn.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    showConfirmModal(user);
+                });
+                actionsContainer.appendChild(editBtn);
+                actionsContainer.appendChild(removeBtn);
+                li.appendChild(actionsContainer);
+            }
+            if (user === userName) {
+                li.style.background = "#333540";
+                li.style.fontWeight = "600";
+            }
+            li.addEventListener("click", () => {
+                const page = userPermissions[user] === "Admin" ? "userAdmin.html" : "users.html";
+                window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+            });
+            userList.appendChild(li);
         });
-        userList.appendChild(li);
-    });
+    }
     userSelectModal.classList.add("show");
 });
-
-
-
-
-
 userSelectModal.addEventListener("click", (e) => {
     if (e.target === userSelectModal) {
         userSelectModal.classList.remove("show");
@@ -2104,12 +2126,11 @@ async function loadTasks() {
 async function loadYourTasks() {
     let adminEmail = localStorage.getItem("currentAdminEmail");
     const urlParams = new URLSearchParams(window.location.search);
-    let currentUser = urlParams.get("user") || localStorage.getItem("currentUser") || adminEmail;
+    let currentUser = urlParams.get("user");
     const yourContainer = document.getElementById("yourTasks");
     yourContainer.innerHTML = "<p>Loading...</p>";
 
-    console.log("loadYourTasks called with:", { adminEmail, currentUser, selectedDate });
-
+    // Fallbacks for missing parameters
     if (!adminEmail) {
         adminEmail = urlParams.get("admin");
         if (adminEmail) {
@@ -2118,7 +2139,6 @@ async function loadYourTasks() {
     }
     if (!currentUser) {
         currentUser = adminEmail;
-        localStorage.setItem("currentUser", currentUser);
     }
 
     if (!adminEmail || !currentUser) {
@@ -2135,26 +2155,22 @@ async function loadYourTasks() {
         if (!res.ok) throw new Error(data.error || "Failed to load tasks");
 
         const allTasks = data.tasks || [];
-        console.log("Fetched tasks:", allTasks);
-
         const todayStr = selectedDate || new Date().toISOString().split("T")[0];
 
+        // Check if user is Admin
         const userRes = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
         const userData = await userRes.json();
         const isAdmin = userData.permissions?.[currentUser] === "Admin";
 
+        // Filter tasks assigned to the current user
         const yourTasks = allTasks.filter(task => {
-            if (!task || !task.title || !task.date) {
+            if (!task || !task.users || !task.title || !task.date) {
                 console.warn("Invalid task:", task);
                 return false;
             }
             if (!filterTasksForDate([task], todayStr).length) return false;
-            const isAssigned = task.users.includes(currentUser) || (task.tempTurnReplacement?.[todayStr] && Object.values(task.tempTurnReplacement[todayStr]).includes(currentUser));
-            console.log(`Task ${task.title} assigned to ${currentUser}:`, isAssigned);
-            return isAssigned;
+            return task.users.includes(currentUser) || (task.tempTurnReplacement?.[todayStr] && Object.values(task.tempTurnReplacement[todayStr]).includes(currentUser));
         });
-
-        console.log("Filtered yourTasks:", yourTasks);
 
         document.getElementById("yourTaskCount").textContent = `(${yourTasks.length})`;
 
@@ -2241,6 +2257,8 @@ async function submitTaskCompletion(title, date, user) {
 
 
 
+
+
 function generateScrollableDates(monthOffset = 0) {
     const container = document.getElementById("dayScrollContainer");
     container.innerHTML = "";
@@ -2274,25 +2292,21 @@ function generateScrollableDates(monthOffset = 0) {
             loadTasks();
             loadOverdueTasks();
             loadPendingTasks();
-            loadYourTasks();
+            loadYourTasks(); // Add this
             loadPendingRewardRequests();
         });
 
         if (btn.dataset.date === todayStr) {
             btn.classList.add("selected");
             selectedDate = btn.dataset.date;
+            loadTasks();
+            loadOverdueTasks();
+            loadPendingTasks();
+            loadYourTasks(); // Add this
+            loadPendingRewardRequests();
         }
 
         container.appendChild(btn);
-    }
-
-    // Ensure tasks are loaded for the selected date
-    if (selectedDate) {
-        loadTasks();
-        loadOverdueTasks();
-        loadPendingTasks();
-        loadYourTasks();
-        loadPendingRewardRequests();
     }
 
     setTimeout(() => {
@@ -2302,7 +2316,6 @@ function generateScrollableDates(monthOffset = 0) {
         }
     }, 50);
 }
-
 
 
 
@@ -2618,48 +2631,12 @@ async function reviewReward(requestIndex, decision) {
 
 
 // Call on page load and date change
-document.addEventListener("DOMContentLoaded", () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
-    let currentUser = urlParams.get('user') || localStorage.getItem('currentUser') || adminEmail;
-
-    if (!adminEmail || !currentUser) {
-        console.error("Missing adminEmail or currentUser", { adminEmail, currentUser });
-        document.getElementById("yourTasks").innerHTML = "<p>Error: Unable to load tasks. Please log in again.</p>";
-        return;
-    }
-
-    if (adminEmail) {
-        localStorage.setItem("currentAdminEmail", adminEmail);
-    }
-    if (urlParams.get('user')) {
-        localStorage.setItem("currentUser", urlParams.get('user'));
-    }
-
-    loadPendingRewardRequests();
-
-    selectedDate = new Date().toLocaleDateString("sv-SE");
-
-    fetchUsersFromServer(adminEmail).then(users => {
-        allUsers = users;
-        generateScrollableDates();
-        loadYourTasks();
-        // Check if a task was just added
-        if (localStorage.getItem("taskAdded") === "true") {
-            console.log("Task added flag detected, refreshing tasks");
-            localStorage.removeItem("taskAdded");
-            setTimeout(loadYourTasks, 500); // Delay to ensure server sync
-        }
-    });
-});
-
-
-
-
+document.addEventListener("DOMContentLoaded", loadPendingRewardRequests);
 // Also call when selectedDate changes
 const originalGenerateScrollableDates = generateScrollableDates;
 generateScrollableDates = function(monthOffset = 0) {
     originalGenerateScrollableDates(monthOffset);
+    loadPendingRewardRequests();
 };
 
 
