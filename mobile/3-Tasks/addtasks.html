@@ -2193,8 +2193,8 @@ function handleCancel() {
   if (from === "onboarding") {
     window.location.href = "/BeeMazing-Y1/onboarding.html#step4";
   } else {
-    window.location.href = "tasks.html";
-  }
+    window.location.href = `tasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(localStorage.getItem("currentUser") || adminEmail)}`;
+}
 }
 
 
