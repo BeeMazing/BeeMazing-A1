@@ -542,8 +542,17 @@ body {
 document.addEventListener("DOMContentLoaded", () => {
     const homeLink = document.getElementById("homeLink");
     const urlParams = new URLSearchParams(window.location.search);
-    const admin = urlParams.get("admin") || localStorage.getItem("currentAdminEmail");
-    const user = urlParams.get("user") || admin; // Fallback to admin if no user
+    let admin = urlParams.get("admin") || localStorage.getItem("currentAdminEmail");
+let user = urlParams.get("user") || localStorage.getItem("currentUser");
+
+if (admin) localStorage.setItem("currentAdminEmail", admin);
+if (user) localStorage.setItem("currentUser", user);
+
+// fallback if still missing
+if (!admin || !user) {
+  console.warn("Missing admin or user in query or storage.");
+}
+
     if (admin && user) {
         homeLink.href = `/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
     } else {
