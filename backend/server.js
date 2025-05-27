@@ -1807,27 +1807,24 @@ app.post('/api/review-task', async (req, res) => {
 
 app.post("/api/complete-task", async (req, res) => {
   const { adminEmail, taskTitle, user, date } = req.body;
-
   try {
     if (!adminEmail || !taskTitle || !user || !date) {
       return res.status(400).json({ error: "Missing required fields: adminEmail, taskTitle, user, or date" });
     }
-
     const db = await connectDB();
     const admins = db.collection("admins");
-
+    const adminUsers = db.collection("adminUsers");
     const admin = await admins.findOne({ email: adminEmail });
     if (!admin) {
       return res.status(404).json({ error: "Admin not found" });
     }
 
+    // Check if user is an Admin
+    const adminDoc = await adminUsers.findOne({ email: adminEmail });
+    const isAdmin = adminDoc?.permissions?.[user] === "Admin";
+
     const tasks = admin.tasks || [];
-    console.log(`Searching for task: title="${taskTitle}", date includes "${date}"`);
-
-    // Normalize date to YYYY-MM-DD
     const normalizedDate = date.split("T")[0];
-
-    // Check if normalizedDate falls within task's date range
     const taskIndex = tasks.findIndex(t => {
       if (t.title !== taskTitle) return false;
       const [startDateStr, endDateStr] = t.date.split(" to ");
@@ -1836,35 +1833,24 @@ app.post("/api/complete-task", async (req, res) => {
       const currentDate = new Date(normalizedDate);
       return currentDate >= startDate && currentDate <= endDate;
     });
-
     if (taskIndex === -1) {
-      console.log(`Task not found: title="${taskTitle}", date="${normalizedDate}", available tasks:`, tasks.map(t => ({ title: t.title, date: t.date })));
       return res.status(404).json({ error: "Task not found" });
     }
-
     const task = tasks[taskIndex];
     task.pendingCompletions = task.pendingCompletions || {};
     task.pendingCompletions[normalizedDate] = task.pendingCompletions[normalizedDate] || [];
     task.completions = task.completions || {};
     task.completions[normalizedDate] = task.completions[normalizedDate] || [];
-
-    // Count total submissions (pending + completed) by this user on this date
     const pendingCount = task.pendingCompletions[normalizedDate].filter(p => p.user === user).length;
     const completedCount = task.completions[normalizedDate].filter(c => c.user === user).length;
     const totalCount = pendingCount + completedCount;
-
-    // Determine how many times this task can be completed per day
     let requiredTimes = 1;
     if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
     if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
     if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-
-    // Block if they've already submitted enough times
     if (totalCount >= requiredTimes) {
       return res.status(400).json({ error: "Task already submitted maximum times today" });
     }
-
-    // Check if user is assigned (in task.users or tempTurnReplacement)
     const userList = task.users || [];
     const tempTurnReplacement = task.tempTurnReplacement?.[normalizedDate] || {};
     const isAssigned = userList.includes(user) || Object.values(tempTurnReplacement).includes(user);
@@ -1872,48 +1858,65 @@ app.post("/api/complete-task", async (req, res) => {
       return res.status(400).json({ error: "User not assigned to this task" });
     }
 
-    // Add to pendingCompletions with repetition
-    const repetition = totalCount + 1; // 1 for first attempt, 2 for second, etc.
-    task.pendingCompletions[normalizedDate].push({ user, repetition });
-
-    // Update currentTurnIndex based on assigned users (including tempTurnReplacement)
+    const repetition = totalCount + 1;
     const assignedUsers = [...new Set([...userList, ...Object.values(tempTurnReplacement)])];
     if (typeof task.currentTurnIndex !== "number") {
       task.currentTurnIndex = assignedUsers.indexOf(user);
       if (task.currentTurnIndex === -1) task.currentTurnIndex = 0;
     }
-
-    // Calculate total completions (pending + completed)
     const totalCompletions = task.pendingCompletions[normalizedDate].length + task.completions[normalizedDate].length;
-    // Advance turn to the next user in rotation
     task.currentTurnIndex = totalCompletions % assignedUsers.length;
-
-    tasks[taskIndex] = task;
 
     const history = admin.history || {};
     const month = new Date(normalizedDate).toLocaleString("default", { month: "long" });
     const day = new Date(normalizedDate).getDate();
     if (!history[month]) history[month] = {};
     if (!history[month][day]) history[month][day] = [];
-    history[month][day].push({
-      title: taskTitle,
-      user,
-      timestamp: new Date().toISOString(),
-      action: "submitted"
-    });
 
+    if (isAdmin) {
+      // For Admins, mark as completed directly
+      task.completions[normalizedDate].push({ user, repetition });
+      const rewardAmount = Number(task.reward || 0);
+      if (rewardAmount > 0) {
+        const rewards = admin.rewards || {};
+        rewards[user] = (rewards[user] || 0) + rewardAmount;
+        await admins.updateOne(
+          { email: adminEmail },
+          { $set: { rewards } }
+        );
+      }
+      history[month][day].push({
+        title: taskTitle,
+        user,
+        timestamp: new Date().toISOString(),
+        action: "completed"
+      });
+    } else {
+      // For non-Admins, submit for review
+      task.pendingCompletions[normalizedDate].push({ user, repetition });
+      history[month][day].push({
+        title: taskTitle,
+        user,
+        timestamp: new Date().toISOString(),
+        action: "submitted"
+      });
+    }
+
+    tasks[taskIndex] = task;
     await admins.updateOne(
       { email: adminEmail },
       { $set: { tasks, history } }
     );
 
-    res.status(200).json({ success: true, message: "Task submitted for review" });
+    res.status(200).json({
+      success: true,
+      message: isAdmin ? "Task completed successfully" : "Task submitted for review"
+    });
   } catch (err) {
     console.error("Error in /api/complete-task:", err);
     res.status(500).json({ error: `Server error: ${err.message}` });
   }
 });
-
 
 
 

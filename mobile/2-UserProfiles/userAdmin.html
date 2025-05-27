@@ -1083,7 +1083,6 @@
 }
 
 
-
   </style>
 
 
@@ -2139,7 +2138,7 @@ async function loadYourTasks() {
         }
     }
     if (!currentUser) {
-        currentUser = adminEmail; // Default to admin as user if no user specified
+        currentUser = adminEmail;
     }
 
     if (!adminEmail || !currentUser) {
@@ -2158,14 +2157,19 @@ async function loadYourTasks() {
         const allTasks = data.tasks || [];
         const todayStr = selectedDate || new Date().toISOString().split("T")[0];
 
-        // Filter tasks assigned to the current Admin user
+        // Check if user is Admin
+        const userRes = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const userData = await userRes.json();
+        const isAdmin = userData.permissions?.[currentUser] === "Admin";
+
+        // Filter tasks assigned to the current user
         const yourTasks = allTasks.filter(task => {
             if (!task || !task.users || !task.title || !task.date) {
                 console.warn("Invalid task:", task);
                 return false;
             }
             if (!filterTasksForDate([task], todayStr).length) return false;
-            return task.users.includes(currentUser);
+            return task.users.includes(currentUser) || (task.tempTurnReplacement?.[todayStr] && Object.values(task.tempTurnReplacement[todayStr]).includes(currentUser));
         });
 
         document.getElementById("yourTaskCount").textContent = `(${yourTasks.length})`;
@@ -2182,10 +2186,18 @@ async function loadYourTasks() {
                     turnData = typeof individualTurnData === "function" ? individualTurnData(task, todayStr) : turnData;
                 }
 
-                // Get turns for the current user
                 const userTurns = turnData.turns.filter(t => t.user === currentUser);
-                const completedTurns = userTurns.filter(t => t.isCompleted).length;
-                const pendingTurns = userTurns.filter(t => t.isPending && !t.isCompleted).length;
+                const completedTurns = (task.completions?.[todayStr] || []).filter(c => c.user === currentUser).length;
+                const pendingTurns = (task.pendingCompletions?.[todayStr] || []).filter(p => p.user === currentUser).length;
+
+                let statusText = "Not Started";
+                if (completedTurns > 0) {
+                    statusText = `${completedTurns}/${turnData.requiredTimes} Completed`;
+                } else if (pendingTurns > 0) {
+                    statusText = `${pendingTurns} Pending Review`;
+                }
+
+                const canComplete = (isAdmin && completedTurns < turnData.requiredTimes) || (!isAdmin && completedTurns + pendingTurns < turnData.requiredTimes);
 
                 const div = document.createElement("div");
                 div.className = "your-task";
@@ -2193,18 +2205,9 @@ async function loadYourTasks() {
                     <div class="task-title">${task.title}</div>
                     <div class="task-info">${task.notes || "No description provided"}</div>
                     <div class="task-info">Due: ${new Date(todayStr).toLocaleDateString()}</div>
-                    <div class="task-info">Status: ${
-                        userTurns.length === 0
-                            ? "Not Started"
-                            : `${completedTurns}/${turnData.requiredTimes} Completed` +
-                              (pendingTurns > 0 ? `, ${pendingTurns} Pending Review` : "")
-                    }</div>
+                    <div class="task-info">Status: ${statusText}</div>
                     <div class="task-info">Assigned to: ${task.users.join(", ")}</div>
-                    ${
-                        completedTurns < turnData.requiredTimes && pendingTurns === 0
-                            ? `<button class="complete-btn" onclick="submitTaskCompletion('${task.title}', '${todayStr}', '${currentUser}')">Mark Complete</button>`
-                            : ""
-                    }
+                    ${canComplete ? `<button class="complete-btn" onclick="submitTaskCompletion('${task.title}', '${todayStr}', '${currentUser}')">Mark Complete</button>` : ""}
                 `;
                 yourContainer.appendChild(div);
             });
@@ -2215,31 +2218,36 @@ async function loadYourTasks() {
     }
 }
 
+
+
+
+
+
+
+
 // Add task completion function
 async function submitTaskCompletion(title, date, user) {
     try {
         const adminEmail = localStorage.getItem("currentAdminEmail");
-        const response = await fetch("https://beemazing.onrender.com/api/submit-task", {
+        const response = await fetch("https://beemazing.onrender.com/api/complete-task", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 adminEmail,
-                title,
-                date,
+                taskTitle: title,
                 user,
-                repetition: 1
+                date
             })
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Failed to submit task");
-        alert("Task submitted for review!");
-        loadYourTasks();
+        alert(data.message || "Task completed successfully!");
+        await loadYourTasks(); // Ensure UI refreshes
     } catch (err) {
         console.error("Error submitting task:", err);
         alert("Error submitting task: " + err.message);
     }
 }
-
 
 
 
