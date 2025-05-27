@@ -2385,16 +2385,13 @@ async function loadOverdueTasks() {
     const allTasks = data.tasks || [];
     const todayStr = selectedDate;
 
-
     const overdueTasks = allTasks.filter(task => {
       if (!task || !task.users || !task.title || !task.date) return false;
       if (!filterTasksForDate([task], todayStr).length) return false;
 
       if (!Array.isArray(task.users) || task.users.length === 0) {
-  task.users = ["Unknown"];
-}
-
-
+        task.users = ["Unknown"];
+      }
 
       let turnData;
       if (task.settings?.includes("Rotation")) {
@@ -2410,6 +2407,7 @@ async function loadOverdueTasks() {
           const completed = turns.filter(t => t.isCompleted || t.isPending).length;
           return completed < turnData.requiredTimes;
         });
+        task.usersNotDone = usersNotDone; // Store for rendering
         return usersNotDone.length > 0;
       }
       return false;
@@ -2422,22 +2420,16 @@ async function loadOverdueTasks() {
     } else {
       overdueContainer.innerHTML = "";
       overdueTasks.forEach(task => {
-
-
-
         const div = document.createElement("div");
-div.className = "overdue-task";
-div.innerHTML = `
-  <div class="task-title">${task.title}</div>
-  <div class="task-info">Task overdue for: ${task.users?.join(", ")}</div>
-`;
-overdueContainer.appendChild(div);
-
-
-
-
-
-
+        div.className = "overdue-task";
+        const overdueUsers = task.settings?.includes("Individual") && task.usersNotDone?.length > 0
+          ? task.usersNotDone.join(", ")
+          : task.users.join(", ");
+        div.innerHTML = `
+          <div class="task-title">${task.title}</div>
+          <div class="task-info">Task overdue for: ${overdueUsers || "Unknown"}</div>
+        `;
+        overdueContainer.appendChild(div);
       });
     }
 
@@ -2446,6 +2438,8 @@ overdueContainer.appendChild(div);
     overdueContainer.innerHTML = "<p>Error loading overdue tasks</p>";
   }
 }
+
+
 
 
 
