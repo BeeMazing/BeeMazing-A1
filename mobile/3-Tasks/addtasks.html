@@ -1246,6 +1246,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     
         let selectedUsers = [];
 
+        // Try to prefill selectedUsers if editing a task
+const editTask = JSON.parse(localStorage.getItem("familyApp_editTask"));
+if (editTask && editTask.users && editTask.users.length > 0) {
+  selectedUsers = editTask.users;
+  localStorage.setItem("currentUser", selectedUsers[0]);
+}
+
 
 
 
@@ -2165,12 +2172,15 @@ window.addEventListener("click", (e) => {
 
 
         const adminEmail = encodeURIComponent(currentAdmin);
-const user = encodeURIComponent(urlParams.get("user") || currentAdmin); // Fallback to admin email if no user
+const user = encodeURIComponent(users[0]); // first user from assigned list
+localStorage.setItem("currentUser", users[0]);
+
 if (from === "onboarding") {
     window.location.href = `/BeeMazing-Y1/onboarding.html?admin=${adminEmail}&user=${user}#step4`;
 } else {
     window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${user}`;
 }
+
 
 
     } catch (error) {
@@ -2193,7 +2203,7 @@ function handleCancel() {
   if (from === "onboarding") {
     window.location.href = "/BeeMazing-Y1/onboarding.html#step4";
   } else {
-    window.location.href = `tasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(localStorage.getItem("currentUser") || adminEmail)}`;
+    window.location.href = "tasks.html";
 }
 }
 
