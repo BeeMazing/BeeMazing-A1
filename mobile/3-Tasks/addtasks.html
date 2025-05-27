@@ -1245,21 +1245,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         const assignedToSelection = document.getElementById("assignedToSelection");
     
         let selectedUsers = [];
-
-
-
-
         const populateUsers = () => {
     const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
     const currentAdmin = localStorage.getItem("currentAdminEmail");
     const users = allUserData[currentAdmin]?.users || [];
-    const permissions = allUserData[currentAdmin]?.permissions || {};
-
-    // Include all users and Admins
-    const allUsers = [...new Set([...users, ...Object.keys(permissions).filter(u => permissions[u] === "Admin")])];
 
     userList.innerHTML = "";
-    allUsers.forEach((user) => {
+    users.forEach((user) => {
         const userItem = document.createElement("li");
         userItem.textContent = user;
         userItem.style.padding = "10px";
@@ -1269,6 +1261,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         userItem.style.cursor = "pointer";
         userItem.style.textAlign = "center";
 
+        // Set initial background based on selectedUsers
         if (selectedUsers.includes(user)) {
             userItem.style.backgroundColor = "var(--primary-color)";
             userItem.style.color = "var(--secondary-color)";
@@ -1305,13 +1298,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         userList.appendChild(userItem);
     });
 };
-
-
-
-
-
-
-
     
         const updateSelectedUsersDisplay = () => {
     // Clean the selectedUsers array just in case
