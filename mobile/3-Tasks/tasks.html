@@ -517,8 +517,7 @@ body {
         <!-- Tasks will be loaded dynamically here -->
     </div>
 
-    <a href="/BeeMazing-Y1/mobile/3-Tasks/addtasks.html" class="add-task-btn" aria-label="Add Task" onclick="localStorage.removeItem('familyApp_editTask'); localStorage.removeItem('familyApp_editTask_index');">+</a>
-
+    <a href="#" class="add-task-btn" aria-label="Add Task" onclick="navigateToAddTasks(); localStorage.removeItem('familyApp_editTask'); localStorage.removeItem('familyApp_editTask_index');">+</a>
 
     <div class="footer">
         <a href="/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
@@ -1207,6 +1206,18 @@ async function finishTask(userName, task, button, selectedDate) {
   taskElement.addEventListener('mouseleave', () => {
     if (isSwiping) onEnd({});
   });
+}
+
+
+
+
+
+
+function navigateToAddTasks() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminEmail = encodeURIComponent(urlParams.get("admin") || localStorage.getItem("currentAdminEmail"));
+    const user = encodeURIComponent(urlParams.get("user") || localStorage.getItem("currentAdminEmail"));
+    window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/addtasks.html?admin=${adminEmail}&user=${user}`;
 }
 
 

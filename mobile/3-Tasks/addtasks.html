@@ -2183,19 +2183,25 @@ if (from === "onboarding") {
 
 
 
-
-
-
 function handleCancel() {
   const urlParams = new URLSearchParams(window.location.search);
   const from = urlParams.get("from");
+  const currentAdmin = localStorage.getItem("currentAdminEmail");
+  const user = encodeURIComponent(urlParams.get("user") || currentAdmin);
 
   if (from === "onboarding") {
-    window.location.href = "/BeeMazing-Y1/onboarding.html#step4";
+    const adminEmail = encodeURIComponent(currentAdmin);
+    window.location.href = `/BeeMazing-Y1/onboarding.html?admin=${adminEmail}&user=${user}#step4`;
   } else {
-    window.location.href = "tasks.html";
+    const adminEmail = encodeURIComponent(currentAdmin);
+    window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${user}`;
   }
 }
+
+
+
+
+
 
 
     </script>    
