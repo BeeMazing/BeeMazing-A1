@@ -542,10 +542,12 @@ body {
 document.addEventListener("DOMContentLoaded", () => {
     const homeLink = document.getElementById("homeLink");
     const urlParams = new URLSearchParams(window.location.search);
-    const admin = urlParams.get("admin");
-    const user = urlParams.get("user");
+    const admin = urlParams.get("admin") || localStorage.getItem("currentAdminEmail");
+    const user = urlParams.get("user") || admin; // Fallback to admin if no user
     if (admin && user) {
         homeLink.href = `/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
+    } else {
+        console.warn("Admin or user missing for homeLink", { admin, user });
     }
 });
 

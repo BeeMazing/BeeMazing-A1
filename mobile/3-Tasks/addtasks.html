@@ -2162,11 +2162,17 @@ window.addEventListener("click", (e) => {
             }
         }
 
-        if (from === "onboarding") {
-            window.location.href = "/BeeMazing-Y1/onboarding.html#step4";
-        } else {
-            window.location.href = "tasks.html";
-        }
+
+
+        const adminEmail = encodeURIComponent(currentAdmin);
+const user = encodeURIComponent(urlParams.get("user") || currentAdmin); // Fallback to admin email if no user
+if (from === "onboarding") {
+    window.location.href = `/BeeMazing-Y1/onboarding.html?admin=${adminEmail}&user=${user}#step4`;
+} else {
+    window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${user}`;
+}
+
+
     } catch (error) {
         console.error("Error saving task:", error);
         alert(`Failed to save task: ${error.message}`);
