@@ -1508,12 +1508,6 @@ const profileIcon = document.getElementById("profileIcon");
 const userSelectModal = document.getElementById("userSelectModal");
 const userList = document.getElementById("userList");
 const closeModalBtn = document.getElementById("closeModalBtn");
-
-
-
-
-
-
 profileIcon.addEventListener("click", async () => {
     if (!adminEmail) {
         alert("Admin email not found. Please log in again.");
@@ -1524,6 +1518,7 @@ profileIcon.addEventListener("click", async () => {
     const userPermissions = allUserData[adminEmail]?.permissions || {};
     userList.innerHTML = '';
     if (users.length === 0) {
+        alert("No users found for this admin.");
         userList.innerHTML = '<li style="padding: 15px 20px; color: #D32F2F;">No users available</li>';
     } else {
         users.forEach(user => {
@@ -1564,30 +1559,19 @@ profileIcon.addEventListener("click", async () => {
                 actionsContainer.appendChild(removeBtn);
                 li.appendChild(actionsContainer);
             }
-            if (user === currentUser) {
+            if (user === userName) {
                 li.style.background = "#333540";
                 li.style.fontWeight = "600";
             }
             li.addEventListener("click", () => {
-                currentUser = user; // Update global currentUser
-                const newParams = new URLSearchParams();
-                newParams.set('admin', adminEmail);
-                newParams.set('user', currentUser);
-                window.history.replaceState({}, '', `${window.location.pathname}?${newParams}`);
-                loadYourTasks(); // Reload tasks for new user
-                userSelectModal.classList.remove("show"); // Close modal
+                const page = userPermissions[user] === "Admin" ? "userAdmin.html" : "users.html";
+                window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
             });
             userList.appendChild(li);
         });
     }
     userSelectModal.classList.add("show");
 });
-
-
-
-
-
-
 userSelectModal.addEventListener("click", (e) => {
     if (e.target === userSelectModal) {
         userSelectModal.classList.remove("show");
@@ -1798,7 +1782,7 @@ document.querySelectorAll('.footer a').forEach(link => {
 
 
 
-let selectedDate = new Date().toLocaleDateString("sv-SE");
+        let selectedDate = new Date().toLocaleDateString("sv-SE");
 let allUsers = [];
 const expandedTasks = new Set();
 
@@ -2139,10 +2123,23 @@ async function loadTasks() {
 
 
 
-
-async function loadYourTasks(retryCount = 0, maxRetries = 3) {
+async function loadYourTasks() {
+    let adminEmail = localStorage.getItem("currentAdminEmail");
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentUser = urlParams.get("user");
     const yourContainer = document.getElementById("yourTasks");
     yourContainer.innerHTML = "<p>Loading...</p>";
+
+    // Fallbacks for missing parameters
+    if (!adminEmail) {
+        adminEmail = urlParams.get("admin");
+        if (adminEmail) {
+            localStorage.setItem("currentAdminEmail", adminEmail);
+        }
+    }
+    if (!currentUser) {
+        currentUser = adminEmail;
+    }
 
     if (!adminEmail || !currentUser) {
         yourContainer.innerHTML = "<p>Error: Unable to load tasks. Please log in again.</p>";
@@ -2174,14 +2171,6 @@ async function loadYourTasks(retryCount = 0, maxRetries = 3) {
             if (!filterTasksForDate([task], todayStr).length) return false;
             return task.users.includes(currentUser) || (task.tempTurnReplacement?.[todayStr] && Object.values(task.tempTurnReplacement[todayStr]).includes(currentUser));
         });
-
-        console.log("loadYourTasks - Current User:", currentUser, "Tasks:", yourTasks); // Debug
-
-        if (yourTasks.length === 0 && retryCount < maxRetries) {
-            console.log(`No tasks found, retrying (${retryCount + 1}/${maxRetries})...`);
-            setTimeout(() => loadYourTasks(retryCount + 1, maxRetries), 1000);
-            return;
-        }
 
         document.getElementById("yourTaskCount").textContent = `(${yourTasks.length})`;
 
@@ -2225,15 +2214,9 @@ async function loadYourTasks(retryCount = 0, maxRetries = 3) {
         }
     } catch (err) {
         console.error("Error loading your tasks:", err);
-        if (retryCount < maxRetries) {
-            console.log(`Error occurred, retrying (${retryCount + 1}/${maxRetries})...`);
-            setTimeout(() => loadYourTasks(retryCount + 1, maxRetries), 1000);
-            return;
-        }
         yourContainer.innerHTML = "<p>Error loading your tasks: " + err.message + "</p>";
     }
 }
-
 
 
 
