@@ -453,14 +453,12 @@ document.querySelectorAll('.footer a').forEach(link => {
             };
         });
 
-        // Count rewards (userRewards + pendingRequests)
-        const rewardCounts = {};
-        userRewards.forEach(reward => {
-            rewardCounts[reward.name] = (rewardCounts[reward.name] || 0) + 1;
-        });
-        pendingRequests.forEach(req => {
-            rewardCounts[req.rewardName] = (rewardCounts[req.rewardName] || 0) + 1;
-        });
+
+// Count only pendingRequests for purchase indicator
+const rewardCounts = {};
+pendingRequests.forEach(req => {
+    rewardCounts[req.rewardName] = (rewardCounts[req.rewardName] || 0) + 1;
+});
 
         // Filter market rewards
         const filteredRewards = marketRewards.filter(reward => {

@@ -2396,6 +2396,11 @@ async function loadPendingRewardRequests() {
     }
 }
 
+
+
+
+
+
 async function reviewReward(requestIndex, decision) {
     try {
         const buttons = document.querySelectorAll(`.reward-request button`);
@@ -2404,13 +2409,34 @@ async function reviewReward(requestIndex, decision) {
             btn.style.opacity = "0.5";
         });
 
-        const response = await fetch("https://beemazing.onrender.com/api/review-reward", {
+        // Fetch current reward requests to get the request details
+        const response = await fetch(`https://beemazing.onrender.com/api/reward-requests?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
+            cache: "no-store"
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Failed to fetch reward requests");
+
+        const pendingRequests = (data.requests || []).filter(req => req.status === "pending");
+        const request = pendingRequests[requestIndex];
+        if (!request) throw new Error("Reward request not found");
+
+        // Update the reward request status
+        const reviewResponse = await fetch("https://beemazing.onrender.com/api/review-reward", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ adminEmail, requestIndex, decision })
         });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Failed to process reward request");
+        const reviewData = await reviewResponse.json();
+        if (!reviewResponse.ok) throw new Error(reviewData.error || "Failed to process reward request");
+
+        // If approved or declined, remove the request from pending requests
+        const deleteResponse = await fetch("https://beemazing.onrender.com/api/delete-reward-request", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ adminEmail, requestIndex })
+        });
+        const deleteData = await deleteResponse.json();
+        if (!deleteResponse.ok) throw new Error(deleteData.error || "Failed to delete reward request");
 
         alert(`Reward ${decision}d successfully!`);
         loadPendingRewardRequests(); // Refresh list
@@ -2425,6 +2451,12 @@ async function reviewReward(requestIndex, decision) {
         });
     }
 }
+
+
+
+
+
+
 
 // Call on page load and date change
 document.addEventListener("DOMContentLoaded", loadPendingRewardRequests);
