@@ -1805,23 +1805,29 @@ app.post('/api/review-task', async (req, res) => {
 
 // taskrotations.js
 
+
+
 app.post("/api/complete-task", async (req, res) => {
   const { adminEmail, taskTitle, user, date } = req.body;
   try {
     if (!adminEmail || !taskTitle || !user || !date) {
+      console.error("🔥 /api/complete-task: Missing fields", { adminEmail, taskTitle, user, date });
       return res.status(400).json({ error: "Missing required fields: adminEmail, taskTitle, user, or date" });
     }
+
     const db = await connectDB();
     const admins = db.collection("admins");
     const adminUsers = db.collection("adminUsers");
     const admin = await admins.findOne({ email: adminEmail });
     if (!admin) {
+      console.error("🔥 /api/complete-task: Admin not found", { adminEmail });
       return res.status(404).json({ error: "Admin not found" });
     }
 
     // Check if user is an Admin
     const adminDoc = await adminUsers.findOne({ email: adminEmail });
     const isAdmin = adminDoc?.permissions?.[user] === "Admin";
+    console.log("🔍 /api/complete-task: User permission", { user, isAdmin });
 
     const tasks = admin.tasks || [];
     const normalizedDate = date.split("T")[0];
@@ -1834,27 +1840,35 @@ app.post("/api/complete-task", async (req, res) => {
       return currentDate >= startDate && currentDate <= endDate;
     });
     if (taskIndex === -1) {
+      console.error("🔥 /api/complete-task: Task not found", { taskTitle, normalizedDate });
       return res.status(404).json({ error: "Task not found" });
     }
+
     const task = tasks[taskIndex];
     task.pendingCompletions = task.pendingCompletions || {};
     task.pendingCompletions[normalizedDate] = task.pendingCompletions[normalizedDate] || [];
     task.completions = task.completions || {};
     task.completions[normalizedDate] = task.completions[normalizedDate] || [];
+
     const pendingCount = task.pendingCompletions[normalizedDate].filter(p => p.user === user).length;
     const completedCount = task.completions[normalizedDate].filter(c => c.user === user).length;
     const totalCount = pendingCount + completedCount;
+
     let requiredTimes = 1;
     if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
     if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
     if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+
     if (totalCount >= requiredTimes) {
+      console.error("🔥 /api/complete-task: Max submissions reached", { user, taskTitle, totalCount, requiredTimes });
       return res.status(400).json({ error: "Task already submitted maximum times today" });
     }
+
     const userList = task.users || [];
     const tempTurnReplacement = task.tempTurnReplacement?.[normalizedDate] || {};
     const isAssigned = userList.includes(user) || Object.values(tempTurnReplacement).includes(user);
     if (!isAssigned) {
+      console.error("🔥 /api/complete-task: User not assigned", { user, taskTitle, userList, tempTurnReplacement });
       return res.status(400).json({ error: "User not assigned to this task" });
     }
 
@@ -1864,8 +1878,10 @@ app.post("/api/complete-task", async (req, res) => {
       task.currentTurnIndex = assignedUsers.indexOf(user);
       if (task.currentTurnIndex === -1) task.currentTurnIndex = 0;
     }
+
     const totalCompletions = task.pendingCompletions[normalizedDate].length + task.completions[normalizedDate].length;
-    task.currentTurnIndex = totalCompletions % assignedUsers.length;
+    task.currentTurnIndex = (totalCompletions + 1) % assignedUsers.length; // Advance turn after submission
+    console.log("🔍 /api/complete-task: Updated turn", { taskTitle, currentTurnIndex: task.currentTurnIndex, nextUser: assignedUsers[task.currentTurnIndex] });
 
     const history = admin.history || {};
     const month = new Date(normalizedDate).toLocaleString("default", { month: "long" });
@@ -1880,26 +1896,15 @@ app.post("/api/complete-task", async (req, res) => {
       if (rewardAmount > 0) {
         const rewards = admin.rewards || {};
         rewards[user] = (rewards[user] || 0) + rewardAmount;
-        await admins.updateOne(
-          { email: adminEmail },
-          { $set: { rewards } }
-        );
+        await admins.updateOne({ email: adminEmail }, { $set: { rewards } });
       }
-      history[month][day].push({
-        title: taskTitle,
-        user,
-        timestamp: new Date().toISOString(),
-        action: "completed"
-      });
+      history[month][day].push({ title: taskTitle, user, timestamp: new Date().toISOString(), action: "completed" });
+      console.log("✅ /api/complete-task: Admin task completed", { user, taskTitle, rewardAmount });
     } else {
       // For non-Admins, submit for review
       task.pendingCompletions[normalizedDate].push({ user, repetition });
-      history[month][day].push({
-        title: taskTitle,
-        user,
-        timestamp: new Date().toISOString(),
-        action: "submitted"
-      });
+      history[month][day].push({ title: taskTitle, user, timestamp: new Date().toISOString(), action: "submitted" });
+      console.log("✅ /api/complete-task: Non-admin task submitted for review", { user, taskTitle, repetition });
     }
 
     tasks[taskIndex] = task;
@@ -1907,17 +1912,17 @@ app.post("/api/complete-task", async (req, res) => {
       { email: adminEmail },
       { $set: { tasks, history } }
     );
+    console.log("✅ /api/complete-task: Database updated", { taskTitle, pendingCompletions: task.pendingCompletions[normalizedDate] });
 
     res.status(200).json({
       success: true,
       message: isAdmin ? "Task completed successfully" : "Task submitted for review"
     });
   } catch (err) {
-    console.error("Error in /api/complete-task:", err);
+    console.error("🔥 /api/complete-task: Server error", err);
     res.status(500).json({ error: `Server error: ${err.message}` });
   }
 });
-
 
 
 

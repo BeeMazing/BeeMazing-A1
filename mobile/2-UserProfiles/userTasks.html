@@ -1277,11 +1277,16 @@ async function fetchAvatarPath(userName) {
 
 
 
+
+
+
 async function finishTask(currentUser, task, selectedDate) {
   const today = selectedDate || new Date().toISOString().split("T")[0];
   const adminEmail = localStorage.getItem("currentAdminEmail");
   const button = event.target;
   button.disabled = true;
+
+  console.log("🔍 finishTask: Starting submission", { currentUser, taskTitle: task.title, selectedDate: today, adminEmail });
 
   // Fetch avatar and derive video path
   const avatarPath = await fetchAvatarPath(currentUser);
@@ -1318,29 +1323,18 @@ async function finishTask(currentUser, task, selectedDate) {
       body: JSON.stringify({ adminEmail, taskTitle: task.title.trim(), user: currentUser, date: today })
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
+    if (!response.ok) {
+      throw new Error(data.error || `HTTP error ${response.status}`);
+    }
     
+    console.log("✅ finishTask: Task submitted", data);
     popup.textContent = `Task Submitted! Waiting for Parent Review`;
     setTimeout(() => {
       popup.remove();
-      // Check if the current user is an admin before redirecting
-      fetch(`https://beemazing.onrender.com/api/get-permission?adminEmail=${encodeURIComponent(adminEmail)}&username=${encodeURIComponent(currentUser)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.permission === "Admin") {
-            window.location.href = "userAdmin.html";
-          } else {
-            // Reload tasks for non-admins
-            loadUserTasks(currentUser, selectedDate);
-          }
-        })
-        .catch(err => {
-          console.error("Error checking permission:", err);
-          loadUserTasks(currentUser, selectedDate);
-        });
+      loadUserTasks(currentUser, today); // Reload tasks to reflect pending status
     }, 2000);
   } catch (err) {
-    console.error("Error submitting task:", err);
+    console.error("🔥 finishTask: Error submitting task", err);
     popup.textContent = `Error: ${err.message}`;
     popup.style.color = "red";
     setTimeout(() => {
@@ -1349,7 +1343,6 @@ async function finishTask(currentUser, task, selectedDate) {
     }, 3000);
   }
 }
-
 
 
 
