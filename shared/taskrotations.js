@@ -156,9 +156,7 @@ function mixedTurnOffset(task, selectedDate) {
     const selectedMonth = selected.getMonth();
 
     if (repeat === "Monthly") {
-        // Step 1: Collect all completions in chronological order
         const allCompletions = [];
-
         const gatherCompletions = (source) => {
             if (!source) return;
             for (const dateStr in source) {
@@ -174,11 +172,8 @@ function mixedTurnOffset(task, selectedDate) {
 
         gatherCompletions(task.completions);
         gatherCompletions(task.pendingCompletions);
-
-        // Sort completions by date
         allCompletions.sort((a, b) => a.date - b.date);
 
-        // Step 2: Count completions up to the selected month
         let completionCount = 0;
         for (const completion of allCompletions) {
             if (
@@ -199,9 +194,7 @@ function mixedTurnOffset(task, selectedDate) {
     }
 
     if (repeat === "Weekly") {
-        // Step 1: Collect all completions in chronological order
         const allCompletions = [];
-
         const gatherCompletions = (source) => {
             if (!source) return;
             for (const dateStr in source) {
@@ -215,14 +208,9 @@ function mixedTurnOffset(task, selectedDate) {
 
         gatherCompletions(task.completions);
         gatherCompletions(task.pendingCompletions);
-
-        // Sort completions by date
         allCompletions.sort((a, b) => a.date - b.date);
 
-        // Step 2: Count completions up to the selected week
         let completionCount = 0;
-
-        // Calculate the start of the selected week (Monday)
         const selectedWeekStart = new Date(selected);
         selectedWeekStart.setHours(0, 0, 0, 0);
         const selectedDayOfWeek = selectedWeekStart.getDay();
@@ -230,14 +218,12 @@ function mixedTurnOffset(task, selectedDate) {
         selectedWeekStart.setDate(selectedWeekStart.getDate() - daysToMonday);
 
         for (const completion of allCompletions) {
-            // Calculate the start of the completion's week (Monday)
             const completionWeekStart = new Date(completion.date);
             completionWeekStart.setHours(0, 0, 0, 0);
             const completionDayOfWeek = completionWeekStart.getDay();
             const completionDaysToMonday = completionDayOfWeek === 0 ? 6 : completionDayOfWeek - 1;
             completionWeekStart.setDate(completionWeekStart.getDate() - completionDaysToMonday);
 
-            // Compare week starts
             if (
                 completionWeekStart < selectedWeekStart ||
                 (
@@ -252,7 +238,41 @@ function mixedTurnOffset(task, selectedDate) {
         return completionCount % assignedUsers.length;
     }
 
-    // Fallback for daily tasks
+    // Daily tasks with timesPerDay = 1: Check for missed turns
+    if (repeat === "Daily" && requiredTimes === 1) {
+        const range = task.date.split(" to ");
+        const taskStartDate = parseLocalDate(range[0]);
+        const userList = task.users || [];
+        const tempTurnReplacement = task.tempTurnReplacement?.[selectedDate] || {};
+        const assignedUsers = [...new Set([...userList, ...Object.values(tempTurnReplacement)])];
+
+        let rotationOffset = 0;
+        let currentDate = new Date(taskStartDate);
+        currentDate.setHours(0, 0, 0, 0);
+
+        while (currentDate <= selected) {
+            const dateStr = currentDate.toISOString().split("T")[0];
+            const isCurrentDate = dateStr === selectedDate;
+
+            const dayAssignedUsers = [...new Set([...userList, ...(task.tempTurnReplacement?.[dateStr] || {})])];
+            const dayIndex = rotationOffset % dayAssignedUsers.length;
+            const expectedUser = dayAssignedUsers[dayIndex];
+
+            const completionsOnDay = Array.isArray(task.completions?.[dateStr]) ? task.completions[dateStr] : [];
+            const pendingOnDay = Array.isArray(task.pendingCompletions?.[dateStr]) ? task.pendingCompletions[dateStr] : [];
+            const completed = completionsOnDay.some(c => c.user === expectedUser) || pendingOnDay.some(p => p.user === expectedUser);
+
+            if (completed || isCurrentDate) {
+                rotationOffset++;
+            }
+
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        return (rotationOffset - 1) % assignedUsers.length;
+    }
+
+    // Other daily tasks
     const range = task.date.split(" to ");
     const taskStartDate = parseLocalDate(range[0]);
     let rotationOffset = 0;
@@ -295,11 +315,6 @@ function mixedTurnOffset(task, selectedDate) {
 
 
 
-
-
-
-
-
 function mixedTurnData(task, selectedDate) {
     try {
         if (!task || typeof task !== "object" || !Array.isArray(task.users) || !task.date) {
@@ -320,7 +335,6 @@ function mixedTurnData(task, selectedDate) {
         const selectedYear = selected.getFullYear();
         const selectedMonth = selected.getMonth();
 
-        // ✅ For Monthly tasks, count completions for the whole month
         let completions = [];
         let pendingCompletions = [];
 
@@ -348,12 +362,12 @@ function mixedTurnData(task, selectedDate) {
         const userCompletionCounts = {};
         const userPendingCounts = {};
 
-        completions.forEach(user => {
-            userCompletionCounts[user] = (userCompletionCounts[user] || 0) + 1;
+        completions.forEach(c => {
+            userCompletionCounts[c.user] = (userCompletionCounts[c.user] || 0) + 1;
         });
 
-        pendingCompletions.forEach(user => {
-            userPendingCounts[user] = (userPendingCounts[user] || 0) + 1;
+        pendingCompletions.forEach(p => {
+            userPendingCounts[p.user] = (userPendingCounts[p.user] || 0) + 1;
         });
 
         const userOrder = [...task.users];
@@ -367,9 +381,10 @@ function mixedTurnData(task, selectedDate) {
         });
 
         const rotationOffset = mixedTurnOffset(task, selectedDate);
+        const currentTurnIndex = task.currentTurnIndex ?? rotationOffset;
 
         for (let i = 0; i < requiredTimes; i++) {
-            const userIndex = (i + rotationOffset) % assignedUsers.length;
+            const userIndex = (i + currentTurnIndex) % assignedUsers.length;
             const user = assignedUsers[userIndex];
             const originalUser = userOrder[userIndex];
 
@@ -402,6 +417,8 @@ function mixedTurnData(task, selectedDate) {
         return { turns: [], completedCount: 0, requiredTimes: 1 };
     }
 }
+
+
 
 
 

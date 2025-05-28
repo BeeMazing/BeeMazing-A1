@@ -1807,6 +1807,7 @@ app.post('/api/review-task', async (req, res) => {
 
 
 
+
 app.post("/api/complete-task", async (req, res) => {
   const { adminEmail, taskTitle, user, date } = req.body;
   try {
@@ -1866,6 +1867,7 @@ app.post("/api/complete-task", async (req, res) => {
 
     const userList = task.users || [];
     const tempTurnReplacement = task.tempTurnReplacement?.[normalizedDate] || {};
+    const assignedUsers = [...new Set([...userList, ...Object.values(tempTurnReplacement)])];
     const isAssigned = userList.includes(user) || Object.values(tempTurnReplacement).includes(user);
     if (!isAssigned) {
       console.error("🔥 /api/complete-task: User not assigned", { user, taskTitle, userList, tempTurnReplacement });
@@ -1873,15 +1875,13 @@ app.post("/api/complete-task", async (req, res) => {
     }
 
     const repetition = totalCount + 1;
-    const assignedUsers = [...new Set([...userList, ...Object.values(tempTurnReplacement)])];
-    if (typeof task.currentTurnIndex !== "number") {
+    const isRotation = task.settings?.includes("Rotation");
+
+    // Initialize currentTurnIndex if not set
+    if (typeof task.currentTurnIndex !== "number" || task.currentTurnIndex < 0 || task.currentTurnIndex >= assignedUsers.length) {
       task.currentTurnIndex = assignedUsers.indexOf(user);
       if (task.currentTurnIndex === -1) task.currentTurnIndex = 0;
     }
-
-    const totalCompletions = task.pendingCompletions[normalizedDate].length + task.completions[normalizedDate].length;
-    task.currentTurnIndex = (totalCompletions + 1) % assignedUsers.length; // Advance turn after submission
-    console.log("🔍 /api/complete-task: Updated turn", { taskTitle, currentTurnIndex: task.currentTurnIndex, nextUser: assignedUsers[task.currentTurnIndex] });
 
     const history = admin.history || {};
     const month = new Date(normalizedDate).toLocaleString("default", { month: "long" });
@@ -1900,11 +1900,65 @@ app.post("/api/complete-task", async (req, res) => {
       }
       history[month][day].push({ title: taskTitle, user, timestamp: new Date().toISOString(), action: "completed" });
       console.log("✅ /api/complete-task: Admin task completed", { user, taskTitle, rewardAmount });
+
+      // Advance turn for rotation tasks
+      if (isRotation && task.repeat === "Daily" && task.timesPerDay === 1) {
+        // Check if previous day's turn was missed
+        const prevDate = new Date(normalizedDate);
+        prevDate.setDate(prevDate.getDate() - 1);
+        const prevDateStr = prevDate.toISOString().split("T")[0];
+        const prevCompletions = task.completions?.[prevDateStr] || [];
+        const prevPending = task.pendingCompletions?.[prevDateStr] || [];
+        const prevAssignedUsers = [...new Set([...userList, ...(task.tempTurnReplacement?.[prevDateStr] || {})])];
+        const prevTurnIndex = (task.currentTurnIndex - 1 + prevAssignedUsers.length) % prevAssignedUsers.length;
+        const prevTurnUser = prevAssignedUsers[prevTurnIndex];
+
+        if (!prevCompletions.some(c => c.user === prevTurnUser) && !prevPending.some(p => p.user === prevTurnUser)) {
+          // Previous turn was missed; don't advance
+          console.log("🔍 /api/complete-task: Previous turn missed, not advancing", { prevTurnUser, prevDateStr });
+        } else {
+          task.currentTurnIndex = (task.currentTurnIndex + 1) % assignedUsers.length;
+          console.log("🔍 /api/complete-task: Advanced turn", { taskTitle, currentTurnIndex: task.currentTurnIndex, nextUser: assignedUsers[task.currentTurnIndex] });
+        }
+      } else if (isRotation) {
+        // For other rotation tasks, advance based on total completions
+        const totalCompletions = task.completions[normalizedDate].length + task.pendingCompletions[normalizedDate].length;
+        if (totalCompletions >= requiredTimes) {
+          task.currentTurnIndex = (task.currentTurnIndex + 1) % assignedUsers.length;
+          console.log("🔍 /api/complete-task: Advanced turn after required completions", { taskTitle, currentTurnIndex: task.currentTurnIndex, nextUser: assignedUsers[task.currentTurnIndex] });
+        }
+      }
     } else {
       // For non-Admins, submit for review
       task.pendingCompletions[normalizedDate].push({ user, repetition });
       history[month][day].push({ title: taskTitle, user, timestamp: new Date().toISOString(), action: "submitted" });
       console.log("✅ /api/complete-task: Non-admin task submitted for review", { user, taskTitle, repetition });
+
+      // Advance turn for rotation tasks only after all required completions
+      if (isRotation && task.repeat === "Daily" && task.timesPerDay === 1) {
+        const prevDate = new Date(normalizedDate);
+        prevDate.setDate(prevDate.getDate() - 1);
+        const prevDateStr = prevDate.toISOString().split("T")[0];
+        const prevCompletions = task.completions?.[prevDateStr] || [];
+        const prevPending = task.pendingCompletions?.[prevDateStr] || [];
+        const prevAssignedUsers = [...new Set([...userList, ...(task.tempTurnReplacement?.[prevDateStr] || {})])];
+        const prevTurnIndex = (task.currentTurnIndex - 1 + prevAssignedUsers.length) % prevAssignedUsers.length;
+        const prevTurnUser = prevAssignedUsers[prevTurnIndex];
+
+        if (!prevCompletions.some(c => c.user === prevTurnUser) && !prevPending.some(p => p.user === prevTurnUser)) {
+          // Previous turn was missed; don't advance
+          console.log("🔍 /api/complete-task: Previous turn missed, not advancing", { prevTurnUser, prevDateStr });
+        } else {
+          task.currentTurnIndex = (task.currentTurnIndex + 1) % assignedUsers.length;
+          console.log("🔍 /api/complete-task: Advanced turn", { taskTitle, currentTurnIndex: task.currentTurnIndex, nextUser: assignedUsers[task.currentTurnIndex] });
+        }
+      } else if (isRotation) {
+        const totalCompletions = task.completions[normalizedDate].length + task.pendingCompletions[normalizedDate].length;
+        if (totalCompletions >= requiredTimes) {
+          task.currentTurnIndex = (task.currentTurnIndex + 1) % assignedUsers.length;
+          console.log("🔍 /api/complete-task: Advanced turn after required completions", { taskTitle, currentTurnIndex: task.currentTurnIndex, nextUser: assignedUsers[task.currentTurnIndex] });
+        }
+      }
     }
 
     tasks[taskIndex] = task;
@@ -1916,13 +1970,18 @@ app.post("/api/complete-task", async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: isAdmin ? "Task completed successfully" : "Task submitted for review"
+      message: isAdmin ? "Task completed successfully" : "Task submitted for review",
+      currentTurnIndex: task.currentTurnIndex,
+      nextUser: assignedUsers[task.currentTurnIndex]
     });
   } catch (err) {
     console.error("🔥 /api/complete-task: Server error", err);
     res.status(500).json({ error: `Server error: ${err.message}` });
   }
 });
+
+
+
 
 
 
