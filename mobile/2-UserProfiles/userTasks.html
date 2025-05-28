@@ -1319,19 +1319,36 @@ async function finishTask(currentUser, task, selectedDate) {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
+    
     popup.textContent = `Task Submitted! Waiting for Parent Review`;
-    setTimeout(() => popup.remove(), 2000);
-    await loadUserTasks(currentUser, selectedDate);
+    setTimeout(() => {
+      popup.remove();
+      // Check if the current user is an admin before redirecting
+      fetch(`https://beemazing.onrender.com/api/get-permission?adminEmail=${encodeURIComponent(adminEmail)}&username=${encodeURIComponent(currentUser)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.permission === "Admin") {
+            window.location.href = "userAdmin.html";
+          } else {
+            // Reload tasks for non-admins
+            loadUserTasks(currentUser, selectedDate);
+          }
+        })
+        .catch(err => {
+          console.error("Error checking permission:", err);
+          loadUserTasks(currentUser, selectedDate);
+        });
+    }, 2000);
   } catch (err) {
     console.error("Error submitting task:", err);
     popup.textContent = `Error: ${err.message}`;
     popup.style.color = "red";
-    setTimeout(() => popup.remove(), 3000);
-    button.disabled = false;
+    setTimeout(() => {
+      popup.remove();
+      button.disabled = false;
+    }, 3000);
   }
 }
-
-
 
 
 
