@@ -2516,7 +2516,7 @@ async function loadPendingTasks() {
     console.log("🔍 loadPendingTasks: Filtered pending tasks", pendingTasks.map(t => ({ title: t.title, pending: t.pendingCompletions[todayStr] })));
 
     if (pendingTasks.length === 0) {
-      pendingContainer.innerHTML = "<p>No tasks needing approval 🎉</p>";
+      pendingContainer.innerHTML = "<p>No tasks needing approval</p>";
     } else {
       pendingContainer.innerHTML = "";
       pendingTasks.forEach(task => {
@@ -2607,7 +2607,7 @@ async function loadPendingRewardRequests() {
         document.getElementById("rewardCount").textContent = `(${pendingRequests.length})`;
 
         if (pendingRequests.length === 0) {
-            rewardContainer.innerHTML = "<p>No rewards needing approval 🎉</p>";
+            rewardContainer.innerHTML = "<p>No rewards needing approval</p>";
         } else {
             rewardContainer.innerHTML = "";
             pendingRequests.forEach((request, index) => {
