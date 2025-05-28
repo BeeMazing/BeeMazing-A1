@@ -1287,6 +1287,7 @@ async function fetchAvatarPath(userName) {
 // for finish task button video preview
 
 
+
 async function finishTask(currentUser, task, selectedDate) {
   const today = selectedDate || new Date().toISOString().split("T")[0];
   const adminEmail = localStorage.getItem("currentAdminEmail");
@@ -1322,7 +1323,7 @@ async function finishTask(currentUser, task, selectedDate) {
   document.body.appendChild(popup);
 
   try {
-    let requestBody = {
+    const requestBody = {
       adminEmail,
       taskTitle: task.title.trim(),
       user: currentUser,
@@ -1335,7 +1336,7 @@ async function finishTask(currentUser, task, selectedDate) {
       if (!turnData) throw new Error("Unable to load turn data for Rotation task");
       const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending && turn.user === currentUser);
       if (!activeTurn) throw new Error("No active turn available for this user");
-      requestBody.repetition = activeTurn.repetition; // Use repetition instead of turnIndex
+      requestBody.repetition = activeTurn.repetition;
     }
 
     const response = await fetch("https://beemazing.onrender.com/api/complete-task", {
@@ -1356,7 +1357,6 @@ async function finishTask(currentUser, task, selectedDate) {
     button.disabled = false;
   }
 }
-
 
 
 
