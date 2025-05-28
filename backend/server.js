@@ -1806,7 +1806,7 @@ app.post('/api/review-task', async (req, res) => {
 // taskrotations.js
 
 app.post("/api/complete-task", async (req, res) => {
-  const { adminEmail, taskTitle, user, date, repetition } = req.body;
+  const { adminEmail, taskTitle, user, date } = req.body;
   try {
     if (!adminEmail || !taskTitle || !user || !date) {
       return res.status(400).json({ error: "Missing required fields: adminEmail, taskTitle, user, or date" });
@@ -1841,43 +1841,16 @@ app.post("/api/complete-task", async (req, res) => {
     task.pendingCompletions[normalizedDate] = task.pendingCompletions[normalizedDate] || [];
     task.completions = task.completions || {};
     task.completions[normalizedDate] = task.completions[normalizedDate] || [];
-
-    const pending = task.pendingCompletions[normalizedDate];
-    const completions = task.completions[normalizedDate];
-    let rep = repetition;
-
-    // Validate repetition for Rotation tasks
-    if (task.settings?.includes("Rotation")) {
-      if (repetition === undefined || !Number.isInteger(repetition) || repetition < 1) {
-        return res.status(400).json({ error: "Missing or invalid repetition for Rotation task" });
-      }
-      let requiredTimes = 1;
-      if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-      if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-      if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-      if (repetition > requiredTimes) {
-        return res.status(400).json({ error: `Repetition ${repetition} exceeds required times ${requiredTimes}` });
-      }
-      // Check if repetition is already taken
-      if (pending.some(p => p.user === user && p.repetition === repetition) ||
-          completions.some(c => c.user === user && c.repetition === repetition)) {
-        return res.status(400).json({ error: `Repetition ${repetition} already submitted by this user` });
-      }
-    } else {
-      // For Individual tasks, calculate repetition
-      const pendingCount = pending.filter(p => p.user === user).length;
-      const completedCount = completions.filter(c => c.user === user).length;
-      const totalCount = pendingCount + completedCount;
-      let requiredTimes = 1;
-      if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-      if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-      if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-      if (totalCount >= requiredTimes) {
-        return res.status(400).json({ error: "Task already submitted maximum times today" });
-      }
-      rep = totalCount + 1;
+    const pendingCount = task.pendingCompletions[normalizedDate].filter(p => p.user === user).length;
+    const completedCount = task.completions[normalizedDate].filter(c => c.user === user).length;
+    const totalCount = pendingCount + completedCount;
+    let requiredTimes = 1;
+    if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
+    if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
+    if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
+    if (totalCount >= requiredTimes) {
+      return res.status(400).json({ error: "Task already submitted maximum times today" });
     }
-
     const userList = task.users || [];
     const tempTurnReplacement = task.tempTurnReplacement?.[normalizedDate] || {};
     const isAssigned = userList.includes(user) || Object.values(tempTurnReplacement).includes(user);
@@ -1885,12 +1858,13 @@ app.post("/api/complete-task", async (req, res) => {
       return res.status(400).json({ error: "User not assigned to this task" });
     }
 
+    const repetition = totalCount + 1;
     const assignedUsers = [...new Set([...userList, ...Object.values(tempTurnReplacement)])];
     if (typeof task.currentTurnIndex !== "number") {
       task.currentTurnIndex = assignedUsers.indexOf(user);
       if (task.currentTurnIndex === -1) task.currentTurnIndex = 0;
     }
-    const totalCompletions = pending.length + completions.length;
+    const totalCompletions = task.pendingCompletions[normalizedDate].length + task.completions[normalizedDate].length;
     task.currentTurnIndex = totalCompletions % assignedUsers.length;
 
     const history = admin.history || {};
@@ -1901,7 +1875,7 @@ app.post("/api/complete-task", async (req, res) => {
 
     if (isAdmin) {
       // For Admins, mark as completed directly
-      completions.push({ user, repetition: rep });
+      task.completions[normalizedDate].push({ user, repetition });
       const rewardAmount = Number(task.reward || 0);
       if (rewardAmount > 0) {
         const rewards = admin.rewards || {};
@@ -1919,7 +1893,7 @@ app.post("/api/complete-task", async (req, res) => {
       });
     } else {
       // For non-Admins, submit for review
-      pending.push({ user, repetition: rep });
+      task.pendingCompletions[normalizedDate].push({ user, repetition });
       history[month][day].push({
         title: taskTitle,
         user,
@@ -1943,8 +1917,6 @@ app.post("/api/complete-task", async (req, res) => {
     res.status(500).json({ error: `Server error: ${err.message}` });
   }
 });
-
-
 
 
 
