@@ -380,45 +380,79 @@
     color: var(--secondary-color);     /* black text */
 }
 
+
+
+/* Date picker start point */
+
+
 .day-scroll-wrapper {
     display: flex;
     align-items: center;
-    overflow: hidden;
-    background: var(--secondary-color);
+    position: relative;
     background: transparent;
     padding: 6px 0;
+    overflow: hidden;
 }
 .day-scroll {
     display: flex;
     overflow-x: auto;
-    gap: 8px;
     padding: 6px 10px;
+    gap: 8px;
+    background: transparent;
     scroll-behavior: smooth;
 }
-.day-scroll::-webkit-scrollbar {
-    display: none;
+.day-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 38px;
+}
+.day-label {
+    font-size: 10px;
+    color: var(--accent-color); /* White text */
+    text-align: center;
+    margin-bottom: 2px;
+    font-weight: 600;
 }
 .day {
     min-width: 38px;
+    width: 38px;
     height: 38px;
     line-height: 38px;
     text-align: center;
     border-radius: 50%;
-    background: var(--secondary-color); /* dark bubble */
-    color: var(--accent-color);         /* white text */
+    background: var(--secondary-color); /* Black bubble */
+    color: var(--accent-color); /* White text */
     font-weight: bold;
     cursor: pointer;
     flex-shrink: 0;
+    transition: background-color 0.3s, transform 0.2s;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 .day:hover {
     background: #FFF3CD;
+    transform: scale(1.08);
 }
 .day.selected {
-    background: var(--primary-color);
-    color: var(--secondary-color);
+    background: var(--primary-color); /* Yellow when selected */
+    color: var(--secondary-color); /* Black text */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
+.day-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+
+
+
+
+/* Date picker end point */
+
+
+
+
+
+
 .scroll-btn {
     background: var(--secondary-color);
     border: none;
@@ -1552,58 +1586,77 @@ avatarImg.style.display = "none"; // Hide initially
         
 // addtasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
 
-        function generateScrollableDates(monthOffset = 0) {
-  const container = document.getElementById("dayScrollContainer");
-  container.innerHTML = "";
 
-  const today = new Date();
-  today.setDate(1);
-  today.setMonth(today.getMonth() + monthOffset);
+function generateScrollableDates(monthOffset = 0) {
+    const container = document.getElementById("dayScrollContainer");
+    container.innerHTML = "";
 
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const today = new Date();
+    today.setDate(1);
+    today.setMonth(today.getMonth() + monthOffset);
 
-  document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
-    month: 'long',
-    year: 'numeric'
-  });
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const userName = urlParams.get('user');
-
-  for (let i = 1; i <= daysInMonth; i++) {
-    const date = new Date(currentYear, currentMonth, i);
-    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-
-    const btn = document.createElement("div");
-    btn.className = "day";
-    btn.textContent = i;
-    btn.dataset.date = dateStr;
-
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-      btn.classList.add("selected");
-      loadOverallProgress(userName); // Added to update progress on date change
+    document.getElementById("monthLabel").textContent = today.toLocaleDateString("https://beemazing.local", {
+        month: 'long',
+        year: 'numeric'
     });
 
-    const now = new Date();
-    const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    if (dateStr === nowStr) {
-      btn.classList.add("selected");
+    const urlParams = new URLSearchParams(window.location.search);
+    const userName = urlParams.get('user');
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const dayAbbreviations = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+    for (let i = 1; i <= daysInMonth; i++) {
+        const date = new Date(currentYear, currentMonth, i);
+        const dayOfWeek = dayAbbreviations[date.getDay()]; // Get day abbreviation
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+        const containerDiv = document.createElement("div");
+        containerDiv.className = "day-container";
+
+        const label = document.createElement("span");
+        label.className = "day-label";
+        label.textContent = dayOfWeek;
+
+        const btn = document.createElement("div");
+        btn.className = "day";
+        btn.textContent = i;
+        btn.dataset.date = dateStr;
+
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+            btn.classList.add("selected");
+            loadOverallProgress(userName); // Update progress on date change
+        });
+
+        const now = new Date();
+        const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        if (dateStr === nowStr) {
+            btn.classList.add("selected");
+        }
+
+        containerDiv.appendChild(label);
+        containerDiv.appendChild(btn);
+        container.appendChild(containerDiv);
     }
 
-    container.appendChild(btn);
-  }
-
-  setTimeout(() => {
-    const selected = document.querySelector(".day.selected");
-    if (selected) {
-      selected.scrollIntoView({ behavior: "smooth", inline: "center" });
-    }
-  }, 50);
+    setTimeout(() => {
+        const selected = document.querySelector(".day.selected");
+        if (selected) {
+            selected.scrollIntoView({ behavior: "smooth", inline: "center" });
+        }
+    }, 50);
 }
-        
+
+
+
+
+
+
+
 
 // addtasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
 

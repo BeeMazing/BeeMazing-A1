@@ -356,45 +356,6 @@ body {
     color: var(--secondary-color); /* black text */
 }
 
-.day-scroll {
-    display: flex;
-    overflow-x: auto;
-    padding: 6px 10px;
-    gap: 8px;
-    background: transparent; /* ✅ Remove white */
-    scroll-behavior: smooth;
-}
-
-.day-scroll::-webkit-scrollbar {
-    display: none;
-}
-
-.day {
-    min-width: 38px;
-    height: 38px;
-    line-height: 38px;
-    text-align: center;
-    border-radius: 50%;
-    background: var(--secondary-color); /* black bubble */
-    color: var(--accent-color); /* white text */
-    font-weight: bold;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background-color 0.3s, transform 0.2s;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.day:hover {
-    background: #FFF3CD;
-    transform: scale(1.08);
-}
-
-.day.selected {
-    background: var(--primary-color); /* yellow when selected */
-    color: var(--secondary-color); /* black text */
-    border-color: var(--accent-color); /* optional white ring */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
 
 
 
@@ -402,28 +363,83 @@ body {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+/* Date picker start point */
 
 
 .day-scroll-wrapper {
     display: flex;
     align-items: center;
     position: relative;
-    background: transparent; /* ✅ Let it inherit the yellow gradient from .date-header */
-    padding: 6px 0; /* ✅ Optional: reduce spacing to tighten layout */
+    background: transparent;
+    padding: 6px 0;
     overflow: hidden;
 }
+.day-scroll {
+    display: flex;
+    overflow-x: auto;
+    padding: 6px 10px;
+    gap: 8px;
+    background: transparent;
+    scroll-behavior: smooth;
+}
+.day-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 38px;
+}
+.day-label {
+    font-size: 10px;
+    color: var(--accent-color); /* White text */
+    text-align: center;
+    margin-bottom: 2px;
+    font-weight: 600;
+}
+.day {
+    min-width: 38px;
+    width: 38px;
+    height: 38px;
+    line-height: 38px;
+    text-align: center;
+    border-radius: 50%;
+    background: var(--secondary-color); /* Black bubble */
+    color: var(--accent-color); /* White text */
+    font-weight: bold;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.day:hover {
+    background: #FFF3CD;
+    transform: scale(1.08);
+}
+.day.selected {
+    background: var(--primary-color); /* Yellow when selected */
+    color: var(--secondary-color); /* Black text */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.day-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+
+
+
+
+/* Date picker end point */
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 .scroll-btn {
@@ -1072,56 +1088,68 @@ async function finishTask(userName, task, button, selectedDate) {
 
         // Generate scrollable date picker
         function generateScrollableDates(monthOffset = 0) {
-            const container = document.getElementById("dayScrollContainer");
-            container.innerHTML = "";
-        
-            const today = new Date();
-            today.setDate(1);
-            today.setMonth(today.getMonth() + monthOffset);
-        
-            const currentMonth = today.getMonth();
-            const currentYear = today.getFullYear();
-        
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-        
-            document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
-                month: 'long',
-                year: 'numeric'
-            });
-        
-            for (let i = 1; i <= daysInMonth; i++) {
-                const date = new Date(currentYear, currentMonth, i);
-                const btn = document.createElement("div");
-                btn.className = "day";
-                btn.textContent = i;
-                btn.dataset.date = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        
-                btn.addEventListener("click", () => {
-                    document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-                    btn.classList.add("selected");
-                    loadTasksForDate(btn.dataset.date);
-                });
-        
-                const now = new Date();
-                if (date.toDateString() === now.toDateString()) {
-                    btn.classList.add("selected");
-                }
-        
-                container.appendChild(btn);
-            }
-        
-            setTimeout(() => {
-    const selected = document.querySelector(".day.selected");
-    if (selected) {
-        selected.scrollIntoView({ behavior: "smooth", inline: "center" });
-        loadTasksForDate(selected.dataset.date); // 🐝 <-- Automatically load today's tasks
-    }
-}, 50);
+    const container = document.getElementById("dayScrollContainer");
+    container.innerHTML = "";
 
+    const today = new Date();
+    today.setDate(1);
+    today.setMonth(today.getMonth() + monthOffset);
 
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
+    document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
+        month: 'long',
+        year: 'numeric'
+    });
+
+    const todayStr = formatDate(new Date());
+    const dayAbbreviations = ["S", "Mo", "Tu", "We", "Th", "Fr", "St"];
+
+    for (let i = 1; i <= daysInMonth; i++) {
+        const date = new Date(currentYear, currentMonth, i);
+        const dayOfWeek = dayAbbreviations[date.getDay()]; // Get day abbreviation
+
+        const containerDiv = document.createElement("div");
+        containerDiv.className = "day-container";
+
+        const label = document.createElement("span");
+        label.className = "day-label";
+        label.textContent = dayOfWeek;
+
+        const btn = document.createElement("div");
+        btn.className = "day";
+        btn.textContent = i;
+        btn.dataset.date = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+            btn.classList.add("selected");
+            loadTasksForDate(btn.dataset.date);
+        });
+
+        if (btn.dataset.date === todayStr) {
+            btn.classList.add("selected");
         }
-        
+
+        containerDiv.appendChild(label);
+        containerDiv.appendChild(btn);
+        container.appendChild(containerDiv);
+    }
+
+    setTimeout(() => {
+        const selected = document.querySelector(".day.selected");
+        if (selected) {
+            selected.scrollIntoView({ behavior: "smooth", inline: "center" });
+            loadTasksForDate(selected.dataset.date);
+        }
+    }, 50);
+}
+
+
+
+
         // Initialize date navigation
         let monthOffset = 0;
         document.getElementById("prevMonth").addEventListener("click", () => {
