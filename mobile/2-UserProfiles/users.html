@@ -396,10 +396,11 @@
 .day-scroll {
     display: flex;
     overflow-x: auto;
-    padding: 6px 10px;
-    gap: 8px;
-    background: transparent;
+    padding: 8px 10px;
+    gap: 10px;
+    background: none;
     scroll-behavior: smooth;
+    width: 100%;
 }
 .day-container {
     display: flex;
@@ -1587,73 +1588,80 @@ avatarImg.style.display = "none"; // Hide initially
 // addtasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
 
 
+
+
 function generateScrollableDates(monthOffset = 0) {
-    const container = document.getElementById("dayScrollContainer");
-    container.innerHTML = "";
+    try {
+        const container = document.getElementById("dayScrollContainer");
+        if (!container) {
+            console.error("dayScrollContainer not found");
+            return;
+        }
+        container.innerHTML = "";
 
-    const today = new Date();
-    today.setDate(1);
-    today.setMonth(today.getMonth() + monthOffset);
+        const today = new Date();
+        today.setDate(1);
+        today.setMonth(today.getMonth() + monthOffset);
 
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-    document.getElementById("monthLabel").textContent = today.toLocaleDateString("https://beemazing.local", {
-        month: 'long',
-        year: 'numeric'
-    });
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const userName = urlParams.get('user');
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    const dayAbbreviations = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-
-    for (let i = 1; i <= daysInMonth; i++) {
-        const date = new Date(currentYear, currentMonth, i);
-        const dayOfWeek = dayAbbreviations[date.getDay()]; // Get day abbreviation
-        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-
-        const containerDiv = document.createElement("div");
-        containerDiv.className = "day-container";
-
-        const label = document.createElement("span");
-        label.className = "day-label";
-        label.textContent = dayOfWeek;
-
-        const btn = document.createElement("div");
-        btn.className = "day";
-        btn.textContent = i;
-        btn.dataset.date = dateStr;
-
-        btn.addEventListener("click", () => {
-            document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-            btn.classList.add("selected");
-            loadOverallProgress(userName); // Update progress on date change
+        document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
+            month: 'long',
+            year: 'numeric'
         });
 
-        const now = new Date();
-        const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        if (dateStr === nowStr) {
-            btn.classList.add("selected");
+        const urlParams = new URLSearchParams(window.location.search);
+        const userName = urlParams.get('user');
+        const dayAbbreviations = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            const date = new Date(currentYear, currentMonth, i);
+            const dayOfWeek = dayAbbreviations[date.getDay()];
+            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+
+            const containerDiv = document.createElement("div");
+            containerDiv.className = "day-container";
+
+            const label = document.createElement("span");
+            label.className = "day-label";
+            label.textContent = dayOfWeek;
+
+            const btn = document.createElement("div");
+            btn.className = "day";
+            btn.textContent = i;
+            btn.dataset.date = dateStr;
+
+            btn.addEventListener("click", () => {
+                document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+                btn.classList.add("selected");
+                loadOverallProgress(userName);
+            });
+
+            const now = new Date();
+            const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            if (dateStr === nowStr) {
+                btn.classList.add("selected");
+                loadOverallProgress(userName);
+            }
+
+            containerDiv.appendChild(label);
+            containerDiv.appendChild(btn);
+            container.appendChild(containerDiv);
         }
 
-        containerDiv.appendChild(label);
-        containerDiv.appendChild(btn);
-        container.appendChild(containerDiv);
+        setTimeout(() => {
+            const selected = document.querySelector(".day.selected");
+            if (selected) {
+                selected.scrollIntoView({ behavior: "smooth", inline: "center" });
+            }
+        }, 100);
+    } catch (error) {
+        console.error("Error in generateScrollableDates:", error);
+        document.getElementById("monthLabel").textContent = "Error loading dates";
     }
-
-    setTimeout(() => {
-        const selected = document.querySelector(".day.selected");
-        if (selected) {
-            selected.scrollIntoView({ behavior: "smooth", inline: "center" });
-        }
-    }, 50);
 }
-
-
-
-
 
 
 
