@@ -1806,143 +1806,70 @@ app.post('/api/review-task', async (req, res) => {
 // taskrotations.js
 
 app.post("/api/complete-task", async (req, res) => {
-  const { adminEmail, taskTitle, user, date, repetition } = req.body;
+  const { adminEmail, taskTitle, user, date } = req.body;
+
   try {
-    if (!adminEmail || !taskTitle || !user || !date) {
-      return res.status(400).json({ error: "Missing required fields: adminEmail, taskTitle, user, or date" });
-    }
-    const db = await connectDB();
-    const admins = db.collection("admins");
-    const adminUsers = db.collection("adminUsers");
-    const admin = await admins.findOne({ email: adminEmail });
-    if (!admin) {
-      return res.status(404).json({ error: "Admin not found" });
-    }
+      const db = await getDb();
+      const collection = db.collection("adminTasks");
 
-    // Check if user is an Admin
-    const adminDoc = await adminUsers.findOne({ email: adminEmail });
-    const isAdmin = adminDoc?.permissions?.[user] === "Admin";
+      const task = await collection.findOne({ adminEmail, title: taskTitle });
 
-    const tasks = admin.tasks || [];
-    const normalizedDate = date.split("T")[0];
-    const taskIndex = tasks.findIndex(t => {
-      if (t.title !== taskTitle) return false;
-      const [startDateStr, endDateStr] = t.date.split(" to ");
-      const startDate = new Date(startDateStr);
-      const endDate = new Date(endDateStr || "3000-01-01");
-      const currentDate = new Date(normalizedDate);
-      return currentDate >= startDate && currentDate <= endDate;
-    });
-    if (taskIndex === -1) {
-      return res.status(404).json({ error: "Task not found" });
-    }
-    const task = tasks[taskIndex];
-    task.pendingCompletions = task.pendingCompletions || {};
-    task.pendingCompletions[normalizedDate] = task.pendingCompletions[normalizedDate] || [];
-    task.completions = task.completions || {};
-    task.completions[normalizedDate] = task.completions[normalizedDate] || [];
-
-    const pending = task.pendingCompletions[normalizedDate];
-    const completions = task.completions[normalizedDate];
-    let rep = repetition;
-
-    // Validate repetition for Rotation tasks
-    if (task.settings?.includes("Rotation")) {
-      if (repetition === undefined || !Number.isInteger(repetition) || repetition < 1) {
-        return res.status(400).json({ error: "Missing or invalid repetition for Rotation task" });
+      if (!task) {
+          return res.status(404).json({ message: "Task not found" });
       }
-      let requiredTimes = 1;
-      if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-      if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-      if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-      if (repetition > requiredTimes) {
-        return res.status(400).json({ error: `Repetition ${repetition} exceeds required times ${requiredTimes}` });
+
+      // Ensure completions object exists
+      if (!task.completions) task.completions = {};
+
+      // Handle Rotation task
+      if (task.settings && task.settings.includes("Rotation")) {
+          // Mark the user's turn as pending, not completed yet
+          for (let turn of task.turns) {
+              if (turn.user === user && !turn.isCompleted && !turn.isPending) {
+                  turn.isPending = true;
+                  break;
+              }
+          }
+
+          // Save to pendingCompletions
+          if (!task.pendingCompletions) task.pendingCompletions = {};
+          if (!task.pendingCompletions[date]) task.pendingCompletions[date] = [];
+          if (!task.pendingCompletions[date].includes(user)) {
+              task.pendingCompletions[date].push(user);
+          }
+
+      } else {
+          // Handle normal (non-rotation) task
+          if (!task.completions[date]) task.completions[date] = [];
+
+          if (!task.completions[date].includes(user)) {
+              task.completions[date].push(user);
+          }
+
+          for (let turn of task.turns) {
+              if (turn.user === user && !turn.isCompleted) {
+                  turn.isCompleted = true;
+                  break;
+              }
+          }
       }
-      // Check if repetition is already taken
-      if (pending.some(p => p.user === user && p.repetition === repetition) ||
-          completions.some(c => c.user === user && c.repetition === repetition)) {
-        return res.status(400).json({ error: `Repetition ${repetition} already submitted by this user` });
-      }
-    } else {
-      // For Individual tasks, calculate repetition
-      const pendingCount = pending.filter(p => p.user === user).length;
-      const completedCount = completions.filter(c => c.user === user).length;
-      const totalCount = pendingCount + completedCount;
-      let requiredTimes = 1;
-      if (task.repeat === "Daily") requiredTimes = task.timesPerDay || 1;
-      if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
-      if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
-      if (totalCount >= requiredTimes) {
-        return res.status(400).json({ error: "Task already submitted maximum times today" });
-      }
-      rep = totalCount + 1;
-    }
 
-    const userList = task.users || [];
-    const tempTurnReplacement = task.tempTurnReplacement?.[normalizedDate] || {};
-    const isAssigned = userList.includes(user) || Object.values(tempTurnReplacement).includes(user);
-    if (!isAssigned) {
-      return res.status(400).json({ error: "User not assigned to this task" });
-    }
+      // Save changes
+      await collection.updateOne(
+          { adminEmail, title: taskTitle },
+          { $set: { completions: task.completions, pendingCompletions: task.pendingCompletions, turns: task.turns } }
+      );
 
-    const assignedUsers = [...new Set([...userList, ...Object.values(tempTurnReplacement)])];
-    if (typeof task.currentTurnIndex !== "number") {
-      task.currentTurnIndex = assignedUsers.indexOf(user);
-      if (task.currentTurnIndex === -1) task.currentTurnIndex = 0;
-    }
-    const totalCompletions = pending.length + completions.length;
-    task.currentTurnIndex = totalCompletions % assignedUsers.length;
+      res.status(200).json({ message: "Task marked successfully" });
 
-    const history = admin.history || {};
-    const month = new Date(normalizedDate).toLocaleString("default", { month: "long" });
-    const day = new Date(normalizedDate).getDate();
-    if (!history[month]) history[month] = {};
-    if (!history[month][day]) history[month][day] = [];
-
-    if (isAdmin) {
-      // For Admins, mark as completed directly
-      completions.push({ user, repetition: rep });
-      const rewardAmount = Number(task.reward || 0);
-      if (rewardAmount > 0) {
-        const rewards = admin.rewards || {};
-        rewards[user] = (rewards[user] || 0) + rewardAmount;
-        await admins.updateOne(
-          { email: adminEmail },
-          { $set: { rewards } }
-        );
-      }
-      history[month][day].push({
-        title: taskTitle,
-        user,
-        timestamp: new Date().toISOString(),
-        action: "completed"
-      });
-    } else {
-      // For non-Admins, submit for review
-      pending.push({ user, repetition: rep });
-      history[month][day].push({
-        title: taskTitle,
-        user,
-        timestamp: new Date().toISOString(),
-        action: "submitted"
-      });
-    }
-
-    tasks[taskIndex] = task;
-    await admins.updateOne(
-      { email: adminEmail },
-      { $set: { tasks, history } }
-    );
-
-    res.status(200).json({
-      success: true,
-      message: isAdmin ? "Task completed successfully" : "Task submitted for review"
-    });
   } catch (err) {
-    console.error("Error in /api/complete-task:", err);
-    res.status(500).json({ error: `Server error: ${err.message}` });
+      console.error("Error in /api/complete-task:", err);
+      res.status(500).json({ message: "Server error" });
   }
 });
+
+
+
 
 
 
