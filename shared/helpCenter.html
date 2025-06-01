@@ -1290,7 +1290,7 @@ submitOfferBtn.addEventListener("click", async function () {
 
     try {
         // Post the offer
-        const offerRes = await fetch("https://beemazing.onrender.com/api/help-offers", {
+        const offerRes = await fetch("https://beemazing1.onrender.com/api/help-offers", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ adminEmail, offer })
@@ -1302,7 +1302,7 @@ submitOfferBtn.addEventListener("click", async function () {
         }
 
         // Send notification
-        const notificationRes = await fetch("https://beemazing.onrender.com/api/notifications", {
+        const notificationRes = await fetch("https://beemazing1.onrender.com/api/notifications", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1377,7 +1377,7 @@ async function loadOffers(tab = "offerHelp") {
     }
 
     try {
-        const res = await fetch(`https://beemazing.onrender.com/api/help-offers?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
+        const res = await fetch(`https://beemazing1.onrender.com/api/help-offers?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
             method: "GET",
             headers: { "Content-Type": "application/json" }
         });
@@ -1484,7 +1484,7 @@ async function showOfferDetails(offer) {
 
     try {
         // Fetch task data to get totalPoints
-        const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
+        const res = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
             method: "GET",
             headers: { "Content-Type": "application/json" }
         });
@@ -1560,7 +1560,7 @@ async function acceptOffer(offer, offerIndex, taskIndex, tab) {
     };
 
     try {
-        const res = await fetch("https://beemazing.onrender.com/api/accept-offer", {
+        const res = await fetch("https://beemazing1.onrender.com/api/accept-offer", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(acceptData)
@@ -1591,7 +1591,7 @@ async function deleteOffer(index, tab) {
     }
 
     try {
-        const res = await fetch(`https://beemazing.onrender.com/api/help-offers?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const res = await fetch(`https://beemazing1.onrender.com/api/help-offers?adminEmail=${encodeURIComponent(adminEmail)}`);
         if (!res.ok) {
             throw new Error(`HTTP error! Status: ${res.status}`);
         }
@@ -1603,7 +1603,7 @@ async function deleteOffer(index, tab) {
         }
         offers.splice(index, 1);
 
-        const updateRes = await fetch(`https://beemazing.onrender.com/api/help-offers`, {
+        const updateRes = await fetch(`https://beemazing1.onrender.com/api/help-offers`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ adminEmail, offers, currentUser })
@@ -1639,7 +1639,7 @@ async function deleteOffer(index, tab) {
     }
 
     try {
-        const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+        const res = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         const data = await res.json();
         const tasks = data.tasks || [];
@@ -1704,7 +1704,7 @@ async function deleteOffer(index, tab) {
     const today = new Date().toISOString().split("T")[0];
 
     try {
-        const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
+        const response = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`);
         const data = await response.json();
         const tasks = data.tasks || [];
 

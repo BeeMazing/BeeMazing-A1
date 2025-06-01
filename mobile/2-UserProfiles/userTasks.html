@@ -849,7 +849,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 // Clear notifications for this user
                 try {
-                    const res = await fetch("https://beemazing.onrender.com/api/notifications", {
+                    const res = await fetch("https://beemazing1.onrender.com/api/notifications", {
                         method: "DELETE",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ adminEmail, user: userName })
@@ -898,7 +898,7 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
     let tasks = [];
 
     try {
-        const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+        const res = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
         tasks = data.tasks || [];
@@ -1015,7 +1015,7 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         async function loadUserReward(userName) {
           const adminEmail = localStorage.getItem("currentAdminEmail");
           try {
-            const response = await fetch(`https://beemazing.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const response = await fetch(`https://beemazing1.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "Failed to fetch rewards");
             const rewards = data.rewards || {};
@@ -1318,7 +1318,7 @@ function showTaskDetails(task, selectedDate = new Date().toLocaleDateString("sv-
 async function fetchAvatarPath(userName) {
   const adminEmail = localStorage.getItem("currentAdminEmail");
   try {
-    const res = await fetch(`https://beemazing.onrender.com/get-avatar?adminEmail=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`);
+    const res = await fetch(`https://beemazing1.onrender.com/get-avatar?adminEmail=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`);
     const data = await res.json();
     if (!data.success || !data.avatar) {
       throw new Error(data.message || "Avatar not found");
@@ -1376,7 +1376,7 @@ async function finishTask(currentUser, task, selectedDate) {
   document.body.appendChild(popup);
 
   try {
-    const response = await fetch("https://beemazing.onrender.com/api/complete-task", {
+    const response = await fetch("https://beemazing1.onrender.com/api/complete-task", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ adminEmail, taskTitle: task.title.trim(), user: currentUser, date: today })
@@ -1457,7 +1457,7 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
   let tasks = [];
 
   try {
-    const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+    const res = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
     tasks = data.tasks || [];
@@ -1594,7 +1594,7 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         return;
     }
     try {
-        const res = await fetch(`https://beemazing.onrender.com/api/notifications?adminEmail=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}&t=${Date.now()}`, {
+        const res = await fetch(`https://beemazing1.onrender.com/api/notifications?adminEmail=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}&t=${Date.now()}`, {
             method: "GET",
             headers: { "Content-Type": "application/json" }
         });

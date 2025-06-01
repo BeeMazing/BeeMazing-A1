@@ -583,7 +583,7 @@ function calculateIndividualProgress(task, selectedDate, user) {
 async function updateUserReward(userName, amount) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     try {
-      const response = await fetch("https://beemazing.onrender.com/api/rewards", {
+      const response = await fetch("https://beemazing1.onrender.com/api/rewards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminEmail, user: userName, amount })
@@ -605,7 +605,7 @@ async function updateUserReward(userName, amount) {
     const dateString = now.toLocaleDateString();
   
     try {
-      const response = await fetch(`https://beemazing.onrender.com/api/history?adminEmail=${encodeURIComponent(adminEmail)}`);
+      const response = await fetch(`https://beemazing1.onrender.com/api/history?adminEmail=${encodeURIComponent(adminEmail)}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to fetch history");
       const history = data.history || {};
@@ -618,7 +618,7 @@ async function updateUserReward(userName, amount) {
         timestamp: `${dateString} at ${time}`,
       });
   
-      await fetch("https://beemazing.onrender.com/api/history", {
+      await fetch("https://beemazing1.onrender.com/api/history", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminEmail, history })
@@ -631,7 +631,7 @@ async function updateUserReward(userName, amount) {
   async function updateLuckyChestProgress(userName, earnedHoney) {
     const adminEmail = localStorage.getItem("currentAdminEmail");
     try {
-      const response = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+      const response = await fetch(`https://beemazing1.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
       const allChests = data.luckyChests || {};
@@ -650,7 +650,7 @@ async function updateUserReward(userName, amount) {
   
       if (updated) {
         allChests[userName] = userChests;
-        await fetch("https://beemazing.onrender.com/api/lucky-chests", {
+        await fetch("https://beemazing1.onrender.com/api/lucky-chests", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ adminEmail, luckyChests: allChests })

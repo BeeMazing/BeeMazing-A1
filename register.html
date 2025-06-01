@@ -509,7 +509,7 @@ function showResetPasswordForm() {
 
     const body = isResettingPassword ? { email } : { email, password };
     console.log(`Sending request to ${endpoint} with body:`, body);
-    const res = await fetch(`https://beemazing.onrender.com${endpoint}`, {
+    const res = await fetch(`https://beemazing1.onrender.com${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -581,7 +581,7 @@ resetPasswordForm.addEventListener("submit", async (e) => {
 
     const body = { resetToken, newPassword: newPasswordValue };
     console.log("Sending request to /reset-password with body:", body);
-    const res = await fetch("https://beemazing.onrender.com/reset-password", {
+    const res = await fetch("https://beemazing1.onrender.com/reset-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

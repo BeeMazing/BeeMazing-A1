@@ -49,7 +49,7 @@
       const adminEmail = localStorage.getItem("currentAdminEmail");
       if (!adminEmail) return alert("Missing adminEmail");
 
-      const res = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
+      const res = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
       const data = await res.json();
 
       if (!data.tasks) {
@@ -84,7 +84,7 @@
       const confirmDelete = confirm("Are you sure you want to delete this task?");
       if (!confirmDelete) return;
 
-      const res = await fetch(`https://beemazing.onrender.com/api/delete-any-task?adminEmail=${encodeURIComponent(adminEmail)}&taskIndex=${index}`, {
+      const res = await fetch(`https://beemazing1.onrender.com/api/delete-any-task?adminEmail=${encodeURIComponent(adminEmail)}&taskIndex=${index}`, {
         method: "DELETE"
       });
 

@@ -376,7 +376,7 @@ confirmButton.style.display = "inline-block";
   
           confirmButton.onclick = async () => {
             try {
-              const res = await fetch("https://beemazing.onrender.com/set-avatar", {
+              const res = await fetch("https://beemazing1.onrender.com/set-avatar", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ adminEmail, userName, avatar: avatarPath })

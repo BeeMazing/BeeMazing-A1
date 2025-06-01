@@ -63,7 +63,7 @@ const currentAdmin = localStorage.getItem("currentAdminEmail");
     const selectedRole = document.querySelector('input[name="beeRole"]:checked')?.value || "User";
 
     try {
-      const res = await fetch("https://beemazing.onrender.com/add-user", {
+      const res = await fetch("https://beemazing1.onrender.com/add-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
 body: JSON.stringify({
@@ -106,7 +106,7 @@ body: JSON.stringify({
 
   async function fetchUsersFromServer(email) {
       try {
-        const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(email)}`);
+        const res = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(email)}`);
         const data = await res.json();
     
         if (data.success) {
@@ -220,7 +220,7 @@ body: JSON.stringify({
               }
         
               try {
-                const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
+                const res = await fetch(`https://beemazing1.onrender.com/verify-admin-password`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ email: currentAdmin, password: enteredPassword }),
@@ -286,7 +286,7 @@ body: JSON.stringify({
 async function deleteUserFromServer(username) {
   try {
       const res = await fetch(
-          `https://beemazing.onrender.com/delete-user?adminEmail=${encodeURIComponent(currentAdmin)}&username=${encodeURIComponent(username)}`,
+          `https://beemazing1.onrender.com/delete-user?adminEmail=${encodeURIComponent(currentAdmin)}&username=${encodeURIComponent(username)}`,
           {
               method: "DELETE",
               headers: { "Content-Type": "application/json" },
@@ -332,7 +332,7 @@ document.getElementById("confirmYesBtn").addEventListener("click", async () => {
     try {
       // Call the server to delete the user
       const res = await fetch(
-        `https://beemazing.onrender.com/delete-user?adminEmail=${encodeURIComponent(currentAdmin)}&username=${encodeURIComponent(userToRemove)}`,
+        `https://beemazing1.onrender.com/delete-user?adminEmail=${encodeURIComponent(currentAdmin)}&username=${encodeURIComponent(userToRemove)}`,
         {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
@@ -415,7 +415,7 @@ savePermissionBtn.addEventListener("click", async () => {
 
     // 🔥 Save to server
     try {
-      const res = await fetch("https://beemazing.onrender.com/save-permissions", {
+      const res = await fetch("https://beemazing1.onrender.com/save-permissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

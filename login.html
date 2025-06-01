@@ -273,7 +273,7 @@
 
     // Check if admin password exists in MongoDB
     if (adminEmail) {
-      fetch(`https://beemazing.onrender.com/check-admin-password`, {
+      fetch(`https://beemazing1.onrender.com/check-admin-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: adminEmail }),
@@ -347,7 +347,7 @@
       }
 
       try {
-        const res = await fetch(`https://beemazing.onrender.com/set-admin-password`, {
+        const res = await fetch(`https://beemazing1.onrender.com/set-admin-password`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: adminEmail, password }),
@@ -381,7 +381,7 @@
       }
 
       try {
-        const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
+        const res = await fetch(`https://beemazing1.onrender.com/verify-admin-password`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: adminEmail, password: currentPassword }),
@@ -422,7 +422,7 @@
       }
 
       try {
-        const res = await fetch(`https://beemazing.onrender.com/change-admin-password`, {
+        const res = await fetch(`https://beemazing1.onrender.com/change-admin-password`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: adminEmail, currentPassword, newPassword }),
@@ -471,7 +471,7 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
         return;
       }
       try {
-        const res = await fetch(`https://beemazing.onrender.com/verify-admin-password`, {
+        const res = await fetch(`https://beemazing1.onrender.com/verify-admin-password`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: adminEmail, password: enteredPassword }),

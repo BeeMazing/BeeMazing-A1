@@ -290,7 +290,7 @@ function saveParentPassword() {
   localStorage.removeItem("onboardingTaskTitles");
   localStorage.removeItem("onboardingRewardTitles");
 
-  fetch("https://beemazing.onrender.com/set-admin-password", {
+  fetch("https://beemazing1.onrender.com/set-admin-password", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password })
@@ -317,7 +317,7 @@ localStorage.setItem(`onboardingParentNames_${email}`, JSON.stringify(names));
   }
 
   const createPromises = names.map(name => {
-    return fetch("https://beemazing.onrender.com/add-user", {
+    return fetch("https://beemazing1.onrender.com/add-user", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ adminEmail: email, newUser: name, role: "Admin" })
@@ -379,7 +379,7 @@ function addAdminInput() {
 
 
   const createPromises = names.map(name => {
-    return fetch("https://beemazing.onrender.com/add-user", {
+    return fetch("https://beemazing1.onrender.com/add-user", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ adminEmail: email, newUser: name, role: "User" })
@@ -439,7 +439,7 @@ function addChildInput() {
       const rewardTitle = document.getElementById("rewardTitle").value.trim();
       const rewardAmount = parseInt(document.getElementById("rewardAmount").value.trim());
       if (!rewardTitle || isNaN(rewardAmount)) return alert("Enter valid reward");
-      fetch("https://beemazing.onrender.com/api/market-rewards", {
+      fetch("https://beemazing1.onrender.com/api/market-rewards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminEmail: email, rewards: [{ title: rewardTitle, cost: rewardAmount }] })
@@ -512,7 +512,7 @@ function goToAddTaskPage() {
 
 async function fetchUsersFromServer(email) {
   try {
-    const res = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(email)}`);
+    const res = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(email)}`);
     const data = await res.json();
 
     if (data.success) {

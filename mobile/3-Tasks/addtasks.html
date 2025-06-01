@@ -1037,7 +1037,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (editTitle && editDate) {
         // Fetch all tasks from server and find the matching task
         try {
-            const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(currentAdmin)}`, {
+            const response = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(currentAdmin)}`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" }
             });
@@ -1265,7 +1265,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     try {
-        const response = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(currentAdmin)}`, {
+        const response = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(currentAdmin)}`, {
             method: "GET",
             headers: { "Content-Type": "application/json" }
         });
@@ -2138,7 +2138,7 @@ window.addEventListener("click", (e) => {
     }
 
     try {
-        const url = "https://beemazing.onrender.com/api/tasks";
+        const url = "https://beemazing1.onrender.com/api/tasks";
         const body = (editTitle && editDate)
             ? {
                   adminEmail: currentAdmin,

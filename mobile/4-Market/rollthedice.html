@@ -238,7 +238,7 @@
 
     async function grantChestToUser(userName, reward) {
       try {
-        const customResponse = await fetch(`https://beemazing.onrender.com/api/custom-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const customResponse = await fetch(`https://beemazing1.onrender.com/api/custom-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
         const customData = await customResponse.json();
         if (!customResponse.ok) throw new Error(customData.error || "Failed to fetch custom chests");
         const allChestsList = [
@@ -251,7 +251,7 @@
           ...(customData.customChests || [])
         ];
 
-        const chestResponse = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const chestResponse = await fetch(`https://beemazing1.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
         const chestData = await chestResponse.json();
         if (!chestResponse.ok) throw new Error(chestData.error || "Failed to fetch lucky chests");
         const allChests = chestData.luckyChests || {};
@@ -286,7 +286,7 @@
         }
 
         allChests[userName].push(chest);
-        await fetch("https://beemazing.onrender.com/api/lucky-chests", {
+        await fetch("https://beemazing1.onrender.com/api/lucky-chests", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ adminEmail, luckyChests: allChests })
@@ -304,13 +304,13 @@
 
     async function removeDiceChestFromUser(userName, rewardName) {
   try {
-    const rewardsResponse = await fetch(`https://beemazing.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const rewardsResponse = await fetch(`https://beemazing1.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
     const rewardsData = await rewardsResponse.json();
     if (!rewardsResponse.ok) throw new Error(rewardsData.error || "Failed to fetch user rewards");
     const rewards = rewardsData.userRewards || {};
     if (!rewards[userName]) return;
 
-    const historyResponse = await fetch(`https://beemazing.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const historyResponse = await fetch(`https://beemazing1.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}`);
     const historyData = await historyResponse.json();
     if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
     const history = historyData.rewardHistory || {};
@@ -327,13 +327,13 @@
         receivedDate: new Date().toLocaleString()
       });
 
-      await fetch("https://beemazing.onrender.com/api/user-rewards", {
+      await fetch("https://beemazing1.onrender.com/api/user-rewards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminEmail, userRewards: rewards })
       });
 
-      await fetch("https://beemazing.onrender.com/api/reward-history", {
+      await fetch("https://beemazing1.onrender.com/api/reward-history", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminEmail, rewardHistory: history })

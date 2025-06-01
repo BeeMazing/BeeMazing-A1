@@ -469,7 +469,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function getDiceRewardOptions() {
   try {
-    const res = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const res = await fetch(`https://beemazing1.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Failed to fetch market rewards");
 
@@ -576,7 +576,7 @@ document.addEventListener("DOMContentLoaded", () => {
     async function loadChests() {
       chestContainer.innerHTML = "<p>Loading chests...</p>";
       try {
-        const response = await fetch(`https://beemazing.onrender.com/api/custom-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const response = await fetch(`https://beemazing1.onrender.com/api/custom-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Failed to fetch custom chests");
         const customChests = data.customChests || [];
@@ -593,12 +593,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function deleteChest(chestName) {
       try {
-        const response = await fetch(`https://beemazing.onrender.com/api/custom-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const response = await fetch(`https://beemazing1.onrender.com/api/custom-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Failed to fetch custom chests");
         let customChests = data.customChests || [];
         customChests = customChests.filter(chest => chest.name !== chestName);
-        await fetch("https://beemazing.onrender.com/api/custom-chests", {
+        await fetch("https://beemazing1.onrender.com/api/custom-chests", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ adminEmail, customChests })
@@ -615,7 +615,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function openAssignModal() {
   try {
-    const response = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const response = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
     const data = await response.json();
     if (!response.ok || !data.success) throw new Error(data.message || "Failed to fetch users");
     const users = data.users || [];
@@ -662,7 +662,7 @@ async function assignChest(userName, requiredPoints) {
 
     try {
         // Fetch existing lucky chests
-        const response = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const response = await fetch(`https://beemazing1.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
 
@@ -689,7 +689,7 @@ async function assignChest(userName, requiredPoints) {
         });
 
         // Save updated lucky chests
-        const saveResponse = await fetch("https://beemazing.onrender.com/api/lucky-chests", {
+        const saveResponse = await fetch("https://beemazing1.onrender.com/api/lucky-chests", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ adminEmail, luckyChests })
@@ -712,7 +712,7 @@ async function assignChest(userName, requiredPoints) {
 
 async function openDiceModal() {
   try {
-    const usersRes = await fetch(`https://beemazing.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
+    const usersRes = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
     const usersData = await usersRes.json();
     if (!usersRes.ok || !usersData.success) throw new Error(usersData.message || "Failed to fetch users");
 
@@ -774,7 +774,7 @@ async function openDiceModal() {
       }
 
       try {
-        const response = await fetch(`https://beemazing.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const response = await fetch(`https://beemazing1.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
         const allChests = data.luckyChests || {};
@@ -789,7 +789,7 @@ async function openDiceModal() {
           requiredPoints
         });
 
-        await fetch("https://beemazing.onrender.com/api/lucky-chests", {
+        await fetch("https://beemazing1.onrender.com/api/lucky-chests", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ adminEmail, luckyChests: allChests })
@@ -834,7 +834,7 @@ async function openDiceModal() {
       }
 
       try {
-        const response = await fetch(`https://beemazing.onrender.com/api/custom-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+        const response = await fetch(`https://beemazing1.onrender.com/api/custom-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Failed to fetch custom chests");
         const customChests = data.customChests || [];
@@ -861,7 +861,7 @@ async function openDiceModal() {
         }
 
         customChests.push(newChest);
-        await fetch("https://beemazing.onrender.com/api/custom-chests", {
+        await fetch("https://beemazing1.onrender.com/api/custom-chests", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ adminEmail, customChests })

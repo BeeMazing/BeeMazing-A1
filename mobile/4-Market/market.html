@@ -365,7 +365,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         
           try {
-            const response = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
+            const response = await fetch(`https://beemazing1.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
             const data = await response.json();
         
             if (!response.ok) {
@@ -476,7 +476,7 @@ rewardItem.innerHTML = `
         
         async function deleteReward(index) {
           try {
-            const response = await fetch(`https://beemazing.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}&index=${index}`, {
+            const response = await fetch(`https://beemazing1.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}&index=${index}`, {
               method: "DELETE"
             });
             const data = await response.json();

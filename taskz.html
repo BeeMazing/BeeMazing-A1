@@ -75,7 +75,7 @@ if (!adminEmail) {
 }
 
 try {
-    const response = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+    const response = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: `HTTP error ${response.status}` }));
         throw new Error(`Failed to fetch tasks: ${errorData.error || response.statusText}`);
@@ -186,7 +186,7 @@ try {
             }
             
             if (!e.target.classList.contains("delete-btn")) {
-                const latest = await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+                const latest = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
                 const latestResult = await latest.json();
                 const latestTask = latestResult.tasks.find(t => t.title === task.title && t.date === task.date);
                 if (latestTask) showTaskDetails(latestTask);
@@ -357,7 +357,7 @@ const adminEmail = localStorage.getItem("currentAdminEmail");
 const todayStr = selectedDate || new Date().toISOString().split("T")[0];
 
 try {
-    const res = await fetch("https://beemazing.onrender.com/api/complete-task", {
+    const res = await fetch("https://beemazing1.onrender.com/api/complete-task", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -415,7 +415,7 @@ try {
     
             try {
                 const response = await fetch(
-                    `https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(title)}&date=${encodeURIComponent(startDate)}`,
+                    `https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(title)}&date=${encodeURIComponent(startDate)}`,
                     {
                         method: "DELETE",
                         headers: {
@@ -457,7 +457,7 @@ try {
         }
     
         try {
-            const response = await fetch("https://beemazing.onrender.com/api/tasks", {
+            const response = await fetch("https://beemazing1.onrender.com/api/tasks", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -664,7 +664,7 @@ if (!adminEmail) return;
 
 const startDate = task.date?.split(" to ")[0] || "";
 try {
-await fetch(`https://beemazing.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(task.title || "")}&date=${encodeURIComponent(startDate)}`, {
+await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(task.title || "")}&date=${encodeURIComponent(startDate)}`, {
   method: "DELETE",
   headers: { "Content-Type": "application/json" }
 });
