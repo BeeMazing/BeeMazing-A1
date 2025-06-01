@@ -475,7 +475,7 @@ function addChildInput() {
     localStorage.removeItem("onboardingChildName");
 
     // ✅ Redirect to user profile
-    window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(email)}&user=${encodeURIComponent(parentUser)}`;
+    window.location.href = `/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(email)}&user=${encodeURIComponent(parentUser)}`;
   } else {
     alert("Error: Could not find parent profile.");
   }
@@ -503,7 +503,7 @@ function goToAddTaskPage() {
 
   localStorage.setItem("onboardingChildName", firstChild);
   localStorage.setItem("onboardingReturn", "step4");
-  window.location.href = "/BeeMazing-Y1/mobile/3-Tasks/addtasks.html?from=onboarding";
+  window.location.href = "/BeeMazing-A1/mobile/3-Tasks/addtasks.html?from=onboarding";
 }
 
 

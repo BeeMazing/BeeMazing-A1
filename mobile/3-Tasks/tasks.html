@@ -536,19 +536,19 @@ body {
     <a href="#" class="add-task-btn" aria-label="Add Task" id="addTaskBtn">+</a>
 
     <div class="footer">
-        <a href="/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
-            <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
+        <a href="/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
+            <img src="/BeeMazing-A1/mobile/1-Home/HomeBtn.png" alt="Home" />
             <span></span>
         </a>
-        <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
-            <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
+        <a href="/BeeMazing-A1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
+            <img src="/BeeMazing-A1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
         </a>
-        <a href="/BeeMazing-Y1/mobile/4-Market/market.html" class="footer-icon" aria-label="Market">
-            <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
+        <a href="/BeeMazing-A1/mobile/4-Market/market.html" class="footer-icon" aria-label="Market">
+            <img src="/BeeMazing-A1/mobile/1-Home/MarketBtn.png" alt="Market" />
         </a>
     </div>
 
-    <script src="/BeeMazing-Y1/shared/taskrotations.js?t=${Date.now()}"></script>
+    <script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
 
     <script>
 
@@ -569,7 +569,7 @@ if (!admin || !user) {
 }
 
     if (admin && user) {
-        homeLink.href = `/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
+        homeLink.href = `/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
     } else {
         console.warn("Admin or user missing for homeLink", { admin, user });
     }
@@ -585,7 +585,7 @@ document.getElementById("addTaskBtn").addEventListener("click", () => {
     const admin = localStorage.getItem("currentAdminEmail");
     const user = localStorage.getItem("currentUser");
     if (admin && user) {
-        window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/addtasks.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
+        window.location.href = `/BeeMazing-A1/mobile/3-Tasks/addtasks.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
     } else {
         alert("Admin or user information missing. Please log in again.");
     }
@@ -597,7 +597,7 @@ document.getElementById("addTaskBtn").addEventListener("click", () => {
 
 
 // Verify taskrotations.js load
-fetch("/BeeMazing-Y1/shared/taskrotations.js?t=" + Date.now(), { method: "HEAD" })
+fetch("/BeeMazing-A1/shared/taskrotations.js?t=" + Date.now(), { method: "HEAD" })
     .then(response => {
         if (!response.ok) {
             console.error(`Failed to fetch taskrotations.js: HTTP ${response.status}`);
@@ -923,7 +923,7 @@ async function showTaskDetails(task) {
     const admin = localStorage.getItem("currentAdminEmail");
     const user = localStorage.getItem("currentUser");
     if (admin && user) {
-        window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/addtasks.html?editTitle=${encodedTitle}&editDate=${encodedDate}&admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
+        window.location.href = `/BeeMazing-A1/mobile/3-Tasks/addtasks.html?editTitle=${encodedTitle}&editDate=${encodedDate}&admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
     } else {
         alert("Admin or user information missing. Please log in again.");
     }

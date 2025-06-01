@@ -1775,7 +1775,7 @@ document.querySelectorAll('input[name="taskCheckbox"]').forEach(checkbox => {
     const userName = urlParams.get("user") || localStorage.getItem("lastHelpUser");
     
     if (adminEmail && userName) {
-        const backURL = `/BeeMazing-Y1/mobile/2-UserProfiles/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+        const backURL = `/BeeMazing-A1/mobile/2-UserProfiles/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
         window.location.href = backURL;
     } else {
         alert("Error: Missing admin or user information. Please return to the tasks page manually.");

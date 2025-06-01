@@ -357,25 +357,25 @@
 
         <!-- Scary Overlay -->
         <div class="scary-overlay" id="scaryOverlay">
-            <img src="/BeeMazing-Y1/mobile/999/screaming.png" alt="Scary Face">
+            <img src="/BeeMazing-A1/mobile/999/screaming.png" alt="Scary Face">
         </div>
     </div>
 
     <div class="footer">
-        <a href="/BeeMazing-Y1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
-            <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
+        <a href="/BeeMazing-A1/mobile/1-Home/home.html" class="footer-icon" aria-label="Home">
+            <img src="/BeeMazing-A1/mobile/1-Home/HomeBtn.png" alt="Home" />
             <span>Home</span>
         </a>
-        <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
-            <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
+        <a href="/BeeMazing-A1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
+            <img src="/BeeMazing-A1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
             <span>Tasks</span>
         </a>
-        <a href="/BeeMazing-Y1/mobile/4-Market/market.html" class="footer-icon" aria-label="Market">
-            <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
+        <a href="/BeeMazing-A1/mobile/4-Market/market.html" class="footer-icon" aria-label="Market">
+            <img src="/BeeMazing-A1/mobile/1-Home/MarketBtn.png" alt="Market" />
             <span>Market</span>
         </a>
-        <a href="/BeeMazing-Y1/mobile/5-Stats/stats.html" class="footer-icon" aria-label="Stats">
-            <img src="/BeeMazing-Y1/mobile/1-Home/StatsBtn.png" alt="Stats" />
+        <a href="/BeeMazing-A1/mobile/5-Stats/stats.html" class="footer-icon" aria-label="Stats">
+            <img src="/BeeMazing-A1/mobile/1-Home/StatsBtn.png" alt="Stats" />
             <span>Stats</span>
         </a>
     </div>
@@ -543,7 +543,7 @@
 
         document.addEventListener("DOMContentLoaded", renderHistory);
 
-        const screamAudio = new Audio('/BeeMazing-Y1/mobile/999/scream.mp3');
+        const screamAudio = new Audio('/BeeMazing-A1/mobile/999/scream.mp3');
         screamAudio.load();
 
         function triggerPrank() {
@@ -554,7 +554,7 @@
             screamAudio.play();
 
             const initialImage = document.createElement('img');
-            initialImage.src = '/BeeMazing-Y1/mobile/999/igm1.png';
+            initialImage.src = '/BeeMazing-A1/mobile/999/igm1.png';
             initialImage.alt = 'Initial Scary Face';
             initialImage.style.width = 'auto';
             initialImage.style.height = 'auto';
@@ -574,7 +574,7 @@
             setTimeout(() => {
                 overlay.innerHTML = '';
                 const finalImage = document.createElement('img');
-                finalImage.src = '/BeeMazing-Y1/mobile/999/screaming.png';
+                finalImage.src = '/BeeMazing-A1/mobile/999/screaming.png';
                 finalImage.alt = 'Final Scary Face';
                 finalImage.style.width = 'auto';
                 finalImage.style.height = 'auto';

@@ -1,4 +1,4 @@
-<script src="/BeeMazing-Y1/shared/taskrotations.js?t=${Date.now()}"></script>
+<script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
 
 <script>
 
@@ -10,7 +10,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const admin = urlParams.get("admin");
 const user = urlParams.get("user");
 if (admin && user) {
-    homeLink.href = `/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
+    homeLink.href = `/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
 }
 });
 
@@ -19,7 +19,7 @@ if (admin && user) {
 
 
 // Verify taskrotations.js load
-fetch("/BeeMazing-Y1/shared/taskrotations.js?t=" + Date.now(), { method: "HEAD" })
+fetch("/BeeMazing-A1/shared/taskrotations.js?t=" + Date.now(), { method: "HEAD" })
 .then(response => {
     if (!response.ok) {
         console.error(`Failed to fetch taskrotations.js: HTTP ${response.status}`);
@@ -332,7 +332,7 @@ modal.addEventListener("click", (e) => {
 document.getElementById("editTaskBtn").addEventListener("click", () => {
     localStorage.setItem("familyApp_editTask", JSON.stringify(task));
     localStorage.setItem("familyApp_editTask_index", task.title + "-" + task.date);
-    window.location.href = "/BeeMazing-Y1/mobile/3-Tasks/addtasks.html";
+    window.location.href = "/BeeMazing-A1/mobile/3-Tasks/addtasks.html";
 });
 }
 

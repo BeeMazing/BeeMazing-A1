@@ -776,20 +776,20 @@
 
     <div class="footer">
       <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
-          <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
+          <img src="/BeeMazing-A1/mobile/1-Home/HomeBtn.png" alt="Home" />
       </a>
       <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
-          <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
+          <img src="/BeeMazing-A1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
       </a>
       <a href="#" id="marketButton" class="footer-icon" aria-label="Market">
-          <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
+          <img src="/BeeMazing-A1/mobile/1-Home/MarketBtn.png" alt="Market" />
       </a>
   </div>
     
     
 
 
-  <script src="/BeeMazing-Y1/shared/taskrotations.js?t=${Date.now()}"></script>
+  <script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
 
 
     <script>
@@ -811,7 +811,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const isUserAdmin = permissions[userName] === "Admin";
 
         // Set footer button links
-        const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
+        const basePath = "/BeeMazing-A1/mobile/2-UserProfiles";
         const homeButton = document.getElementById("homeButton");
         const tasksButton = document.getElementById("tasksButton");
         const marketButton = document.getElementById("marketButton");
@@ -845,7 +845,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (helpCenterBtn) {
             helpCenterBtn.addEventListener("click", async () => {
                 localStorage.setItem("lastHelpUser", userName);
-                const helpURL = `/BeeMazing-Y1/shared/helpCenter.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                const helpURL = `/BeeMazing-A1/shared/helpCenter.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
                 
                 // Clear notifications for this user
                 try {
@@ -1323,7 +1323,7 @@ async function fetchAvatarPath(userName) {
     if (!data.success || !data.avatar) {
       throw new Error(data.message || "Avatar not found");
     }
-    return data.avatar; // returns full path like "/BeeMazing-Y1/shared/Avatars/scorpion1.png"
+    return data.avatar; // returns full path like "/BeeMazing-A1/shared/Avatars/scorpion1.png"
   } catch (err) {
     console.warn("Could not fetch avatar path:", err);
     return null;
@@ -1350,7 +1350,7 @@ async function finishTask(currentUser, task, selectedDate) {
   // Fetch avatar and derive video path
   const avatarPath = await fetchAvatarPath(currentUser);
   const avatarId = avatarPath?.match(/\/([^/]+)\.png$/)?.[1];
-  const videoPath = avatarId ? `/BeeMazing-Y1/shared/Avatars/Selected/Preview/${avatarId}.mp4` : null;
+  const videoPath = avatarId ? `/BeeMazing-A1/shared/Avatars/Selected/Preview/${avatarId}.mp4` : null;
 
   // Show video overlay if videoPath exists
   if (videoPath) {
@@ -1674,11 +1674,11 @@ style="
     background: #1a1a1a;
     display: block;
 ">
-<source src="/BeeMazing-Y1/mobile/4-Market/LuckyChest/Chest_fixed.mp4" type="video/mp4" />
+<source src="/BeeMazing-A1/mobile/4-Market/LuckyChest/Chest_fixed.mp4" type="video/mp4" />
 Your browser does not support the video tag.
 </video>
 <audio id="chestUnlockSound" preload="auto">
-    <source src="/BeeMazing-Y1/mobile/4-Market/LuckyChest/ChestUnlock.mp3" type="audio/mp3" />
+    <source src="/BeeMazing-A1/mobile/4-Market/LuckyChest/ChestUnlock.mp3" type="audio/mp3" />
     Your browser does not support the audio element.
 </audio>
 

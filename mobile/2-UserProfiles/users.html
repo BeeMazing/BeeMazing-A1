@@ -1084,10 +1084,10 @@
 <body>
 
     <div class="date-header">
-      <img src="/BeeMazing-Y1/mobile/1-Home/ProfileBtn.png" id="profileIcon" alt="Select User" class="profile-icon" />
+      <img src="/BeeMazing-A1/mobile/1-Home/ProfileBtn.png" id="profileIcon" alt="Select User" class="profile-icon" />
       <div id="logoutContainer" class="logout-container">
         <button id="logoutBtn" aria-label="Logout" title="Logout">
-          <img src="/BeeMazing-Y1/mobile/1-Home/Logout.png" alt="Logout" class="logout-icon" />
+          <img src="/BeeMazing-A1/mobile/1-Home/Logout.png" alt="Logout" class="logout-icon" />
         </button>        
       </div>
       <div class="month-nav">
@@ -1183,13 +1183,13 @@
 
     <div class="footer">
       <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
-          <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
+          <img src="/BeeMazing-A1/mobile/1-Home/HomeBtn.png" alt="Home" />
       </a>
       <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
-          <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
+          <img src="/BeeMazing-A1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
       </a>
       <a href="#" id="marketButton" class="footer-icon" aria-label="Market">
-          <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
+          <img src="/BeeMazing-A1/mobile/1-Home/MarketBtn.png" alt="Market" />
       </a>
   </div>
   
@@ -1199,7 +1199,7 @@
 
 
 
-  <script src="/BeeMazing-Y1/shared/taskrotations.js?t=${Date.now()}"></script>
+  <script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
 
     <script>
 
@@ -1227,7 +1227,7 @@ document.addEventListener("DOMContentLoaded", () => {
   localStorage.removeItem("adminPassword"); // optional, if stored
 
   // Keep currentAdminEmail so login.html still knows the registered account
-  window.location.href = "/BeeMazing-Y1/login.html";
+  window.location.href = "/BeeMazing-A1/login.html";
 });
 
 
@@ -1270,7 +1270,7 @@ li.style.marginBottom = "10px"; // Adds space between cards
 
   
   const avatar = document.createElement("img");
-  avatar.src = data.avatars?.[user] || "/BeeMazing-Y1/shared/Avatars/default.png";
+  avatar.src = data.avatars?.[user] || "/BeeMazing-A1/shared/Avatars/default.png";
   avatar.style.width = "80px";         // large like profile
   avatar.style.height = "90px";
   avatar.style.borderRadius = "20px";
@@ -1285,7 +1285,7 @@ li.style.marginBottom = "10px"; // Adds space between cards
   nameSpan.style.fontWeight = "600";
 
   const editIcon = document.createElement("img");
-  editIcon.src = "/BeeMazing-Y1/mobile/1-Home/EditIcon.png";
+  editIcon.src = "/BeeMazing-A1/mobile/1-Home/EditIcon.png";
   editIcon.alt = "Edit";
   editIcon.title = "Edit " + user;
   editIcon.dataset.username = user;
@@ -1307,7 +1307,7 @@ li.style.marginBottom = "10px"; // Adds space between cards
 
     li.addEventListener("click", async () => {
         const isAdminUser = data.permissions?.[user] === "Admin";
-        const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
+        const basePath = "/BeeMazing-A1/mobile/2-UserProfiles";
         const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
 
         if (isAdminUser) {
@@ -1344,7 +1344,7 @@ li.style.marginBottom = "10px"; // Adds space between cards
     editIcon.addEventListener("click", (e) => {
     e.stopPropagation();
     const userToEdit = e.target.dataset.username;
-    window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/chooseAvatar.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userToEdit)}`;
+    window.location.href = `/BeeMazing-A1/mobile/2-UserProfiles/chooseAvatar.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userToEdit)}`;
   });
 });
 
@@ -1384,7 +1384,7 @@ li.style.marginBottom = "10px"; // Adds space between cards
         const isUserAdmin = permissions[userName] === "Admin";
 
         // Set footer button links
-        const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
+        const basePath = "/BeeMazing-A1/mobile/2-UserProfiles";
         const homeButton = document.getElementById("homeButton");
         const tasksButton = document.getElementById("tasksButton");
         const marketButton = document.getElementById("marketButton");
@@ -1432,12 +1432,12 @@ avatarImg.style.display = "none"; // Hide initially
       avatarImg.style.display = "block";
     } else {
       console.warn(`No avatar found for ${userName}`);
-      avatarImg.src = "/BeeMazing-Y1/shared/Avatars/default.png"; // Fallback image
+      avatarImg.src = "/BeeMazing-A1/shared/Avatars/default.png"; // Fallback image
       avatarImg.style.display = "block";
     }
   } catch (err) {
     console.error("Failed to fetch avatar from server:", err);
-    avatarImg.src = "/BeeMazing-Y1/shared/Avatars/default.png"; // Fallback image
+    avatarImg.src = "/BeeMazing-A1/shared/Avatars/default.png"; // Fallback image
     avatarImg.style.display = "block";
   }
 })();
@@ -1749,8 +1749,8 @@ function generateScrollableDates(monthOffset = 0) {
             userChests.forEach((chest, index) => {
               const isUnlocked = chest.progress >= chest.requiredPoints;
               const chestImage = isUnlocked
-                ? '/BeeMazing-Y1/mobile/4-Market/LuckyChest/ChestReady.gif'
-                : '/BeeMazing-Y1/mobile/4-Market/LuckyChest/ChestPending.png';
+                ? '/BeeMazing-A1/mobile/4-Market/LuckyChest/ChestReady.gif'
+                : '/BeeMazing-A1/mobile/4-Market/LuckyChest/ChestPending.png';
         
               const card = document.createElement("div");
               card.className = "lucky-chest-card";
@@ -1834,14 +1834,14 @@ function generateScrollableDates(monthOffset = 0) {
                 name: currentChest.name,
                 quote: currentChest.quote || "",
                 effect: currentChest.effect || "",
-                image: currentChest.image || "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png"
+                image: currentChest.image || "/BeeMazing-A1/mobile/4-Market/LuckyChest/default.png"
               };
             } else if (hasHoney) {
               rewardToShow = {
                 name: `${currentChest.honey} Honey`,
                 quote: currentChest.quote || "",
                 effect: currentChest.effect || "",
-                image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png"
+                image: "/BeeMazing-A1/mobile/4-Market/LuckyChest/default.png"
               };
             }
         
@@ -1921,7 +1921,7 @@ function generateScrollableDates(monthOffset = 0) {
         name: claimedChest.name,
         quote: claimedChest.quote || "",
         effect: claimedChest.effect || "",
-        image: claimedChest.image || "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png",
+        image: claimedChest.image || "/BeeMazing-A1/mobile/4-Market/LuckyChest/default.png",
         date: now.toLocaleDateString(),
         claimedAt: now.toISOString(),
         type: "normal"
@@ -1933,7 +1933,7 @@ function generateScrollableDates(monthOffset = 0) {
           quote: claimedChest.quote || "",
           effect: claimedChest.effect || "",
           honey: claimedChest.honey,
-          image: claimedChest.image || "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png",
+          image: claimedChest.image || "/BeeMazing-A1/mobile/4-Market/LuckyChest/default.png",
           requiredPoints: claimedChest.requiredPoints,
           progress: claimedChest.progress,
           onlyHoney: true
@@ -1974,7 +1974,7 @@ function generateScrollableDates(monthOffset = 0) {
 
 
     // Redirect to usermarket.html with tab=rewards
-    const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
+    const basePath = "/BeeMazing-A1/mobile/2-UserProfiles";
     window.location.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}&tab=rewards`;
   } catch (err) {
     console.error("Error claiming lucky chest:", err);
@@ -2179,11 +2179,11 @@ style="
     background: #1a1a1a;
     display: block;
 ">
-<source src="/BeeMazing-Y1/mobile/4-Market/LuckyChest/Chest_fixed.mp4" type="video/mp4" />
+<source src="/BeeMazing-A1/mobile/4-Market/LuckyChest/Chest_fixed.mp4" type="video/mp4" />
 Your browser does not support the video tag.
 </video>
 <audio id="chestUnlockSound" preload="auto">
-    <source src="/BeeMazing-Y1/mobile/4-Market/LuckyChest/ChestUnlock.mp3" type="audio/mp3" />
+    <source src="/BeeMazing-A1/mobile/4-Market/LuckyChest/ChestUnlock.mp3" type="audio/mp3" />
     Your browser does not support the audio element.
 </audio>
 

@@ -242,12 +242,12 @@
         const customData = await customResponse.json();
         if (!customResponse.ok) throw new Error(customData.error || "Failed to fetch custom chests");
         const allChestsList = [
-          { name: "The Key", quote: "You hold the key to the path of others.", effect: "➡ Transfer one of your tasks to another user. You get the honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Keyy.gif" },
-          { name: "Double Trouble", quote: "Today’s efforts are worth double.", effect: "➡ Next task = double honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/DoubleTrouble.png" },
-          { name: "Roll the Dice", quote: "Test your Luck", effect: "➡ Get a surprise reward.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/dice.gif" },
-          { name: "Dance Party", quote: "Feel the rhythm!", effect: "➡ Dance after a task. If someone joins, both get honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Dance.jpg" },
-          { name: "Bee-Witched!", quote: "Your magical aura changes the rules...", effect: "➡ Make a silly rule. Others who follow it get honey.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Bee-Witched.jpg" },
-          { name: "Special Buzz Off", quote: "You’re too cool for chores today.", effect: "➡ Skip all tasks today.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Special.jpg" },
+          { name: "The Key", quote: "You hold the key to the path of others.", effect: "➡ Transfer one of your tasks to another user. You get the honey.", image: "/BeeMazing-A1/mobile/4-Market/LuckyChest/Keyy.gif" },
+          { name: "Double Trouble", quote: "Today’s efforts are worth double.", effect: "➡ Next task = double honey.", image: "/BeeMazing-A1/mobile/4-Market/LuckyChest/DoubleTrouble.png" },
+          { name: "Roll the Dice", quote: "Test your Luck", effect: "➡ Get a surprise reward.", image: "/BeeMazing-A1/mobile/4-Market/LuckyChest/dice.gif" },
+          { name: "Dance Party", quote: "Feel the rhythm!", effect: "➡ Dance after a task. If someone joins, both get honey.", image: "/BeeMazing-A1/mobile/4-Market/LuckyChest/Dance.jpg" },
+          { name: "Bee-Witched!", quote: "Your magical aura changes the rules...", effect: "➡ Make a silly rule. Others who follow it get honey.", image: "/BeeMazing-A1/mobile/4-Market/LuckyChest/Bee-Witched.jpg" },
+          { name: "Special Buzz Off", quote: "You’re too cool for chores today.", effect: "➡ Skip all tasks today.", image: "/BeeMazing-A1/mobile/4-Market/LuckyChest/Special.jpg" },
           ...(customData.customChests || [])
         ];
 
@@ -264,7 +264,7 @@
             name: `${honeyAmount} Honey`,
             quote: "",
             effect: `🍯 Collect ${honeyAmount} honey instantly!`,
-            image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/honey.gif",
+            image: "/BeeMazing-A1/mobile/4-Market/LuckyChest/honey.gif",
             honey: honeyAmount,
             requiredPoints: 0,
             progress: 0,
@@ -277,7 +277,7 @@
             name: match?.name || reward.type || "Mystery Reward",
             quote: match?.quote || "",
             effect: match?.effect || "",
-            image: match?.image || "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png",
+            image: match?.image || "/BeeMazing-A1/mobile/4-Market/LuckyChest/default.png",
             requiredPoints: 0,
             progress: 0,
             type: "normal",
@@ -353,7 +353,7 @@
 
 
     function goBack() {
-      window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(user)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+      window.location.href = `/BeeMazing-A1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(user)}&adminEmail=${encodeURIComponent(adminEmail)}`;
     }
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -396,7 +396,7 @@
 
 
     function testLuckLater() {
-  window.location.href = `/BeeMazing-Y1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(user)}&adminEmail=${encodeURIComponent(adminEmail)}`;
+  window.location.href = `/BeeMazing-A1/mobile/2-UserProfiles/users.html?user=${encodeURIComponent(user)}&adminEmail=${encodeURIComponent(adminEmail)}`;
 }
 
 

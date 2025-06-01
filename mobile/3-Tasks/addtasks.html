@@ -1014,7 +1014,7 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
 
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="/BeeMazing-Y1/shared/taskrotations.js?t=${Date.now()}"></script>
+    <script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
     <script>
 
 
@@ -2133,7 +2133,7 @@ window.addEventListener("click", (e) => {
 
     if (!originalUser) {
         alert("No user context available. Redirecting to user selection.");
-        window.location.href = "/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html";
+        window.location.href = "/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html";
         return;
     }
 
@@ -2173,9 +2173,9 @@ window.addEventListener("click", (e) => {
         // Redirect back to the original user's tasks.html or onboarding
         const adminEmail = encodeURIComponent(currentAdmin || "");
         if (from === "onboarding") {
-            window.location.href = `/BeeMazing-Y1/onboarding.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}#step4`;
+            window.location.href = `/BeeMazing-A1/onboarding.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}#step4`;
         } else {
-            window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}`;
+            window.location.href = `/BeeMazing-A1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}`;
         }
 
     } catch (error) {
@@ -2197,12 +2197,12 @@ function handleCancel() {
     const originalUser = urlParams.get("user") || localStorage.getItem("currentUser");
 
     if (from === "onboarding") {
-        window.location.href = `/BeeMazing-Y1/onboarding.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}#step4`;
+        window.location.href = `/BeeMazing-A1/onboarding.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}#step4`;
     } else if (originalUser) {
-        window.location.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}`;
+        window.location.href = `/BeeMazing-A1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}`;
     } else {
         alert("User information missing. Please return to the user selection page.");
-        window.location.href = "/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html";
+        window.location.href = "/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html";
     }
 }
 

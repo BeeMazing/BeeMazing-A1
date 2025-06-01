@@ -275,13 +275,13 @@
 
     <div class="footer">
         <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
-            <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
+            <img src="/BeeMazing-A1/mobile/1-Home/HomeBtn.png" alt="Home" />
         </a>
         <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
-            <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
+            <img src="/BeeMazing-A1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
         </a>
         <a href="#" id="marketButton" class="footer-icon" aria-label="Market">
-            <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
+            <img src="/BeeMazing-A1/mobile/1-Home/MarketBtn.png" alt="Market" />
         </a>
     </div>
     
@@ -312,7 +312,7 @@
       const userName = urlParams.get('user');
       let adminEmail = urlParams.get('admin') || urlParams.get('adminEmail') || localStorage.getItem("currentAdminEmail");
       const tabParam = urlParams.get('tab') || 'rewards';
-      const basePath = "/BeeMazing-Y1/mobile/2-UserProfiles";
+      const basePath = "/BeeMazing-A1/mobile/2-UserProfiles";
   
       if (userName && adminEmail) {
           document.getElementById('userName').textContent = userName;
@@ -698,7 +698,7 @@ async function claimReward(userName, rewardName, rewardType, honey, outcomes) {
     const fullChest = { type: "dice", outcomes: outcomes };
     const encoded = encodeURIComponent(btoa(JSON.stringify(fullChest)));
 
-    window.location.href = `/BeeMazing-Y1/mobile/4-Market/rollthedice.html?user=${encodeURIComponent(userName)}&data=${encoded}&admin=${encodeURIComponent(adminEmail)}&rewardName=${encodeURIComponent(rewardName)}`;
+    window.location.href = `/BeeMazing-A1/mobile/4-Market/rollthedice.html?user=${encodeURIComponent(userName)}&data=${encoded}&admin=${encodeURIComponent(adminEmail)}&rewardName=${encodeURIComponent(rewardName)}`;
   } catch (err) {
     console.error("Error using dice chest:", err);
     alert(`Failed to process ${rewardName}: ${err.message}. Please try again.`);

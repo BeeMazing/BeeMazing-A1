@@ -426,14 +426,14 @@
   <div class="add-reward-btn" id="openNewChestModal" aria-label="Add Reward">+</div>
 
   <div class="footer">
-    <a href="/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
-      <img src="/BeeMazing-Y1/mobile/1-Home/HomeBtn.png" alt="Home" />
+    <a href="/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
+      <img src="/BeeMazing-A1/mobile/1-Home/HomeBtn.png" alt="Home" />
   </a>
-    <a href="/BeeMazing-Y1/mobile/3-Tasks/tasks.html" id="tasksLink" class="footer-icon" aria-label="Tasks">
-      <img src="/BeeMazing-Y1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
+    <a href="/BeeMazing-A1/mobile/3-Tasks/tasks.html" id="tasksLink" class="footer-icon" aria-label="Tasks">
+      <img src="/BeeMazing-A1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
     </a>
-    <a href="/BeeMazing-Y1/mobile/4-Market/market.html" id="marketLink" class="footer-icon" aria-label="Market">
-      <img src="/BeeMazing-Y1/mobile/1-Home/MarketBtn.png" alt="Market" />
+    <a href="/BeeMazing-A1/mobile/4-Market/market.html" id="marketLink" class="footer-icon" aria-label="Market">
+      <img src="/BeeMazing-A1/mobile/1-Home/MarketBtn.png" alt="Market" />
     </a>
   </div>
 
@@ -447,7 +447,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const admin = urlParams.get("admin");
     const user = urlParams.get("user");
     if (admin && user) {
-        homeLink.href = `/BeeMazing-Y1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
+        homeLink.href = `/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
     }
 });
 
@@ -457,12 +457,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     let chests = [
-      { name: "The Key", quote: "You hold the key to the path of others.", effect: "➡ Transfer one of your tasks to another user. You get the Buzz Points.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Keyy.gif", isCustom: false },
-      { name: "Double Trouble", quote: "Today’s efforts are worth double.", effect: "➡ Next task = double Buzz Points.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/DoubleTrouble.png", isCustom: false },
-      { name: "Roll the Dice", quote: "Test your Luck", effect: "➡ Get a surprise reward.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/dice.gif", isCustom: false },
-      { name: "Dance Party", quote: "Feel the rhythm!", effect: "➡ Dance after a task. If someone joins, both get Buzz Points.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Dance.jpg", isCustom: false },
-      { name: "Bee-Witched!", quote: "Your magical aura changes the rules...", effect: "➡ Make a silly rule. Others who follow it get Buzz Points.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Bee-Witched.jpg", isCustom: false },
-      { name: "Special Buzz Off", quote: "You’re too cool for chores today.", effect: "➡ Skip all tasks today.", image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/Special.jpg", isCustom: false }
+      { name: "The Key", quote: "You hold the key to the path of others.", effect: "➡ Transfer one of your tasks to another user. You get the Buzz Points.", image: "/BeeMazing-A1/mobile/4-Market/LuckyChest/Keyy.gif", isCustom: false },
+      { name: "Double Trouble", quote: "Today’s efforts are worth double.", effect: "➡ Next task = double Buzz Points.", image: "/BeeMazing-A1/mobile/4-Market/LuckyChest/DoubleTrouble.png", isCustom: false },
+      { name: "Roll the Dice", quote: "Test your Luck", effect: "➡ Get a surprise reward.", image: "/BeeMazing-A1/mobile/4-Market/LuckyChest/dice.gif", isCustom: false },
+      { name: "Dance Party", quote: "Feel the rhythm!", effect: "➡ Dance after a task. If someone joins, both get Buzz Points.", image: "/BeeMazing-A1/mobile/4-Market/LuckyChest/Dance.jpg", isCustom: false },
+      { name: "Bee-Witched!", quote: "Your magical aura changes the rules...", effect: "➡ Make a silly rule. Others who follow it get Buzz Points.", image: "/BeeMazing-A1/mobile/4-Market/LuckyChest/Bee-Witched.jpg", isCustom: false },
+      { name: "Special Buzz Off", quote: "You’re too cool for chores today.", effect: "➡ Skip all tasks today.", image: "/BeeMazing-A1/mobile/4-Market/LuckyChest/Special.jpg", isCustom: false }
     ];
 
   
@@ -487,7 +487,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-    const defaultChestImage = "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png";
+    const defaultChestImage = "/BeeMazing-A1/mobile/4-Market/LuckyChest/default.png";
 
     const chestContainer = document.getElementById("chestContainer");
     const assignModal = document.getElementById("assignModal");
@@ -516,9 +516,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const tasksLink = document.getElementById('tasksLink');
     const marketLink = document.getElementById('marketLink');
 
-    if (homeLink) homeLink.href = `/BeeMazing-Y1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
-    if (tasksLink) tasksLink.href = `/BeeMazing-Y1/mobile/3-Tasks/tasks.html?adminEmail=${encodeURIComponent(adminEmail)}`;
-    if (marketLink) marketLink.href = `/BeeMazing-Y1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}`;
+    if (homeLink) homeLink.href = `/BeeMazing-A1/mobile/1-Home/home.html?admin=${encodeURIComponent(adminEmail)}`;
+    if (tasksLink) tasksLink.href = `/BeeMazing-A1/mobile/3-Tasks/tasks.html?adminEmail=${encodeURIComponent(adminEmail)}`;
+    if (marketLink) marketLink.href = `/BeeMazing-A1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}`;
   }
 
          // Show welcome popup if not disabled
@@ -531,7 +531,7 @@ document.addEventListener("DOMContentLoaded", () => {
          document.querySelectorAll('.footer a').forEach(link => {
              const currentPath = window.location.pathname.replace(/\/$/, '');
              const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
-             if (linkPath === "/BeeMazing-Y1/mobile/4-Market/market.html" && currentPath.startsWith("/BeeMazing-Y1/mobile/4-Market/")) {
+             if (linkPath === "/BeeMazing-A1/mobile/4-Market/market.html" && currentPath.startsWith("/BeeMazing-A1/mobile/4-Market/")) {
                  link.classList.add('active');
              } else if (currentPath === linkPath) {
                  link.classList.add('active');
@@ -681,7 +681,7 @@ async function assignChest(userName, requiredPoints) {
         luckyChests[userName].push({
             name: selectedChest.name,
             type: chestType,
-            image: selectedChest.image || "/BeeMazing-Y1/mobile/4-Market/LuckyChest/default.png",
+            image: selectedChest.image || "/BeeMazing-A1/mobile/4-Market/LuckyChest/default.png",
             requiredPoints: parseInt(requiredPoints),
             progress: 0,
             reward: selectedChest.honey !== undefined ? `${selectedChest.honey} Honey` : selectedChest.name,
@@ -783,7 +783,7 @@ async function openDiceModal() {
         allChests[user].push({
           name: "Roll the Dice",
           type: "dice",
-          image: "/BeeMazing-Y1/mobile/4-Market/LuckyChest/dice.gif",
+          image: "/BeeMazing-A1/mobile/4-Market/LuckyChest/dice.gif",
           outcomes,
           progress: 0,
           requiredPoints

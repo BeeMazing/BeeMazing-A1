@@ -10,7 +10,7 @@ const currentAdmin = localStorage.getItem("currentAdminEmail");
 
   // Redirect to login if user not logged in
   if (localStorage.getItem("isAdmin") === null) {
-      window.location.href = "/BeeMazing-Y1/login.html";
+      window.location.href = "/BeeMazing-A1/login.html";
       return;
   }
 
@@ -55,7 +55,7 @@ const currentAdmin = localStorage.getItem("currentAdminEmail");
     if (!currentAdmin) {
       console.error("❌ currentAdmin is missing in localStorage!");
       alert("Error: Admin session expired. Please log in again.");
-      window.location.href = "/BeeMazing-Y1/login.html";
+      window.location.href = "/BeeMazing-A1/login.html";
       return;
     }
 
@@ -100,8 +100,8 @@ body: JSON.stringify({
 
 
   // Determine the base path (mobile or web) based on the current URL
-  const isMobile = window.location.pathname.includes("/BeeMazing-Y1/mobile/");
-  const basePath = isMobile ? "/BeeMazing-Y1/mobile" : "/web";
+  const isMobile = window.location.pathname.includes("/BeeMazing-A1/mobile/");
+  const basePath = isMobile ? "/BeeMazing-A1/mobile" : "/web";
 
 
   async function fetchUsersFromServer(email) {
@@ -377,7 +377,7 @@ logoutBtn.addEventListener("click", () => {
   localStorage.removeItem("adminPassword"); // optional, if stored
 
   // Keep currentAdminEmail so login.html still knows the registered account
-  window.location.href = "/BeeMazing-Y1/login.html";
+  window.location.href = "/BeeMazing-A1/login.html";
 });
 
 

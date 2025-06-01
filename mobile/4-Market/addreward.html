@@ -163,7 +163,7 @@
 
   <div class="footer">
     <a href="market.html" id="backLink" aria-label="Back">
-      <img src="/BeeMazing-Y1/mobile/1-Home/BackBtn.png" alt="Back" />
+      <img src="/BeeMazing-A1/mobile/1-Home/BackBtn.png" alt="Back" />
     </a>
   </div>
 
@@ -197,7 +197,7 @@
 
     // Update the back link to include adminEmail
     const backLink = document.getElementById('backLink');
-    backLink.href = `/BeeMazing-Y1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}`;
+    backLink.href = `/BeeMazing-A1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}`;
 
     // Function to fetch existing rewards from MongoDB
     async function fetchRewards() {
@@ -258,7 +258,7 @@
         await saveRewards(rewards);
 
         // Redirect back to market.html with adminEmail
-        window.location.href = `/BeeMazing-Y1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}`;
+        window.location.href = `/BeeMazing-A1/mobile/4-Market/market.html?adminEmail=${encodeURIComponent(adminEmail)}`;
       } catch (err) {
         alert("Failed to save reward. Please try again.");
       }

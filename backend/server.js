@@ -465,7 +465,7 @@ app.post('/forgot-password', async (req, res) => {
     console.log(`✅ /forgot-password: Generated resetToken for ${email}: ${resetToken}`);
 
     // Send reset email
-    const resetLink = `https://g4mechanger.github.io/BeeMazing-Y1/register.html?resetToken=${resetToken}`;
+    const resetLink = `https://g4mechanger.github.io/BeeMazing-A1/register.html?resetToken=${resetToken}`;
     const mailOptions = {
       from: 'beemazing@inbox.lv',
       to: email,
