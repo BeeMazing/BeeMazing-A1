@@ -1,476 +1,554 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BeeMazing - Register / Login</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>BeeMazing - Register / Login</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-    body {
-      background: linear-gradient(135deg, #1E1F26 0%, #2A2B32 100%);
-      color: #ffffff;
-      font-family: 'Poppins', sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      overflow: hidden;
-      animation: gradientShift 15s ease infinite;
-    }
+            body {
+                background: linear-gradient(135deg, #1e1f26 0%, #2a2b32 100%);
+                color: #ffffff;
+                font-family: "Poppins", sans-serif;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                overflow: hidden;
+                animation: gradientShift 15s ease infinite;
+            }
 
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+            @keyframes gradientShift {
+                0% {
+                    background-position: 0% 50%;
+                }
+                50% {
+                    background-position: 100% 50%;
+                }
+                100% {
+                    background-position: 0% 50%;
+                }
+            }
 
-    .container {
-      background: rgba(42, 43, 50, 0.2);
-      backdrop-filter: blur(10px);
-      padding: 2rem;
-      border-radius: 15px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      width: 90%;
-      max-width: 500px;
-      min-width: 300px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-      animation: fadeIn 0.5s ease-out;
-    }
+            .container {
+                background: rgba(42, 43, 50, 0.2);
+                backdrop-filter: blur(10px);
+                padding: 2rem;
+                border-radius: 15px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                width: 90%;
+                max-width: 500px;
+                min-width: 300px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+                animation: fadeIn 0.5s ease-out;
+            }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
 
-    .logo {
-      text-align: center;
-      margin-bottom: 0px;
-    }
+            .logo {
+                text-align: center;
+                margin-bottom: 0px;
+            }
 
-    .logo img {
-      width: 120px;
-      height: auto;
-    }
+            .logo img {
+                width: 120px;
+                height: auto;
+            }
 
-    h2 {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      font-size: 1.75rem;
-      font-weight: 600;
-      color: #FFC107;
-      cursor: default;
-    }
+            h2 {
+                text-align: center;
+                margin-bottom: 1.5rem;
+                font-size: 1.75rem;
+                font-weight: 600;
+                color: #ffc107;
+                cursor: default;
+            }
 
-    .input-group {
-      position: relative;
-      margin-bottom: 1.25rem;
-    }
+            .input-group {
+                position: relative;
+                margin-bottom: 1.25rem;
+            }
 
-    input {
-      width: 100%;
-      padding: 0.75rem 0.75rem 0.75rem 2.5rem;
-      font-size: 1rem;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(30, 31, 38, 0.5);
-      color: #ffffff;
-      transition: border-color 0.3s, box-shadow 0.3s;
-      cursor: text;
-    }
+            input {
+                width: 100%;
+                padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+                font-size: 1rem;
+                border-radius: 8px;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                background: rgba(30, 31, 38, 0.5);
+                color: #ffffff;
+                transition:
+                    border-color 0.3s,
+                    box-shadow 0.3s;
+                cursor: text;
+            }
 
-    input:focus {
-      outline: none;
-      border-color: #FFC107;
-      box-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
-    }
+            input:focus {
+                outline: none;
+                border-color: #ffc107;
+                box-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
+            }
 
-    .input-group::before {
-      content: '';
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 20px;
-      height: 20px;
-      background-size: contain;
-      opacity: 0.5;
-    }
+            .input-group::before {
+                content: "";
+                position: absolute;
+                left: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 20px;
+                height: 20px;
+                background-size: contain;
+                opacity: 0.5;
+            }
 
-    .input-group.email::before {
-      background: url('https://img.icons8.com/ios-filled/50/ffffff/email.png') no-repeat center;
-    }
+            .input-group.email::before {
+                background: url("https://img.icons8.com/ios-filled/50/ffffff/email.png")
+                    no-repeat center;
+            }
 
-    .input-group.password::before {
-      background: url('https://img.icons8.com/ios-filled/50/ffffff/lock.png') no-repeat center;
-    }
+            .input-group.password::before {
+                background: url("https://img.icons8.com/ios-filled/50/ffffff/lock.png")
+                    no-repeat center;
+            }
 
-    button {
-      width: 100%;
-      padding: 0.75rem;
-      font-size: 1rem;
-      font-weight: 600;
-      border-radius: 8px;
-      border: none;
-      background: #FFC107;
-      color: #212121;
-      cursor: pointer;
-      transition: transform 0.2s, background 0.3s, box-shadow 0.3s;
-    }
+            button {
+                width: 100%;
+                padding: 0.75rem;
+                font-size: 1rem;
+                font-weight: 600;
+                border-radius: 8px;
+                border: none;
+                background: #ffc107;
+                color: #212121;
+                cursor: pointer;
+                transition:
+                    transform 0.2s,
+                    background 0.3s,
+                    box-shadow 0.3s;
+            }
 
-    button:hover {
-      background: #FFB300;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
-    }
+            button:hover {
+                background: #ffb300;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+            }
 
-    button:active {
-      transform: translateY(0);
-    }
+            button:active {
+                transform: translateY(0);
+            }
 
-    .toggle {
-      text-align: center;
-      margin-top: 1rem;
-      font-size: 0.875rem;
-      color: #B0B0B0;
-    }
+            .toggle {
+                text-align: center;
+                margin-top: 1rem;
+                font-size: 0.875rem;
+                color: #b0b0b0;
+            }
 
-    .toggle span {
-      cursor: default;
-    }
+            .toggle span {
+                cursor: default;
+            }
 
-    .toggle a#toggleFormText {
-      color: #FFC107;
-      text-decoration: none;
-      font-weight: 500;
-      cursor: pointer !important;
-      position: relative;
-      transition: color 0.3s;
-    }
+            .toggle a#toggleFormText {
+                color: #ffc107;
+                text-decoration: none;
+                font-weight: 500;
+                cursor: pointer !important;
+                position: relative;
+                transition: color 0.3s;
+            }
 
-    .toggle a#toggleFormText:hover {
-      color: #FFB300;
-    }
+            .toggle a#toggleFormText:hover {
+                color: #ffb300;
+            }
 
-    .toggle a#toggleFormText::after {
-      content: '';
-      position: absolute;
-      width: 0;
-      height: 1px;
-      bottom: -2px;
-      left: 0;
-      background-color: #FFB300;
-      transition: width 0.3s ease;
-    }
+            .toggle a#toggleFormText::after {
+                content: "";
+                position: absolute;
+                width: 0;
+                height: 1px;
+                bottom: -2px;
+                left: 0;
+                background-color: #ffb300;
+                transition: width 0.3s ease;
+            }
 
-    .toggle a#toggleFormText:hover::after {
-      width: 100%;
-    }
+            .toggle a#toggleFormText:hover::after {
+                width: 100%;
+            }
 
+            .toggle a#forgotPasswordLink {
+                color: #ffc107;
+                text-decoration: none;
+                font-weight: 500;
+                cursor: pointer !important;
+                position: relative;
+                transition: color 0.3s;
+            }
 
-    .toggle a#forgotPasswordLink {
-      color: #FFC107;
-      text-decoration: none;
-      font-weight: 500;
-      cursor: pointer !important;
-      position: relative;
-      transition: color 0.3s;
-}
+            .toggle a#forgotPasswordLink:hover {
+                color: #ffb300;
+            }
 
-.toggle a#forgotPasswordLink:hover {
-      color: #FFB300;
-    }
+            .toggle a#forgotPasswordLink::after {
+                content: "";
+                position: absolute;
+                width: 0;
+                height: 1px;
+                bottom: -2px;
+                left: 0;
+                background-color: #ffb300;
+                transition: width 0.3s ease;
+            }
 
-    .toggle a#forgotPasswordLink::after {
-      content: '';
-      position: absolute;
-      width: 0;
-      height: 1px;
-      bottom: -2px;
-      left: 0;
-      background-color: #FFB300;
-      transition: width 0.3s ease;
-    }
+            .toggle a#forgotPasswordLink:hover::after {
+                width: 100%;
+            }
 
-    .toggle a#forgotPasswordLink:hover::after {
-      width: 100%;
-    }
+            .message {
+                text-align: center;
+                margin-top: 1rem;
+                font-size: 0.875rem;
+                min-height: 1.25rem;
+            }
 
-    .message {
-      text-align: center;
-      margin-top: 1rem;
-      font-size: 0.875rem;
-      min-height: 1.25rem;
-    }
+            /* Large screens (desktops, monitors) */
+            @media (min-width: 1200px) {
+                .container {
+                    max-width: 600px;
+                    padding: 2.5rem;
+                }
 
-    /* Large screens (desktops, monitors) */
-    @media (min-width: 1200px) {
-      .container {
-        max-width: 600px;
-        padding: 2.5rem;
-      }
+                .logo img {
+                    width: 150px;
+                }
 
-      .logo img {
-        width: 150px;
-      }
+                h2 {
+                    font-size: 2rem;
+                }
 
-      h2 {
-        font-size: 2rem;
-      }
+                input,
+                button {
+                    font-size: 1.125rem;
+                    padding: 0.875rem 0.875rem 0.875rem 3rem;
+                }
 
-      input, button {
-        font-size: 1.125rem;
-        padding: 0.875rem 0.875rem 0.875rem 3rem;
-      }
+                .input-group::before {
+                    left: 15px;
+                    width: 24px;
+                    height: 24px;
+                }
 
-      .input-group::before {
-        left: 15px;
-        width: 24px;
-        height: 24px;
-      }
+                .toggle,
+                .message {
+                    font-size: 1rem;
+                }
+            }
 
-      .toggle, .message {
-        font-size: 1rem;
-      }
-    }
+            /* Medium screens (tablets, small laptops) */
+            @media (min-width: 768px) and (max-width: 1199px) {
+                .container {
+                    max-width: 500px;
+                    padding: 2rem;
+                }
 
-    /* Medium screens (tablets, small laptops) */
-    @media (min-width: 768px) and (max-width: 1199px) {
-      .container {
-        max-width: 500px;
-        padding: 2rem;
-      }
+                .logo img {
+                    width: 130px;
+                }
 
-      .logo img {
-        width: 130px;
-      }
+                h2 {
+                    font-size: 1.875rem;
+                }
 
-      h2 {
-        font-size: 1.875rem;
-      }
+                input,
+                button {
+                    font-size: 1rem;
+                }
+            }
 
-      input, button {
-        font-size: 1rem;
-      }
-    }
+            /* Small screens (phones) */
+            @media (max-width: 767px) {
+                .container {
+                    padding: 1.5rem;
+                    max-width: 400px;
+                    min-width: 280px;
+                }
 
-    /* Small screens (phones) */
-    @media (max-width: 767px) {
-      .container {
-        padding: 1.5rem;
-        max-width: 400px;
-        min-width: 280px;
-      }
+                .logo img {
+                    width: 100px;
+                }
 
-      .logo img {
-        width: 100px;
-      }
+                h2 {
+                    font-size: 1.5rem;
+                }
 
-      h2 {
-        font-size: 1.5rem;
-      }
+                input,
+                button {
+                    font-size: 0.875rem;
+                    padding: 0.625rem 0.625rem 0.625rem 2.25rem;
+                }
 
-      input, button {
-        font-size: 0.875rem;
-        padding: 0.625rem 0.625rem 0.625rem 2.25rem;
-      }
+                .input-group::before {
+                    left: 10px;
+                    width: 18px;
+                    height: 18px;
+                }
 
-      .input-group::before {
-        left: 10px;
-        width: 18px;
-        height: 18px;
-      }
+                .toggle,
+                .message {
+                    font-size: 0.75rem;
+                }
+            }
 
-      .toggle, .message {
-        font-size: 0.75rem;
-      }
-    }
+            /* Very small screens (e.g., old phones < 320px) */
+            @media (max-width: 360px) {
+                .container {
+                    padding: 1rem;
+                    min-width: 260px;
+                }
 
-    /* Very small screens (e.g., old phones < 320px) */
-    @media (max-width: 360px) {
-      .container {
-        padding: 1rem;
-        min-width: 260px;
-      }
+                .logo img {
+                    width: 80px;
+                }
 
-      .logo img {
-        width: 80px;
-      }
+                h2 {
+                    font-size: 1.25rem;
+                }
 
-      h2 {
-        font-size: 1.25rem;
-      }
+                input,
+                button {
+                    font-size: 0.75rem;
+                }
+            }
 
-      input, button {
-        font-size: 0.75rem;
-      }
-    }
+            #backBtn {
+                width: 100%;
+                padding: 0.75rem;
+                font-size: 1rem;
+                font-weight: 600;
+                border-radius: 8px;
+                border: none;
+                background: #b0b0b0; /* Gray color for secondary action */
+                color: #212121;
+                cursor: pointer;
+                transition:
+                    transform 0.2s,
+                    background 0.3s,
+                    box-shadow 0.3s;
+                margin-top: 0.5rem; /* Add some spacing between Send Reset Link and Back */
+            }
 
-    #backBtn {
-  width: 100%;
-  padding: 0.75rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 8px;
-  border: none;
-  background: #B0B0B0; /* Gray color for secondary action */
-  color: #212121;
-  cursor: pointer;
-  transition: transform 0.2s, background 0.3s, box-shadow 0.3s;
-  margin-top: 0.5rem; /* Add some spacing between Send Reset Link and Back */
-}
+            #backBtn:hover {
+                background: #a0a0a0; /* Slightly darker gray on hover */
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(176, 176, 176, 0.4);
+            }
 
-#backBtn:hover {
-  background: #A0A0A0; /* Slightly darker gray on hover */
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(176, 176, 176, 0.4);
-}
+            #backBtn:active {
+                transform: translateY(0);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="logo">
+                <img
+                    src="https://i.postimg.cc/x1fDPQPX/pngtree-honey-bee-logo-design-vector-png-image-12507314-removebg-preview.png"
+                    alt="BeeMazing Logo"
+                />
+            </div>
+            <h2 id="formTitle">Register</h2>
+            <form id="authForm" novalidate>
+                <div id="emailGroup" class="input-group email">
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="Email"
+                        required
+                    />
+                </div>
+                <div id="passwordGroup" class="input-group password">
+                    <input
+                        type="password"
+                        id="password"
+                        placeholder="Password"
+                        required
+                    />
+                </div>
+                <div
+                    id="confirmPasswordGroup"
+                    class="input-group password"
+                    style="display: none"
+                >
+                    <input
+                        type="password"
+                        id="confirmPassword"
+                        placeholder="Confirm Password"
+                    />
+                </div>
+                <button type="submit" id="submitBtn">Register</button>
+                <button type="button" id="backBtn" style="display: none">
+                    Back
+                </button>
+                <div class="message" id="message"></div>
+            </form>
+            <!-- Reset Password Form -->
+            <form id="resetPasswordForm" novalidate style="display: none">
+                <div id="newPasswordGroup" class="input-group password">
+                    <input
+                        type="password"
+                        id="newPassword"
+                        placeholder="New Password"
+                        required
+                    />
+                </div>
+                <div id="confirmNewPasswordGroup" class="input-group password">
+                    <input
+                        type="password"
+                        id="confirmNewPassword"
+                        placeholder="Confirm Password"
+                        required
+                    />
+                </div>
+                <button type="submit" id="resetSubmitBtn">
+                    Reset Password
+                </button>
+                <div class="message" id="resetMessage"></div>
+            </form>
+            <div class="toggle">
+                <span id="toggleText">Already have an account?</span>
+                <a onclick="toggleForm()" id="toggleFormText">Login</a>
+                <span> | </span>
+                <a onclick="showForgotPassword()" id="forgotPasswordLink"
+                    >Forgot Password?</a
+                >
+            </div>
+        </div>
 
-#backBtn:active {
-  transform: translateY(0);
-}
-</style>
-</head>
-<body>
-  <div class="container">
-    <div class="logo">
-      <img src="https://i.postimg.cc/x1fDPQPX/pngtree-honey-bee-logo-design-vector-png-image-12507314-removebg-preview.png" alt="BeeMazing Logo">
-    </div>
-    <h2 id="formTitle">Register A1</h2>
-    <form id="authForm" novalidate>
-      <div id="emailGroup" class="input-group email">
-        <input type="email" id="email" placeholder="Email" required />
-      </div>
-      <div id="passwordGroup" class="input-group password">
-        <input type="password" id="password" placeholder="Password" required />
-      </div>
-      <div id="confirmPasswordGroup" class="input-group password" style="display: none;">
-        <input type="password" id="confirmPassword" placeholder="Confirm Password" />
-      </div>
-      <button type="submit" id="submitBtn">Register</button>
-      <button type="button" id="backBtn" style="display: none;">Back</button>
-      <div class="message" id="message"></div>
-    </form>
-    <!-- Reset Password Form -->
-<form id="resetPasswordForm" novalidate style="display: none;">
-  <div id="newPasswordGroup" class="input-group password">
-    <input type="password" id="newPassword" placeholder="New Password" required />
-  </div>
-  <div id="confirmNewPasswordGroup" class="input-group password">
-    <input type="password" id="confirmNewPassword" placeholder="Confirm Password" required />
-  </div>
-  <button type="submit" id="resetSubmitBtn">Reset Password</button>
-  <div class="message" id="resetMessage"></div>
-</form>
-    <div class="toggle">
-      <span id="toggleText">Already have an account?</span>
-      <a onclick="toggleForm()" id="toggleFormText">Login</a>
-      <span> | </span>
-      <a onclick="showForgotPassword()" id="forgotPasswordLink">Forgot Password?</a>
-    </div>
-  </div>
+        <script>
+            let isRegistering = true;
+            let isResettingPassword = false;
+            const urlParams = new URLSearchParams(window.location.search);
+            const resetToken = urlParams.get("resetToken");
+            const form = document.getElementById("authForm");
+            const message = document.getElementById("message");
+            const emailGroup = document.getElementById("emailGroup");
+            const passwordGroup = document.getElementById("passwordGroup");
+            const confirmPasswordGroup = document.getElementById(
+                "confirmPasswordGroup",
+            );
+            const submitBtn = document.getElementById("submitBtn");
+            const toggleText = document.getElementById("toggleText");
+            const toggleFormText = document.getElementById("toggleFormText");
+            const forgotPasswordLink =
+                document.getElementById("forgotPasswordLink");
 
+            const resetPasswordForm =
+                document.getElementById("resetPasswordForm");
+            const resetMessage = document.getElementById("resetMessage");
+            const newPassword = document.getElementById("newPassword");
+            const confirmNewPassword =
+                document.getElementById("confirmNewPassword");
+            const resetSubmitBtn = document.getElementById("resetSubmitBtn");
+            const backBtn = document.getElementById("backBtn");
 
-  <script>
-    let isRegistering = true;
-    let isResettingPassword = false;
-    const urlParams = new URLSearchParams(window.location.search);
-    const resetToken = urlParams.get('resetToken');
-    const form = document.getElementById("authForm");
-    const message = document.getElementById("message");
-    const emailGroup = document.getElementById("emailGroup");
-    const passwordGroup = document.getElementById("passwordGroup");
-    const confirmPasswordGroup = document.getElementById("confirmPasswordGroup");
-    const submitBtn = document.getElementById("submitBtn");
-    const toggleText = document.getElementById("toggleText");
-    const toggleFormText = document.getElementById("toggleFormText");
-    const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+            function toggleForm() {
+                if (isResettingPassword) return;
+                isRegistering = !isRegistering;
+                document.getElementById("formTitle").textContent = isRegistering
+                    ? "Register"
+                    : "Login";
+                submitBtn.textContent = isRegistering ? "Register" : "Login";
+                toggleText.textContent = isRegistering
+                    ? "Already have an account?"
+                    : "Don't have an account?";
+                toggleFormText.textContent = isRegistering
+                    ? "Login"
+                    : "Register";
+                emailGroup.style.display = "block";
+                passwordGroup.style.display = "block";
+                confirmPasswordGroup.style.display = "none";
+                document.querySelector(".toggle").style.display = "block";
+                backBtn.style.display = "none"; // Hide the Back button
+                message.textContent = "";
+                form.reset(); // Clear form fields
+            }
 
-    const resetPasswordForm = document.getElementById("resetPasswordForm");
-const resetMessage = document.getElementById("resetMessage");
-const newPassword = document.getElementById("newPassword");
-const confirmNewPassword = document.getElementById("confirmNewPassword");
-const resetSubmitBtn = document.getElementById("resetSubmitBtn");
-const backBtn = document.getElementById("backBtn");
-  
-function toggleForm() {
-  if (isResettingPassword) return;
-  isRegistering = !isRegistering;
-  document.getElementById("formTitle").textContent = isRegistering ? "Register" : "Login";
-  submitBtn.textContent = isRegistering ? "Register" : "Login";
-  toggleText.textContent = isRegistering ? "Already have an account?" : "Don't have an account?";
-  toggleFormText.textContent = isRegistering ? "Login" : "Register";
-  emailGroup.style.display = "block";
-  passwordGroup.style.display = "block";
-  confirmPasswordGroup.style.display = "none";
-  document.querySelector(".toggle").style.display = "block";
-  backBtn.style.display = "none"; // Hide the Back button
-  message.textContent = "";
-  form.reset(); // Clear form fields
-}
-  
-function showForgotPassword() {
-  isResettingPassword = true;
-  isRegistering = false;
-  document.getElementById("formTitle").textContent = "Reset Password";
-  submitBtn.textContent = "Send Reset Link";
-  emailGroup.style.display = "block";
-  passwordGroup.style.display = "none";
-  confirmPasswordGroup.style.display = "none";
-  document.querySelector(".toggle").style.display = "none";
-  backBtn.style.display = "block"; // Show the Back button
-  message.textContent = "";
-  form.reset(); // Clear form fields
-}
-  
-function showResetPasswordForm() {
-  isResettingPassword = true;
-  isRegistering = false;
-  document.getElementById("formTitle").textContent = "Set New Password";
-  authForm.style.display = "none";
-  resetPasswordForm.style.display = "block";
-  document.querySelector(".toggle").style.display = "none"; // Hide the entire toggle div
-  backBtn.style.display = "block"; // Show the Back button
-  message.textContent = "";
-  resetMessage.textContent = "";
-  resetPasswordForm.reset();
-}
-  
-    // Email validation regex
-    /*
+            function showForgotPassword() {
+                isResettingPassword = true;
+                isRegistering = false;
+                document.getElementById("formTitle").textContent =
+                    "Reset Password";
+                submitBtn.textContent = "Send Reset Link";
+                emailGroup.style.display = "block";
+                passwordGroup.style.display = "none";
+                confirmPasswordGroup.style.display = "none";
+                document.querySelector(".toggle").style.display = "none";
+                backBtn.style.display = "block"; // Show the Back button
+                message.textContent = "";
+                form.reset(); // Clear form fields
+            }
+
+            function showResetPasswordForm() {
+                isResettingPassword = true;
+                isRegistering = false;
+                document.getElementById("formTitle").textContent =
+                    "Set New Password";
+                authForm.style.display = "none";
+                resetPasswordForm.style.display = "block";
+                document.querySelector(".toggle").style.display = "none"; // Hide the entire toggle div
+                backBtn.style.display = "block"; // Show the Back button
+                message.textContent = "";
+                resetMessage.textContent = "";
+                resetPasswordForm.reset();
+            }
+
+            // Email validation regex
+            /*
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   */
 
+            // Password strength validation (minimum 8 characters, at least one number)
+            // const passwordRegex = /^(?=.*\d).{8,}$/;
+            // Password strength validation (minimum 8 characters, at least one number)
 
-    // Password strength validation (minimum 8 characters, at least one number)
-    // const passwordRegex = /^(?=.*\d).{8,}$/;
-     // Password strength validation (minimum 8 characters, at least one number)
-  
-    // Token format validation (64-character hex string)
-    const tokenRegex = /^[0-9a-fA-F-]{32,}$/; // Allow hyphens
-  
-    if (resetToken) {
-      if (!tokenRegex.test(resetToken)) {
-        message.style.color = "#D32F2F";
-        message.textContent = "❌ Invalid reset token";
-      } else {
-        showResetPasswordForm();
-      }
-    }
-  
-  
-    authForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const confirmPassword = document.getElementById("confirmPassword").value.trim();
+            // Token format validation (64-character hex string)
+            const tokenRegex = /^[0-9a-fA-F-]{32,}$/; // Allow hyphens
 
-  // Validate email for forgot password
-/*
+            if (resetToken) {
+                if (!tokenRegex.test(resetToken)) {
+                    message.style.color = "#D32F2F";
+                    message.textContent = "❌ Invalid reset token";
+                } else {
+                    showResetPasswordForm();
+                }
+            }
+
+            authForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const email = document.getElementById("email").value.trim();
+                const password = document
+                    .getElementById("password")
+                    .value.trim();
+                const confirmPassword = document
+                    .getElementById("confirmPassword")
+                    .value.trim();
+
+                // Validate email for forgot password
+                /*
   if (isResettingPassword && !emailRegex.test(email)) {
     message.style.color = "#D32F2F";
     message.textContent = "❌ Please enter a valid email";
@@ -479,148 +557,184 @@ function showResetPasswordForm() {
 
   */
 
-  // Validate inputs for register/login
-  if (!isResettingPassword) {
-/*
+                // Validate inputs for register/login
+                if (!isResettingPassword) {
+                    /*
     if (!emailRegex.test(email)) {
       message.style.color = "#D32F2F";
       message.textContent = "❌ Please enter a valid email";
       return;
     }
     */
-    /* if (!passwordRegex.test(password)) {
+                    /* if (!passwordRegex.test(password)) {
       message.style.color = "#D32F2F";
       message.textContent = "❌ Password must be at least 8 characters and include a number";
       return;
     } */
-    if (isRegistering && confirmPasswordGroup.style.display !== "none" && password !== confirmPassword) {
-  message.style.color = "#D32F2F";
-  message.textContent = "❌ Passwords do not match";
-  return;
-}
+                    if (
+                        isRegistering &&
+                        confirmPasswordGroup.style.display !== "none" &&
+                        password !== confirmPassword
+                    ) {
+                        message.style.color = "#D32F2F";
+                        message.textContent = "❌ Passwords do not match";
+                        return;
+                    }
+                }
 
-  }
+                let endpoint = isResettingPassword
+                    ? "/forgot-password"
+                    : isRegistering
+                      ? "/register"
+                      : "/login";
 
-  let endpoint = isResettingPassword ? "/forgot-password" : isRegistering ? "/register" : "/login";
+                try {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = isResettingPassword
+                        ? "Sending..."
+                        : isRegistering
+                          ? "Registering..."
+                          : "Logging in...";
 
-  try {
-    submitBtn.disabled = true;
-    submitBtn.textContent = isResettingPassword ? "Sending..." : isRegistering ? "Registering..." : "Logging in...";
+                    const body = isResettingPassword
+                        ? { email }
+                        : { email, password };
+                    console.log(
+                        `Sending request to ${endpoint} with body:`,
+                        body,
+                    );
+                    const res = await fetch(
+                        `https://beemazing1.onrender.com${endpoint}`,
+                        {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(body),
+                        },
+                    );
 
-    const body = isResettingPassword ? { email } : { email, password };
-    console.log(`Sending request to ${endpoint} with body:`, body);
-    const res = await fetch(`https://beemazing1.onrender.com${endpoint}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+                    const data = await res.json();
+                    console.log(`Response from ${endpoint}:`, data);
 
-    const data = await res.json();
-    console.log(`Response from ${endpoint}:`, data);
+                    if (res.ok && data.success) {
+                        message.style.color = "#4CAF50";
+                        if (isResettingPassword) {
+                            message.textContent =
+                                "✅ Reset link sent to your email!";
+                            authForm.reset();
+                            setTimeout(() => {
+                                toggleForm();
+                                isResettingPassword = false;
+                                document.querySelector(
+                                    ".toggle",
+                                ).style.display = "block"; // Show the entire toggle div
+                            }, 2000);
+                        } else {
+                            message.textContent = isRegistering
+                                ? "✅ Registered successfully! Redirecting to login..."
+                                : "✅ Logged in!";
+                            localStorage.setItem("isAdmin", "true");
+                            localStorage.setItem("currentAdminEmail", email);
+                            authForm.reset();
+                            setTimeout(() => {
+                                if (isRegistering) {
+                                    window.location.href = "onboarding.html"; // ✅ first-time registration
+                                } else {
+                                    window.location.href = "login.html"; // ✅ normal login
+                                }
+                            }, 1000);
+                        }
+                    } else {
+                        message.style.color = "#D32F2F";
+                        message.textContent =
+                            "❌ " + (data.message || "Something went wrong");
+                        console.log(`Error from ${endpoint}:`, data.message);
+                    }
+                } catch (err) {
+                    message.style.color = "#D32F2F";
+                    message.textContent =
+                        "❌ Failed to connect to server. Please check your internet connection.";
+                    console.error(`Fetch error for ${endpoint}:`, err);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = isResettingPassword
+                        ? "Send Reset Link"
+                        : isRegistering
+                          ? "Register"
+                          : "Login";
+                }
+            });
 
-    if (res.ok && data.success) {
-      message.style.color = "#4CAF50";
-      if (isResettingPassword) {
-        message.textContent = "✅ Reset link sent to your email!";
-        authForm.reset();
-setTimeout(() => {
-  toggleForm();
-  isResettingPassword = false;
-  document.querySelector(".toggle").style.display = "block"; // Show the entire toggle div
-}, 2000);
-      } else {
-        message.textContent = isRegistering ? "✅ Registered successfully! Redirecting to login..." : "✅ Logged in!";
-        localStorage.setItem("isAdmin", "true");
-        localStorage.setItem("currentAdminEmail", email);
-        authForm.reset();
-        setTimeout(() => {
-  if (isRegistering) {
-    window.location.href = "onboarding.html"; // ✅ first-time registration
-  } else {
-    window.location.href = "login.html"; // ✅ normal login
-  }
-}, 1000);
+            resetPasswordForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const newPasswordValue = newPassword.value.trim();
+                const confirmNewPasswordValue = confirmNewPassword.value.trim();
 
-      }
-    } else {
-      message.style.color = "#D32F2F";
-      message.textContent = "❌ " + (data.message || "Something went wrong");
-      console.log(`Error from ${endpoint}:`, data.message);
-    }
-  } catch (err) {
-    message.style.color = "#D32F2F";
-    message.textContent = "❌ Failed to connect to server. Please check your internet connection.";
-    console.error(`Fetch error for ${endpoint}:`, err);
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = isResettingPassword ? "Send Reset Link" : isRegistering ? "Register" : "Login";
-  }
-});
-  
-  
-resetPasswordForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const newPasswordValue = newPassword.value.trim();
-  const confirmNewPasswordValue = confirmNewPassword.value.trim();
-
-  // Validate password
-  /* if (!passwordRegex.test(newPasswordValue)) {
+                // Validate password
+                /* if (!passwordRegex.test(newPasswordValue)) {
     resetMessage.style.color = "#D32F2F";
     resetMessage.textContent = "❌ Password must be at least 8 characters and include a number";
     return;
   } */
-  if (newPasswordValue !== confirmNewPasswordValue) {
-    resetMessage.style.color = "#D32F2F";
-    resetMessage.textContent = "❌ Passwords do not match";
-    return;
-  }
+                if (newPasswordValue !== confirmNewPasswordValue) {
+                    resetMessage.style.color = "#D32F2F";
+                    resetMessage.textContent = "❌ Passwords do not match";
+                    return;
+                }
 
-  try {
-    resetSubmitBtn.disabled = true;
-    resetSubmitBtn.textContent = "Resetting...";
+                try {
+                    resetSubmitBtn.disabled = true;
+                    resetSubmitBtn.textContent = "Resetting...";
 
-    const body = { resetToken, newPassword: newPasswordValue };
-    console.log("Sending request to /reset-password with body:", body);
-    const res = await fetch("https://beemazing1.onrender.com/reset-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+                    const body = { resetToken, newPassword: newPasswordValue };
+                    console.log(
+                        "Sending request to /reset-password with body:",
+                        body,
+                    );
+                    const res = await fetch(
+                        "https://beemazing1.onrender.com/reset-password",
+                        {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(body),
+                        },
+                    );
 
-    const data = await res.json();
-    console.log("Response from /reset-password:", data);
+                    const data = await res.json();
+                    console.log("Response from /reset-password:", data);
 
-    if (res.ok && data.success) {
-      resetMessage.style.color = "#4CAF50";
-      resetMessage.textContent = "✅ Password reset successfully! Redirecting to login...";
-      resetPasswordForm.reset();
-      setTimeout(() => {
-        window.location.href = "register.html"; // Clear query parameters
-      }, 2000);
-    } else {
-      resetMessage.style.color = "#D32F2F";
-      resetMessage.textContent = "❌ " + (data.message || "Failed to reset password");
-      console.log("Error from /reset-password:", data.message);
-    }
-  } catch (err) {
-    resetMessage.style.color = "#D32F2F";
-    resetMessage.textContent = "❌ Failed to connect to server. Please check your internet connection.";
-    console.error("Fetch error for /reset-password:", err);
-  } finally {
-    resetSubmitBtn.disabled = false;
-    resetSubmitBtn.textContent = "Reset Password";
-  }
-});
+                    if (res.ok && data.success) {
+                        resetMessage.style.color = "#4CAF50";
+                        resetMessage.textContent =
+                            "✅ Password reset successfully! Redirecting to login...";
+                        resetPasswordForm.reset();
+                        setTimeout(() => {
+                            window.location.href = "register.html"; // Clear query parameters
+                        }, 2000);
+                    } else {
+                        resetMessage.style.color = "#D32F2F";
+                        resetMessage.textContent =
+                            "❌ " +
+                            (data.message || "Failed to reset password");
+                        console.log(
+                            "Error from /reset-password:",
+                            data.message,
+                        );
+                    }
+                } catch (err) {
+                    resetMessage.style.color = "#D32F2F";
+                    resetMessage.textContent =
+                        "❌ Failed to connect to server. Please check your internet connection.";
+                    console.error("Fetch error for /reset-password:", err);
+                } finally {
+                    resetSubmitBtn.disabled = false;
+                    resetSubmitBtn.textContent = "Reset Password";
+                }
+            });
 
-
-backBtn.addEventListener("click", () => {
-  isResettingPassword = false;
-  toggleForm();
-});
-
-
-  </script>
-
-
-</body>
+            backBtn.addEventListener("click", () => {
+                isResettingPassword = false;
+                toggleForm();
+            });
+        </script>
+    </body>
 </html>
