@@ -1020,6 +1020,14 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
 
 let editTaskFullDate = null; // Initialize as null
 
+// Global variables for edit modes (accessible to form handler)
+let isOccurrenceEdit = false;
+let isFutureEdit = false;
+let targetDate = null;
+let splitDate = null;
+let originalStartDate = null;
+let editTask = null;
+
 document.addEventListener("DOMContentLoaded", async () => {
     const currentAdmin = localStorage.getItem("currentAdminEmail");
     if (!currentAdmin) {
@@ -1036,12 +1044,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Check for new editing modes from localStorage
     const editTaskData = localStorage.getItem("familyApp_editTask");
     const editTaskIndex = localStorage.getItem("familyApp_editTask_index");
-    let editTask = null;
-    let isOccurrenceEdit = false;
-    let isFutureEdit = false;
-    let targetDate = null;
-    let splitDate = null;
-    let originalStartDate = null;
+    editTask = null;
+    isOccurrenceEdit = false;
+    isFutureEdit = false;
+    targetDate = null;
+    splitDate = null;
+    originalStartDate = null;
 
     if (editTaskData) {
         try {
@@ -1276,44 +1284,35 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("specificDatesGroup").style.display = "none";
         document.getElementById("specificDaysGroup").style.display = "block";
     }
+
+
 });
 
+// Global modal functions - moved outside DOMContentLoaded scope
+function showModal(modal) {
+    modal.classList.remove('hide');
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+}
 
+// Hide modal with smooth transition
+function hideModal(modal) {
+    modal.classList.remove('show');
+    modal.classList.add('hide');
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
+}
 
-
-
-
-
-
-
-
-
-
-        // Show modal with smooth transition
-        function showModal(modal) {
-            modal.classList.remove('hide');
-            modal.classList.add('show');
-            modal.style.display = 'flex';
-        }
-    
-        // Hide modal with smooth transition
-        function hideModal(modal) {
-            modal.classList.remove('show');
-            modal.classList.add('hide');
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-
-        function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl) {
+function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl) {
     // Open modal on focus
     inputEl.addEventListener("focus", () => {
         customInputEl.value = "";
         showModal(modalEl);
     });
 
-    // Quick pick buttons
-    modalEl.querySelectorAll("button[data-value]").forEach(btn => {
+    // Setup quick select buttons
+    modalEl.querySelectorAll('button[data-value]').forEach(btn => {
         btn.addEventListener("click", () => {
             inputEl.value = btn.getAttribute("data-value");
             hideModal(modalEl);
@@ -1583,8 +1582,214 @@ window.addEventListener("click", (e) => {
         hideModal(roomModal);
     }
 });
+});
 
+// Form submission handler - in global scope with access to global variables
+document.addEventListener("DOMContentLoaded", () => {
+document.getElementById("addTaskForm").addEventListener("submit", async function (event) {
+event.preventDefault();
 
+const title = document.getElementById("taskTitle").value.trim();
+const notes = document.getElementById("taskNotes").value.trim();
+const room = document.getElementById("roomSelection").value;
+const repeat = document.getElementById("repeatSelection").value;
+const settings = document.getElementById("settingsSelection").value;
+const dateFrom = document.getElementById("taskDate").value;
+const dateTo = document.getElementById("taskDateTo").value;
+const dateMode = document.getElementById("dateModeSelection").value;
+const reminder = document.getElementById("taskReminder").checked;
+const users = document.getElementById("assignedToSelection").value
+    .split(",")
+    .map(u => u.trim())
+    .filter(u => u);
+const reward = document.getElementById("RewardValue").value;
+let timesPerDay = parseInt(document.getElementById("timesPerDayInput").value) || null;
+let timesPerWeek = parseInt(document.getElementById("timesPerWeekInput").value) || null;
+let timesPerMonth = parseInt(document.getElementById("timesPerMonthInput").value) || null;
+const specificDates = document.getElementById("specificDatesInput").value;
+
+// Validations
+if (!title) {
+    alert("Task title is required!");
+    return;
+}
+if (users.length === 0) {
+    alert("Please assign at least one user.");
+    return;
+}
+        
+// Special validation for editing modes
+if (isOccurrenceEdit && !targetDate) {
+    alert("Invalid occurrence edit - missing target date.");
+    return;
+}
+if (isFutureEdit && !splitDate) {
+    alert("Invalid future edit - missing split date.");
+    return;
+}
+        
+if (!isOccurrenceEdit && !isFutureEdit) {
+    if (dateMode === "date" && !dateFrom) {
+        alert("Please select a start date.");
+        return;
+    }
+    if (dateMode === "specific-dates" && !specificDates) {
+        alert("Please select at least one date.");
+        return;
+    }
+}
+
+// Cap and sanitize
+if (timesPerDay > 100) timesPerDay = 100;
+if (timesPerWeek > 100) timesPerWeek = 100;
+if (timesPerMonth > 100) timesPerMonth = 100;
+if (timesPerDay !== null && timesPerDay < 1) timesPerDay = 1;
+if (timesPerWeek !== null && timesPerWeek < 1) timesPerWeek = 1;
+if (timesPerMonth !== null && timesPerMonth < 1) timesPerMonth = 1;
+
+let dateValue = "";
+if (isOccurrenceEdit) {
+    // For single occurrence, use target date as both start and end for clarity
+    dateValue = `${targetDate} to ${targetDate}`;
+} else if (isFutureEdit) {
+    // For future edit, use split date as start
+    const originalRange = editTask.date.split(" to ");
+    const originalEnd = originalRange[1] || "3000-01-01";
+    dateValue = `${splitDate} to ${originalEnd}`;
+} else if (dateMode === "date") {
+    const fromDate = dateFrom;
+    const toDate = dateTo || "3000-01-01";
+    dateValue = `${fromDate} to ${toDate}`;
+} else if (dateMode === "specific-dates" && specificDates) {
+    const dates = specificDates.split(",").map(d => d.trim()).filter(d => d);
+    dateValue = `${dates[0]} to ${dates[dates.length - 1]}`;
+} else {
+    const today = new Date().toISOString().split("T")[0];
+    dateValue = `${today} to 3000-01-01`;
+}
+
+const task = {
+    title,
+    notes: notes || undefined,
+    room: room || undefined,
+    repeat: repeat || undefined,
+    settings: settings || undefined,
+    date: dateValue,
+    reminder: reminder || undefined,
+    users,
+    reward: reward || undefined,
+    alarms: alarms.length > 0 ? alarms : undefined,
+    timesPerDay: repeat === "Daily" ? timesPerDay : undefined,
+    timesPerWeek: repeat === "Weekly" ? timesPerWeek : undefined,
+    timesPerMonth: repeat === "Monthly" ? timesPerMonth : undefined,
+    specificDates: dateMode === "specific-dates" ? specificDates : undefined,
+    daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? selectedDays : ["Any"]) : undefined
+};
+
+console.log("Task being saved:", JSON.stringify(task, null, 2));
+
+const currentAdmin = localStorage.getItem("currentAdminEmail");
+const urlParams = new URLSearchParams(window.location.search);
+const editTitle = urlParams.get("editTitle");
+const editDate = urlParams.get("editDate");
+const from = urlParams.get("from");
+const originalUser = urlParams.get("user") || localStorage.getItem("currentUser");
+
+if (!originalUser) {
+    alert("No user context available. Redirecting to user selection.");
+    window.location.href = "/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html";
+    return;
+}
+
+try {
+    const url = "https://beemazing1.onrender.com/api/tasks";
+    let body;
+    let method = "POST";
+    let endpoint = "https://beemazing1.onrender.com/api/tasks";
+
+    if (isOccurrenceEdit && targetDate && originalStartDate && editTask) {
+        // Single occurrence edit
+        method = "PUT";
+        endpoint = "https://beemazing1.onrender.com/api/tasks/occurrence";
+        body = {
+            adminEmail: currentAdmin,
+            originalTitle: editTask.title,
+            originalStartDate: originalStartDate,
+            targetDate: targetDate,
+            modifiedTask: task
+        };
+    } else if (isFutureEdit && splitDate && originalStartDate && editTask) {
+        // Future occurrences edit (split task)
+        method = "PUT";
+        endpoint = "https://beemazing1.onrender.com/api/tasks/future";
+        body = {
+            adminEmail: currentAdmin,
+            originalTitle: editTask.title,
+            originalStartDate: originalStartDate,
+            splitDate: splitDate,
+            modifiedTask: task
+        };
+    } else if (editTitle && editDate) {
+        // Original edit mode
+        method = "PUT";
+        body = {
+            adminEmail: currentAdmin,
+            task,
+            originalTitle: editTitle,
+            originalDate: editTaskFullDate
+        };
+    } else {
+        // New task
+        body = { adminEmail: currentAdmin, task };
+    }
+
+    const response = await fetch(endpoint, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
+
+    console.log("Server response:", data);
+
+    if (isOccurrenceEdit) {
+        alert("Single occurrence updated successfully!");
+    } else if (isFutureEdit) {
+        alert("Future occurrences updated successfully!");
+    } else {
+        alert("Task saved successfully!");
+    }
+
+    // Store task title in localStorage if coming from onboarding
+    if (from === "onboarding") {
+        const existingTitles = JSON.parse(localStorage.getItem("onboardingTaskTitles") || "[]");
+        if (!existingTitles.includes(title)) {
+            existingTitles.push(title);
+            localStorage.setItem("onboardingTaskTitles", JSON.stringify(existingTitles));
+        }
+    }
+
+    // Redirect back to the original user's tasks.html or onboarding
+    const adminEmail = encodeURIComponent(currentAdmin || "");
+    if (from === "onboarding") {
+        window.location.href = `/BeeMazing-A1/onboarding.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}#step4`;
+    } else if (isOccurrenceEdit || isFutureEdit) {
+        // Redirect back to taskz.html for specific date views
+        window.location.href = `/BeeMazing-A1/taskz.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}`;
+    } else {
+        window.location.href = `/BeeMazing-A1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}`;
+    }
+
+} catch (error) {
+    console.error("Error saving task:", error);
+    alert(`Failed to save task: ${error.message}`);
+}
+});
+});
+    
+    
 
 
 
@@ -2138,208 +2343,6 @@ window.addEventListener("click", (e) => {
 
 
 
-
-        document.getElementById("addTaskForm").addEventListener("submit", async function (event) {
-    event.preventDefault();
-
-    const title = document.getElementById("taskTitle").value.trim();
-    const notes = document.getElementById("taskNotes").value.trim();
-    const room = document.getElementById("roomSelection").value;
-    const repeat = document.getElementById("repeatSelection").value;
-    const settings = document.getElementById("settingsSelection").value;
-    const dateFrom = document.getElementById("taskDate").value;
-    const dateTo = document.getElementById("taskDateTo").value;
-    const dateMode = document.getElementById("dateModeSelection").value;
-    const reminder = document.getElementById("taskReminder").checked;
-    const users = document.getElementById("assignedToSelection").value
-        .split(",")
-        .map(u => u.trim())
-        .filter(u => u);
-    const reward = document.getElementById("RewardValue").value;
-    let timesPerDay = parseInt(document.getElementById("timesPerDayInput").value) || null;
-    let timesPerWeek = parseInt(document.getElementById("timesPerWeekInput").value) || null;
-    let timesPerMonth = parseInt(document.getElementById("timesPerMonthInput").value) || null;
-    const specificDates = document.getElementById("specificDatesInput").value;
-
-    // Validations
-    if (!title) {
-        alert("Task title is required!");
-        return;
-    }
-    if (users.length === 0) {
-        alert("Please assign at least one user.");
-        return;
-    }
-    
-    // Special validation for editing modes
-    if (isOccurrenceEdit && !targetDate) {
-        alert("Invalid occurrence edit - missing target date.");
-        return;
-    }
-    if (isFutureEdit && !splitDate) {
-        alert("Invalid future edit - missing split date.");
-        return;
-    }
-    
-    if (!isOccurrenceEdit && !isFutureEdit) {
-        if (dateMode === "date" && !dateFrom) {
-            alert("Please select a start date.");
-            return;
-        }
-        if (dateMode === "specific-dates" && !specificDates) {
-            alert("Please select at least one date.");
-            return;
-        }
-    }
-
-    // Cap and sanitize
-    if (timesPerDay > 100) timesPerDay = 100;
-    if (timesPerWeek > 100) timesPerWeek = 100;
-    if (timesPerMonth > 100) timesPerMonth = 100;
-    if (timesPerDay !== null && timesPerDay < 1) timesPerDay = 1;
-    if (timesPerWeek !== null && timesPerWeek < 1) timesPerWeek = 1;
-    if (timesPerMonth !== null && timesPerMonth < 1) timesPerMonth = 1;
-
-    let dateValue = "";
-    if (isOccurrenceEdit) {
-        // For single occurrence, use target date as both start and end for clarity
-        dateValue = `${targetDate} to ${targetDate}`;
-    } else if (isFutureEdit) {
-        // For future edit, use split date as start
-        const originalRange = editTask.date.split(" to ");
-        const originalEnd = originalRange[1] || "3000-01-01";
-        dateValue = `${splitDate} to ${originalEnd}`;
-    } else if (dateMode === "date") {
-        const fromDate = dateFrom;
-        const toDate = dateTo || "3000-01-01";
-        dateValue = `${fromDate} to ${toDate}`;
-    } else if (dateMode === "specific-dates" && specificDates) {
-        const dates = specificDates.split(",").map(d => d.trim()).filter(d => d);
-        dateValue = `${dates[0]} to ${dates[dates.length - 1]}`;
-    } else {
-        const today = new Date().toISOString().split("T")[0];
-        dateValue = `${today} to 3000-01-01`;
-    }
-
-    const task = {
-        title,
-        notes: notes || undefined,
-        room: room || undefined,
-        repeat: repeat || undefined,
-        settings: settings || undefined,
-        date: dateValue,
-        reminder: reminder || undefined,
-        users,
-        reward: reward || undefined,
-        alarms: alarms.length > 0 ? alarms : undefined,
-        timesPerDay: repeat === "Daily" ? timesPerDay : undefined,
-        timesPerWeek: repeat === "Weekly" ? timesPerWeek : undefined,
-        timesPerMonth: repeat === "Monthly" ? timesPerMonth : undefined,
-        specificDates: dateMode === "specific-dates" ? specificDates : undefined,
-        daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? selectedDays : ["Any"]) : undefined
-    };
-
-    console.log("Task being saved:", JSON.stringify(task, null, 2));
-
-    const currentAdmin = localStorage.getItem("currentAdminEmail");
-    const urlParams = new URLSearchParams(window.location.search);
-    const editTitle = urlParams.get("editTitle");
-    const editDate = urlParams.get("editDate");
-    const from = urlParams.get("from");
-    const originalUser = urlParams.get("user") || localStorage.getItem("currentUser");
-
-    if (!originalUser) {
-        alert("No user context available. Redirecting to user selection.");
-        window.location.href = "/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html";
-        return;
-    }
-
-    try {
-        const url = "https://beemazing1.onrender.com/api/tasks";
-        let body;
-        let method = "POST";
-        let endpoint = "https://beemazing1.onrender.com/api/tasks";
-
-        if (isOccurrenceEdit && targetDate && originalStartDate && editTask) {
-            // Single occurrence edit
-            method = "PUT";
-            endpoint = "https://beemazing1.onrender.com/api/tasks/occurrence";
-            body = {
-                adminEmail: currentAdmin,
-                originalTitle: editTask.title,
-                originalStartDate: originalStartDate,
-                targetDate: targetDate,
-                modifiedTask: task
-            };
-        } else if (isFutureEdit && splitDate && originalStartDate && editTask) {
-            // Future occurrences edit (split task)
-            method = "PUT";
-            endpoint = "https://beemazing1.onrender.com/api/tasks/future";
-            body = {
-                adminEmail: currentAdmin,
-                originalTitle: editTask.title,
-                originalStartDate: originalStartDate,
-                splitDate: splitDate,
-                modifiedTask: task
-            };
-        } else if (editTitle && editDate) {
-            // Original edit mode
-            method = "PUT";
-            body = {
-                adminEmail: currentAdmin,
-                task,
-                originalTitle: editTitle,
-                originalDate: editTaskFullDate
-            };
-        } else {
-            // New task
-            body = { adminEmail: currentAdmin, task };
-        }
-
-        const response = await fetch(endpoint, {
-            method: method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body)
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
-
-        console.log("Server response:", data);
-
-        if (isOccurrenceEdit) {
-            alert("Single occurrence updated successfully!");
-        } else if (isFutureEdit) {
-            alert("Future occurrences updated successfully!");
-        } else {
-            alert("Task saved successfully!");
-        }
-
-        // Store task title in localStorage if coming from onboarding
-        if (from === "onboarding") {
-            const existingTitles = JSON.parse(localStorage.getItem("onboardingTaskTitles") || "[]");
-            if (!existingTitles.includes(title)) {
-                existingTitles.push(title);
-                localStorage.setItem("onboardingTaskTitles", JSON.stringify(existingTitles));
-            }
-        }
-
-        // Redirect back to the original user's tasks.html or onboarding
-        const adminEmail = encodeURIComponent(currentAdmin || "");
-        if (from === "onboarding") {
-            window.location.href = `/BeeMazing-A1/onboarding.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}#step4`;
-        } else if (isOccurrenceEdit || isFutureEdit) {
-            // Redirect back to taskz.html for specific date views
-            window.location.href = `/BeeMazing-A1/taskz.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}`;
-        } else {
-            window.location.href = `/BeeMazing-A1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}`;
-        }
-
-    } catch (error) {
-        console.error("Error saving task:", error);
-        alert(`Failed to save task: ${error.message}`);
-    }
-});
 
 
 
