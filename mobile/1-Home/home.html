@@ -35,7 +35,7 @@ body {
     overflow: hidden;
 }
         .header {
-            background: var(--secondary-color); /* same as footer */
+            background: var(--light-bg); /* match page background */
             padding: 15px;
             display: flex;
             align-items: center;
@@ -99,7 +99,7 @@ body {
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
         }
         .remove-user-btn {
-            background: var(--secondary-color);
+            background: #8B4513;
             color: white;
             border: none;
             border-radius: 50%;
@@ -114,12 +114,13 @@ body {
             transition: background-color 0.3s ease, transform 0.2s ease;
         }
         .remove-user-btn:hover {
-            background-color: #131010;
+            background-color: #A0522D;
             transform: scale(1.1);
         }
 
         .settings-btn {
     font-size: 16px; /* Adjust size if different from X button */
+    color: #8B4513;
 }
 
 
@@ -307,7 +308,7 @@ body {
     left: 50%;
     transform: translateX(-50%);
     background: var(--primary-color);
-    color: var(--secondary-color);
+    color: white;
     padding: 12px 24px;
     font-size: 16px;
     font-weight: 600;
@@ -360,7 +361,7 @@ body {
 .logout-container button {
     margin: 10px 20px;  
     padding: 10px 20px;
-    background-color: var(--secondary-color);
+    background-color: var(--primary-color);
     color: white;
     border: none;
     border-radius: 8px;
@@ -370,7 +371,7 @@ body {
 }
 
 .logout-container button:hover {
-    background-color: #B71C1C;  
+    background-color: #FFB300;  
 }
 
 
@@ -379,7 +380,7 @@ body {
 
 
 .admin-checkmark {
-    color: var(--secondary-color);
+    color: #8B4513;
     font-size: 16px;
     font-weight: bold;
 }
@@ -422,7 +423,7 @@ body {
 <body>
     <div class="header">
         <i class="fas fa-bars menu-icon" aria-label="Menu"></i>
-        <div class="title">BeeMazing 1</div>
+        <div class="title">BeeMazing</div>
     </div>
 
     <div id="logoutContainer" class="logout-container">
