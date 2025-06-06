@@ -53,12 +53,14 @@
       z-index: 10;
     }
 
-    h1 {
-      margin-bottom: 30px;
-      font-size: 32px;
-      letter-spacing: 1px;
-      color: var(--primary-color);
+    .logo {
       text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo img {
+      width: 240px;
+      height: auto;
     }
 
     .button-container {
@@ -71,7 +73,7 @@
 
     .login-btn {
       background-color: var(--primary-color);
-      color: var(--secondary-color);
+      color: white;
       border: none;
       padding: 14px 32px;
       font-size: 18px;
@@ -173,7 +175,7 @@
 
 .top-bar button {
   background-color: var(--primary-color);
-  color: var(--secondary-color);
+  color: white;
   padding: 10px 16px;
   border: none;
   border-radius: 8px;
@@ -197,11 +199,13 @@
   
 
   <div class="wrapper">
-    <h1>BeeMazing A1</h1> <!-- whaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-->
+    <div class="logo">
+      <img src="mobile/1-Home/logo.png" alt="BeeMazing Logo" />
+    </div>
 
     <div class="button-container">
-      <button class="login-btn" id="adminBtn">Parent</button>
-      <button class="login-btn" id="userBtn">Child</button>
+      <button class="login-btn" id="adminBtn">For parents</button>
+      <button class="login-btn" id="userBtn">For kids</button>
     </div>
 
     <div id="passwordPrompt">
