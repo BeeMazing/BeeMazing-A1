@@ -12,7 +12,7 @@
             }
 
             body {
-                background: linear-gradient(135deg, #1e1f26 0%, #2a2b32 100%);
+                background: #fffff8;
                 color: #ffffff;
                 font-family: "Poppins", sans-serif;
                 display: flex;
@@ -20,7 +20,6 @@
                 justify-content: center;
                 min-height: 100vh;
                 overflow: hidden;
-                animation: gradientShift 15s ease infinite;
             }
 
             @keyframes gradientShift {
@@ -36,7 +35,6 @@
             }
 
             .container {
-                background: rgba(42, 43, 50, 0.2);
                 backdrop-filter: blur(10px);
                 padding: 2rem;
                 border-radius: 15px;
@@ -65,8 +63,9 @@
             }
 
             .logo img {
-                width: 120px;
+                width: 220px;
                 height: auto;
+                margin-bottom: 20px;
             }
 
             h2 {
@@ -85,12 +84,12 @@
 
             input {
                 width: 100%;
-                padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+                padding: 0.75rem;
                 font-size: 1rem;
                 border-radius: 8px;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                background: rgba(30, 31, 38, 0.5);
-                color: #ffffff;
+                border: 2px solid #ccc;
+                background: #ffffff;
+                color: #333333;
                 transition:
                     border-color 0.3s,
                     box-shadow 0.3s;
@@ -103,27 +102,7 @@
                 box-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
             }
 
-            .input-group::before {
-                content: "";
-                position: absolute;
-                left: 12px;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 20px;
-                height: 20px;
-                background-size: contain;
-                opacity: 0.5;
-            }
 
-            .input-group.email::before {
-                background: url("https://img.icons8.com/ios-filled/50/ffffff/email.png")
-                    no-repeat center;
-            }
-
-            .input-group.password::before {
-                background: url("https://img.icons8.com/ios-filled/50/ffffff/lock.png")
-                    no-repeat center;
-            }
 
             button {
                 width: 100%;
@@ -266,7 +245,7 @@
                 }
 
                 .logo img {
-                    width: 130px;
+                    width: 230px;
                 }
 
                 h2 {
@@ -288,7 +267,7 @@
                 }
 
                 .logo img {
-                    width: 100px;
+                    width: 200px;
                 }
 
                 h2 {
@@ -365,12 +344,9 @@
     <body>
         <div class="container">
             <div class="logo">
-                <img
-                    src="https://i.postimg.cc/x1fDPQPX/pngtree-honey-bee-logo-design-vector-png-image-12507314-removebg-preview.png"
-                    alt="BeeMazing Logo"
-                />
+                <img src="mobile/1-Home/logo.png" alt="BeeMazing Logo" />
             </div>
-            <h2 id="formTitle">Register</h2>
+            <h2 id="formTitle" style="display: none">Login</h2>
             <form id="authForm" novalidate>
                 <div id="emailGroup" class="input-group email">
                     <input
@@ -399,7 +375,7 @@
                         placeholder="Confirm Password"
                     />
                 </div>
-                <button type="submit" id="submitBtn">Register</button>
+                <button type="submit" id="submitBtn">Login</button>
                 <button type="button" id="backBtn" style="display: none">
                     Back
                 </button>
@@ -429,8 +405,8 @@
                 <div class="message" id="resetMessage"></div>
             </form>
             <div class="toggle">
-                <span id="toggleText">Already have an account?</span>
-                <a onclick="toggleForm()" id="toggleFormText">Login</a>
+                <span id="toggleText">Don't have an account?</span>
+                <a onclick="toggleForm()" id="toggleFormText">Register</a>
                 <span> | </span>
                 <a onclick="showForgotPassword()" id="forgotPasswordLink"
                     >Forgot Password?</a
@@ -439,7 +415,7 @@
         </div>
 
         <script>
-            let isRegistering = true;
+            let isRegistering = false;
             let isResettingPassword = false;
             const urlParams = new URLSearchParams(window.location.search);
             const resetToken = urlParams.get("resetToken");
