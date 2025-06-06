@@ -15,7 +15,7 @@ function filterTasksForDate(tasks, selectedDate) {
     if (!Array.isArray(tasks)) return [];
 
     const selected = parseLocalDate(selectedDate);
-    const selectedDateStr = selected.toISOString().split("T")[0];
+    const selectedDateStr = selectedDate; // Use original date string to match exception keys
     const selectedYear = selected.getFullYear();
     const selectedMonth = selected.getMonth();
 
@@ -28,6 +28,19 @@ function filterTasksForDate(tasks, selectedDate) {
 
     return tasks.filter(task => {
         if (!task.date) return false;
+
+        // Check if this specific date has an exception
+        if (task.exceptions && task.exceptions[selectedDateStr]) {
+            const exception = task.exceptions[selectedDateStr];
+            
+            // If deleted exception, exclude this task for this date
+            if (exception.deleted) {
+                return false;
+            }
+            
+            // If modified exception, this will be handled later in the mapping
+            // For now, continue with normal filtering logic
+        }
 
         // Parse From-To range
         const range = task.date.split(" to ");
@@ -130,6 +143,21 @@ function filterTasksForDate(tasks, selectedDate) {
 
         // Default: From-To
         return inRange;
+    }).map(task => {
+        // Apply task modifications for specific dates if they exist
+        if (task.exceptions && task.exceptions[selectedDateStr]) {
+            const exception = task.exceptions[selectedDateStr];
+            if (exception.modified && exception.task) {
+                // Return the modified task for this specific date
+                return {
+                    ...task,
+                    ...exception.task,
+                    originalTask: task, // Keep reference to original for tracking
+                    isModified: true
+                };
+            }
+        }
+        return task;
     });
 }
 

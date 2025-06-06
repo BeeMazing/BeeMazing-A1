@@ -747,9 +747,167 @@ app.put("/api/tasks", async (req, res) => {
   }
 });
 
+// ✅ Delete a single occurrence of a recurring task
+app.delete("/api/tasks/occurrence", async (req, res) => {
+  const { adminEmail, title, date, originalStartDate } = req.query;
 
+  if (!adminEmail || !title || !date || !originalStartDate) {
+    return res.status(400).json({ error: "Missing adminEmail, title, date, or originalStartDate" });
+  }
 
+  try {
+    console.log(`Deleting single occurrence: adminEmail=${adminEmail}, title=${title}, date=${date}, originalStartDate=${originalStartDate}`);
+    const db = await connectDB();
+    const admins = db.collection("admins");
 
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const tasks = admin.tasks || [];
+    const taskIndex = tasks.findIndex(task => {
+      const taskStartDate = task.date.split(" to ")[0];
+      return task.title === title && taskStartDate === originalStartDate;
+    });
+
+    if (taskIndex === -1) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    // Initialize exceptions if they don't exist
+    if (!tasks[taskIndex].exceptions) {
+      tasks[taskIndex].exceptions = {};
+    }
+
+    // Add deletion exception for this specific date
+    tasks[taskIndex].exceptions[date] = { deleted: true };
+
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { tasks } }
+    );
+
+    console.log(`Single occurrence deleted successfully: title=${title}, date=${date}`);
+    res.json({ success: true, message: "Single occurrence deleted successfully" });
+  } catch (err) {
+    console.error(`Error deleting single occurrence (title=${title}, date=${date}):`, err);
+    res.status(500).json({ error: "Failed to delete single occurrence", details: err.message });
+  }
+});
+
+// ✅ Edit a single occurrence of a recurring task
+app.put("/api/tasks/occurrence", async (req, res) => {
+  const { adminEmail, originalTitle, originalStartDate, targetDate, modifiedTask } = req.body;
+
+  if (!adminEmail || !originalTitle || !originalStartDate || !targetDate || !modifiedTask) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  try {
+    console.log(`Editing single occurrence: adminEmail=${adminEmail}, originalTitle=${originalTitle}, targetDate=${targetDate}`);
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const tasks = admin.tasks || [];
+    const taskIndex = tasks.findIndex(task => {
+      const taskStartDate = task.date.split(" to ")[0];
+      return task.title === originalTitle && taskStartDate === originalStartDate;
+    });
+
+    if (taskIndex === -1) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    // Initialize exceptions if they don't exist
+    if (!tasks[taskIndex].exceptions) {
+      tasks[taskIndex].exceptions = {};
+    }
+
+    // Add modification exception for this specific date
+    tasks[taskIndex].exceptions[targetDate] = {
+      modified: true,
+      task: modifiedTask
+    };
+
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { tasks } }
+    );
+
+    console.log(`Single occurrence modified successfully: title=${originalTitle}, date=${targetDate}`);
+    res.json({ success: true, message: "Single occurrence modified successfully" });
+  } catch (err) {
+    console.error(`Error modifying single occurrence:`, err);
+    res.status(500).json({ error: "Failed to modify single occurrence", details: err.message });
+  }
+});
+
+// ✅ Edit task from a specific date forward (split recurring task)
+app.put("/api/tasks/future", async (req, res) => {
+  const { adminEmail, originalTitle, originalStartDate, splitDate, modifiedTask } = req.body;
+
+  if (!adminEmail || !originalTitle || !originalStartDate || !splitDate || !modifiedTask) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  try {
+    console.log(`Editing task from date forward: adminEmail=${adminEmail}, originalTitle=${originalTitle}, splitDate=${splitDate}`);
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const tasks = admin.tasks || [];
+    const taskIndex = tasks.findIndex(task => {
+      const taskStartDate = task.date.split(" to ")[0];
+      return task.title === originalTitle && taskStartDate === originalStartDate;
+    });
+
+    if (taskIndex === -1) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    const originalTask = tasks[taskIndex];
+    const originalRange = originalTask.date.split(" to ");
+    const originalEnd = originalRange[1] || "3000-01-01";
+
+    // Calculate the day before split date for the original task's new end date
+    const splitDateObj = new Date(splitDate);
+    splitDateObj.setDate(splitDateObj.getDate() - 1);
+    const dayBeforeSplit = splitDateObj.toISOString().split("T")[0];
+
+    // Update the original task to end the day before the split date
+    tasks[taskIndex].date = `${originalRange[0]} to ${dayBeforeSplit}`;
+
+    // Create new task starting from the split date
+    const newTask = {
+      ...modifiedTask,
+      date: `${splitDate} to ${originalEnd}`
+    };
+
+    tasks.push(newTask);
+
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { tasks } }
+    );
+
+    console.log(`Task split successfully: original ends ${dayBeforeSplit}, new starts ${splitDate}`);
+    res.json({ success: true, message: "Task split successfully" });
+  } catch (err) {
+    console.error(`Error splitting task:`, err);
+    res.status(500).json({ error: "Failed to split task", details: err.message });
+  }
+});
 
 // In server.js
 app.post("/api/rewards", async (req, res) => {

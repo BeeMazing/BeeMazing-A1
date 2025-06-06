@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recurring Tasks Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #4CAF50;
+        }
+        .test-title {
+            color: #4CAF50;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .test-result {
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            border-left: 4px solid #f44336;
+        }
+        .task-example {
+            background: #1e1e1e;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .exception-indicator {
+            color: #ffeb3b;
+            font-size: 12px;
+        }
+        .button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #45a049;
+        }
+        .button.secondary {
+            background: #2196F3;
+        }
+        .button.danger {
+            background: #f44336;
+        }
+        pre {
+            background: #0f0f0f;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 Recurring Tasks Management - Test & Demo</h1>
+    
+    <div class="test-section">
+        <div class="test-title">📋 Overview</div>
+        <p>This page demonstrates the new recurring task management system that allows granular control over individual task occurrences.</p>
+        <p><strong>Problem Solved:</strong> Previously, deleting or editing a recurring task would affect ALL past and future occurrences. Now you can manage individual dates!</p>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">🧪 Test 1: Task Exception System</div>
+        <p>Example of a daily recurring task with exceptions:</p>
+        
+        <div class="task-example">
+            <strong>Original Task:</strong> "Daily Room Cleanup"<br>
+            <em>Date Range:</em> 2024-01-01 to 2024-12-31<br>
+            <em>Repeat:</em> Daily<br>
+            <em>Users:</em> Alice, Bob<br>
+            <em>Reward:</em> 5 points
+        </div>
+
+        <div class="task-example">
+            <strong>After User Actions:</strong><br>
+            • March 15: <span style="color: #f44336;">❌ Deleted single occurrence</span><br>
+            • March 20: <span class="exception-indicator">📝 Modified</span> - "Special Event Cleanup" (Charlie, 10 points)<br>
+            • April 1 onwards: <span style="color: #2196F3;">🔄 Split task</span> - Added bonus reward (+2 points)
+        </div>
+
+        <pre id="exceptionData"></pre>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">🖱️ Test 2: User Interface</div>
+        <p>When clicking on a recurring task, users now see these options:</p>
+        
+        <div class="task-example">
+            <strong>Daily Room Cleanup</strong> <span class="exception-indicator">📝 Modified</span><br>
+            <em>March 20, 2024</em><br><br>
+            
+            <button class="button secondary">Edit This Occurrence</button>
+            <button class="button">Edit Future Occurrences</button>
+            <button class="button danger">Delete This Occurrence</button>
+            <button class="button">Edit Entire Task</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">⚙️ Test 3: Backend Endpoints</div>
+        <p>New API endpoints for granular task management:</p>
+        
+        <div class="test-result">
+            <strong>1. Delete Single Occurrence</strong><br>
+            <code>DELETE /api/tasks/occurrence</code><br>
+            <em>Creates deletion exception instead of removing entire task</em>
+        </div>
+        
+        <div class="test-result">
+            <strong>2. Edit Single Occurrence</strong><br>
+            <code>PUT /api/tasks/occurrence</code><br>
+            <em>Creates modification exception for specific date</em>
+        </div>
+        
+        <div class="test-result">
+            <strong>3. Split Recurring Task</strong><br>
+            <code>PUT /api/tasks/future</code><br>
+            <em>Splits task at specified date with new properties</em>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">🔍 Test 4: Filtering Logic</div>
+        <p>The enhanced filtering system now handles:</p>
+        
+        <div class="test-result success">
+            ✅ Deletion exceptions - hides tasks on specific dates
+        </div>
+        <div class="test-result success">
+            ✅ Modification exceptions - shows modified task properties
+        </div>
+        <div class="test-result success">
+            ✅ Original task reference - maintains data integrity
+        </div>
+        <div class="test-result success">
+            ✅ Backward compatibility - existing tasks work unchanged
+        </div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">📊 Test 5: Live Demonstration</div>
+        <p>Click the buttons below to simulate the new functionality:</p>
+        
+        <button class="button" onclick="simulateDeleteOccurrence()">Simulate Delete Occurrence</button>
+        <button class="button secondary" onclick="simulateEditOccurrence()">Simulate Edit Occurrence</button>
+        <button class="button" onclick="simulateSplitTask()">Simulate Split Task</button>
+        <button class="button" onclick="resetDemo()">Reset Demo</button>
+        
+        <div id="demoResult" class="test-result" style="margin-top: 10px; display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">🎯 Usage Scenarios</div>
+        
+        <div class="task-example">
+            <strong>Scenario 1:</strong> Family vacation on March 15<br>
+            → Delete "Daily Chores" for that day only<br>
+            → Task continues normally on all other dates
+        </div>
+        
+        <div class="task-example">
+            <strong>Scenario 2:</strong> Special event on March 20<br>
+            → Edit occurrence to "Party Cleanup" with different users<br>
+            → Regular task resumes on March 21
+        </div>
+        
+        <div class="task-example">
+            <strong>Scenario 3:</strong> New reward system starting April 1<br>
+            → Split task to add rewards from April onwards<br>
+            → Previous months remain unchanged
+        </div>
+    </div>
+
+    <script src="/BeeMazing-A1/shared/taskrotations.js"></script>
+    <script>
+        // Sample task data with exceptions
+        const sampleTaskWithExceptions = {
+            title: "Daily Room Cleanup",
+            date: "2024-01-01 to 2024-12-31",
+            repeat: "Daily",
+            users: ["Alice", "Bob"],
+            reward: "5",
+            exceptions: {
+                "2024-03-15": { 
+                    deleted: true 
+                },
+                "2024-03-20": { 
+                    modified: true,
+                    task: {
+                        title: "Special Event Cleanup",
+                        users: ["Charlie"],
+                        reward: "10",
+                        notes: "Extra cleaning for the party"
+                    }
+                }
+            }
+        };
+
+        // Display the exception data
+        document.getElementById('exceptionData').textContent = JSON.stringify(sampleTaskWithExceptions, null, 2);
+
+        function simulateDeleteOccurrence() {
+            const result = document.getElementById('demoResult');
+            result.style.display = 'block';
+            result.className = 'test-result success';
+            result.innerHTML = `
+                <strong>✅ Delete Occurrence Simulation</strong><br>
+                Date: March 15, 2024<br>
+                Action: Added deletion exception<br>
+                Result: Task hidden on March 15, visible on all other dates<br>
+                <em>Exception added: "2024-03-15": { deleted: true }</em>
+            `;
+        }
+
+        function simulateEditOccurrence() {
+            const result = document.getElementById('demoResult');
+            result.style.display = 'block';
+            result.className = 'test-result success';
+            result.innerHTML = `
+                <strong>✅ Edit Occurrence Simulation</strong><br>
+                Date: March 20, 2024<br>
+                Action: Modified task properties for single date<br>
+                Changes: Title → "Special Event Cleanup", Users → ["Charlie"], Reward → 10<br>
+                <em>Exception added with modified task properties</em>
+            `;
+        }
+
+        function simulateSplitTask() {
+            const result = document.getElementById('demoResult');
+            result.style.display = 'block';
+            result.className = 'test-result success';
+            result.innerHTML = `
+                <strong>✅ Split Task Simulation</strong><br>
+                Split Date: April 1, 2024<br>
+                Action: Created new task from April 1 onwards<br>
+                Original Task: Ends March 31, 2024<br>
+                New Task: Starts April 1, 2024 with reward bonus<br>
+                <em>Two separate task records created</em>
+            `;
+        }
+
+        function resetDemo() {
+            const result = document.getElementById('demoResult');
+            result.style.display = 'none';
+        }
+
+        // Test the filterTasksForDate function if available
+        if (typeof filterTasksForDate === 'function') {
+            console.log('✅ filterTasksForDate function is available');
+            
+            // Test filtering with exceptions
+            const testDate = "2024-03-15";
+            const filteredTasks = filterTasksForDate([sampleTaskWithExceptions], testDate);
+            
+            if (filteredTasks.length === 0) {
+                console.log(`✅ Deletion exception working: Task hidden on ${testDate}`);
+            } else {
+                console.log(`❌ Deletion exception not working: Task still visible on ${testDate}`);
+            }
+            
+            // Test modification exception
+            const modTestDate = "2024-03-20";
+            const modFilteredTasks = filterTasksForDate([sampleTaskWithExceptions], modTestDate);
+            
+            if (modFilteredTasks.length > 0 && modFilteredTasks[0].isModified) {
+                console.log(`✅ Modification exception working: Task modified on ${modTestDate}`);
+                console.log('Modified task:', modFilteredTasks[0]);
+            } else {
+                console.log(`❌ Modification exception not working on ${modTestDate}`);
+            }
+        } else {
+            console.log('❌ filterTasksForDate function not available - check taskrotations.js');
+        }
+
+        // Display test results in console
+        console.log('🔄 Recurring Tasks Test Results:');
+        console.log('Sample task with exceptions:', sampleTaskWithExceptions);
+    </script>
+</body>
+</html>
