@@ -28,7 +28,7 @@
     --footer-height: 70px;
     --modal-bg: rgba(19, 19, 18, 0.4); /* Added */
     --border-dark: #444754; /* Added */
-    /* Cache buster v9.0 - edit/delete buttons match add user style */
+    /* Cache buster v10.0 - aggressive inline styling for buttons and text */
 }
 
 /* RGB color variations for Add User elements */
@@ -1556,6 +1556,26 @@ function simpleAddUserStyling() {
     if (text) {
       text.style.setProperty('color', '#5D4E41', 'important');
     }
+    
+    // Force all user list items to have correct color
+    const userItems = document.querySelectorAll('.user-list li');
+    userItems.forEach(item => {
+      item.style.setProperty('color', '#5D4E41', 'important');
+    });
+    
+    // Force all edit/delete buttons to have correct colors
+    const editBtns = document.querySelectorAll('.edit-user-btn');
+    const removeBtns = document.querySelectorAll('.remove-user-btn');
+    
+    editBtns.forEach(btn => {
+      btn.style.setProperty('background', '#FBB740', 'important');
+      btn.style.setProperty('color', '#F5F5DC', 'important');
+    });
+    
+    removeBtns.forEach(btn => {
+      btn.style.setProperty('background', '#FBB740', 'important');
+      btn.style.setProperty('color', '#F5F5DC', 'important');
+    });
   } catch (e) {
     console.log("Error in simpleAddUserStyling:", e);
   }
@@ -1644,6 +1664,14 @@ document.getElementById("submitUserBtn").addEventListener("click", async () => {
             const editBtn = document.createElement("button");
             editBtn.classList.add("edit-user-btn");
             editBtn.innerHTML = "⚙️";
+            editBtn.style.setProperty('background', '#FBB740', 'important');
+            editBtn.style.setProperty('color', '#F5F5DC', 'important');
+            editBtn.style.setProperty('border', 'none', 'important');
+            editBtn.style.setProperty('border-radius', '50%', 'important');
+            editBtn.style.setProperty('width', '30px', 'important');
+            editBtn.style.setProperty('height', '30px', 'important');
+            editBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
+            editBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
             editBtn.addEventListener("click", (event) => {
               event.stopPropagation();
               showPermissionModal(user);
@@ -1651,6 +1679,14 @@ document.getElementById("submitUserBtn").addEventListener("click", async () => {
             const removeBtn = document.createElement("button");
             removeBtn.classList.add("remove-user-btn");
             removeBtn.textContent = "X";
+            removeBtn.style.setProperty('background', '#FBB740', 'important');
+            removeBtn.style.setProperty('color', '#F5F5DC', 'important');
+            removeBtn.style.setProperty('border', 'none', 'important');
+            removeBtn.style.setProperty('border-radius', '50%', 'important');
+            removeBtn.style.setProperty('width', '30px', 'important');
+            removeBtn.style.setProperty('height', '30px', 'important');
+            removeBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
+            removeBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
             removeBtn.addEventListener("click", (event) => {
               event.stopPropagation();
               showConfirmModal(user);
@@ -1712,11 +1748,13 @@ profileIcon.addEventListener("click", async () => {
     } else {
         users.forEach(user => {
             const li = document.createElement("li");
-            
+            li.style.setProperty('color', '#5D4E41', 'important');
+          
             const nameContainer = document.createElement("div");
             nameContainer.classList.add("user-list-item");
             const userNameSpan = document.createElement("span");
             userNameSpan.textContent = user;
+            userNameSpan.style.setProperty('color', '#5D4E41', 'important');
             nameContainer.appendChild(userNameSpan);
             
             if (userPermissions[user] === "Admin") {
@@ -1737,6 +1775,14 @@ profileIcon.addEventListener("click", async () => {
                 const editBtn = document.createElement("button");
                 editBtn.classList.add("edit-user-btn");
                 editBtn.innerHTML = "⚙️";
+                editBtn.style.setProperty('background', '#FBB740', 'important');
+                editBtn.style.setProperty('color', '#F5F5DC', 'important');
+                editBtn.style.setProperty('border', 'none', 'important');
+                editBtn.style.setProperty('border-radius', '50%', 'important');
+                editBtn.style.setProperty('width', '30px', 'important');
+                editBtn.style.setProperty('height', '30px', 'important');
+                editBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
+                editBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
                 editBtn.addEventListener("click", (event) => {
                     event.stopPropagation();
                     showPermissionModal(user);
@@ -1744,6 +1790,14 @@ profileIcon.addEventListener("click", async () => {
                 const removeBtn = document.createElement("button");
                 removeBtn.classList.add("remove-user-btn");
                 removeBtn.textContent = "X";
+                removeBtn.style.setProperty('background', '#FBB740', 'important');
+                removeBtn.style.setProperty('color', '#F5F5DC', 'important');
+                removeBtn.style.setProperty('border', 'none', 'important');
+                removeBtn.style.setProperty('border-radius', '50%', 'important');
+                removeBtn.style.setProperty('width', '30px', 'important');
+                removeBtn.style.setProperty('height', '30px', 'important');
+                removeBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
+                removeBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
                 removeBtn.addEventListener("click", (event) => {
                     event.stopPropagation();
                     showConfirmModal(user);
@@ -1815,6 +1869,14 @@ confirmYesBtn.addEventListener("click", async () => {
                     const editBtn = document.createElement("button");
                     editBtn.classList.add("edit-user-btn");
                     editBtn.innerHTML = "⚙️";
+                    editBtn.style.setProperty('background', '#FBB740', 'important');
+                    editBtn.style.setProperty('color', '#F5F5DC', 'important');
+                    editBtn.style.setProperty('border', 'none', 'important');
+                    editBtn.style.setProperty('border-radius', '50%', 'important');
+                    editBtn.style.setProperty('width', '30px', 'important');
+                    editBtn.style.setProperty('height', '30px', 'important');
+                    editBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
+                    editBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
                     editBtn.addEventListener("click", (event) => {
                         event.stopPropagation();
                         showPermissionModal(user);
@@ -1822,6 +1884,14 @@ confirmYesBtn.addEventListener("click", async () => {
                     const removeBtn = document.createElement("button");
                     removeBtn.classList.add("remove-user-btn");
                     removeBtn.textContent = "X";
+                    removeBtn.style.setProperty('background', '#FBB740', 'important');
+                    removeBtn.style.setProperty('color', '#F5F5DC', 'important');
+                    removeBtn.style.setProperty('border', 'none', 'important');
+                    removeBtn.style.setProperty('border-radius', '50%', 'important');
+                    removeBtn.style.setProperty('width', '30px', 'important');
+                    removeBtn.style.setProperty('height', '30px', 'important');
+                    removeBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
+                    removeBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
                     removeBtn.addEventListener("click", (event) => {
                         event.stopPropagation();
                         showConfirmModal(user);
@@ -1912,6 +1982,14 @@ savePermissionBtn.addEventListener("click", async () => {
                 const editBtn = document.createElement("button");
                 editBtn.classList.add("edit-user-btn");
                 editBtn.innerHTML = "⚙️";
+                editBtn.style.setProperty('background', '#FBB740', 'important');
+                editBtn.style.setProperty('color', '#F5F5DC', 'important');
+                editBtn.style.setProperty('border', 'none', 'important');
+                editBtn.style.setProperty('border-radius', '50%', 'important');
+                editBtn.style.setProperty('width', '30px', 'important');
+                editBtn.style.setProperty('height', '30px', 'important');
+                editBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
+                editBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
                 editBtn.addEventListener("click", (event) => {
                     event.stopPropagation();
                     showPermissionModal(user);
@@ -1919,6 +1997,14 @@ savePermissionBtn.addEventListener("click", async () => {
                 const removeBtn = document.createElement("button");
                 removeBtn.classList.add("remove-user-btn");
                 removeBtn.textContent = "X";
+                removeBtn.style.setProperty('background', '#FBB740', 'important');
+                removeBtn.style.setProperty('color', '#F5F5DC', 'important');
+                removeBtn.style.setProperty('border', 'none', 'important');
+                removeBtn.style.setProperty('border-radius', '50%', 'important');
+                removeBtn.style.setProperty('width', '30px', 'important');
+                removeBtn.style.setProperty('height', '30px', 'important');
+                removeBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
+                removeBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
                 removeBtn.addEventListener("click", (event) => {
                     event.stopPropagation();
                     showConfirmModal(user);
