@@ -1559,19 +1559,40 @@ if (!globalAdminEmail) {
     const errorMessage = document.getElementById("errorMessage");
 
     if (addUserBtnInModal) {
+        console.log("Add user button found, adding event listener");
         addUserBtnInModal.addEventListener("click", (e) => {
+            console.log("Add user button clicked!");
             e.preventDefault();
             e.stopPropagation();
-            addUserModal.style.display = "flex";
-            usernameInput.value = "";
-            errorMessage.style.display = "none";
-            document.querySelector('input[name="beeRole"][value="User"]').checked = true;
+            if (addUserModal) {
+                console.log("Opening add user modal");
+                addUserModal.style.setProperty('display', 'flex', 'important');
+                addUserModal.style.setProperty('z-index', '9999', 'important');
+                addUserModal.style.setProperty('position', 'fixed', 'important');
+                addUserModal.style.setProperty('top', '0', 'important');
+                addUserModal.style.setProperty('left', '0', 'important');
+                addUserModal.style.setProperty('width', '100%', 'important');
+                addUserModal.style.setProperty('height', '100%', 'important');
+                addUserModal.style.setProperty('background', 'rgba(19, 19, 18, 0.8)', 'important');
+                addUserModal.style.setProperty('justify-content', 'center', 'important');
+                addUserModal.style.setProperty('align-items', 'center', 'important');
+                console.log("Modal display set to:", addUserModal.style.display);
+                if (usernameInput) usernameInput.value = "";
+                if (errorMessage) errorMessage.style.display = "none";
+                const userRole = document.querySelector('input[name="beeRole"][value="User"]');
+                if (userRole) userRole.checked = true;
+            } else {
+                console.log("Add user modal not found!");
+            }
         });
+    } else {
+        console.log("Add user button not found!");
     }
 
     if (cancelUserBtn) {
         cancelUserBtn.addEventListener("click", () => {
-            addUserModal.style.display = "none";
+            console.log("Cancel button clicked, closing modal");
+            addUserModal.style.setProperty('display', 'none', 'important');
         });
     }
 
@@ -1579,7 +1600,8 @@ if (!globalAdminEmail) {
     if (addUserModal) {
         addUserModal.addEventListener("click", (e) => {
             if (e.target === addUserModal) {
-                addUserModal.style.display = "none";
+                console.log("Modal background clicked, closing modal");
+                addUserModal.style.setProperty('display', 'none', 'important');
             }
         });
     }
@@ -1626,7 +1648,7 @@ if (!globalAdminEmail) {
                     allUserData[globalAdminEmail].permissions[username] = selectedRole;
                     localStorage.setItem("userData", JSON.stringify(allUserData));
 
-                    addUserModal.style.display = "none";
+                    addUserModal.style.setProperty('display', 'none', 'important');
                     alert(`${username} has been added as a ${selectedRole}!`);
                     
                     // Refresh the user list by clicking profile icon again
@@ -1726,6 +1748,8 @@ if (!globalAdminEmail) {
                         
                         const editBtn = document.createElement("button");
                         editBtn.innerHTML = "⚙️";
+                        editBtn.title = "Edit User";
+                        editBtn.className = "edit-user-btn";
                         editBtn.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
                         editBtn.style.setProperty('color', 'rgb(245, 245, 220)', 'important');
                         editBtn.style.setProperty('border', 'none', 'important');
@@ -1737,23 +1761,33 @@ if (!globalAdminEmail) {
                         editBtn.style.setProperty('display', 'flex', 'important');
                         editBtn.style.setProperty('align-items', 'center', 'important');
                         editBtn.style.setProperty('justify-content', 'center', 'important');
-                        editBtn.onmouseover = function() { 
+                        editBtn.style.setProperty('transition', 'all 0.3s ease', 'important');
+                        editBtn.addEventListener("mouseenter", function() { 
                             this.style.setProperty('background', '#5D4E41', 'important'); 
                             this.style.setProperty('background-color', '#5D4E41', 'important'); 
-                        };
-                        editBtn.onmouseout = function() { 
+                            this.style.setProperty('transform', 'scale(1.1)', 'important');
+                        });
+                        editBtn.addEventListener("mouseleave", function() { 
                             this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); 
                             this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
-                        };
+                            this.style.setProperty('transform', 'scale(1)', 'important');
+                        });
                         editBtn.addEventListener("click", (event) => {
+                            console.log("Edit button clicked for:", userName);
                             event.preventDefault();
                             event.stopPropagation();
                             event.stopImmediatePropagation();
-                            showPermissionModal(userName);
+                            if (typeof showPermissionModal === 'function') {
+                                showPermissionModal(userName);
+                            } else {
+                                console.log("showPermissionModal function not found");
+                            }
                         });
                         
                         const removeBtn = document.createElement("button");
                         removeBtn.textContent = "X";
+                        removeBtn.title = "Delete User";
+                        removeBtn.className = "remove-user-btn";
                         removeBtn.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
                         removeBtn.style.setProperty('color', 'rgb(245, 245, 220)', 'important');
                         removeBtn.style.setProperty('border', 'none', 'important');
@@ -1766,19 +1800,27 @@ if (!globalAdminEmail) {
                         removeBtn.style.setProperty('display', 'flex', 'important');
                         removeBtn.style.setProperty('align-items', 'center', 'important');
                         removeBtn.style.setProperty('justify-content', 'center', 'important');
-                        removeBtn.onmouseover = function() { 
+                        removeBtn.style.setProperty('transition', 'all 0.3s ease', 'important');
+                        removeBtn.addEventListener("mouseenter", function() { 
                             this.style.setProperty('background', '#5D4E41', 'important'); 
                             this.style.setProperty('background-color', '#5D4E41', 'important'); 
-                        };
-                        removeBtn.onmouseout = function() { 
+                            this.style.setProperty('transform', 'scale(1.1)', 'important');
+                        });
+                        removeBtn.addEventListener("mouseleave", function() { 
                             this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); 
                             this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
-                        };
+                            this.style.setProperty('transform', 'scale(1)', 'important');
+                        });
                         removeBtn.addEventListener("click", (event) => {
+                            console.log("Delete button clicked for:", userName);
                             event.preventDefault();
                             event.stopPropagation();
                             event.stopImmediatePropagation();
-                            showConfirmModal(userName);
+                            if (typeof showConfirmModal === 'function') {
+                                showConfirmModal(userName);
+                            } else {
+                                console.log("showConfirmModal function not found");
+                            }
                         });
                         
                         actionsContainer.appendChild(editBtn);
