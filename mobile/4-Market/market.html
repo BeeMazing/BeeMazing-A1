@@ -539,7 +539,7 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
 </head>
 <body>
     <div class="date-header">
-        <h1 style="color: red; font-size: 30px; text-align: center; background: lime; padding: 15px; border: 5px solid red;">MARKET v4 - CACHE BUST - ADD USER WORKS!</h1>
+
         <div id="profileIcon" class="profile-icon">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -635,23 +635,23 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
 
     <!-- Add User Modal -->
     <div class="modal" id="addUserModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 19, 18, 0.4); z-index: 1001; justify-content: center; align-items: center;">
-      <div class="modal-content" style="background: #2A2B32; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6); border: 2px solid #444754; color: #FFFFFF;">
-        <h3 style="color: #FFFFFF; margin-bottom: 15px; font-weight: 600;">Add a Bee</h3>
-        <input type="text" id="usernameInput" placeholder="Bee name" style="width: 100%; padding: 10px 12px; margin: 10px 0; background: #444754; color: #FFFFFF; border: 2px solid #444754; border-radius: 8px; font-size: 16px; outline: none; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />
+      <div class="modal-content" style="background: #FFFFF8; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6); border: 2px solid #e4e3e0; color: #5D4E41;">
+        <h3 style="color: #5D4E41; margin-bottom: 15px; font-weight: 600;">Add a Bee</h3>
+        <input type="text" id="usernameInput" placeholder="Bee name" style="width: 100%; padding: 10px 12px; margin: 10px 0; background: #FFFFF8; color: #5D4E41; border: 2px solid #e4e3e0; border-radius: 8px; font-size: 16px; outline: none; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />
         <div class="radio-group" style="margin-top: 15px;">
-          <label class="radio-option" style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; cursor: pointer; gap: 10px; color: #FFFFFF;">
+          <label class="radio-option" style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; cursor: pointer; gap: 10px; color: #5D4E41;">
             <input type="radio" name="beeRole" value="Admin" style="accent-color: rgb(251, 183, 64); width: 18px; height: 18px; cursor: pointer;">
             <span>Parent Bee</span>
           </label>
-          <label class="radio-option" style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; cursor: pointer; gap: 10px; color: #FFFFFF;">
+          <label class="radio-option" style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; cursor: pointer; gap: 10px; color: #5D4E41;">
             <input type="radio" name="beeRole" value="User" checked style="accent-color: rgb(251, 183, 64); width: 18px; height: 18px; cursor: pointer;">
             <span>Child Bee</span>
           </label>
         </div>
         <p id="errorMessage" style="color: #D32F2F; font-size: 14px; display: none;">Please enter a valid name</p>
         <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-          <button id="submitUserBtn" style="background: rgb(251, 183, 64); color: #212121; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Add</button>
-          <button id="cancelUserBtn" style="background: #444754; color: #FFFFFF; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Cancel</button>
+          <button id="submitUserBtn" style="background: rgb(251, 183, 64); color: #5D4E41; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Add</button>
+          <button id="cancelUserBtn" style="background: #e4e3e0; color: #5D4E41; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Cancel</button>
         </div>
       </div>
     </div>
