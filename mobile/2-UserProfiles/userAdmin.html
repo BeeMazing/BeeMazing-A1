@@ -1515,8 +1515,7 @@ async function deleteUserFromServer(username) {
 // Setup user management immediately
 console.log("🔧 Setting up user management...");
 
-// Get adminEmail from the URL params or localStorage
-const urlParams = new URLSearchParams(window.location.search);
+// Get adminEmail from the URL params or localStorage (reuse existing urlParams)
 const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
 
 console.log("🔧 Admin email:", adminEmail);
