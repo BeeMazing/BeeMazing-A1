@@ -28,7 +28,7 @@
     --footer-height: 70px;
     --modal-bg: rgba(19, 19, 18, 0.4); /* Added */
     --border-dark: #444754; /* Added */
-    /* Cache buster v2.0 - add user styling update */
+    /* Cache buster v4.0 - inline styles fallback added */
 }
 
 /* Active user highlighting */
@@ -38,32 +38,40 @@
     font-weight: 600 !important;
 }
 
-/* Add User text styling */
+/* Add User text styling - super specific selectors */
+.bottom-sheet .bottom-sheet-header .header-title h3,
+.bottom-sheet-header .header-title h3,
 .header-title h3 {
     color: #8B6914 !important;
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
+    margin: 0 !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
 }
 
-/* Add User button styling */
-.add-user-btn {
+/* Add User button styling - super specific selectors */
+.bottom-sheet .bottom-sheet-header .header-title .add-user-btn,
+.bottom-sheet-header .header-title .add-user-btn,
+.header-title .add-user-btn,
+#addUserBtn {
     background: #FBB740 !important;
     color: #F5F5DC !important;
-    border: none;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s ease;
+    border: none !important;
+    border-radius: 50% !important;
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: background 0.2s ease !important;
 }
 
-.add-user-btn:hover {
+.bottom-sheet .bottom-sheet-header .header-title .add-user-btn:hover,
+.bottom-sheet-header .header-title .add-user-btn:hover,
+.header-title .add-user-btn:hover,
+#addUserBtn:hover {
     background: #8B6914 !important;
     color: #F5F5DC !important;
 }
@@ -1286,8 +1294,8 @@
   <div class="bottom-sheet-content">
     <div class="bottom-sheet-header">
       <div class="header-title">
-        <h3>Add User</h3>
-        <button class="add-user-btn" id="addUserBtn">+</button>
+        <h3 style="color: #8B6914 !important; margin: 0; font-size: 18px; font-weight: 600;">Add User</h3>
+        <button class="add-user-btn" id="addUserBtn" style="background: #FBB740 !important; color: #F5F5DC !important; border: none !important; border-radius: 50% !important; width: 24px !important; height: 24px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;" onmouseover="this.style.background='#8B6914'" onmouseout="this.style.background='#FBB740'">+</button>
       </div>
       <button id="closeModalBtn" class="close-btn" aria-label="Close"></button>
     </div>
@@ -1493,6 +1501,39 @@ document.getElementById("addUserBtn").addEventListener("click", () => {
   showAddUserModal();
 });
 
+// Force styling on Add User elements
+document.addEventListener('DOMContentLoaded', function() {
+  function forceAddUserStyling() {
+    const addUserBtn = document.getElementById('addUserBtn');
+    const addUserText = document.querySelector('.header-title h3');
+    
+    if (addUserBtn) {
+      addUserBtn.style.setProperty('background', '#FBB740', 'important');
+      addUserBtn.style.setProperty('color', '#F5F5DC', 'important');
+      addUserBtn.style.setProperty('border', 'none', 'important');
+      addUserBtn.style.setProperty('border-radius', '50%', 'important');
+      addUserBtn.style.setProperty('width', '24px', 'important');
+      addUserBtn.style.setProperty('height', '24px', 'important');
+      
+      addUserBtn.addEventListener('mouseover', function() {
+        this.style.setProperty('background', '#8B6914', 'important');
+      });
+      
+      addUserBtn.addEventListener('mouseout', function() {
+        this.style.setProperty('background', '#FBB740', 'important');
+      });
+    }
+    
+    if (addUserText) {
+      addUserText.style.setProperty('color', '#8B6914', 'important');
+    }
+  }
+  
+  forceAddUserStyling();
+  // Also apply when modal is opened
+  setTimeout(forceAddUserStyling, 100);
+});
+
 document.getElementById("addUserModal").addEventListener("click", (e) => {
   if (e.target === document.getElementById("addUserModal")) {
     closeAddUserModal();
@@ -1641,11 +1682,13 @@ profileIcon.addEventListener("click", async () => {
     } else {
         users.forEach(user => {
             const li = document.createElement("li");
+            
             const nameContainer = document.createElement("div");
             nameContainer.classList.add("user-list-item");
             const userNameSpan = document.createElement("span");
             userNameSpan.textContent = user;
             nameContainer.appendChild(userNameSpan);
+            
             if (userPermissions[user] === "Admin") {
                 const checkmark = document.createElement("span");
                 checkmark.textContent = "✓";
@@ -1655,7 +1698,9 @@ profileIcon.addEventListener("click", async () => {
                 checkmark.title = "Admin";
                 nameContainer.appendChild(checkmark);
             }
+            
             li.appendChild(nameContainer);
+            
             if (isAdmin) {
                 const actionsContainer = document.createElement("div");
                 actionsContainer.classList.add("user-list-actions");
@@ -1680,15 +1725,31 @@ profileIcon.addEventListener("click", async () => {
             if (user === userName) {
                 li.classList.add('active-user');
             }
+
+
             li.addEventListener("click", () => {
-              localStorage.setItem("currentUser", user);
-                const page = userPermissions[user] === "Admin" ? "userAdmin.html" : "users.html";
-                window.location.href = `/BeeMazing-A1/mobile/2-UserProfiles/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+                localStorage.setItem("currentUser", user);
+                location.reload();
             });
             userList.appendChild(li);
         });
     }
     userSelectModal.classList.add("show");
+    
+    // Force Add User styling after modal opens
+    setTimeout(() => {
+        const addUserBtn = document.getElementById('addUserBtn');
+        const addUserText = document.querySelector('.header-title h3');
+        
+        if (addUserBtn) {
+            addUserBtn.style.setProperty('background', '#FBB740', 'important');
+            addUserBtn.style.setProperty('color', '#F5F5DC', 'important');
+        }
+        
+        if (addUserText) {
+            addUserText.style.setProperty('color', '#8B6914', 'important');
+        }
+    }, 50);
 });
 userSelectModal.addEventListener("click", (e) => {
     if (e.target === userSelectModal) {
