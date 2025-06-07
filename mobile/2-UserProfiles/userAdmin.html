@@ -1513,9 +1513,6 @@ async function deleteUserFromServer(username) {
 }
 
 // Setup user management immediately
-console.log("🔧 Setting up user management...");
-
-console.log("🔧 Admin email:", globalAdminEmail);
 
 if (!globalAdminEmail) {
     console.error("No admin email found. User management disabled.");
@@ -1542,7 +1539,7 @@ if (!globalAdminEmail) {
         editErrorMessage.style.display = "none";
         
         const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-        const userPermissions = allUserData[adminEmail]?.permissions || {};
+        const userPermissions = allUserData[globalAdminEmail]?.permissions || {};
         const currentRole = userPermissions[username] || "User";
         
         if (currentRole === "Admin") {
@@ -1563,22 +1560,13 @@ if (!globalAdminEmail) {
     const usernameInput = document.getElementById("usernameInput");
     const errorMessage = document.getElementById("errorMessage");
 
-    console.log("🔧 Add user button element:", addUserBtnInModal);
-    console.log("🔧 Add user modal element:", addUserModal);
-
     if (addUserBtnInModal) {
-        console.log("🔧 Setting up add user button click handler");
         addUserBtnInModal.addEventListener("click", () => {
-            console.log("🔧 Add user button clicked!");
             addUserModal.style.display = "flex";
             usernameInput.value = "";
             errorMessage.style.display = "none";
             document.querySelector('input[name="beeRole"][value="User"]').checked = true;
         });
-
-        console.log("🔧 User management setup complete");
-    } else {
-        console.error("🔧 Add user button not found!");
     }
 
     if (cancelUserBtn) {
@@ -1683,16 +1671,9 @@ if (!globalAdminEmail) {
     const userList = document.getElementById("userList");
     const closeModalBtn = document.getElementById("closeModalBtn");
 
-    console.log("🔧 Profile icon element:", profileIcon);
-    console.log("🔧 User select modal element:", userSelectModal);
-    console.log("🔧 User list element:", userList);
-    console.log("🔧 Close modal btn element:", closeModalBtn);
-
     // Profile icon functionality - same as market.html
     if (profileIcon) {
-        console.log("🔧 Setting up profile icon click handler");
         profileIcon.addEventListener("click", async (event) => {
-            console.log("🔧 Profile icon clicked!");
             event.preventDefault();
             event.stopPropagation();
             
@@ -1739,6 +1720,7 @@ if (!globalAdminEmail) {
                     const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
                     if (isLoggedInAsAdmin) {
                         const actionsContainer = document.createElement("div");
+                        actionsContainer.classList.add("user-list-actions");
                         actionsContainer.style.setProperty('display', 'flex', 'important');
                         actionsContainer.style.setProperty('gap', '8px', 'important');
                         
@@ -1764,7 +1746,6 @@ if (!globalAdminEmail) {
                             this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
                         };
                         editBtn.addEventListener("click", (event) => {
-                            console.log("🔧 Edit button clicked for:", userName);
                             event.stopPropagation();
                             showPermissionModal(userName);
                         });
@@ -1792,7 +1773,6 @@ if (!globalAdminEmail) {
                             this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
                         };
                         removeBtn.addEventListener("click", (event) => {
-                            console.log("🔧 Delete button clicked for:", userName);
                             event.stopPropagation();
                             showConfirmModal(userName);
                         });
@@ -1972,7 +1952,7 @@ if (!globalAdminEmail) {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
-                                adminEmail: adminEmail,
+                                adminEmail: globalAdminEmail,
                                 newUser: newName,
                                 role: newPermission
                             })
@@ -1987,18 +1967,18 @@ if (!globalAdminEmail) {
                     } else {
                         // Only role changed, update permissions
                         const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-                        if (!allUserData[adminEmail]) {
-                            allUserData[adminEmail] = { users: [], permissions: {} };
+                        if (!allUserData[globalAdminEmail]) {
+                            allUserData[globalAdminEmail] = { users: [], permissions: {} };
                         }
-                        allUserData[adminEmail].permissions[newName] = newPermission;
+                        allUserData[globalAdminEmail].permissions[newName] = newPermission;
                         localStorage.setItem("userData", JSON.stringify(allUserData));
                         
                         const res = await fetch("https://beemazing1.onrender.com/save-permissions", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
-                                adminEmail: adminEmail,
-                                permissions: allUserData[adminEmail].permissions
+                                adminEmail: globalAdminEmail,
+                                permissions: allUserData[globalAdminEmail].permissions
                             })
                         });
                         const result = await res.json();
@@ -2012,18 +1992,18 @@ if (!globalAdminEmail) {
                     
                     // Update localStorage regardless
                     const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-                    if (!allUserData[adminEmail]) {
-                        allUserData[adminEmail] = { users: [], permissions: {} };
+                    if (!allUserData[globalAdminEmail]) {
+                        allUserData[globalAdminEmail] = { users: [], permissions: {} };
                     }
                     
                     if (oldName !== newName) {
-                        const userIndex = allUserData[adminEmail].users.indexOf(oldName);
+                        const userIndex = allUserData[globalAdminEmail].users.indexOf(oldName);
                         if (userIndex !== -1) {
-                            allUserData[adminEmail].users[userIndex] = newName;
+                            allUserData[globalAdminEmail].users[userIndex] = newName;
                         }
-                        delete allUserData[adminEmail].permissions[oldName];
+                        delete allUserData[globalAdminEmail].permissions[oldName];
                     }
-                    allUserData[adminEmail].permissions[newName] = newPermission;
+                    allUserData[globalAdminEmail].permissions[newName] = newPermission;
                     localStorage.setItem("userData", JSON.stringify(allUserData));
                     
                 } catch (err) {
