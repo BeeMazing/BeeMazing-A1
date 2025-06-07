@@ -26,7 +26,7 @@
     --light-bg: #FFFFF8;
     --text-color: #000000;
     --footer-height: 70px;
-    --modal-bg: rgba(33, 33, 33, 0.7); /* Added */
+    --modal-bg: rgba(19, 19, 18, 0.4); /* Added */
     --border-dark: #444754; /* Added */
 }
 
@@ -371,10 +371,11 @@
     left: 0;
     width: 100%;
     max-height: 70vh;
-    background: #2A2B32;
+    background: var(--light-bg);
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 -4px 20px rgba(19, 19, 18, 0.2);
+    border: 2px solid var(--secondary-color);
     transform: translateY(100%);
     transition: transform 0.3s ease-in-out;
 }
@@ -386,7 +387,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 15px 20px;
-    border-bottom: 1px solid var(--border-dark);
+    border-bottom: 2px solid var(--secondary-color);
+    background: var(--accent-color);
 }
 .bottom-sheet-header h3 {
     margin: 0;
@@ -414,14 +416,15 @@
 }
 .user-list li {
     padding: 15px 20px;
-    border-bottom: 1px solid var(--border-dark);
+    border-bottom: 1px solid var(--secondary-color);
     font-size: 16px;
     color: var(--text-color);
     cursor: pointer;
     transition: background 0.2s ease;
+    background: var(--light-bg);
 }
 .user-list li:hover {
-    background: #333540;
+    background: var(--secondary-color);
 }
 .user-list li:last-child {
     border-bottom: none;
@@ -430,14 +433,14 @@
     width: 8px;
 }
 .user-list::-webkit-scrollbar-track {
-    background: #2A2B32;
+    background: var(--light-bg);
 }
 .user-list::-webkit-scrollbar-thumb {
-    background: #444754;
+    background: var(--primary-color);
     border-radius: 4px;
 }
 .user-list::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: var(--text-color);
 }
 
 
@@ -553,12 +556,13 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #2A2B32;
+    background: var(--light-bg);
     border-radius: 12px;
     padding: 20px;
     width: 90%;
     max-width: 400px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 20px rgba(19, 19, 18, 0.2);
+    border: 2px solid var(--secondary-color);
 }
 .modal-content h3 {
     margin: 0 0 15px;
@@ -591,11 +595,11 @@
     background: #B71C1C;
 }
 .modal-actions button:last-child {
-    background: #333;
-    color: white;
+    background: var(--primary-color);
+    color: var(--accent-color);
 }
 .modal-actions button:last-child:hover {
-    background: #333;
+    background: var(--text-color);
 }
 
 /* Permission Modal Specific */
@@ -719,12 +723,13 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: #2A2B32;
+  background: var(--light-bg);
   border-radius: 12px;
   padding: 20px;
   width: 90%;
   max-width: 400px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px rgba(19, 19, 18, 0.2);
+  border: 2px solid var(--secondary-color);
 }
 .add-user-modal-content h3 {
   margin: 0 0 15px;
@@ -735,9 +740,9 @@
   width: 100%;
   padding: 8px;
   border-radius: 6px;
-  background: #333;
+  background: var(--accent-color);
   color: var(--text-color);
-  border: 1px solid var(--border-dark);
+  border: 2px solid var(--secondary-color);
   margin-bottom: 15px;
   font-size: 16px;
 }
@@ -768,11 +773,11 @@
   background: #B71C1C;
 }
 .add-user-modal-actions .submit-btn {
-  background: #333;
-  color: white;
+  background: var(--primary-color);
+  color: var(--accent-color);
 }
 .add-user-modal-actions .submit-btn:hover {
-  background: #333;
+  background: var(--text-color);
 }
 
 /* Header Title Container for Select User and Add Button */
