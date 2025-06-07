@@ -539,11 +539,9 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
 </head>
 <body>
     <div class="date-header">
-        <h1 style="color: white; font-size: 60px; text-align: center; background: purple; padding: 40px; border: 20px solid red; animation: rainbow 0.3s infinite; transform: rotate(5deg); text-shadow: 10px 10px 20px black;">NUCLEAR CACHE BUST v999 - TIMESTAMP: 1735741234567 - SAVE BUTTON FIXED!</h1>
-        <style>@keyframes rainbow { 0% { background: red; color: white; } 16% { background: orange; color: black; } 33% { background: yellow; color: black; } 50% { background: green; color: white; } 66% { background: blue; color: white; } 83% { background: indigo; color: white; } 100% { background: violet; color: white; } }</style>
-
-
-
+        <h1 style="color: red; font-size: 70px; text-align: center; background: lime; padding: 50px; border: 25px solid orange; animation: spin 0.2s infinite; text-shadow: 15px 15px 30px black;">FINAL CLEAN v1000 - ALL DEBUGGING REMOVED!</h1>
+        <style>@keyframes spin { 0% { transform: rotate(0deg) scale(1); } 25% { transform: rotate(90deg) scale(1.2); } 50% { transform: rotate(180deg) scale(0.8); } 75% { transform: rotate(270deg) scale(1.5); } 100% { transform: rotate(360deg) scale(1); } }</style>
+        
         <div id="profileIcon" class="profile-icon">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -1196,18 +1194,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (savePermissionBtn) {
             savePermissionBtn.addEventListener("click", async () => {
-                alert("NUCLEAR DEBUG v999: Save button clicked!");
-                console.log("NUCLEAR DEBUG: selectedUserForPermission =", selectedUserForPermission);
-                
                 if (selectedUserForPermission) {
                     const editUserNameInput = document.getElementById("editUserNameInput");
                     const editErrorMessage = document.getElementById("editErrorMessage");
                     const newName = editUserNameInput.value.trim();
                     
-                    alert("NUCLEAR DEBUG: Found selectedUser, newName = " + newName);
-                    
                     if (!newName) {
-                        alert("NUCLEAR DEBUG: Name is empty, showing error");
                         editErrorMessage.style.display = "block";
                         return;
                     }
@@ -1215,8 +1207,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     editErrorMessage.style.display = "none";
                     const newPermission = document.querySelector('input[name="editBeeRole"]:checked')?.value || "User";
                     const oldName = selectedUserForPermission;
-                    
-                    alert("NUCLEAR DEBUG: oldName = " + oldName + ", newName = " + newName + ", newPermission = " + newPermission);
                     
                     try {
                         // Update localStorage first
@@ -1253,29 +1243,23 @@ document.addEventListener("DOMContentLoaded", () => {
                         const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
                         if (result.success) {
                             if (oldName !== newName) {
-                                alert(`NUCLEAR SUCCESS! Name changed to "${newName}" and role set to ${roleText}.`);
+                                alert(`User updated! Name changed to "${newName}" and role set to ${roleText}.`);
                             } else {
-                                alert(`NUCLEAR SUCCESS! ${newName} is now a ${roleText}.`);
+                                alert(`User updated! ${newName} is now a ${roleText}.`);
                             }
                         } else {
-                            alert(`NUCLEAR LOCAL SAVE! Role updated to ${roleText}. ${oldName !== newName ? 'Name change to "' + newName + '" saved locally.' : ''}`);
+                            alert(`Local changes saved. Role updated to ${roleText}. ${oldName !== newName ? 'Name change to "' + newName + '" saved locally.' : ''}`);
                         }
                     } catch (err) {
-                        // Even if server fails, local changes are saved
                         const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
-                        alert(`NUCLEAR FALLBACK! Changes saved locally! ${newName} is now a ${roleText}.`);
+                        alert(`Changes saved locally! ${newName} is now a ${roleText}.`);
                     }
                     
                     selectedUserForPermission = null;
                     permissionModal.style.display = "none";
-                    // Refresh the user list by clicking profile icon again
                     profileIcon.click();
-                } else {
-                    alert("NUCLEAR ERROR: No user selected for editing!");
                 }
             });
-        } else {
-            alert("NUCLEAR ERROR: Save button not found!");
         }
 
         // Cancel edit button
