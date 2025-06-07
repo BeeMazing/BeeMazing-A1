@@ -1207,50 +1207,81 @@ document.addEventListener("DOMContentLoaded", () => {
                     const oldName = selectedUserForPermission;
                     
                     try {
-                        // Update localStorage first
+                        const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
+                        
+                        // If name changed, delete old user and add new one
+                        if (oldName !== newName) {
+                            // Delete old user
+                            const deleteRes = await fetch(
+                                `https://beemazing1.onrender.com/delete-user?adminEmail=${encodeURIComponent(adminEmail)}&username=${encodeURIComponent(oldName)}`,
+                                {
+                                    method: "DELETE",
+                                    headers: { "Content-Type": "application/json" }
+                                }
+                            );
+                            
+                            // Add new user with new name and role
+                            const addRes = await fetch("https://beemazing1.onrender.com/add-user", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    adminEmail: adminEmail,
+                                    newUser: newName,
+                                    role: newPermission
+                                })
+                            });
+                            
+                            const addResult = await addRes.json();
+                            if (addResult.success) {
+                                alert(`User updated! Name changed to "${newName}" and role set to ${roleText}.`);
+                            } else {
+                                alert("Failed to update user name: " + addResult.message);
+                            }
+                        } else {
+                            // Only role changed, update permissions
+                            const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                            if (!allUserData[adminEmail]) {
+                                allUserData[adminEmail] = { users: [], permissions: {} };
+                            }
+                            allUserData[adminEmail].permissions[newName] = newPermission;
+                            localStorage.setItem("userData", JSON.stringify(allUserData));
+                            
+                            const res = await fetch("https://beemazing1.onrender.com/save-permissions", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    adminEmail: adminEmail,
+                                    permissions: allUserData[adminEmail].permissions
+                                })
+                            });
+                            const result = await res.json();
+                            
+                            if (result.success) {
+                                alert(`User updated! ${newName} is now a ${roleText}.`);
+                            } else {
+                                alert(`Local changes saved. Role updated to ${roleText}.`);
+                            }
+                        }
+                        
+                        // Update localStorage regardless
                         const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
                         if (!allUserData[adminEmail]) {
                             allUserData[adminEmail] = { users: [], permissions: {} };
                         }
                         
-                        // Update user name in list if changed
                         if (oldName !== newName) {
                             const userIndex = allUserData[adminEmail].users.indexOf(oldName);
                             if (userIndex !== -1) {
                                 allUserData[adminEmail].users[userIndex] = newName;
                             }
-                            // Remove old permission entry
                             delete allUserData[adminEmail].permissions[oldName];
                         }
-                        
-                        // Update permissions
                         allUserData[adminEmail].permissions[newName] = newPermission;
                         localStorage.setItem("userData", JSON.stringify(allUserData));
                         
-                        // Save permissions to server (name changes will be handled by the app logic)
-                        const res = await fetch("https://beemazing1.onrender.com/save-permissions", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                adminEmail: adminEmail,
-                                permissions: allUserData[adminEmail].permissions
-                            })
-                        });
-                        const result = await res.json();
-                        
-                        const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
-                        if (result.success) {
-                            if (oldName !== newName) {
-                                alert(`User updated! Name changed to "${newName}" and role set to ${roleText}.`);
-                            } else {
-                                alert(`User updated! ${newName} is now a ${roleText}.`);
-                            }
-                        } else {
-                            alert(`Local changes saved. Role updated to ${roleText}. ${oldName !== newName ? 'Name change to "' + newName + '" saved locally.' : ''}`);
-                        }
                     } catch (err) {
                         const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
-                        alert(`Changes saved locally! ${newName} is now a ${roleText}.`);
+                        alert(`Error updating user. Please try again.`);
                     }
                     
                     selectedUserForPermission = null;
