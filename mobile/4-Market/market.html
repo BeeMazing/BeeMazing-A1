@@ -621,14 +621,23 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
 
     <!-- Permission Modal -->
     <div class="modal" id="permissionModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 19, 18, 0.4); z-index: 1001; justify-content: center; align-items: center;">
-      <div class="modal-content" style="background: #2A2B32; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6); border: 2px solid #444754; color: #FFFFFF;">
-        <h3 id="permissionModalUser" style="color: #FFFFFF; margin-bottom: 15px; font-weight: 600;">Permissions for User</h3>
-        <select id="permissionSelect" style="width: 100%; padding: 10px; font-size: 16px; border-radius: 8px; margin-bottom: 20px; background: #444754; color: #FFFFFF; border: 2px solid #444754;">
-          <option value="User">User</option>
-          <option value="Admin">Admin</option>
-        </select>
-        <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center;">
-          <button id="savePermissionBtn" style="background: rgb(251, 183, 64); color: #212121; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Save</button>
+      <div class="modal-content" style="background: #FFFFF8; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6); border: 2px solid #e4e3e0; color: #5D4E41;">
+        <h3 id="permissionModalUser" style="color: #5D4E41; margin-bottom: 15px; font-weight: 600;">Edit Bee</h3>
+        <input type="text" id="editUserNameInput" placeholder="Bee name" style="width: 100%; padding: 10px 12px; margin: 10px 0; background: #FFFFF8; color: #5D4E41; border: 2px solid #e4e3e0; border-radius: 8px; font-size: 16px; outline: none; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />
+        <div class="radio-group" style="margin-top: 15px;">
+          <label class="radio-option" style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; cursor: pointer; gap: 10px; color: #5D4E41;">
+            <input type="radio" name="editBeeRole" value="Admin" id="editAdminRole" style="accent-color: rgb(251, 183, 64); width: 18px; height: 18px; cursor: pointer;">
+            <span>Parent Bee</span>
+          </label>
+          <label class="radio-option" style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; cursor: pointer; gap: 10px; color: #5D4E41;">
+            <input type="radio" name="editBeeRole" value="User" id="editUserRole" style="accent-color: rgb(251, 183, 64); width: 18px; height: 18px; cursor: pointer;">
+            <span>Child Bee</span>
+          </label>
+        </div>
+        <p id="editErrorMessage" style="color: #D32F2F; font-size: 14px; display: none;">Please enter a valid name</p>
+        <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+          <button id="savePermissionBtn" style="background: rgb(251, 183, 64); color: #5D4E41; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Save</button>
+          <button id="cancelEditBtn" style="background: #e4e3e0; color: #5D4E41; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Cancel</button>
         </div>
       </div>
     </div>
@@ -1005,11 +1014,25 @@ document.addEventListener("DOMContentLoaded", () => {
         function showPermissionModal(username) {
             selectedUserForPermission = username;
             const permissionModalUser = document.getElementById("permissionModalUser");
-            const permissionSelect = document.getElementById("permissionSelect");
-            permissionModalUser.textContent = `Permissions for ${username}`;
+            const editUserNameInput = document.getElementById("editUserNameInput");
+            const editAdminRole = document.getElementById("editAdminRole");
+            const editUserRole = document.getElementById("editUserRole");
+            const editErrorMessage = document.getElementById("editErrorMessage");
+            
+            permissionModalUser.textContent = `Edit Bee`;
+            editUserNameInput.value = username;
+            editErrorMessage.style.display = "none";
+            
             const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
             const userPermissions = allUserData[adminEmail]?.permissions || {};
-            permissionSelect.value = userPermissions[username] || "User";
+            const currentRole = userPermissions[username] || "User";
+            
+            if (currentRole === "Admin") {
+                editAdminRole.checked = true;
+            } else {
+                editUserRole.checked = true;
+            }
+            
             const permissionModal = document.getElementById("permissionModal");
             permissionModal.style.display = "flex";
         }
@@ -1169,33 +1192,61 @@ document.addEventListener("DOMContentLoaded", () => {
 
         savePermissionBtn.addEventListener("click", async () => {
             if (selectedUserForPermission) {
-                const newPermission = document.getElementById("permissionSelect").value;
-                const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-                if (!allUserData[adminEmail]) {
-                    allUserData[adminEmail] = { users: [], permissions: {} };
+                const editUserNameInput = document.getElementById("editUserNameInput");
+                const editErrorMessage = document.getElementById("editErrorMessage");
+                const newName = editUserNameInput.value.trim();
+                
+                if (!newName) {
+                    editErrorMessage.style.display = "block";
+                    return;
                 }
-                if (!allUserData[adminEmail].permissions) {
-                    allUserData[adminEmail].permissions = {};
-                }
-                allUserData[adminEmail].permissions[selectedUserForPermission] = newPermission;
-                localStorage.setItem("userData", JSON.stringify(allUserData));
-
-                // Save to server
+                
+                editErrorMessage.style.display = "none";
+                const newPermission = document.querySelector('input[name="editBeeRole"]:checked')?.value || "User";
+                const oldName = selectedUserForPermission;
+                
                 try {
-                    const res = await fetch("https://beemazing1.onrender.com/save-permissions", {
+                    // Update user name and permissions on server
+                    const res = await fetch("https://beemazing1.onrender.com/update-user", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                             adminEmail: adminEmail,
-                            permissions: allUserData[adminEmail].permissions
+                            oldName: oldName,
+                            newName: newName,
+                            role: newPermission
                         })
                     });
                     const result = await res.json();
+                    
                     if (result.success) {
-                        alert(`Permissions updated! ${selectedUserForPermission} is now a ${newPermission}.`);
+                        // Update localStorage
+                        const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                        if (!allUserData[adminEmail]) {
+                            allUserData[adminEmail] = { users: [], permissions: {} };
+                        }
+                        
+                        // Update user name in list
+                        const userIndex = allUserData[adminEmail].users.indexOf(oldName);
+                        if (userIndex !== -1) {
+                            allUserData[adminEmail].users[userIndex] = newName;
+                        }
+                        
+                        // Update permissions
+                        if (oldName !== newName) {
+                            delete allUserData[adminEmail].permissions[oldName];
+                        }
+                        allUserData[adminEmail].permissions[newName] = newPermission;
+                        
+                        localStorage.setItem("userData", JSON.stringify(allUserData));
+                        
+                        const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
+                        alert(`User updated! ${newName} is now a ${roleText}.`);
+                    } else {
+                        alert("Failed to update user: " + result.message);
                     }
                 } catch (err) {
-                    // Permission save error - continue anyway
+                    alert("Error updating user. Please try again.");
                 }
                 
                 selectedUserForPermission = null;
@@ -1204,6 +1255,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 profileIcon.click();
             }
         });
+
+        // Cancel edit button
+        const cancelEditBtn = document.getElementById("cancelEditBtn");
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener("click", () => {
+                selectedUserForPermission = null;
+                permissionModal.style.display = "none";
+            });
+        }
 
         permissionModal.addEventListener("click", (e) => {
             if (e.target === permissionModal) {
