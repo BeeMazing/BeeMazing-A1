@@ -1872,9 +1872,56 @@ profileIcon.addEventListener("click", async () => {
                 li.classList.add('active-user');
             }
 
-            li.addEventListener("click", () => {
-                localStorage.setItem("currentUser", user);
-                location.reload();
+            li.addEventListener("click", async () => {
+                console.log(`🔥 DEBUG USERADMIN.HTML: Clicking on user: ${user}`);
+                console.log(`🔥 DEBUG USERADMIN.HTML: Admin email: ${adminEmail}`);
+                console.log(`🔥 DEBUG USERADMIN.HTML: User permissions:`, userPermissions);
+                console.log(`🔥 DEBUG USERADMIN.HTML: Permission for ${user}:`, userPermissions[user]);
+                
+                const isAdminUser = userPermissions[user] === "Admin";
+                const basePath = "/BeeMazing-A1/mobile/2-UserProfiles";
+                const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+
+                console.log(`🔥 DEBUG USERADMIN.HTML: Is ${user} admin? ${isAdminUser}`);
+                console.log(`🔥 DEBUG USERADMIN.HTML: Is logged in as admin? ${isLoggedInAsAdmin}`);
+
+                if (isAdminUser) {
+                    console.log(`🔥 DEBUG USERADMIN.HTML: ${user} is admin - checking password`);
+                    if (isLoggedInAsAdmin) {
+                        const targetUrl = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+                        console.log(`🔥 DEBUG USERADMIN.HTML: Navigating to (admin direct): ${targetUrl}`);
+                        window.location.href = targetUrl;
+                    } else {
+                        const enteredPassword = prompt("Enter Parent Password to access Admin profile:");
+                        if (!enteredPassword) {
+                            alert("Password is required to access Admin profile.");
+                            return;
+                        }
+                        try {
+                            const res = await fetch(`https://beemazing1.onrender.com/verify-admin-password`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ email: adminEmail, password: enteredPassword }),
+                            });
+                            const data = await res.json();
+                            if (res.ok && data.success) {
+                                const targetUrl = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+                                console.log(`🔥 DEBUG USERADMIN.HTML: Navigating to (admin verified): ${targetUrl}`);
+                                window.location.href = targetUrl;
+                            } else {
+                                alert(data.message || "Incorrect password. Access denied.");
+                            }
+                        } catch (err) {
+                            console.error("Error verifying admin password:", err);
+                            alert("Failed to verify password. Please check your connection.");
+                        }
+                    }
+                } else {
+                    console.log(`🔥 DEBUG USERADMIN.HTML: ${user} is regular user`);
+                    const targetUrl = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+                    console.log(`🔥 DEBUG USERADMIN.HTML: Navigating to (regular user): ${targetUrl}`);
+                    window.location.href = targetUrl;
+                }
             });
             userList.appendChild(li);
         });

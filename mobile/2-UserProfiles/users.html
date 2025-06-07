@@ -1306,13 +1306,24 @@ li.style.marginBottom = "10px"; // Adds space between cards
   userList.appendChild(li);
 
     li.addEventListener("click", async () => {
+        console.log(`🔥 DEBUG USERS.HTML: Clicking on user: ${user}`);
+        console.log(`🔥 DEBUG USERS.HTML: Admin email: ${adminEmail}`);
+        console.log(`🔥 DEBUG USERS.HTML: User permissions:`, data.permissions);
+        console.log(`🔥 DEBUG USERS.HTML: Permission for ${user}:`, data.permissions?.[user]);
+        
         const isAdminUser = data.permissions?.[user] === "Admin";
         const basePath = "/BeeMazing-A1/mobile/2-UserProfiles";
         const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
 
+        console.log(`🔥 DEBUG USERS.HTML: Is ${user} admin? ${isAdminUser}`);
+        console.log(`🔥 DEBUG USERS.HTML: Is logged in as admin? ${isLoggedInAsAdmin}`);
+
         if (isAdminUser) {
+            console.log(`🔥 DEBUG USERS.HTML: ${user} is admin - checking password`);
             if (isLoggedInAsAdmin) {
-                window.location.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+                const targetUrl = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+                console.log(`🔥 DEBUG USERS.HTML: Navigating to (admin direct): ${targetUrl}`);
+                window.location.href = targetUrl;
             } else {
                 const enteredPassword = prompt("Enter Parent Password to access Admin profile:");
                 if (!enteredPassword) {
@@ -1327,7 +1338,9 @@ li.style.marginBottom = "10px"; // Adds space between cards
                     });
                     const data = await res.json();
                     if (res.ok && data.success) {
-                        window.location.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+                        const targetUrl = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+                        console.log(`🔥 DEBUG USERS.HTML: Navigating to (admin verified): ${targetUrl}`);
+                        window.location.href = targetUrl;
                     } else {
                         alert(data.message || "Incorrect password. Access denied.");
                     }
@@ -1337,7 +1350,10 @@ li.style.marginBottom = "10px"; // Adds space between cards
                 }
             }
         } else {
-            window.location.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+            console.log(`🔥 DEBUG USERS.HTML: ${user} is regular user`);
+            const targetUrl = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
+            console.log(`🔥 DEBUG USERS.HTML: Navigating to (regular user): ${targetUrl}`);
+            window.location.href = targetUrl;
         }
     });
 
