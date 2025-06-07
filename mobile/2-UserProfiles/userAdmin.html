@@ -399,13 +399,13 @@
 .bottom-sheet-header .close-btn {
     background: none;
     border: none;
-    color: var(--text-color);
+    color: #F5F5DC;
     font-size: 24px;
     cursor: pointer;
     padding: 5px;
 }
 .bottom-sheet-header .close-btn:hover {
-    color: var(--primary-color);
+    color: #FFFFFF;
 }
 .user-list {
     list-style: none;
@@ -453,7 +453,7 @@
         font-size: 14px;
         padding: 12px 15px;
         border-bottom: 1px solid var(--secondary-color);
-        color: var(--text-color);
+        color: #8B6914;
         cursor: pointer;
         transition: background 0.2s ease;
         background: var(--light-bg);
@@ -483,19 +483,20 @@
         padding: 6px;
     }
     .remove-user-btn, .edit-user-btn {
-    background: #2A2B32; /* Dark background */
-    color: white; /* White icon/text by default */
-    border: none;
-    border-radius: 6px;
-    width: 40px;
-    height: 40px;
-    font-size: 22px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s ease;
-    border: 2px solid var(--border-dark);
+        background: #8B6914; /* Warm brown background */
+        color: #F5F5DC; /* Light beige icon/text */
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        padding: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease;
+    }
 }
 
 /* Make remove button (X) yellow and dark text */
@@ -629,7 +630,7 @@
     padding: 12px 20px;
     border-bottom: 1px solid var(--secondary-color);
     font-size: 16px;
-    color: var(--text-color);
+    color: #8B6914;
     cursor: pointer;
     transition: background 0.2s ease;
     background: var(--light-bg);
@@ -648,8 +649,8 @@
     gap: 8px;
 }
 .remove-user-btn, .edit-user-btn {
-    background: #333540;
-    color: var(--primary-color);
+    background: #8B6914;
+    color: #F5F5DC;
     border: none;
     border-radius: 50%;
     width: 30px;
@@ -663,14 +664,14 @@
     transition: background 0.2s ease;
 }
 .edit-user-btn {
-    background: #333540;
+    background: #8B6914;
 }
 /* Optional hover effects */
 .remove-user-btn:hover {
-    background: #FFD54F;
+    background: #A0522D;
 }
 .edit-user-btn:hover {
-    background: #333540;
+    background: #A0522D;
 }
 
 
@@ -1515,7 +1516,7 @@ document.getElementById("submitUserBtn").addEventListener("click", async () => {
       const userPermissions = allUserData[adminEmail]?.permissions || {};
       userList.innerHTML = '';
       if (users.length === 0) {
-        userList.innerHTML = '<li style="padding: 15px 20px; color: #131312; background: #FFFFF8;">No users available</li>';
+        userList.innerHTML = '<li style="padding: 15px 20px; color: #8B6914; background: #FFFFF8;">No users available</li>';
       } else {
         users.forEach(user => {
           const li = document.createElement("li");
@@ -1556,7 +1557,8 @@ document.getElementById("submitUserBtn").addEventListener("click", async () => {
             li.appendChild(actionsContainer);
           }
           if (user === userName) {
-            li.style.background = "#e4e3e0";
+            li.style.background = "#FBB740";
+            li.style.color = "#8B6914";
             li.style.fontWeight = "600";
           }
 
@@ -1605,7 +1607,7 @@ profileIcon.addEventListener("click", async () => {
     userList.innerHTML = '';
     if (users.length === 0) {
         alert("No users found for this admin.");
-        userList.innerHTML = '<li style="padding: 15px 20px; color: #131312; background: #FFFFF8;">No users available</li>';
+        userList.innerHTML = '<li style="padding: 15px 20px; color: #8B6914; background: #FFFFF8;">No users available</li>';
     } else {
         users.forEach(user => {
             const li = document.createElement("li");
@@ -1646,7 +1648,8 @@ profileIcon.addEventListener("click", async () => {
                 li.appendChild(actionsContainer);
             }
             if (user === userName) {
-                li.style.background = "#e4e3e0";
+                li.style.background = "#FBB740";
+                li.style.color = "#8B6914";
                 li.style.fontWeight = "600";
             }
             li.addEventListener("click", () => {
@@ -1721,7 +1724,8 @@ confirmYesBtn.addEventListener("click", async () => {
                     li.appendChild(actionsContainer);
                 }
                 if (user === userName) {
-                    li.style.background = "#e4e3e0";
+                    li.style.background = "#FBB740";
+                    li.style.color = "#8B6914";
                     li.style.fontWeight = "600";
                 }
                 li.addEventListener("click", () => {
@@ -1819,7 +1823,8 @@ savePermissionBtn.addEventListener("click", async () => {
                 li.appendChild(actionsContainer);
             }
             if (user === userName) {
-                li.style.background = "#e4e3e0";
+                li.style.background = "#FBB740";
+                li.style.color = "#8B6914";
                 li.style.fontWeight = "600";
             }
             li.addEventListener("click", () => {
