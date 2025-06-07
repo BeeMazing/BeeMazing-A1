@@ -1514,14 +1514,26 @@ async function deleteUserFromServer(username) {
 
 // Setup user management immediately
 console.log("🔧 Setting up user management...");
-alert("🔧 UserAdmin.html JavaScript is running!");
 
 // Get adminEmail from the URL params or localStorage
 const urlParams = new URLSearchParams(window.location.search);
 const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
 
 console.log("🔧 Admin email:", adminEmail);
-alert("🔧 Admin email: " + adminEmail);
+
+// Test if profile icon exists
+setTimeout(() => {
+    const testProfileIcon = document.getElementById("profileIcon");
+    console.log("🔧 Profile icon found:", testProfileIcon);
+    if (testProfileIcon) {
+        alert("✅ Profile icon found! Adding click test...");
+        testProfileIcon.addEventListener("click", () => {
+            alert("🎯 Profile icon clicked successfully!");
+        });
+    } else {
+        alert("❌ Profile icon NOT found!");
+    }
+}, 1000);
 
 if (!adminEmail) {
     console.error("No admin email found. User management disabled.");
