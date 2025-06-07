@@ -294,9 +294,14 @@ transform: scale(1.1);
 
 /* Active user highlighting */
 .user-list li.active-user {
-    background: #FBB740 !important;
+    background: rgb(251, 183, 64) !important;
     color: #5D4E41 !important;
     font-weight: 600 !important;
+}
+
+.user-list-actions {
+    display: flex;
+    gap: 8px;
 }
 .user-list::-webkit-scrollbar {
     width: 8px;
@@ -534,6 +539,7 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
 </head>
 <body>
     <div class="date-header">
+        <h1 style="color: red; font-size: 24px; text-align: center; background: yellow; padding: 10px;">MARKET CACHE BUST v1 - FILE UPDATED</h1>
         <div id="profileIcon" class="profile-icon">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -589,14 +595,17 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
     </div>
 
     <!-- User Selection Modal -->
-    <div class="bottom-sheet" id="userSelectModal">
-        <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <h3>Select User</h3>
-                <button id="closeModalBtn" class="close-btn" aria-label="Close">×</button>
-            </div>
-            <ul id="userList" class="user-list"></ul>
+    <div class="bottom-sheet" id="userSelectModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 19, 18, 0.4); z-index: 1000; opacity: 0; transition: opacity 0.3s ease-in-out;">
+      <div class="bottom-sheet-content" style="position: fixed; bottom: 0; left: 0; width: 100%; max-height: none; background: #FFFFF8; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -4px 20px rgba(19, 19, 18, 0.2); border: 2px solid #e4e3e0; transform: translateY(100%); transition: transform 0.3s ease-in-out;">
+        <div class="bottom-sheet-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 2px solid #e4e3e0; background: #FFFFFF;">
+          <div class="header-title" style="display: flex; align-items: center; gap: 10px;">
+            <h3 style="color: #5D4E41 !important; margin: 0; font-size: 18px; font-weight: 600; display: inline-block;">Add User</h3>
+            <button class="add-user-btn" id="addUserBtn" style="background: rgb(251, 183, 64) !important; color: rgb(245, 245, 220) !important; border: none !important; border-radius: 50% !important; width: 24px !important; height: 24px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; margin-left: 10px;" onmouseover="this.style.setProperty('background', '#5D4E41', 'important'); this.style.setProperty('background-color', '#5D4E41', 'important');" onmouseout="this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important');">+</button>
+          </div>
+          <button id="closeModalBtn" class="close-btn" aria-label="Close" style="background: none; border: none; color: #F5F5DC !important; font-size: 24px; cursor: pointer; padding: 5px;">✕</button>
         </div>
+        <ul id="userList" class="user-list" style="list-style: none; padding: 0; margin: 0; height: auto !important; max-height: none !important; overflow-y: visible !important; min-height: 48px;"></ul>
+      </div>
     </div>
 
     <script>
@@ -787,6 +796,9 @@ console.log("DOM loaded:", document.readyState !== 'loading');
             }
         }
 
+        // Cache bust test - Market v1
+        alert('MARKET CACHE BUST v1 - File loaded from: ' + window.location.pathname);
+        
         // User selection modal functionality
         const profileIcon = document.getElementById('profileIcon');
         const userSelectModal = document.getElementById('userSelectModal');
@@ -808,82 +820,225 @@ console.log("DOM loaded:", document.readyState !== 'loading');
             }
         }
 
-        // Profile icon click handler
-        profileIcon.addEventListener("click", async () => {
-            if (!adminEmail) {
-                alert("Admin email not found. Please log in again.");
-                return;
-            }
-            const users = await fetchUsersFromServer(adminEmail);
-            const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-            const userPermissions = allUserData[adminEmail]?.permissions || {};
-            const currentUser = localStorage.getItem("currentUser");
-            
-            userList.innerHTML = '';
-            if (users.length === 0) {
-                userList.innerHTML = '<li style="padding: 15px 20px; color: #5D4E41; background: #FFFFF8;">No users available</li>';
-            } else {
-                users.forEach(user => {
-                    const li = document.createElement("li");
-                    li.style.setProperty('color', '#5D4E41', 'important');
-                    
-                    const nameContainer = document.createElement("div");
-                    nameContainer.classList.add("user-list-item");
-                    const userNameSpan = document.createElement("span");
-                    userNameSpan.textContent = user;
-                    userNameSpan.style.setProperty('color', '#5D4E41', 'important');
-                    nameContainer.appendChild(userNameSpan);
-                    
-                    if (userPermissions[user] === "Admin") {
-                        const checkmark = document.createElement("span");
-                        checkmark.textContent = "✓";
-                        checkmark.style.color = "#00C4B4";
-                        checkmark.style.fontSize = "16px";
-                        checkmark.style.fontWeight = "bold";
-                        checkmark.title = "Admin";
-                        nameContainer.appendChild(checkmark);
-                    }
-                    
-                    li.appendChild(nameContainer);
-                    
-                    if (user === currentUser) {
-                        li.style.setProperty('background', '#FBB740', 'important');
-                        li.style.setProperty('color', '#5D4E41', 'important');
-                        li.style.fontWeight = "600";
-                    }
-
-                    li.addEventListener("click", () => {
-                        localStorage.setItem("currentUser", user);
-                        location.reload();
-                    });
-                    userList.appendChild(li);
-                });
+        // Profile icon functionality - same as tasks.html
+        if (profileIcon) {
+            profileIcon.addEventListener("click", async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
                 
-                // Force no scrolling after populating users
-                setTimeout(() => {
-                    const modal = document.querySelector('.bottom-sheet-content');
-                    if (userList && modal) {
-                        userList.style.setProperty('height', 'auto', 'important');
-                        userList.style.setProperty('max-height', 'none', 'important');
-                        userList.style.setProperty('overflow-y', 'visible', 'important');
-                        modal.style.setProperty('max-height', 'none', 'important');
-                        modal.style.setProperty('height', 'auto', 'important');
+                if (!adminEmail) {
+                    alert("Admin email not found. Please log in again.");
+                    return;
+                }
+                
+                alert("MARKET CACHE BUST v1 - Profile clicked");
+                
+                try {
+                    const res = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
+                    const data = await res.json();
+                    if (!res.ok || !data.users) throw new Error("Failed to fetch users");
+
+                    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                    const userPermissions = allUserData[adminEmail]?.permissions || data.permissions || {};
+                    const user = urlParams.get('user') || localStorage.getItem("currentUser");
+
+                    userList.innerHTML = "";
+                    
+                    data.users.forEach(userName => {
+                        const li = document.createElement("li");
+                        li.style.setProperty('color', '#5D4E41', 'important');
+                        
+                        const nameContainer = document.createElement("div");
+                        nameContainer.classList.add("user-list-item");
+                        const userNameSpan = document.createElement("span");
+                        userNameSpan.textContent = userName;
+                        userNameSpan.style.setProperty('color', '#5D4E41', 'important');
+                        nameContainer.appendChild(userNameSpan);
+                        
+                        if (userPermissions[userName] === "Admin") {
+                            const checkmark = document.createElement("span");
+                            checkmark.textContent = "✓";
+                            checkmark.style.color = "#00C4B4";
+                            checkmark.style.fontSize = "16px";
+                            checkmark.style.fontWeight = "bold";
+                            checkmark.title = "Admin";
+                            nameContainer.appendChild(checkmark);
+                        }
+                        
+                        li.appendChild(nameContainer);
+                        
+                        // Add settings and delete buttons
+                        const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+                        if (isLoggedInAsAdmin) {
+                            const actionsContainer = document.createElement("div");
+                            actionsContainer.classList.add("user-list-actions");
+                            
+                            const editBtn = document.createElement("button");
+                            editBtn.classList.add("edit-user-btn");
+                            editBtn.innerHTML = "⚙️";
+                            editBtn.style.setProperty('background', '#FBB740', 'important');
+                            editBtn.style.setProperty('color', '#F5F5DC', 'important');
+                            editBtn.style.setProperty('border', 'none', 'important');
+                            editBtn.style.setProperty('border-radius', '50%', 'important');
+                            editBtn.style.setProperty('width', '30px', 'important');
+                            editBtn.style.setProperty('height', '30px', 'important');
+                            editBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
+                            editBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
+                            editBtn.addEventListener("click", (event) => {
+                                event.stopPropagation();
+                                alert("Settings functionality not implemented in market page");
+                            });
+                            
+                            const removeBtn = document.createElement("button");
+                            removeBtn.classList.add("remove-user-btn");
+                            removeBtn.textContent = "X";
+                            removeBtn.style.setProperty('background', '#FBB740', 'important');
+                            removeBtn.style.setProperty('color', '#F5F5DC', 'important');
+                            removeBtn.style.setProperty('border', 'none', 'important');
+                            removeBtn.style.setProperty('border-radius', '50%', 'important');
+                            removeBtn.style.setProperty('width', '30px', 'important');
+                            removeBtn.style.setProperty('height', '30px', 'important');
+                            removeBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
+                            removeBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
+                            removeBtn.addEventListener("click", (event) => {
+                                event.stopPropagation();
+                                alert("Delete functionality not implemented in market page");
+                            });
+                            
+                            actionsContainer.appendChild(editBtn);
+                            actionsContainer.appendChild(removeBtn);
+                            li.appendChild(actionsContainer);
+                        }
+                        
+                        // Highlight current user
+                        if (userName === user) {
+                            li.classList.add('active-user');
+                            li.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important');
+                            li.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
+                            li.style.setProperty('color', '#5D4E41', 'important');
+                            li.style.setProperty('font-weight', '600', 'important');
+                        }
+                        
+                        li.addEventListener("click", async () => {
+                            const isAdminUser = userPermissions[userName] === "Admin";
+                            const basePath = "/BeeMazing-A1/mobile";
+                            const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+
+                            if (isAdminUser) {
+                                if (isLoggedInAsAdmin) {
+                                    window.location.href = `${basePath}/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                                } else {
+                                    const enteredPassword = prompt("Enter Parent Password to access Admin profile:");
+                                    if (!enteredPassword) {
+                                        alert("Password is required to access Admin profile.");
+                                        return;
+                                    }
+                                    try {
+                                        const res = await fetch(`https://beemazing1.onrender.com/verify-admin-password`, {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ email: adminEmail, password: enteredPassword }),
+                                        });
+                                        const data = await res.json();
+                                        if (res.ok && data.success) {
+                                            window.location.href = `${basePath}/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                                        } else {
+                                            alert(data.message || "Incorrect password. Access denied.");
+                                        }
+                                    } catch (err) {
+                                        console.error("Error verifying admin password:", err);
+                                        alert("Failed to verify password. Please check your connection.");
+                                    }
+                                }
+                            } else {
+                                window.location.href = `${basePath}/2-UserProfiles/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                            }
+                        });
+                        
+                        userList.appendChild(li);
+                    });
+
+                    // Show modal with force inline styles
+                    userSelectModal.style.display = 'block';
+                    userSelectModal.style.opacity = '1';
+                    userSelectModal.classList.add("show");
+                    
+                    const bottomSheetContent = userSelectModal.querySelector('.bottom-sheet-content');
+                    if (bottomSheetContent) {
+                        bottomSheetContent.style.transform = 'translateY(0)';
                     }
-                }, 10);
-            }
-            userSelectModal.classList.add('show');
-        });
+                    
+                    // Apply styling after modal opens
+                    setTimeout(applyModalStyling, 10);
+                } catch (err) {
+                    console.error("Failed to load users:", err);
+                    userList.innerHTML = '<li style="padding: 15px; color: #D32F2F;">Failed to load users</li>';
+                    userSelectModal.style.display = 'block';
+                    userSelectModal.style.opacity = '1';
+                    userSelectModal.classList.add("show");
+                }
+            });
+        }
 
         // Close modal handlers
-        closeModalBtn.addEventListener('click', () => {
-            userSelectModal.classList.remove('show');
-        });
-
-        userSelectModal.addEventListener('click', (e) => {
-            if (e.target === userSelectModal) {
-                userSelectModal.classList.remove('show');
+        // Helper function to ensure proper modal styling
+        function applyModalStyling() {
+            try {
+                const text = document.querySelector('.bottom-sheet-header h3');
+                if (text) {
+                    text.style.setProperty('color', '#5D4E41', 'important');
+                }
+                
+                const closeBtn = document.querySelector('.close-btn');
+                if (closeBtn) {
+                    closeBtn.style.setProperty('color', '#F5F5DC', 'important');
+                }
+                
+                const userListItems = document.querySelectorAll('.user-list li');
+                userListItems.forEach(item => {
+                    if (!item.style.getPropertyValue('background')) {
+                        item.style.setProperty('background', '#FFFFF8', 'important');
+                    }
+                });
+            } catch (e) {
+                console.log("Error in applyModalStyling:", e);
             }
-        });
+        }
+
+        // Modal close functionality
+        if (userSelectModal) {
+            userSelectModal.addEventListener("click", (e) => {
+                if (e.target === userSelectModal) {
+                    userSelectModal.style.display = 'none';
+                    userSelectModal.style.opacity = '0';
+                    userSelectModal.classList.remove("show");
+                    const bottomSheetContent = userSelectModal.querySelector('.bottom-sheet-content');
+                    if (bottomSheetContent) {
+                        bottomSheetContent.style.transform = 'translateY(100%)';
+                    }
+                }
+            });
+        }
+
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener("click", () => {
+                userSelectModal.style.display = 'none';
+                userSelectModal.style.opacity = '0';
+                userSelectModal.classList.remove("show");
+                const bottomSheetContent = userSelectModal.querySelector('.bottom-sheet-content');
+                if (bottomSheetContent) {
+                    bottomSheetContent.style.transform = 'translateY(100%)';
+                }
+            });
+        }
+
+        // Add User button functionality
+        const addUserBtnInModal = document.getElementById("addUserBtn");
+        if (addUserBtnInModal) {
+            addUserBtnInModal.addEventListener("click", () => {
+                alert("Add User functionality not implemented in market page. Please use the main home page to add users.");
+            });
+        }
 
 
 
