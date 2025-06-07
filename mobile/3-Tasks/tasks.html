@@ -23,6 +23,7 @@
             --add-btn-height: 80px; /* 60px button + 20px buffer */
             --border-dark: #444754; /* same as in addtasks.html */
             --header-height: 68px;
+            --card-bg: #2A2B32;
 
         }
 
@@ -499,10 +500,99 @@ transform: scale(1.1);
 
 .scroll-btn:hover {
     background: var(--primary-color);
+}
+
+/* User Selection Modal Styles */
+#userSelectModal {
+    z-index: 1001;
+}
+
+.bottom-sheet-content {
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 15px;
+    width: 85%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+    border: 2px solid var(--border-dark);
+    color: var(--accent-color);
+}
+
+.bottom-sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.bottom-sheet-header h3 {
+    color: var(--accent-color);
+    margin: 0;
+    font-weight: 600;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--accent-color);
+}
+
+.close-btn:hover {
     color: var(--secondary-color);
 }
 
+.user-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+}
 
+.user-list li {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border: 2px solid var(--border-dark);
+    border-radius: 16px;
+    background: var(--card-bg);
+    padding: 8px 10px;
+    gap: 12px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.user-list li:hover {
+    background: #333540;
+}
+
+.user-list li.active-user {
+    background: #333540;
+    font-weight: 800;
+}
+
+.user-list li img {
+    width: 50px;
+    height: 60px;
+    border-radius: 12px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.user-list li span {
+    flex: 1;
+    color: var(--accent-color);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* Position for swipe to delete feature */
 
 
 
@@ -608,6 +698,19 @@ transform: scale(1.1);
         </a>
     </div>
 
+    <!-- User Selection Modal -->
+    <div id="userSelectModal" class="task-modal" style="display: none;">
+        <div class="bottom-sheet-content">
+            <div class="bottom-sheet-header">
+                <h3>Select User</h3>
+                <span id="closeModalBtn" class="close-btn">&times;</span>
+            </div>
+            <ul id="userList" class="user-list">
+                <!-- Users will be populated here -->
+            </ul>
+        </div>
+    </div>
+
     <script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
 
     <script>
@@ -649,6 +752,125 @@ if (!admin || !user) {
         });
     } else {
         console.error("Logout button not found");
+    }
+
+    // Profile icon functionality
+    const profileIcon = document.getElementById("profileIcon");
+    const userSelectModal = document.getElementById("userSelectModal");
+    const userList = document.getElementById("userList");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+
+    if (profileIcon) {
+        profileIcon.addEventListener("click", async () => {
+            if (!admin) {
+                alert("Admin email not found. Please log in again.");
+                return;
+            }
+            
+            try {
+                const res = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(admin)}`);
+                const data = await res.json();
+                if (!res.ok || !data.users) throw new Error("Failed to fetch users");
+
+                const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                const userPermissions = allUserData[admin]?.permissions || data.permissions || {};
+
+                userList.innerHTML = "";
+                
+                data.users.forEach(userName => {
+                    const li = document.createElement("li");
+                    
+                    const avatar = document.createElement("img");
+                    avatar.src = data.avatars?.[userName] || "/BeeMazing-A1/shared/Avatars/default.png";
+                    
+                    const nameSpan = document.createElement("span");
+                    nameSpan.textContent = userName;
+                    
+                    // Highlight current user
+                    if (userName === user) {
+                        li.classList.add('active-user');
+                    }
+                    
+                    li.appendChild(avatar);
+                    li.appendChild(nameSpan);
+                    
+                    li.addEventListener("click", async () => {
+                        console.log(`🔥 DEBUG TASKS.HTML: Clicking on user: ${userName}`);
+                        console.log(`🔥 DEBUG TASKS.HTML: Admin email: ${admin}`);
+                        console.log(`🔥 DEBUG TASKS.HTML: User permissions:`, userPermissions);
+                        console.log(`🔥 DEBUG TASKS.HTML: Permission for ${userName}:`, userPermissions[userName]);
+                        
+                        const isAdminUser = userPermissions[userName] === "Admin";
+                        const basePath = "/BeeMazing-A1/mobile";
+                        const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+
+                        console.log(`🔥 DEBUG TASKS.HTML: Is ${userName} admin? ${isAdminUser}`);
+                        console.log(`🔥 DEBUG TASKS.HTML: Is logged in as admin? ${isLoggedInAsAdmin}`);
+
+                        if (isAdminUser) {
+                            console.log(`🔥 DEBUG TASKS.HTML: ${userName} is admin - checking password`);
+                            if (isLoggedInAsAdmin) {
+                                const targetUrl = `${basePath}/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(userName)}`;
+                                console.log(`🔥 DEBUG TASKS.HTML: Navigating to (admin direct): ${targetUrl}`);
+                                window.location.href = targetUrl;
+                            } else {
+                                const enteredPassword = prompt("Enter Parent Password to access Admin profile:");
+                                if (!enteredPassword) {
+                                    alert("Password is required to access Admin profile.");
+                                    return;
+                                }
+                                try {
+                                    const res = await fetch(`https://beemazing1.onrender.com/verify-admin-password`, {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ email: admin, password: enteredPassword }),
+                                    });
+                                    const data = await res.json();
+                                    if (res.ok && data.success) {
+                                        const targetUrl = `${basePath}/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(userName)}`;
+                                        console.log(`🔥 DEBUG TASKS.HTML: Navigating to (admin verified): ${targetUrl}`);
+                                        window.location.href = targetUrl;
+                                    } else {
+                                        alert(data.message || "Incorrect password. Access denied.");
+                                    }
+                                } catch (err) {
+                                    console.error("Error verifying admin password:", err);
+                                    alert("Failed to verify password. Please check your connection.");
+                                }
+                            }
+                        } else {
+                            console.log(`🔥 DEBUG TASKS.HTML: ${userName} is regular user`);
+                            const targetUrl = `${basePath}/2-UserProfiles/users.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(userName)}`;
+                            console.log(`🔥 DEBUG TASKS.HTML: Navigating to (regular user): ${targetUrl}`);
+                            window.location.href = targetUrl;
+                        }
+                    });
+                    
+                    userList.appendChild(li);
+                });
+
+                userSelectModal.style.display = "flex";
+            } catch (err) {
+                console.error("Failed to load users:", err);
+                userList.innerHTML = '<li style="padding: 15px; color: #D32F2F;">Failed to load users</li>';
+                userSelectModal.style.display = "flex";
+            }
+        });
+    }
+
+    // Modal close functionality
+    if (userSelectModal) {
+        userSelectModal.addEventListener("click", (e) => {
+            if (e.target === userSelectModal) {
+                userSelectModal.style.display = "none";
+            }
+        });
+    }
+
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener("click", () => {
+            userSelectModal.style.display = "none";
+        });
     }
 });
 
