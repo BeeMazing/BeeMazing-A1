@@ -28,7 +28,7 @@
     --footer-height: 70px;
     --modal-bg: rgba(19, 19, 18, 0.4); /* Added */
     --border-dark: #444754; /* Added */
-    /* Cache buster v12.0 - fixed adaptive height calculations */
+    /* Cache buster v13.0 - direct DOM manipulation for no scrolling */
 }
 
 /* RGB color variations for Add User elements */
@@ -488,9 +488,9 @@ h3 {
     list-style: none;
     padding: 0;
     margin: 0;
-    height: auto;
-    max-height: none;
-    overflow-y: visible;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
     min-height: 48px;
 }
 
@@ -527,9 +527,9 @@ h3 {
         color: #5D4E41 !important;
     }
     .user-list {
-        height: auto;
-        max-height: none;
-        overflow-y: visible;
+        height: auto !important;
+        max-height: none !important;
+        overflow-y: visible !important;
         min-height: 48px;
     }
     .user-list li {
@@ -1589,59 +1589,57 @@ function simpleAddUserStyling() {
 // Run styling safely
 setTimeout(simpleAddUserStyling, 100);
 
-// Function to adjust modal height based on user count
-function adjustModalHeight() {
+// Function to force no scrolling - multiple aggressive attempts
+function forceNoScrolling() {
   try {
     const userList = document.getElementById('userList');
     const modal = document.querySelector('.bottom-sheet-content');
-    const header = document.querySelector('.bottom-sheet-header');
+    const bottomSheet = document.querySelector('.bottom-sheet');
     
-    if (userList && modal && header) {
-      const userCount = userList.children.length;
-      console.log('Adjusting height for', userCount, 'users');
+    if (userList && modal) {
+      console.log('Forcing no scrolling for', userList.children.length, 'users');
       
-      // Get actual measurements
-      const headerHeight = header.offsetHeight || 80;
-      const itemHeight = 60; // Account for padding and spacing
-      const modalPadding = 20;
-      const maxScreenHeight = window.innerHeight * 0.9;
-      
-      console.log('Header height:', headerHeight, 'Max screen:', maxScreenHeight);
-      
-      // Calculate required height for all users
-      const requiredListHeight = userCount * itemHeight;
-      const totalRequiredHeight = headerHeight + requiredListHeight + modalPadding;
-      
-      console.log('Required list height:', requiredListHeight, 'Total required:', totalRequiredHeight);
-      
-      // Remove any height restrictions first
-      userList.style.height = 'auto';
-      userList.style.maxHeight = 'none';
-      userList.style.overflowY = 'visible';
-      
-      // If total height fits on screen, let it grow naturally
-      if (totalRequiredHeight <= maxScreenHeight) {
-        modal.style.maxHeight = 'none';
-        modal.style.height = 'auto';
-        console.log('All users fit - no scrolling needed');
-      } else {
-        // If too tall, set max height and enable scrolling
-        const maxListHeight = maxScreenHeight - headerHeight - modalPadding;
-        modal.style.maxHeight = `${maxScreenHeight}px`;
-        userList.style.maxHeight = `${maxListHeight}px`;
-        userList.style.overflowY = 'auto';
-        console.log('Too many users - scrolling enabled, max list height:', maxListHeight);
+      // Force all parent containers to have no height restrictions
+      if (bottomSheet) {
+        bottomSheet.style.setProperty('height', '100vh', 'important');
+        bottomSheet.style.setProperty('max-height', 'none', 'important');
       }
+      
+      modal.style.setProperty('max-height', 'none', 'important');
+      modal.style.setProperty('height', 'auto', 'important');
+      modal.style.setProperty('overflow-y', 'visible', 'important');
+      modal.style.setProperty('overflow', 'visible', 'important');
+      
+      // Multiple attempts to override user list height
+      userList.style.setProperty('height', 'auto', 'important');
+      userList.style.setProperty('max-height', '100vh', 'important');
+      userList.style.setProperty('overflow-y', 'visible', 'important');
+      userList.style.setProperty('overflow', 'visible', 'important');
+      
+      // Force via CSS text override
+      userList.setAttribute('style', 'height: auto !important; max-height: 100vh !important; overflow-y: visible !important; overflow: visible !important;');
+      
+      console.log('No scrolling forced - all users should be visible');
+      console.log('User list height:', userList.offsetHeight, 'Modal height:', modal.offsetHeight);
     }
   } catch (e) {
-    console.log("Error adjusting modal height:", e);
+    console.log("Error forcing no scrolling:", e);
   }
 }
 
-// Add window resize listener to adjust modal height
+// Multiple timing attempts to ensure it works
+function multipleForceAttempts() {
+  forceNoScrolling();
+  setTimeout(forceNoScrolling, 50);
+  setTimeout(forceNoScrolling, 100);
+  setTimeout(forceNoScrolling, 200);
+  setTimeout(forceNoScrolling, 500);
+}
+
+// Add window resize listener to force no scrolling
 window.addEventListener('resize', function() {
   if (document.querySelector('.bottom-sheet.show')) {
-    setTimeout(adjustModalHeight, 10);
+    multipleForceAttempts();
   }
 });
 
@@ -1772,8 +1770,8 @@ document.getElementById("submitUserBtn").addEventListener("click", async () => {
           userList.appendChild(li);
         });
         
-        // Adjust modal height after populating users
-        setTimeout(adjustModalHeight, 10);
+        // Force no scrolling after populating users - multiple attempts
+        multipleForceAttempts();
       }
 
       closeAddUserModal();
@@ -1881,16 +1879,16 @@ profileIcon.addEventListener("click", async () => {
             userList.appendChild(li);
         });
         
-        // Adjust modal height after populating users
-        setTimeout(adjustModalHeight, 10);
+        // Force no scrolling after populating users - multiple attempts
+        multipleForceAttempts();
     }
     userSelectModal.classList.add("show");
     
     // Simple styling after modal opens
     setTimeout(simpleAddUserStyling, 10);
     
-    // Adjust modal height based on user count
-    setTimeout(adjustModalHeight, 20);
+    // Force no scrolling - multiple attempts
+    multipleForceAttempts();
 });
 userSelectModal.addEventListener("click", (e) => {
     if (e.target === userSelectModal) {
@@ -2093,8 +2091,8 @@ savePermissionBtn.addEventListener("click", async () => {
             userList.appendChild(li);
         });
         
-        // Adjust modal height after populating users
-        setTimeout(adjustModalHeight, 10);
+        // Force no scrolling after populating users - multiple attempts
+        multipleForceAttempts();
     }
 });
 permissionModal.addEventListener("click", (e) => {
