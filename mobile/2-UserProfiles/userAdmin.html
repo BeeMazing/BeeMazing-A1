@@ -1431,9 +1431,7 @@ h3 {
 
 
   <script>
-// Cache busting - force reload with timestamp
-const cacheVersion = Date.now();
-console.log("Script loading at:", cacheVersion);
+
 
 // Dynamically set footer button links and active state
 const urlParams = new URLSearchParams(window.location.search);
@@ -1561,9 +1559,9 @@ if (!globalAdminEmail) {
     const errorMessage = document.getElementById("errorMessage");
 
     if (addUserBtnInModal) {
-        addUserBtnInModal.addEventListener("click", () => {
-            console.log("🚀 ADD USER BUTTON CLICKED - WORKING!");
-            alert("Add user button clicked! Modal should open.");
+        addUserBtnInModal.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             addUserModal.style.display = "flex";
             usernameInput.value = "";
             errorMessage.style.display = "none";
@@ -1748,9 +1746,9 @@ if (!globalAdminEmail) {
                             this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
                         };
                         editBtn.addEventListener("click", (event) => {
-                            console.log("🚀 EDIT BUTTON CLICKED - WORKING!");
-                            alert("Edit button clicked for: " + userName);
+                            event.preventDefault();
                             event.stopPropagation();
+                            event.stopImmediatePropagation();
                             showPermissionModal(userName);
                         });
                         
@@ -1777,9 +1775,9 @@ if (!globalAdminEmail) {
                             this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
                         };
                         removeBtn.addEventListener("click", (event) => {
-                            console.log("🚀 DELETE BUTTON CLICKED - WORKING!");
-                            alert("Delete button clicked for: " + userName);
+                            event.preventDefault();
                             event.stopPropagation();
+                            event.stopImmediatePropagation();
                             showConfirmModal(userName);
                         });
                         
@@ -1798,8 +1796,11 @@ if (!globalAdminEmail) {
                     }
                     
                     li.addEventListener("click", async (clickEvent) => {
-                        console.log("🚀 USER CLICKED - WORKING!", userName);
-                        alert("User clicked: " + userName);
+                        // Check if click target is a button or inside a button
+                        if (clickEvent.target.tagName === 'BUTTON' || clickEvent.target.closest('button')) {
+                            return; // Don't handle user click if a button was clicked
+                        }
+                        
                         // Prevent default behavior
                         clickEvent.preventDefault();
                         clickEvent.stopPropagation();
