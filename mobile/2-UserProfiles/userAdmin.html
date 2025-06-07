@@ -1515,7 +1515,6 @@ let selectedUserForPermission = null;
 
 // Global modal functions
 function showConfirmModal(username) {
-    console.log("showConfirmModal called for:", username);
     userToRemove = username;
     const confirmModal = document.getElementById("confirmModal");
     if (confirmModal) {
@@ -1529,14 +1528,10 @@ function showConfirmModal(username) {
         confirmModal.style.setProperty('z-index', '10000', 'important');
         confirmModal.style.setProperty('justify-content', 'center', 'important');
         confirmModal.style.setProperty('align-items', 'center', 'important');
-        console.log("Confirm modal opened");
-    } else {
-        console.log("Confirm modal not found!");
     }
 }
 
 function showPermissionModal(username) {
-    console.log("showPermissionModal called for:", username);
     selectedUserForPermission = username;
     const permissionModalUser = document.getElementById("permissionModalUser");
     const editUserNameInput = document.getElementById("editUserNameInput");
@@ -1570,9 +1565,6 @@ function showPermissionModal(username) {
         permissionModal.style.setProperty('z-index', '10000', 'important');
         permissionModal.style.setProperty('justify-content', 'center', 'important');
         permissionModal.style.setProperty('align-items', 'center', 'important');
-        console.log("Permission modal opened");
-    } else {
-        console.log("Permission modal not found!");
     }
 }
 
@@ -1592,13 +1584,10 @@ if (!globalAdminEmail) {
     const errorMessage = document.getElementById("errorMessage");
 
     if (addUserBtnInModal) {
-        console.log("Add user button found, adding event listener");
         addUserBtnInModal.addEventListener("click", (e) => {
-            console.log("Add user button clicked!");
             e.preventDefault();
             e.stopPropagation();
             if (addUserModal) {
-                console.log("Opening add user modal");
                 addUserModal.style.setProperty('display', 'flex', 'important');
                 addUserModal.style.setProperty('position', 'fixed', 'important');
                 addUserModal.style.setProperty('top', '0', 'important');
@@ -1614,18 +1603,12 @@ if (!globalAdminEmail) {
                 if (errorMessage) errorMessage.style.display = "none";
                 const userRole = document.querySelector('input[name="beeRole"][value="User"]');
                 if (userRole) userRole.checked = true;
-                console.log("Modal opened successfully");
-            } else {
-                console.log("Add user modal not found!");
             }
         });
-    } else {
-        console.log("Add user button not found!");
     }
 
     if (cancelUserBtn) {
         cancelUserBtn.addEventListener("click", () => {
-            console.log("Cancel button clicked, closing modal");
             if (addUserModal) addUserModal.style.setProperty('display', 'none', 'important');
         });
     }
@@ -1634,7 +1617,6 @@ if (!globalAdminEmail) {
     if (addUserModal) {
         addUserModal.addEventListener("click", (e) => {
             if (e.target === addUserModal) {
-                console.log("Modal background clicked, closing modal");
                 if (addUserModal) addUserModal.style.setProperty('display', 'none', 'important');
             }
         });
@@ -1775,14 +1757,12 @@ if (!globalAdminEmail) {
                     // Add settings and delete buttons - check if user is admin
                     const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
                     if (isLoggedInAsAdmin) {
-                        console.log("Creating action buttons for user:", userName);
                         const actionsContainer = document.createElement("div");
                         actionsContainer.classList.add("user-list-actions");
                         actionsContainer.style.setProperty('display', 'flex', 'important');
                         actionsContainer.style.setProperty('gap', '8px', 'important');
                         
                         const editBtn = document.createElement("button");
-                        console.log("Edit button created for:", userName);
                         editBtn.innerHTML = "⚙️";
                         editBtn.title = "Edit User";
                         editBtn.className = "edit-user-btn";
@@ -1809,16 +1789,13 @@ if (!globalAdminEmail) {
                             this.style.setProperty('transform', 'scale(1)', 'important');
                         });
                         editBtn.addEventListener("click", (event) => {
-                            console.log("Edit button clicked for:", userName);
                             event.preventDefault();
                             event.stopPropagation();
                             event.stopImmediatePropagation();
                             showPermissionModal(userName);
                         });
-                        console.log("Edit button event listener added for:", userName);
                         
                         const removeBtn = document.createElement("button");
-                        console.log("Delete button created for:", userName);
                         removeBtn.textContent = "X";
                         removeBtn.title = "Delete User";
                         removeBtn.className = "remove-user-btn";
@@ -1846,20 +1823,15 @@ if (!globalAdminEmail) {
                             this.style.setProperty('transform', 'scale(1)', 'important');
                         });
                         removeBtn.addEventListener("click", (event) => {
-                            console.log("Delete button clicked for:", userName);
                             event.preventDefault();
                             event.stopPropagation();
                             event.stopImmediatePropagation();
                             showConfirmModal(userName);
                         });
-                        console.log("Delete button event listener added for:", userName);
                         
                         actionsContainer.appendChild(editBtn);
                         actionsContainer.appendChild(removeBtn);
                         li.appendChild(actionsContainer);
-                        console.log("Buttons appended to container for:", userName);
-                    } else {
-                        console.log("User is not admin, no action buttons created");
                     }
                     
                     // Highlight current user
