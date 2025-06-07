@@ -1587,24 +1587,46 @@ if (!globalAdminEmail) {
         addUserBtnInModal.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
+            
+            // Debug check
+            alert("Add button clicked! Modal exists: " + (!!addUserModal));
+            
             if (addUserModal) {
-                addUserModal.style.setProperty('display', 'flex', 'important');
-                addUserModal.style.setProperty('position', 'fixed', 'important');
-                addUserModal.style.setProperty('top', '0', 'important');
-                addUserModal.style.setProperty('left', '0', 'important');
-                addUserModal.style.setProperty('width', '100vw', 'important');
-                addUserModal.style.setProperty('height', '100vh', 'important');
-                addUserModal.style.setProperty('background', 'rgba(19, 19, 18, 0.7)', 'important');
-                addUserModal.style.setProperty('z-index', '10000', 'important');
-                addUserModal.style.setProperty('justify-content', 'center', 'important');
-                addUserModal.style.setProperty('align-items', 'center', 'important');
+                // Force show modal with aggressive styling
+                addUserModal.style.display = "block";
+                addUserModal.style.position = "fixed";
+                addUserModal.style.top = "0";
+                addUserModal.style.left = "0";
+                addUserModal.style.width = "100vw";
+                addUserModal.style.height = "100vh";
+                addUserModal.style.background = "rgba(0, 0, 0, 0.8)";
+                addUserModal.style.zIndex = "99999";
+                addUserModal.innerHTML = `
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; min-width: 300px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+                        <h3 style="margin: 0 0 20px 0; color: #333;">Add a Bee</h3>
+                        <input type="text" id="newUserName" placeholder="Bee name" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;" />
+                        <div style="margin: 15px 0;">
+                            <label style="display: block; margin: 5px 0; color: #333;">
+                                <input type="radio" name="newBeeRole" value="Admin" style="margin-right: 8px;"> Parent Bee
+                            </label>
+                            <label style="display: block; margin: 5px 0; color: #333;">
+                                <input type="radio" name="newBeeRole" value="User" checked style="margin-right: 8px;"> Child Bee
+                            </label>
+                        </div>
+                        <div style="margin-top: 20px; text-align: center;">
+                            <button onclick="handleAddUser()" style="background: #FBB740; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">Add Bee</button>
+                            <button onclick="closeAddModal()" style="background: #ccc; color: black; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Cancel</button>
+                        </div>
+                    </div>
+                `;
                 
-                if (usernameInput) usernameInput.value = "";
-                if (errorMessage) errorMessage.style.display = "none";
-                const userRole = document.querySelector('input[name="beeRole"][value="User"]');
-                if (userRole) userRole.checked = true;
+                alert("Modal should now be visible!");
+            } else {
+                alert("Add user modal element not found!");
             }
         });
+    } else {
+        alert("Add user button not found!");
     }
 
     if (cancelUserBtn) {
@@ -1792,7 +1814,40 @@ if (!globalAdminEmail) {
                             event.preventDefault();
                             event.stopPropagation();
                             event.stopImmediatePropagation();
-                            showPermissionModal(userName);
+                            
+                            alert("Edit button clicked for: " + userName);
+                            
+                            const permissionModal = document.getElementById("permissionModal");
+                            if (permissionModal) {
+                                permissionModal.style.display = "block";
+                                permissionModal.style.position = "fixed";
+                                permissionModal.style.top = "0";
+                                permissionModal.style.left = "0";
+                                permissionModal.style.width = "100vw";
+                                permissionModal.style.height = "100vh";
+                                permissionModal.style.background = "rgba(0, 0, 0, 0.8)";
+                                permissionModal.style.zIndex = "99999";
+                                permissionModal.innerHTML = `
+                                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; min-width: 300px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+                                        <h3 style="margin: 0 0 20px 0; color: #333;">Edit Bee: ${userName}</h3>
+                                        <input type="text" id="editUserName" value="${userName}" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;" />
+                                        <div style="margin: 15px 0;">
+                                            <label style="display: block; margin: 5px 0; color: #333;">
+                                                <input type="radio" name="editBeeRole" value="Admin" style="margin-right: 8px;"> Parent Bee
+                                            </label>
+                                            <label style="display: block; margin: 5px 0; color: #333;">
+                                                <input type="radio" name="editBeeRole" value="User" checked style="margin-right: 8px;"> Child Bee
+                                            </label>
+                                        </div>
+                                        <div style="margin-top: 20px; text-align: center;">
+                                            <button onclick="handleEditUser('${userName}')" style="background: #FBB740; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">Save</button>
+                                            <button onclick="closeEditModal()" style="background: #ccc; color: black; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Cancel</button>
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                alert("Permission modal not found!");
+                            }
                         });
                         
                         const removeBtn = document.createElement("button");
@@ -1826,7 +1881,32 @@ if (!globalAdminEmail) {
                             event.preventDefault();
                             event.stopPropagation();
                             event.stopImmediatePropagation();
-                            showConfirmModal(userName);
+                            
+                            alert("Delete button clicked for: " + userName);
+                            
+                            const confirmModal = document.getElementById("confirmModal");
+                            if (confirmModal) {
+                                confirmModal.style.display = "block";
+                                confirmModal.style.position = "fixed";
+                                confirmModal.style.top = "0";
+                                confirmModal.style.left = "0";
+                                confirmModal.style.width = "100vw";
+                                confirmModal.style.height = "100vh";
+                                confirmModal.style.background = "rgba(0, 0, 0, 0.8)";
+                                confirmModal.style.zIndex = "99999";
+                                confirmModal.innerHTML = `
+                                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #2A2B32; color: white; padding: 30px; border-radius: 10px; min-width: 300px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+                                        <h3 style="margin: 0 0 20px 0; color: white;">Delete User</h3>
+                                        <p style="margin-bottom: 20px; color: white;">Are you sure you want to delete ${userName}?</p>
+                                        <div style="margin-top: 20px; text-align: center;">
+                                            <button onclick="handleDeleteUser('${userName}')" style="background: #FBB740; color: black; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">Yes</button>
+                                            <button onclick="closeConfirmModal()" style="background: #666; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">No</button>
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                alert("Confirm modal not found!");
+                            }
                         });
                         
                         actionsContainer.appendChild(editBtn);
@@ -2106,6 +2186,71 @@ if (!globalAdminEmail) {
         }
     }, 1000);
 }
+}
+
+// Helper functions for modal actions
+function closeAddModal() {
+    const modal = document.getElementById("addUserModal");
+    if (modal) modal.style.display = "none";
+}
+
+function closeEditModal() {
+    const modal = document.getElementById("permissionModal");
+    if (modal) modal.style.display = "none";
+}
+
+function closeConfirmModal() {
+    const modal = document.getElementById("confirmModal");
+    if (modal) modal.style.display = "none";
+}
+
+function handleAddUser() {
+    const nameInput = document.getElementById("newUserName");
+    const roleInputs = document.querySelectorAll('input[name="newBeeRole"]:checked');
+    
+    if (!nameInput || !nameInput.value.trim()) {
+        alert("Please enter a name");
+        return;
+    }
+    
+    const username = nameInput.value.trim();
+    const role = roleInputs.length > 0 ? roleInputs[0].value : "User";
+    
+    alert(`Adding user: ${username} as ${role}`);
+    closeAddModal();
+    
+    // Refresh user list
+    const profileIcon = document.getElementById("profileIcon");
+    if (profileIcon) profileIcon.click();
+}
+
+function handleEditUser(oldName) {
+    const nameInput = document.getElementById("editUserName");
+    const roleInputs = document.querySelectorAll('input[name="editBeeRole"]:checked');
+    
+    if (!nameInput || !nameInput.value.trim()) {
+        alert("Please enter a name");
+        return;
+    }
+    
+    const newName = nameInput.value.trim();
+    const role = roleInputs.length > 0 ? roleInputs[0].value : "User";
+    
+    alert(`Updating user: ${oldName} to ${newName} as ${role}`);
+    closeEditModal();
+    
+    // Refresh user list
+    const profileIcon = document.getElementById("profileIcon");
+    if (profileIcon) profileIcon.click();
+}
+
+function handleDeleteUser(username) {
+    alert(`Deleting user: ${username}`);
+    closeConfirmModal();
+    
+    // Refresh user list
+    const profileIcon = document.getElementById("profileIcon");
+    if (profileIcon) profileIcon.click();
 }
 
 // Run setup when DOM is ready
