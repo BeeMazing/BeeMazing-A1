@@ -735,7 +735,7 @@ transform: scale(1.1);
       <div class="bottom-sheet-content" style="position: fixed; bottom: 0; left: 0; width: 100%; max-height: none; background: #FFFFF8; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -4px 20px rgba(19, 19, 18, 0.2); border: 2px solid #e4e3e0; transform: translateY(100%); transition: transform 0.3s ease-in-out;">
         <div class="bottom-sheet-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 2px solid #e4e3e0; background: #FFFFFF;">
           <div class="header-title">
-            <h3 style="color: #5D4E41 !important; margin: 0; font-size: 18px; font-weight: 600;">Add User</h3>
+            <h3 style="color: #5D4E41 !important; margin: 0; font-size: 18px; font-weight: 600;">Select User - UPDATED</h3>
             <button class="add-user-btn" id="addUserBtn" style="background: rgb(251, 183, 64) !important; color: rgb(245, 245, 220) !important; border: none !important; border-radius: 50% !important; width: 24px !important; height: 24px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;" onmouseover="this.style.setProperty('background', '#5D4E41', 'important'); this.style.setProperty('background-color', '#5D4E41', 'important');" onmouseout="this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important');">+</button>
           </div>
           <button id="closeModalBtn" class="close-btn" aria-label="Close" style="background: none; border: none; color: #F5F5DC !important; font-size: 24px; cursor: pointer; padding: 5px;">✕</button>
@@ -747,9 +747,10 @@ transform: scale(1.1);
     <script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
 
     <script>
-        // Force fresh load with timestamp
+        // Force fresh load with timestamp - CACHE BUST v3
         const timestamp = Date.now();
         console.log('Tasks.html loaded at:', timestamp);
+        document.title = 'BeeMazing Tasks - ' + timestamp;
 
 
 // Append admin and user query parameters to Home link
@@ -926,8 +927,9 @@ if (!admin || !user) {
                     userList.appendChild(li);
                 });
 
-                console.log("🔥 DEBUG: Modal element:", userSelectModal);
-                console.log("🔥 DEBUG: Modal classes before:", userSelectModal.className);
+                console.log("🔥 DEBUG CACHE BUST v3: Modal element:", userSelectModal);
+                console.log("🔥 DEBUG CACHE BUST v3: Modal classes before:", userSelectModal.className);
+                alert("Profile clicked - CACHE BUST v3");
                 // Show modal with force inline styles
                 userSelectModal.style.display = 'block';
                 userSelectModal.style.opacity = '1';
