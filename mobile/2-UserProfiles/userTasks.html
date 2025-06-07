@@ -817,7 +817,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const marketButton = document.getElementById("marketButton");
 
         if (homeButton) {
-            homeButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+            const homePage = isUserAdmin ? "userAdmin.html" : "users.html";
+            homeButton.href = `${basePath}/${homePage}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
         }
         if (tasksButton) {
             tasksButton.href = `${basePath}/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;

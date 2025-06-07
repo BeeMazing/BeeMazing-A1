@@ -99,11 +99,6 @@ body: JSON.stringify({
 }
 
 
-  // Determine the base path (mobile or web) based on the current URL
-  const isMobile = window.location.pathname.includes("/BeeMazing-A1/mobile/");
-  const basePath = isMobile ? "/BeeMazing-A1/mobile" : "/web";
-
-
   async function fetchUsersFromServer(email) {
       try {
         const res = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(email)}`);
@@ -177,6 +172,13 @@ body: JSON.stringify({
       const users = usersFromServer || [];
       const userPermissions = permissionsFromServer || {};
       const isAdmin = localStorage.getItem("isAdmin") === "true";
+      
+      console.log(`🔥 DEBUG renderUsers: users=`, users);
+      console.log(`🔥 DEBUG renderUsers: permissions=`, userPermissions);
+      
+      // Determine the base path (mobile or web) based on the current URL
+      const isMobile = window.location.pathname.includes("/BeeMazing-A1/mobile/");
+      const basePath = isMobile ? "/BeeMazing-A1/mobile" : "/web";
     
       users.forEach((username) => {
         const newUserItem = document.createElement("li");
@@ -204,13 +206,24 @@ body: JSON.stringify({
         }
     
         newUserItem.addEventListener("click", async function () {
+          console.log(`🔥 DEBUG: Clicking on user: ${username}`);
+          console.log(`🔥 DEBUG: Current admin: ${currentAdmin}`);
+          console.log(`🔥 DEBUG: User permissions for ${username}:`, userPermissions[username]);
+          console.log(`🔥 DEBUG: Base path: ${basePath}`);
+          
           const page = userPermissions[username] === "Admin" ? "userAdmin.html" : "users.html";
           const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+          
+          console.log(`🔥 DEBUG: Target page: ${page}`);
+          console.log(`🔥 DEBUG: Is logged in as admin: ${isLoggedInAsAdmin}`);
         
           if (userPermissions[username] === "Admin") {
+            console.log(`🔥 DEBUG: ${username} is an admin user`);
             if (isLoggedInAsAdmin) {
               // Parent logged in → direct access
-              window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
+              const targetUrl = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
+              console.log(`🔥 DEBUG: Navigating to (admin direct): ${targetUrl}`);
+              window.location.href = targetUrl;
             } else {
               // Child logged in → ask for password
               const enteredPassword = prompt("Enter Parent Password to access Admin profile:");
@@ -228,7 +241,9 @@ body: JSON.stringify({
                 const data = await res.json();
         
                 if (res.ok && data.success) {
-                  window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
+                  const targetUrl = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
+                  console.log(`🔥 DEBUG: Navigating to (admin verified): ${targetUrl}`);
+                  window.location.href = targetUrl;
                 } else {
                   alert(data.message || "Incorrect password. Access denied.");
                 }
@@ -239,7 +254,10 @@ body: JSON.stringify({
             }
           } else {
             // Normal Child user → open directly
-            window.location.href = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
+            console.log(`🔥 DEBUG: ${username} is a regular user`);
+            const targetUrl = `${basePath}/2-UserProfiles/${page}?admin=${encodeURIComponent(currentAdmin)}&user=${encodeURIComponent(username)}`;
+            console.log(`🔥 DEBUG: Navigating to (regular user): ${targetUrl}`);
+            window.location.href = targetUrl;
           }
         });
         
