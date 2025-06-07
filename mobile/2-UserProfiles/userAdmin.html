@@ -1480,10 +1480,9 @@ async function fetchUsersFromServer(email) {
 
 // Helper function to delete a user from the server
 async function deleteUserFromServer(username) {
-    const adminEmail = globalAdminEmail;
     try {
         const res = await fetch(
-            `https://beemazing1.onrender.com/delete-user?adminEmail=${encodeURIComponent(adminEmail)}&username=${encodeURIComponent(username)}`,
+            `https://beemazing1.onrender.com/delete-user?adminEmail=${encodeURIComponent(globalAdminEmail)}&username=${encodeURIComponent(username)}`,
             {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" }
@@ -1492,16 +1491,17 @@ async function deleteUserFromServer(username) {
         const result = await res.json();
         if (result.success) {
             const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-            let users = allUserData[adminEmail]?.users || [];
+            let users = allUserData[globalAdminEmail]?.users || [];
             users = users.filter(user => user !== username);
-            allUserData[adminEmail].users = users;
+            allUserData[globalAdminEmail].users = users;
             localStorage.setItem("userData", JSON.stringify(allUserData));
             return true;
         } else {
-            console.error("Failed to delete user: " + result.message);
+            alert("Failed to delete user from server: " + result.message);
             return false;
         }
     } catch (err) {
+        alert("Error deleting user. Please try again.");
         console.error("Failed to delete user:", err);
         return false;
     }
@@ -1936,7 +1936,7 @@ if (!globalAdminEmail) {
                     if (oldName !== newName) {
                         // Delete old user
                         const deleteRes = await fetch(
-                            `https://beemazing1.onrender.com/delete-user?adminEmail=${encodeURIComponent(adminEmail)}&username=${encodeURIComponent(oldName)}`,
+                            `https://beemazing1.onrender.com/delete-user?adminEmail=${encodeURIComponent(globalAdminEmail)}&username=${encodeURIComponent(oldName)}`,
                             {
                                 method: "DELETE",
                                 headers: { "Content-Type": "application/json" }
