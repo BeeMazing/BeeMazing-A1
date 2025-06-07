@@ -539,6 +539,9 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
 </head>
 <body>
     <div class="date-header">
+        <h1 style="color: white; font-size: 60px; text-align: center; background: purple; padding: 40px; border: 20px solid red; animation: rainbow 0.3s infinite; transform: rotate(5deg); text-shadow: 10px 10px 20px black;">NUCLEAR CACHE BUST v999 - TIMESTAMP: 1735741234567 - SAVE BUTTON FIXED!</h1>
+        <style>@keyframes rainbow { 0% { background: red; color: white; } 16% { background: orange; color: black; } 33% { background: yellow; color: black; } 50% { background: green; color: white; } 66% { background: blue; color: white; } 83% { background: indigo; color: white; } 100% { background: violet; color: white; } }</style>
+
 
 
         <div id="profileIcon" class="profile-icon">
@@ -1191,83 +1194,89 @@ document.addEventListener("DOMContentLoaded", () => {
         const permissionModal = document.getElementById("permissionModal");
         const savePermissionBtn = document.getElementById("savePermissionBtn");
 
-        savePermissionBtn.addEventListener("click", async () => {
-            alert("DEBUG: Save button clicked!");
-            console.log("DEBUG: selectedUserForPermission =", selectedUserForPermission);
-            
-            if (selectedUserForPermission) {
-                const editUserNameInput = document.getElementById("editUserNameInput");
-                const editErrorMessage = document.getElementById("editErrorMessage");
-                const newName = editUserNameInput.value.trim();
+        if (savePermissionBtn) {
+            savePermissionBtn.addEventListener("click", async () => {
+                alert("NUCLEAR DEBUG v999: Save button clicked!");
+                console.log("NUCLEAR DEBUG: selectedUserForPermission =", selectedUserForPermission);
                 
-                alert("DEBUG: Found selectedUser, newName = " + newName);
-                
-                if (!newName) {
-                    alert("DEBUG: Name is empty, showing error");
-                    editErrorMessage.style.display = "block";
-                    return;
-                }
-                
-                editErrorMessage.style.display = "none";
-                const newPermission = document.querySelector('input[name="editBeeRole"]:checked')?.value || "User";
-                const oldName = selectedUserForPermission;
-                
-                alert("DEBUG: oldName = " + oldName + ", newName = " + newName + ", newPermission = " + newPermission);
-                
-                try {
-                    // Update localStorage first
-                    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-                    if (!allUserData[adminEmail]) {
-                        allUserData[adminEmail] = { users: [], permissions: {} };
+                if (selectedUserForPermission) {
+                    const editUserNameInput = document.getElementById("editUserNameInput");
+                    const editErrorMessage = document.getElementById("editErrorMessage");
+                    const newName = editUserNameInput.value.trim();
+                    
+                    alert("NUCLEAR DEBUG: Found selectedUser, newName = " + newName);
+                    
+                    if (!newName) {
+                        alert("NUCLEAR DEBUG: Name is empty, showing error");
+                        editErrorMessage.style.display = "block";
+                        return;
                     }
                     
-                    // Update user name in list if changed
-                    if (oldName !== newName) {
-                        const userIndex = allUserData[adminEmail].users.indexOf(oldName);
-                        if (userIndex !== -1) {
-                            allUserData[adminEmail].users[userIndex] = newName;
+                    editErrorMessage.style.display = "none";
+                    const newPermission = document.querySelector('input[name="editBeeRole"]:checked')?.value || "User";
+                    const oldName = selectedUserForPermission;
+                    
+                    alert("NUCLEAR DEBUG: oldName = " + oldName + ", newName = " + newName + ", newPermission = " + newPermission);
+                    
+                    try {
+                        // Update localStorage first
+                        const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                        if (!allUserData[adminEmail]) {
+                            allUserData[adminEmail] = { users: [], permissions: {} };
                         }
-                        // Remove old permission entry
-                        delete allUserData[adminEmail].permissions[oldName];
-                    }
-                    
-                    // Update permissions
-                    allUserData[adminEmail].permissions[newName] = newPermission;
-                    localStorage.setItem("userData", JSON.stringify(allUserData));
-                    
-                    // Save permissions to server (name changes will be handled by the app logic)
-                    const res = await fetch("https://beemazing1.onrender.com/save-permissions", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            adminEmail: adminEmail,
-                            permissions: allUserData[adminEmail].permissions
-                        })
-                    });
-                    const result = await res.json();
-                    
-                    const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
-                    if (result.success) {
+                        
+                        // Update user name in list if changed
                         if (oldName !== newName) {
-                            alert(`User updated! Name changed to "${newName}" and role set to ${roleText}.`);
-                        } else {
-                            alert(`User updated! ${newName} is now a ${roleText}.`);
+                            const userIndex = allUserData[adminEmail].users.indexOf(oldName);
+                            if (userIndex !== -1) {
+                                allUserData[adminEmail].users[userIndex] = newName;
+                            }
+                            // Remove old permission entry
+                            delete allUserData[adminEmail].permissions[oldName];
                         }
-                    } else {
-                        alert(`Local changes saved. Role updated to ${roleText}. ${oldName !== newName ? 'Name change to "' + newName + '" saved locally.' : ''}`);
+                        
+                        // Update permissions
+                        allUserData[adminEmail].permissions[newName] = newPermission;
+                        localStorage.setItem("userData", JSON.stringify(allUserData));
+                        
+                        // Save permissions to server (name changes will be handled by the app logic)
+                        const res = await fetch("https://beemazing1.onrender.com/save-permissions", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                adminEmail: adminEmail,
+                                permissions: allUserData[adminEmail].permissions
+                            })
+                        });
+                        const result = await res.json();
+                        
+                        const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
+                        if (result.success) {
+                            if (oldName !== newName) {
+                                alert(`NUCLEAR SUCCESS! Name changed to "${newName}" and role set to ${roleText}.`);
+                            } else {
+                                alert(`NUCLEAR SUCCESS! ${newName} is now a ${roleText}.`);
+                            }
+                        } else {
+                            alert(`NUCLEAR LOCAL SAVE! Role updated to ${roleText}. ${oldName !== newName ? 'Name change to "' + newName + '" saved locally.' : ''}`);
+                        }
+                    } catch (err) {
+                        // Even if server fails, local changes are saved
+                        const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
+                        alert(`NUCLEAR FALLBACK! Changes saved locally! ${newName} is now a ${roleText}.`);
                     }
-                } catch (err) {
-                    // Even if server fails, local changes are saved
-                    const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
-                    alert(`Changes saved locally! ${newName} is now a ${roleText}.`);
+                    
+                    selectedUserForPermission = null;
+                    permissionModal.style.display = "none";
+                    // Refresh the user list by clicking profile icon again
+                    profileIcon.click();
+                } else {
+                    alert("NUCLEAR ERROR: No user selected for editing!");
                 }
-                
-                selectedUserForPermission = null;
-                permissionModal.style.display = "none";
-                // Refresh the user list by clicking profile icon again
-                profileIcon.click();
-            }
-        });
+            });
+        } else {
+            alert("NUCLEAR ERROR: Save button not found!");
+        }
 
         // Cancel edit button
         const cancelEditBtn = document.getElementById("cancelEditBtn");
