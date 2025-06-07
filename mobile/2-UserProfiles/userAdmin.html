@@ -1520,7 +1520,15 @@ function showConfirmModal(username) {
     const confirmModal = document.getElementById("confirmModal");
     if (confirmModal) {
         confirmModal.style.setProperty('display', 'flex', 'important');
-        confirmModal.style.setProperty('z-index', '9999', 'important');
+        confirmModal.style.setProperty('position', 'fixed', 'important');
+        confirmModal.style.setProperty('top', '0', 'important');
+        confirmModal.style.setProperty('left', '0', 'important');
+        confirmModal.style.setProperty('width', '100vw', 'important');
+        confirmModal.style.setProperty('height', '100vh', 'important');
+        confirmModal.style.setProperty('background', 'rgba(19, 19, 18, 0.7)', 'important');
+        confirmModal.style.setProperty('z-index', '10000', 'important');
+        confirmModal.style.setProperty('justify-content', 'center', 'important');
+        confirmModal.style.setProperty('align-items', 'center', 'important');
         console.log("Confirm modal opened");
     } else {
         console.log("Confirm modal not found!");
@@ -1553,7 +1561,15 @@ function showPermissionModal(username) {
     const permissionModal = document.getElementById("permissionModal");
     if (permissionModal) {
         permissionModal.style.setProperty('display', 'flex', 'important');
-        permissionModal.style.setProperty('z-index', '9999', 'important');
+        permissionModal.style.setProperty('position', 'fixed', 'important');
+        permissionModal.style.setProperty('top', '0', 'important');
+        permissionModal.style.setProperty('left', '0', 'important');
+        permissionModal.style.setProperty('width', '100vw', 'important');
+        permissionModal.style.setProperty('height', '100vh', 'important');
+        permissionModal.style.setProperty('background', 'rgba(19, 19, 18, 0.7)', 'important');
+        permissionModal.style.setProperty('z-index', '10000', 'important');
+        permissionModal.style.setProperty('justify-content', 'center', 'important');
+        permissionModal.style.setProperty('align-items', 'center', 'important');
         console.log("Permission modal opened");
     } else {
         console.log("Permission modal not found!");
@@ -1579,53 +1595,38 @@ if (!globalAdminEmail) {
         console.log("Add user button found, adding event listener");
         addUserBtnInModal.addEventListener("click", (e) => {
             console.log("Add user button clicked!");
-            alert("Add user button works! Forcing modal open...");
             e.preventDefault();
             e.stopPropagation();
             if (addUserModal) {
                 console.log("Opening add user modal");
-                // Force modal to show with absolute positioning
-                addUserModal.innerHTML = `
-                    <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border: 3px solid #000; z-index: 99999; box-shadow: 0 0 20px rgba(0,0,0,0.8);">
-                        <h3 style="color: #333; margin-bottom: 20px;">Add a Bee</h3>
-                        <input type="text" id="testUsernameInput" placeholder="Bee name" style="width: 200px; padding: 10px; margin: 10px 0; border: 2px solid #ccc;" />
-                        <div style="margin: 15px 0;">
-                            <label style="display: block; margin: 5px 0; color: #333;">
-                                <input type="radio" name="testBeeRole" value="Admin" style="margin-right: 5px;"> Parent Bee
-                            </label>
-                            <label style="display: block; margin: 5px 0; color: #333;">
-                                <input type="radio" name="testBeeRole" value="User" checked style="margin-right: 5px;"> Child Bee
-                            </label>
-                        </div>
-                        <div style="margin-top: 20px;">
-                            <button onclick="alert('Submit clicked'); this.closest('.modal').style.display='none';" style="background: #FBB740; color: white; padding: 10px 20px; border: none; margin-right: 10px; cursor: pointer;">Submit</button>
-                            <button onclick="this.closest('.modal').style.display='none';" style="background: #ccc; color: black; padding: 10px 20px; border: none; cursor: pointer;">Cancel</button>
-                        </div>
-                    </div>
-                `;
-                addUserModal.style.setProperty('display', 'block', 'important');
+                addUserModal.style.setProperty('display', 'flex', 'important');
                 addUserModal.style.setProperty('position', 'fixed', 'important');
                 addUserModal.style.setProperty('top', '0', 'important');
                 addUserModal.style.setProperty('left', '0', 'important');
-                addUserModal.style.setProperty('width', '100%', 'important');
-                addUserModal.style.setProperty('height', '100%', 'important');
-                addUserModal.style.setProperty('background', 'rgba(0, 0, 0, 0.5)', 'important');
-                addUserModal.style.setProperty('z-index', '99999', 'important');
-                console.log("Modal forced open");
+                addUserModal.style.setProperty('width', '100vw', 'important');
+                addUserModal.style.setProperty('height', '100vh', 'important');
+                addUserModal.style.setProperty('background', 'rgba(19, 19, 18, 0.7)', 'important');
+                addUserModal.style.setProperty('z-index', '10000', 'important');
+                addUserModal.style.setProperty('justify-content', 'center', 'important');
+                addUserModal.style.setProperty('align-items', 'center', 'important');
+                
+                if (usernameInput) usernameInput.value = "";
+                if (errorMessage) errorMessage.style.display = "none";
+                const userRole = document.querySelector('input[name="beeRole"][value="User"]');
+                if (userRole) userRole.checked = true;
+                console.log("Modal opened successfully");
             } else {
                 console.log("Add user modal not found!");
-                alert("Add user modal not found!");
             }
         });
     } else {
         console.log("Add user button not found!");
-        alert("Add user button not found!");
     }
 
     if (cancelUserBtn) {
         cancelUserBtn.addEventListener("click", () => {
             console.log("Cancel button clicked, closing modal");
-            addUserModal.style.setProperty('display', 'none', 'important');
+            if (addUserModal) addUserModal.style.setProperty('display', 'none', 'important');
         });
     }
 
@@ -1634,7 +1635,7 @@ if (!globalAdminEmail) {
         addUserModal.addEventListener("click", (e) => {
             if (e.target === addUserModal) {
                 console.log("Modal background clicked, closing modal");
-                addUserModal.style.setProperty('display', 'none', 'important');
+                if (addUserModal) addUserModal.style.setProperty('display', 'none', 'important');
             }
         });
     }
@@ -1681,7 +1682,7 @@ if (!globalAdminEmail) {
                     allUserData[globalAdminEmail].permissions[username] = selectedRole;
                     localStorage.setItem("userData", JSON.stringify(allUserData));
 
-                    addUserModal.style.setProperty('display', 'none', 'important');
+                    if (addUserModal) addUserModal.style.setProperty('display', 'none', 'important');
                     alert(`${username} has been added as a ${selectedRole}!`);
                     
                     // Refresh the user list by clicking profile icon again
@@ -1809,41 +1810,10 @@ if (!globalAdminEmail) {
                         });
                         editBtn.addEventListener("click", (event) => {
                             console.log("Edit button clicked for:", userName);
-                            alert("Edit button clicked for: " + userName);
                             event.preventDefault();
                             event.stopPropagation();
                             event.stopImmediatePropagation();
-                            
-                            // Force show permission modal
-                            const permissionModal = document.getElementById("permissionModal");
-                            if (permissionModal) {
-                                permissionModal.innerHTML = `
-                                    <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border: 3px solid #000; z-index: 99999; box-shadow: 0 0 20px rgba(0,0,0,0.8);">
-                                        <h3 style="color: #333; margin-bottom: 20px;">Edit Bee: ${userName}</h3>
-                                        <input type="text" value="${userName}" style="width: 200px; padding: 10px; margin: 10px 0; border: 2px solid #ccc;" />
-                                        <div style="margin: 15px 0;">
-                                            <label style="display: block; margin: 5px 0; color: #333;">
-                                                <input type="radio" name="editTestRole" value="Admin" style="margin-right: 5px;"> Parent Bee
-                                            </label>
-                                            <label style="display: block; margin: 5px 0; color: #333;">
-                                                <input type="radio" name="editTestRole" value="User" checked style="margin-right: 5px;"> Child Bee
-                                            </label>
-                                        </div>
-                                        <div style="margin-top: 20px;">
-                                            <button onclick="alert('Save clicked'); this.closest('.modal').style.display='none';" style="background: #FBB740; color: white; padding: 10px 20px; border: none; margin-right: 10px; cursor: pointer;">Save</button>
-                                            <button onclick="this.closest('.modal').style.display='none';" style="background: #ccc; color: black; padding: 10px 20px; border: none; cursor: pointer;">Cancel</button>
-                                        </div>
-                                    </div>
-                                `;
-                                permissionModal.style.setProperty('display', 'block', 'important');
-                                permissionModal.style.setProperty('position', 'fixed', 'important');
-                                permissionModal.style.setProperty('top', '0', 'important');
-                                permissionModal.style.setProperty('left', '0', 'important');
-                                permissionModal.style.setProperty('width', '100%', 'important');
-                                permissionModal.style.setProperty('height', '100%', 'important');
-                                permissionModal.style.setProperty('background', 'rgba(0, 0, 0, 0.5)', 'important');
-                                permissionModal.style.setProperty('z-index', '99999', 'important');
-                            }
+                            showPermissionModal(userName);
                         });
                         console.log("Edit button event listener added for:", userName);
                         
@@ -1877,33 +1847,10 @@ if (!globalAdminEmail) {
                         });
                         removeBtn.addEventListener("click", (event) => {
                             console.log("Delete button clicked for:", userName);
-                            alert("Delete button clicked for: " + userName);
                             event.preventDefault();
                             event.stopPropagation();
                             event.stopImmediatePropagation();
-                            
-                            // Force show confirm modal
-                            const confirmModal = document.getElementById("confirmModal");
-                            if (confirmModal) {
-                                confirmModal.innerHTML = `
-                                    <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #2A2B32; color: white; padding: 30px; border: 3px solid #000; z-index: 99999; box-shadow: 0 0 20px rgba(0,0,0,0.8);">
-                                        <h3 style="color: white; margin-bottom: 20px;">Delete User</h3>
-                                        <p style="color: white; margin-bottom: 20px;">Are you sure you want to delete ${userName}?</p>
-                                        <div style="margin-top: 20px;">
-                                            <button onclick="alert('User ${userName} deleted!'); this.closest('.modal').style.display='none';" style="background: #FBB740; color: black; padding: 10px 20px; border: none; margin-right: 10px; cursor: pointer;">Yes</button>
-                                            <button onclick="this.closest('.modal').style.display='none';" style="background: #444754; color: white; padding: 10px 20px; border: none; cursor: pointer;">No</button>
-                                        </div>
-                                    </div>
-                                `;
-                                confirmModal.style.setProperty('display', 'block', 'important');
-                                confirmModal.style.setProperty('position', 'fixed', 'important');
-                                confirmModal.style.setProperty('top', '0', 'important');
-                                confirmModal.style.setProperty('left', '0', 'important');
-                                confirmModal.style.setProperty('width', '100%', 'important');
-                                confirmModal.style.setProperty('height', '100%', 'important');
-                                confirmModal.style.setProperty('background', 'rgba(0, 0, 0, 0.5)', 'important');
-                                confirmModal.style.setProperty('z-index', '99999', 'important');
-                            }
+                            showConfirmModal(userName);
                         });
                         console.log("Delete button event listener added for:", userName);
                         
@@ -2032,7 +1979,7 @@ if (!globalAdminEmail) {
             const success = await deleteUserFromServer(userToRemove);
             if (success) {
                 userToRemove = null;
-                confirmModal.style.display = "none";
+                if (confirmModal) confirmModal.style.setProperty('display', 'none', 'important');
                 // Refresh the user list by clicking profile icon again
                 profileIcon.click();
             }
@@ -2041,13 +1988,13 @@ if (!globalAdminEmail) {
 
     confirmNoBtn.addEventListener("click", () => {
         userToRemove = null;
-        confirmModal.style.display = "none";
+        if (confirmModal) confirmModal.style.setProperty('display', 'none', 'important');
     });
 
     confirmModal.addEventListener("click", (e) => {
         if (e.target === confirmModal) {
             userToRemove = null;
-            confirmModal.style.display = "none";
+            if (confirmModal) confirmModal.style.setProperty('display', 'none', 'important');
         }
     });
 
@@ -2150,7 +2097,7 @@ if (!globalAdminEmail) {
                 }
                 
                 selectedUserForPermission = null;
-                permissionModal.style.display = "none";
+                if (permissionModal) permissionModal.style.setProperty('display', 'none', 'important');
                 profileIcon.click();
             }
         });
@@ -2161,7 +2108,7 @@ if (!globalAdminEmail) {
     if (cancelEditBtn) {
         cancelEditBtn.addEventListener("click", () => {
             selectedUserForPermission = null;
-            permissionModal.style.display = "none";
+            if (permissionModal) permissionModal.style.setProperty('display', 'none', 'important');
         });
     }
 
@@ -2170,7 +2117,7 @@ if (!globalAdminEmail) {
         permissionModal.addEventListener("click", (e) => {
             if (e.target === permissionModal) {
                 selectedUserForPermission = null;
-                permissionModal.style.display = "none";
+                if (permissionModal) permissionModal.style.setProperty('display', 'none', 'important');
             }
         });
     }
