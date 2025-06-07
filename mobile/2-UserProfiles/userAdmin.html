@@ -28,7 +28,7 @@
     --footer-height: 70px;
     --modal-bg: rgba(19, 19, 18, 0.4); /* Added */
     --border-dark: #444754; /* Added */
-    /* Cache buster v6.0 - simplified safe styling added */
+    /* Cache buster v9.0 - edit/delete buttons match add user style */
 }
 
 /* RGB color variations for Add User elements */
@@ -53,19 +53,19 @@ button[id="addUserBtn"],
 button[id="addUserBtn"]:hover,
 #addUserBtn:hover,
 .add-user-btn:hover {
-    background-color: rgb(139, 105, 20) !important;
-    background: rgb(139, 105, 20) !important;
+    background-color: #5D4E41 !important;
+    background: #5D4E41 !important;
     color: rgb(245, 245, 220) !important;
 }
 
 h3 {
-    color: rgb(139, 105, 20) !important;
+    color: #5D4E41 !important;
 }
 
 /* Active user highlighting */
 .user-list li.active-user {
     background: rgb(251, 183, 64) !important;
-    color: rgb(139, 105, 20) !important;
+    color: #5D4E41 !important;
     font-weight: 600 !important;
 }
 
@@ -73,7 +73,7 @@ h3 {
 .bottom-sheet .bottom-sheet-header .header-title h3,
 .bottom-sheet-header .header-title h3,
 .header-title h3 {
-    color: #8B6914 !important;
+    color: #5D4E41 !important;
     margin: 0 !important;
     font-size: 18px !important;
     font-weight: 600 !important;
@@ -103,7 +103,7 @@ h3 {
 .bottom-sheet-header .header-title .add-user-btn:hover,
 .header-title .add-user-btn:hover,
 #addUserBtn:hover {
-    background: #8B6914 !important;
+    background: #5D4E41 !important;
     color: #F5F5DC !important;
 }
 
@@ -471,7 +471,7 @@ h3 {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: #8B6914 !important;
+    color: #5D4E41 !important;
 }
 .bottom-sheet-header .close-btn {
     background: none;
@@ -522,7 +522,7 @@ h3 {
     }
     .bottom-sheet-header h3 {
         font-size: 16px;
-        color: #8B6914 !important;
+        color: #5D4E41 !important;
     }
     .user-list {
         height: 240px;
@@ -531,7 +531,7 @@ h3 {
         font-size: 14px;
         padding: 12px 15px;
         border-bottom: 1px solid var(--secondary-color);
-        color: #8B6914 !important;
+        color: #5D4E41 !important;
         cursor: pointer;
         transition: background 0.2s ease;
         background: var(--light-bg) !important;
@@ -561,7 +561,7 @@ h3 {
         padding: 6px;
     }
     .remove-user-btn, .edit-user-btn {
-        background: #8B6914 !important; /* Warm brown background */
+        background: #FBB740 !important; /* Yellow background like add user */
         color: #F5F5DC !important; /* Light beige icon/text */
         border: none;
         border-radius: 50%;
@@ -574,6 +574,10 @@ h3 {
         align-items: center;
         justify-content: center;
         transition: background 0.2s ease;
+    }
+    .remove-user-btn:hover, .edit-user-btn:hover {
+        background: #5D4E41 !important; /* Grey/brown hover like add user */
+        color: #F5F5DC !important;
     }
 }
 
@@ -708,7 +712,7 @@ h3 {
     padding: 12px 20px;
     border-bottom: 1px solid var(--secondary-color);
     font-size: 16px;
-    color: #8B6914 !important;
+    color: #5D4E41 !important;
     cursor: pointer;
     transition: background 0.2s ease;
     background: var(--light-bg) !important;
@@ -727,7 +731,7 @@ h3 {
     gap: 8px;
 }
 .remove-user-btn, .edit-user-btn {
-    background: #8B6914 !important;
+    background: #FBB740 !important;
     color: #F5F5DC !important;
     border: none;
     border-radius: 50%;
@@ -742,14 +746,16 @@ h3 {
     transition: background 0.2s ease;
 }
 .edit-user-btn {
-    background: #8B6914;
+    background: #FBB740 !important;
 }
 /* Optional hover effects */
 .remove-user-btn:hover {
-    background: #A0522D;
+    background: #5D4E41 !important;
+    color: #F5F5DC !important;
 }
 .edit-user-btn:hover {
-    background: #A0522D;
+    background: #5D4E41 !important;
+    color: #F5F5DC !important;
 }
 
 
@@ -877,7 +883,7 @@ h3 {
     color: #F5F5DC !important;
   }
   .add-user-btn:hover {
-    background: #8B6914 !important;
+    background: #5D4E41 !important;
     color: #F5F5DC !important;
   }
   .add-user-modal-content {
@@ -899,7 +905,7 @@ h3 {
     gap: 6px;
   }
   .header-title h3 {
-    color: #8B6914 !important;
+    color: #5D4E41 !important;
     font-size: 16px;
   }
 }
@@ -1325,8 +1331,8 @@ h3 {
   <div class="bottom-sheet-content">
     <div class="bottom-sheet-header">
       <div class="header-title">
-        <h3 style="color: rgb(139, 105, 20) !important; margin: 0; font-size: 18px; font-weight: 600;">Add User</h3>
-        <button class="add-user-btn" id="addUserBtn" style="background: rgb(251, 183, 64) !important; color: rgb(245, 245, 220) !important; border: none !important; border-radius: 50% !important; width: 24px !important; height: 24px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;" onmouseover="this.style.setProperty('background', 'rgb(139, 105, 20)', 'important'); this.style.setProperty('background-color', 'rgb(139, 105, 20)', 'important');" onmouseout="this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important');">+</button>
+        <h3 style="color: #5D4E41 !important; margin: 0; font-size: 18px; font-weight: 600;">Add User</h3>
+        <button class="add-user-btn" id="addUserBtn" style="background: rgb(251, 183, 64) !important; color: rgb(245, 245, 220) !important; border: none !important; border-radius: 50% !important; width: 24px !important; height: 24px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;" onmouseover="this.style.setProperty('background', '#5D4E41', 'important'); this.style.setProperty('background-color', '#5D4E41', 'important');" onmouseout="this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important');">+</button>
       </div>
       <button id="closeModalBtn" class="close-btn" aria-label="Close"></button>
     </div>
@@ -1548,7 +1554,7 @@ function simpleAddUserStyling() {
     
     const text = document.querySelector('.header-title h3');
     if (text) {
-      text.style.setProperty('color', 'rgb(139, 105, 20)', 'important');
+      text.style.setProperty('color', '#5D4E41', 'important');
     }
   } catch (e) {
     console.log("Error in simpleAddUserStyling:", e);
@@ -1613,7 +1619,7 @@ document.getElementById("submitUserBtn").addEventListener("click", async () => {
       const userPermissions = allUserData[adminEmail]?.permissions || {};
       userList.innerHTML = '';
       if (users.length === 0) {
-        userList.innerHTML = '<li style="padding: 15px 20px; color: #8B6914; background: #FFFFF8;">No users available</li>';
+        userList.innerHTML = '<li style="padding: 15px 20px; color: #5D4E41; background: #FFFFF8;">No users available</li>';
       } else {
         users.forEach(user => {
           const li = document.createElement("li");
@@ -1702,7 +1708,7 @@ profileIcon.addEventListener("click", async () => {
     userList.innerHTML = '';
     if (users.length === 0) {
         alert("No users found for this admin.");
-        userList.innerHTML = '<li style="padding: 15px 20px; color: #8B6914; background: #FFFFF8;">No users available</li>';
+        userList.innerHTML = '<li style="padding: 15px 20px; color: #5D4E41; background: #FFFFF8;">No users available</li>';
     } else {
         users.forEach(user => {
             const li = document.createElement("li");
