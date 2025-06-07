@@ -28,7 +28,7 @@
     --footer-height: 70px;
     --modal-bg: rgba(19, 19, 18, 0.4); /* Added */
     --border-dark: #444754; /* Added */
-    /* Cache buster v5.0 - aggressive debugging added */
+    /* Cache buster v6.0 - simplified safe styling added */
 }
 
 /* RGB color variations for Add User elements */
@@ -1325,8 +1325,8 @@ h3 {
   <div class="bottom-sheet-content">
     <div class="bottom-sheet-header">
       <div class="header-title">
-        <h3 style="color: #8B6914 !important; margin: 0; font-size: 18px; font-weight: 600;">Add User</h3>
-        <button class="add-user-btn" id="addUserBtn" style="background: #FBB740 !important; color: #F5F5DC !important; border: none !important; border-radius: 50% !important; width: 24px !important; height: 24px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;" onmouseover="this.style.background='#8B6914'" onmouseout="this.style.background='#FBB740'">+</button>
+        <h3 style="color: rgb(139, 105, 20) !important; margin: 0; font-size: 18px; font-weight: 600;">Add User</h3>
+        <button class="add-user-btn" id="addUserBtn" style="background: rgb(251, 183, 64) !important; color: rgb(245, 245, 220) !important; border: none !important; border-radius: 50% !important; width: 24px !important; height: 24px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;" onmouseover="this.style.setProperty('background', 'rgb(139, 105, 20)', 'important'); this.style.setProperty('background-color', 'rgb(139, 105, 20)', 'important');" onmouseout="this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important');">+</button>
       </div>
       <button id="closeModalBtn" class="close-btn" aria-label="Close"></button>
     </div>
@@ -1528,108 +1528,35 @@ function closeAddUserModal() {
   addUserModal.classList.remove("show");
 }
 
-document.getElementById("addUserBtn").addEventListener("click", () => {
-  showAddUserModal();
-});
-
-// Aggressive Add User styling with debugging
-function forceAddUserStyling() {
-  console.log('=== FORCE ADD USER STYLING CALLED ===');
-  
-  // Try multiple selectors for the button
-  const addUserBtn1 = document.getElementById('addUserBtn');
-  const addUserBtn2 = document.querySelector('.add-user-btn');
-  const addUserBtn3 = document.querySelector('[id="addUserBtn"]');
-  const addUserBtn4 = document.querySelector('button.add-user-btn');
-  
-  console.log('Button selectors found:', {
-    'getElementById': !!addUserBtn1,
-    'querySelector .add-user-btn': !!addUserBtn2,
-    'querySelector [id="addUserBtn"]': !!addUserBtn3,
-    'querySelector button.add-user-btn': !!addUserBtn4
+// Simple add user button click handler
+try {
+  document.getElementById("addUserBtn").addEventListener("click", () => {
+    showAddUserModal();
   });
-  
-  // Try multiple selectors for the text
-  const addUserText1 = document.querySelector('.header-title h3');
-  const addUserText2 = document.querySelector('.bottom-sheet-header h3');
-  const addUserText3 = document.querySelector('h3');
-  
-  console.log('Text selectors found:', {
-    '.header-title h3': !!addUserText1,
-    '.bottom-sheet-header h3': !!addUserText2,
-    'h3': !!addUserText3
-  });
-  
-  // Style all found buttons
-  [addUserBtn1, addUserBtn2, addUserBtn3, addUserBtn4].forEach((btn, index) => {
-    if (btn) {
-      console.log(`Styling button ${index + 1}`);
-      btn.style.setProperty('background-color', '#FBB740', 'important');
-      btn.style.setProperty('background', '#FBB740', 'important');
-      btn.style.setProperty('color', '#F5F5DC', 'important');
-      btn.style.setProperty('border', 'none', 'important');
-      btn.style.setProperty('border-radius', '50%', 'important');
-      btn.style.setProperty('width', '24px', 'important');
-      btn.style.setProperty('height', '24px', 'important');
-      btn.style.setProperty('font-size', '16px', 'important');
-      btn.style.setProperty('font-weight', 'bold', 'important');
-      btn.style.setProperty('display', 'inline-flex', 'important');
-      btn.style.setProperty('align-items', 'center', 'important');
-      btn.style.setProperty('justify-content', 'center', 'important');
-      
-      // Remove existing event listeners and add new ones
-      btn.onmouseover = function() {
-        console.log('Button hover in');
-        this.style.setProperty('background-color', '#8B6914', 'important');
-        this.style.setProperty('background', '#8B6914', 'important');
-      };
-      
-      btn.onmouseout = function() {
-        console.log('Button hover out');
-        this.style.setProperty('background-color', '#FBB740', 'important');
-        this.style.setProperty('background', '#FBB740', 'important');
-      };
-    }
-  });
-  
-  // Style all found text elements
-  [addUserText1, addUserText2, addUserText3].forEach((text, index) => {
-    if (text && text.textContent && text.textContent.includes('Add User')) {
-      console.log(`Styling text ${index + 1}: "${text.textContent}"`);
-      text.style.setProperty('color', '#8B6914', 'important');
-      text.style.setProperty('font-weight', '600', 'important');
-    }
-  });
-  
-  console.log('=== FORCE ADD USER STYLING COMPLETE ===');
+} catch (e) {
+  console.log("Error adding addUserBtn listener:", e);
 }
 
-// Multiple timing attempts
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM Content Loaded - attempting styling');
-  forceAddUserStyling();
-});
+// Simple styling function with error handling
+function simpleAddUserStyling() {
+  try {
+    const btn = document.getElementById('addUserBtn');
+    if (btn) {
+      btn.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
+      btn.style.setProperty('color', 'rgb(245, 245, 220)', 'important');
+    }
+    
+    const text = document.querySelector('.header-title h3');
+    if (text) {
+      text.style.setProperty('color', 'rgb(139, 105, 20)', 'important');
+    }
+  } catch (e) {
+    console.log("Error in simpleAddUserStyling:", e);
+  }
+}
 
-window.addEventListener('load', function() {
-  console.log('Window Load - attempting styling');
-  forceAddUserStyling();
-});
-
-// Delayed attempts
-setTimeout(() => {
-  console.log('Timeout 100ms - attempting styling');
-  forceAddUserStyling();
-}, 100);
-
-setTimeout(() => {
-  console.log('Timeout 500ms - attempting styling');
-  forceAddUserStyling();
-}, 500);
-
-setTimeout(() => {
-  console.log('Timeout 1000ms - attempting styling');
-  forceAddUserStyling();
-}, 1000);
+// Run styling safely
+setTimeout(simpleAddUserStyling, 100);
 
 document.getElementById("addUserModal").addEventListener("click", (e) => {
   if (e.target === document.getElementById("addUserModal")) {
@@ -1833,17 +1760,8 @@ profileIcon.addEventListener("click", async () => {
     }
     userSelectModal.classList.add("show");
     
-    // Force Add User styling after modal opens
-    console.log('Modal opened - attempting styling');
-    forceAddUserStyling();
-    setTimeout(() => {
-        console.log('Modal opened - delayed styling attempt');
-        forceAddUserStyling();
-    }, 50);
-    setTimeout(() => {
-        console.log('Modal opened - delayed styling attempt 2');
-        forceAddUserStyling();
-    }, 200);
+    // Simple styling after modal opens
+    setTimeout(simpleAddUserStyling, 10);
 });
 userSelectModal.addEventListener("click", (e) => {
     if (e.target === userSelectModal) {
