@@ -1244,23 +1244,23 @@ h3 {
             </div>
 
             <div id="logoutContainer" class="logout-container">
-
-
               <button id="logoutBtn" aria-label="Logout" title="Logout">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 logout-icon">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
                   </svg>
               </button>
-          </div>
+            </div>
             <div class="month-nav">
-                <button id="prevMonth"><</button>
-                <span id="monthLabel">Month</span>
-                <button id="nextMonth">></button>
+                <button id="prevMonth">&lt;</button>
+                <span id="monthLabel">December 2024</span>
+                <button id="nextMonth">&gt;</button>
             </div>
             <div class="day-scroll-wrapper">
-                <button class="scroll-btn" id="scrollLeft"><</button>
-                <div class="day-scroll" id="dayScrollContainer"></div>
-                <button class="scroll-btn" id="scrollRight">></button>
+                <button class="scroll-btn" id="scrollLeft">&lt;</button>
+                <div class="day-scroll" id="dayScrollContainer">
+                    <!-- Days will be injected dynamically -->
+                </div>
+                <button class="scroll-btn" id="scrollRight">&gt;</button>
             </div>
         </div>
 
@@ -1552,7 +1552,7 @@ function showPermissionModal(username) {
 function setupUserManagement() {
 try {
 if (!globalAdminEmail) {
-    console.warn("No admin email found. Using fallback for testing.");
+    console.warn("No admin email found. Using demo mode.");
     globalAdminEmail = 'demo@beemazing.com';
 }
 
