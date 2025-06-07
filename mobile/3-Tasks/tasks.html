@@ -675,7 +675,7 @@ transform: scale(1.1);
 </head>
 <body>
     <div class="date-header">
-
+        <h1 style="color: red; font-size: 24px; text-align: center; background: yellow; padding: 10px;">CACHE BUST v4 - FILE UPDATED</h1>
         <div id="profileIcon" class="profile-icon">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -736,8 +736,8 @@ transform: scale(1.1);
       <div class="bottom-sheet-content" style="position: fixed; bottom: 0; left: 0; width: 100%; max-height: none; background: #FFFFF8; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -4px 20px rgba(19, 19, 18, 0.2); border: 2px solid #e4e3e0; transform: translateY(100%); transition: transform 0.3s ease-in-out;">
         <div class="bottom-sheet-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 2px solid #e4e3e0; background: #FFFFFF;">
           <div class="header-title" style="display: flex; align-items: center; gap: 10px;">
-            <h3 style="color: #5D4E41 !important; margin: 0; font-size: 18px; font-weight: 600;">Add User</h3>
-            <button class="add-user-btn" id="addUserBtn" style="background: rgb(251, 183, 64) !important; color: rgb(245, 245, 220) !important; border: none !important; border-radius: 50% !important; width: 24px !important; height: 24px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;" onmouseover="this.style.setProperty('background', '#5D4E41', 'important'); this.style.setProperty('background-color', '#5D4E41', 'important');" onmouseout="this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important');">+</button>
+            <h3 style="color: #5D4E41 !important; margin: 0; font-size: 18px; font-weight: 600; display: inline-block;">Add User</h3>
+            <button class="add-user-btn" id="addUserBtn" style="background: rgb(251, 183, 64) !important; color: rgb(245, 245, 220) !important; border: none !important; border-radius: 50% !important; width: 24px !important; height: 24px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; margin-left: 10px;" onmouseover="this.style.setProperty('background', '#5D4E41', 'important'); this.style.setProperty('background-color', '#5D4E41', 'important');" onmouseout="this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important');">+</button>
           </div>
           <button id="closeModalBtn" class="close-btn" aria-label="Close" style="background: none; border: none; color: #F5F5DC !important; font-size: 24px; cursor: pointer; padding: 5px;">✕</button>
         </div>
@@ -887,10 +887,13 @@ if (!admin || !user) {
                     // Highlight current user
                     if (userName === user) {
                         li.classList.add('active-user');
+                        li.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important');
                         li.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
                         li.style.setProperty('color', '#5D4E41', 'important');
                         li.style.setProperty('font-weight', '600', 'important');
-                        console.log("🔥 DEBUG: Applied active user styling to:", userName);
+                        li.setAttribute('data-active', 'true');
+                        console.log("🔥 DEBUG v4: Applied active user styling to:", userName);
+                        alert("ACTIVE USER FOUND: " + userName);
                     }
                     
                     li.addEventListener("click", async () => {
@@ -933,7 +936,7 @@ if (!admin || !user) {
                 });
 
 
-
+                alert("CACHE BUST v4 - Modal opening");
                 // Show modal with force inline styles
                 userSelectModal.style.display = 'block';
                 userSelectModal.style.opacity = '1';
