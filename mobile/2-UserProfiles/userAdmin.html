@@ -28,7 +28,7 @@
     --footer-height: 70px;
     --modal-bg: rgba(19, 19, 18, 0.4); /* Added */
     --border-dark: #444754; /* Added */
-    /* Cache buster v11.0 - adaptive modal height for all users */
+    /* Cache buster v12.0 - fixed adaptive height calculations */
 }
 
 /* RGB color variations for Add User elements */
@@ -447,7 +447,7 @@ h3 {
     bottom: 0;
     left: 0;
     width: 100%;
-    max-height: 90vh;
+    max-height: none;
     background: var(--light-bg);
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
@@ -488,8 +488,9 @@ h3 {
     list-style: none;
     padding: 0;
     margin: 0;
-    max-height: calc(90vh - 120px);
-    overflow-y: auto;
+    height: auto;
+    max-height: none;
+    overflow-y: visible;
     min-height: 48px;
 }
 
@@ -519,14 +520,16 @@ h3 {
         height: 35px;
     }
     .bottom-sheet-content {
-        max-height: 95vh;
+        max-height: none;
     }
     .bottom-sheet-header h3 {
         font-size: 16px;
         color: #5D4E41 !important;
     }
     .user-list {
-        max-height: calc(95vh - 120px);
+        height: auto;
+        max-height: none;
+        overflow-y: visible;
         min-height: 48px;
     }
     .user-list li {
@@ -1591,24 +1594,43 @@ function adjustModalHeight() {
   try {
     const userList = document.getElementById('userList');
     const modal = document.querySelector('.bottom-sheet-content');
-    if (userList && modal) {
+    const header = document.querySelector('.bottom-sheet-header');
+    
+    if (userList && modal && header) {
       const userCount = userList.children.length;
-      const headerHeight = 80; // Header height
-      const itemHeight = 48; // Each user item height
-      const padding = 40; // Extra padding
-      const maxHeight = window.innerHeight * 0.9; // 90% of screen height
+      console.log('Adjusting height for', userCount, 'users');
       
-      const calculatedHeight = Math.min(headerHeight + (userCount * itemHeight) + padding, maxHeight);
+      // Get actual measurements
+      const headerHeight = header.offsetHeight || 80;
+      const itemHeight = 60; // Account for padding and spacing
+      const modalPadding = 20;
+      const maxScreenHeight = window.innerHeight * 0.9;
       
-      // Remove fixed height and let content determine height
+      console.log('Header height:', headerHeight, 'Max screen:', maxScreenHeight);
+      
+      // Calculate required height for all users
+      const requiredListHeight = userCount * itemHeight;
+      const totalRequiredHeight = headerHeight + requiredListHeight + modalPadding;
+      
+      console.log('Required list height:', requiredListHeight, 'Total required:', totalRequiredHeight);
+      
+      // Remove any height restrictions first
       userList.style.height = 'auto';
-      userList.style.maxHeight = `${calculatedHeight - headerHeight}px`;
+      userList.style.maxHeight = 'none';
+      userList.style.overflowY = 'visible';
       
-      // If all users fit, remove scrolling
-      if (calculatedHeight < maxHeight) {
-        userList.style.overflowY = 'visible';
+      // If total height fits on screen, let it grow naturally
+      if (totalRequiredHeight <= maxScreenHeight) {
+        modal.style.maxHeight = 'none';
+        modal.style.height = 'auto';
+        console.log('All users fit - no scrolling needed');
       } else {
+        // If too tall, set max height and enable scrolling
+        const maxListHeight = maxScreenHeight - headerHeight - modalPadding;
+        modal.style.maxHeight = `${maxScreenHeight}px`;
+        userList.style.maxHeight = `${maxListHeight}px`;
         userList.style.overflowY = 'auto';
+        console.log('Too many users - scrolling enabled, max list height:', maxListHeight);
       }
     }
   } catch (e) {
