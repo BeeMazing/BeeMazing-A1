@@ -830,7 +830,6 @@ if (!admin || !user) {
         console.warn("Admin or user missing for homeLink", { admin, user });
     }
 
-    // Logout button functionality
     const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn) {
         console.log("Logout button found, adding event listener");
@@ -844,7 +843,7 @@ if (!admin || !user) {
             window.location.href = "/BeeMazing-A1/login.html";
         });
     } else {
-        console.error("Logout button not found");
+        console.log("Logout button not found");
     }
 
     // Profile icon functionality
@@ -1009,8 +1008,6 @@ if (!admin || !user) {
                     userList.appendChild(li);
                 });
 
-
-
                 // Show modal with force inline styles
                 userSelectModal.style.display = 'block';
                 userSelectModal.style.opacity = '1';
@@ -1021,8 +1018,6 @@ if (!admin || !user) {
                     bottomSheetContent.style.transform = 'translateY(0)';
                 }
                 
-                // Apply styling after modal opens
-                setTimeout(applyModalStyling, 10);
             } catch (err) {
                 console.error("Failed to load users:", err);
                 userList.innerHTML = '<li style="padding: 15px; color: #D32F2F;">Failed to load users</li>';
@@ -1031,30 +1026,6 @@ if (!admin || !user) {
                 userSelectModal.classList.add("show");
             }
         });
-    }
-
-    // Helper function to ensure proper modal styling
-    function applyModalStyling() {
-        try {
-            const text = document.querySelector('.bottom-sheet-header h3');
-            if (text) {
-                text.style.setProperty('color', '#5D4E41', 'important');
-            }
-            
-            const closeBtn = document.querySelector('.close-btn');
-            if (closeBtn) {
-                closeBtn.style.setProperty('color', '#F5F5DC', 'important');
-            }
-            
-            const userListItems = document.querySelectorAll('.user-list li');
-            userListItems.forEach(item => {
-                if (!item.style.getPropertyValue('background')) {
-                    item.style.setProperty('background', '#FFFFF8', 'important');
-                }
-            });
-        } catch (e) {
-            console.log("Error in applyModalStyling:", e);
-        }
     }
 
     // Modal close functionality
@@ -1123,10 +1094,9 @@ if (!admin || !user) {
 
     // Delete user from server function
     async function deleteUserFromServer(username) {
-        const adminEmail = localStorage.getItem("currentAdminEmail");
         try {
             const res = await fetch(
-                `https://beemazing1.onrender.com/delete-user?adminEmail=${encodeURIComponent(adminEmail)}&username=${encodeURIComponent(username)}`,
+                `https://beemazing1.onrender.com/delete-user?adminEmail=${encodeURIComponent(admin)}&username=${encodeURIComponent(username)}`,
                 {
                     method: "DELETE",
                     headers: { "Content-Type": "application/json" }
@@ -1136,12 +1106,12 @@ if (!admin || !user) {
             if (result.success) {
                 // Update localStorage after successful server deletion
                 const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-                let users = allUserData[adminEmail]?.users || [];
+                let users = allUserData[admin]?.users || [];
                 users = users.filter(user => user !== username);
-                if (!allUserData[adminEmail]) {
-                    allUserData[adminEmail] = { users: [], permissions: {} };
+                if (!allUserData[admin]) {
+                    allUserData[admin] = { users: [], permissions: {} };
                 }
-                allUserData[adminEmail].users = users;
+                allUserData[admin].users = users;
                 localStorage.setItem("userData", JSON.stringify(allUserData));
                 return true;
             } else {
@@ -1189,7 +1159,6 @@ if (!admin || !user) {
     // Submit new user
     if (submitUserBtn) {
         submitUserBtn.addEventListener("click", async () => {
-            const adminEmail = localStorage.getItem("currentAdminEmail");
             const username = usernameInput.value.trim();
             
             if (!username) {
@@ -1197,7 +1166,7 @@ if (!admin || !user) {
                 return;
             }
 
-            if (!adminEmail) {
+            if (!admin) {
                 alert("Error: Admin session expired. Please log in again.");
                 window.location.href = "/BeeMazing-A1/login.html";
                 return;
@@ -1211,7 +1180,7 @@ if (!admin || !user) {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        adminEmail: adminEmail,
+                        adminEmail: admin,
                         newUser: username,
                         role: selectedRole
                     })
@@ -1221,17 +1190,16 @@ if (!admin || !user) {
 
                 if (result.success) {
                     const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-                    if (!allUserData[adminEmail]) {
-                        allUserData[adminEmail] = { users: [], permissions: {} };
+                    if (!allUserData[admin]) {
+                        allUserData[admin] = { users: [], permissions: {} };
                     }
 
-                    allUserData[adminEmail].users.push(username);
-                    allUserData[adminEmail].permissions = allUserData[adminEmail].permissions || {};
-                    allUserData[adminEmail].permissions[username] = selectedRole;
+                    allUserData[admin].users.push(username);
+                    allUserData[admin].permissions[username] = selectedRole;
                     localStorage.setItem("userData", JSON.stringify(allUserData));
 
                     addUserModal.style.display = "none";
-                } else {  alert(`${username} has been added as a ${selectedRole}!`);
+                    alert(`${username} has been added as a ${selectedRole}!`);
                     
                     // Refresh the user list by clicking profile icon again
                     profileIcon.click();
@@ -1391,11 +1359,8 @@ if (!admin || !user) {
             permissionModal.style.display = "none";
         }
     });
+
 });
-
-
-
-
 
 document.getElementById("addTaskBtn").addEventListener("click", () => {
     localStorage.removeItem('familyApp_editTask');
