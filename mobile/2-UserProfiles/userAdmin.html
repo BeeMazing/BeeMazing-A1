@@ -1346,49 +1346,59 @@ h3 {
 </div>
 
 <!-- Confirm Delete Modal -->
-<div class="modal" id="confirmModal">
-  <div class="modal-content">
-    <p>Are you sure you want to delete this user?</p>
-    <div class="modal-actions">
-      <button id="confirmYesBtn">Yes</button>
-      <button id="confirmNoBtn">No</button>
+<!-- Confirm Delete Modal -->
+<div class="modal" id="confirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 19, 18, 0.4); z-index: 1001; justify-content: center; align-items: center;">
+  <div class="modal-content" style="background: #2A2B32; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6); border: 2px solid #444754; color: #FFFFFF;">
+    <p style="color: #FFFFFF; margin-bottom: 20px; font-size: 16px;">Are you sure you want to delete this user?</p>
+    <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center;">
+      <button id="confirmYesBtn" style="background: rgb(251, 183, 64); color: #212121; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Yes</button>
+      <button id="confirmNoBtn" style="background: #444754; color: #FFFFFF; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">No</button>
     </div>
   </div>
 </div>
 
 <!-- Permission Modal -->
-<div class="modal" id="permissionModal">
-  <div class="modal-content">
-    <h3 id="permissionModalUser">Permissions for User</h3>
-    <select id="permissionSelect">
-      <option value="User">User</option>
-      <option value="Admin">Admin</option>
-    </select>
-    <div class="modal-actions">
-      <button id="savePermissionBtn">Save</button>
+<div class="modal" id="permissionModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 19, 18, 0.4); z-index: 1001; justify-content: center; align-items: center;">
+  <div class="modal-content" style="background: #FFFFF8; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6); border: 2px solid #e4e3e0; color: #5D4E41;">
+    <h3 id="permissionModalUser" style="color: #5D4E41; margin-bottom: 15px; font-weight: 600;">Edit Bee</h3>
+    <input type="text" id="editUserNameInput" placeholder="Bee name" style="width: 100%; padding: 10px 12px; margin: 10px 0; background: #FFFFF8; color: #5D4E41; border: 2px solid #e4e3e0; border-radius: 8px; font-size: 16px; outline: none; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />
+    <div class="radio-group" style="margin-top: 15px;">
+      <label class="radio-option" style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; cursor: pointer; gap: 10px; color: #5D4E41;">
+        <input type="radio" name="editBeeRole" value="Admin" id="editAdminRole" style="accent-color: rgb(251, 183, 64); width: 18px; height: 18px; cursor: pointer;">
+        <span>Parent Bee</span>
+      </label>
+      <label class="radio-option" style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; cursor: pointer; gap: 10px; color: #5D4E41;">
+        <input type="radio" name="editBeeRole" value="User" id="editUserRole" style="accent-color: rgb(251, 183, 64); width: 18px; height: 18px; cursor: pointer;">
+        <span>Child Bee</span>
+      </label>
+    </div>
+    <p id="editErrorMessage" style="color: #D32F2F; font-size: 14px; display: none;">Please enter a valid name</p>
+    <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+      <button id="savePermissionBtn" style="background: rgb(251, 183, 64); color: #5D4E41; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Save</button>
+      <button id="cancelEditBtn" style="background: #e4e3e0; color: #5D4E41; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Cancel</button>
     </div>
   </div>
 </div>
 
 <!-- Add User Modal -->
-<div class="add-user-modal" id="addUserModal">
-  <div class="add-user-modal-content">
-    <h3>Add New User</h3>
-    <input type="text" id="usernameInput" placeholder="Enter username" />
-    <div class="error-message" id="errorMessage">Please enter a username.</div>
-    <div class="radio-group">
-      <label class="radio-option">
-        <input type="radio" name="beeRole" value="Admin">
+<div class="modal" id="addUserModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 19, 18, 0.4); z-index: 1001; justify-content: center; align-items: center;">
+  <div class="modal-content" style="background: #FFFFF8; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6); border: 2px solid #e4e3e0; color: #5D4E41;">
+    <h3 style="color: #5D4E41; margin-bottom: 15px; font-weight: 600;">Add a Bee</h3>
+    <input type="text" id="usernameInput" placeholder="Bee name" style="width: 100%; padding: 10px 12px; margin: 10px 0; background: #FFFFF8; color: #5D4E41; border: 2px solid #e4e3e0; border-radius: 8px; font-size: 16px; outline: none; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />
+    <div class="radio-group" style="margin-top: 15px;">
+      <label class="radio-option" style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; cursor: pointer; gap: 10px; color: #5D4E41;">
+        <input type="radio" name="beeRole" value="Admin" style="accent-color: rgb(251, 183, 64); width: 18px; height: 18px; cursor: pointer;">
         <span>Parent Bee</span>
       </label>
-      <label class="radio-option">
-        <input type="radio" name="beeRole" value="User" checked>
+      <label class="radio-option" style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; cursor: pointer; gap: 10px; color: #5D4E41;">
+        <input type="radio" name="beeRole" value="User" checked style="accent-color: rgb(251, 183, 64); width: 18px; height: 18px; cursor: pointer;">
         <span>Child Bee</span>
       </label>
     </div>
-    <div class="add-user-modal-actions">
-      <button class="cancel-btn" id="cancelUserBtn">Cancel</button>
-      <button class="submit-btn" id="submitUserBtn">Submit</button>
+    <p id="errorMessage" style="color: #D32F2F; font-size: 14px; display: none;">Please enter a valid name</p>
+    <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+      <button id="submitUserBtn" style="background: rgb(251, 183, 64); color: #5D4E41; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Add</button>
+      <button id="cancelUserBtn" style="background: #e4e3e0; color: #5D4E41; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Cancel</button>
     </div>
   </div>
 </div>
@@ -1493,12 +1503,11 @@ async function deleteUserFromServer(username) {
             localStorage.setItem("userData", JSON.stringify(allUserData));
             return true;
         } else {
-            alert("Failed to delete user: " + result.message);
+            console.error("Failed to delete user: " + result.message);
             return false;
         }
     } catch (err) {
         console.error("Failed to delete user:", err);
-        alert("Error deleting user. Please try again.");
         return false;
     }
 }
@@ -1507,7 +1516,8 @@ async function deleteUserFromServer(username) {
 let userToRemove = null;
 function showConfirmModal(username) {
     userToRemove = username;
-    document.getElementById("confirmModal").classList.add("show");
+    const confirmModal = document.getElementById("confirmModal");
+    confirmModal.style.display = "flex";
 }
 
 // Show permission modal for editing
@@ -1515,12 +1525,27 @@ let selectedUserForPermission = null;
 function showPermissionModal(username) {
     selectedUserForPermission = username;
     const permissionModalUser = document.getElementById("permissionModalUser");
-    const permissionSelect = document.getElementById("permissionSelect");
-    permissionModalUser.textContent = `Permissions for ${username}`;
+    const editUserNameInput = document.getElementById("editUserNameInput");
+    const editAdminRole = document.getElementById("editAdminRole");
+    const editUserRole = document.getElementById("editUserRole");
+    const editErrorMessage = document.getElementById("editErrorMessage");
+    
+    permissionModalUser.textContent = `Edit Bee`;
+    editUserNameInput.value = username;
+    editErrorMessage.style.display = "none";
+    
     const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
     const userPermissions = allUserData[adminEmail]?.permissions || {};
-    permissionSelect.value = userPermissions[username] || "User";
-    document.getElementById("permissionModal").classList.add("show");
+    const currentRole = userPermissions[username] || "User";
+    
+    if (currentRole === "Admin") {
+        editAdminRole.checked = true;
+    } else {
+        editUserRole.checked = true;
+    }
+    
+    const permissionModal = document.getElementById("permissionModal");
+    permissionModal.style.display = "flex";
 }
 
 
@@ -1531,12 +1556,12 @@ function showAddUserModal() {
   const errorMessage = document.getElementById("errorMessage");
   usernameInput.value = "";
   errorMessage.style.display = "none";
-  addUserModal.classList.add("show");
+  document.querySelector('input[name="beeRole"][value="User"]').checked = true;
+  addUserModal.style.display = "flex";
 }
 
 function closeAddUserModal() {
-  const addUserModal = document.getElementById("addUserModal");
-  addUserModal.classList.remove("show");
+  document.getElementById("addUserModal").style.display = "none";
 }
 
 // Simple add user button click handler
@@ -1643,148 +1668,83 @@ window.addEventListener('resize', function() {
   }
 });
 
-document.getElementById("addUserModal").addEventListener("click", (e) => {
-  if (e.target === document.getElementById("addUserModal")) {
-    closeAddUserModal();
-  }
-});
+// Add User modal event handlers
+const addUserModal = document.getElementById("addUserModal");
+const submitUserBtn = document.getElementById("submitUserBtn");
+const cancelUserBtn = document.getElementById("cancelUserBtn");
+const usernameInput = document.getElementById("usernameInput");
+const errorMessage = document.getElementById("errorMessage");
 
-document.getElementById("cancelUserBtn").addEventListener("click", () => {
-  closeAddUserModal();
-});
-
-document.getElementById("submitUserBtn").addEventListener("click", async () => {
-  const username = document.getElementById("usernameInput").value.trim();
-  const errorMessage = document.getElementById("errorMessage");
-
-  if (!username) {
-    errorMessage.style.display = "block";
-    return;
-  }
-
-  if (!adminEmail) {
-    alert("Admin email not found. Please log in again.");
-    closeAddUserModal();
-    return;
-  }
-
-  errorMessage.style.display = "none";
-  const role = document.querySelector('input[name="beeRole"]:checked').value;
-
-  try {
-    const res = await fetch("https://beemazing1.onrender.com/add-user", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-  adminEmail,
-  newUser: username,
-  role: role
-})
+if (addUserModal) {
+    addUserModal.addEventListener("click", (e) => {
+        if (e.target === addUserModal) {
+            addUserModal.style.display = "none";
+        }
     });
+}
 
-    const result = await res.json();
-    if (result.success) {
-      // Update localStorage
-      const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-      if (!allUserData[adminEmail]) {
-        allUserData[adminEmail] = { users: [], permissions: {} };
-      }
-      allUserData[adminEmail].users.push(username);
-      allUserData[adminEmail].permissions[username] = role;
-      localStorage.setItem("userData", JSON.stringify(allUserData));
+if (cancelUserBtn) {
+    cancelUserBtn.addEventListener("click", () => {
+        addUserModal.style.display = "none";
+    });
+}
 
-      // Refresh user list in modal
-      const users = await fetchUsersFromServer(adminEmail);
-      const userPermissions = allUserData[adminEmail]?.permissions || {};
-      userList.innerHTML = '';
-      if (users.length === 0) {
-        userList.innerHTML = '<li style="padding: 15px 20px; color: #5D4E41; background: #FFFFF8;">No users available</li>';
-      } else {
-        users.forEach(user => {
-          const li = document.createElement("li");
-          const nameContainer = document.createElement("div");
-          nameContainer.classList.add("user-list-item");
-          const userNameSpan = document.createElement("span");
-          userNameSpan.textContent = user;
-          nameContainer.appendChild(userNameSpan);
-          if (userPermissions[user] === "Admin") {
-            const checkmark = document.createElement("span");
-            checkmark.textContent = "✓";
-            checkmark.style.color = "#00C4B4";
-            checkmark.style.fontSize = "16px";
-            checkmark.style.fontWeight = "bold";
-            checkmark.title = "Admin";
-            nameContainer.appendChild(checkmark);
-          }
-          li.appendChild(nameContainer);
-          if (isAdmin) {
-            const actionsContainer = document.createElement("div");
-            actionsContainer.classList.add("user-list-actions");
-            const editBtn = document.createElement("button");
-            editBtn.classList.add("edit-user-btn");
-            editBtn.innerHTML = "⚙️";
-            editBtn.style.setProperty('background', '#FBB740', 'important');
-            editBtn.style.setProperty('color', '#F5F5DC', 'important');
-            editBtn.style.setProperty('border', 'none', 'important');
-            editBtn.style.setProperty('border-radius', '50%', 'important');
-            editBtn.style.setProperty('width', '30px', 'important');
-            editBtn.style.setProperty('height', '30px', 'important');
-            editBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
-            editBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
-            editBtn.addEventListener("click", (event) => {
-              event.stopPropagation();
-              showPermissionModal(user);
-            });
-            const removeBtn = document.createElement("button");
-            removeBtn.classList.add("remove-user-btn");
-            removeBtn.textContent = "X";
-            removeBtn.style.setProperty('background', '#FBB740', 'important');
-            removeBtn.style.setProperty('color', '#F5F5DC', 'important');
-            removeBtn.style.setProperty('border', 'none', 'important');
-            removeBtn.style.setProperty('border-radius', '50%', 'important');
-            removeBtn.style.setProperty('width', '30px', 'important');
-            removeBtn.style.setProperty('height', '30px', 'important');
-            removeBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
-            removeBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
-            removeBtn.addEventListener("click", (event) => {
-              event.stopPropagation();
-              showConfirmModal(user);
-            });
-            actionsContainer.appendChild(editBtn);
-            actionsContainer.appendChild(removeBtn);
-            li.appendChild(actionsContainer);
-          }
-          if (user === userName) {
-            li.classList.add('active-user');
-          }
-
-
-          li.addEventListener("click", () => {
-    localStorage.setItem("currentUser", user); // ✅ Save selected user
-    const page = userPermissions[user] === "Admin" ? "userAdmin.html" : "users.html";
-    window.location.href = `/BeeMazing-A1/mobile/2-UserProfiles/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
-});
-
-
-
-          userList.appendChild(li);
-        });
+if (submitUserBtn) {
+    submitUserBtn.addEventListener("click", async () => {
+        const username = usernameInput.value.trim();
         
-        // Force no scrolling after populating users - multiple attempts
-        multipleForceAttempts();
-      }
+        if (!username) {
+            errorMessage.style.display = "block";
+            return;
+        }
 
-      closeAddUserModal();
-    } else {
-      errorMessage.textContent = result.message || "Failed to add user.";
-      errorMessage.style.display = "block";
-    }
-  } catch (err) {
-    console.error("Error adding user:", err);
-    errorMessage.textContent = "Error adding user. Please try again.";
-    errorMessage.style.display = "block";
-  }
-});
+        if (!adminEmail) {
+            console.error("Admin email not found. Please log in again.");
+            addUserModal.style.display = "none";
+            return;
+        }
+
+        errorMessage.style.display = "none";
+        const selectedRole = document.querySelector('input[name="beeRole"]:checked')?.value || "User";
+
+        try {
+            const res = await fetch("https://beemazing1.onrender.com/add-user", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    adminEmail: adminEmail,
+                    newUser: username,
+                    role: selectedRole
+                })
+            });
+
+            const result = await res.json();
+
+            if (result.success) {
+                const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                if (!allUserData[adminEmail]) {
+                    allUserData[adminEmail] = { users: [], permissions: {} };
+                }
+
+                allUserData[adminEmail].users.push(username);
+                allUserData[adminEmail].permissions[username] = selectedRole;
+                localStorage.setItem("userData", JSON.stringify(allUserData));
+
+                addUserModal.style.display = "none";
+                
+                // Refresh the user list by clicking profile icon again
+                profileIcon.click();
+            } else {
+                errorMessage.textContent = result.message || "Failed to add user.";
+                errorMessage.style.display = "block";
+            }
+        } catch (err) {
+            console.error("Error adding user:", err);
+            errorMessage.textContent = "Error adding user. Please try again.";
+            errorMessage.style.display = "block";
+        }
+    });
+}
 
 
 
@@ -1797,7 +1757,7 @@ const userList = document.getElementById("userList");
 const closeModalBtn = document.getElementById("closeModalBtn");
 profileIcon.addEventListener("click", async () => {
     if (!adminEmail) {
-        alert("Admin email not found. Please log in again.");
+        console.error("Admin email not found. Please log in again.");
         return;
     }
     const users = await fetchUsersFromServer(adminEmail);
@@ -1805,7 +1765,6 @@ profileIcon.addEventListener("click", async () => {
     const userPermissions = allUserData[adminEmail]?.permissions || {};
     userList.innerHTML = '';
     if (users.length === 0) {
-        alert("No users found for this admin.");
         userList.innerHTML = '<li style="padding: 15px 20px; color: #5D4E41; background: #FFFFF8;">No users available</li>';
     } else {
         users.forEach(user => {
@@ -1833,18 +1792,30 @@ profileIcon.addEventListener("click", async () => {
             
             if (isAdmin) {
                 const actionsContainer = document.createElement("div");
-                actionsContainer.classList.add("user-list-actions");
+                actionsContainer.style.setProperty('display', 'flex', 'important');
+                actionsContainer.style.setProperty('gap', '8px', 'important');
                 const editBtn = document.createElement("button");
                 editBtn.classList.add("edit-user-btn");
                 editBtn.innerHTML = "⚙️";
-                editBtn.style.setProperty('background', '#FBB740', 'important');
-                editBtn.style.setProperty('color', '#F5F5DC', 'important');
+                editBtn.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
+                editBtn.style.setProperty('color', 'rgb(245, 245, 220)', 'important');
                 editBtn.style.setProperty('border', 'none', 'important');
                 editBtn.style.setProperty('border-radius', '50%', 'important');
                 editBtn.style.setProperty('width', '30px', 'important');
                 editBtn.style.setProperty('height', '30px', 'important');
-                editBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
-                editBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
+                editBtn.style.setProperty('font-size', '14px', 'important');
+                editBtn.style.setProperty('cursor', 'pointer', 'important');
+                editBtn.style.setProperty('display', 'flex', 'important');
+                editBtn.style.setProperty('align-items', 'center', 'important');
+                editBtn.style.setProperty('justify-content', 'center', 'important');
+                editBtn.onmouseover = function() { 
+                    this.style.setProperty('background', '#5D4E41', 'important'); 
+                    this.style.setProperty('background-color', '#5D4E41', 'important'); 
+                };
+                editBtn.onmouseout = function() { 
+                    this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); 
+                    this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
+                };
                 editBtn.addEventListener("click", (event) => {
                     event.stopPropagation();
                     showPermissionModal(user);
@@ -1852,14 +1823,26 @@ profileIcon.addEventListener("click", async () => {
                 const removeBtn = document.createElement("button");
                 removeBtn.classList.add("remove-user-btn");
                 removeBtn.textContent = "X";
-                removeBtn.style.setProperty('background', '#FBB740', 'important');
-                removeBtn.style.setProperty('color', '#F5F5DC', 'important');
+                removeBtn.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
+                removeBtn.style.setProperty('color', 'rgb(245, 245, 220)', 'important');
                 removeBtn.style.setProperty('border', 'none', 'important');
                 removeBtn.style.setProperty('border-radius', '50%', 'important');
                 removeBtn.style.setProperty('width', '30px', 'important');
                 removeBtn.style.setProperty('height', '30px', 'important');
-                removeBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
-                removeBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
+                removeBtn.style.setProperty('font-size', '14px', 'important');
+                removeBtn.style.setProperty('font-weight', 'bold', 'important');
+                removeBtn.style.setProperty('cursor', 'pointer', 'important');
+                removeBtn.style.setProperty('display', 'flex', 'important');
+                removeBtn.style.setProperty('align-items', 'center', 'important');
+                removeBtn.style.setProperty('justify-content', 'center', 'important');
+                removeBtn.onmouseover = function() { 
+                    this.style.setProperty('background', '#5D4E41', 'important'); 
+                    this.style.setProperty('background-color', '#5D4E41', 'important'); 
+                };
+                removeBtn.onmouseout = function() { 
+                    this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); 
+                    this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
+                };
                 removeBtn.addEventListener("click", (event) => {
                     event.stopPropagation();
                     showConfirmModal(user);
@@ -1894,7 +1877,6 @@ profileIcon.addEventListener("click", async () => {
                     } else {
                         const enteredPassword = prompt("Enter Parent Password to access Admin profile:");
                         if (!enteredPassword) {
-                            alert("Password is required to access Admin profile.");
                             return;
                         }
                         try {
@@ -1909,11 +1891,10 @@ profileIcon.addEventListener("click", async () => {
                                 console.log(`🔥 DEBUG USERADMIN.HTML: Navigating to (admin verified): ${targetUrl}`);
                                 window.location.href = targetUrl;
                             } else {
-                                alert(data.message || "Incorrect password. Access denied.");
+                                console.error(data.message || "Incorrect password. Access denied.");
                             }
                         } catch (err) {
                             console.error("Error verifying admin password:", err);
-                            alert("Failed to verify password. Please check your connection.");
                         }
                     }
                 } else {
@@ -1950,201 +1931,146 @@ closeModalBtn.addEventListener("click", () => {
 const confirmModal = document.getElementById("confirmModal");
 const confirmYesBtn = document.getElementById("confirmYesBtn");
 const confirmNoBtn = document.getElementById("confirmNoBtn");
+
 confirmYesBtn.addEventListener("click", async () => {
     if (userToRemove) {
         const success = await deleteUserFromServer(userToRemove);
         if (success) {
             userToRemove = null;
-            confirmModal.classList.remove("show");
-            const users = await fetchUsersFromServer(adminEmail);
-            userList.innerHTML = '';
-            const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-            const userPermissions = allUserData[adminEmail]?.permissions || {};
-            users.forEach(user => {
-                const li = document.createElement("li");
-                const nameContainer = document.createElement("div");
-                nameContainer.classList.add("user-list-item");
-                const userNameSpan = document.createElement("span");
-                userNameSpan.textContent = user;
-                nameContainer.appendChild(userNameSpan);
-                if (userPermissions[user] === "Admin") {
-                    const checkmark = document.createElement("span");
-                    checkmark.textContent = "✓";
-                    checkmark.style.color = "#00C4B4";
-                    checkmark.style.fontSize = "16px";
-                    checkmark.style.fontWeight = "bold";
-                    checkmark.title = "Admin";
-                    nameContainer.appendChild(checkmark);
-                }
-                li.appendChild(nameContainer);
-                if (isAdmin) {
-                    const actionsContainer = document.createElement("div");
-                    actionsContainer.classList.add("user-list-actions");
-                    const editBtn = document.createElement("button");
-                    editBtn.classList.add("edit-user-btn");
-                    editBtn.innerHTML = "⚙️";
-                    editBtn.style.setProperty('background', '#FBB740', 'important');
-                    editBtn.style.setProperty('color', '#F5F5DC', 'important');
-                    editBtn.style.setProperty('border', 'none', 'important');
-                    editBtn.style.setProperty('border-radius', '50%', 'important');
-                    editBtn.style.setProperty('width', '30px', 'important');
-                    editBtn.style.setProperty('height', '30px', 'important');
-                    editBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
-                    editBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
-                    editBtn.addEventListener("click", (event) => {
-                        event.stopPropagation();
-                        showPermissionModal(user);
-                    });
-                    const removeBtn = document.createElement("button");
-                    removeBtn.classList.add("remove-user-btn");
-                    removeBtn.textContent = "X";
-                    removeBtn.style.setProperty('background', '#FBB740', 'important');
-                    removeBtn.style.setProperty('color', '#F5F5DC', 'important');
-                    removeBtn.style.setProperty('border', 'none', 'important');
-                    removeBtn.style.setProperty('border-radius', '50%', 'important');
-                    removeBtn.style.setProperty('width', '30px', 'important');
-                    removeBtn.style.setProperty('height', '30px', 'important');
-                    removeBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
-                    removeBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
-                    removeBtn.addEventListener("click", (event) => {
-                        event.stopPropagation();
-                        showConfirmModal(user);
-                    });
-                    actionsContainer.appendChild(editBtn);
-                    actionsContainer.appendChild(removeBtn);
-                    li.appendChild(actionsContainer);
-                }
-                if (user === userName) {
-                    li.classList.add('active-user');
-                }
-                li.addEventListener("click", () => {
-                  localStorage.setItem("currentUser", user);
-                    const page = userPermissions[user] === "Admin" ? "userAdmin.html" : "users.html";
-                    window.location.href = `/BeeMazing-A1/mobile/2-UserProfiles/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
-                });
-                userList.appendChild(li);
-            });
+            confirmModal.style.display = "none";
+            // Refresh the user list by clicking profile icon again
+            profileIcon.click();
         }
     }
 });
+
 confirmNoBtn.addEventListener("click", () => {
     userToRemove = null;
-    confirmModal.classList.remove("show");
+    confirmModal.style.display = "none";
 });
+
 confirmModal.addEventListener("click", (e) => {
     if (e.target === confirmModal) {
         userToRemove = null;
-        confirmModal.classList.remove("show");
+        confirmModal.style.display = "none";
     }
 });
 
 // PermissionModal event listeners
 const permissionModal = document.getElementById("permissionModal");
 const savePermissionBtn = document.getElementById("savePermissionBtn");
-savePermissionBtn.addEventListener("click", async () => {
-    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-    if (!allUserData[adminEmail]) {
-        allUserData[adminEmail] = { users: [], permissions: {} };
-    }
-    if (!allUserData[adminEmail].permissions) {
-        allUserData[adminEmail].permissions = {};
-    }
-    if (selectedUserForPermission) {
-        allUserData[adminEmail].permissions[selectedUserForPermission] = document.getElementById("permissionSelect").value;
-        localStorage.setItem("userData", JSON.stringify(allUserData));
-        try {
-            const res = await fetch("https://beemazing1.onrender.com/save-permissions", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    adminEmail,
-                    permissions: allUserData[adminEmail].permissions
-                })
-            });
-            const result = await res.json();
-            if (!result.success) {
-                console.warn("Failed to save permissions to server");
+const cancelEditBtn = document.getElementById("cancelEditBtn");
+
+if (savePermissionBtn) {
+    savePermissionBtn.addEventListener("click", async () => {
+        if (selectedUserForPermission) {
+            const editUserNameInput = document.getElementById("editUserNameInput");
+            const editErrorMessage = document.getElementById("editErrorMessage");
+            const newName = editUserNameInput.value.trim();
+            
+            if (!newName) {
+                editErrorMessage.style.display = "block";
+                return;
             }
-        } catch (err) {
-            console.error("Error saving permissions:", err);
+            
+            editErrorMessage.style.display = "none";
+            const newPermission = document.querySelector('input[name="editBeeRole"]:checked')?.value || "User";
+            const oldName = selectedUserForPermission;
+            
+            try {
+                const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
+                
+                // If name changed, delete old user and add new one
+                if (oldName !== newName) {
+                    // Delete old user
+                    const deleteRes = await fetch(
+                        `https://beemazing1.onrender.com/delete-user?adminEmail=${encodeURIComponent(adminEmail)}&username=${encodeURIComponent(oldName)}`,
+                        {
+                            method: "DELETE",
+                            headers: { "Content-Type": "application/json" }
+                        }
+                    );
+                    const addRes = await fetch("https://beemazing1.onrender.com/add-user", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            adminEmail: adminEmail,
+                            newUser: newName,
+                            role: newPermission
+                        })
+                    });
+                    
+                    const addResult = await addRes.json();
+                    if (addResult.success) {
+                        console.log(`User updated! Name changed to "${newName}" and role set to ${roleText}.`);
+                    } else {
+                        console.error("Failed to update user name: " + addResult.message);
+                    }
+                } else {
+                    // Only role changed, update permissions
+                    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                    if (!allUserData[adminEmail]) {
+                        allUserData[adminEmail] = { users: [], permissions: {} };
+                    }
+                    allUserData[adminEmail].permissions[newName] = newPermission;
+                    localStorage.setItem("userData", JSON.stringify(allUserData));
+                    
+                    const res = await fetch("https://beemazing1.onrender.com/save-permissions", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            adminEmail: adminEmail,
+                            permissions: allUserData[adminEmail].permissions
+                        })
+                    });
+                    const result = await res.json();
+                    
+                    if (result.success) {
+                        console.log(`User updated! ${newName} is now a ${roleText}.`);
+                    } else {
+                        console.log(`Local changes saved. Role updated to ${roleText}.`);
+                    }
+                }
+                
+                // Update localStorage regardless
+                const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                if (!allUserData[adminEmail]) {
+                    allUserData[adminEmail] = { users: [], permissions: {} };
+                }
+                
+                if (oldName !== newName) {
+                    const userIndex = allUserData[adminEmail].users.indexOf(oldName);
+                    if (userIndex !== -1) {
+                        allUserData[adminEmail].users[userIndex] = newName;
+                    }
+                    delete allUserData[adminEmail].permissions[oldName];
+                }
+                allUserData[adminEmail].permissions[newName] = newPermission;
+                localStorage.setItem("userData", JSON.stringify(allUserData));
+                
+            } catch (err) {
+                const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
+                console.error(`Error updating user. Please try again.`);
+            }
+            
+            selectedUserForPermission = null;
+            permissionModal.style.display = "none";
+            profileIcon.click();
         }
-        permissionModal.classList.remove("show");
-        const users = await fetchUsersFromServer(adminEmail);
-        userList.innerHTML = '';
-        const updatedUserData = JSON.parse(localStorage.getItem("userData")) || {};
-        const userPermissions = updatedUserData[adminEmail]?.permissions || {};
-        users.forEach(user => {
-            const li = document.createElement("li");
-            const nameContainer = document.createElement("div");
-            nameContainer.classList.add("user-list-item");
-            const userNameSpan = document.createElement("span");
-            userNameSpan.textContent = user;
-            nameContainer.appendChild(userNameSpan);
-            if (userPermissions[user] === "Admin") {
-                const checkmark = document.createElement("span");
-                checkmark.textContent = "✓";
-                checkmark.style.color = "#00C4B4";
-                checkmark.style.fontSize = "16px";
-                checkmark.style.fontWeight = "bold";
-                checkmark.title = "Admin";
-                nameContainer.appendChild(checkmark);
-            }
-            li.appendChild(nameContainer);
-            if (isAdmin) {
-                const actionsContainer = document.createElement("div");
-                actionsContainer.classList.add("user-list-actions");
-                const editBtn = document.createElement("button");
-                editBtn.classList.add("edit-user-btn");
-                editBtn.innerHTML = "⚙️";
-                editBtn.style.setProperty('background', '#FBB740', 'important');
-                editBtn.style.setProperty('color', '#F5F5DC', 'important');
-                editBtn.style.setProperty('border', 'none', 'important');
-                editBtn.style.setProperty('border-radius', '50%', 'important');
-                editBtn.style.setProperty('width', '30px', 'important');
-                editBtn.style.setProperty('height', '30px', 'important');
-                editBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
-                editBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
-                editBtn.addEventListener("click", (event) => {
-                    event.stopPropagation();
-                    showPermissionModal(user);
-                });
-                const removeBtn = document.createElement("button");
-                removeBtn.classList.add("remove-user-btn");
-                removeBtn.textContent = "X";
-                removeBtn.style.setProperty('background', '#FBB740', 'important');
-                removeBtn.style.setProperty('color', '#F5F5DC', 'important');
-                removeBtn.style.setProperty('border', 'none', 'important');
-                removeBtn.style.setProperty('border-radius', '50%', 'important');
-                removeBtn.style.setProperty('width', '30px', 'important');
-                removeBtn.style.setProperty('height', '30px', 'important');
-                removeBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
-                removeBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
-                removeBtn.addEventListener("click", (event) => {
-                    event.stopPropagation();
-                    showConfirmModal(user);
-                });
-                actionsContainer.appendChild(editBtn);
-                actionsContainer.appendChild(removeBtn);
-                li.appendChild(actionsContainer);
-            }
-            if (user === userName) {
-                li.classList.add('active-user');
-            }
-            li.addEventListener("click", () => {
-              localStorage.setItem("currentUser", user);
-                const page = userPermissions[user] === "Admin" ? "userAdmin.html" : "users.html";
-                window.location.href = `/BeeMazing-A1/mobile/2-UserProfiles/${page}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
-            });
-            userList.appendChild(li);
-        });
-        
-        // Force no scrolling after populating users - multiple attempts
-        multipleForceAttempts();
-    }
-});
+    });
+}
+
+if (cancelEditBtn) {
+    cancelEditBtn.addEventListener("click", () => {
+        selectedUserForPermission = null;
+        permissionModal.style.display = "none";
+    });
+}
+
 permissionModal.addEventListener("click", (e) => {
     if (e.target === permissionModal) {
-        permissionModal.classList.remove("show");
+        selectedUserForPermission = null;
+        permissionModal.style.display = "none";
     }
 });
 
