@@ -507,7 +507,7 @@ transform: scale(1.1);
     z-index: 1001;
 }
 
-.bottom-sheet-content {
+#userSelectModal .modal-content {
     background: var(--card-bg);
     padding: 25px;
     border-radius: 15px;
@@ -700,7 +700,7 @@ transform: scale(1.1);
 
     <!-- User Selection Modal -->
     <div id="userSelectModal" class="task-modal" style="display: none;">
-        <div class="bottom-sheet-content">
+        <div class="modal-content">
             <div class="bottom-sheet-header">
                 <h3>Select User</h3>
                 <span id="closeModalBtn" class="close-btn">&times;</span>
@@ -760,12 +760,26 @@ if (!admin || !user) {
     const userList = document.getElementById("userList");
     const closeModalBtn = document.getElementById("closeModalBtn");
 
+    console.log("🔥 DEBUG: Profile icon element:", profileIcon);
+    console.log("🔥 DEBUG: User select modal:", userSelectModal);
+    console.log("🔥 DEBUG: User list:", userList);
+    console.log("🔥 DEBUG: Close modal btn:", closeModalBtn);
+    console.log("🔥 DEBUG: Admin value:", admin);
+    console.log("🔥 DEBUG: User value:", user);
+
     if (profileIcon) {
-        profileIcon.addEventListener("click", async () => {
+        console.log("🔥 DEBUG: Adding click listener to profile icon");
+        profileIcon.addEventListener("click", async (event) => {
+            console.log("🔥 DEBUG: Profile icon clicked!");
+            event.preventDefault();
+            event.stopPropagation();
+            
             if (!admin) {
+                console.log("🔥 DEBUG: No admin found");
                 alert("Admin email not found. Please log in again.");
                 return;
             }
+            console.log("🔥 DEBUG: Admin found, proceeding with fetch");
             
             try {
                 const res = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(admin)}`);
@@ -849,28 +863,40 @@ if (!admin || !user) {
                     userList.appendChild(li);
                 });
 
+                console.log("🔥 DEBUG: Showing modal");
                 userSelectModal.style.display = "flex";
             } catch (err) {
-                console.error("Failed to load users:", err);
+                console.error("🔥 DEBUG: Failed to load users:", err);
                 userList.innerHTML = '<li style="padding: 15px; color: #D32F2F;">Failed to load users</li>';
                 userSelectModal.style.display = "flex";
             }
         });
+    } else {
+        console.error("🔥 DEBUG: Profile icon not found!");
     }
 
     // Modal close functionality
     if (userSelectModal) {
+        console.log("🔥 DEBUG: Adding modal click listener");
         userSelectModal.addEventListener("click", (e) => {
+            console.log("🔥 DEBUG: Modal clicked");
             if (e.target === userSelectModal) {
+                console.log("🔥 DEBUG: Closing modal via background click");
                 userSelectModal.style.display = "none";
             }
         });
+    } else {
+        console.error("🔥 DEBUG: User select modal not found!");
     }
 
     if (closeModalBtn) {
+        console.log("🔥 DEBUG: Adding close button listener");
         closeModalBtn.addEventListener("click", () => {
+            console.log("🔥 DEBUG: Close button clicked");
             userSelectModal.style.display = "none";
         });
+    } else {
+        console.error("🔥 DEBUG: Close modal button not found!");
     }
 });
 
