@@ -1342,12 +1342,7 @@ h3 {
         </div>
         <ul id="userList" class="user-list" style="list-style: none; padding: 0; margin: 0; height: auto !important; max-height: none !important; overflow-y: visible !important; min-height: 48px;"></ul>
       </div>
-  </div>
-
-  <!-- Simple floating test button -->
-  <div style="position: fixed; bottom: 80px; right: 20px; z-index: 999;">
-      <button id="testModalsBtn" style="background: #4CAF50; color: white; border: none; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; font-size: 18px; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.2);" title="Test Modals">T</button>
-  </div>
+    </div>
 
 <!-- Confirm Delete Modal -->
 <!-- Confirm Delete Modal -->
@@ -1557,13 +1552,10 @@ function showPermissionModal(username) {
 function setupUserManagement() {
 try {
 if (!globalAdminEmail) {
-    console.warn("No admin email found. Using demo mode for testing.");
-    window.globalAdminEmail = 'demo@test.com';
+    console.warn("No admin email found. Using fallback for testing.");
+    globalAdminEmail = 'demo@beemazing.com';
 }
 
-    // Debug: Check if elements exist
-    console.log("🔍 Setting up user management...");
-    
     // Add User button functionality
     const addUserBtnInModal = document.getElementById("addUserBtn");
     const addUserModal = document.getElementById("addUserModal");
@@ -1572,23 +1564,12 @@ if (!globalAdminEmail) {
     const usernameInput = document.getElementById("usernameInput");
     const errorMessage = document.getElementById("errorMessage");
 
-    console.log("📋 Element check:");
-    console.log("  addUserBtn:", !!addUserBtnInModal);
-    console.log("  addUserModal:", !!addUserModal);
-    console.log("  submitUserBtn:", !!submitUserBtn);
-    console.log("  cancelUserBtn:", !!cancelUserBtn);
-
     if (addUserBtnInModal) {
-        console.log("✅ Add button found, attaching event listener");
         addUserBtnInModal.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
             
-            console.log("🎯 Add user button clicked!");
-            console.log("  Modal exists:", !!addUserModal);
-            
             if (addUserModal) {
-                console.log("🔓 Opening add user modal");
                 // Clear and reset the form
                 const usernameInput = document.getElementById("usernameInput");
                 if (usernameInput) usernameInput.value = "";
@@ -1599,13 +1580,8 @@ if (!globalAdminEmail) {
                 
                 // Show modal using CSS class
                 addUserModal.classList.add('show');
-                console.log("✅ Add user modal should now be visible");
-            } else {
-                console.error("❌ Add user modal not found!");
             }
         });
-    } else {
-        console.error("❌ Add user button not found!");
     }
 
     if (cancelUserBtn) {
@@ -1712,16 +1688,12 @@ if (!globalAdminEmail) {
 
     // Profile icon functionality - same as market.html
     if (profileIcon) {
-        console.log("✅ Profile icon found, attaching event listener");
         profileIcon.addEventListener("click", async (event) => {
             event.preventDefault();
             event.stopPropagation();
             
-            console.log("👤 Profile icon clicked!");
-            
             if (!globalAdminEmail) {
-                console.log("No admin email, using demo mode");
-                window.globalAdminEmail = 'demo@test.com';
+                globalAdminEmail = 'demo@beemazing.com';
             }
             
             try {
@@ -1797,11 +1769,8 @@ if (!globalAdminEmail) {
                             event.stopPropagation();
                             event.stopImmediatePropagation();
                             
-                            console.log("⚙️ Edit button clicked for:", userName);
-                            
                             // Use the existing showPermissionModal function
                             showPermissionModal(userName);
-                            console.log("✅ showPermissionModal called");
                         });
                         
                         const removeBtn = document.createElement("button");
@@ -1836,11 +1805,8 @@ if (!globalAdminEmail) {
                             event.stopPropagation();
                             event.stopImmediatePropagation();
                             
-                            console.log("❌ Delete button clicked for:", userName);
-                            
                             // Use the existing showConfirmModal function
                             showConfirmModal(userName);
-                            console.log("✅ showConfirmModal called");
                         });
                         
                         actionsContainer.appendChild(editBtn);
@@ -1921,7 +1887,6 @@ if (!globalAdminEmail) {
                 // Apply styling after modal opens
                 setTimeout(applyModalStyling, 10);
             } catch (err) {
-                console.error("❌ Error loading users:", err);
                 userList.innerHTML = '<li style="padding: 15px; color: #D32F2F;">Failed to load users</li>';
                 userSelectModal.style.display = 'block';
                 userSelectModal.style.opacity = '1';
@@ -1943,8 +1908,6 @@ if (!globalAdminEmail) {
                 }
             }
         });
-    } else {
-        console.error("❌ Profile icon not found!");
     }
     
     // Close modal functionality
@@ -2112,67 +2075,6 @@ if (!globalAdminEmail) {
             }
         });
     }
-    
-    // Add floating test button handler
-    const testModalsBtn = document.getElementById('testModalsBtn');
-    if (testModalsBtn) {
-        testModalsBtn.addEventListener('click', function() {
-            console.log('Testing all modals...');
-            
-            // Test 1: Add modal
-            const addModal = document.getElementById('addUserModal');
-            if (addModal) {
-                const nameInput = document.getElementById('usernameInput');
-                if (nameInput) nameInput.value = '';
-                const userRole = document.querySelector('input[name="beeRole"][value="User"]');
-                if (userRole) userRole.checked = true;
-                
-                addModal.classList.add('show');
-                console.log('✅ Add modal opened');
-                
-                setTimeout(() => {
-                    addModal.classList.remove('show');
-                    console.log('Add modal closed');
-                    
-                    // Test 2: Edit modal
-                    setTimeout(() => {
-                        const editModal = document.getElementById('permissionModal');
-                        if (editModal) {
-                            const editNameInput = document.getElementById('editUserNameInput');
-                            if (editNameInput) editNameInput.value = 'Test User';
-                            const editUserRole = document.getElementById('editUserRole');
-                            if (editUserRole) editUserRole.checked = true;
-                            
-                            editModal.classList.add('show');
-                            console.log('✅ Edit modal opened');
-                            
-                            setTimeout(() => {
-                                editModal.classList.remove('show');
-                                console.log('Edit modal closed');
-                                
-                                // Test 3: Delete modal
-                                setTimeout(() => {
-                                    const deleteModal = document.getElementById('confirmModal');
-                                    if (deleteModal) {
-                                        deleteModal.classList.add('show');
-                                        console.log('✅ Delete modal opened');
-                                        
-                                        setTimeout(() => {
-                                            deleteModal.classList.remove('show');
-                                            console.log('Delete modal closed');
-                                            console.log('🎉 All modals tested successfully!');
-                                        }, 2000);
-                                    }
-                                }, 500);
-                            }, 2000);
-                        }
-                    }, 500);
-                }, 2000);
-            } else {
-                console.error('❌ Add modal not found');
-            }
-        });
-    }
 
 }
 } catch (error) {
@@ -2207,24 +2109,10 @@ function closeConfirmModal() {
 
 
 
-// Add error handler to catch any JavaScript errors
-window.addEventListener('error', function(e) {
-    console.error('🚨 JavaScript Error:', e.error);
-    console.error('  Message:', e.message);
-    console.error('  File:', e.filename);
-    console.error('  Line:', e.lineno);
-    console.error('  Column:', e.colno);
-});
-
 // Run setup when DOM is ready
-console.log("🚀 Initializing user management...");
-console.log("Document ready state:", document.readyState);
-
 if (document.readyState === 'loading') {
-    console.log("⏳ DOM still loading, waiting for DOMContentLoaded");
     document.addEventListener('DOMContentLoaded', setupUserManagement);
 } else {
-    console.log("✅ DOM ready, setting up immediately");
     setupUserManagement();
 }
 
