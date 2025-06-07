@@ -539,7 +539,7 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
 </head>
 <body>
     <div class="date-header">
-        <h1 style="color: red; font-size: 24px; text-align: center; background: yellow; padding: 10px;">MARKET v3 - FINAL CACHE BUST TEST</h1>
+
         <div id="profileIcon" class="profile-icon">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -629,6 +629,29 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
         </select>
         <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center;">
           <button id="savePermissionBtn" style="background: rgb(251, 183, 64); color: #212121; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal" id="addUserModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 19, 18, 0.4); z-index: 1001; justify-content: center; align-items: center;">
+      <div class="modal-content" style="background: #2A2B32; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6); border: 2px solid #444754; color: #FFFFFF;">
+        <h3 style="color: #FFFFFF; margin-bottom: 15px; font-weight: 600;">Add a Bee</h3>
+        <input type="text" id="usernameInput" placeholder="Bee name" style="width: 100%; padding: 10px 12px; margin: 10px 0; background: #444754; color: #FFFFFF; border: 2px solid #444754; border-radius: 8px; font-size: 16px; outline: none; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />
+        <div class="radio-group" style="margin-top: 15px;">
+          <label class="radio-option" style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; cursor: pointer; gap: 10px; color: #FFFFFF;">
+            <input type="radio" name="beeRole" value="Admin" style="accent-color: rgb(251, 183, 64); width: 18px; height: 18px; cursor: pointer;">
+            <span>Parent Bee</span>
+          </label>
+          <label class="radio-option" style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; cursor: pointer; gap: 10px; color: #FFFFFF;">
+            <input type="radio" name="beeRole" value="User" checked style="accent-color: rgb(251, 183, 64); width: 18px; height: 18px; cursor: pointer;">
+            <span>Child Bee</span>
+          </label>
+        </div>
+        <p id="errorMessage" style="color: #D32F2F; font-size: 14px; display: none;">Please enter a valid name</p>
+        <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+          <button id="submitUserBtn" style="background: rgb(251, 183, 64); color: #212121; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Add</button>
+          <button id="cancelUserBtn" style="background: #444754; color: #FFFFFF; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Cancel</button>
         </div>
       </div>
     </div>
@@ -993,9 +1016,89 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Add User button functionality
         const addUserBtnInModal = document.getElementById("addUserBtn");
+        const addUserModal = document.getElementById("addUserModal");
+        const submitUserBtn = document.getElementById("submitUserBtn");
+        const cancelUserBtn = document.getElementById("cancelUserBtn");
+        const usernameInput = document.getElementById("usernameInput");
+        const errorMessage = document.getElementById("errorMessage");
+
         if (addUserBtnInModal) {
             addUserBtnInModal.addEventListener("click", () => {
-                alert("Add User functionality not implemented in market page. Please use the main home page to add users.");
+                addUserModal.style.display = "flex";
+                usernameInput.value = "";
+                errorMessage.style.display = "none";
+                document.querySelector('input[name="beeRole"][value="User"]').checked = true;
+            });
+        }
+
+        if (cancelUserBtn) {
+            cancelUserBtn.addEventListener("click", () => {
+                addUserModal.style.display = "none";
+            });
+        }
+
+        // Add user modal click outside to close
+        if (addUserModal) {
+            addUserModal.addEventListener("click", (e) => {
+                if (e.target === addUserModal) {
+                    addUserModal.style.display = "none";
+                }
+            });
+        }
+
+        // Submit new user
+        if (submitUserBtn) {
+            submitUserBtn.addEventListener("click", async () => {
+                const username = usernameInput.value.trim();
+                
+                if (!username) {
+                    errorMessage.style.display = "block";
+                    return;
+                }
+
+                if (!adminEmail) {
+                    alert("Error: Admin session expired. Please log in again.");
+                    window.location.href = "/BeeMazing-A1/login.html";
+                    return;
+                }
+
+                errorMessage.style.display = "none";
+                const selectedRole = document.querySelector('input[name="beeRole"]:checked')?.value || "User";
+
+                try {
+                    const res = await fetch("https://beemazing1.onrender.com/add-user", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            adminEmail: adminEmail,
+                            newUser: username,
+                            role: selectedRole
+                        })
+                    });
+
+                    const result = await res.json();
+
+                    if (result.success) {
+                        const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                        if (!allUserData[adminEmail]) {
+                            allUserData[adminEmail] = { users: [], permissions: {} };
+                        }
+
+                        allUserData[adminEmail].users.push(username);
+                        allUserData[adminEmail].permissions[username] = selectedRole;
+                        localStorage.setItem("userData", JSON.stringify(allUserData));
+
+                        addUserModal.style.display = "none";
+                        alert(`${username} has been added as a ${selectedRole}!`);
+                        
+                        // Refresh the user list by clicking profile icon again
+                        profileIcon.click();
+                    } else {
+                        alert("Failed to add user: " + result.message);
+                    }
+                } catch (err) {
+                    alert("Error adding user. Please try again.");
+                }
             });
         }
 
