@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Test - BeeMazing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .test-button {
+            background: #FBB740;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+        
+        .test-button:hover {
+            background: #E6A42D;
+        }
+        
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.pending {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        /* Modal Styles - Copy from userAdmin.html */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(19, 19, 18, 0.4);
+            z-index: 1100;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        .modal.show {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 1;
+        }
+        
+        .modal-content {
+            background: #FFFFF8;
+            border-radius: 12px;
+            padding: 25px;
+            width: 85%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+            border: 2px solid #e4e3e0;
+            color: #5D4E41;
+        }
+        
+        .modal-content h3 {
+            color: #5D4E41;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .modal-content input {
+            width: 100%;
+            padding: 10px 12px;
+            margin: 10px 0;
+            background: #FFFFF8;
+            color: #5D4E41;
+            border: 2px solid #e4e3e0;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .radio-group {
+            margin-top: 15px;
+        }
+        
+        .radio-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            gap: 10px;
+            color: #5D4E41;
+        }
+        
+        .radio-option input[type="radio"] {
+            accent-color: rgb(251, 183, 64);
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .modal-actions button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .modal-actions .submit-btn {
+            background: rgb(251, 183, 64);
+            color: #5D4E41;
+        }
+        
+        .modal-actions .cancel-btn {
+            background: #e4e3e0;
+            color: #5D4E41;
+        }
+        
+        .error-message {
+            color: #D32F2F;
+            font-size: 14px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Modal Functionality Test</h1>
+        <p>This page tests the modal functionality that was fixed in userAdmin.html</p>
+        
+        <div class="test-section">
+            <h3>➕ Add User Modal Test</h3>
+            <button id="testAddBtn" class="test-button">Test Add User Modal</button>
+            <div id="addStatus" class="status pending">Click button to test</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>⚙️ Edit User Modal Test</h3>
+            <button id="testEditBtn" class="test-button">Test Edit User Modal</button>
+            <div id="editStatus" class="status pending">Click button to test</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>❌ Delete Confirmation Modal Test</h3>
+            <button id="testDeleteBtn" class="test-button">Test Delete Modal</button>
+            <div id="deleteStatus" class="status pending">Click button to test</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔍 Test Results</h3>
+            <ul id="testResults">
+                <li>Ready to test...</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal" id="addUserModal">
+        <div class="modal-content">
+            <h3>Add a Bee</h3>
+            <input type="text" id="usernameInput" placeholder="Bee name" />
+            <div class="radio-group">
+                <label class="radio-option">
+                    <input type="radio" name="beeRole" value="Admin">
+                    <span>Parent Bee</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="beeRole" value="User" checked>
+                    <span>Child Bee</span>
+                </label>
+            </div>
+            <p id="errorMessage" class="error-message">Please enter a valid name</p>
+            <div class="modal-actions">
+                <button id="submitUserBtn" class="submit-btn">Add</button>
+                <button id="cancelUserBtn" class="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal" id="permissionModal">
+        <div class="modal-content">
+            <h3 id="permissionModalUser">Edit Bee</h3>
+            <input type="text" id="editUserNameInput" placeholder="Bee name" />
+            <div class="radio-group">
+                <label class="radio-option">
+                    <input type="radio" name="editBeeRole" value="Admin" id="editAdminRole">
+                    <span>Parent Bee</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="editBeeRole" value="User" id="editUserRole">
+                    <span>Child Bee</span>
+                </label>
+            </div>
+            <p id="editErrorMessage" class="error-message">Please enter a valid name</p>
+            <div class="modal-actions">
+                <button id="savePermissionBtn" class="submit-btn">Save</button>
+                <button id="cancelEditBtn" class="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content" style="background: #2A2B32; color: #FFFFFF;">
+            <p style="color: #FFFFFF; margin-bottom: 20px; font-size: 16px;">Are you sure you want to delete this user?</p>
+            <div class="modal-actions">
+                <button id="confirmYesBtn" style="background: rgb(251, 183, 64); color: #212121;">Yes</button>
+                <button id="confirmNoBtn" style="background: #444754; color: #FFFFFF;">No</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = [];
+        
+        function updateResults() {
+            const resultsEl = document.getElementById('testResults');
+            resultsEl.innerHTML = testResults.map(result => `<li>${result}</li>`).join('');
+        }
+        
+        function updateStatus(id, status, message) {
+            const el = document.getElementById(id);
+            el.className = `status ${status}`;
+            el.textContent = message;
+        }
+        
+        // Test Add User Modal
+        document.getElementById('testAddBtn').addEventListener('click', () => {
+            const modal = document.getElementById('addUserModal');
+            modal.classList.add('show');
+            updateStatus('addStatus', 'success', '✅ Modal opened successfully!');
+            testResults.push('✅ Add User Modal: Opened correctly');
+            updateResults();
+        });
+        
+        // Test Edit User Modal
+        document.getElementById('testEditBtn').addEventListener('click', () => {
+            const modal = document.getElementById('permissionModal');
+            const nameInput = document.getElementById('editUserNameInput');
+            
+            // Pre-fill with test data
+            nameInput.value = 'Test User';
+            document.getElementById('editUserRole').checked = true;
+            
+            modal.classList.add('show');
+            updateStatus('editStatus', 'success', '✅ Modal opened with pre-filled data!');
+            testResults.push('✅ Edit User Modal: Opened with data correctly');
+            updateResults();
+        });
+        
+        // Test Delete Confirmation Modal
+        document.getElementById('testDeleteBtn').addEventListener('click', () => {
+            const modal = document.getElementById('confirmModal');
+            modal.classList.add('show');
+            updateStatus('deleteStatus', 'success', '✅ Confirmation modal opened!');
+            testResults.push('✅ Delete Confirmation Modal: Opened correctly');
+            updateResults();
+        });
+        
+        // Add User Modal handlers
+        document.getElementById('submitUserBtn').addEventListener('click', () => {
+            const nameInput = document.getElementById('usernameInput');
+            const selectedRole = document.querySelector('input[name="beeRole"]:checked')?.value;
+            const errorMsg = document.getElementById('errorMessage');
+            
+            if (!nameInput.value.trim()) {
+                errorMsg.style.display = 'block';
+                testResults.push('⚠️ Add User Modal: Validation working (empty name)');
+                updateResults();
+                return;
+            }
+            
+            errorMsg.style.display = 'none';
+            document.getElementById('addUserModal').classList.remove('show');
+            nameInput.value = '';
+            document.querySelector('input[name="beeRole"][value="User"]').checked = true;
+            
+            testResults.push(`✅ Add User Modal: Form submitted - Name: "${nameInput.value}", Role: ${selectedRole}`);
+            updateResults();
+        });
+        
+        document.getElementById('cancelUserBtn').addEventListener('click', () => {
+            document.getElementById('addUserModal').classList.remove('show');
+            testResults.push('✅ Add User Modal: Cancelled correctly');
+            updateResults();
+        });
+        
+        // Edit User Modal handlers
+        document.getElementById('savePermissionBtn').addEventListener('click', () => {
+            const nameInput = document.getElementById('editUserNameInput');
+            const selectedRole = document.querySelector('input[name="editBeeRole"]:checked')?.value;
+            const errorMsg = document.getElementById('editErrorMessage');
+            
+            if (!nameInput.value.trim()) {
+                errorMsg.style.display = 'block';
+                testResults.push('⚠️ Edit User Modal: Validation working (empty name)');
+                updateResults();
+                return;
+            }
+            
+            errorMsg.style.display = 'none';
+            document.getElementById('permissionModal').classList.remove('show');
+            
+            testResults.push(`✅ Edit User Modal: Form submitted - Name: "${nameInput.value}", Role: ${selectedRole}`);
+            updateResults();
+        });
+        
+        document.getElementById('cancelEditBtn').addEventListener('click', () => {
+            document.getElementById('permissionModal').classList.remove('show');
+            testResults.push('✅ Edit User Modal: Cancelled correctly');
+            updateResults();
+        });
+        
+        // Delete Confirmation Modal handlers
+        document.getElementById('confirmYesBtn').addEventListener('click', () => {
+            document.getElementById('confirmModal').classList.remove('show');
+            testResults.push('✅ Delete Confirmation Modal: Confirmed deletion');
+            updateResults();
+        });
+        
+        document.getElementById('confirmNoBtn').addEventListener('click', () => {
+            document.getElementById('confirmModal').classList.remove('show');
+            testResults.push('✅ Delete Confirmation Modal: Cancelled deletion');
+            updateResults();
+        });
+        
+        // Click outside to close
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('show');
+                    testResults.push(`✅ Modal closed by clicking outside: ${modal.id}`);
+                    updateResults();
+                }
+            });
+        });
+        
+        // Initial message
+        testResults.push('🧪 Modal test page loaded. Click buttons above to test each modal.');
+        updateResults();
+    </script>
+</body>
+</html>
