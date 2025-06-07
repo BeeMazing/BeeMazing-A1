@@ -1331,19 +1331,19 @@ h3 {
 
 
 
-<!-- User Selection ----------------------------->
-<div class="bottom-sheet" id="userSelectModal">
-  <div class="bottom-sheet-content">
-    <div class="bottom-sheet-header">
-      <div class="header-title">
-        <h3 style="color: #5D4E41 !important; margin: 0; font-size: 18px; font-weight: 600;">Add User</h3>
-        <button class="add-user-btn" id="addUserBtn" style="background: rgb(251, 183, 64) !important; color: rgb(245, 245, 220) !important; border: none !important; border-radius: 50% !important; width: 24px !important; height: 24px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;" onmouseover="this.style.setProperty('background', '#5D4E41', 'important'); this.style.setProperty('background-color', '#5D4E41', 'important');" onmouseout="this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important');">+</button>
+    <!-- User Selection Modal -->
+    <div class="bottom-sheet" id="userSelectModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 19, 18, 0.4); z-index: 1000; opacity: 0; transition: opacity 0.3s ease-in-out;">
+      <div class="bottom-sheet-content" style="position: fixed; bottom: 0; left: 0; width: 100%; max-height: none; background: #FFFFF8; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -4px 20px rgba(19, 19, 18, 0.2); border: 2px solid #e4e3e0; transform: translateY(100%); transition: transform 0.3s ease-in-out;">
+        <div class="bottom-sheet-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 2px solid #e4e3e0; background: #FFFFFF;">
+          <div class="header-title" style="display: flex; align-items: center; gap: 10px;">
+            <h3 style="color: #5D4E41 !important; margin: 0; font-size: 18px; font-weight: 600; display: inline-block;">Add User</h3>
+            <button class="add-user-btn" id="addUserBtn" style="background: rgb(251, 183, 64) !important; color: rgb(245, 245, 220) !important; border: none !important; border-radius: 50% !important; width: 24px !important; height: 24px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; margin-left: 10px;" onmouseover="this.style.setProperty('background', '#5D4E41', 'important'); this.style.setProperty('background-color', '#5D4E41', 'important');" onmouseout="this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important');">+</button>
+          </div>
+          <button id="closeModalBtn" class="close-btn" aria-label="Close" style="background: none; border: none; color: #F5F5DC !important; font-size: 24px; cursor: pointer; padding: 5px;">✕</button>
+        </div>
+        <ul id="userList" class="user-list" style="list-style: none; padding: 0; margin: 0; height: auto !important; max-height: none !important; overflow-y: visible !important; min-height: 48px;"></ul>
       </div>
-      <button id="closeModalBtn" class="close-btn" aria-label="Close"></button>
     </div>
-    <ul id="userList" class="user-list"></ul>
-  </div>
-</div>
 
 <!-- Confirm Delete Modal -->
 <!-- Confirm Delete Modal -->
@@ -1512,567 +1512,525 @@ async function deleteUserFromServer(username) {
     }
 }
 
-// Show confirmation modal for deletion
-let userToRemove = null;
-function showConfirmModal(username) {
-    userToRemove = username;
-    const confirmModal = document.getElementById("confirmModal");
-    confirmModal.style.display = "flex";
-}
+        let userToRemove = null;
+        let selectedUserForPermission = null;
 
-// Show permission modal for editing
-let selectedUserForPermission = null;
-function showPermissionModal(username) {
-    selectedUserForPermission = username;
-    const permissionModalUser = document.getElementById("permissionModalUser");
-    const editUserNameInput = document.getElementById("editUserNameInput");
-    const editAdminRole = document.getElementById("editAdminRole");
-    const editUserRole = document.getElementById("editUserRole");
-    const editErrorMessage = document.getElementById("editErrorMessage");
-    
-    permissionModalUser.textContent = `Edit Bee`;
-    editUserNameInput.value = username;
-    editErrorMessage.style.display = "none";
-    
-    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-    const userPermissions = allUserData[adminEmail]?.permissions || {};
-    const currentRole = userPermissions[username] || "User";
-    
-    if (currentRole === "Admin") {
-        editAdminRole.checked = true;
-    } else {
-        editUserRole.checked = true;
-    }
-    
-    const permissionModal = document.getElementById("permissionModal");
-    permissionModal.style.display = "flex";
-}
-
-
-// Add User Modal Handling
-function showAddUserModal() {
-  const addUserModal = document.getElementById("addUserModal");
-  const usernameInput = document.getElementById("usernameInput");
-  const errorMessage = document.getElementById("errorMessage");
-  usernameInput.value = "";
-  errorMessage.style.display = "none";
-  document.querySelector('input[name="beeRole"][value="User"]').checked = true;
-  addUserModal.style.display = "flex";
-}
-
-function closeAddUserModal() {
-  document.getElementById("addUserModal").style.display = "none";
-}
-
-// Simple add user button click handler
-try {
-  document.getElementById("addUserBtn").addEventListener("click", () => {
-    showAddUserModal();
-  });
-} catch (e) {
-  console.log("Error adding addUserBtn listener:", e);
-}
-
-// Simple styling function with error handling
-function simpleAddUserStyling() {
-  try {
-    const btn = document.getElementById('addUserBtn');
-    if (btn) {
-      btn.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
-      btn.style.setProperty('color', 'rgb(245, 245, 220)', 'important');
-    }
-    
-    const text = document.querySelector('.header-title h3');
-    if (text) {
-      text.style.setProperty('color', '#5D4E41', 'important');
-    }
-    
-    // Force all user list items to have correct color
-    const userItems = document.querySelectorAll('.user-list li');
-    userItems.forEach(item => {
-      item.style.setProperty('color', '#5D4E41', 'important');
-    });
-    
-    // Force all edit/delete buttons to have correct colors
-    const editBtns = document.querySelectorAll('.edit-user-btn');
-    const removeBtns = document.querySelectorAll('.remove-user-btn');
-    
-    editBtns.forEach(btn => {
-      btn.style.setProperty('background', '#FBB740', 'important');
-      btn.style.setProperty('color', '#F5F5DC', 'important');
-    });
-    
-    removeBtns.forEach(btn => {
-      btn.style.setProperty('background', '#FBB740', 'important');
-      btn.style.setProperty('color', '#F5F5DC', 'important');
-    });
-  } catch (e) {
-    console.log("Error in simpleAddUserStyling:", e);
-  }
-}
-
-// Run styling safely
-setTimeout(simpleAddUserStyling, 100);
-
-// Function to force no scrolling - multiple aggressive attempts
-function forceNoScrolling() {
-  try {
-    const userList = document.getElementById('userList');
-    const modal = document.querySelector('.bottom-sheet-content');
-    const bottomSheet = document.querySelector('.bottom-sheet');
-    
-    if (userList && modal) {
-      console.log('Forcing no scrolling for', userList.children.length, 'users');
-      
-      // Force all parent containers to have no height restrictions
-      if (bottomSheet) {
-        bottomSheet.style.setProperty('height', '100vh', 'important');
-        bottomSheet.style.setProperty('max-height', 'none', 'important');
-      }
-      
-      modal.style.setProperty('max-height', 'none', 'important');
-      modal.style.setProperty('height', 'auto', 'important');
-      modal.style.setProperty('overflow-y', 'visible', 'important');
-      modal.style.setProperty('overflow', 'visible', 'important');
-      
-      // Multiple attempts to override user list height
-      userList.style.setProperty('height', 'auto', 'important');
-      userList.style.setProperty('max-height', '100vh', 'important');
-      userList.style.setProperty('overflow-y', 'visible', 'important');
-      userList.style.setProperty('overflow', 'visible', 'important');
-      
-      // Force via CSS text override
-      userList.setAttribute('style', 'height: auto !important; max-height: 100vh !important; overflow-y: visible !important; overflow: visible !important;');
-      
-      console.log('No scrolling forced - all users should be visible');
-      console.log('User list height:', userList.offsetHeight, 'Modal height:', modal.offsetHeight);
-    }
-  } catch (e) {
-    console.log("Error forcing no scrolling:", e);
-  }
-}
-
-// Multiple timing attempts to ensure it works
-function multipleForceAttempts() {
-  forceNoScrolling();
-  setTimeout(forceNoScrolling, 50);
-  setTimeout(forceNoScrolling, 100);
-  setTimeout(forceNoScrolling, 200);
-  setTimeout(forceNoScrolling, 500);
-}
-
-// Add window resize listener to force no scrolling
-window.addEventListener('resize', function() {
-  if (document.querySelector('.bottom-sheet.show')) {
-    multipleForceAttempts();
-  }
-});
-
-// Add User modal event handlers
-const addUserModal = document.getElementById("addUserModal");
-const submitUserBtn = document.getElementById("submitUserBtn");
-const cancelUserBtn = document.getElementById("cancelUserBtn");
-const usernameInput = document.getElementById("usernameInput");
-const errorMessage = document.getElementById("errorMessage");
-
-if (addUserModal) {
-    addUserModal.addEventListener("click", (e) => {
-        if (e.target === addUserModal) {
-            addUserModal.style.display = "none";
-        }
-    });
-}
-
-if (cancelUserBtn) {
-    cancelUserBtn.addEventListener("click", () => {
-        addUserModal.style.display = "none";
-    });
-}
-
-if (submitUserBtn) {
-    submitUserBtn.addEventListener("click", async () => {
-        const username = usernameInput.value.trim();
-        
-        if (!username) {
-            errorMessage.style.display = "block";
-            return;
+        function showConfirmModal(username) {
+            userToRemove = username;
+            const confirmModal = document.getElementById("confirmModal");
+            confirmModal.style.display = "flex";
         }
 
-        if (!adminEmail) {
-            console.error("Admin email not found. Please log in again.");
-            addUserModal.style.display = "none";
-            return;
-        }
-
-        errorMessage.style.display = "none";
-        const selectedRole = document.querySelector('input[name="beeRole"]:checked')?.value || "User";
-
-        try {
-            const res = await fetch("https://beemazing1.onrender.com/add-user", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    adminEmail: adminEmail,
-                    newUser: username,
-                    role: selectedRole
-                })
-            });
-
-            const result = await res.json();
-
-            if (result.success) {
-                const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-                if (!allUserData[adminEmail]) {
-                    allUserData[adminEmail] = { users: [], permissions: {} };
-                }
-
-                allUserData[adminEmail].users.push(username);
-                allUserData[adminEmail].permissions[username] = selectedRole;
-                localStorage.setItem("userData", JSON.stringify(allUserData));
-
-                addUserModal.style.display = "none";
-                
-                // Refresh the user list by clicking profile icon again
-                profileIcon.click();
+        function showPermissionModal(username) {
+            selectedUserForPermission = username;
+            const permissionModalUser = document.getElementById("permissionModalUser");
+            const editUserNameInput = document.getElementById("editUserNameInput");
+            const editAdminRole = document.getElementById("editAdminRole");
+            const editUserRole = document.getElementById("editUserRole");
+            const editErrorMessage = document.getElementById("editErrorMessage");
+            
+            permissionModalUser.textContent = `Edit Bee`;
+            editUserNameInput.value = username;
+            editErrorMessage.style.display = "none";
+            
+            const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+            const userPermissions = allUserData[adminEmail]?.permissions || {};
+            const currentRole = userPermissions[username] || "User";
+            
+            if (currentRole === "Admin") {
+                editAdminRole.checked = true;
             } else {
-                errorMessage.textContent = result.message || "Failed to add user.";
-                errorMessage.style.display = "block";
+                editUserRole.checked = true;
             }
-        } catch (err) {
-            console.error("Error adding user:", err);
-            errorMessage.textContent = "Error adding user. Please try again.";
-            errorMessage.style.display = "block";
+            
+            const permissionModal = document.getElementById("permissionModal");
+            permissionModal.style.display = "flex";
         }
-    });
-}
 
+        // Add User button functionality
+        const addUserBtnInModal = document.getElementById("addUserBtn");
+        const addUserModal = document.getElementById("addUserModal");
+        const submitUserBtn = document.getElementById("submitUserBtn");
+        const cancelUserBtn = document.getElementById("cancelUserBtn");
+        const usernameInput = document.getElementById("usernameInput");
+        const errorMessage = document.getElementById("errorMessage");
 
+        if (addUserBtnInModal) {
+            addUserBtnInModal.addEventListener("click", () => {
+                addUserModal.style.display = "flex";
+                usernameInput.value = "";
+                errorMessage.style.display = "none";
+                document.querySelector('input[name="beeRole"][value="User"]').checked = true;
+            });
+        }
 
+        if (cancelUserBtn) {
+            cancelUserBtn.addEventListener("click", () => {
+                addUserModal.style.display = "none";
+            });
+        }
 
-// User selection
-const isAdmin = localStorage.getItem("isAdmin") === "true";
-const profileIcon = document.getElementById("profileIcon");
-const userSelectModal = document.getElementById("userSelectModal");
-const userList = document.getElementById("userList");
-const closeModalBtn = document.getElementById("closeModalBtn");
-profileIcon.addEventListener("click", async () => {
-    if (!adminEmail) {
-        console.error("Admin email not found. Please log in again.");
-        return;
-    }
-    const users = await fetchUsersFromServer(adminEmail);
-    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-    const userPermissions = allUserData[adminEmail]?.permissions || {};
-    userList.innerHTML = '';
-    if (users.length === 0) {
-        userList.innerHTML = '<li style="padding: 15px 20px; color: #5D4E41; background: #FFFFF8;">No users available</li>';
-    } else {
-        users.forEach(user => {
-            const li = document.createElement("li");
-            li.style.setProperty('color', '#5D4E41', 'important');
-          
-            const nameContainer = document.createElement("div");
-            nameContainer.classList.add("user-list-item");
-            const userNameSpan = document.createElement("span");
-            userNameSpan.textContent = user;
-            userNameSpan.style.setProperty('color', '#5D4E41', 'important');
-            nameContainer.appendChild(userNameSpan);
-            
-            if (userPermissions[user] === "Admin") {
-                const checkmark = document.createElement("span");
-                checkmark.textContent = "✓";
-                checkmark.style.color = "#00C4B4";
-                checkmark.style.fontSize = "16px";
-                checkmark.style.fontWeight = "bold";
-                checkmark.title = "Admin";
-                nameContainer.appendChild(checkmark);
-            }
-            
-            li.appendChild(nameContainer);
-            
-            if (isAdmin) {
-                const actionsContainer = document.createElement("div");
-                actionsContainer.style.setProperty('display', 'flex', 'important');
-                actionsContainer.style.setProperty('gap', '8px', 'important');
-                const editBtn = document.createElement("button");
-                editBtn.classList.add("edit-user-btn");
-                editBtn.innerHTML = "⚙️";
-                editBtn.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
-                editBtn.style.setProperty('color', 'rgb(245, 245, 220)', 'important');
-                editBtn.style.setProperty('border', 'none', 'important');
-                editBtn.style.setProperty('border-radius', '50%', 'important');
-                editBtn.style.setProperty('width', '30px', 'important');
-                editBtn.style.setProperty('height', '30px', 'important');
-                editBtn.style.setProperty('font-size', '14px', 'important');
-                editBtn.style.setProperty('cursor', 'pointer', 'important');
-                editBtn.style.setProperty('display', 'flex', 'important');
-                editBtn.style.setProperty('align-items', 'center', 'important');
-                editBtn.style.setProperty('justify-content', 'center', 'important');
-                editBtn.onmouseover = function() { 
-                    this.style.setProperty('background', '#5D4E41', 'important'); 
-                    this.style.setProperty('background-color', '#5D4E41', 'important'); 
-                };
-                editBtn.onmouseout = function() { 
-                    this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); 
-                    this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
-                };
-                editBtn.addEventListener("click", (event) => {
-                    event.stopPropagation();
-                    showPermissionModal(user);
-                });
-                const removeBtn = document.createElement("button");
-                removeBtn.classList.add("remove-user-btn");
-                removeBtn.textContent = "X";
-                removeBtn.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
-                removeBtn.style.setProperty('color', 'rgb(245, 245, 220)', 'important');
-                removeBtn.style.setProperty('border', 'none', 'important');
-                removeBtn.style.setProperty('border-radius', '50%', 'important');
-                removeBtn.style.setProperty('width', '30px', 'important');
-                removeBtn.style.setProperty('height', '30px', 'important');
-                removeBtn.style.setProperty('font-size', '14px', 'important');
-                removeBtn.style.setProperty('font-weight', 'bold', 'important');
-                removeBtn.style.setProperty('cursor', 'pointer', 'important');
-                removeBtn.style.setProperty('display', 'flex', 'important');
-                removeBtn.style.setProperty('align-items', 'center', 'important');
-                removeBtn.style.setProperty('justify-content', 'center', 'important');
-                removeBtn.onmouseover = function() { 
-                    this.style.setProperty('background', '#5D4E41', 'important'); 
-                    this.style.setProperty('background-color', '#5D4E41', 'important'); 
-                };
-                removeBtn.onmouseout = function() { 
-                    this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); 
-                    this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
-                };
-                removeBtn.addEventListener("click", (event) => {
-                    event.stopPropagation();
-                    showConfirmModal(user);
-                });
-                actionsContainer.appendChild(editBtn);
-                actionsContainer.appendChild(removeBtn);
-                li.appendChild(actionsContainer);
-            }
-            if (user === userName) {
-                li.classList.add('active-user');
-            }
-
-            li.addEventListener("click", async () => {
-                console.log(`🔥 DEBUG USERADMIN.HTML: Clicking on user: ${user}`);
-                console.log(`🔥 DEBUG USERADMIN.HTML: Admin email: ${adminEmail}`);
-                console.log(`🔥 DEBUG USERADMIN.HTML: User permissions:`, userPermissions);
-                console.log(`🔥 DEBUG USERADMIN.HTML: Permission for ${user}:`, userPermissions[user]);
-                
-                const isAdminUser = userPermissions[user] === "Admin";
-                const basePath = "/BeeMazing-A1/mobile/2-UserProfiles";
-                const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
-
-                console.log(`🔥 DEBUG USERADMIN.HTML: Is ${user} admin? ${isAdminUser}`);
-                console.log(`🔥 DEBUG USERADMIN.HTML: Is logged in as admin? ${isLoggedInAsAdmin}`);
-
-                if (isAdminUser) {
-                    console.log(`🔥 DEBUG USERADMIN.HTML: ${user} is admin - checking password`);
-                    if (isLoggedInAsAdmin) {
-                        const targetUrl = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
-                        console.log(`🔥 DEBUG USERADMIN.HTML: Navigating to (admin direct): ${targetUrl}`);
-                        window.location.href = targetUrl;
-                    } else {
-                        const enteredPassword = prompt("Enter Parent Password to access Admin profile:");
-                        if (!enteredPassword) {
-                            return;
-                        }
-                        try {
-                            const res = await fetch(`https://beemazing1.onrender.com/verify-admin-password`, {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ email: adminEmail, password: enteredPassword }),
-                            });
-                            const data = await res.json();
-                            if (res.ok && data.success) {
-                                const targetUrl = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
-                                console.log(`🔥 DEBUG USERADMIN.HTML: Navigating to (admin verified): ${targetUrl}`);
-                                window.location.href = targetUrl;
-                            } else {
-                                console.error(data.message || "Incorrect password. Access denied.");
-                            }
-                        } catch (err) {
-                            console.error("Error verifying admin password:", err);
-                        }
-                    }
-                } else {
-                    console.log(`🔥 DEBUG USERADMIN.HTML: ${user} is regular user`);
-                    const targetUrl = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(user)}`;
-                    console.log(`🔥 DEBUG USERADMIN.HTML: Navigating to (regular user): ${targetUrl}`);
-                    window.location.href = targetUrl;
+        // Add user modal click outside to close
+        if (addUserModal) {
+            addUserModal.addEventListener("click", (e) => {
+                if (e.target === addUserModal) {
+                    addUserModal.style.display = "none";
                 }
             });
-            userList.appendChild(li);
+        }
+
+        // Submit new user
+        if (submitUserBtn) {
+            submitUserBtn.addEventListener("click", async () => {
+                const username = usernameInput.value.trim();
+                
+                if (!username) {
+                    errorMessage.style.display = "block";
+                    return;
+                }
+
+                if (!adminEmail) {
+                    alert("Error: Admin session expired. Please log in again.");
+                    window.location.href = "/BeeMazing-A1/login.html";
+                    return;
+                }
+
+                errorMessage.style.display = "none";
+                const selectedRole = document.querySelector('input[name="beeRole"]:checked')?.value || "User";
+
+                try {
+                    const res = await fetch("https://beemazing1.onrender.com/add-user", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            adminEmail: adminEmail,
+                            newUser: username,
+                            role: selectedRole
+                        })
+                    });
+
+                    const result = await res.json();
+
+                    if (result.success) {
+                        const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                        if (!allUserData[adminEmail]) {
+                            allUserData[adminEmail] = { users: [], permissions: {} };
+                        }
+
+                        allUserData[adminEmail].users.push(username);
+                        allUserData[adminEmail].permissions[username] = selectedRole;
+                        localStorage.setItem("userData", JSON.stringify(allUserData));
+
+                        addUserModal.style.display = "none";
+                        alert(`${username} has been added as a ${selectedRole}!`);
+                        
+                        // Refresh the user list by clicking profile icon again
+                        profileIcon.click();
+                    } else {
+                        alert("Failed to add user: " + result.message);
+                    }
+                } catch (err) {
+                    alert("Error adding user. Please try again.");
+                }
+            });
+        }
+
+        // Helper function to ensure proper modal styling
+        function applyModalStyling() {
+            try {
+                const text = document.querySelector('.bottom-sheet-header h3');
+                if (text) {
+                    text.style.setProperty('color', '#5D4E41', 'important');
+                }
+                
+                const closeBtn = document.querySelector('.close-btn');
+                if (closeBtn) {
+                    closeBtn.style.setProperty('color', '#F5F5DC', 'important');
+                }
+                
+                const userListItems = document.querySelectorAll('.user-list li');
+                userListItems.forEach(item => {
+                    if (!item.style.getPropertyValue('background')) {
+                        item.style.setProperty('background', '#FFFFF8', 'important');
+                    }
+                });
+            } catch (e) {
+                // Styling error - ignore
+            }
+        }
+
+        // User selection modal functionality
+        const isAdmin = localStorage.getItem("isAdmin") === "true";
+        const profileIcon = document.getElementById("profileIcon");
+        const userSelectModal = document.getElementById("userSelectModal");
+        const userList = document.getElementById("userList");
+        const closeModalBtn = document.getElementById("closeModalBtn");
+
+        // Profile icon functionality - same as market.html
+        if (profileIcon) {
+            profileIcon.addEventListener("click", async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                if (!adminEmail) {
+                    alert("Admin email not found. Please log in again.");
+                    return;
+                }
+                
+                try {
+                    const res = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
+                    const data = await res.json();
+                    if (!res.ok || !data.users) throw new Error("Failed to fetch users");
+
+                    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                    const userPermissions = allUserData[adminEmail]?.permissions || data.permissions || {};
+                    const user = urlParams.get('user') || localStorage.getItem("currentUser");
+
+                    userList.innerHTML = "";
+                    
+                    data.users.forEach(userName => {
+                        const li = document.createElement("li");
+                        li.style.setProperty('color', '#5D4E41', 'important');
+                        
+                        const nameContainer = document.createElement("div");
+                        nameContainer.classList.add("user-list-item");
+                        const userNameSpan = document.createElement("span");
+                        userNameSpan.textContent = userName;
+                        userNameSpan.style.setProperty('color', '#5D4E41', 'important');
+                        nameContainer.appendChild(userNameSpan);
+                        
+                        if (userPermissions[userName] === "Admin") {
+                            const checkmark = document.createElement("span");
+                            checkmark.textContent = "✓";
+                            checkmark.style.color = "#00C4B4";
+                            checkmark.style.fontSize = "16px";
+                            checkmark.style.fontWeight = "bold";
+                            checkmark.title = "Admin";
+                            nameContainer.appendChild(checkmark);
+                        }
+                        
+                        li.appendChild(nameContainer);
+                        
+                        // Add settings and delete buttons - check if user is admin
+                        const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+                        if (isLoggedInAsAdmin) {
+                            const actionsContainer = document.createElement("div");
+                            actionsContainer.style.setProperty('display', 'flex', 'important');
+                            actionsContainer.style.setProperty('gap', '8px', 'important');
+                            
+                            const editBtn = document.createElement("button");
+                            editBtn.innerHTML = "⚙️";
+                            editBtn.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
+                            editBtn.style.setProperty('color', 'rgb(245, 245, 220)', 'important');
+                            editBtn.style.setProperty('border', 'none', 'important');
+                            editBtn.style.setProperty('border-radius', '50%', 'important');
+                            editBtn.style.setProperty('width', '30px', 'important');
+                            editBtn.style.setProperty('height', '30px', 'important');
+                            editBtn.style.setProperty('font-size', '14px', 'important');
+                            editBtn.style.setProperty('cursor', 'pointer', 'important');
+                            editBtn.style.setProperty('display', 'flex', 'important');
+                            editBtn.style.setProperty('align-items', 'center', 'important');
+                            editBtn.style.setProperty('justify-content', 'center', 'important');
+                            editBtn.onmouseover = function() { 
+                                this.style.setProperty('background', '#5D4E41', 'important'); 
+                                this.style.setProperty('background-color', '#5D4E41', 'important'); 
+                            };
+                            editBtn.onmouseout = function() { 
+                                this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); 
+                                this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
+                            };
+                            editBtn.addEventListener("click", (event) => {
+                                event.stopPropagation();
+                                showPermissionModal(userName);
+                            });
+                            
+                            const removeBtn = document.createElement("button");
+                            removeBtn.textContent = "X";
+                            removeBtn.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
+                            removeBtn.style.setProperty('color', 'rgb(245, 245, 220)', 'important');
+                            removeBtn.style.setProperty('border', 'none', 'important');
+                            removeBtn.style.setProperty('border-radius', '50%', 'important');
+                            removeBtn.style.setProperty('width', '30px', 'important');
+                            removeBtn.style.setProperty('height', '30px', 'important');
+                            removeBtn.style.setProperty('font-size', '14px', 'important');
+                            removeBtn.style.setProperty('font-weight', 'bold', 'important');
+                            removeBtn.style.setProperty('cursor', 'pointer', 'important');
+                            removeBtn.style.setProperty('display', 'flex', 'important');
+                            removeBtn.style.setProperty('align-items', 'center', 'important');
+                            removeBtn.style.setProperty('justify-content', 'center', 'important');
+                            removeBtn.onmouseover = function() { 
+                                this.style.setProperty('background', '#5D4E41', 'important'); 
+                                this.style.setProperty('background-color', '#5D4E41', 'important'); 
+                            };
+                            removeBtn.onmouseout = function() { 
+                                this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); 
+                                this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
+                            };
+                            removeBtn.addEventListener("click", (event) => {
+                                event.stopPropagation();
+                                showConfirmModal(userName);
+                            });
+                            
+                            actionsContainer.appendChild(editBtn);
+                            actionsContainer.appendChild(removeBtn);
+                            li.appendChild(actionsContainer);
+                        }
+                        
+                        // Highlight current user
+                        if (userName === user) {
+                            li.classList.add('active-user');
+                            li.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important');
+                            li.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
+                            li.style.setProperty('color', '#5D4E41', 'important');
+                            li.style.setProperty('font-weight', '600', 'important');
+                        }
+                        
+                        li.addEventListener("click", async (clickEvent) => {
+                            // Prevent default behavior
+                            clickEvent.preventDefault();
+                            clickEvent.stopPropagation();
+                            
+                            const isAdminUser = userPermissions[userName] === "Admin";
+                            const basePath = "/BeeMazing-A1/mobile";
+                            const currentLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+
+                            if (isAdminUser) {
+                                if (currentLoggedInAsAdmin) {
+                                    // Admin clicking on admin user - direct access
+                                    window.location.href = `${basePath}/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                                } else {
+                                    // Child clicking on admin user - need password
+                                    const enteredPassword = prompt("Enter Parent Password to access Admin profile:");
+                                    if (!enteredPassword) {
+                                        alert("Password is required to access Admin profile.");
+                                        return;
+                                    }
+                                    try {
+                                        const res = await fetch(`https://beemazing1.onrender.com/verify-admin-password`, {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ email: adminEmail, password: enteredPassword }),
+                                        });
+                                        const verifyData = await res.json();
+                                        if (res.ok && verifyData.success) {
+                                            window.location.href = `${basePath}/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                                        } else {
+                                            alert(verifyData.message || "Incorrect password. Access denied.");
+                                        }
+                                    } catch (err) {
+                                        alert("Failed to verify password. Please check your connection.");
+                                    }
+                                }
+                            } else {
+                                // Regular user - direct access to users.html
+                                window.location.href = `${basePath}/2-UserProfiles/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                            }
+                        });
+                        
+                        userList.appendChild(li);
+                    });
+
+                    // Show modal with force inline styles
+                    userSelectModal.style.display = 'block';
+                    userSelectModal.style.opacity = '1';
+                    userSelectModal.classList.add("show");
+                    
+                    const bottomSheetContent = userSelectModal.querySelector('.bottom-sheet-content');
+                    if (bottomSheetContent) {
+                        bottomSheetContent.style.transform = 'translateY(0)';
+                    }
+                    
+                    // Apply styling after modal opens
+                    setTimeout(applyModalStyling, 10);
+                } catch (err) {
+                    userList.innerHTML = '<li style="padding: 15px; color: #D32F2F;">Failed to load users</li>';
+                    userSelectModal.style.display = 'block';
+                    userSelectModal.style.opacity = '1';
+                    userSelectModal.classList.add("show");
+                }
+            });
+        }
+
+        // Modal close functionality
+        if (userSelectModal) {
+            userSelectModal.addEventListener("click", (e) => {
+                if (e.target === userSelectModal) {
+                    userSelectModal.style.display = 'none';
+                    userSelectModal.style.opacity = '0';
+                    userSelectModal.classList.remove("show");
+                    const bottomSheetContent = userSelectModal.querySelector('.bottom-sheet-content');
+                    if (bottomSheetContent) {
+                        bottomSheetContent.style.transform = 'translateY(100%)';
+                    }
+                }
+            });
+        }
+
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener("click", () => {
+                userSelectModal.style.display = 'none';
+                userSelectModal.style.opacity = '0';
+                userSelectModal.classList.remove("show");
+                const bottomSheetContent = userSelectModal.querySelector('.bottom-sheet-content');
+                if (bottomSheetContent) {
+                    bottomSheetContent.style.transform = 'translateY(100%)';
+                }
+            });
+        }
+
+        // Confirm Delete Modal event listeners
+        // Confirm Delete Modal event listeners
+        const confirmModal = document.getElementById("confirmModal");
+        const confirmYesBtn = document.getElementById("confirmYesBtn");
+        const confirmNoBtn = document.getElementById("confirmNoBtn");
+
+        confirmYesBtn.addEventListener("click", async () => {
+            if (userToRemove) {
+                const success = await deleteUserFromServer(userToRemove);
+                if (success) {
+                    userToRemove = null;
+                    confirmModal.style.display = "none";
+                    // Refresh the user list by clicking profile icon again
+                    profileIcon.click();
+                }
+            }
         });
-        
-        // Force no scrolling after populating users - multiple attempts
-        multipleForceAttempts();
-    }
-    userSelectModal.classList.add("show");
-    
-    // Simple styling after modal opens
-    setTimeout(simpleAddUserStyling, 10);
-    
-    // Force no scrolling - multiple attempts
-    multipleForceAttempts();
-});
-userSelectModal.addEventListener("click", (e) => {
-    if (e.target === userSelectModal) {
-        userSelectModal.classList.remove("show");
-    }
-});
-closeModalBtn.addEventListener("click", () => {
-    userSelectModal.classList.remove("show");
-});
 
-// ConfirmModal event listeners
-const confirmModal = document.getElementById("confirmModal");
-const confirmYesBtn = document.getElementById("confirmYesBtn");
-const confirmNoBtn = document.getElementById("confirmNoBtn");
-
-confirmYesBtn.addEventListener("click", async () => {
-    if (userToRemove) {
-        const success = await deleteUserFromServer(userToRemove);
-        if (success) {
+        confirmNoBtn.addEventListener("click", () => {
             userToRemove = null;
             confirmModal.style.display = "none";
-            // Refresh the user list by clicking profile icon again
-            profileIcon.click();
-        }
-    }
-});
+        });
 
-confirmNoBtn.addEventListener("click", () => {
-    userToRemove = null;
-    confirmModal.style.display = "none";
-});
-
-confirmModal.addEventListener("click", (e) => {
-    if (e.target === confirmModal) {
-        userToRemove = null;
-        confirmModal.style.display = "none";
-    }
-});
-
-// PermissionModal event listeners
-const permissionModal = document.getElementById("permissionModal");
-const savePermissionBtn = document.getElementById("savePermissionBtn");
-const cancelEditBtn = document.getElementById("cancelEditBtn");
-
-if (savePermissionBtn) {
-    savePermissionBtn.addEventListener("click", async () => {
-        if (selectedUserForPermission) {
-            const editUserNameInput = document.getElementById("editUserNameInput");
-            const editErrorMessage = document.getElementById("editErrorMessage");
-            const newName = editUserNameInput.value.trim();
-            
-            if (!newName) {
-                editErrorMessage.style.display = "block";
-                return;
+        confirmModal.addEventListener("click", (e) => {
+            if (e.target === confirmModal) {
+                userToRemove = null;
+                confirmModal.style.display = "none";
             }
-            
-            editErrorMessage.style.display = "none";
-            const newPermission = document.querySelector('input[name="editBeeRole"]:checked')?.value || "User";
-            const oldName = selectedUserForPermission;
-            
-            try {
-                const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
-                
-                // If name changed, delete old user and add new one
-                if (oldName !== newName) {
-                    // Delete old user
-                    const deleteRes = await fetch(
-                        `https://beemazing1.onrender.com/delete-user?adminEmail=${encodeURIComponent(adminEmail)}&username=${encodeURIComponent(oldName)}`,
-                        {
-                            method: "DELETE",
-                            headers: { "Content-Type": "application/json" }
+        });
+
+        // Permission Modal event listeners
+        const permissionModal = document.getElementById("permissionModal");
+        const savePermissionBtn = document.getElementById("savePermissionBtn");
+
+        if (savePermissionBtn) {
+            savePermissionBtn.addEventListener("click", async () => {
+                if (selectedUserForPermission) {
+                    const editUserNameInput = document.getElementById("editUserNameInput");
+                    const editErrorMessage = document.getElementById("editErrorMessage");
+                    const newName = editUserNameInput.value.trim();
+                    
+                    if (!newName) {
+                        editErrorMessage.style.display = "block";
+                        return;
+                    }
+                    
+                    editErrorMessage.style.display = "none";
+                    const newPermission = document.querySelector('input[name="editBeeRole"]:checked')?.value || "User";
+                    const oldName = selectedUserForPermission;
+                    
+                    try {
+                        const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
+                        
+                        // If name changed, delete old user and add new one
+                        if (oldName !== newName) {
+                            // Delete old user
+                            const deleteRes = await fetch(
+                                `https://beemazing1.onrender.com/delete-user?adminEmail=${encodeURIComponent(adminEmail)}&username=${encodeURIComponent(oldName)}`,
+                                {
+                                    method: "DELETE",
+                                    headers: { "Content-Type": "application/json" }
+                                }
+                            );
+                            
+                            // Add new user with new name and role
+                            const addRes = await fetch("https://beemazing1.onrender.com/add-user", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    adminEmail: adminEmail,
+                                    newUser: newName,
+                                    role: newPermission
+                                })
+                            });
+                            
+                            const addResult = await addRes.json();
+                            if (addResult.success) {
+                                alert(`User updated! Name changed to "${newName}" and role set to ${roleText}.`);
+                            } else {
+                                alert("Failed to update user name: " + addResult.message);
+                            }
+                        } else {
+                            // Only role changed, update permissions
+                            const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                            if (!allUserData[adminEmail]) {
+                                allUserData[adminEmail] = { users: [], permissions: {} };
+                            }
+                            allUserData[adminEmail].permissions[newName] = newPermission;
+                            localStorage.setItem("userData", JSON.stringify(allUserData));
+                            
+                            const res = await fetch("https://beemazing1.onrender.com/save-permissions", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    adminEmail: adminEmail,
+                                    permissions: allUserData[adminEmail].permissions
+                                })
+                            });
+                            const result = await res.json();
+                            
+                            if (result.success) {
+                                alert(`User updated! ${newName} is now a ${roleText}.`);
+                            } else {
+                                alert(`Local changes saved. Role updated to ${roleText}.`);
+                            }
                         }
-                    );
-                    const addRes = await fetch("https://beemazing1.onrender.com/add-user", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            adminEmail: adminEmail,
-                            newUser: newName,
-                            role: newPermission
-                        })
-                    });
+                        
+                        // Update localStorage regardless
+                        const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                        if (!allUserData[adminEmail]) {
+                            allUserData[adminEmail] = { users: [], permissions: {} };
+                        }
+                        
+                        if (oldName !== newName) {
+                            const userIndex = allUserData[adminEmail].users.indexOf(oldName);
+                            if (userIndex !== -1) {
+                                allUserData[adminEmail].users[userIndex] = newName;
+                            }
+                            delete allUserData[adminEmail].permissions[oldName];
+                        }
+                        allUserData[adminEmail].permissions[newName] = newPermission;
+                        localStorage.setItem("userData", JSON.stringify(allUserData));
+                        
+                    } catch (err) {
+                        const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
+                        alert(`Error updating user. Please try again.`);
+                    }
                     
-                    const addResult = await addRes.json();
-                    if (addResult.success) {
-                        console.log(`User updated! Name changed to "${newName}" and role set to ${roleText}.`);
-                    } else {
-                        console.error("Failed to update user name: " + addResult.message);
-                    }
-                } else {
-                    // Only role changed, update permissions
-                    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-                    if (!allUserData[adminEmail]) {
-                        allUserData[adminEmail] = { users: [], permissions: {} };
-                    }
-                    allUserData[adminEmail].permissions[newName] = newPermission;
-                    localStorage.setItem("userData", JSON.stringify(allUserData));
-                    
-                    const res = await fetch("https://beemazing1.onrender.com/save-permissions", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            adminEmail: adminEmail,
-                            permissions: allUserData[adminEmail].permissions
-                        })
-                    });
-                    const result = await res.json();
-                    
-                    if (result.success) {
-                        console.log(`User updated! ${newName} is now a ${roleText}.`);
-                    } else {
-                        console.log(`Local changes saved. Role updated to ${roleText}.`);
-                    }
+                    selectedUserForPermission = null;
+                    permissionModal.style.display = "none";
+                    profileIcon.click();
                 }
-                
-                // Update localStorage regardless
-                const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-                if (!allUserData[adminEmail]) {
-                    allUserData[adminEmail] = { users: [], permissions: {} };
-                }
-                
-                if (oldName !== newName) {
-                    const userIndex = allUserData[adminEmail].users.indexOf(oldName);
-                    if (userIndex !== -1) {
-                        allUserData[adminEmail].users[userIndex] = newName;
-                    }
-                    delete allUserData[adminEmail].permissions[oldName];
-                }
-                allUserData[adminEmail].permissions[newName] = newPermission;
-                localStorage.setItem("userData", JSON.stringify(allUserData));
-                
-            } catch (err) {
-                const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
-                console.error(`Error updating user. Please try again.`);
-            }
-            
-            selectedUserForPermission = null;
-            permissionModal.style.display = "none";
-            profileIcon.click();
+            });
         }
-    });
-}
 
-if (cancelEditBtn) {
-    cancelEditBtn.addEventListener("click", () => {
-        selectedUserForPermission = null;
-        permissionModal.style.display = "none";
-    });
-}
+        // Cancel edit button
+        const cancelEditBtn = document.getElementById("cancelEditBtn");
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener("click", () => {
+                selectedUserForPermission = null;
+                permissionModal.style.display = "none";
+            });
+        }
 
-permissionModal.addEventListener("click", (e) => {
-    if (e.target === permissionModal) {
-        selectedUserForPermission = null;
-        permissionModal.style.display = "none";
-    }
-});
+        // Permission modal click outside to close
+        if (permissionModal) {
+            permissionModal.addEventListener("click", (e) => {
+                if (e.target === permissionModal) {
+                    selectedUserForPermission = null;
+                    permissionModal.style.display = "none";
+                }
+            });
+        }
 
 
 // User selection ///////////////////////////////////////////////////////////////////////
