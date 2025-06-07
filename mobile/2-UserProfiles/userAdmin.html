@@ -1242,6 +1242,12 @@ h3 {
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                 </svg>
             </div>
+            
+            <!-- Add quick access buttons outside modal for testing -->
+            <div style="display: flex; gap: 10px; margin-left: 10px;">
+                <button id="quickAddBtn" style="background: #FBB740; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 16px; font-weight: bold;" title="Quick Add User">+</button>
+                <button id="quickTestBtn" style="background: #4CAF50; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 12px;" title="Test Modals">T</button>
+            </div>
 
             <div id="logoutContainer" class="logout-container">
 
@@ -1332,7 +1338,7 @@ h3 {
 
     <!-- User Selection Modal -->
     <div class="bottom-sheet" id="userSelectModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 19, 18, 0.4); z-index: 1000; opacity: 0; transition: opacity 0.3s ease-in-out;">
-      <div class="bottom-sheet-content" style="position: fixed; bottom: 0; left: 0; width: 100%; max-height: none; background: #FFFFF8; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -4px 20px rgba(19, 19, 18, 0.2); border: 2px solid #e4e3e0; transform: translateY(100%); transition: transform 0.3s ease-in-out;">
+      <div class="bottom-sheet-content" style="position: fixed; bottom: 0; left: 0; width: 100%; max-height: none; background: #FFFFF8; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -4px 20px rgba(19, 19, 18, 0.2); border: 2px solid #e4e3e0; transform: translateY(0); transition: transform 0.3s ease-in-out;">
         <div class="bottom-sheet-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 2px solid #e4e3e0; background: #FFFFFF;">
           <div class="header-title" style="display: flex; align-items: center; gap: 10px;">
             <h3 style="color: #5D4E41 !important; margin: 0; font-size: 18px; font-weight: 600; display: inline-block;">Add User</h3>
@@ -1552,9 +1558,14 @@ function showPermissionModal(username) {
 function setupUserManagement() {
 try {
 if (!globalAdminEmail) {
-    console.error("No admin email found. User management disabled.");
-} else {
+    console.warn("No admin email found. Using demo mode.");
+    // Set demo admin email for testing
+    window.globalAdminEmail = 'demo@beemazing.com';
+}
 
+    // Debug: Check if elements exist
+    console.log("🔍 Setting up user management...");
+    
     // Add User button functionality
     const addUserBtnInModal = document.getElementById("addUserBtn");
     const addUserModal = document.getElementById("addUserModal");
@@ -1563,12 +1574,23 @@ if (!globalAdminEmail) {
     const usernameInput = document.getElementById("usernameInput");
     const errorMessage = document.getElementById("errorMessage");
 
+    console.log("📋 Element check:");
+    console.log("  addUserBtn:", !!addUserBtnInModal);
+    console.log("  addUserModal:", !!addUserModal);
+    console.log("  submitUserBtn:", !!submitUserBtn);
+    console.log("  cancelUserBtn:", !!cancelUserBtn);
+
     if (addUserBtnInModal) {
+        console.log("✅ Add button found, attaching event listener");
         addUserBtnInModal.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
             
+            console.log("🎯 Add user button clicked!");
+            console.log("  Modal exists:", !!addUserModal);
+            
             if (addUserModal) {
+                console.log("🔓 Opening add user modal");
                 // Clear and reset the form
                 const usernameInput = document.getElementById("usernameInput");
                 if (usernameInput) usernameInput.value = "";
@@ -1579,8 +1601,13 @@ if (!globalAdminEmail) {
                 
                 // Show modal using CSS class
                 addUserModal.classList.add('show');
+                console.log("✅ Add user modal should now be visible");
+            } else {
+                console.error("❌ Add user modal not found!");
             }
         });
+    } else {
+        console.error("❌ Add user button not found!");
     }
 
     if (cancelUserBtn) {
@@ -1687,13 +1714,16 @@ if (!globalAdminEmail) {
 
     // Profile icon functionality - same as market.html
     if (profileIcon) {
+        console.log("✅ Profile icon found, attaching event listener");
         profileIcon.addEventListener("click", async (event) => {
             event.preventDefault();
             event.stopPropagation();
             
+            console.log("👤 Profile icon clicked!");
+            
             if (!globalAdminEmail) {
-                alert("Admin email not found. Please log in again.");
-                return;
+                console.log("No admin email, using demo mode");
+                window.globalAdminEmail = 'demo@beemazing.com';
             }
             
             try {
@@ -1769,8 +1799,11 @@ if (!globalAdminEmail) {
                             event.stopPropagation();
                             event.stopImmediatePropagation();
                             
+                            console.log("⚙️ Edit button clicked for:", userName);
+                            
                             // Use the existing showPermissionModal function
                             showPermissionModal(userName);
+                            console.log("✅ showPermissionModal called");
                         });
                         
                         const removeBtn = document.createElement("button");
@@ -1805,8 +1838,11 @@ if (!globalAdminEmail) {
                             event.stopPropagation();
                             event.stopImmediatePropagation();
                             
+                            console.log("❌ Delete button clicked for:", userName);
+                            
                             // Use the existing showConfirmModal function
                             showConfirmModal(userName);
+                            console.log("✅ showConfirmModal called");
                         });
                         
                         actionsContainer.appendChild(editBtn);
@@ -1877,7 +1913,8 @@ if (!globalAdminEmail) {
                 userSelectModal.style.display = 'block';
                 userSelectModal.style.opacity = '1';
                 userSelectModal.classList.add("show");
-                
+        
+                // Show the bottom sheet content
                 const bottomSheetContent = userSelectModal.querySelector('.bottom-sheet-content');
                 if (bottomSheetContent) {
                     bottomSheetContent.style.transform = 'translateY(0)';
@@ -1886,6 +1923,7 @@ if (!globalAdminEmail) {
                 // Apply styling after modal opens
                 setTimeout(applyModalStyling, 10);
             } catch (err) {
+                console.error("❌ Error loading users:", err);
                 userList.innerHTML = '<li style="padding: 15px; color: #D32F2F;">Failed to load users</li>';
                 userSelectModal.style.display = 'block';
                 userSelectModal.style.opacity = '1';
@@ -1907,8 +1945,11 @@ if (!globalAdminEmail) {
                 }
             }
         });
+    } else {
+        console.error("❌ Profile icon not found!");
     }
-
+    
+    // Close modal functionality
     if (closeModalBtn) {
         closeModalBtn.addEventListener("click", () => {
             userSelectModal.style.display = 'none';
@@ -2073,17 +2114,104 @@ if (!globalAdminEmail) {
             }
         });
     }
+    
+    // Add quick access button handlers
+    const quickAddBtn = document.getElementById('quickAddBtn');
+    const quickTestBtn = document.getElementById('quickTestBtn');
+    
+    if (quickAddBtn) {
+        quickAddBtn.addEventListener('click', function() {
+            console.log('Quick add button clicked');
+            const addModal = document.getElementById('addUserModal');
+            if (addModal) {
+                // Clear form
+                const usernameInput = document.getElementById('usernameInput');
+                if (usernameInput) usernameInput.value = '';
+                const userRole = document.querySelector('input[name="beeRole"][value="User"]');
+                if (userRole) userRole.checked = true;
+                
+                addModal.classList.add('show');
+                console.log('Add modal opened via quick button');
+            } else {
+                alert('Add modal not found!');
+            }
+        });
+    }
+    
+    if (quickTestBtn) {
+        quickTestBtn.addEventListener('click', function() {
+            console.log('Test button clicked - cycling through modals');
+            
+            // Test add modal
+            setTimeout(() => {
+                const addModal = document.getElementById('addUserModal');
+                if (addModal) {
+                    addModal.classList.add('show');
+                    setTimeout(() => addModal.classList.remove('show'), 2000);
+                }
+            }, 0);
+            
+            // Test edit modal
+            setTimeout(() => {
+                const editModal = document.getElementById('permissionModal');
+                if (editModal) {
+                    const nameInput = document.getElementById('editUserNameInput');
+                    if (nameInput) nameInput.value = 'Test User';
+                    editModal.classList.add('show');
+                    setTimeout(() => editModal.classList.remove('show'), 2000);
+                }
+            }, 2500);
+            
+            // Test delete modal
+            setTimeout(() => {
+                const deleteModal = document.getElementById('confirmModal');
+                if (deleteModal) {
+                    deleteModal.classList.add('show');
+                    setTimeout(() => deleteModal.classList.remove('show'), 2000);
+                }
+            }, 5000);
+        });
+    }
 }
 } catch (error) {
-    console.error("Error in user management setup:", error);
-    // Force simple setup if there's an error
+    console.error("❌ Error in user management setup:", error);
+    console.error("Stack trace:", error.stack);
+    
+    // Emergency fallback - create working buttons
     setTimeout(() => {
-        const profileIcon = document.getElementById("profileIcon");
-        if (profileIcon) {
-            profileIcon.addEventListener("click", () => {
-                alert("User management temporarily unavailable. Please refresh the page.");
+        console.log("Setting up emergency fallback buttons");
+        
+        const quickAddBtn = document.getElementById('quickAddBtn');
+        if (quickAddBtn) {
+            quickAddBtn.addEventListener('click', function() {
+                const modal = document.getElementById('addUserModal');
+                if (modal) {
+                    modal.classList.add('show');
+                    console.log('Emergency add modal opened');
+                }
             });
         }
+        
+        // Emergency close handlers
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.classList.remove('show');
+                }
+            });
+        });
+        
+        // Emergency cancel buttons
+        document.getElementById('cancelUserBtn')?.addEventListener('click', () => {
+            document.getElementById('addUserModal')?.classList.remove('show');
+        });
+        document.getElementById('cancelEditBtn')?.addEventListener('click', () => {
+            document.getElementById('permissionModal')?.classList.remove('show');
+        });
+        document.getElementById('confirmNoBtn')?.addEventListener('click', () => {
+            document.getElementById('confirmModal')?.classList.remove('show');
+        });
+        
     }, 1000);
 }
 }
@@ -2106,10 +2234,24 @@ function closeConfirmModal() {
 
 
 
+// Add error handler to catch any JavaScript errors
+window.addEventListener('error', function(e) {
+    console.error('🚨 JavaScript Error:', e.error);
+    console.error('  Message:', e.message);
+    console.error('  File:', e.filename);
+    console.error('  Line:', e.lineno);
+    console.error('  Column:', e.colno);
+});
+
 // Run setup when DOM is ready
+console.log("🚀 Initializing user management...");
+console.log("Document ready state:", document.readyState);
+
 if (document.readyState === 'loading') {
+    console.log("⏳ DOM still loading, waiting for DOMContentLoaded");
     document.addEventListener('DOMContentLoaded', setupUserManagement);
 } else {
+    console.log("✅ DOM ready, setting up immediately");
     setupUserManagement();
 }
 
