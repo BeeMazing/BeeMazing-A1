@@ -571,9 +571,45 @@ transform: scale(1.1);
     min-height: 48px;
 }
 
+.user-list li {
+    font-size: 14px;
+    padding: 12px 15px;
+    border-bottom: 1px solid #e4e3e0;
+    color: #5D4E41 !important;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    background: #FFFFF8 !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-list li:hover {
+    background: #e4e3e0 !important;
+}
+
+.user-list li.active-user {
+    background: rgb(251, 183, 64) !important;
+    color: #5D4E41 !important;
+    font-weight: 600 !important;
+}
+
 .user-list li:last-child {
     border-bottom: none;
 }
+
+.user-list-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.user-list-actions {
+    display: flex;
+    gap: 8px;
+}
+
 .user-list::-webkit-scrollbar {
     width: 8px;
 }
@@ -586,37 +622,6 @@ transform: scale(1.1);
 }
 .user-list::-webkit-scrollbar-thumb:hover {
     background: #000000;
-}
-
-@media (max-width: 600px) {
-    .bottom-sheet-content {
-        max-height: none;
-    }
-    .bottom-sheet-header h3 {
-        font-size: 16px;
-        color: #5D4E41 !important;
-    }
-    .user-list {
-        height: auto !important;
-        max-height: none !important;
-        overflow-y: visible !important;
-        min-height: 48px;
-    }
-    .user-list li {
-        font-size: 14px;
-        padding: 12px 15px;
-        border-bottom: 1px solid #e4e3e0;
-        color: #5D4E41 !important;
-        cursor: pointer;
-        transition: background 0.2s ease;
-        background: #FFFFF8 !important;
-    }
-    .user-list li:hover {
-        background: #e4e3e0;
-    }
-    .user-list li:last-child {
-        border-bottom: none;
-    }
 }
 
 /* Position for swipe to delete feature */
@@ -730,7 +735,8 @@ transform: scale(1.1);
       <div class="bottom-sheet-content" style="position: fixed; bottom: 0; left: 0; width: 100%; max-height: none; background: #FFFFF8; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -4px 20px rgba(19, 19, 18, 0.2); border: 2px solid #e4e3e0; transform: translateY(100%); transition: transform 0.3s ease-in-out;">
         <div class="bottom-sheet-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 2px solid #e4e3e0; background: #FFFFFF;">
           <div class="header-title">
-            <h3 style="color: #5D4E41 !important; margin: 0; font-size: 18px; font-weight: 600;">Select User</h3>
+            <h3 style="color: #5D4E41 !important; margin: 0; font-size: 18px; font-weight: 600;">Add User</h3>
+            <button class="add-user-btn" id="addUserBtn" style="background: rgb(251, 183, 64) !important; color: rgb(245, 245, 220) !important; border: none !important; border-radius: 50% !important; width: 24px !important; height: 24px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;" onmouseover="this.style.setProperty('background', '#5D4E41', 'important'); this.style.setProperty('background-color', '#5D4E41', 'important');" onmouseout="this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important');">+</button>
           </div>
           <button id="closeModalBtn" class="close-btn" aria-label="Close" style="background: none; border: none; color: #F5F5DC !important; font-size: 24px; cursor: pointer; padding: 5px;">✕</button>
         </div>
@@ -812,52 +818,74 @@ if (!admin || !user) {
                 
                 data.users.forEach(userName => {
                     const li = document.createElement("li");
-                    li.style.setProperty('font-size', '14px', 'important');
-                    li.style.setProperty('padding', '12px 15px', 'important');
-                    li.style.setProperty('border-bottom', '1px solid #e4e3e0', 'important');
                     li.style.setProperty('color', '#5D4E41', 'important');
-                    li.style.setProperty('cursor', 'pointer', 'important');
-                    li.style.setProperty('transition', 'background 0.2s ease', 'important');
-                    li.style.setProperty('background', '#FFFFF8', 'important');
-                    li.style.setProperty('display', 'flex', 'important');
-                    li.style.setProperty('align-items', 'center', 'important');
-                    li.style.setProperty('gap', '12px', 'important');
                     
-                    const avatar = document.createElement("img");
-                    avatar.src = data.avatars?.[userName] || "/BeeMazing-A1/shared/Avatars/default.png";
-                    avatar.style.setProperty('width', '50px', 'important');
-                    avatar.style.setProperty('height', '60px', 'important');
-                    avatar.style.setProperty('border-radius', '12px', 'important');
-                    avatar.style.setProperty('object-fit', 'cover', 'important');
-                    avatar.style.setProperty('flex-shrink', '0', 'important');
+                    const nameContainer = document.createElement("div");
+                    nameContainer.classList.add("user-list-item");
+                    const userNameSpan = document.createElement("span");
+                    userNameSpan.textContent = userName;
+                    userNameSpan.style.setProperty('color', '#5D4E41', 'important');
+                    nameContainer.appendChild(userNameSpan);
                     
-                    const nameSpan = document.createElement("span");
-                    nameSpan.textContent = userName;
-                    nameSpan.style.setProperty('flex', '1', 'important');
-                    nameSpan.style.setProperty('color', '#5D4E41', 'important');
-                    nameSpan.style.setProperty('font-size', '16px', 'important');
-                    nameSpan.style.setProperty('font-weight', '600', 'important');
+                    if (userPermissions[userName] === "Admin") {
+                        const checkmark = document.createElement("span");
+                        checkmark.textContent = "✓";
+                        checkmark.style.color = "#00C4B4";
+                        checkmark.style.fontSize = "16px";
+                        checkmark.style.fontWeight = "bold";
+                        checkmark.title = "Admin";
+                        nameContainer.appendChild(checkmark);
+                    }
+                    
+                    li.appendChild(nameContainer);
+                    
+                    // Add settings and delete buttons
+                    const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+                    if (isLoggedInAsAdmin) {
+                        const actionsContainer = document.createElement("div");
+                        actionsContainer.classList.add("user-list-actions");
+                        
+                        const editBtn = document.createElement("button");
+                        editBtn.classList.add("edit-user-btn");
+                        editBtn.innerHTML = "⚙️";
+                        editBtn.style.setProperty('background', '#FBB740', 'important');
+                        editBtn.style.setProperty('color', '#F5F5DC', 'important');
+                        editBtn.style.setProperty('border', 'none', 'important');
+                        editBtn.style.setProperty('border-radius', '50%', 'important');
+                        editBtn.style.setProperty('width', '30px', 'important');
+                        editBtn.style.setProperty('height', '30px', 'important');
+                        editBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
+                        editBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
+                        editBtn.addEventListener("click", (event) => {
+                            event.stopPropagation();
+                            alert("Settings functionality not implemented in tasks page");
+                        });
+                        
+                        const removeBtn = document.createElement("button");
+                        removeBtn.classList.add("remove-user-btn");
+                        removeBtn.textContent = "X";
+                        removeBtn.style.setProperty('background', '#FBB740', 'important');
+                        removeBtn.style.setProperty('color', '#F5F5DC', 'important');
+                        removeBtn.style.setProperty('border', 'none', 'important');
+                        removeBtn.style.setProperty('border-radius', '50%', 'important');
+                        removeBtn.style.setProperty('width', '30px', 'important');
+                        removeBtn.style.setProperty('height', '30px', 'important');
+                        removeBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
+                        removeBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
+                        removeBtn.addEventListener("click", (event) => {
+                            event.stopPropagation();
+                            alert("Delete functionality not implemented in tasks page");
+                        });
+                        
+                        actionsContainer.appendChild(editBtn);
+                        actionsContainer.appendChild(removeBtn);
+                        li.appendChild(actionsContainer);
+                    }
                     
                     // Highlight current user
                     if (userName === user) {
                         li.classList.add('active-user');
-                        li.style.setProperty('background', '#e4e3e0', 'important');
-                        nameSpan.style.setProperty('font-weight', '800', 'important');
                     }
-                    
-                    li.onmouseover = function() {
-                        this.style.setProperty('background', '#e4e3e0', 'important');
-                    };
-                    li.onmouseout = function() {
-                        if (userName !== user) {
-                            this.style.setProperty('background', '#FFFFF8', 'important');
-                        } else {
-                            this.style.setProperty('background', '#e4e3e0', 'important');
-                        }
-                    };
-                    
-                    li.appendChild(avatar);
-                    li.appendChild(nameSpan);
                     
                     li.addEventListener("click", async () => {
                         const isAdminUser = userPermissions[userName] === "Admin";
@@ -970,6 +998,14 @@ if (!admin || !user) {
             if (bottomSheetContent) {
                 bottomSheetContent.style.transform = 'translateY(100%)';
             }
+        });
+    }
+
+    // Add User button functionality
+    const addUserBtnInModal = document.getElementById("addUserBtn");
+    if (addUserBtnInModal) {
+        addUserBtnInModal.addEventListener("click", () => {
+            alert("Add User functionality not implemented in tasks page. Please use the main home page to add users.");
         });
     }
 });
