@@ -28,7 +28,7 @@
     --footer-height: 70px;
     --modal-bg: rgba(19, 19, 18, 0.4); /* Added */
     --border-dark: #444754; /* Added */
-    /* Cache buster v10.0 - aggressive inline styling for buttons and text */
+    /* Cache buster v11.0 - adaptive modal height for all users */
 }
 
 /* RGB color variations for Add User elements */
@@ -447,7 +447,7 @@ h3 {
     bottom: 0;
     left: 0;
     width: 100%;
-    max-height: 70vh;
+    max-height: 90vh;
     background: var(--light-bg);
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
@@ -488,8 +488,9 @@ h3 {
     list-style: none;
     padding: 0;
     margin: 0;
-    height: 240px; /* Approx. 5 users at 48px each */
+    max-height: calc(90vh - 120px);
     overflow-y: auto;
+    min-height: 48px;
 }
 
 .user-list li:last-child {
@@ -518,14 +519,15 @@ h3 {
         height: 35px;
     }
     .bottom-sheet-content {
-        max-height: 80vh;
+        max-height: 95vh;
     }
     .bottom-sheet-header h3 {
         font-size: 16px;
         color: #5D4E41 !important;
     }
     .user-list {
-        height: 240px;
+        max-height: calc(95vh - 120px);
+        min-height: 48px;
     }
     .user-list li {
         font-size: 14px;
@@ -1584,6 +1586,43 @@ function simpleAddUserStyling() {
 // Run styling safely
 setTimeout(simpleAddUserStyling, 100);
 
+// Function to adjust modal height based on user count
+function adjustModalHeight() {
+  try {
+    const userList = document.getElementById('userList');
+    const modal = document.querySelector('.bottom-sheet-content');
+    if (userList && modal) {
+      const userCount = userList.children.length;
+      const headerHeight = 80; // Header height
+      const itemHeight = 48; // Each user item height
+      const padding = 40; // Extra padding
+      const maxHeight = window.innerHeight * 0.9; // 90% of screen height
+      
+      const calculatedHeight = Math.min(headerHeight + (userCount * itemHeight) + padding, maxHeight);
+      
+      // Remove fixed height and let content determine height
+      userList.style.height = 'auto';
+      userList.style.maxHeight = `${calculatedHeight - headerHeight}px`;
+      
+      // If all users fit, remove scrolling
+      if (calculatedHeight < maxHeight) {
+        userList.style.overflowY = 'visible';
+      } else {
+        userList.style.overflowY = 'auto';
+      }
+    }
+  } catch (e) {
+    console.log("Error adjusting modal height:", e);
+  }
+}
+
+// Add window resize listener to adjust modal height
+window.addEventListener('resize', function() {
+  if (document.querySelector('.bottom-sheet.show')) {
+    setTimeout(adjustModalHeight, 10);
+  }
+});
+
 document.getElementById("addUserModal").addEventListener("click", (e) => {
   if (e.target === document.getElementById("addUserModal")) {
     closeAddUserModal();
@@ -1710,6 +1749,9 @@ document.getElementById("submitUserBtn").addEventListener("click", async () => {
 
           userList.appendChild(li);
         });
+        
+        // Adjust modal height after populating users
+        setTimeout(adjustModalHeight, 10);
       }
 
       closeAddUserModal();
@@ -1810,18 +1852,23 @@ profileIcon.addEventListener("click", async () => {
                 li.classList.add('active-user');
             }
 
-
             li.addEventListener("click", () => {
                 localStorage.setItem("currentUser", user);
                 location.reload();
             });
             userList.appendChild(li);
         });
+        
+        // Adjust modal height after populating users
+        setTimeout(adjustModalHeight, 10);
     }
     userSelectModal.classList.add("show");
     
     // Simple styling after modal opens
     setTimeout(simpleAddUserStyling, 10);
+    
+    // Adjust modal height based on user count
+    setTimeout(adjustModalHeight, 20);
 });
 userSelectModal.addEventListener("click", (e) => {
     if (e.target === userSelectModal) {
@@ -2023,6 +2070,9 @@ savePermissionBtn.addEventListener("click", async () => {
             });
             userList.appendChild(li);
         });
+        
+        // Adjust modal height after populating users
+        setTimeout(adjustModalHeight, 10);
     }
 });
 permissionModal.addEventListener("click", (e) => {
