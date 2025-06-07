@@ -502,94 +502,121 @@ transform: scale(1.1);
     background: var(--primary-color);
 }
 
-/* User Selection Modal Styles */
-#userSelectModal {
-    z-index: 1001;
+/* User Selection Modal Styles - Bottom Sheet */
+.bottom-sheet {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--modal-bg);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
 }
-
-#userSelectModal .modal-content {
-    background: var(--card-bg);
-    padding: 25px;
-    border-radius: 15px;
-    width: 85%;
-    max-width: 400px;
-    text-align: center;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
-    border: 2px solid var(--border-dark);
-    color: var(--accent-color);
+.bottom-sheet.show {
+    display: block;
+    opacity: 1;
 }
-
+.bottom-sheet-content {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: none;
+    background: var(--light-bg);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    box-shadow: 0 -4px 20px rgba(19, 19, 18, 0.2);
+    border: 2px solid var(--secondary-color);
+    transform: translateY(100%);
+    transition: transform 0.3s ease-in-out;
+}
+.bottom-sheet.show .bottom-sheet-content {
+    transform: translateY(0);
+}
 .bottom-sheet-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    padding: 15px 20px;
+    border-bottom: 2px solid var(--secondary-color);
+    background: var(--accent-color);
 }
-
 .bottom-sheet-header h3 {
-    color: var(--accent-color);
     margin: 0;
+    font-size: 18px;
     font-weight: 600;
+    color: #5D4E41 !important;
 }
-
-.close-btn {
+.bottom-sheet-header .close-btn {
     background: none;
     border: none;
+    color: #F5F5DC !important;
     font-size: 24px;
     cursor: pointer;
-    color: var(--accent-color);
+    padding: 5px;
 }
-
-.close-btn:hover {
-    color: var(--secondary-color);
+.bottom-sheet-header .close-btn:hover {
+    color: #FFFFFF;
 }
-
 .user-list {
     list-style: none;
     padding: 0;
     margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    max-height: 300px;
-    overflow-y: auto;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+    min-height: 48px;
 }
 
-.user-list li {
-    display: flex;
-    align-items: center;
-    background: transparent;
-    border: 2px solid var(--border-dark);
-    border-radius: 16px;
-    background: var(--card-bg);
-    padding: 8px 10px;
-    gap: 12px;
-    cursor: pointer;
-    transition: background 0.2s ease;
+.user-list li:last-child {
+    border-bottom: none;
+}
+.user-list::-webkit-scrollbar {
+    width: 8px;
+}
+.user-list::-webkit-scrollbar-track {
+    background: var(--light-bg);
+}
+.user-list::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+.user-list::-webkit-scrollbar-thumb:hover {
+    background: var(--text-color);
 }
 
-.user-list li:hover {
-    background: #333540;
-}
-
-.user-list li.active-user {
-    background: #333540;
-    font-weight: 800;
-}
-
-.user-list li img {
-    width: 50px;
-    height: 60px;
-    border-radius: 12px;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
-.user-list li span {
-    flex: 1;
-    color: var(--accent-color);
-    font-size: 16px;
-    font-weight: 600;
+@media (max-width: 600px) {
+    .bottom-sheet-content {
+        max-height: none;
+    }
+    .bottom-sheet-header h3 {
+        font-size: 16px;
+        color: #5D4E41 !important;
+    }
+    .user-list {
+        height: auto !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+        min-height: 48px;
+    }
+    .user-list li {
+        font-size: 14px;
+        padding: 12px 15px;
+        border-bottom: 1px solid var(--secondary-color);
+        color: #5D4E41 !important;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        background: var(--light-bg) !important;
+    }
+    .user-list li:hover {
+        background: var(--secondary-color);
+    }
+    .user-list li:last-child {
+        border-bottom: none;
+    }
 }
 
 /* Position for swipe to delete feature */
@@ -699,15 +726,15 @@ transform: scale(1.1);
     </div>
 
     <!-- User Selection Modal -->
-    <div id="userSelectModal" class="task-modal" style="display: none;">
-        <div class="modal-content">
+    <div class="bottom-sheet" id="userSelectModal">
+        <div class="bottom-sheet-content">
             <div class="bottom-sheet-header">
-                <h3>Select User</h3>
-                <span id="closeModalBtn" class="close-btn">&times;</span>
+                <div class="header-title">
+                    <h3 style="color: #5D4E41 !important; margin: 0; font-size: 18px; font-weight: 600;">Select User</h3>
+                </div>
+                <button id="closeModalBtn" class="close-btn" aria-label="Close">&times;</button>
             </div>
-            <ul id="userList" class="user-list">
-                <!-- Users will be populated here -->
-            </ul>
+            <ul id="userList" class="user-list"></ul>
         </div>
     </div>
 
@@ -760,26 +787,15 @@ if (!admin || !user) {
     const userList = document.getElementById("userList");
     const closeModalBtn = document.getElementById("closeModalBtn");
 
-    console.log("🔥 DEBUG: Profile icon element:", profileIcon);
-    console.log("🔥 DEBUG: User select modal:", userSelectModal);
-    console.log("🔥 DEBUG: User list:", userList);
-    console.log("🔥 DEBUG: Close modal btn:", closeModalBtn);
-    console.log("🔥 DEBUG: Admin value:", admin);
-    console.log("🔥 DEBUG: User value:", user);
-
     if (profileIcon) {
-        console.log("🔥 DEBUG: Adding click listener to profile icon");
         profileIcon.addEventListener("click", async (event) => {
-            console.log("🔥 DEBUG: Profile icon clicked!");
             event.preventDefault();
             event.stopPropagation();
             
             if (!admin) {
-                console.log("🔥 DEBUG: No admin found");
                 alert("Admin email not found. Please log in again.");
                 return;
             }
-            console.log("🔥 DEBUG: Admin found, proceeding with fetch");
             
             try {
                 const res = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(admin)}`);
@@ -793,40 +809,61 @@ if (!admin || !user) {
                 
                 data.users.forEach(userName => {
                     const li = document.createElement("li");
+                    li.style.setProperty('font-size', '14px', 'important');
+                    li.style.setProperty('padding', '12px 15px', 'important');
+                    li.style.setProperty('border-bottom', '1px solid var(--secondary-color)', 'important');
+                    li.style.setProperty('color', '#5D4E41', 'important');
+                    li.style.setProperty('cursor', 'pointer', 'important');
+                    li.style.setProperty('transition', 'background 0.2s ease', 'important');
+                    li.style.setProperty('background', 'var(--light-bg)', 'important');
+                    li.style.setProperty('display', 'flex', 'important');
+                    li.style.setProperty('align-items', 'center', 'important');
+                    li.style.setProperty('gap', '12px', 'important');
                     
                     const avatar = document.createElement("img");
                     avatar.src = data.avatars?.[userName] || "/BeeMazing-A1/shared/Avatars/default.png";
+                    avatar.style.setProperty('width', '50px', 'important');
+                    avatar.style.setProperty('height', '60px', 'important');
+                    avatar.style.setProperty('border-radius', '12px', 'important');
+                    avatar.style.setProperty('object-fit', 'cover', 'important');
+                    avatar.style.setProperty('flex-shrink', '0', 'important');
                     
                     const nameSpan = document.createElement("span");
                     nameSpan.textContent = userName;
+                    nameSpan.style.setProperty('flex', '1', 'important');
+                    nameSpan.style.setProperty('color', '#5D4E41', 'important');
+                    nameSpan.style.setProperty('font-size', '16px', 'important');
+                    nameSpan.style.setProperty('font-weight', '600', 'important');
                     
                     // Highlight current user
                     if (userName === user) {
                         li.classList.add('active-user');
+                        li.style.setProperty('background', 'var(--secondary-color)', 'important');
+                        nameSpan.style.setProperty('font-weight', '800', 'important');
                     }
+                    
+                    li.onmouseover = function() {
+                        this.style.setProperty('background', 'var(--secondary-color)', 'important');
+                    };
+                    li.onmouseout = function() {
+                        if (userName !== user) {
+                            this.style.setProperty('background', 'var(--light-bg)', 'important');
+                        } else {
+                            this.style.setProperty('background', 'var(--secondary-color)', 'important');
+                        }
+                    };
                     
                     li.appendChild(avatar);
                     li.appendChild(nameSpan);
                     
                     li.addEventListener("click", async () => {
-                        console.log(`🔥 DEBUG TASKS.HTML: Clicking on user: ${userName}`);
-                        console.log(`🔥 DEBUG TASKS.HTML: Admin email: ${admin}`);
-                        console.log(`🔥 DEBUG TASKS.HTML: User permissions:`, userPermissions);
-                        console.log(`🔥 DEBUG TASKS.HTML: Permission for ${userName}:`, userPermissions[userName]);
-                        
                         const isAdminUser = userPermissions[userName] === "Admin";
                         const basePath = "/BeeMazing-A1/mobile";
                         const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
 
-                        console.log(`🔥 DEBUG TASKS.HTML: Is ${userName} admin? ${isAdminUser}`);
-                        console.log(`🔥 DEBUG TASKS.HTML: Is logged in as admin? ${isLoggedInAsAdmin}`);
-
                         if (isAdminUser) {
-                            console.log(`🔥 DEBUG TASKS.HTML: ${userName} is admin - checking password`);
                             if (isLoggedInAsAdmin) {
-                                const targetUrl = `${basePath}/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(userName)}`;
-                                console.log(`🔥 DEBUG TASKS.HTML: Navigating to (admin direct): ${targetUrl}`);
-                                window.location.href = targetUrl;
+                                window.location.href = `${basePath}/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(userName)}`;
                             } else {
                                 const enteredPassword = prompt("Enter Parent Password to access Admin profile:");
                                 if (!enteredPassword) {
@@ -841,9 +878,7 @@ if (!admin || !user) {
                                     });
                                     const data = await res.json();
                                     if (res.ok && data.success) {
-                                        const targetUrl = `${basePath}/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(userName)}`;
-                                        console.log(`🔥 DEBUG TASKS.HTML: Navigating to (admin verified): ${targetUrl}`);
-                                        window.location.href = targetUrl;
+                                        window.location.href = `${basePath}/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(userName)}`;
                                     } else {
                                         alert(data.message || "Incorrect password. Access denied.");
                                     }
@@ -853,50 +888,62 @@ if (!admin || !user) {
                                 }
                             }
                         } else {
-                            console.log(`🔥 DEBUG TASKS.HTML: ${userName} is regular user`);
-                            const targetUrl = `${basePath}/2-UserProfiles/users.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(userName)}`;
-                            console.log(`🔥 DEBUG TASKS.HTML: Navigating to (regular user): ${targetUrl}`);
-                            window.location.href = targetUrl;
+                            window.location.href = `${basePath}/2-UserProfiles/users.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(userName)}`;
                         }
                     });
                     
                     userList.appendChild(li);
                 });
 
-                console.log("🔥 DEBUG: Showing modal");
-                userSelectModal.style.display = "flex";
+                userSelectModal.classList.add("show");
+                
+                // Apply styling after modal opens
+                setTimeout(applyModalStyling, 10);
             } catch (err) {
-                console.error("🔥 DEBUG: Failed to load users:", err);
+                console.error("Failed to load users:", err);
                 userList.innerHTML = '<li style="padding: 15px; color: #D32F2F;">Failed to load users</li>';
-                userSelectModal.style.display = "flex";
+                userSelectModal.classList.add("show");
             }
         });
-    } else {
-        console.error("🔥 DEBUG: Profile icon not found!");
+    }
+
+    // Helper function to ensure proper modal styling
+    function applyModalStyling() {
+        try {
+            const text = document.querySelector('.bottom-sheet-header h3');
+            if (text) {
+                text.style.setProperty('color', '#5D4E41', 'important');
+            }
+            
+            const closeBtn = document.querySelector('.close-btn');
+            if (closeBtn) {
+                closeBtn.style.setProperty('color', '#F5F5DC', 'important');
+            }
+            
+            const userListItems = document.querySelectorAll('.user-list li');
+            userListItems.forEach(item => {
+                if (!item.style.getPropertyValue('background')) {
+                    item.style.setProperty('background', 'var(--light-bg)', 'important');
+                }
+            });
+        } catch (e) {
+            console.log("Error in applyModalStyling:", e);
+        }
     }
 
     // Modal close functionality
     if (userSelectModal) {
-        console.log("🔥 DEBUG: Adding modal click listener");
         userSelectModal.addEventListener("click", (e) => {
-            console.log("🔥 DEBUG: Modal clicked");
             if (e.target === userSelectModal) {
-                console.log("🔥 DEBUG: Closing modal via background click");
-                userSelectModal.style.display = "none";
+                userSelectModal.classList.remove("show");
             }
         });
-    } else {
-        console.error("🔥 DEBUG: User select modal not found!");
     }
 
     if (closeModalBtn) {
-        console.log("🔥 DEBUG: Adding close button listener");
         closeModalBtn.addEventListener("click", () => {
-            console.log("🔥 DEBUG: Close button clicked");
-            userSelectModal.style.display = "none";
+            userSelectModal.classList.remove("show");
         });
-    } else {
-        console.error("🔥 DEBUG: Close modal button not found!");
     }
 });
 
