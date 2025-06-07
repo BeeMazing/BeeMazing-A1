@@ -1515,26 +1515,9 @@ async function deleteUserFromServer(username) {
 // Setup user management immediately
 console.log("🔧 Setting up user management...");
 
-// Get adminEmail from the URL params or localStorage (reuse existing urlParams)
-const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
+console.log("🔧 Admin email:", globalAdminEmail);
 
-console.log("🔧 Admin email:", adminEmail);
-
-// Test if profile icon exists
-setTimeout(() => {
-    const testProfileIcon = document.getElementById("profileIcon");
-    console.log("🔧 Profile icon found:", testProfileIcon);
-    if (testProfileIcon) {
-        alert("✅ Profile icon found! Adding click test...");
-        testProfileIcon.addEventListener("click", () => {
-            alert("🎯 Profile icon clicked successfully!");
-        });
-    } else {
-        alert("❌ Profile icon NOT found!");
-    }
-}, 1000);
-
-if (!adminEmail) {
+if (!globalAdminEmail) {
     console.error("No admin email found. User management disabled.");
 } else {
     let userToRemove = null;
@@ -1623,7 +1606,7 @@ if (!adminEmail) {
                 return;
             }
 
-            if (!adminEmail) {
+            if (!globalAdminEmail) {
                 alert("Error: Admin session expired. Please log in again.");
                 window.location.href = "/BeeMazing-A1/login.html";
                 return;
@@ -1637,7 +1620,7 @@ if (!adminEmail) {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        adminEmail: adminEmail,
+                        adminEmail: globalAdminEmail,
                         newUser: username,
                         role: selectedRole
                     })
@@ -1647,12 +1630,12 @@ if (!adminEmail) {
 
                 if (result.success) {
                     const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-                    if (!allUserData[adminEmail]) {
-                        allUserData[adminEmail] = { users: [], permissions: {} };
+                    if (!allUserData[globalAdminEmail]) {
+                        allUserData[globalAdminEmail] = { users: [], permissions: {} };
                     }
 
-                    allUserData[adminEmail].users.push(username);
-                    allUserData[adminEmail].permissions[username] = selectedRole;
+                    allUserData[globalAdminEmail].users.push(username);
+                    allUserData[globalAdminEmail].permissions[username] = selectedRole;
                     localStorage.setItem("userData", JSON.stringify(allUserData));
 
                     addUserModal.style.display = "none";
@@ -1713,18 +1696,18 @@ if (!adminEmail) {
             event.preventDefault();
             event.stopPropagation();
             
-            if (!adminEmail) {
+            if (!globalAdminEmail) {
                 alert("Admin email not found. Please log in again.");
                 return;
             }
             
             try {
-                const res = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
+                const res = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(globalAdminEmail)}`);
                 const data = await res.json();
                 if (!res.ok || !data.users) throw new Error("Failed to fetch users");
 
                 const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-                const userPermissions = allUserData[adminEmail]?.permissions || data.permissions || {};
+                const userPermissions = allUserData[globalAdminEmail]?.permissions || data.permissions || {};
                 const user = urlParams.get('user') || localStorage.getItem("currentUser");
 
                 userList.innerHTML = "";
@@ -2469,7 +2452,6 @@ async function loadTasks() {
 
 async function loadYourTasks() {
     const adminEmail = globalAdminEmail;
-    const urlParams = new URLSearchParams(window.location.search);
     let currentUser = urlParams.get("user") || localStorage.getItem("currentUser");
 
     const yourContainer = document.getElementById("yourTasks");
