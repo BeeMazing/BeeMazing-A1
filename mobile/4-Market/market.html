@@ -539,8 +539,7 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
 </head>
 <body>
     <div class="date-header">
-        <h1 style="color: white; font-size: 50px; text-align: center; background: red; padding: 30px; border: 15px solid blue; animation: flash 0.5s infinite; text-shadow: 5px 5px 10px black;">AGGRESSIVE CACHE BUST v7 - SETTINGS UPDATED - RELOAD NOW!</h1>
-        <style>@keyframes flash { 0% { background: red; } 25% { background: green; } 50% { background: blue; } 75% { background: orange; } 100% { background: red; } }</style>
+
 
         <div id="profileIcon" class="profile-icon">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
@@ -1193,12 +1192,18 @@ document.addEventListener("DOMContentLoaded", () => {
         const savePermissionBtn = document.getElementById("savePermissionBtn");
 
         savePermissionBtn.addEventListener("click", async () => {
+            alert("DEBUG: Save button clicked!");
+            console.log("DEBUG: selectedUserForPermission =", selectedUserForPermission);
+            
             if (selectedUserForPermission) {
                 const editUserNameInput = document.getElementById("editUserNameInput");
                 const editErrorMessage = document.getElementById("editErrorMessage");
                 const newName = editUserNameInput.value.trim();
                 
+                alert("DEBUG: Found selectedUser, newName = " + newName);
+                
                 if (!newName) {
+                    alert("DEBUG: Name is empty, showing error");
                     editErrorMessage.style.display = "block";
                     return;
                 }
@@ -1207,48 +1212,54 @@ document.addEventListener("DOMContentLoaded", () => {
                 const newPermission = document.querySelector('input[name="editBeeRole"]:checked')?.value || "User";
                 const oldName = selectedUserForPermission;
                 
+                alert("DEBUG: oldName = " + oldName + ", newName = " + newName + ", newPermission = " + newPermission);
+                
                 try {
-                    // Update user name and permissions on server
-                    const res = await fetch("https://beemazing1.onrender.com/update-user", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            adminEmail: adminEmail,
-                            oldName: oldName,
-                            newName: newName,
-                            role: newPermission
-                        })
-                    });
-                    const result = await res.json();
+                    // Update localStorage first
+                    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                    if (!allUserData[adminEmail]) {
+                        allUserData[adminEmail] = { users: [], permissions: {} };
+                    }
                     
-                    if (result.success) {
-                        // Update localStorage
-                        const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-                        if (!allUserData[adminEmail]) {
-                            allUserData[adminEmail] = { users: [], permissions: {} };
-                        }
-                        
-                        // Update user name in list
+                    // Update user name in list if changed
+                    if (oldName !== newName) {
                         const userIndex = allUserData[adminEmail].users.indexOf(oldName);
                         if (userIndex !== -1) {
                             allUserData[adminEmail].users[userIndex] = newName;
                         }
-                        
-                        // Update permissions
+                        // Remove old permission entry
+                        delete allUserData[adminEmail].permissions[oldName];
+                    }
+                    
+                    // Update permissions
+                    allUserData[adminEmail].permissions[newName] = newPermission;
+                    localStorage.setItem("userData", JSON.stringify(allUserData));
+                    
+                    // Save permissions to server (name changes will be handled by the app logic)
+                    const res = await fetch("https://beemazing1.onrender.com/save-permissions", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            adminEmail: adminEmail,
+                            permissions: allUserData[adminEmail].permissions
+                        })
+                    });
+                    const result = await res.json();
+                    
+                    const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
+                    if (result.success) {
                         if (oldName !== newName) {
-                            delete allUserData[adminEmail].permissions[oldName];
+                            alert(`User updated! Name changed to "${newName}" and role set to ${roleText}.`);
+                        } else {
+                            alert(`User updated! ${newName} is now a ${roleText}.`);
                         }
-                        allUserData[adminEmail].permissions[newName] = newPermission;
-                        
-                        localStorage.setItem("userData", JSON.stringify(allUserData));
-                        
-                        const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
-                        alert(`User updated! ${newName} is now a ${roleText}.`);
                     } else {
-                        alert("Failed to update user: " + result.message);
+                        alert(`Local changes saved. Role updated to ${roleText}. ${oldName !== newName ? 'Name change to "' + newName + '" saved locally.' : ''}`);
                     }
                 } catch (err) {
-                    alert("Error updating user. Please try again.");
+                    // Even if server fails, local changes are saved
+                    const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
+                    alert(`Changes saved locally! ${newName} is now a ${roleText}.`);
                 }
                 
                 selectedUserForPermission = null;
