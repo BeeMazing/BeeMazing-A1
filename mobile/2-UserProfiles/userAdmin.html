@@ -1509,46 +1509,63 @@ async function deleteUserFromServer(username) {
     }
 }
 
+// Global variables for user management
+let userToRemove = null;
+let selectedUserForPermission = null;
+
+// Global modal functions
+function showConfirmModal(username) {
+    console.log("showConfirmModal called for:", username);
+    userToRemove = username;
+    const confirmModal = document.getElementById("confirmModal");
+    if (confirmModal) {
+        confirmModal.style.setProperty('display', 'flex', 'important');
+        confirmModal.style.setProperty('z-index', '9999', 'important');
+        console.log("Confirm modal opened");
+    } else {
+        console.log("Confirm modal not found!");
+    }
+}
+
+function showPermissionModal(username) {
+    console.log("showPermissionModal called for:", username);
+    selectedUserForPermission = username;
+    const permissionModalUser = document.getElementById("permissionModalUser");
+    const editUserNameInput = document.getElementById("editUserNameInput");
+    const editAdminRole = document.getElementById("editAdminRole");
+    const editUserRole = document.getElementById("editUserRole");
+    const editErrorMessage = document.getElementById("editErrorMessage");
+    
+    if (permissionModalUser) permissionModalUser.textContent = `Edit Bee`;
+    if (editUserNameInput) editUserNameInput.value = username;
+    if (editErrorMessage) editErrorMessage.style.display = "none";
+    
+    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+    const userPermissions = allUserData[globalAdminEmail]?.permissions || {};
+    const currentRole = userPermissions[username] || "User";
+    
+    if (currentRole === "Admin") {
+        if (editAdminRole) editAdminRole.checked = true;
+    } else {
+        if (editUserRole) editUserRole.checked = true;
+    }
+    
+    const permissionModal = document.getElementById("permissionModal");
+    if (permissionModal) {
+        permissionModal.style.setProperty('display', 'flex', 'important');
+        permissionModal.style.setProperty('z-index', '9999', 'important');
+        console.log("Permission modal opened");
+    } else {
+        console.log("Permission modal not found!");
+    }
+}
+
 // Setup user management when DOM is ready - wrapped in try-catch to isolate from other errors
 function setupUserManagement() {
 try {
 if (!globalAdminEmail) {
     console.error("No admin email found. User management disabled.");
 } else {
-    let userToRemove = null;
-    let selectedUserForPermission = null;
-
-    function showConfirmModal(username) {
-        userToRemove = username;
-        const confirmModal = document.getElementById("confirmModal");
-        confirmModal.style.display = "flex";
-    }
-
-    function showPermissionModal(username) {
-        selectedUserForPermission = username;
-        const permissionModalUser = document.getElementById("permissionModalUser");
-        const editUserNameInput = document.getElementById("editUserNameInput");
-        const editAdminRole = document.getElementById("editAdminRole");
-        const editUserRole = document.getElementById("editUserRole");
-        const editErrorMessage = document.getElementById("editErrorMessage");
-        
-        permissionModalUser.textContent = `Edit Bee`;
-        editUserNameInput.value = username;
-        editErrorMessage.style.display = "none";
-        
-        const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-        const userPermissions = allUserData[globalAdminEmail]?.permissions || {};
-        const currentRole = userPermissions[username] || "User";
-        
-        if (currentRole === "Admin") {
-            editAdminRole.checked = true;
-        } else {
-            editUserRole.checked = true;
-        }
-        
-        const permissionModal = document.getElementById("permissionModal");
-        permissionModal.style.display = "flex";
-    }
 
     // Add User button functionality
     const addUserBtnInModal = document.getElementById("addUserBtn");
