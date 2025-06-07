@@ -651,6 +651,17 @@ document.getElementById("addTaskBtn").addEventListener("click", () => {
     }
 });
 
+// Logout button functionality
+const logoutBtn = document.getElementById("logoutBtn");
+logoutBtn.addEventListener("click", () => {
+    // Only remove login session info
+    localStorage.removeItem("isAdmin");
+    localStorage.removeItem("userData");
+    localStorage.removeItem("adminPassword");
+    // Keep currentAdminEmail as per home.js
+    window.location.href = "/BeeMazing-A1/login.html";
+});
+
 
 
 
