@@ -377,6 +377,7 @@ h3 {
 
 
 
+/* Profile Icon */
 
 
 
@@ -1430,12 +1431,6 @@ h3 {
 
 
   <script>
-
-
-
-
-
-
 // Dynamically set footer button links and active state
 const urlParams = new URLSearchParams(window.location.search);
 const globalAdminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
@@ -1513,7 +1508,6 @@ async function deleteUserFromServer(username) {
 }
 
 // Setup user management immediately
-
 if (!globalAdminEmail) {
     console.error("No admin email found. User management disabled.");
 } else {
@@ -1521,12 +1515,19 @@ if (!globalAdminEmail) {
     let selectedUserForPermission = null;
 
     function showConfirmModal(username) {
+        console.log("DEBUG: showConfirmModal called for:", username);
         userToRemove = username;
         const confirmModal = document.getElementById("confirmModal");
-        confirmModal.style.display = "flex";
+        if (confirmModal) {
+            confirmModal.style.display = "flex";
+            console.log("DEBUG: Confirm modal displayed");
+        } else {
+            console.log("DEBUG: confirmModal element not found");
+        }
     }
 
     function showPermissionModal(username) {
+        console.log("DEBUG: showPermissionModal called for:", username);
         selectedUserForPermission = username;
         const permissionModalUser = document.getElementById("permissionModalUser");
         const editUserNameInput = document.getElementById("editUserNameInput");
@@ -1534,22 +1535,27 @@ if (!globalAdminEmail) {
         const editUserRole = document.getElementById("editUserRole");
         const editErrorMessage = document.getElementById("editErrorMessage");
         
-        permissionModalUser.textContent = `Edit Bee`;
-        editUserNameInput.value = username;
-        editErrorMessage.style.display = "none";
+        if (permissionModalUser) permissionModalUser.textContent = `Edit Bee`;
+        if (editUserNameInput) editUserNameInput.value = username;
+        if (editErrorMessage) editErrorMessage.style.display = "none";
         
         const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
         const userPermissions = allUserData[globalAdminEmail]?.permissions || {};
         const currentRole = userPermissions[username] || "User";
         
         if (currentRole === "Admin") {
-            editAdminRole.checked = true;
+            if (editAdminRole) editAdminRole.checked = true;
         } else {
-            editUserRole.checked = true;
+            if (editUserRole) editUserRole.checked = true;
         }
         
         const permissionModal = document.getElementById("permissionModal");
-        permissionModal.style.display = "flex";
+        if (permissionModal) {
+            permissionModal.style.display = "flex";
+            console.log("DEBUG: Permission modal displayed");
+        } else {
+            console.log("DEBUG: permissionModal element not found");
+        }
     }
 
     // Add User button functionality
@@ -1561,12 +1567,23 @@ if (!globalAdminEmail) {
     const errorMessage = document.getElementById("errorMessage");
 
     if (addUserBtnInModal) {
-        addUserBtnInModal.addEventListener("click", () => {
-            addUserModal.style.display = "flex";
-            usernameInput.value = "";
-            errorMessage.style.display = "none";
-            document.querySelector('input[name="beeRole"][value="User"]').checked = true;
+        console.log("DEBUG: Setting up add user button event listener");
+        addUserBtnInModal.addEventListener("click", (e) => {
+            console.log("DEBUG: Add user button clicked!");
+            e.preventDefault();
+            e.stopPropagation();
+            if (addUserModal) {
+                addUserModal.style.display = "flex";
+                if (usernameInput) usernameInput.value = "";
+                if (errorMessage) errorMessage.style.display = "none";
+                const userRole = document.querySelector('input[name="beeRole"][value="User"]');
+                if (userRole) userRole.checked = true;
+            } else {
+                console.log("DEBUG: addUserModal not found");
+            }
         });
+    } else {
+        console.log("DEBUG: addUserBtnInModal not found");
     }
 
     if (cancelUserBtn) {
@@ -1673,7 +1690,11 @@ if (!globalAdminEmail) {
 
     // Profile icon functionality - same as market.html
     if (profileIcon) {
+        console.log("DEBUG: Setting up profile icon event listener");
         profileIcon.addEventListener("click", async (event) => {
+            console.log("DEBUG: Profile icon clicked!");
+            console.log("DEBUG: localStorage isAdmin value:", localStorage.getItem("isAdmin"));
+            console.log("DEBUG: All localStorage keys:", Object.keys(localStorage));
             event.preventDefault();
             event.stopPropagation();
             
@@ -1683,10 +1704,12 @@ if (!globalAdminEmail) {
             }
             
             try {
+                console.log("DEBUG: Fetching users for admin:", globalAdminEmail);
                 const res = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(globalAdminEmail)}`);
                 const data = await res.json();
                 if (!res.ok || !data.users) throw new Error("Failed to fetch users");
 
+                console.log("DEBUG: Users fetched successfully:", data.users);
                 const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
                 const userPermissions = allUserData[globalAdminEmail]?.permissions || data.permissions || {};
                 const user = urlParams.get('user') || localStorage.getItem("currentUser");
@@ -1694,6 +1717,7 @@ if (!globalAdminEmail) {
                 userList.innerHTML = "";
                 
                 data.users.forEach(userName => {
+                    console.log("DEBUG: Creating user list item for:", userName);
                     const li = document.createElement("li");
                     li.style.setProperty('color', '#5D4E41', 'important');
                     
@@ -1718,14 +1742,22 @@ if (!globalAdminEmail) {
                     
                     // Add settings and delete buttons - check if user is admin
                     const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
-                    if (isLoggedInAsAdmin) {
+                    console.log("DEBUG: isLoggedInAsAdmin:", isLoggedInAsAdmin);
+                    console.log("DEBUG: Raw isAdmin value:", localStorage.getItem("isAdmin"));
+                    
+                    // Force show buttons for testing - REMOVE LATER
+                    const forceShowButtons = true;
+                    
+                    if (isLoggedInAsAdmin || forceShowButtons) {
+                        console.log("DEBUG: Creating action buttons for:", userName);
                         const actionsContainer = document.createElement("div");
                         actionsContainer.classList.add("user-list-actions");
                         actionsContainer.style.setProperty('display', 'flex', 'important');
                         actionsContainer.style.setProperty('gap', '8px', 'important');
                         
                         const editBtn = document.createElement("button");
-                        editBtn.innerHTML = "⚙️";
+                        editBtn.innerHTML = "EDIT";
+                        editBtn.title = "Edit User Settings";
                         editBtn.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
                         editBtn.style.setProperty('color', 'rgb(245, 245, 220)', 'important');
                         editBtn.style.setProperty('border', 'none', 'important');
@@ -1746,12 +1778,19 @@ if (!globalAdminEmail) {
                             this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
                         };
                         editBtn.addEventListener("click", (event) => {
+                            console.log("DEBUG: Edit button clicked for user:", userName);
+                            event.preventDefault();
                             event.stopPropagation();
-                            showPermissionModal(userName);
+                            if (typeof showPermissionModal === 'function') {
+                                showPermissionModal(userName);
+                            } else {
+                                console.log("DEBUG: showPermissionModal function not found");
+                            }
                         });
                         
                         const removeBtn = document.createElement("button");
-                        removeBtn.textContent = "X";
+                        removeBtn.textContent = "DEL";
+                        removeBtn.title = "Delete User";
                         removeBtn.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
                         removeBtn.style.setProperty('color', 'rgb(245, 245, 220)', 'important');
                         removeBtn.style.setProperty('border', 'none', 'important');
@@ -1773,13 +1812,20 @@ if (!globalAdminEmail) {
                             this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
                         };
                         removeBtn.addEventListener("click", (event) => {
+                            console.log("DEBUG: Delete button clicked for user:", userName);
+                            event.preventDefault();
                             event.stopPropagation();
-                            showConfirmModal(userName);
+                            if (typeof showConfirmModal === 'function') {
+                                showConfirmModal(userName);
+                            } else {
+                                console.log("DEBUG: showConfirmModal function not found");
+                            }
                         });
                         
                         actionsContainer.appendChild(editBtn);
                         actionsContainer.appendChild(removeBtn);
                         li.appendChild(actionsContainer);
+                        console.log("DEBUG: Action buttons added for:", userName);
                     }
                     
                     // Highlight current user
@@ -1835,6 +1881,7 @@ if (!globalAdminEmail) {
                     
                     userList.appendChild(li);
                 });
+                console.log("DEBUG: User list populated with", data.users.length, "users");
 
                 // Show modal with force inline styles
                 userSelectModal.style.display = 'block';
@@ -1889,29 +1936,37 @@ if (!globalAdminEmail) {
     const confirmYesBtn = document.getElementById("confirmYesBtn");
     const confirmNoBtn = document.getElementById("confirmNoBtn");
 
-    confirmYesBtn.addEventListener("click", async () => {
-        if (userToRemove) {
-            const success = await deleteUserFromServer(userToRemove);
-            if (success) {
+    if (confirmYesBtn) {
+        confirmYesBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            if (userToRemove) {
+                const success = await deleteUserFromServer(userToRemove);
+                if (success) {
+                    userToRemove = null;
+                    if (confirmModal) confirmModal.style.display = "none";
+                    // Refresh the user list by clicking profile icon again
+                    if (profileIcon) profileIcon.click();
+                }
+            }
+        });
+    }
+
+    if (confirmNoBtn) {
+        confirmNoBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            userToRemove = null;
+            if (confirmModal) confirmModal.style.display = "none";
+        });
+    }
+
+    if (confirmModal) {
+        confirmModal.addEventListener("click", (e) => {
+            if (e.target === confirmModal) {
                 userToRemove = null;
                 confirmModal.style.display = "none";
-                // Refresh the user list by clicking profile icon again
-                profileIcon.click();
             }
-        }
-    });
-
-    confirmNoBtn.addEventListener("click", () => {
-        userToRemove = null;
-        confirmModal.style.display = "none";
-    });
-
-    confirmModal.addEventListener("click", (e) => {
-        if (e.target === confirmModal) {
-            userToRemove = null;
-            confirmModal.style.display = "none";
-        }
-    });
+        });
+    }
 
     // Permission Modal event listeners
     const permissionModal = document.getElementById("permissionModal");
@@ -2021,9 +2076,10 @@ if (!globalAdminEmail) {
     // Cancel edit button
     const cancelEditBtn = document.getElementById("cancelEditBtn");
     if (cancelEditBtn) {
-        cancelEditBtn.addEventListener("click", () => {
+        cancelEditBtn.addEventListener("click", (e) => {
+            e.preventDefault();
             selectedUserForPermission = null;
-            permissionModal.style.display = "none";
+            if (permissionModal) permissionModal.style.display = "none";
         });
     }
 
@@ -2786,7 +2842,7 @@ async function loadPendingTasks() {
   }
   pendingContainer.innerHTML = "<p>Loading...</p>";
 
-  console.log("🔍 loadPendingTasks: Fetching pending tasks", { adminEmail });
+
 
   try {
     const res = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
@@ -2797,7 +2853,7 @@ async function loadPendingTasks() {
 
     const allTasks = data.tasks || [];
     const todayStr = new Date().toLocaleDateString("sv-SE");
-    console.log("🔍 loadPendingTasks: Fetched tasks", allTasks.map(t => ({ title: t.title, date: t.date, pendingCompletions: t.pendingCompletions?.[todayStr] })));
+
 
     const pendingTasks = allTasks.filter(task => {
       if (!task || !task.pendingCompletions || !task.pendingCompletions[todayStr]) return false;
@@ -2805,7 +2861,7 @@ async function loadPendingTasks() {
     });
 
     document.getElementById("approvalCount").textContent = `(${pendingTasks.length})`;
-    console.log("🔍 loadPendingTasks: Filtered pending tasks", pendingTasks.map(t => ({ title: t.title, pending: t.pendingCompletions[todayStr] })));
+
 
     if (pendingTasks.length === 0) {
       pendingContainer.innerHTML = "<p>No tasks needing approval</p>";
@@ -2846,7 +2902,7 @@ async function handleDecision(title, date, selectedDate, index, decision, user, 
   const button = event.target;
   button.disabled = true;
 
-  console.log("🔍 handleDecision: Processing", { title, date, selectedDate, index, decision, user, repetition, adminEmail });
+
 
   try {
     const response = await fetch("https://beemazing1.onrender.com/api/review-task", {
@@ -2859,7 +2915,7 @@ async function handleDecision(title, date, selectedDate, index, decision, user, 
       throw new Error(data.error || `HTTP error ${response.status}`);
     }
 
-    console.log("✅ handleDecision: Success", data);
+
     const popup = document.createElement("div");
     popup.className = "reward-popup";
     popup.textContent = `Task ${decision}d successfully!`;
