@@ -633,6 +633,23 @@ if (!admin || !user) {
     } else {
         console.warn("Admin or user missing for homeLink", { admin, user });
     }
+
+    // Logout button functionality
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+        console.log("Logout button found, adding event listener");
+        logoutBtn.addEventListener("click", () => {
+            console.log("Logout button clicked");
+            // Only remove login session info
+            localStorage.removeItem("isAdmin");
+            localStorage.removeItem("userData");
+            localStorage.removeItem("adminPassword");
+            // Keep currentAdminEmail as per home.js
+            window.location.href = "/BeeMazing-A1/login.html";
+        });
+    } else {
+        console.error("Logout button not found");
+    }
 });
 
 
@@ -651,16 +668,7 @@ document.getElementById("addTaskBtn").addEventListener("click", () => {
     }
 });
 
-// Logout button functionality
-const logoutBtn = document.getElementById("logoutBtn");
-logoutBtn.addEventListener("click", () => {
-    // Only remove login session info
-    localStorage.removeItem("isAdmin");
-    localStorage.removeItem("userData");
-    localStorage.removeItem("adminPassword");
-    // Keep currentAdminEmail as per home.js
-    window.location.href = "/BeeMazing-A1/login.html";
-});
+
 
 
 
