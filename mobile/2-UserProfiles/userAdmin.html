@@ -1431,6 +1431,10 @@ h3 {
 
 
   <script>
+// Cache busting - force reload with timestamp
+const cacheVersion = Date.now();
+console.log("Script loading at:", cacheVersion);
+
 // Dynamically set footer button links and active state
 const urlParams = new URLSearchParams(window.location.search);
 const globalAdminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
@@ -1558,6 +1562,8 @@ if (!globalAdminEmail) {
 
     if (addUserBtnInModal) {
         addUserBtnInModal.addEventListener("click", () => {
+            console.log("🚀 ADD USER BUTTON CLICKED - WORKING!");
+            alert("Add user button clicked! Modal should open.");
             addUserModal.style.display = "flex";
             usernameInput.value = "";
             errorMessage.style.display = "none";
@@ -1742,6 +1748,8 @@ if (!globalAdminEmail) {
                             this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
                         };
                         editBtn.addEventListener("click", (event) => {
+                            console.log("🚀 EDIT BUTTON CLICKED - WORKING!");
+                            alert("Edit button clicked for: " + userName);
                             event.stopPropagation();
                             showPermissionModal(userName);
                         });
@@ -1769,6 +1777,8 @@ if (!globalAdminEmail) {
                             this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
                         };
                         removeBtn.addEventListener("click", (event) => {
+                            console.log("🚀 DELETE BUTTON CLICKED - WORKING!");
+                            alert("Delete button clicked for: " + userName);
                             event.stopPropagation();
                             showConfirmModal(userName);
                         });
@@ -1788,6 +1798,8 @@ if (!globalAdminEmail) {
                     }
                     
                     li.addEventListener("click", async (clickEvent) => {
+                        console.log("🚀 USER CLICKED - WORKING!", userName);
+                        alert("User clicked: " + userName);
                         // Prevent default behavior
                         clickEvent.preventDefault();
                         clickEvent.stopPropagation();
