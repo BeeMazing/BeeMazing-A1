@@ -28,6 +28,44 @@
     --footer-height: 70px;
     --modal-bg: rgba(19, 19, 18, 0.4); /* Added */
     --border-dark: #444754; /* Added */
+    /* Cache buster v2.0 - add user styling update */
+}
+
+/* Active user highlighting */
+.user-list li.active-user {
+    background: rgb(251, 183, 64) !important;
+    color: rgb(139, 105, 20) !important;
+    font-weight: 600 !important;
+}
+
+/* Add User text styling */
+.header-title h3 {
+    color: #8B6914 !important;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* Add User button styling */
+.add-user-btn {
+    background: #FBB740 !important;
+    color: #F5F5DC !important;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+}
+
+.add-user-btn:hover {
+    background: #8B6914 !important;
+    color: #F5F5DC !important;
 }
 
 #taskContainer {
@@ -394,12 +432,12 @@
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: var(--text-color);
+    color: #8B6914 !important;
 }
 .bottom-sheet-header .close-btn {
     background: none;
     border: none;
-    color: #F5F5DC;
+    color: #F5F5DC !important;
     font-size: 24px;
     cursor: pointer;
     padding: 5px;
@@ -445,6 +483,7 @@
     }
     .bottom-sheet-header h3 {
         font-size: 16px;
+        color: #8B6914 !important;
     }
     .user-list {
         height: 240px;
@@ -453,10 +492,10 @@
         font-size: 14px;
         padding: 12px 15px;
         border-bottom: 1px solid var(--secondary-color);
-        color: #8B6914;
+        color: #8B6914 !important;
         cursor: pointer;
         transition: background 0.2s ease;
-        background: var(--light-bg);
+        background: var(--light-bg) !important;
     }
     .user-list li:hover {
         background: var(--secondary-color);
@@ -483,8 +522,8 @@
         padding: 6px;
     }
     .remove-user-btn, .edit-user-btn {
-        background: #8B6914; /* Warm brown background */
-        color: #F5F5DC; /* Light beige icon/text */
+        background: #8B6914 !important; /* Warm brown background */
+        color: #F5F5DC !important; /* Light beige icon/text */
         border: none;
         border-radius: 50%;
         width: 20px;
@@ -630,10 +669,10 @@
     padding: 12px 20px;
     border-bottom: 1px solid var(--secondary-color);
     font-size: 16px;
-    color: #8B6914;
+    color: #8B6914 !important;
     cursor: pointer;
     transition: background 0.2s ease;
-    background: var(--light-bg);
+    background: var(--light-bg) !important;
 }
 .user-list li:hover {
     background: var(--secondary-color);
@@ -649,8 +688,8 @@
     gap: 8px;
 }
 .remove-user-btn, .edit-user-btn {
-    background: #8B6914;
-    color: #F5F5DC;
+    background: #8B6914 !important;
+    color: #F5F5DC !important;
     border: none;
     border-radius: 50%;
     width: 30px;
@@ -692,24 +731,7 @@
 /* Add User Button in User Selection Modal */
 /* Add User Button in User Selection Modal */
 /* Add User Button in User Selection Modal */
-.add-user-btn {
-  background: var(--primary-color);
-  color: #212121;
-  border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s ease;
-}
-.add-user-btn:hover {
-    background: #FBB740;
-}
+/* Old add-user-btn styles replaced above */
 
 /* Add User Modal */
 .add-user-modal {
@@ -809,9 +831,15 @@
 /* Responsive Adjustments */
 @media (max-width: 600px) {
   .add-user-btn {
-    width: 20px;
-    height: 20px;
-    font-size: 14px;
+    width: 20px !important;
+    height: 20px !important;
+    font-size: 14px !important;
+    background: #FBB740 !important;
+    color: #F5F5DC !important;
+  }
+  .add-user-btn:hover {
+    background: #8B6914 !important;
+    color: #F5F5DC !important;
   }
   .add-user-modal-content {
     width: 95%;
@@ -830,6 +858,10 @@
   }
   .header-title {
     gap: 6px;
+  }
+  .header-title h3 {
+    color: #8B6914 !important;
+    font-size: 16px;
   }
 }
 
@@ -1557,9 +1589,7 @@ document.getElementById("submitUserBtn").addEventListener("click", async () => {
             li.appendChild(actionsContainer);
           }
           if (user === userName) {
-            li.style.background = "#FBB740";
-            li.style.color = "#8B6914";
-            li.style.fontWeight = "600";
+            li.classList.add('active-user');
           }
 
 
@@ -1648,9 +1678,7 @@ profileIcon.addEventListener("click", async () => {
                 li.appendChild(actionsContainer);
             }
             if (user === userName) {
-                li.style.background = "#FBB740";
-                li.style.color = "#8B6914";
-                li.style.fontWeight = "600";
+                li.classList.add('active-user');
             }
             li.addEventListener("click", () => {
               localStorage.setItem("currentUser", user);
@@ -1724,9 +1752,7 @@ confirmYesBtn.addEventListener("click", async () => {
                     li.appendChild(actionsContainer);
                 }
                 if (user === userName) {
-                    li.style.background = "#FBB740";
-                    li.style.color = "#8B6914";
-                    li.style.fontWeight = "600";
+                    li.classList.add('active-user');
                 }
                 li.addEventListener("click", () => {
                   localStorage.setItem("currentUser", user);
@@ -1823,9 +1849,7 @@ savePermissionBtn.addEventListener("click", async () => {
                 li.appendChild(actionsContainer);
             }
             if (user === userName) {
-                li.style.background = "#FBB740";
-                li.style.color = "#8B6914";
-                li.style.fontWeight = "600";
+                li.classList.add('active-user');
             }
             li.addEventListener("click", () => {
               localStorage.setItem("currentUser", user);
