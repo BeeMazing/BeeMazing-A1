@@ -1512,17 +1512,18 @@ async function deleteUserFromServer(username) {
     }
 }
 
-// Wait for DOM to be fully loaded before setting up user management
-document.addEventListener("DOMContentLoaded", function() {
-    // Get adminEmail from the URL params or localStorage
-    const urlParams = new URLSearchParams(window.location.search);
-    const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
-    
-    if (!adminEmail) {
-        console.error("No admin email found. User management disabled.");
-        return;
-    }
+// Setup user management immediately
+console.log("🔧 Setting up user management...");
 
+// Get adminEmail from the URL params or localStorage
+const urlParams = new URLSearchParams(window.location.search);
+const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
+
+console.log("🔧 Admin email:", adminEmail);
+
+if (!adminEmail) {
+    console.error("No admin email found. User management disabled.");
+} else {
     let userToRemove = null;
     let selectedUserForPermission = null;
 
@@ -1566,13 +1567,22 @@ document.addEventListener("DOMContentLoaded", function() {
     const usernameInput = document.getElementById("usernameInput");
     const errorMessage = document.getElementById("errorMessage");
 
+    console.log("🔧 Add user button element:", addUserBtnInModal);
+    console.log("🔧 Add user modal element:", addUserModal);
+
     if (addUserBtnInModal) {
+        console.log("🔧 Setting up add user button click handler");
         addUserBtnInModal.addEventListener("click", () => {
+            console.log("🔧 Add user button clicked!");
             addUserModal.style.display = "flex";
             usernameInput.value = "";
             errorMessage.style.display = "none";
             document.querySelector('input[name="beeRole"][value="User"]').checked = true;
         });
+
+        console.log("🔧 User management setup complete");
+    } else {
+        console.error("🔧 Add user button not found!");
     }
 
     if (cancelUserBtn) {
@@ -1677,9 +1687,16 @@ document.addEventListener("DOMContentLoaded", function() {
     const userList = document.getElementById("userList");
     const closeModalBtn = document.getElementById("closeModalBtn");
 
+    console.log("🔧 Profile icon element:", profileIcon);
+    console.log("🔧 User select modal element:", userSelectModal);
+    console.log("🔧 User list element:", userList);
+    console.log("🔧 Close modal btn element:", closeModalBtn);
+
     // Profile icon functionality - same as market.html
     if (profileIcon) {
+        console.log("🔧 Setting up profile icon click handler");
         profileIcon.addEventListener("click", async (event) => {
+            console.log("🔧 Profile icon clicked!");
             event.preventDefault();
             event.stopPropagation();
             
@@ -1751,6 +1768,7 @@ document.addEventListener("DOMContentLoaded", function() {
                             this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
                         };
                         editBtn.addEventListener("click", (event) => {
+                            console.log("🔧 Edit button clicked for:", userName);
                             event.stopPropagation();
                             showPermissionModal(userName);
                         });
@@ -1778,6 +1796,7 @@ document.addEventListener("DOMContentLoaded", function() {
                             this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
                         };
                         removeBtn.addEventListener("click", (event) => {
+                            console.log("🔧 Delete button clicked for:", userName);
                             event.stopPropagation();
                             showConfirmModal(userName);
                         });
@@ -2041,7 +2060,7 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     }
-});
+}
 
 
 
