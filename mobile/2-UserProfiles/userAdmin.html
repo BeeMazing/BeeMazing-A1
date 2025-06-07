@@ -1515,7 +1515,7 @@ document.getElementById("submitUserBtn").addEventListener("click", async () => {
       const userPermissions = allUserData[adminEmail]?.permissions || {};
       userList.innerHTML = '';
       if (users.length === 0) {
-        userList.innerHTML = '<li style="padding: 15px 20px; color: #D32F2F;">No users available</li>';
+        userList.innerHTML = '<li style="padding: 15px 20px; color: #131312; background: #FFFFF8;">No users available</li>';
       } else {
         users.forEach(user => {
           const li = document.createElement("li");
@@ -1556,7 +1556,7 @@ document.getElementById("submitUserBtn").addEventListener("click", async () => {
             li.appendChild(actionsContainer);
           }
           if (user === userName) {
-            li.style.background = "#333540";
+            li.style.background = "#e4e3e0";
             li.style.fontWeight = "600";
           }
 
@@ -1605,7 +1605,7 @@ profileIcon.addEventListener("click", async () => {
     userList.innerHTML = '';
     if (users.length === 0) {
         alert("No users found for this admin.");
-        userList.innerHTML = '<li style="padding: 15px 20px; color: #D32F2F;">No users available</li>';
+        userList.innerHTML = '<li style="padding: 15px 20px; color: #131312; background: #FFFFF8;">No users available</li>';
     } else {
         users.forEach(user => {
             const li = document.createElement("li");
@@ -1646,7 +1646,7 @@ profileIcon.addEventListener("click", async () => {
                 li.appendChild(actionsContainer);
             }
             if (user === userName) {
-                li.style.background = "#333540";
+                li.style.background = "#e4e3e0";
                 li.style.fontWeight = "600";
             }
             li.addEventListener("click", () => {
@@ -1721,7 +1721,7 @@ confirmYesBtn.addEventListener("click", async () => {
                     li.appendChild(actionsContainer);
                 }
                 if (user === userName) {
-                    li.style.background = "#333540";
+                    li.style.background = "#e4e3e0";
                     li.style.fontWeight = "600";
                 }
                 li.addEventListener("click", () => {
@@ -1819,7 +1819,7 @@ savePermissionBtn.addEventListener("click", async () => {
                 li.appendChild(actionsContainer);
             }
             if (user === userName) {
-                li.style.background = "#333540";
+                li.style.background = "#e4e3e0";
                 li.style.fontWeight = "600";
             }
             li.addEventListener("click", () => {
