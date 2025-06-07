@@ -414,18 +414,7 @@
     height: 240px; /* Approx. 5 users at 48px each */
     overflow-y: auto;
 }
-.user-list li {
-    padding: 15px 20px;
-    border-bottom: 1px solid var(--secondary-color);
-    font-size: 16px;
-    color: var(--text-color);
-    cursor: pointer;
-    transition: background 0.2s ease;
-    background: var(--light-bg);
-}
-.user-list li:hover {
-    background: var(--secondary-color);
-}
+
 .user-list li:last-child {
     border-bottom: none;
 }
@@ -463,6 +452,17 @@
     .user-list li {
         font-size: 14px;
         padding: 12px 15px;
+        border-bottom: 1px solid var(--secondary-color);
+        color: var(--text-color);
+        cursor: pointer;
+        transition: background 0.2s ease;
+        background: var(--light-bg);
+    }
+    .user-list li:hover {
+        background: var(--secondary-color);
+    }
+    .user-list li:last-child {
+        border-bottom: none;
     }
     .modal-content {
         width: 95%;
@@ -627,6 +627,15 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px 20px;
+    border-bottom: 1px solid var(--secondary-color);
+    font-size: 16px;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background 0.2s ease;
+    background: var(--light-bg);
+}
+.user-list li:hover {
+    background: var(--secondary-color);
 }
 .user-list-item {
     display: flex;
