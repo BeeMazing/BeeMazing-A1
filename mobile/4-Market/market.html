@@ -142,9 +142,9 @@
             transform: translateX(-50%);
             width: 60px;
             height: 60px;
-            background: var(--secondary-color);
-            color: var(--primary-color);
-            border: 3px solid var(--primary-color);
+            background: #FBB740;
+            color: #FFFFFF;
+            border: 3px solid #FFFFFF;
             border-radius: 50%;
             font-size: 36px;
             display: flex;
@@ -157,18 +157,19 @@
             z-index: 99;
         }
         .add-reward-btn:hover {
-            background: var(--primary-color);
-            color: var(--secondary-color);
+            background: #5D4E41;
+            color: #FFFFFF;
             transform: translateX(-50%) scale(1.1);
         }
         .footer {
     position: fixed;
     bottom: 0;
     width: 100%;
+    left: 0;
     display: flex;
     justify-content: space-around;
     align-items: center;
-    background: var(--secondary-color); /* Changed to black */
+    background: #FBB740;
     padding: 10px 0;
     box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
     z-index: 100;
@@ -176,7 +177,7 @@
 }
 .footer a {
     text-decoration: none;
-    color: var(--accent-color); /* Changed to white for text */
+    color: #FFFFFF;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -186,28 +187,34 @@
             transform: scale(1.1);
         }
 
-
-
-
-
-
-
-        .footer-icon img {
+        .footer-icon img, .footer-icon svg {
     width: 40px;
     height: 40px;
-    filter: invert(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)); /* Default: white */
+    filter: brightness(0) saturate(100%) invert(100%);
+    transition: filter 0.3s ease;
+}
+
+.footer a.active svg,
+.footer a[aria-label="Market"] svg,
+a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
+    filter: brightness(0) saturate(100%) invert(30%) sepia(20%) saturate(2000%) hue-rotate(15deg) brightness(0.8) contrast(1.2) !important;
+    color: #5D4E41 !important;
+    width: 40px !important;
+    height: 40px !important;
 }
 
 .footer a.active img {
-    filter: none;
-    filter: invert(77%) sepia(88%) saturate(900%) hue-rotate(0deg) brightness(100%) contrast(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+    filter: brightness(0) saturate(100%) invert(30%) sepia(20%) saturate(2000%) hue-rotate(15deg) brightness(0.8) contrast(1.2) !important;
 }
 
-
-
-
 .footer a.active span {
-    color: var(--primary-color);
+    color: #FFFFFF;
+}
+
+.footer-icon span {
+    font-size: 12px;
+    margin-top: 5px;
+    font-weight: 600;
 }
 
 
@@ -284,13 +291,19 @@
     <a href="/BeeMazing-A1/mobile/4-Market/addreward.html" class="add-reward-btn" aria-label="Add Reward">+</a>
     <div class="footer">
       <a href="/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
-        <img src="/BeeMazing-A1/mobile/1-Home/HomeBtn.png" alt="Home" />
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6" style="width: 24px; height: 24px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+        </svg>
     </a>
         <a href="/BeeMazing-A1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
-            <img src="/BeeMazing-A1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"  style="width: 24px; height: 24px;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+            </svg>
         </a>
-        <a href="/BeeMazing-A1/mobile/4-Market/market.html" class="footer-icon" aria-label="Market">
-            <img src="/BeeMazing-A1/mobile/1-Home/MarketBtn.png" alt="Market" />
+        <a href="/BeeMazing-A1/mobile/4-Market/market.html" class="footer-icon active" aria-label="Market">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 0 0 7.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 0 0 2.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 0 1 2.916.52 6.003 6.003 0 0 1-5.395 4.972m0 0a6.726 6.726 0 0 1-2.749 1.35m0 0a6.772 6.772 0 0 1-3.044 0" />
+            </svg>
         </a>
     </div>
 

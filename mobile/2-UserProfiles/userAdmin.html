@@ -269,15 +269,16 @@
 .footer a:hover {
     transform: scale(1.1);
 }
-.footer-icon img {
+.footer-icon img, .footer-icon svg {
     width: 40px;
     height: 40px;
     filter: brightness(0) saturate(100%) invert(100%);
     transition: filter 0.3s ease;
 }
 
-.footer a.active img {
+.footer a.active svg {
     filter: brightness(0) saturate(100%) invert(30%) sepia(20%) saturate(2000%) hue-rotate(15deg) brightness(0.8) contrast(1.2) !important;
+    color: #5D4E41;
 }
 
 .footer-icon span {
@@ -289,7 +290,7 @@
     color: #FFFFFF;
 }
 @media (max-width: 600px) {
-    .footer-icon img {
+    .footer-icon img, .footer-icon svg {
         width: 24px;
         height: 24px;
         margin-bottom: 2px;

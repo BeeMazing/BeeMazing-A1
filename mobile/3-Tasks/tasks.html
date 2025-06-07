@@ -12,11 +12,11 @@
             box-sizing: border-box;
         }
         :root {
-            --primary-color: #FFC107;
-            --secondary-color: #212121;
+            --primary-color: #131312;
+            --secondary-color: #e4e3e0;
             --accent-color: #FFFFFF;
             --light-bg: #FFFFF8;
-            --text-color: #FFFFFF;
+            --text-color: #000000;
             --danger-color: #D32F2F;
             --modal-bg: rgba(33, 33, 33, 0.7);
             --footer-height: 70px;
@@ -39,7 +39,7 @@
 body {
   font-family: 'Poppins', Arial, sans-serif;
   background-color: var(--light-bg);
-  color: var(--text-color);
+  color: #FFFFFF;
 }
 
 
@@ -47,36 +47,77 @@ body {
 
 
 
-        .header {
-            background: linear-gradient(135deg, var(--primary-color), #FFB300);
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            position: fixed; /* Changed to fixed */
-            top: 0;
-            width: 100%;
-            height: var(--header-height);
-            z-index: 100;
-        }
+        .date-header {
+        background: #FFF6E9;
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 50;
+        padding: 5px 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        color: black;
+    }
         
-        .menu-icon {
-            font-size: 28px;
-            margin-right: 15px;
-            color: var(--secondary-color);
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
-        .menu-icon:hover {
-            transform: rotate(90deg);
-        }
-        .title {
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--secondary-color);
-            letter-spacing: 1px;
-        }
+        /* Profile Icon */
+.profile-icon {
+    position: fixed;
+    top: 10px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    z-index: 202;
+    transition: transform 0.3s ease;
+    background: #FBB740;
+    border-radius: 50%;
+    padding: 8px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.profile-icon:hover {
+    transform: scale(1.1);
+}
+
+.logout-container {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 150;
+}
+
+#logoutBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    background: #FBB740;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    box-sizing: border-box;
+    transition: transform 0.3s ease;
+}
+
+#logoutBtn:hover {
+    transform: scale(1.1);
+}
+
+.logout-icon {
+    width: 24px;
+    height: 24px;
+    filter: brightness(0) saturate(100%) invert(100%);
+    transition: transform 0.3s ease;
+}
+
+.logout-icon:hover {
+    transform: scale(1.1);
+}
 
 
         .content {
@@ -173,10 +214,11 @@ body {
     position: fixed;
     bottom: 0;
     width: 100%;
+    left: 0;
     display: flex;
     justify-content: space-around;
     align-items: center;
-    background: var(--secondary-color); /* Changed to black */
+    background: #FBB740;
     padding: 10px 0;
     box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
     z-index: 100;
@@ -184,7 +226,7 @@ body {
 }
 .footer a {
     text-decoration: none;
-    color: var(--accent-color); /* Changed to white for text */
+    color: #FFFFFF;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -200,21 +242,28 @@ body {
 
 
 
-        .footer-icon img {
+        .footer-icon img, .footer-icon svg {
     width: 40px;
     height: 40px;
-    filter: invert(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)); /* Default: white */
+    filter: brightness(0) saturate(100%) invert(100%);
+    transition: filter 0.3s ease;
+}
+
+.footer a.active svg,
+.footer a[aria-label="Tasks"] svg,
+a[href="/BeeMazing-A1/mobile/3-Tasks/tasks.html"] svg {
+    filter: brightness(0) saturate(100%) invert(30%) sepia(20%) saturate(2000%) hue-rotate(15deg) brightness(0.8) contrast(1.2) !important;
+    color: #5D4E41 !important;
+    width: 40px !important;
+    height: 40px !important;
 }
 
 .footer a.active img {
-    filter: none;
-    filter: invert(77%) sepia(88%) saturate(900%) hue-rotate(0deg) brightness(100%) contrast(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+    filter: brightness(0) saturate(100%) invert(30%) sepia(20%) saturate(2000%) hue-rotate(15deg) brightness(0.8) contrast(1.2) !important;
 }
 
-
-
 .footer a.active span {
-    color: var(--primary-color);
+    color: #FFFFFF;
 }
 
 
@@ -236,9 +285,9 @@ body {
             transform: translateX(-50%);
             width: 60px;
             height: 60px;
-            background: var(--secondary-color);
-            color: var(--primary-color);
-            border: 3px solid var(--primary-color);
+            background: #FBB740;
+            color: #FFFFFF;
+            border: 3px solid #FFFFFF;
             border-radius: 50%;
             font-size: 36px;
             display: flex;
@@ -251,8 +300,8 @@ body {
             z-index: 99; /* Below footer but above content */
         }
         .add-task-btn:hover {
-            background: var(--primary-color);
-            color: var(--secondary-color);
+            background: #5D4E41;
+            color: #FFFFFF;
             transform: translateX(-50%) scale(1.1);
         }
         .task-modal {
@@ -317,43 +366,39 @@ body {
 
 
         .date-header {
-            background: var(--secondary-color); /* black like footer */
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    padding-bottom: 5px;
-    padding: 5px 0; /* tighter */
-}
+        background: #FFF6E9;
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 50;
+        padding: 5px 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        color: black;
+    }
 
 .month-nav {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 4px 0;
-    font-weight: bold;
-    font-size: 18px;
-    color: var(--accent-color); /* white text */
-    background: transparent; /* ✅ Remove extra background */
+display: flex;
+justify-content: center;
+align-items: center;
+font-size: 18px;
+font-weight: bold;
+width: 100%;
+padding: 5px 0;
+color: #5D4E41;
 }
-
-
 .month-nav button {
-    background: var(--secondary-color); /* black */
-    border: none;
-    color: var(--accent-color); /* white */
-    padding: 4px 10px;
-    font-size: 16px;
-    border-radius: 8px;
-    margin: 0 8px;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+margin: 0 10px;
+background: #FBB740;
+color: white;
+border: none;
+padding: 8px 12px;
+border-radius: 8px;
+cursor: pointer;
+transition: transform 0.3s ease;
+font-weight: bold;
 }
-
-
 .month-nav button:hover {
-    background: var(--primary-color); /* yellow hover */
-    color: var(--secondary-color); /* black text */
+transform: scale(1.1);
 }
 
 
@@ -366,61 +411,61 @@ body {
 /* Date picker start point */
 
 
-.day-scroll-wrapper {
-    display: flex;
-    align-items: center;
-    position: relative;
-    background: transparent;
-    padding: 6px 0;
-    overflow: hidden;
+    .day-scroll-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 5px 0;
+  overflow: hidden;
 }
 .day-scroll {
-    display: flex;
-    overflow-x: auto;
-    padding: 6px 10px;
-    gap: 8px;
-    background: transparent;
-    scroll-behavior: smooth;
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding: 5px 10px;
 }
 .day-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 38px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 38px;
 }
 .day-label {
-    font-size: 10px;
-    color: var(--accent-color); /* White text */
-    text-align: center;
-    margin-bottom: 2px;
-    font-weight: 600;
+  font-size: 10px;
+  color: #5D4E41;
+  text-align: center;
+  margin-bottom: 2px;
+  font-weight: 600;
 }
 .day {
-    min-width: 38px;
-    width: 38px;
-    height: 38px;
-    line-height: 38px;
-    text-align: center;
-    border-radius: 50%;
-    background: var(--secondary-color); /* Black bubble */
-    color: var(--accent-color); /* White text */
-    font-weight: bold;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background-color 0.3s, transform 0.2s;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-.day:hover {
-    background: #FFF3CD;
-    transform: scale(1.08);
+  width: 38px;
+  height: 38px;
+  line-height: 38px;
+  text-align: center;
+  border-radius: 50%;
+  background: transparent;
+  color: #5D4E41;
+  font-weight: bold;
+  cursor: pointer;
 }
 .day.selected {
-    background: var(--primary-color); /* Yellow when selected */
-    color: var(--secondary-color); /* Black text */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: #FBB740;
+  color: #fff;
+}
+.day.today {
+  border: 2px solid #FBB740;
+  font-weight: bold;
+}
+.day.today.selected {
+  background: #FBB740;
+  color: #fff;
+  border: 2px solid #fff;
 }
 .day-scroll::-webkit-scrollbar {
-    display: none;
+  display: none;
+}
+.day-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 
@@ -442,17 +487,13 @@ body {
 
 
 
-.scroll-btn {
-    background: var(--secondary-color);
-    border: none;
-     color: var(--accent-color);
-    font-size: 20px;
-    font-weight: bold;
-    padding: 5px 10px;
-    cursor: pointer;
-    border-radius: 10px;
-    margin: 0 5px;
-    z-index: 10;
+    .scroll-btn {
+      background: #e4e3e0;
+      color: #181816;
+      border: none;
+      font-size: 20px;
+      padding: 5px 10px;
+      cursor: pointer;
     flex-shrink: 0;
 }
 
@@ -512,6 +553,19 @@ body {
 </head>
 <body>
     <div class="date-header">
+        <div id="profileIcon" class="profile-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            </svg>
+        </div>
+
+        <div id="logoutContainer" class="logout-container">
+          <button id="logoutBtn" aria-label="Logout" title="Logout">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 logout-icon">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
+              </svg>
+          </button>
+      </div>
         <div class="month-nav">
             <button id="prevMonth">&lt;</button>
             <span id="monthLabel">April 2025</span>
@@ -537,14 +591,20 @@ body {
 
     <div class="footer">
         <a href="/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html" class="footer-icon" id="homeLink" aria-label="Home">
-            <img src="/BeeMazing-A1/mobile/1-Home/HomeBtn.png" alt="Home" />
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6" style="width: 24px; height: 24px;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+            </svg>
             <span></span>
         </a>
-        <a href="/BeeMazing-A1/mobile/3-Tasks/tasks.html" class="footer-icon" aria-label="Tasks">
-            <img src="/BeeMazing-A1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
+        <a href="/BeeMazing-A1/mobile/3-Tasks/tasks.html" class="footer-icon active" aria-label="Tasks">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+            </svg>
         </a>
         <a href="/BeeMazing-A1/mobile/4-Market/market.html" class="footer-icon" aria-label="Market">
-            <img src="/BeeMazing-A1/mobile/1-Home/MarketBtn.png" alt="Market" />
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6" style="width: 24px; height:24px;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 0 0 7.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 0 0 2.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 0 1 2.916.52 6.003 6.003 0 0 1-5.395 4.972m0 0a6.726 6.726 0 0 1-2.749 1.35m0 0a6.772 6.772 0 0 1-3.044 0" />
+            </svg>
         </a>
     </div>
 
@@ -1237,6 +1297,7 @@ async function finishTask(userName, task, button, selectedDate) {
         });
 
         if (btn.dataset.date === todayStr) {
+            btn.classList.add("today");
             btn.classList.add("selected");
         }
 
