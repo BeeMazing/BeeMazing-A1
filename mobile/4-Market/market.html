@@ -539,7 +539,7 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
 </head>
 <body>
     <div class="date-header">
-        <h1 style="color: red; font-size: 24px; text-align: center; background: yellow; padding: 10px;">MARKET CACHE BUST v1 - FILE UPDATED</h1>
+
         <div id="profileIcon" class="profile-icon">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -796,8 +796,7 @@ console.log("DOM loaded:", document.readyState !== 'loading');
             }
         }
 
-        // Cache bust test - Market v1
-        alert('MARKET CACHE BUST v1 - File loaded from: ' + window.location.pathname);
+
         
         // User selection modal functionality
         const profileIcon = document.getElementById('profileIcon');
@@ -831,7 +830,7 @@ console.log("DOM loaded:", document.readyState !== 'loading');
                     return;
                 }
                 
-                alert("MARKET CACHE BUST v1 - Profile clicked");
+
                 
                 try {
                     const res = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
@@ -867,39 +866,63 @@ console.log("DOM loaded:", document.readyState !== 'loading');
                         
                         li.appendChild(nameContainer);
                         
-                        // Add settings and delete buttons
+                        // Add settings and delete buttons - check if user is admin
                         const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+                        console.log(`User ${userName}: isLoggedInAsAdmin = ${isLoggedInAsAdmin}`);
                         if (isLoggedInAsAdmin) {
+                            console.log(`Adding action buttons for user: ${userName}`);
                             const actionsContainer = document.createElement("div");
-                            actionsContainer.classList.add("user-list-actions");
+                            actionsContainer.style.setProperty('display', 'flex', 'important');
+                            actionsContainer.style.setProperty('gap', '8px', 'important');
                             
                             const editBtn = document.createElement("button");
-                            editBtn.classList.add("edit-user-btn");
                             editBtn.innerHTML = "⚙️";
-                            editBtn.style.setProperty('background', '#FBB740', 'important');
-                            editBtn.style.setProperty('color', '#F5F5DC', 'important');
+                            editBtn.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
+                            editBtn.style.setProperty('color', 'rgb(245, 245, 220)', 'important');
                             editBtn.style.setProperty('border', 'none', 'important');
                             editBtn.style.setProperty('border-radius', '50%', 'important');
                             editBtn.style.setProperty('width', '30px', 'important');
                             editBtn.style.setProperty('height', '30px', 'important');
-                            editBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
-                            editBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
+                            editBtn.style.setProperty('font-size', '14px', 'important');
+                            editBtn.style.setProperty('cursor', 'pointer', 'important');
+                            editBtn.style.setProperty('display', 'flex', 'important');
+                            editBtn.style.setProperty('align-items', 'center', 'important');
+                            editBtn.style.setProperty('justify-content', 'center', 'important');
+                            editBtn.onmouseover = function() { 
+                                this.style.setProperty('background', '#5D4E41', 'important'); 
+                                this.style.setProperty('background-color', '#5D4E41', 'important'); 
+                            };
+                            editBtn.onmouseout = function() { 
+                                this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); 
+                                this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
+                            };
                             editBtn.addEventListener("click", (event) => {
                                 event.stopPropagation();
                                 alert("Settings functionality not implemented in market page");
                             });
                             
                             const removeBtn = document.createElement("button");
-                            removeBtn.classList.add("remove-user-btn");
                             removeBtn.textContent = "X";
-                            removeBtn.style.setProperty('background', '#FBB740', 'important');
-                            removeBtn.style.setProperty('color', '#F5F5DC', 'important');
+                            removeBtn.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
+                            removeBtn.style.setProperty('color', 'rgb(245, 245, 220)', 'important');
                             removeBtn.style.setProperty('border', 'none', 'important');
                             removeBtn.style.setProperty('border-radius', '50%', 'important');
                             removeBtn.style.setProperty('width', '30px', 'important');
                             removeBtn.style.setProperty('height', '30px', 'important');
-                            removeBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
-                            removeBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
+                            removeBtn.style.setProperty('font-size', '14px', 'important');
+                            removeBtn.style.setProperty('font-weight', 'bold', 'important');
+                            removeBtn.style.setProperty('cursor', 'pointer', 'important');
+                            removeBtn.style.setProperty('display', 'flex', 'important');
+                            removeBtn.style.setProperty('align-items', 'center', 'important');
+                            removeBtn.style.setProperty('justify-content', 'center', 'important');
+                            removeBtn.onmouseover = function() { 
+                                this.style.setProperty('background', '#5D4E41', 'important'); 
+                                this.style.setProperty('background-color', '#5D4E41', 'important'); 
+                            };
+                            removeBtn.onmouseout = function() { 
+                                this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); 
+                                this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
+                            };
                             removeBtn.addEventListener("click", (event) => {
                                 event.stopPropagation();
                                 alert("Delete functionality not implemented in market page");
@@ -919,15 +942,25 @@ console.log("DOM loaded:", document.readyState !== 'loading');
                             li.style.setProperty('font-weight', '600', 'important');
                         }
                         
-                        li.addEventListener("click", async () => {
+                        li.addEventListener("click", async (clickEvent) => {
+                            // Prevent default behavior
+                            clickEvent.preventDefault();
+                            clickEvent.stopPropagation();
+                            
                             const isAdminUser = userPermissions[userName] === "Admin";
                             const basePath = "/BeeMazing-A1/mobile";
-                            const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+                            const currentLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
+
+                            console.log(`Switching to user: ${userName}, isAdmin: ${isAdminUser}`);
 
                             if (isAdminUser) {
-                                if (isLoggedInAsAdmin) {
-                                    window.location.href = `${basePath}/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                                if (currentLoggedInAsAdmin) {
+                                    // Admin clicking on admin user - direct access
+                                    const targetUrl = `${basePath}/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                                    console.log(`Navigating admin to admin: ${targetUrl}`);
+                                    window.location.href = targetUrl;
                                 } else {
+                                    // Child clicking on admin user - need password
                                     const enteredPassword = prompt("Enter Parent Password to access Admin profile:");
                                     if (!enteredPassword) {
                                         alert("Password is required to access Admin profile.");
@@ -939,11 +972,13 @@ console.log("DOM loaded:", document.readyState !== 'loading');
                                             headers: { "Content-Type": "application/json" },
                                             body: JSON.stringify({ email: adminEmail, password: enteredPassword }),
                                         });
-                                        const data = await res.json();
-                                        if (res.ok && data.success) {
-                                            window.location.href = `${basePath}/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                                        const verifyData = await res.json();
+                                        if (res.ok && verifyData.success) {
+                                            const targetUrl = `${basePath}/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                                            console.log(`Navigating child to admin (verified): ${targetUrl}`);
+                                            window.location.href = targetUrl;
                                         } else {
-                                            alert(data.message || "Incorrect password. Access denied.");
+                                            alert(verifyData.message || "Incorrect password. Access denied.");
                                         }
                                     } catch (err) {
                                         console.error("Error verifying admin password:", err);
@@ -951,7 +986,10 @@ console.log("DOM loaded:", document.readyState !== 'loading');
                                     }
                                 }
                             } else {
-                                window.location.href = `${basePath}/2-UserProfiles/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                                // Regular user - direct access to users.html
+                                const targetUrl = `${basePath}/2-UserProfiles/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                                console.log(`Navigating to regular user: ${targetUrl}`);
+                                window.location.href = targetUrl;
                             }
                         });
                         
