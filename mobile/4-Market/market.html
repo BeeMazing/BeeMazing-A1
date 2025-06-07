@@ -573,25 +573,57 @@ document.addEventListener("DOMContentLoaded", () => {
         homeLink.href = `/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
     }
 
-    // Logout button functionality
-    const logoutBtn = document.getElementById("logoutBtn");
-    if (logoutBtn) {
-        console.log("Logout button found, adding event listener");
-        logoutBtn.addEventListener("click", () => {
-            console.log("Logout button clicked");
-            // Only remove login session info
-            localStorage.removeItem("isAdmin");
-            localStorage.removeItem("userData");
-            localStorage.removeItem("adminPassword");
-            // Keep currentAdminEmail as per home.js
-            window.location.href = "/BeeMazing-A1/login.html";
-        });
-    } else {
-        console.error("Logout button not found");
+    // Logout button functionality - multiple approaches
+    function setupLogoutButton() {
+        const logoutBtn = document.getElementById("logoutBtn");
+        if (logoutBtn) {
+            console.log("Logout button found, adding event listener");
+            logoutBtn.addEventListener("click", () => {
+                console.log("Logout button clicked");
+                // Only remove login session info
+                localStorage.removeItem("isAdmin");
+                localStorage.removeItem("userData");
+                localStorage.removeItem("adminPassword");
+                // Keep currentAdminEmail as per home.js
+                window.location.href = "/BeeMazing-A1/login.html";
+            });
+            return true;
+        } else {
+            console.error("Logout button not found");
+            return false;
+        }
+    }
+    
+    // Try immediately
+    if (!setupLogoutButton()) {
+        // Try with timeout if not found initially
+        setTimeout(() => {
+            if (!setupLogoutButton()) {
+                console.error("Logout button still not found after timeout");
+            }
+        }, 500);
     }
 });
 
-
+// Additional fallback with window load event
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        const logoutBtn = document.getElementById("logoutBtn");
+        if (logoutBtn && !logoutBtn.hasAttribute('data-logout-attached')) {
+            console.log("Window load: Logout button found, adding event listener");
+            logoutBtn.setAttribute('data-logout-attached', 'true');
+            logoutBtn.addEventListener("click", () => {
+                console.log("Window load: Logout button clicked");
+                // Only remove login session info
+                localStorage.removeItem("isAdmin");
+                localStorage.removeItem("userData");
+                localStorage.removeItem("adminPassword");
+                // Keep currentAdminEmail as per home.js
+                window.location.href = "/BeeMazing-A1/login.html";
+            });
+        }
+    }, 100);
+});
 
         // Dynamically highlight the active footer icon
         document.querySelectorAll('.footer a').forEach(link => {
