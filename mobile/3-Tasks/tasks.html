@@ -745,6 +745,63 @@ transform: scale(1.1);
       </div>
     </div>
 
+    <!-- Confirm Delete Modal -->
+    <div class="modal" id="confirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 19, 18, 0.4); z-index: 1001; justify-content: center; align-items: center;">
+      <div class="modal-content" style="background: #2A2B32; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6); border: 2px solid #444754; color: #FFFFFF;">
+        <p style="color: #FFFFFF; margin-bottom: 20px; font-size: 16px;">Are you sure you want to delete this user?</p>
+        <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center;">
+          <button id="confirmYesBtn" style="background: rgb(251, 183, 64); color: #212121; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Yes</button>
+          <button id="confirmNoBtn" style="background: #444754; color: #FFFFFF; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">No</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Permission Modal -->
+    <div class="modal" id="permissionModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 19, 18, 0.4); z-index: 1001; justify-content: center; align-items: center;">
+      <div class="modal-content" style="background: #FFFFF8; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6); border: 2px solid #e4e3e0; color: #5D4E41;">
+        <h3 id="permissionModalUser" style="color: #5D4E41; margin-bottom: 15px; font-weight: 600;">Edit Bee</h3>
+        <input type="text" id="editUserNameInput" placeholder="Bee name" style="width: 100%; padding: 10px 12px; margin: 10px 0; background: #FFFFF8; color: #5D4E41; border: 2px solid #e4e3e0; border-radius: 8px; font-size: 16px; outline: none; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />
+        <div class="radio-group" style="margin-top: 15px;">
+          <label class="radio-option" style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; cursor: pointer; gap: 10px; color: #5D4E41;">
+            <input type="radio" name="editBeeRole" value="Admin" id="editAdminRole" style="accent-color: rgb(251, 183, 64); width: 18px; height: 18px; cursor: pointer;">
+            <span>Parent Bee</span>
+          </label>
+          <label class="radio-option" style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; cursor: pointer; gap: 10px; color: #5D4E41;">
+            <input type="radio" name="editBeeRole" value="User" id="editUserRole" style="accent-color: rgb(251, 183, 64); width: 18px; height: 18px; cursor: pointer;">
+            <span>Child Bee</span>
+          </label>
+        </div>
+        <p id="editErrorMessage" style="color: #D32F2F; font-size: 14px; display: none;">Please enter a valid name</p>
+        <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+          <button id="savePermissionBtn" style="background: rgb(251, 183, 64); color: #5D4E41; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Save</button>
+          <button id="cancelEditBtn" style="background: #e4e3e0; color: #5D4E41; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal" id="addUserModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 19, 18, 0.4); z-index: 1001; justify-content: center; align-items: center;">
+      <div class="modal-content" style="background: #FFFFF8; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6); border: 2px solid #e4e3e0; color: #5D4E41;">
+        <h3 style="color: #5D4E41; margin-bottom: 15px; font-weight: 600;">Add a Bee</h3>
+        <input type="text" id="usernameInput" placeholder="Bee name" style="width: 100%; padding: 10px 12px; margin: 10px 0; background: #FFFFF8; color: #5D4E41; border: 2px solid #e4e3e0; border-radius: 8px; font-size: 16px; outline: none; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />
+        <div class="radio-group" style="margin-top: 15px;">
+          <label class="radio-option" style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; cursor: pointer; gap: 10px; color: #5D4E41;">
+            <input type="radio" name="beeRole" value="Admin" style="accent-color: rgb(251, 183, 64); width: 18px; height: 18px; cursor: pointer;">
+            <span>Parent Bee</span>
+          </label>
+          <label class="radio-option" style="display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; cursor: pointer; gap: 10px; color: #5D4E41;">
+            <input type="radio" name="beeRole" value="User" checked style="accent-color: rgb(251, 183, 64); width: 18px; height: 18px; cursor: pointer;">
+            <span>Child Bee</span>
+          </label>
+        </div>
+        <p id="errorMessage" style="color: #D32F2F; font-size: 14px; display: none;">Please enter a valid name</p>
+        <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+          <button id="submitUserBtn" style="background: rgb(251, 183, 64); color: #5D4E41; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Add</button>
+          <button id="cancelUserBtn" style="background: #e4e3e0; color: #5D4E41; border: none; padding: 12px 25px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Cancel</button>
+        </div>
+      </div>
+    </div>
+
     <script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
 
     <script>
@@ -843,38 +900,60 @@ if (!admin || !user) {
                     const isLoggedInAsAdmin = localStorage.getItem("isAdmin") === "true";
                     if (isLoggedInAsAdmin) {
                         const actionsContainer = document.createElement("div");
-                        actionsContainer.classList.add("user-list-actions");
+                        actionsContainer.style.setProperty('display', 'flex', 'important');
+                        actionsContainer.style.setProperty('gap', '8px', 'important');
                         
                         const editBtn = document.createElement("button");
-                        editBtn.classList.add("edit-user-btn");
                         editBtn.innerHTML = "⚙️";
-                        editBtn.style.setProperty('background', '#FBB740', 'important');
-                        editBtn.style.setProperty('color', '#F5F5DC', 'important');
+                        editBtn.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
+                        editBtn.style.setProperty('color', 'rgb(245, 245, 220)', 'important');
                         editBtn.style.setProperty('border', 'none', 'important');
                         editBtn.style.setProperty('border-radius', '50%', 'important');
                         editBtn.style.setProperty('width', '30px', 'important');
                         editBtn.style.setProperty('height', '30px', 'important');
-                        editBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
-                        editBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
+                        editBtn.style.setProperty('font-size', '14px', 'important');
+                        editBtn.style.setProperty('cursor', 'pointer', 'important');
+                        editBtn.style.setProperty('display', 'flex', 'important');
+                        editBtn.style.setProperty('align-items', 'center', 'important');
+                        editBtn.style.setProperty('justify-content', 'center', 'important');
+                        editBtn.onmouseover = function() { 
+                            this.style.setProperty('background', '#5D4E41', 'important'); 
+                            this.style.setProperty('background-color', '#5D4E41', 'important'); 
+                        };
+                        editBtn.onmouseout = function() { 
+                            this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); 
+                            this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
+                        };
                         editBtn.addEventListener("click", (event) => {
                             event.stopPropagation();
-                            alert("Settings functionality not implemented in tasks page");
+                            showPermissionModal(userName);
                         });
                         
                         const removeBtn = document.createElement("button");
-                        removeBtn.classList.add("remove-user-btn");
                         removeBtn.textContent = "X";
-                        removeBtn.style.setProperty('background', '#FBB740', 'important');
-                        removeBtn.style.setProperty('color', '#F5F5DC', 'important');
+                        removeBtn.style.setProperty('background', 'rgb(251, 183, 64)', 'important');
+                        removeBtn.style.setProperty('color', 'rgb(245, 245, 220)', 'important');
                         removeBtn.style.setProperty('border', 'none', 'important');
                         removeBtn.style.setProperty('border-radius', '50%', 'important');
                         removeBtn.style.setProperty('width', '30px', 'important');
                         removeBtn.style.setProperty('height', '30px', 'important');
-                        removeBtn.onmouseover = function() { this.style.setProperty('background', '#5D4E41', 'important'); };
-                        removeBtn.onmouseout = function() { this.style.setProperty('background', '#FBB740', 'important'); };
+                        removeBtn.style.setProperty('font-size', '14px', 'important');
+                        removeBtn.style.setProperty('font-weight', 'bold', 'important');
+                        removeBtn.style.setProperty('cursor', 'pointer', 'important');
+                        removeBtn.style.setProperty('display', 'flex', 'important');
+                        removeBtn.style.setProperty('align-items', 'center', 'important');
+                        removeBtn.style.setProperty('justify-content', 'center', 'important');
+                        removeBtn.onmouseover = function() { 
+                            this.style.setProperty('background', '#5D4E41', 'important'); 
+                            this.style.setProperty('background-color', '#5D4E41', 'important'); 
+                        };
+                        removeBtn.onmouseout = function() { 
+                            this.style.setProperty('background', 'rgb(251, 183, 64)', 'important'); 
+                            this.style.setProperty('background-color', 'rgb(251, 183, 64)', 'important'); 
+                        };
                         removeBtn.addEventListener("click", (event) => {
                             event.stopPropagation();
-                            alert("Delete functionality not implemented in tasks page");
+                            showConfirmModal(userName);
                         });
                         
                         actionsContainer.appendChild(editBtn);
@@ -1005,13 +1084,313 @@ if (!admin || !user) {
         });
     }
 
+    // Global variables for modal functionality
+    let userToRemove = null;
+    let selectedUserForPermission = null;
+
+    // Modal functionality functions
+    function showConfirmModal(username) {
+        userToRemove = username;
+        const confirmModal = document.getElementById("confirmModal");
+        confirmModal.style.display = "flex";
+    }
+
+    function showPermissionModal(username) {
+        selectedUserForPermission = username;
+        const permissionModalUser = document.getElementById("permissionModalUser");
+        const editUserNameInput = document.getElementById("editUserNameInput");
+        const editAdminRole = document.getElementById("editAdminRole");
+        const editUserRole = document.getElementById("editUserRole");
+        const editErrorMessage = document.getElementById("editErrorMessage");
+        
+        permissionModalUser.textContent = `Edit Bee`;
+        editUserNameInput.value = username;
+        editErrorMessage.style.display = "none";
+        
+        const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+        const userPermissions = allUserData[admin]?.permissions || {};
+        const currentRole = userPermissions[username] || "User";
+        
+        if (currentRole === "Admin") {
+            editAdminRole.checked = true;
+        } else {
+            editUserRole.checked = true;
+        }
+        
+        const permissionModal = document.getElementById("permissionModal");
+        permissionModal.style.display = "flex";
+    }
+
+    // Delete user from server function
+    async function deleteUserFromServer(username) {
+        const adminEmail = localStorage.getItem("currentAdminEmail");
+        try {
+            const res = await fetch(
+                `https://beemazing1.onrender.com/delete-user?adminEmail=${encodeURIComponent(adminEmail)}&username=${encodeURIComponent(username)}`,
+                {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" }
+                }
+            );
+            const result = await res.json();
+            if (result.success) {
+                // Update localStorage after successful server deletion
+                const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                let users = allUserData[adminEmail]?.users || [];
+                users = users.filter(user => user !== username);
+                if (!allUserData[adminEmail]) {
+                    allUserData[adminEmail] = { users: [], permissions: {} };
+                }
+                allUserData[adminEmail].users = users;
+                localStorage.setItem("userData", JSON.stringify(allUserData));
+                return true;
+            } else {
+                alert("Failed to delete user from server: " + result.message);
+                return false;
+            }
+        } catch (err) {
+            alert("Error deleting user. Please try again.");
+            return false;
+        }
+    }
+
     // Add User button functionality
     const addUserBtnInModal = document.getElementById("addUserBtn");
+    const addUserModal = document.getElementById("addUserModal");
+    const submitUserBtn = document.getElementById("submitUserBtn");
+    const cancelUserBtn = document.getElementById("cancelUserBtn");
+    const usernameInput = document.getElementById("usernameInput");
+    const errorMessage = document.getElementById("errorMessage");
+
     if (addUserBtnInModal) {
         addUserBtnInModal.addEventListener("click", () => {
-            alert("Add User functionality not implemented in tasks page. Please use the main home page to add users.");
+            addUserModal.style.display = "flex";
+            usernameInput.value = "";
+            errorMessage.style.display = "none";
+            document.querySelector('input[name="beeRole"][value="User"]').checked = true;
         });
     }
+
+    if (cancelUserBtn) {
+        cancelUserBtn.addEventListener("click", () => {
+            addUserModal.style.display = "none";
+        });
+    }
+
+    // Add user modal click outside to close
+    if (addUserModal) {
+        addUserModal.addEventListener("click", (e) => {
+            if (e.target === addUserModal) {
+                addUserModal.style.display = "none";
+            }
+        });
+    }
+
+    // Submit new user
+    if (submitUserBtn) {
+        submitUserBtn.addEventListener("click", async () => {
+            const adminEmail = localStorage.getItem("currentAdminEmail");
+            const username = usernameInput.value.trim();
+            
+            if (!username) {
+                errorMessage.style.display = "block";
+                return;
+            }
+
+            if (!adminEmail) {
+                alert("Error: Admin session expired. Please log in again.");
+                window.location.href = "/BeeMazing-A1/login.html";
+                return;
+            }
+
+            errorMessage.style.display = "none";
+            const selectedRole = document.querySelector('input[name="beeRole"]:checked')?.value || "User";
+
+            try {
+                const res = await fetch("https://beemazing1.onrender.com/add-user", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        adminEmail: adminEmail,
+                        newUser: username,
+                        role: selectedRole
+                    })
+                });
+
+                const result = await res.json();
+
+                if (result.success) {
+                    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                    if (!allUserData[adminEmail]) {
+                        allUserData[adminEmail] = { users: [], permissions: {} };
+                    }
+
+                    allUserData[adminEmail].users.push(username);
+                    allUserData[adminEmail].permissions = allUserData[adminEmail].permissions || {};
+                    allUserData[adminEmail].permissions[username] = selectedRole;
+                    localStorage.setItem("userData", JSON.stringify(allUserData));
+
+                    addUserModal.style.display = "none";
+                } else {  alert(`${username} has been added as a ${selectedRole}!`);
+                    
+                    // Refresh the user list by clicking profile icon again
+                    profileIcon.click();
+                } else {
+                    alert("Failed to add user: " + result.message);
+                }
+            } catch (err) {
+                alert("Error adding user. Please try again.");
+            }
+        });
+    }
+
+    // Confirm Delete Modal event listeners
+    const confirmModal = document.getElementById("confirmModal");
+    const confirmYesBtn = document.getElementById("confirmYesBtn");
+    const confirmNoBtn = document.getElementById("confirmNoBtn");
+
+    confirmYesBtn.addEventListener("click", async () => {
+        if (userToRemove) {
+            const success = await deleteUserFromServer(userToRemove);
+            if (success) {
+                userToRemove = null;
+                confirmModal.style.display = "none";
+                // Refresh the user list by clicking profile icon again
+                profileIcon.click();
+            }
+        }
+    });
+
+    confirmNoBtn.addEventListener("click", () => {
+        userToRemove = null;
+        confirmModal.style.display = "none";
+    });
+
+    confirmModal.addEventListener("click", (e) => {
+        if (e.target === confirmModal) {
+            userToRemove = null;
+            confirmModal.style.display = "none";
+        }
+    });
+
+    // Permission Modal event listeners
+    const permissionModal = document.getElementById("permissionModal");
+    const savePermissionBtn = document.getElementById("savePermissionBtn");
+
+    if (savePermissionBtn) {
+        savePermissionBtn.addEventListener("click", async () => {
+            if (selectedUserForPermission) {
+                const editUserNameInput = document.getElementById("editUserNameInput");
+                const editErrorMessage = document.getElementById("editErrorMessage");
+                const newName = editUserNameInput.value.trim();
+                
+                if (!newName) {
+                    editErrorMessage.style.display = "block";
+                    return;
+                }
+                
+                editErrorMessage.style.display = "none";
+                const newPermission = document.querySelector('input[name="editBeeRole"]:checked')?.value || "User";
+                const oldName = selectedUserForPermission;
+                
+                try {
+                    const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
+                    
+                    // If name changed, delete old user and add new one
+                    if (oldName !== newName) {
+                        // Delete old user
+                        const deleteRes = await fetch(
+                            `https://beemazing1.onrender.com/delete-user?adminEmail=${encodeURIComponent(admin)}&username=${encodeURIComponent(oldName)}`,
+                            {
+                                method: "DELETE",
+                                headers: { "Content-Type": "application/json" }
+                            }
+                        );
+                        const addRes = await fetch("https://beemazing1.onrender.com/add-user", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                adminEmail: admin,
+                                newUser: newName,
+                                role: newPermission
+                            })
+                        });
+                        
+                        const addResult = await addRes.json();
+                        if (addResult.success) {
+                            alert(`User updated! Name changed to "${newName}" and role set to ${roleText}.`);
+                        } else {
+                            alert("Failed to update user name: " + addResult.message);
+                        }
+                    } else {
+                        // Only role changed, update permissions
+                        const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                        if (!allUserData[admin]) {
+                            allUserData[admin] = { users: [], permissions: {} };
+                        }
+                        allUserData[admin].permissions[newName] = newPermission;
+                        localStorage.setItem("userData", JSON.stringify(allUserData));
+                        
+                        const res = await fetch("https://beemazing1.onrender.com/save-permissions", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                adminEmail: admin,
+                                permissions: allUserData[admin].permissions
+                            })
+                        });
+                        const result = await res.json();
+                        
+                        if (result.success) {
+                            alert(`User updated! ${newName} is now a ${roleText}.`);
+                        } else {
+                            alert(`Local changes saved. Role updated to ${roleText}.`);
+                        }
+                    }
+                    
+                    // Update localStorage regardless
+                    const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+                    if (!allUserData[admin]) {
+                        allUserData[admin] = { users: [], permissions: {} };
+                    }
+                    
+                    if (oldName !== newName) {
+                        const userIndex = allUserData[admin].users.indexOf(oldName);
+                        if (userIndex !== -1) {
+                            allUserData[admin].users[userIndex] = newName;
+                        }
+                        delete allUserData[admin].permissions[oldName];
+                    }
+                    allUserData[admin].permissions[newName] = newPermission;
+                    localStorage.setItem("userData", JSON.stringify(allUserData));
+                    
+                } catch (err) {
+                    const roleText = newPermission === "Admin" ? "Parent Bee" : "Child Bee";
+                    alert(`Error updating user. Please try again.`);
+                }
+                
+                selectedUserForPermission = null;
+                permissionModal.style.display = "none";
+                profileIcon.click();
+            }
+        });
+    }
+
+    // Cancel edit button
+    const cancelEditBtn = document.getElementById("cancelEditBtn");
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener("click", () => {
+            selectedUserForPermission = null;
+            permissionModal.style.display = "none";
+        });
+    }
+
+    permissionModal.addEventListener("click", (e) => {
+        if (e.target === permissionModal) {
+            selectedUserForPermission = null;
+            permissionModal.style.display = "none";
+        }
+    });
 });
 
 
