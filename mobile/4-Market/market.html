@@ -565,6 +565,8 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
 
 // Append admin and user query parameters to Home link
 document.addEventListener("DOMContentLoaded", () => {
+    console.log("=== MARKET.HTML DEBUG: DOMContentLoaded event fired ===");
+    
     const homeLink = document.getElementById("homeLink");
     const urlParams = new URLSearchParams(window.location.search);
     const admin = urlParams.get("admin");
@@ -573,13 +575,54 @@ document.addEventListener("DOMContentLoaded", () => {
         homeLink.href = `/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
     }
 
-    // Logout button functionality - multiple approaches
+    // Logout button functionality - comprehensive debugging
     function setupLogoutButton() {
+        console.log("=== SETUP LOGOUT BUTTON CALLED ===");
+        
+        // List all elements with id containing 'logout'
+        const allElements = document.querySelectorAll('*');
+        const logoutElements = [];
+        allElements.forEach(el => {
+            if (el.id && el.id.toLowerCase().includes('logout')) {
+                logoutElements.push({id: el.id, tagName: el.tagName, classes: el.className});
+            }
+        });
+        console.log("Elements with 'logout' in ID:", logoutElements);
+        
+        // Check specifically for logoutBtn
         const logoutBtn = document.getElementById("logoutBtn");
+        console.log("getElementById('logoutBtn') result:", logoutBtn);
+        console.log("Type of result:", typeof logoutBtn);
+        console.log("Is null?", logoutBtn === null);
+        console.log("Is undefined?", logoutBtn === undefined);
+        
+        // Try alternative selectors
+        const byQuery = document.querySelector("#logoutBtn");
+        const byQuery2 = document.querySelector('button[id="logoutBtn"]');
+        const byQuery3 = document.querySelector('.logout-container button');
+        
+        console.log("querySelector('#logoutBtn'):", byQuery);
+        console.log("querySelector('button[id=\"logoutBtn\"]'):", byQuery2);
+        console.log("querySelector('.logout-container button'):", byQuery3);
+        
+        // Check if logout container exists
+        const logoutContainer = document.getElementById("logoutContainer");
+        console.log("Logout container found:", logoutContainer);
+        if (logoutContainer) {
+            console.log("Logout container children:", logoutContainer.children);
+        }
+        
         if (logoutBtn) {
-            console.log("Logout button found, adding event listener");
+            console.log("SUCCESS: Logout button found, adding event listener");
+            console.log("Button properties:", {
+                id: logoutBtn.id,
+                tagName: logoutBtn.tagName,
+                className: logoutBtn.className,
+                innerHTML: logoutBtn.innerHTML
+            });
+            
             logoutBtn.addEventListener("click", () => {
-                console.log("Logout button clicked");
+                console.log("SUCCESS: Logout button clicked!");
                 // Only remove login session info
                 localStorage.removeItem("isAdmin");
                 localStorage.removeItem("userData");
@@ -589,17 +632,36 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             return true;
         } else {
-            console.error("Logout button not found");
+            console.error("FAILED: Logout button not found with any selector");
             return false;
         }
     }
     
     // Try immediately
+    console.log("=== TRYING IMMEDIATE SETUP ===");
     if (!setupLogoutButton()) {
+        console.log("=== IMMEDIATE SETUP FAILED, TRYING WITH TIMEOUT ===");
         // Try with timeout if not found initially
         setTimeout(() => {
+            console.log("=== TIMEOUT SETUP ATTEMPT ===");
             if (!setupLogoutButton()) {
-                console.error("Logout button still not found after timeout");
+                console.error("FINAL FAILURE: Logout button still not found after timeout");
+                
+                // Final debug - show entire DOM structure around logout area
+                const body = document.body;
+                console.log("=== FULL DOM STRUCTURE DEBUG ===");
+                console.log("Document body HTML (first 1000 chars):", body.innerHTML.substring(0, 1000));
+                
+                // Look for any button elements
+                const allButtons = document.querySelectorAll('button');
+                console.log("All buttons found:", allButtons.length);
+                allButtons.forEach((btn, index) => {
+                    console.log(`Button ${index}:`, {
+                        id: btn.id,
+                        className: btn.className,
+                        innerHTML: btn.innerHTML.substring(0, 100)
+                    });
+                });
             }
         }, 500);
     }
@@ -607,13 +669,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Additional fallback with window load event
 window.addEventListener('load', () => {
+    console.log("=== WINDOW LOAD EVENT FIRED ===");
     setTimeout(() => {
+        console.log("=== WINDOW LOAD TIMEOUT SETUP ===");
         const logoutBtn = document.getElementById("logoutBtn");
+        console.log("Window load - logout button found:", logoutBtn);
+        
         if (logoutBtn && !logoutBtn.hasAttribute('data-logout-attached')) {
-            console.log("Window load: Logout button found, adding event listener");
+            console.log("SUCCESS: Window load - Logout button found, adding event listener");
             logoutBtn.setAttribute('data-logout-attached', 'true');
             logoutBtn.addEventListener("click", () => {
-                console.log("Window load: Logout button clicked");
+                console.log("SUCCESS: Window load - Logout button clicked!");
                 // Only remove login session info
                 localStorage.removeItem("isAdmin");
                 localStorage.removeItem("userData");
@@ -621,9 +687,18 @@ window.addEventListener('load', () => {
                 // Keep currentAdminEmail as per home.js
                 window.location.href = "/BeeMazing-A1/login.html";
             });
+        } else if (logoutBtn) {
+            console.log("Window load - Logout button found but already has event listener");
+        } else {
+            console.error("Window load - Logout button still not found");
         }
     }, 100);
 });
+
+// Additional debug on page ready
+console.log("=== MARKET.HTML SCRIPT LOADING ===");
+console.log("Document ready state:", document.readyState);
+console.log("DOM loaded:", document.readyState !== 'loading');
 
         // Dynamically highlight the active footer icon
         document.querySelectorAll('.footer a').forEach(link => {
