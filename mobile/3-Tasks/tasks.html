@@ -510,7 +510,7 @@ transform: scale(1.1);
     left: 0;
     width: 100%;
     height: 100%;
-    background: var(--modal-bg);
+    background: rgba(19, 19, 18, 0.4);
     z-index: 1000;
     opacity: 0;
     transition: opacity 0.3s ease-in-out;
@@ -525,11 +525,11 @@ transform: scale(1.1);
     left: 0;
     width: 100%;
     max-height: none;
-    background: var(--light-bg);
+    background: #FFFFF8;
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
     box-shadow: 0 -4px 20px rgba(19, 19, 18, 0.2);
-    border: 2px solid var(--secondary-color);
+    border: 2px solid #e4e3e0;
     transform: translateY(100%);
     transition: transform 0.3s ease-in-out;
 }
@@ -541,8 +541,8 @@ transform: scale(1.1);
     justify-content: space-between;
     align-items: center;
     padding: 15px 20px;
-    border-bottom: 2px solid var(--secondary-color);
-    background: var(--accent-color);
+    border-bottom: 2px solid #e4e3e0;
+    background: #FFFFFF;
 }
 .bottom-sheet-header h3 {
     margin: 0;
@@ -578,14 +578,14 @@ transform: scale(1.1);
     width: 8px;
 }
 .user-list::-webkit-scrollbar-track {
-    background: var(--light-bg);
+    background: #FFFFF8;
 }
 .user-list::-webkit-scrollbar-thumb {
-    background: var(--primary-color);
+    background: #131312;
     border-radius: 4px;
 }
 .user-list::-webkit-scrollbar-thumb:hover {
-    background: var(--text-color);
+    background: #000000;
 }
 
 @media (max-width: 600px) {
@@ -605,14 +605,14 @@ transform: scale(1.1);
     .user-list li {
         font-size: 14px;
         padding: 12px 15px;
-        border-bottom: 1px solid var(--secondary-color);
+        border-bottom: 1px solid #e4e3e0;
         color: #5D4E41 !important;
         cursor: pointer;
         transition: background 0.2s ease;
-        background: var(--light-bg) !important;
+        background: #FFFFF8 !important;
     }
     .user-list li:hover {
-        background: var(--secondary-color);
+        background: #e4e3e0;
     }
     .user-list li:last-child {
         border-bottom: none;
@@ -811,11 +811,11 @@ if (!admin || !user) {
                     const li = document.createElement("li");
                     li.style.setProperty('font-size', '14px', 'important');
                     li.style.setProperty('padding', '12px 15px', 'important');
-                    li.style.setProperty('border-bottom', '1px solid var(--secondary-color)', 'important');
+                    li.style.setProperty('border-bottom', '1px solid #e4e3e0', 'important');
                     li.style.setProperty('color', '#5D4E41', 'important');
                     li.style.setProperty('cursor', 'pointer', 'important');
                     li.style.setProperty('transition', 'background 0.2s ease', 'important');
-                    li.style.setProperty('background', 'var(--light-bg)', 'important');
+                    li.style.setProperty('background', '#FFFFF8', 'important');
                     li.style.setProperty('display', 'flex', 'important');
                     li.style.setProperty('align-items', 'center', 'important');
                     li.style.setProperty('gap', '12px', 'important');
@@ -838,18 +838,18 @@ if (!admin || !user) {
                     // Highlight current user
                     if (userName === user) {
                         li.classList.add('active-user');
-                        li.style.setProperty('background', 'var(--secondary-color)', 'important');
+                        li.style.setProperty('background', '#e4e3e0', 'important');
                         nameSpan.style.setProperty('font-weight', '800', 'important');
                     }
                     
                     li.onmouseover = function() {
-                        this.style.setProperty('background', 'var(--secondary-color)', 'important');
+                        this.style.setProperty('background', '#e4e3e0', 'important');
                     };
                     li.onmouseout = function() {
                         if (userName !== user) {
-                            this.style.setProperty('background', 'var(--light-bg)', 'important');
+                            this.style.setProperty('background', '#FFFFF8', 'important');
                         } else {
-                            this.style.setProperty('background', 'var(--secondary-color)', 'important');
+                            this.style.setProperty('background', '#e4e3e0', 'important');
                         }
                     };
                     
@@ -895,10 +895,37 @@ if (!admin || !user) {
                     userList.appendChild(li);
                 });
 
+                console.log("🔥 DEBUG: Modal element:", userSelectModal);
+                console.log("🔥 DEBUG: Modal classes before:", userSelectModal.className);
                 userSelectModal.classList.add("show");
+                console.log("🔥 DEBUG: Modal classes after:", userSelectModal.className);
+                console.log("🔥 DEBUG: Modal display:", window.getComputedStyle(userSelectModal).display);
+                console.log("🔥 DEBUG: Modal opacity:", window.getComputedStyle(userSelectModal).opacity);
                 
                 // Apply styling after modal opens
                 setTimeout(applyModalStyling, 10);
+                
+                // Force display and ensure bottom sheet content is visible
+                setTimeout(() => {
+                    userSelectModal.style.display = 'block';
+                    userSelectModal.style.opacity = '1';
+                    
+                    const bottomSheetContent = userSelectModal.querySelector('.bottom-sheet-content');
+                    if (bottomSheetContent) {
+                        bottomSheetContent.style.setProperty('transform', 'translateY(0)', 'important');
+                        bottomSheetContent.style.setProperty('position', 'fixed', 'important');
+                        bottomSheetContent.style.setProperty('bottom', '0', 'important');
+                        bottomSheetContent.style.setProperty('left', '0', 'important');
+                        bottomSheetContent.style.setProperty('width', '100%', 'important');
+                        bottomSheetContent.style.setProperty('background', '#FFFFF8', 'important');
+                        bottomSheetContent.style.setProperty('border-top-left-radius', '20px', 'important');
+                        bottomSheetContent.style.setProperty('border-top-right-radius', '20px', 'important');
+                        bottomSheetContent.style.setProperty('box-shadow', '0 -4px 20px rgba(19, 19, 18, 0.2)', 'important');
+                        bottomSheetContent.style.setProperty('border', '2px solid #e4e3e0', 'important');
+                        console.log("🔥 DEBUG: Bottom sheet content styled");
+                    }
+                    console.log("🔥 DEBUG: Forced modal display");
+                }, 50);
             } catch (err) {
                 console.error("Failed to load users:", err);
                 userList.innerHTML = '<li style="padding: 15px; color: #D32F2F;">Failed to load users</li>';
@@ -923,7 +950,7 @@ if (!admin || !user) {
             const userListItems = document.querySelectorAll('.user-list li');
             userListItems.forEach(item => {
                 if (!item.style.getPropertyValue('background')) {
-                    item.style.setProperty('background', 'var(--light-bg)', 'important');
+                    item.style.setProperty('background', '#FFFFF8', 'important');
                 }
             });
         } catch (e) {
