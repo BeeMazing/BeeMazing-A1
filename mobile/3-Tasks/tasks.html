@@ -726,21 +726,24 @@ transform: scale(1.1);
     </div>
 
     <!-- User Selection Modal -->
-    <div class="bottom-sheet" id="userSelectModal">
-        <div class="bottom-sheet-content">
-            <div class="bottom-sheet-header">
-                <div class="header-title">
-                    <h3 style="color: #5D4E41 !important; margin: 0; font-size: 18px; font-weight: 600;">Select User</h3>
-                </div>
-                <button id="closeModalBtn" class="close-btn" aria-label="Close">&times;</button>
-            </div>
-            <ul id="userList" class="user-list"></ul>
+    <div class="bottom-sheet" id="userSelectModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19, 19, 18, 0.4); z-index: 1000; opacity: 0; transition: opacity 0.3s ease-in-out;">
+      <div class="bottom-sheet-content" style="position: fixed; bottom: 0; left: 0; width: 100%; max-height: none; background: #FFFFF8; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -4px 20px rgba(19, 19, 18, 0.2); border: 2px solid #e4e3e0; transform: translateY(100%); transition: transform 0.3s ease-in-out;">
+        <div class="bottom-sheet-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 2px solid #e4e3e0; background: #FFFFFF;">
+          <div class="header-title">
+            <h3 style="color: #5D4E41 !important; margin: 0; font-size: 18px; font-weight: 600;">Select User</h3>
+          </div>
+          <button id="closeModalBtn" class="close-btn" aria-label="Close" style="background: none; border: none; color: #F5F5DC !important; font-size: 24px; cursor: pointer; padding: 5px;">✕</button>
         </div>
+        <ul id="userList" class="user-list" style="list-style: none; padding: 0; margin: 0; height: auto !important; max-height: none !important; overflow-y: visible !important; min-height: 48px;"></ul>
+      </div>
     </div>
 
     <script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
 
     <script>
+        // Force fresh load with timestamp
+        const timestamp = Date.now();
+        console.log('Tasks.html loaded at:', timestamp);
 
 
 // Append admin and user query parameters to Home link
@@ -897,38 +900,23 @@ if (!admin || !user) {
 
                 console.log("🔥 DEBUG: Modal element:", userSelectModal);
                 console.log("🔥 DEBUG: Modal classes before:", userSelectModal.className);
+                // Show modal with force inline styles
+                userSelectModal.style.display = 'block';
+                userSelectModal.style.opacity = '1';
                 userSelectModal.classList.add("show");
-                console.log("🔥 DEBUG: Modal classes after:", userSelectModal.className);
-                console.log("🔥 DEBUG: Modal display:", window.getComputedStyle(userSelectModal).display);
-                console.log("🔥 DEBUG: Modal opacity:", window.getComputedStyle(userSelectModal).opacity);
+                
+                const bottomSheetContent = userSelectModal.querySelector('.bottom-sheet-content');
+                if (bottomSheetContent) {
+                    bottomSheetContent.style.transform = 'translateY(0)';
+                }
                 
                 // Apply styling after modal opens
                 setTimeout(applyModalStyling, 10);
-                
-                // Force display and ensure bottom sheet content is visible
-                setTimeout(() => {
-                    userSelectModal.style.display = 'block';
-                    userSelectModal.style.opacity = '1';
-                    
-                    const bottomSheetContent = userSelectModal.querySelector('.bottom-sheet-content');
-                    if (bottomSheetContent) {
-                        bottomSheetContent.style.setProperty('transform', 'translateY(0)', 'important');
-                        bottomSheetContent.style.setProperty('position', 'fixed', 'important');
-                        bottomSheetContent.style.setProperty('bottom', '0', 'important');
-                        bottomSheetContent.style.setProperty('left', '0', 'important');
-                        bottomSheetContent.style.setProperty('width', '100%', 'important');
-                        bottomSheetContent.style.setProperty('background', '#FFFFF8', 'important');
-                        bottomSheetContent.style.setProperty('border-top-left-radius', '20px', 'important');
-                        bottomSheetContent.style.setProperty('border-top-right-radius', '20px', 'important');
-                        bottomSheetContent.style.setProperty('box-shadow', '0 -4px 20px rgba(19, 19, 18, 0.2)', 'important');
-                        bottomSheetContent.style.setProperty('border', '2px solid #e4e3e0', 'important');
-                        console.log("🔥 DEBUG: Bottom sheet content styled");
-                    }
-                    console.log("🔥 DEBUG: Forced modal display");
-                }, 50);
             } catch (err) {
                 console.error("Failed to load users:", err);
                 userList.innerHTML = '<li style="padding: 15px; color: #D32F2F;">Failed to load users</li>';
+                userSelectModal.style.display = 'block';
+                userSelectModal.style.opacity = '1';
                 userSelectModal.classList.add("show");
             }
         });
@@ -962,14 +950,26 @@ if (!admin || !user) {
     if (userSelectModal) {
         userSelectModal.addEventListener("click", (e) => {
             if (e.target === userSelectModal) {
+                userSelectModal.style.display = 'none';
+                userSelectModal.style.opacity = '0';
                 userSelectModal.classList.remove("show");
+                const bottomSheetContent = userSelectModal.querySelector('.bottom-sheet-content');
+                if (bottomSheetContent) {
+                    bottomSheetContent.style.transform = 'translateY(100%)';
+                }
             }
         });
     }
 
     if (closeModalBtn) {
         closeModalBtn.addEventListener("click", () => {
+            userSelectModal.style.display = 'none';
+            userSelectModal.style.opacity = '0';
             userSelectModal.classList.remove("show");
+            const bottomSheetContent = userSelectModal.querySelector('.bottom-sheet-content');
+            if (bottomSheetContent) {
+                bottomSheetContent.style.transform = 'translateY(100%)';
+            }
         });
     }
 });
