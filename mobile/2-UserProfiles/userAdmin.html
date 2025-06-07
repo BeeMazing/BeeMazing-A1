@@ -1514,12 +1514,14 @@ async function deleteUserFromServer(username) {
 
 // Setup user management immediately
 console.log("🔧 Setting up user management...");
+alert("🔧 UserAdmin.html JavaScript is running!");
 
 // Get adminEmail from the URL params or localStorage
 const urlParams = new URLSearchParams(window.location.search);
 const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
 
 console.log("🔧 Admin email:", adminEmail);
+alert("🔧 Admin email: " + adminEmail);
 
 if (!adminEmail) {
     console.error("No admin email found. User management disabled.");
@@ -2105,7 +2107,13 @@ const expandedTasks = new Set();
 if (globalAdminEmail) {
     fetchUsersFromServer(globalAdminEmail).then(users => {
         allUsers = users;
-        generateScrollableDates();
+        try {
+            generateScrollableDates();
+        } catch (err) {
+            console.error("Error in generateScrollableDates:", err);
+        }
+    }).catch(err => {
+        console.error("Error fetching users:", err);
     });
 }
 
@@ -2173,9 +2181,9 @@ async function handleDecision(title, date, index, decision, user, event) {
     if (!response.ok) throw new Error(reviewData.error || "Failed to process decision");
 
     setTimeout(() => {
-      loadTasks();
-      loadPendingTasks();
-      loadOverdueTasks();
+      try { loadTasks(); } catch (err) { console.error("Error in loadTasks:", err); }
+      try { loadPendingTasks(); } catch (err) { console.error("Error in loadPendingTasks:", err); }
+      try { loadOverdueTasks(); } catch (err) { console.error("Error in loadOverdueTasks:", err); }
     }, 500);
   } catch (err) {
     console.error("Error processing decision:", err);
@@ -2309,6 +2317,12 @@ async function handleRevert(title, date, index, user, event) {
 
 async function loadTasks() {
   try {
+    const container = document.getElementById("taskContainer");
+    if (!container) {
+      console.log("Task container not found, skipping load");
+      return;
+    }
+
     const res = await fetch(`https://beemazing1.onrender.com/get-tasks?adminEmail=${encodeURIComponent(globalAdminEmail)}&t=${Date.now()}`, {
       cache: "no-store"
     });
@@ -2317,8 +2331,6 @@ async function loadTasks() {
 
     // Filter tasks using filterTasksForDate from taskrotations.js
     const filteredTasks = filterTasksForDate(tasks, selectedDate);
-
-    const container = document.getElementById("taskContainer");
     container.innerHTML = ""; // Clear UI
 
     if (filteredTasks.length === 0) {
@@ -2429,7 +2441,10 @@ async function loadTasks() {
     });
   } catch (err) {
     console.error("Error loading tasks:", err);
-    document.getElementById("taskContainer").innerHTML = "<p>Error loading tasks. Please try again.</p>";
+    const errorContainer = document.getElementById("taskContainer");
+    if (errorContainer) {
+      errorContainer.innerHTML = "<p>Error loading tasks. Please try again.</p>";
+    }
   }
 }
 
@@ -2616,11 +2631,11 @@ function generateScrollableDates(monthOffset = 0) {
       document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
       btn.classList.add("selected");
       selectedDate = btn.dataset.date;
-      loadTasks();
-      loadOverdueTasks();
-      loadPendingTasks();
-      loadYourTasks();
-      loadPendingRewardRequests();
+      try { loadTasks(); } catch (err) { console.error("Error in loadTasks:", err); }
+      try { loadOverdueTasks(); } catch (err) { console.error("Error in loadOverdueTasks:", err); }
+      try { loadPendingTasks(); } catch (err) { console.error("Error in loadPendingTasks:", err); }
+      try { loadYourTasks(); } catch (err) { console.error("Error in loadYourTasks:", err); }
+      try { loadPendingRewardRequests(); } catch (err) { console.error("Error in loadPendingRewardRequests:", err); }
     });
 
     // Always mark today's date with the "today" class when it exists in current month view
@@ -2634,11 +2649,11 @@ function generateScrollableDates(monthOffset = 0) {
       if (monthOffset === 0) {
         btn.classList.add("selected");
         selectedDate = btn.dataset.date;
-        loadTasks();
-        loadOverdueTasks();
-        loadPendingTasks();
-        loadYourTasks();
-        loadPendingRewardRequests();
+        try { loadTasks(); } catch (err) { console.error("Error in loadTasks:", err); }
+        try { loadOverdueTasks(); } catch (err) { console.error("Error in loadOverdueTasks:", err); }
+        try { loadPendingTasks(); } catch (err) { console.error("Error in loadPendingTasks:", err); }
+        try { loadYourTasks(); } catch (err) { console.error("Error in loadYourTasks:", err); }
+        try { loadPendingRewardRequests(); } catch (err) { console.error("Error in loadPendingRewardRequests:", err); }
       }
     }
 
@@ -2696,6 +2711,10 @@ document.getElementById("scrollRight").addEventListener("click", () => {
 async function loadOverdueTasks() {
   const adminEmail = globalAdminEmail;
   const overdueContainer = document.getElementById("overdueTasks");
+  if (!overdueContainer) {
+    console.log("Overdue container not found, skipping load");
+    return;
+  }
   overdueContainer.innerHTML = "<p>Loading...</p>";
 
   try {
@@ -2756,7 +2775,10 @@ async function loadOverdueTasks() {
 
   } catch (err) {
     console.error("Error loading overdue tasks:", err);
-    overdueContainer.innerHTML = "<p>Error loading overdue tasks</p>";
+    const overdueContainer = document.getElementById("overdueTasks");
+    if (overdueContainer) {
+      overdueContainer.innerHTML = "<p>Error loading overdue tasks</p>";
+    }
   }
 }
 
@@ -2785,6 +2807,10 @@ overdueCard.addEventListener("click", () => {
 async function loadPendingTasks() {
   const adminEmail = globalAdminEmail;
   const pendingContainer = document.getElementById("pendingTasks");
+  if (!pendingContainer) {
+    console.log("Pending container not found, skipping load");
+    return;
+  }
   pendingContainer.innerHTML = "<p>Loading...</p>";
 
   console.log("🔍 loadPendingTasks: Fetching pending tasks", { adminEmail });
@@ -2830,7 +2856,10 @@ async function loadPendingTasks() {
     }
   } catch (err) {
     console.error("🔥 loadPendingTasks: Error", err);
-    pendingContainer.innerHTML = "<p>Error loading pending tasks</p>";
+    const pendingContainer = document.getElementById("pendingTasks");
+    if (pendingContainer) {
+      pendingContainer.innerHTML = "<p>Error loading pending tasks</p>";
+    }
   }
 }
 
@@ -2888,6 +2917,10 @@ async function handleDecision(title, date, selectedDate, index, decision, user, 
 async function loadPendingRewardRequests() {
     const adminEmail = globalAdminEmail;
     const rewardContainer = document.getElementById("rewardRequests");
+    if (!rewardContainer) {
+        console.log("Reward container not found, skipping load");
+        return;
+    }
     rewardContainer.innerHTML = "<p>Loading...</p>";
 
     try {
