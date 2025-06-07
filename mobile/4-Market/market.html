@@ -245,31 +245,7 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
 
 
 
-        .lucky-chest-btn {
-    position: fixed;
-    bottom: calc(var(--footer-height) + 10px);
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    background: #D32F2F;
-    color: rgb(0, 0, 0);
-    border: 3px solid rgb(0, 0, 0);
-    border-radius: 50%;
-    font-size: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(255, 0, 0, 0.4);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    z-index: 101;
-}
 
-.lucky-chest-btn:hover {
-    background: #B71C1C;
-    transform: scale(1.1);
-}
 
     </style>
 </head>
@@ -285,8 +261,6 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
         </ul>
     </div>
     
-
-    <a href="/BeeMazing-A1/mobile/4-Market/luckychest.html" class="lucky-chest-btn" aria-label="Add Lucky Chest">+</a>
 
     <a href="/BeeMazing-A1/mobile/4-Market/addreward.html" class="add-reward-btn" aria-label="Add Reward">+</a>
     <div class="footer">
@@ -360,11 +334,7 @@ document.addEventListener("DOMContentLoaded", () => {
           addRewardBtn.href = `/BeeMazing-A1/mobile/4-Market/addreward.html?adminEmail=${encodeURIComponent(adminEmail)}`;
         }
         
-        // Update the lucky-chest-btn href to include adminEmail
-        const luckyChestBtn = document.querySelector('.lucky-chest-btn');
-        if (adminEmail) {
-          luckyChestBtn.href = `/BeeMazing-A1/mobile/4-Market/luckychest.html?adminEmail=${encodeURIComponent(adminEmail)}`;
-        }
+
         
         async function loadRewards() {
           const rewardList = document.getElementById("rewardList");
