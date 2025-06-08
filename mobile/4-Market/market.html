@@ -399,29 +399,58 @@ transform: scale(1.1);
             color: #5D4037;
         }
         .reward-item.swiped {
-            transform: translateX(-100px);
+            transform: translateX(-150px);
         }
-        .delete-btn {
+        
+        .action-buttons {
             position: absolute;
-            right: -100px;
+            right: -150px;
             top: 0;
             height: 100%;
-            background: var(--danger-color);
+            display: flex;
+        }
+        
+        .edit-btn {
+            width: 75px;
+            height: 100%;
+            background: #FF9800;
             color: white;
             border: none;
-            border-radius: 0 10px 10px 0;
-            padding: 0 20px;
-            font-size: 16px;
+            padding: 0;
+            font-size: 14px;
             font-weight: 600;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: right 0.3s ease, background-color 0.3s ease;
+            transition: background-color 0.3s ease;
         }
-        .reward-item.swiped .delete-btn {
+        
+        .edit-btn:hover {
+            background: #F57C00;
+        }
+        
+        .delete-btn {
+            width: 75px;
+            height: 100%;
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 0 10px 10px 0;
+            padding: 0;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .reward-item.swiped .action-buttons {
             right: 0;
         }
+        
         .delete-btn:hover {
             background: #B71C1C;
         }
@@ -644,6 +673,45 @@ transform: scale(1.1);
             margin-left: 8px;
         }
 
+        /* Reward type selection styles */
+        .reward-type-container {
+            margin-bottom: 15px;
+        }
+
+        .reward-type-options {
+            display: flex;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .reward-type-option {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 12px;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            background: var(--light-bg);
+            color: #6D4C41;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .reward-type-option.selected {
+            background: var(--primary-color);
+            color: #6D4C41;
+            transform: scale(1.02);
+        }
+
+        .reward-type-option:hover {
+            transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+        }
+
         /* Reward item avatar styles */
         .reward-avatars {
             display: flex;
@@ -680,6 +748,27 @@ transform: scale(1.1);
             padding: 2px 4px;
             border-radius: 8px;
             margin-left: 8px;
+        }
+
+        .reward-type-badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 8px;
+            border: 1px solid;
+        }
+
+        .reward-type-badge.onetime {
+            background: rgba(255, 87, 34, 0.1);
+            color: #FF5722;
+            border-color: #FF5722;
+        }
+
+        .reward-type-badge.continuous {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4CAF50;
+            border-color: #4CAF50;
         }
 
         .reward-form-container input::placeholder {
@@ -995,6 +1084,18 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
                     </div>
                     <span class="honey-icon">🍯</span>
                 </div>
+
+                <div class="reward-type-container">
+                    <label>Type:</label>
+                    <div class="reward-type-options">
+                        <div class="reward-type-option selected" id="oneTimeOption" onclick="selectRewardType('oneTime')">
+                            One-Time
+                        </div>
+                        <div class="reward-type-option" id="continuousOption" onclick="selectRewardType('continuous')">
+                            Continuous
+                        </div>
+                    </div>
+                </div>
                 
                 <label>To:</label>
                 
@@ -1018,12 +1119,26 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
         
         // Add Reward Modal Variables
         let modalSelectedUsers = ["Everyone"];
+        let selectedRewardType = "oneTime"; // Default to one-time
+        let editingRewardIndex = -1; // -1 means adding new reward, >= 0 means editing existing
         
         // Function to open add reward modal
         function openAddRewardModal() {
+            editingRewardIndex = -1; // Reset to adding mode
             const modal = document.getElementById('addRewardModal');
             modal.classList.add('show');
+            document.querySelector('.add-reward-modal-header h3').textContent = 'Add Reward';
             initializeValuePicker();
+            populateModalAvatars();
+        }
+        
+        // Function to open edit reward modal
+        function openEditRewardModal(index) {
+            editingRewardIndex = index;
+            const modal = document.getElementById('addRewardModal');
+            modal.classList.add('show');
+            document.querySelector('.add-reward-modal-header h3').textContent = 'Edit Reward';
+            loadRewardForEditing(index);
             populateModalAvatars();
         }
         
@@ -1036,6 +1151,11 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
             document.getElementById('modalRewardName').value = '';
             initializeValuePicker();
             modalSelectedUsers = ["Everyone"];
+            selectedRewardType = "oneTime";
+            
+            // Reset reward type selection
+            document.getElementById('oneTimeOption').classList.add('selected');
+            document.getElementById('continuousOption').classList.remove('selected');
         }
         
         // Function to get avatar for user using existing system
@@ -1210,6 +1330,55 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
             }
         }
 
+        // Function to load reward data for editing
+        async function loadRewardForEditing(index) {
+            try {
+                const rewards = await fetchRewards();
+                const reward = rewards[index];
+                
+                if (reward) {
+                    // Set reward name
+                    document.getElementById('modalRewardName').value = reward.name;
+                    
+                    // Set value
+                    selectedValue = reward.diamonds;
+                    selectValueFromInput(reward.diamonds);
+                    document.getElementById('valueTextInput').value = reward.diamonds;
+                    
+                    // Set reward type
+                    selectedRewardType = reward.type || 'oneTime';
+                    selectRewardType(selectedRewardType);
+                    
+                    // Set assigned users
+                    if (reward.assignedUsers && reward.assignedUsers.length > 0) {
+                        modalSelectedUsers = [...reward.assignedUsers];
+                    } else {
+                        modalSelectedUsers = ["Everyone"];
+                    }
+                    
+                    initializeValuePicker();
+                }
+            } catch (err) {
+                console.error("Error loading reward for editing:", err);
+                alert("Failed to load reward data.");
+            }
+        }
+
+        // Function to select reward type
+        function selectRewardType(type) {
+            selectedRewardType = type;
+            
+            // Update visual selection
+            document.getElementById('oneTimeOption').classList.remove('selected');
+            document.getElementById('continuousOption').classList.remove('selected');
+            
+            if (type === 'oneTime') {
+                document.getElementById('oneTimeOption').classList.add('selected');
+            } else {
+                document.getElementById('continuousOption').classList.add('selected');
+            }
+        }
+
         // Value picker variables
         let selectedValue = 1;
 
@@ -1330,7 +1499,7 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
             }
         }
 
-        // Function to save new reward from modal
+        // Function to save reward from modal (add or edit)
         async function saveNewReward() {
             const rewardName = document.getElementById("modalRewardName").value.trim();
             const rewardDiamonds = selectedValue;
@@ -1348,11 +1517,24 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
             try {
                 const rewards = await fetchRewards();
 
-                rewards.push({
+                const rewardData = {
                     name: rewardName,
                     diamonds: rewardDiamonds,
-                    assignedUsers: modalSelectedUsers.includes("Everyone") ? undefined : modalSelectedUsers
-                });
+                    assignedUsers: modalSelectedUsers.includes("Everyone") ? undefined : modalSelectedUsers,
+                    type: selectedRewardType,
+                    claimedBy: [] // Track who has claimed this reward (for one-time rewards)
+                };
+
+                if (editingRewardIndex >= 0) {
+                    // Editing existing reward - preserve claimedBy data
+                    if (rewards[editingRewardIndex] && rewards[editingRewardIndex].claimedBy) {
+                        rewardData.claimedBy = rewards[editingRewardIndex].claimedBy;
+                    }
+                    rewards[editingRewardIndex] = rewardData;
+                } else {
+                    // Adding new reward
+                    rewards.push(rewardData);
+                }
 
                 await saveRewards(rewards);
                 
@@ -2152,17 +2334,36 @@ if (reward.assignedUsers && reward.assignedUsers.length > 0) {
   avatarsHTML = '<div class="everyone-badge">ALL</div>';
 }
 
+// Add reward type badge
+const typeBadge = reward.type === 'continuous' 
+  ? '<span class="reward-type-badge continuous">∞</span>'
+  : '<span class="reward-type-badge onetime">1×</span>';
+
 rewardItem.innerHTML = `
   <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
     <div style="flex: 1; display: flex; align-items: center;">
       <strong>${reward.name}</strong>
       ${avatarsHTML}
+      ${typeBadge}
     </div>
     <div style="font-weight: 600; color: var(--primary-color);">${reward.diamonds} 🍯</div>
   </div>
 `;
 
         
+              // Create action buttons container
+              const actionButtons = document.createElement("div");
+              actionButtons.className = "action-buttons";
+              
+              // Create edit button
+              const editButton = document.createElement("button");
+              editButton.className = "edit-btn";
+              editButton.textContent = "Edit";
+              editButton.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                openEditRewardModal(index);
+              });
+              
               // Create delete button
               const deleteButton = document.createElement("button");
               deleteButton.className = "delete-btn";
@@ -2172,7 +2373,10 @@ rewardItem.innerHTML = `
                 await deleteReward(index);
                 await loadRewards();
               });
-              rewardItem.appendChild(deleteButton);
+              
+              actionButtons.appendChild(editButton);
+              actionButtons.appendChild(deleteButton);
+              rewardItem.appendChild(actionButtons);
         
               // Swipe functionality
               let startX = 0;
