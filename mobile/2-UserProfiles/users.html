@@ -69,37 +69,48 @@
 }
 
         .profile-card {
-            background: var(--card-bg); /* dark card background like task items */
-            border: 2px solid var(--border-dark); /* dark border like tasks */
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-            padding: 20px;
+            background-color: #FFFFFF;
+            border: 2px solid var(--primary-color);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
             text-align: center;
             width: 100%;
             max-width: 480px;
             margin: 0 auto;
-            transition: transform 0.3s ease;
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .profile-card:hover {
-            transform: translateY(-10px);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
         }
         .profile-card h1 {
-            font-size: 32px;
+            font-size: 1.5rem;
             font-weight: 600;
-            color: var(--accent-color); /* white */
-            margin-bottom: 15px;
+            color: #6D4C41;
+            margin-bottom: 1rem;
+        }
+        .profile-card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
         }
         .profile-card p {
-            font-size: 18px;
-            color: var(--accent-color); /* white */
-            margin-bottom: 20px;
+            font-size: 1.1rem;
+            color: #6D4C41;
+            margin-bottom: 1rem;
         }
         .reward-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 20px;
-            margin-bottom: 20px;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .reward-container p {
+            color: #6D4C41;
+            font-weight: 600;
         }
         #sellButton {
             background: var(--secondary-color);
@@ -481,53 +492,7 @@
 
 
 
-.lucky-chest-card {
-  background: var(--card-bg);
-  border: 2px solid var(--border-dark);
-  border-radius: 12px;
-  padding: 15px 20px;
-  margin-top: 10px;
-  display: flex;
-  gap: 20px; /* increased spacing between image and text */
-  align-items: center;
-  justify-content: flex-start;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
 
-.lucky-chest-card img {
-  width: 100px; /* increased from 80px */
-  height: 100px;
-  object-fit: contain;
-  flex-shrink: 0;
-  border-radius: 12px;
-}
-
-.lucky-chest-card .info {
-  flex: 1;
-  padding-left: 10px; /* 👈 helps shift content slightly right */
-}
-
-.lucky-chest-card .info h4 {
-  margin: 0 0 8px 0;
-  font-size: 20px;
-  color: var(--primary-color);
-}
-
-.lucky-chest-card .info p {
-  margin: 0;
-  font-size: 15px;
-  color: var(--text-color);
-}
-
-.lucky-chest-progress {
-  font-weight: bold;
-  color: var(--text-color);
-  margin-top: 6px;
-}
-
-.lucky-chest-card:hover img {
-    animation: pulse 1s infinite;
-}
 
 @keyframes pulse {
   0% { transform: scale(1); }
@@ -537,10 +502,7 @@
 
 
 
-.lucky-chest-card.locked img {
-    opacity: 0.8;
-    filter: grayscale(50%);
-}
+
 
 
 
@@ -702,15 +664,7 @@
 
 
 
-#chestVideoOverlay video {
-  max-width: 90vw;
-  max-height: 90vh;
-  border-radius: 20px;
-  box-shadow: 0 0 30px rgba(255, 193, 7, 0.6);
-  background: #1a1a1a;
-  display: block;
-  animation: chestZoomIn 0.4s ease-out;
-}
+
 
 
 
@@ -998,17 +952,19 @@
 /* overall progress */
 
 .overall-progress {
-  background: #2a2b35;
-  border: 1px solid #444;
-  border-radius: 10px;
-  padding: 15px;
-  margin: 15px;
+  background-color: #FFFFFF;
+  border: 2px solid var(--primary-color);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin: 1rem auto;
   text-align: center;
+  max-width: 480px;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
 }
 
 .progress-bar-container {
   width: 100%;
-  background: #555;
+  background: #E5E5E5;
   border-radius: 8px;
   overflow: hidden;
   height: 20px;
@@ -1110,8 +1066,7 @@
                 Change Admin Password
             </button>
 
-            <h2 id="welcomeMessage" style="color: var(--primary-color); margin-bottom: 10px; min-height: 1em;">Loading user...</h2>
-            <img id="avatarImage" src="" alt="User Avatar" class="avatar-centered" />
+            <h2 id="welcomeMessage">Loading user...</h2>
 
             <div class="modal" id="changePasswordModal" style="display: none;">
                 <div class="modal-content">
@@ -1121,17 +1076,8 @@
                 </div>
               </div>
 
-            
-
-                   <!-- 🎁 Lucky Chest Section -->
-<div class="lucky-chests-section">
-    <h3 style="margin-top: 30px; color: var(--primary-color);">🕋 Lucky Chests</h3>
-    <div id="luckyChestContainer"></div>
-  </div>
-
-  
             <div class="reward-container">
-                <p><strong>Buzz points:</strong> <span id="rewardAmount">0</span> 🍯</p>
+                <p>Buzz Points: <span id="rewardAmount">0</span> 🍯</p>
             </div>
 
         
@@ -1142,12 +1088,11 @@
 
 
         <div id="overallProgress" class="overall-progress">
-          <h3>Overall Progress</h3>
+          <h3 style="color: #6D4C41; margin-bottom: 1rem;">Today's Progress</h3>
           <div class="progress-bar-container">
             <div id="progressBar" class="progress-bar"></div>
           </div>
-          <p id="taskSummary">Loading...</p>
-          <p id="doSummary">Loading...</p>
+          <p id="doSummary" style="color: #6D4C41; margin: 0.5rem 0;">Loading...</p>
         </div>
 
 
@@ -1201,10 +1146,8 @@
 
   <script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
 
-    <script>
-
-
-
+  <script>
+let monthOffset = 0;
 
 document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -1427,36 +1370,13 @@ li.style.marginBottom = "10px"; // Adds space between cards
         });
 
         loadUserReward(userName);
-        loadLuckyChests(userName);
         loadOverallProgress(userName);
 
         document.getElementById("welcomeMessage").textContent = `Welcome, ${userName}!`;
 
 
 
-        const avatarImg = document.getElementById("avatarImage");
-avatarImg.style.display = "none"; // Hide initially
-
-(async () => {
-  try {
-    const res = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`, { cache: "no-store" });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Failed to fetch user data");
-    if (data.avatars && data.avatars[userName]) {
-      console.log(`Loading avatar for ${userName}: ${data.avatars[userName]}`);
-      avatarImg.src = data.avatars[userName];
-      avatarImg.style.display = "block";
-    } else {
-      console.warn(`No avatar found for ${userName}`);
-      avatarImg.src = "/BeeMazing-A1/shared/Avatars/default.png"; // Fallback image
-      avatarImg.style.display = "block";
-    }
-  } catch (err) {
-    console.error("Failed to fetch avatar from server:", err);
-    avatarImg.src = "/BeeMazing-A1/shared/Avatars/default.png"; // Fallback image
-    avatarImg.style.display = "block";
-  }
-})();
+        // Avatar code removed since avatarImage element was removed
 
 
 
@@ -1481,9 +1401,117 @@ avatarImg.style.display = "none"; // Hide initially
     }
 
     adjustContentTop();
-    generateScrollableDates();
     showAdminControlsIfNeeded();
+    
+    // Initialize calendar with debug
+    console.log("About to initialize calendar");
+    
+    // Set month name immediately
+    initializeCalendar();
 });
+
+function initializeCalendar() {
+    generateScrollableDates(monthOffset);
+    
+    // Setup navigation event listeners
+    document.getElementById("prevMonth").addEventListener("click", () => {
+        monthOffset--;
+        generateScrollableDates(monthOffset);
+    });
+
+    document.getElementById("nextMonth").addEventListener("click", () => {
+        monthOffset++;
+        generateScrollableDates(monthOffset);
+    });
+    
+    document.getElementById("scrollLeft").addEventListener("click", () => {
+        document.getElementById("dayScrollContainer").scrollBy({
+            left: -200,
+            behavior: "smooth"
+        });
+    });
+    
+    document.getElementById("scrollRight").addEventListener("click", () => {
+        document.getElementById("dayScrollContainer").scrollBy({
+            left: 200,
+            behavior: "smooth"
+        });
+    });
+}
+
+function generateScrollableDates(monthOffset = 0) {
+    try {
+        const container = document.getElementById("dayScrollContainer");
+        if (!container) {
+            console.error("dayScrollContainer not found");
+            return;
+        }
+        container.innerHTML = "";
+
+        const today = new Date();
+        today.setDate(1);
+        today.setMonth(today.getMonth() + monthOffset);
+
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+        document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
+            month: 'long',
+            year: 'numeric'
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const userName = urlParams.get('user');
+        const dayAbbreviations = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            const date = new Date(currentYear, currentMonth, i);
+            const dayOfWeek = dayAbbreviations[date.getDay()];
+            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+
+            const containerDiv = document.createElement("div");
+            containerDiv.className = "day-container";
+
+            const label = document.createElement("span");
+            label.className = "day-label";
+            label.textContent = dayOfWeek;
+
+            const btn = document.createElement("div");
+            btn.className = "day";
+            btn.textContent = i;
+            btn.dataset.date = dateStr;
+
+            btn.addEventListener("click", () => {
+                document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+                btn.classList.add("selected");
+                loadOverallProgress(userName);
+            });
+
+            const now = new Date();
+            const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            if (dateStr === nowStr) {
+                btn.classList.add("selected");
+                loadOverallProgress(userName);
+            }
+
+            containerDiv.appendChild(label);
+            containerDiv.appendChild(btn);
+            container.appendChild(containerDiv);
+        }
+
+        setTimeout(() => {
+            const selected = document.querySelector(".day.selected");
+            if (selected) {
+                selected.scrollIntoView({ behavior: "smooth", inline: "center" });
+            }
+        }, 100);
+    } catch (error) {
+        console.error("Error in generateScrollableDates:", error);
+        document.getElementById("monthLabel").textContent = "Error loading dates";
+    }
+}
+
 
 
 
@@ -1598,232 +1626,124 @@ avatarImg.style.display = "none"; // Hide initially
 
 
 
-
-        let monthOffset = 0;
         
 // addtasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
 
 
 
 
-function generateScrollableDates(monthOffset = 0) {
-    try {
-        const container = document.getElementById("dayScrollContainer");
-        if (!container) {
-            console.error("dayScrollContainer not found");
-            return;
-        }
-        container.innerHTML = "";
-
-        const today = new Date();
-        today.setDate(1);
-        today.setMonth(today.getMonth() + monthOffset);
-
-        const currentMonth = today.getMonth();
-        const currentYear = today.getFullYear();
-        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-        document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
-            month: 'long',
-            year: 'numeric'
-        });
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const userName = urlParams.get('user');
-        const dayAbbreviations = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-
-        for (let i = 1; i <= daysInMonth; i++) {
-            const date = new Date(currentYear, currentMonth, i);
-            const dayOfWeek = dayAbbreviations[date.getDay()];
-            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-
-            const containerDiv = document.createElement("div");
-            containerDiv.className = "day-container";
-
-            const label = document.createElement("span");
-            label.className = "day-label";
-            label.textContent = dayOfWeek;
-
-            const btn = document.createElement("div");
-            btn.className = "day";
-            btn.textContent = i;
-            btn.dataset.date = dateStr;
-
-            btn.addEventListener("click", () => {
-                document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-                btn.classList.add("selected");
-                loadOverallProgress(userName);
-            });
-
-            const now = new Date();
-            const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-            if (dateStr === nowStr) {
-                btn.classList.add("selected");
-                loadOverallProgress(userName);
-            }
-
-            containerDiv.appendChild(label);
-            containerDiv.appendChild(btn);
-            container.appendChild(containerDiv);
-        }
-
-        setTimeout(() => {
-            const selected = document.querySelector(".day.selected");
-            if (selected) {
-                selected.scrollIntoView({ behavior: "smooth", inline: "center" });
-            }
-        }, 100);
-    } catch (error) {
-        console.error("Error in generateScrollableDates:", error);
-        document.getElementById("monthLabel").textContent = "Error loading dates";
-    }
-}
-
-
-
-
 // addtasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
+        
+        // async function updateLuckyChestProgress(userName, earnedHoney) {
+        //   const adminEmail = localStorage.getItem("currentAdminEmail");
+        //   try {
+        //     const response = await fetch(`https://beemazing1.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+        //     const data = await response.json();
+        //     if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
+        //     const allChests = data.luckyChests || {};
+        //     const userChests = allChests[userName] || [];
+        
+        //     let updated = false;
+        
+        //     userChests.forEach(chest => {
+        //       if (chest.progress < chest.requiredPoints) {
+        //         chest.progress = Math.min(chest.progress + earnedHoney, chest.requiredPoints);
+        //         updated = true;
+        //       }
+        //     });
+        
+        //     if (updated) {
+        //       allChests[userName] = userChests;
+        //       await fetch("https://beemazing1.onrender.com/api/lucky-chests", {
+        //         method: "POST",
+        //         headers: { "Content-Type": "application/json" },
+        //         body: JSON.stringify({ adminEmail, luckyChests: allChests })
+        //       });
+        //       loadLuckyChests(userName);
+        //       loadOverallProgress(userName);
 
-        document.getElementById("prevMonth").addEventListener("click", () => {
-          monthOffset--;
-          generateScrollableDates(monthOffset);
-        });
+        //     }
+        //   } catch (err) {
+        //     console.error("Error updating lucky chest progress:", err);
+        //   }
+        // }
         
-        document.getElementById("nextMonth").addEventListener("click", () => {
-          monthOffset++;
-          generateScrollableDates(monthOffset);
-        });
+        // async function loadLuckyChests(userName) {
+        //   const container = document.getElementById("luckyChestContainer");
+        //   const adminEmail = localStorage.getItem("currentAdminEmail");
+        //   try {
+        //     const response = await fetch(`https://beemazing1.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
+        //     const data = await response.json();
+        //     if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
+        //     const allChests = data.luckyChests || {};
+        //     const userChests = allChests[userName] || [];
         
-        document.getElementById("scrollLeft").addEventListener("click", () => {
-          document.getElementById("dayScrollContainer").scrollBy({
-            left: -200,
-            behavior: "smooth"
-          });
-        });
+        //     container.innerHTML = "";
         
-        document.getElementById("scrollRight").addEventListener("click", () => {
-          document.getElementById("dayScrollContainer").scrollBy({
-            left: 200,
-            behavior: "smooth"
-          });
-        });
+        //     if (userChests.length === 0) {
+        //       container.innerHTML = "<p>No Lucky Chests assigned yet.</p>";
+        //       return;
+        //     }
         
-        async function updateLuckyChestProgress(userName, earnedHoney) {
-          const adminEmail = localStorage.getItem("currentAdminEmail");
-          try {
-            const response = await fetch(`https://beemazing1.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
-            const allChests = data.luckyChests || {};
-            const userChests = allChests[userName] || [];
+        //     userChests.forEach((chest, index) => {
+        //       const isUnlocked = chest.progress >= chest.requiredPoints;
+        //       const chestImage = isUnlocked
+        //         ? '/BeeMazing-A1/mobile/4-Market/LuckyChest/ChestReady.gif'
+        //         : '/BeeMazing-A1/mobile/4-Market/LuckyChest/ChestPending.png';
         
-            let updated = false;
+        //       const card = document.createElement("div");
+        //       card.className = "lucky-chest-card";
+        //       if (!isUnlocked) card.classList.add("locked");
         
-            userChests.forEach(chest => {
-              if (chest.progress < chest.requiredPoints) {
-                chest.progress += earnedHoney;
-                if (chest.progress > chest.requiredPoints) {
-                  chest.progress = chest.requiredPoints;
-                }
-                updated = true;
-              }
-            });
+        //       card.innerHTML = `
+        //         <img src="${chestImage}" alt="Lucky Chest" />
+        //         <div class="info">
+        //           <h4>${chest.name}</h4>
+        //           <p>Progress: <span class="lucky-chest-progress">${chest.progress}/${chest.requiredPoints}</span></p>
+        //           <p style="font-size: 13px; color: #888; margin-top: 4px;">
+        //             ${isUnlocked ? "✅ Unlocked! Click to open." : "⏳ Complete tasks to unlock this chest."}
+        //           </p>
+        //         </div>
+        //       `;
         
-            if (updated) {
-              allChests[userName] = userChests;
-              await fetch("https://beemazing1.onrender.com/api/lucky-chests", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ adminEmail, luckyChests: allChests })
-              });
-              loadLuckyChests(userName);
-              loadOverallProgress(userName);
-
-            }
-          } catch (err) {
-            console.error("Error updating lucky chest progress:", err);
-          }
-        }
+        //       if (isUnlocked) {
+        //         card.style.cursor = "pointer";
+        //         card.addEventListener("click", () => revealLuckyChestReward(userName, chest, index, true));
+        //       }
         
-        async function loadLuckyChests(userName) {
-          const container = document.getElementById("luckyChestContainer");
-          const adminEmail = localStorage.getItem("currentAdminEmail");
-          try {
-            const response = await fetch(`https://beemazing1.onrender.com/api/lucky-chests?adminEmail=${encodeURIComponent(adminEmail)}`);
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || "Failed to fetch lucky chests");
-            const allChests = data.luckyChests || {};
-            const userChests = allChests[userName] || [];
+        //       container.appendChild(card);
+        //     });
+        //   } catch (err) {
+        //     console.error("Error loading lucky chests:", err);
+        //     container.innerHTML = "<p>Failed to load lucky chests.</p>";
+        //   }
+        // }
         
-            container.innerHTML = "";
+        // function revealLuckyChestReward(userName, chest, chestIndex, isUserAction = false) {
+        //   const overlay = document.getElementById("chestVideoOverlay");
+        //   const video = document.getElementById("chestVideo");
+        //   const audio = document.getElementById("chestUnlockSound");
         
-            if (userChests.length === 0) {
-              container.innerHTML = "<p>No Lucky Chests assigned yet.</p>";
-              return;
-            }
+        //   overlay.style.display = "flex";
+        //   video.currentTime = 0;
+        //   audio.currentTime = 0;
+        //   video.play();
+        //   audio.play();
         
-            userChests.forEach((chest, index) => {
-              const isUnlocked = chest.progress >= chest.requiredPoints;
-              const chestImage = isUnlocked
-                ? '/BeeMazing-A1/mobile/4-Market/LuckyChest/ChestReady.gif'
-                : '/BeeMazing-A1/mobile/4-Market/LuckyChest/ChestPending.png';
+        //   let skipped = false;
         
-              const card = document.createElement("div");
-              card.className = "lucky-chest-card";
-              if (!isUnlocked) {
-                card.classList.add("locked");
-              }
+        //   const skipVideo = () => {
+        //     if (skipped) return;
+        //     skipped = true;
+        //     video.pause();
+        //     audio.pause();
+        //     overlay.style.display = "none";
+        //     showLuckyChestRewardOverlay(userName, chest, chestIndex);
+        //   };
         
-              card.innerHTML = `
-                <img src="${chestImage}" alt="Chest" class="${isUnlocked ? 'pulse' : ''}">
-                <div class="info">
-                  <p>${isUnlocked ? 'CONGRATULATIONS! Chest unlocked!' : 'Unlock to reveal your reward!'}</p>
-                  <div class="lucky-chest-progress">
-                    Progress: ${chest.progress || 0} / ${chest.requiredPoints} 🍯
-                  </div>
-                </div>
-              `;
-        
-              if (isUnlocked) {
-                card.style.cursor = "pointer";
-                card.addEventListener("click", () => revealLuckyChestReward(userName, chest, index, true));
-              }
-        
-              container.appendChild(card);
-            });
-          } catch (err) {
-            console.error("Error loading lucky chests:", err);
-            container.innerHTML = "<p>Failed to load lucky chests.</p>";
-          }
-        }
-        
-        function revealLuckyChestReward(userName, chest, chestIndex, isUserAction = false) {
-          const overlay = document.getElementById("chestVideoOverlay");
-          const video = document.getElementById("chestVideo");
-          const audio = document.getElementById("chestUnlockSound");
-        
-          overlay.style.display = "flex";
-          video.currentTime = 0;
-          video.play();
-        
-          audio.currentTime = 0;
-          audio.play().catch(error => console.log("Audio playback failed:", error));
-        
-          let skipped = false;
-        
-          const skipVideo = () => {
-            if (skipped) return;
-            skipped = true;
-            video.pause();
-            audio.pause();
-            overlay.style.display = "none";
-            showLuckyChestRewardOverlay(userName, chest, chestIndex);
-          };
-        
-          overlay.addEventListener("click", skipVideo, { once: true });
-          video.onended = () => skipVideo();
-          video.onerror = () => skipVideo();
-        }
+        //   video.addEventListener("ended", skipVideo, { once: true });
+        //   overlay.addEventListener("click", skipVideo);
+        // }
         
         async function showLuckyChestRewardOverlay(userName, chest, chestIndex) {
           const adminEmail = localStorage.getItem("currentAdminEmail");
@@ -2143,14 +2063,12 @@ function generateScrollableDates(monthOffset = 0) {
 
     const progressPercent = totalDos > 0 ? (completedDos / totalDos) * 100 : 0;
 
-    document.getElementById("taskSummary").textContent = `Tasks: ${completedTasks}/${totalTasks}`;
-    document.getElementById("doSummary").textContent = `Do's Completed: ${completedDos}/${totalDos}`;
+    document.getElementById("doSummary").textContent = `Completed: ${completedDos}/${totalDos}`;
     document.getElementById("progressBar").style.width = `${progressPercent}%`;
 
   } catch (err) {
     console.error("Error loading overall progress:", err);
-    document.getElementById("taskSummary").textContent = "Error loading tasks";
-    document.getElementById("doSummary").textContent = "";
+    document.getElementById("doSummary").textContent = "Error loading progress";
   }
 }
 
@@ -2171,40 +2089,7 @@ function generateScrollableDates(monthOffset = 0) {
 
 
 
-<div id="chestVideoOverlay" style="
-    display:none;
-    position:fixed;
-    top:0; left:0;
-    width:100%; height:100%;
-    background: rgba(10, 10, 10, 0.959); /* darkened more */
-backdrop-filter: blur(5px);
-    z-index:2000;
-    justify-content:center;
-    align-items:center;
-    overflow: hidden;
-">
-<video id="chestVideo"
-autoplay
-muted
-playsinline
-style="
-    max-width: 90vw;
-    max-height: 90vh;
-    border-radius: 20px;
-    box-shadow: 0 0 30px rgba(255, 193, 7, 0.6);
-    background: #1a1a1a;
-    display: block;
-">
-<source src="/BeeMazing-A1/mobile/4-Market/LuckyChest/Chest_fixed.mp4" type="video/mp4" />
-Your browser does not support the video tag.
-</video>
-<audio id="chestUnlockSound" preload="auto">
-    <source src="/BeeMazing-A1/mobile/4-Market/LuckyChest/ChestUnlock.mp3" type="audio/mp3" />
-    Your browser does not support the audio element.
-</audio>
 
-
-</div>
 
 
 
