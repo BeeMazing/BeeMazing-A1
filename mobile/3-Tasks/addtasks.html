@@ -13,17 +13,18 @@
     }
 
     :root {
-    --primary-color: #E0B018; /* softened gold */
+    --primary-color: #FFC107; /* bright yellow matching other pages */
     --secondary-color: #212121;
     --accent-color: #2C2F3A;
     --light-bg: #FFFFF8;
-    --text-color: #FFFFFF;
+    --text-color: #6D4C41; /* brown text matching other pages */
+    --card-bg: #FFFFFF; /* white card backgrounds */
     --danger-color: #D32F2F;
     --muted-button: #3A3D4B;
     --hover-accent: #3F4353;
-    --border-dark: #444754; /* subtle dark gray-blue border */
-    --selection-border: #555555; /* darker gray border for selected states */
-    --selection-bg: #3A3D4B;      /* muted highlight */
+    --border-dark: #444754;
+    --selection-border: #555555;
+    --selection-bg: #3A3D4B;
 }
 
 
@@ -43,23 +44,23 @@
     display: flex;
     justify-content: center; /* Center the title */
     align-items: center;
-    background: var(--secondary-color);
+    background: var(--primary-color);
     padding: 15px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
 .menu-icon {
-    position: absolute;
-    left: 15px;
-    font-size: 24px;
-    color: var(--text-color); /* fix: use white instead of black */
-    cursor: pointer;
+position: absolute;
+left: 15px;
+font-size: 24px;
+color: #FFFFFF; /* white for menu icon */
+cursor: pointer;
 }
 
     .title {
     font-size: 24px;
     font-weight: 600;
-    color: var(--text-color); /* white text */
+    color: var(--text-color); /* brown text for title */
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -72,8 +73,17 @@
     }
 
     .form-group, .form-group-full {
-    padding: 15px 0;
-    border-bottom: 1px solid var(--border-dark); /* subtle divider */
+    padding: 8px 0;
+    margin-bottom: 8px;
+}
+
+    .form-group.room-section, .form-group.frequency-section, .form-group-full.date-section {
+    background-color: rgba(255, 193, 7, 0.1);
+    border: 2px solid var(--primary-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
 }
 
 
@@ -99,13 +109,13 @@
     }
 
     input, textarea {
-    background: var(--accent-color);
+    background: rgba(255, 193, 7, 0.1);
     color: var(--text-color);
-    border: 2px solid var(--border-dark);
+    border: 2px solid var(--primary-color);
     border-radius: 8px;
     padding: 10px;
     font-size: 16px;
-    width: 100%; /* 👈 Add this line to make inputs full width */
+    width: 100%;
 }
 
 
@@ -115,12 +125,12 @@
     }
 
     ::placeholder {
-        color: rgba(255, 255, 255, 0.6);
+        color: rgba(109, 76, 65, 0.6);
     }
 
     .select-btn {
-    background: var(--muted-button);
-    border: 2px solid var(--border-dark);
+    background: var(--card-bg);
+    border: 2px solid var(--primary-color);
     color: var(--text-color);
     font-size: 16px;
     font-weight: 600;
@@ -131,7 +141,8 @@
 }
 
 .select-btn:hover {
-    background: #FFB300;
+    background: rgba(255, 193, 7, 0.1);
+    transform: translateY(-1px);
 }
 
 /* New class for the circular + button */
@@ -163,21 +174,24 @@
 }
 
     .date-display {
-        background: var(--accent-color);
-        border: 2px solid var(--border-dark);
+        background: var(--light-bg);
+        border: 2px solid var(--primary-color);
         border-radius: 8px;
-        padding: 10px 15px;
+        padding: 12px 16px;
         font-size: 16px;
         font-weight: 600;
         color: var(--text-color);
         text-align: center;
         cursor: pointer;
-        transition: background-color 0.3s ease, color 0.3s ease;
+        transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+        min-width: 120px;
+        box-shadow: 0 2px 4px rgba(255, 193, 7, 0.1);
     }
 
     .date-display:hover {
-        background: var(--primary-color);
-        color: var(--secondary-color);
+        background: rgba(255, 193, 7, 0.15);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(255, 193, 7, 0.2);
     }
 
     .date-flex-row {
@@ -244,14 +258,14 @@
     }
 
     .modal-content {
-        background: var(--accent-color);
+        background: var(--card-bg);
         padding: 20px;
         border-radius: 15px;
         border: 2px solid var(--primary-color);
         width: 80%;
         max-width: 400px;
         text-align: center;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 6px 20px rgba(255, 193, 7, 0.3);
         color: var(--text-color);
     }
 
@@ -270,32 +284,39 @@
     .modal-content ul li {
         padding: 10px;
         margin: 5px 0;
-        background: var(--light-bg);
+        background: var(--card-bg);
         color: var(--text-color);
-        border: 2px solid var(--border-dark);
+        border: 2px solid var(--primary-color);
         border-radius: 8px;
         cursor: pointer;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     .modal-content ul li:hover {
-        background: var(--primary-color);
-        color: var(--secondary-color);
+        background: rgba(255, 193, 7, 0.1);
+        transform: translateY(-1px);
     }
 
     .close-btn {
         margin-top: 15px;
         padding: 10px 20px;
-        background: var(--danger-color);
+        background: var(--primary-color);
         color: var(--text-color);
-        border: none;
+        border: 2px solid var(--text-color);
         border-radius: 8px;
         cursor: pointer;
-        transition: background-color 0.3s ease;
+        font-size: 16px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+        transition: all 0.3s ease;
     }
 
     .close-btn:hover {
-        background: #B71C1C;
+        background: #FFB300;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.5);
     }
 
     .footer {
@@ -500,7 +521,110 @@
     border-color: var(--border-dark);
 }
 
+/* Additional flatpickr styling to match page theme */
+.flatpickr-calendar {
+    background: var(--light-bg) !important;
+    border: 2px solid var(--primary-color) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2) !important;
+}
 
+.flatpickr-months {
+    background: var(--primary-color) !important;
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.flatpickr-month {
+    background: var(--primary-color) !important;
+    color: var(--secondary-color) !important;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    background: var(--primary-color) !important;
+    color: var(--secondary-color) !important;
+}
+
+.flatpickr-current-month input.cur-year {
+    background: var(--primary-color) !important;
+    color: var(--secondary-color) !important;
+}
+
+.flatpickr-prev-month, .flatpickr-next-month {
+    color: var(--secondary-color) !important;
+}
+
+.flatpickr-prev-month:hover, .flatpickr-next-month:hover {
+    color: var(--text-color) !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.flatpickr-weekdays {
+    background: var(--accent-color) !important;
+    color: var(--text-color) !important;
+}
+
+.flatpickr-weekday {
+    background: var(--accent-color) !important;
+    color: var(--text-color) !important;
+    font-weight: 600 !important;
+}
+
+.flatpickr-days {
+    background: var(--light-bg) !important;
+}
+
+.flatpickr-day {
+    background: var(--light-bg) !important;
+    color: var(--text-color) !important;
+    border: 1px solid transparent !important;
+}
+
+.flatpickr-day:hover {
+    background: rgba(255, 193, 7, 0.1) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.flatpickr-day.selected {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: var(--secondary-color) !important;
+}
+
+.flatpickr-day.today {
+    border-color: var(--primary-color) !important;
+    background: rgba(255, 193, 7, 0.1) !important;
+    color: var(--text-color) !important;
+    font-weight: 600 !important;
+}
+
+.flatpickr-day.today.selected {
+    background: var(--primary-color) !important;
+    color: var(--secondary-color) !important;
+}
+
+.flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay {
+    color: rgba(109, 76, 65, 0.4) !important;
+    background: var(--light-bg) !important;
+}
+
+.flatpickr-day.prevMonthDay:hover, .flatpickr-day.nextMonthDay:hover {
+    background: rgba(255, 193, 7, 0.05) !important;
+}
+
+.flatpickr-day.disabled {
+    color: rgba(109, 76, 65, 0.2) !important;
+    background: var(--light-bg) !important;
+}
+
+.flatpickr-time {
+    background: var(--light-bg) !important;
+    border-top: 1px solid var(--primary-color) !important;
+}
+
+.flatpickr-time input {
+    background: var(--light-bg) !important;
+    color: var(--text-color) !important;
+}
 
 /* Add spacing and alignment for the specific dates group */
 #specificDatesGroup {
@@ -587,37 +711,37 @@
 .date-mode-selector {
     display: flex;
     gap: 8px;
-    margin-bottom: 15px;
-    background: var(--accent-color);
-    padding: 5px;
-    border-radius: 8px;
-    border: 1px solid var(--border-dark);
+    margin-bottom: 1rem;
 }
 
 .mode-btn {
     flex: 1;
-    background: var(--muted-button);
-    border: none;
+    background: var(--card-bg);
+    border: 2px solid var(--primary-color);
     color: var(--text-color);
     font-size: 14px;
-    font-weight: 500;
-    padding: 8px;
-    border-radius: 6px;
+    font-weight: 600;
+    padding: 10px 15px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
 }
 
 .mode-btn.active {
     background: var(--primary-color);
     color: var(--secondary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 6px rgba(255, 193, 7, 0.3);
 }
 
 .mode-btn:hover {
-    background: var(--hover-accent);
+    background: rgba(255, 193, 7, 0.1);
+    transform: translateY(-1px);
 }
 
 .mode-btn.active:hover {
     background: #FFB300;
+    transform: translateY(-1px);
 }
 
 /* Date Group (From/To, Specific Dates, Specific Days) */
@@ -625,23 +749,25 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 10px;
-    background: var(--accent-color);
-    border-radius: 8px;
-    border: 1px solid var(--border-dark);
+    padding: 0;
+    background: transparent;
+    border: none;
 }
 
 .date-row {
     display: flex;
     align-items: center;
     gap: 15px;
+    margin-bottom: 8px;
+    padding: 8px 0;
 }
 
 .date-label {
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 16px;
+    font-weight: 600;
     color: var(--text-color);
-    min-width: 50px;
+    min-width: 60px;
+    text-transform: capitalize;
 }
 
 .add-end-date {
@@ -649,11 +775,17 @@
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: color 0.3s ease;
+    transition: color 0.3s ease, transform 0.2s ease;
+    padding: 8px 12px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-top: 8px;
 }
 
 .add-end-date:hover {
     color: #FFB300;
+    background: rgba(255, 193, 7, 0.2);
+    transform: translateY(-1px);
 }
 
 .remove-btn {
@@ -672,44 +804,50 @@
 .day-buttons-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-}
-
-.day-buttons-container {
-    justify-content: center;
+    gap: 8px;
+    justify-content: flex-start;
+    padding: 8px 0;
 }
 
 
 /* Day Buttons for Specific Days (Original Styles) */
 .day-btn {
     position: relative;
-    background: var(--muted-button);
-    border: 2px solid var(--border-dark);
+    background: var(--light-bg);
+    border: 2px solid var(--primary-color);
     color: var(--text-color);
     font-size: 14px;
     font-weight: 600;
-    padding: 6px 12px;
+    padding: 8px 14px;
     border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
     min-width: 50px;
     text-align: center;
+    box-shadow: 0 1px 3px rgba(255, 193, 7, 0.1);
 }
 
 .day-btn.selected {
     background: var(--primary-color);
     color: var(--secondary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 3px 8px rgba(255, 193, 7, 0.3);
+    transform: translateY(-1px);
 }
 
 
 
 .day-btn:hover {
-    background: var(--hover-accent);
+    background: rgba(255, 193, 7, 0.1);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(255, 193, 7, 0.2);
 }
 
 .day-btn.selected:hover {
-    background: #FFB300; /* Brighter gold */
+    background: #FFB300;
     color: var(--secondary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(255, 193, 7, 0.4);
 }
 
 
@@ -721,7 +859,7 @@
 <body>
     <div class="header">
         <i class="fas fa-bars menu-icon"></i>
-        <div class="title">Add Task 1</div>
+        <div class="title">Add Task</div>
     </div>
 
     <div class="content">
@@ -734,42 +872,42 @@
                 <label for="taskNotes"></label>
                 <textarea id="taskNotes" placeholder="Enter any additional notes"></textarea>
             </div>
-            <div class="form-group">
+            <div class="form-group room-section">
                 <label>Room</label>
                 <button type="button" id="selectRoom" class="select-btn">Select</button>
                 <input type="hidden" id="roomSelection" value="">
             </div>
             
             
-            <div class="form-group">
+            <div class="form-group frequency-section">
                 <label>Frequency</label>
                 <button type="button" id="selectRepeat" class="select-btn">Select</button>
                 <input type="hidden" id="repeatSelection" value="">
             </div>
             
             <!-- NEW: Times Per Day input (only shown when Daily is selected) -->
-            <div class="form-group" id="timesPerDayGroup" style="display: none;">
+            <div class="form-group" id="timesPerDayGroup" style="display: none; background-color: rgba(255, 193, 7, 0.1); border: 2px solid var(--primary-color); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);">
                 <label>Times per Day</label>
                 <input type="text" id="timesPerDayInput" value="1" readonly
-    style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--primary-color); border-radius: 8px; background: var(--accent-color); font-size: 16px; cursor: pointer;">
+    style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--primary-color); border-radius: 8px; background: var(--light-bg); font-size: 16px; cursor: pointer; color: var(--text-color); font-weight: 400;">
             </div>
 
 
 
             <!-- Weekly Frequency Input -->
-<div class="form-group" id="timesPerWeekGroup" style="display: none;">
+<div class="form-group" id="timesPerWeekGroup" style="display: none; background-color: rgba(255, 193, 7, 0.1); border: 2px solid var(--primary-color); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);">
     <label>Times per Week</label>
     <input type="text" id="timesPerWeekInput" value="1" readonly
-    style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--primary-color); border-radius: 8px; background: var(--accent-color); font-size: 16px; cursor: pointer;">
+    style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--primary-color); border-radius: 8px; background: var(--light-bg); font-size: 16px; cursor: pointer; color: var(--text-color); font-weight: 400;">
     
 
 </div>
 
 <!-- Monthly Frequency Input -->
-<div class="form-group" id="timesPerMonthGroup" style="display: none;">
+<div class="form-group" id="timesPerMonthGroup" style="display: none; background-color: rgba(255, 193, 7, 0.1); border: 2px solid var(--primary-color); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);">
     <label>Times per Month</label>
     <input type="text" id="timesPerMonthInput" value="1" readonly
-style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--primary-color); border-radius: 8px; background: var(--accent-color); font-size: 16px; cursor: pointer;">
+style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--primary-color); border-radius: 8px; background: var(--light-bg); font-size: 16px; cursor: pointer; color: var(--text-color); font-weight: 400;">
 
 
 </div>
@@ -785,6 +923,14 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
                 </div>
                 
             
+                <!-- Single Date UI for One Time tasks -->
+                <div id="singleDateGroup" class="date-group" style="display: none;">
+                    <div class="date-row">
+                        <span class="date-label">Date</span>
+                        <div class="date-display" id="singleDateDisplay">Select Date</div>
+                    </div>
+                </div>
+                
                 <!-- From - To Date UI -->
                 <div id="fromToDateGroup" class="date-group">
                     <div class="date-row">
@@ -830,6 +976,7 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
                 <!-- Hidden inputs -->
                 <input type="text" id="taskDate" class="date-input" />
                 <input type="text" id="taskDateTo" class="date-input" />
+                <input type="text" id="singleTaskDate" class="date-input" />
                 <input type="hidden" id="specificDatesInput" value="">
                 <input type="hidden" id="specificDaysInput" value="">
             </div>
@@ -913,7 +1060,7 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
                 <li data-value="Outside">Outside</li>
                 <li data-value="Other">Other</li>
             </ul>
-            <button class="close-btn" id="closeRoomModal">Close</button>
+            <button class="close-btn" id="closeRoomModal">Save</button>
         </div>
     </div>
     
@@ -924,6 +1071,7 @@ style="width: 60px; text-align: center; padding: 6px; border: 2px solid var(--pr
         <div class="modal-content">
             <h3>Choose Repeat</h3>
             <ul>
+                <li data-value="One Time">One Time</li>
                 <li data-value="Daily">Daily</li>
                 <li data-value="Weekly">Weekly</li>
                 <li data-value="Monthly">Monthly</li>
@@ -1097,7 +1245,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (editTask.room) {
             selectedRooms = editTask.room.split(",").map(r => r.trim());
             document.getElementById("roomSelection").value = selectedRooms.join(", ");
-            document.getElementById("selectRoom").textContent = `Selected: ${selectedRooms.join(", ")}`;
+            document.getElementById("selectRoom").textContent = selectedRooms.join(", ");
         }
         document.getElementById("repeatSelection").value = editTask.repeat || "";
         document.getElementById("selectRepeat").textContent = editTask.repeat || "Select";
@@ -1459,7 +1607,7 @@ function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl)
     // Set value and display cleanly
     assignedToSelection.value = selectedUsers.join(", ");
     assignedToDisplay.textContent = selectedUsers.length > 0
-        ? `Selected: ${selectedUsers.join(", ")}`
+        ? selectedUsers.join(", ")
         : "Select users";
 };
 
@@ -1568,7 +1716,7 @@ roomList.querySelectorAll("li").forEach(item => {
         }
         roomInput.value = selectedRooms.join(", ");
         roomButton.textContent = selectedRooms.length > 0
-            ? `Selected: ${selectedRooms.join(", ")}`
+            ? selectedRooms.join(", ")
             : "Select";
     });
 });
@@ -1595,6 +1743,7 @@ const repeat = document.getElementById("repeatSelection").value;
 const settings = document.getElementById("settingsSelection").value;
 const dateFrom = document.getElementById("taskDate").value;
 const dateTo = document.getElementById("taskDateTo").value;
+const singleDate = document.getElementById("singleTaskDate").value;
 const dateMode = document.getElementById("dateModeSelection").value;
 const reminder = document.getElementById("taskReminder").checked;
 const users = document.getElementById("assignedToSelection").value
@@ -1628,7 +1777,11 @@ if (isFutureEdit && !splitDate) {
 }
         
 if (!isOccurrenceEdit && !isFutureEdit) {
-    if (dateMode === "date" && !dateFrom) {
+    if (repeat === "One Time" && !singleDate) {
+        alert("Please select a date for this one-time task.");
+        return;
+    }
+    if (dateMode === "date" && repeat !== "One Time" && !dateFrom) {
         alert("Please select a start date.");
         return;
     }
@@ -1655,6 +1808,8 @@ if (isOccurrenceEdit) {
     const originalRange = editTask.date.split(" to ");
     const originalEnd = originalRange[1] || "3000-01-01";
     dateValue = `${splitDate} to ${originalEnd}`;
+} else if (repeat === "One Time") {
+    dateValue = `${singleDate} to ${singleDate}`;
 } else if (dateMode === "date") {
     const fromDate = dateFrom;
     const toDate = dateTo || "3000-01-01";
@@ -1818,10 +1973,25 @@ repeatModal.addEventListener('click', (e) => {
         repeatButton.textContent = selected;
         hideModal(repeatModal);
 
-        // Show/hide correct "x times" groups (Specific Dates no longer tied to Daily)
+        // Show/hide correct "x times" groups and date sections
         timesPerDayGroup.style.display = selected === "Daily" ? "flex" : "none";
         timesPerWeekGroup.style.display = selected === "Weekly" ? "flex" : "none";
         timesPerMonthGroup.style.display = selected === "Monthly" ? "flex" : "none";
+        
+        // Toggle date input sections based on frequency
+        const singleDateGroup = document.getElementById("singleDateGroup");
+        const fromToDateGroup = document.getElementById("fromToDateGroup");
+        const specificDaysGroup = document.getElementById("specificDaysGroup");
+        
+        if (selected === "One Time") {
+            singleDateGroup.style.display = "block";
+            fromToDateGroup.style.display = "none";
+            specificDaysGroup.style.display = "none";
+        } else {
+            singleDateGroup.style.display = "none";
+            fromToDateGroup.style.display = "block";
+            specificDaysGroup.style.display = "block";
+        }
 
         // Set initial value to 1
         if (selected === "Daily") timesPerDayInput.value = "1";
@@ -1934,6 +2104,21 @@ removeEndDateBtn.addEventListener("click", () => {
 
 
     
+        // Single date picker for One Time tasks
+        const flatpickrSingle = flatpickr("#singleTaskDate", {
+            dateFormat: "Y-m-d",
+            defaultDate: "today",
+            onChange: function(selectedDates, dateStr) {
+                document.getElementById("singleDateDisplay").textContent = selectedDates[0] 
+                    ? selectedDates[0].toLocaleDateString(undefined, { month: "long", day: "numeric" })
+                    : "Select Date";
+            }
+        });
+        
+        document.getElementById("singleDateDisplay").addEventListener("click", () => {
+            flatpickrSingle.open();
+        });
+        
         const flatpickrFrom = flatpickr("#taskDate", {
             dateFormat: "Y-m-d",
             defaultDate: "today",
