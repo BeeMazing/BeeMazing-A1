@@ -36,16 +36,72 @@
 
 
         .reward-card {
-    background-color: var(--card-bg);
-    border: 2px solid var(--border-dark);
-    border-radius: 0.5rem;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-}
+            background-color: #FFFFFF;
+            border: 2px solid var(--primary-color);
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.5rem 0 0.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            color: #6D4C41;
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            min-height: 95px;
+        }
+
+        .reward-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+        }
+
+        .reward-card h3 {
+            color: #6D4C41;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .reward-card .bottom-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            gap: 0.75rem;
+        }
+
+        .reward-card .cost-display {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1rem;
+            white-space: nowrap;
+        }
+
+        .reward-type-indicator {
+            position: absolute;
+            top: 0.375rem;
+            right: 0.375rem;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .reward-type-indicator.onetime {
+            background-color: #FF5722;
+        }
+
+        .reward-type-indicator.continuous {
+            background-color: #4CAF50;
+        }
 
 
 
@@ -56,21 +112,26 @@
             background-color: var(--primary-color);
             color: var(--secondary-color);
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
             display: none;
         }
         .btn-primary {
             background-color: var(--primary-color);
-            color: var(--secondary-color);
+            color: #6D4C41;
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 0.375rem 0.75rem;
+            flex-shrink: 0;
         }
         .btn-primary:hover {
             background-color: #FFB300;
+            transform: scale(1.05);
         }
         .btn-back {
             background-color: var(--secondary-color);
@@ -80,12 +141,17 @@
             background-color: #3A3B3F;
         }
         .btn-disabled {
-            background-color: #6B7280;
-            color: #D1D5DB;
+            background-color: #E5E5E5;
+            color: #8D6E63;
             cursor: not-allowed;
+            border: 2px solid #E5E5E5;
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 0.375rem 0.75rem;
         }
         .btn-disabled:hover {
-            background-color: #6B7280;
+            background-color: #E5E5E5;
+            transform: none;
         }
         .modal {
             position: fixed;
@@ -164,9 +230,23 @@
 
 
 
-            .reward-card { padding: 0.75rem; }
-.reward-card h3 { font-size: 1rem; }
-.reward-card p { font-size: 0.875rem; }
+            .reward-card { 
+                padding: 0.375rem 0.375rem 0 0.375rem;
+                min-height: 80px;
+            }
+            .reward-card h3 { 
+                font-size: 1rem; 
+                color: #6D4C41;
+                font-weight: 600;
+                margin-bottom: 0.375rem;
+            }
+            .reward-card .cost-display { 
+                font-size: 0.875rem; 
+            }
+            .btn-primary {
+                font-size: 0.75rem;
+                padding: 0.3rem 0.5rem;
+            }
 
 
 
@@ -238,14 +318,195 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
     background-color: black;
     color: #FFC107; /* Yellow color for the number */
     border-radius: 50%;
-    font-size: 14px;
+    font-size: 0.6rem;
     font-weight: bold;
     margin: 8px auto;
+}
+
+/* Tab button styling */
+.tab-button {
+    background-color: var(--light-bg) !important;
+    color: #6D4C41 !important;
+    border: 2px solid var(--primary-color) !important;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.tab-button:hover {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+    transform: translateY(-1px);
+}
+
+.tab-button.active {
+    background-color: var(--primary-color) !important;
+    color: #6D4C41 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+/* History card specific styling */
+#history-grid .reward-card {
+    background-color: #FFFFFF;
+    border: 2px solid var(--primary-color);
+    color: #6D4C41;
+}
+
+#history-grid .reward-card h3 {
+    color: #6D4C41;
+}
+
+#history-grid .reward-card p {
+    color: #6D4C41 !important;
+}
+
+/* Status circle styling for history cards */
+.status-circle {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 11px;
+    color: white;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.status-circle.pending {
+    background-color: #FF9800; /* Orange for pending */
+}
+
+.status-circle.approved {
+    background-color: #4CAF50; /* Green for approved */
+}
+
+/* Custom popup modal for insufficient honey */
+.honey-popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.honey-popup.show {
+    display: flex;
+}
+
+.honey-popup-content {
+    background: #FFFFFF;
+    padding: 30px;
+    border-radius: 15px;
+    border: 3px solid var(--primary-color);
+    box-shadow: 0 0 25px rgba(255, 193, 7, 0.6);
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+    position: relative;
+    animation: popupZoom 0.3s ease-out forwards;
+}
+
+.honey-popup-message {
+    color: #6D4C41;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.honey-popup-close {
+    background-color: var(--primary-color);
+    color: #6D4C41;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.honey-popup-close:hover {
+    background-color: #FFB300;
+    transform: scale(1.05);
+}
+
+@keyframes popupZoom {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Custom popup modal for successful reward claim */
+.success-popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.success-popup.show {
+    display: flex;
+}
+
+.success-popup-content {
+    background: #FFFFFF;
+    padding: 30px;
+    border-radius: 15px;
+    border: 3px solid var(--primary-color);
+    box-shadow: 0 0 25px rgba(255, 193, 7, 0.6);
+    text-align: center;
+    max-width: 350px;
+    width: 90%;
+    position: relative;
+    animation: popupZoom 0.3s ease-out forwards;
+}
+
+.success-popup-message {
+    color: #6D4C41;
+    font-size: 1.1rem;
+    font-weight: 400;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.success-popup-message .reward-title {
+    font-weight: bold;
+}
+
+.success-popup-close {
+    background-color: var(--primary-color);
+    color: #6D4C41;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.success-popup-close:hover {
+    background-color: #FFB300;
+    transform: scale(1.05);
 }
 
 
@@ -258,8 +519,8 @@
 
     <div class="container mx-auto p-4 pt-[calc(var(--header-height)+1rem)]">
         <div class="flex justify-center mb-4">
-            <button onclick="showTab('rewards')" class="tab-button px-4 py-2 bg-[var(--primary-color)] text-[var(--secondary-color)] rounded-l-lg border-2 border-[var(--accent-color)] shadow-md">Rewards</button>
-            <button onclick="showTab('history')" class="tab-button px-4 py-2 bg-[var(--secondary-color)] text-[var(--text-color)] rounded-r-lg border-2 border-[var(--accent-color)] shadow-md">History</button>
+            <button onclick="showTab('rewards')" class="tab-button px-4 py-2 rounded-l-lg shadow-md active">Rewards</button>
+            <button onclick="showTab('history')" class="tab-button px-4 py-2 rounded-r-lg shadow-md">Received</button>
         </div>
         <div id="rewards" class="tab-content">
             <div class="grid grid-cols-2 gap-4" id="rewards-grid">
@@ -268,7 +529,7 @@
         </div>
         <div id="history" class="tab-content hidden">
             <div class="grid grid-cols-2 gap-4" id="history-grid">
-                <!-- Reward history will be loaded here -->
+                <!-- Received rewards will be loaded here -->
             </div>
         </div>
     </div>
@@ -285,6 +546,22 @@
         </a>
     </div>
     
+
+    <!-- Custom Honey Popup -->
+    <div id="honeyPopup" class="honey-popup">
+        <div class="honey-popup-content">
+            <div id="honeyPopupMessage" class="honey-popup-message"></div>
+            <button class="honey-popup-close" onclick="closeHoneyPopup()">OK</button>
+        </div>
+    </div>
+
+    <!-- Custom Success Popup -->
+    <div id="successPopup" class="success-popup">
+        <div class="success-popup-content">
+            <div id="successPopupMessage" class="success-popup-message"></div>
+            <button class="success-popup-close" onclick="closeSuccessPopup()">OK</button>
+        </div>
+    </div>
 
     <!-- The Key Popup -->
     <div id="keyPopup" class="modal hidden">
@@ -400,13 +677,11 @@ document.querySelectorAll('.footer a').forEach(link => {
           document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
           document.getElementById(tabId).classList.remove('hidden');
           document.querySelectorAll('.tab-button').forEach(button => {
-              button.classList.remove('bg-[var(--primary-color)]', 'text-[var(--secondary-color)]');
-              button.classList.add('bg-[var(--secondary-color)]', 'text-[var(--text-color)]');
+              button.classList.remove('active');
           });
           const activeButton = document.querySelector(`button[onclick="showTab('${tabId}')"]`);
           if (activeButton) {
-              activeButton.classList.add('bg-[var(--primary-color)]', 'text-[var(--secondary-color)]');
-              activeButton.classList.remove('bg-[var(--secondary-color)]', 'text-[var(--text-color)]');
+              activeButton.classList.add('active');
           }
       }
   
@@ -418,7 +693,7 @@ document.querySelectorAll('.footer a').forEach(link => {
     const rewardsGrid = document.getElementById("rewards-grid");
     const historyGrid = document.getElementById("history-grid");
     rewardsGrid.innerHTML = "<p class='text-center'>Loading rewards...</p>";
-    historyGrid.innerHTML = "<p class='text-center'>Loading history...</p>";
+    historyGrid.innerHTML = "<p class='text-center'>Loading received rewards...</p>";
 
     try {
         const userHoney = await getUserHoney(userName);
@@ -518,19 +793,32 @@ document.querySelectorAll('.footer a').forEach(link => {
                         </button>
                     `;
                 } else {
-                    const buttonText = isOneTime ? 'Claim Once' : 'Get It';
-                    buttonContent = `
-                        <button class="mt-2 px-3 py-1 rounded font-semibold ${canAfford ? 'btn-primary' : 'btn-disabled'}" 
-                            ${canAfford ? '' : 'disabled'} 
-                            onclick="claimReward('${userName}', '${rewardName}', '${rewardType}', ${rewardCost}, '${JSON.stringify(outcomes)}')">${buttonText}</button>
-                    `;
+                    if (canAfford) {
+                        buttonContent = `
+                            <button class="rounded font-semibold btn-primary" 
+                                onclick="claimReward('${userName}', '${rewardName}', '${rewardType}', ${rewardCost}, '${JSON.stringify(outcomes)}')">Claim</button>
+                        `;
+                    } else {
+                        const needed = rewardCost - userHoney;
+                        buttonContent = `
+                            <button class="rounded font-semibold btn-disabled" 
+                                onclick="showInsufficientHoneyMessage(${needed})">Claim</button>
+                        `;
+                    }
                 }
+
+                const typeIndicator = isOneTime ? 
+                    '<div class="reward-type-indicator onetime">1</div>' : 
+                    '<div class="reward-type-indicator continuous">∞</div>';
 
                 card.innerHTML = `
                     <span class="purchase-indicator" data-count="${userRewardCount}"></span>
-                    <h3 class="text-lg font-semibold">${rewardName}</h3>
-                    <p class="text-[var(--text-color)]">Buzz Points: ${rewardCost} 🍯</p>
-                    ${buttonContent}
+                    ${typeIndicator}
+                    <h3>${rewardName}</h3>
+                    <div class="bottom-row">
+                        <span class="cost-display">${rewardCost} 🍯</span>
+                        ${buttonContent}
+                    </div>
                 `;
 
                 rewardsGrid.appendChild(card);
@@ -541,59 +829,86 @@ document.querySelectorAll('.footer a').forEach(link => {
             });
         }
 
-        // Load reward history (including pending requests)
-        const historyResponse = await fetch(`https://beemazing1.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-        const historyData = await historyResponse.json();
-        if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
-        const rewardHistory = (historyData.rewardHistory || {})[userName] || [];
+        // Load reward history (including pending requests) in separate try-catch
+        try {
+            const historyResponse = await fetch(`https://beemazing1.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+            const historyData = await historyResponse.json();
+            if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
+            const rewardHistory = (historyData.rewardHistory || {})[userName] || [];
 
-        // Deduplicate history entries
-        const seenEntries = new Set();
-        const combinedHistory = [];
-        const allHistoryItems = [
-            ...rewardHistory.map(item => ({
-                rewardName: item.rewardName,
-                rewardCost: item.rewardCost,
-                status: item.status,
-                timestamp: item.timestamp
-            })),
-            ...pendingRequests.map(req => ({
-                rewardName: req.rewardName,
-                rewardCost: req.rewardCost,
-                status: "Pending",
-                timestamp: new Date(req.timestamp).toISOString()
-            }))
-        ];
+            // Deduplicate history entries
+            const seenEntries = new Set();
+            const combinedHistory = [];
+            const allHistoryItems = [
+                ...rewardHistory.map(item => ({
+                    rewardName: item.rewardName,
+                    rewardCost: item.rewardCost,
+                    status: item.status,
+                    timestamp: item.timestamp
+                })),
+                ...pendingRequests.map(req => ({
+                    rewardName: req.rewardName,
+                    rewardCost: req.rewardCost,
+                    status: "Pending",
+                    timestamp: new Date(req.timestamp).toISOString()
+                }))
+            ];
 
-        allHistoryItems.forEach(item => {
-            const key = `${item.rewardName}|${item.timestamp}|${item.status}`;
-            if (!seenEntries.has(key)) {
-                seenEntries.add(key);
-                combinedHistory.push(item);
-            }
-        });
-
-        historyGrid.innerHTML = "";
-        if (combinedHistory.length === 0) {
-            historyGrid.innerHTML = "<p class='text-center'>No rewards received yet.</p>";
-        } else {
-            const reversedHistory = [...combinedHistory].reverse();
-            reversedHistory.forEach((reward) => {
-                const card = document.createElement("div");
-                card.className = "reward-card";
-                card.innerHTML = `
-                    <h3 class="text-lg font-semibold">${reward.rewardName}</h3>
-                    <p class="text-[var(--text-color)]">Cost: ${reward.rewardCost} 🍯</p>
-                    <p class="text-[var(--text-color)]">Status: ${reward.status}</p>
-                    <p class="text-[var(--text-color)]">Date: ${new Date(reward.timestamp).toLocaleString()}</p>
-                `;
-                historyGrid.appendChild(card);
+            allHistoryItems.forEach(item => {
+                const key = `${item.rewardName}|${item.timestamp}|${item.status}`;
+                if (!seenEntries.has(key)) {
+                    seenEntries.add(key);
+                    combinedHistory.push(item);
+                }
             });
+
+            historyGrid.innerHTML = "";
+            if (combinedHistory.length === 0) {
+                historyGrid.innerHTML = "<p class='text-center'>No rewards received yet.</p>";
+            } else {
+                const reversedHistory = [...combinedHistory].reverse();
+                reversedHistory.forEach((reward) => {
+                    const card = document.createElement("div");
+                    card.className = "reward-card";
+                    // Determine status display and date logic
+                    const status = reward.status || 'Unknown';
+                    const isApproved = status.toLowerCase() === 'approved' || status.toLowerCase() === 'received';
+                    const isPending = status.toLowerCase() === 'pending';
+                    
+                    let statusDisplay = '';
+                    if (isPending) {
+                        statusDisplay = '<span class="status-circle pending">P</span>';
+                    } else if (isApproved) {
+                        statusDisplay = '<span class="status-circle approved">A</span>';
+                    } else {
+                        statusDisplay = `<span class="status-circle">${status.charAt(0).toUpperCase()}</span>`;
+                    }
+                    
+                    // For date display - pending shows claim date, approved shows approval date
+                    let dateToShow = 'Unknown date';
+                    try {
+                        if (reward.timestamp) {
+                            dateToShow = new Date(reward.timestamp).toLocaleDateString();
+                        }
+                    } catch (e) {
+                        console.warn('Invalid timestamp:', reward.timestamp);
+                    }
+                    
+                    card.innerHTML = `
+                        <h3 class="text-lg font-semibold">${reward.rewardName || 'Unknown Reward'}</h3>
+                        <p>${reward.rewardCost || 0} 🍯</p>
+                        <p>${statusDisplay} ${dateToShow}</p>
+                    `;
+                    historyGrid.appendChild(card);
+                });
+            }
+        } catch (historyErr) {
+            console.error("Error loading reward history:", historyErr);
+            historyGrid.innerHTML = "<p class='text-center'>Failed to load history. Please try again later.</p>";
         }
     } catch (err) {
-        console.error("Error loading rewards or history:", err);
+        console.error("Error loading rewards:", err);
         rewardsGrid.innerHTML = "<p class='text-center'>Failed to load rewards. Please try again later.</p>";
-        historyGrid.innerHTML = "<p class='text-center'>Failed to load history. Please try again later.</p>";
     }
 }
 
@@ -666,12 +981,12 @@ async function claimReward(userName, rewardName, rewardType, honey, outcomes) {
         if (!response.ok) throw new Error(data.error || "Failed to submit reward request");
 
         if (reward.type === 'oneTime') {
-            alert("One-time reward claimed successfully! Points deducted.");
+            showSuccessPopup(rewardName, 'oneTime', honey);
         } else {
-            alert("Reward request submitted for approval! Points deducted.");
+            showSuccessPopup(rewardName, 'continuous', honey);
         }
         
-        loadRewards(userName); // Refresh rewards and history
+        loadRewards(userName); // Refresh rewards and received
     } catch (err) {
         console.error(`Error requesting ${rewardName}:`, err);
         alert(`Failed to request ${rewardName}: ${err.message}. Please try again or contact support.`);
@@ -888,9 +1203,46 @@ async function claimReward(userName, rewardName, rewardType, honey, outcomes) {
 
 
 
+      function showInsufficientHoneyMessage(needed) {
+          const message = `Not enough honey! You need to earn ${needed} 🍯 to claim this reward`;
+          document.getElementById('honeyPopupMessage').textContent = message;
+          document.getElementById('honeyPopup').classList.add('show');
+      }
+
+      function closeHoneyPopup() {
+          document.getElementById('honeyPopup').classList.remove('show');
+      }
+
+      function showSuccessPopup(rewardName, rewardType, rewardCost) {
+          let message;
+          if (rewardType === 'oneTime') {
+              message = `One-time reward <span class="reward-title">${rewardName}</span> claimed successfully! ${rewardCost} 🍯 deducted.`;
+          } else {
+              message = `<span class="reward-title">${rewardName}</span> claimed successfully! ${rewardCost} 🍯 deducted.`;
+          }
+          document.getElementById('successPopupMessage').innerHTML = message;
+          document.getElementById('successPopup').classList.add('show');
+      }
+
+      function closeSuccessPopup() {
+          document.getElementById('successPopup').classList.remove('show');
+      }
+
       document.getElementById("keyPopup").addEventListener("click", function(e) {
           if (e.target === this) {
               this.style.display = "none";
+          }
+      });
+
+      document.getElementById("honeyPopup").addEventListener("click", function(e) {
+          if (e.target === this) {
+              closeHoneyPopup();
+          }
+      });
+
+      document.getElementById("successPopup").addEventListener("click", function(e) {
+          if (e.target === this) {
+              closeSuccessPopup();
           }
       });
   </script>
