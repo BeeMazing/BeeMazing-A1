@@ -177,21 +177,21 @@ cursor: pointer;
         background: var(--light-bg);
         border: 2px solid var(--primary-color);
         border-radius: 8px;
-        padding: 12px 16px;
-        font-size: 16px;
+        padding: 8px 12px;
+        font-size: 14px;
         font-weight: 600;
         color: var(--text-color);
         text-align: center;
         cursor: pointer;
         transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
-        min-width: 120px;
-        box-shadow: 0 2px 4px rgba(255, 193, 7, 0.1);
+        min-width: 80px;
+        box-shadow: 0 1px 3px rgba(255, 193, 7, 0.1);
     }
 
     .date-display:hover {
         background: rgba(255, 193, 7, 0.15);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(255, 193, 7, 0.2);
+        transform: translateY(-1px);
+        box-shadow: 0 3px 6px rgba(255, 193, 7, 0.2);
     }
 
     .date-flex-row {
@@ -353,8 +353,8 @@ cursor: pointer;
     .switch {
         position: relative;
         display: inline-block;
-        width: 34px;
-        height: 20px;
+        width: 50px;
+        height: 28px;
     }
 
     .switch input {
@@ -370,29 +370,32 @@ cursor: pointer;
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: #444;
+        background-color: white;
+        border: 2px solid #ccc;
         transition: 0.4s;
-        border-radius: 20px;
+        border-radius: 28px;
     }
 
     .slider:before {
         position: absolute;
         content: "";
-        height: 14px;
-        width: 14px;
-        left: 3px;
-        bottom: 3px;
-        background-color: var(--accent-color);
+        height: 20px;
+        width: 20px;
+        left: 4px;
+        bottom: 4px;
+        background-color: #444;
         transition: 0.4s;
         border-radius: 50%;
     }
 
     input:checked + .slider {
-        background-color: var(--primary-color);
+        background-color: white;
+        border-color: var(--primary-color);
     }
 
     input:checked + .slider:before {
-        transform: translateX(14px);
+        background-color: var(--primary-color);
+        transform: translateX(22px);
     }
 
     .fancy-input {
@@ -773,16 +776,15 @@ cursor: pointer;
 
 .add-end-date {
     color: var(--primary-color);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: color 0.3s ease, transform 0.2s ease;
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 6px 12px;
+    border-radius: 6px;
     display: inline-block;
     margin-left: 8px;
     white-space: nowrap;
-    flex-shrink: 0;
 }
 
 .add-end-date:hover {
@@ -813,8 +815,8 @@ cursor: pointer;
     
     .add-end-date {
         margin-left: 4px;
-        font-size: 11px;
-        padding: 3px 6px;
+        font-size: 12px;
+        padding: 4px 8px;
     }
     
     .date-range-container {
@@ -922,8 +924,12 @@ cursor: pointer;
             <!-- NEW: Times Per Day input (only shown when Daily is selected) -->
             <div class="form-group" id="timesPerDayGroup" style="display: none; background-color: rgba(255, 193, 7, 0.1); border: 2px solid var(--primary-color); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);">
                 <label>Times per Day</label>
-                <input type="text" id="timesPerDayInput" value="1" readonly
-    style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--primary-color); border-radius: 8px; background: var(--light-bg); font-size: 16px; cursor: pointer; color: var(--text-color); font-weight: 400;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" id="decreaseTimesPerDay" style="width: 32px; height: 32px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 18px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">-</button>
+                    <input type="number" id="timesPerDayInput" value="1" min="1" max="100"
+                        style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--primary-color); border-radius: 8px; background: var(--light-bg); font-size: 16px; color: var(--text-color); font-weight: 400;">
+                    <button type="button" id="increaseTimesPerDay" style="width: 32px; height: 32px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 18px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">+</button>
+                </div>
             </div>
 
 
@@ -1015,6 +1021,7 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
                 
             
             
+            <!-- COMMENTED OUT - REMINDERS FUNCTIONALITY (keep for later implementation)
             <div class="form-group">
                 <label>Reminder</label>
                 <label class="switch">
@@ -1024,6 +1031,16 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
                 <button type="button" id="addAlarmBtn" class="select-btn" style="display: none; margin-left: 10px;">+ Add Alarm</button>
             </div>
             <div id="alarmContainer" style="margin-top: 10px;"></div>
+            -->
+
+            <div class="form-group">
+                <label>Due Time</label>
+                <label class="switch">
+                    <input type="checkbox" id="dueTimeToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div id="dueTimeContainer" style="margin-top: 10px; display: none;"></div>
 
             <div class="form-group">
                 <label>Settings</label>
@@ -1032,10 +1049,11 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
             </div>
 
             <div class="form-group">
-                <label>
-                    <span id="assignedToDisplay" class="select-btn">Select users</span>
-                    <input type="hidden" id="assignedToSelection" value="">
-                </label>
+                <label>Assign to:</label>
+                <div id="userAvatarContainer" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; align-items: center;">
+                    <div id="userAvatarList" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                </div>
+                <input type="hidden" id="assignedToSelection" value="">
             </div>
             <div class="form-group">
                 <label>
@@ -1070,13 +1088,6 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
 
 
     <!-- Modals -->
-    <div class="modal" id="userModal">
-        <div class="modal-content">
-            <h3>Choose User</h3>
-            <ul id="userList"></ul>
-            <button class="close-btn" id="closeUserModal">Close</button>
-        </div>
-    </div>
 
     <div class="modal" id="roomModal">
         <div class="modal-content">
@@ -1194,6 +1205,7 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
 
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="/BeeMazing-A1/shared/avatar-system.js"></script>
     <script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
     <script>
 
@@ -1283,8 +1295,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("selectRepeat").textContent = editTask.repeat || "Select";
         document.getElementById("settingsSelection").value = editTask.settings || "";
         document.getElementById("selectSettings").textContent = editTask.settings || "Select";
-        document.getElementById("taskReminder").checked = !!editTask.reminder;
-        document.getElementById("addAlarmBtn").style.display = editTask.reminder ? "inline-block" : "none";
+        // COMMENTED OUT - REMINDERS
+        // document.getElementById("taskReminder").checked = !!editTask.reminder;
+        // document.getElementById("addAlarmBtn").style.display = editTask.reminder ? "inline-block" : "none";
+        
+        // Due Time functionality
+        document.getElementById("dueTimeToggle").checked = !!editTask.dueTimes;
+        document.getElementById("dueTimeContainer").style.display = editTask.dueTimes ? "block" : "none";
         document.getElementById("RewardValue").value = editTask.reward || "";
         document.getElementById("selectReward").textContent = editTask.reward ? `Buzz Points: ${editTask.reward} 🍯` : "Reward";
 
@@ -1445,6 +1462,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             populateUsers();
         }
 
+        // COMMENTED OUT - ALARMS
+        /*
         if (editTask.alarms?.length) {
             alarms = [...editTask.alarms];
             alarms.forEach((time) => {
@@ -1463,10 +1482,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const removeButton = document.createElement("button");
                 removeButton.textContent = "Remove";
                 removeButton.style.padding = "5px 10px";
-                removeButton.style.backgroundColor = "var(--danger-color)";
-                removeButton.style.color = "var(--accent-color)";
-                removeButton.style.border = "none";
-                removeButton.style.borderRadius = "8px";
+                removeButton.style.marginLeft = "10px";
                 removeButton.addEventListener("click", () => {
                     alarmWrapper.remove();
                     alarms = alarms.filter((a) => a !== time);
@@ -1475,6 +1491,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                 alarmWrapper.appendChild(removeButton);
                 alarmContainer.appendChild(alarmWrapper);
             });
+        }
+        */
+
+        // Due Time functionality for edit mode
+        if (editTask.dueTimes?.length) {
+            dueTimes = [...editTask.dueTimes];
+            updateDueTimeDisplay();
         }
     } else {
         // Initialize form for new task
@@ -1538,12 +1561,9 @@ function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl)
 }
 
     
-        // User Modal Logic
-        const userModal = document.getElementById("userModal");
-        const assignedToDisplay = document.getElementById("assignedToDisplay");
-        const userList = document.getElementById("userList");
+        // User Avatar Selection Logic
         const assignedToSelection = document.getElementById("assignedToSelection");
-    
+
         let selectedUsers = [];
 
 
@@ -1557,7 +1577,6 @@ function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl)
     const currentAdmin = localStorage.getItem("currentAdminEmail");
     if (!currentAdmin) {
         console.error("No admin email found in localStorage");
-        assignedToDisplay.textContent = "Error: No admin logged in";
         return;
     }
 
@@ -1576,73 +1595,143 @@ function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl)
 
         const { users = [], permissions = {} } = data;
 
-        // Use all users (no filtering for Admin)
-        const allUsers = users;
+        // Store users globally for other functions
+        window.allUsers = users;
 
         // Update localStorage to sync with backend
         const allUserData = JSON.parse(localStorage.getItem("userData") || "{}");
         allUserData[currentAdmin] = allUserData[currentAdmin] || { users: [], permissions: {} };
-        allUserData[currentAdmin].users = allUsers;
+        allUserData[currentAdmin].users = users;
         allUserData[currentAdmin].permissions = permissions;
         localStorage.setItem("userData", JSON.stringify(allUserData));
 
-        // Clear existing user list
-        userList.innerHTML = "";
+        // Get avatar container
+        const userAvatarList = document.getElementById("userAvatarList");
+        userAvatarList.innerHTML = "";
 
-        // Populate user list
-        allUsers.forEach(user => {
-            const userItem = document.createElement("li");
-            userItem.textContent = user; // Display only the user email
-            userItem.style.padding = "10px";
-            userItem.style.margin = "5px 0";
-            userItem.style.border = "1px solid var(--selection-border)";
-            userItem.style.borderRadius = "8px";
-            userItem.style.cursor = "pointer";
-            userItem.style.textAlign = "center";
+        // Initialize avatar system if not already done
+        if (typeof window.avatarSystem === 'undefined') {
+            window.avatarSystem = new AvatarSystem();
+            await window.avatarSystem.initialize();
+        }
 
-            if (selectedUsers.includes(user)) {
-                userItem.style.backgroundColor = "var(--primary-color)";
-                userItem.style.color = "var(--secondary-color)";
+        // Create "All" avatar button first
+        const allAvatarContainer = document.createElement("div");
+        allAvatarContainer.style.position = "relative";
+        allAvatarContainer.style.cursor = "pointer";
+        allAvatarContainer.id = "allUsersBtn";
+        
+        // Create All avatar with consistent styling
+        const allAvatar = document.createElement("div");
+        allAvatar.className = "user-avatar medium";
+        allAvatar.style.background = "var(--primary-color)";
+        allAvatar.style.color = "var(--secondary-color)";
+        allAvatar.style.fontSize = "14px";
+        allAvatar.style.fontWeight = "bold";
+        allAvatar.style.width = "40px";
+        allAvatar.style.height = "40px";
+        allAvatar.style.borderRadius = "50%";
+        allAvatar.style.display = "flex";
+        allAvatar.style.alignItems = "center";
+        allAvatar.style.justifyContent = "center";
+        allAvatar.style.border = "2px solid rgba(255, 255, 255, 0.2)";
+        allAvatar.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+        allAvatar.textContent = "All";
+        allAvatar.title = "Select all users";
+        allAvatar.style.transition = "all 0.3s ease";
+        
+        allAvatarContainer.appendChild(allAvatar);
+        
+        // All button click handler
+        allAvatarContainer.addEventListener("click", () => {
+            if (allAvatarContainer.classList.contains('active')) {
+                // Deselect All
+                allAvatarContainer.classList.remove('active');
+                selectedUsers = [];
             } else {
-                userItem.style.backgroundColor = "var(--light-bg)";
-                userItem.style.color = "var(--text-color)";
+                // Select All
+                allAvatarContainer.classList.add('active');
+                selectedUsers = window.allUsers ? [...window.allUsers] : [];
             }
+            updateSelectedUsersDisplay();
+        });
+        
+        // Hover effects for All button
+        allAvatarContainer.addEventListener("mouseenter", () => {
+            allAvatar.style.transform = "scale(1.1)";
+        });
+        
+        allAvatarContainer.addEventListener("mouseleave", () => {
+            allAvatar.style.transform = "scale(1)";
+        });
+        
+        userAvatarList.appendChild(allAvatarContainer);
 
-            userItem.addEventListener("mouseover", () => {
-                userItem.style.backgroundColor = "var(--primary-color)";
-                userItem.style.color = "var(--secondary-color)";
-            });
-            userItem.addEventListener("mouseout", () => {
-                if (selectedUsers.includes(user)) {
-                    userItem.style.backgroundColor = "var(--primary-color)";
-                    userItem.style.color = "var(--secondary-color)";
-                } else {
-                    userItem.style.backgroundColor = "var(--light-bg)";
-                    userItem.style.color = "var(--text-color)";
-                }
-            });
-            userItem.addEventListener("click", () => {
-                if (selectedUsers.includes(user)) {
-                    selectedUsers = selectedUsers.filter(u => u !== user);
-                    userItem.style.backgroundColor = "var(--light-bg)";
-                    userItem.style.color = "var(--text-color)";
-                } else {
-                    selectedUsers.push(user);
-                    userItem.style.backgroundColor = "var(--primary-color)";
-                    userItem.style.color = "var(--secondary-color)";
-                }
-                updateSelectedUsersDisplay();
-            });
-            userList.appendChild(userItem);
+        // Populate user avatars
+        users.forEach((user, index) => {
+            const avatarContainer = document.createElement("div");
+            avatarContainer.style.position = "relative";
+            avatarContainer.style.cursor = "pointer";
+            
+            // Generate avatar HTML
+            const avatarHTML = window.avatarSystem.generateAvatarHTML(user, 'medium');
+            avatarContainer.innerHTML = avatarHTML;
+            
+            const avatar = avatarContainer.querySelector('.user-avatar');
+            if (avatar) {
+                avatar.title = user; // Tooltip with username
+                avatar.style.transition = 'all 0.3s ease';
+                // Ensure perfect circle with consistent dimensions
+                avatar.style.width = "40px";
+                avatar.style.height = "40px";
+                avatar.style.borderRadius = "50%";
+                avatar.style.display = "flex";
+                avatar.style.alignItems = "center";
+                avatar.style.justifyContent = "center";
+                avatar.style.fontSize = "14px";
+                avatar.style.fontWeight = "bold";
+                avatar.style.border = "2px solid rgba(255, 255, 255, 0.2)";
+                avatar.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+                
+                // Click handler for individual avatar
+                avatarContainer.addEventListener("click", () => {
+                    const allUsersBtn = document.getElementById("allUsersBtn");
+                    
+                    if (allUsersBtn.classList.contains('active')) {
+                        // If "All" is currently selected, deselect it and select only this user
+                        allUsersBtn.classList.remove('active');
+                        selectedUsers = [user];
+                    } else {
+                        // Normal toggle behavior
+                        if (selectedUsers.includes(user)) {
+                            // Deselect this user
+                            selectedUsers = selectedUsers.filter(u => u !== user);
+                        } else {
+                            // Select this user
+                            selectedUsers.push(user);
+                        }
+                    }
+                    updateSelectedUsersDisplay();
+                });
+                
+                // Hover effects
+                avatarContainer.addEventListener("mouseenter", () => {
+                    avatar.style.transform = "scale(1.1)";
+                });
+                
+                avatarContainer.addEventListener("mouseleave", () => {
+                    avatar.style.transform = "scale(1)";
+                });
+            }
+            
+            userAvatarList.appendChild(avatarContainer);
         });
 
         // Update display
         updateSelectedUsersDisplay();
-        assignedToDisplay.textContent = allUsers.length ? "Select users" : "No users available";
 
     } catch (error) {
         console.error("Error fetching users:", error);
-        assignedToDisplay.textContent = "Error loading users";
     }
 }
 
@@ -1658,28 +1747,114 @@ function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl)
     // Clean the selectedUsers array just in case
     selectedUsers = selectedUsers.map(u => u.trim()).filter(u => u);
 
-    // Set value and display cleanly
+    // Set value for form submission
     assignedToSelection.value = selectedUsers.join(", ");
-    assignedToDisplay.textContent = selectedUsers.length > 0
-        ? selectedUsers.join(", ")
-        : "Select users";
+    
+    // Update visual state of all avatars
+    const userAvatarList = document.getElementById("userAvatarList");
+    const avatarContainers = userAvatarList.querySelectorAll('div[style*="position: relative"]');
+    const allUsersBtn = document.getElementById("allUsersBtn");
+    
+    // Check if all users are selected
+    const allSelected = window.allUsers && window.allUsers.length > 0 && 
+                       window.allUsers.every(user => selectedUsers.includes(user));
+    
+    // Update "All" button visual state
+    const allAvatar = allUsersBtn ? allUsersBtn.querySelector('.user-avatar') : null;
+    if (allUsersBtn && allAvatar) {
+        // Remove existing checkmark if any
+        const existingCheckmark = allUsersBtn.querySelector('.avatar-checkmark');
+        if (existingCheckmark) {
+            existingCheckmark.remove();
+        }
+        
+        if (allSelected) {
+            allUsersBtn.classList.add('active');
+            allAvatar.style.boxShadow = '0 0 0 4px rgba(255, 193, 7, 0.9)';
+            allAvatar.style.border = '3px solid var(--primary-color)';
+            allAvatar.style.transform = 'scale(1.1)';
+            allAvatar.style.filter = 'brightness(1.2)';
+            
+            // Add checkmark overlay to All button
+            const checkmark = document.createElement('div');
+            checkmark.className = 'avatar-checkmark';
+            checkmark.innerHTML = '✓';
+            checkmark.style.position = 'absolute';
+            checkmark.style.top = '-5px';
+            checkmark.style.right = '-5px';
+            checkmark.style.width = '20px';
+            checkmark.style.height = '20px';
+            checkmark.style.backgroundColor = 'var(--primary-color)';
+            checkmark.style.color = 'white';
+            checkmark.style.borderRadius = '50%';
+            checkmark.style.display = 'flex';
+            checkmark.style.alignItems = 'center';
+            checkmark.style.justifyContent = 'center';
+            checkmark.style.fontSize = '12px';
+            checkmark.style.fontWeight = 'bold';
+            checkmark.style.border = '2px solid white';
+            checkmark.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+            allUsersBtn.appendChild(checkmark);
+        } else {
+            allUsersBtn.classList.remove('active');
+            allAvatar.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            allAvatar.style.border = '2px solid rgba(255, 255, 255, 0.2)';
+            allAvatar.style.transform = 'scale(1)';
+            allAvatar.style.filter = 'none';
+        }
+    }
+    
+    // Skip the first container (which is the All button) and process user avatars
+    avatarContainers.forEach((container, index) => {
+        if (index === 0) return; // Skip the All button
+        const avatar = container.querySelector('.user-avatar');
+        const user = window.allUsers ? window.allUsers[index - 1] : null; // Adjust index for All button
+        
+        // Remove existing checkmark if any
+        const existingCheckmark = container.querySelector('.avatar-checkmark');
+        if (existingCheckmark) {
+            existingCheckmark.remove();
+        }
+        
+        if (user && selectedUsers.includes(user) && !allSelected) {
+            avatar.style.boxShadow = '0 0 0 4px rgba(255, 193, 7, 0.9)';
+            avatar.style.border = '3px solid var(--primary-color)';
+            avatar.style.transform = 'scale(1.1)';
+            avatar.style.filter = 'brightness(1.2)';
+            
+            // Add checkmark overlay
+            const checkmark = document.createElement('div');
+            checkmark.className = 'avatar-checkmark';
+            checkmark.innerHTML = '✓';
+            checkmark.style.position = 'absolute';
+            checkmark.style.top = '-5px';
+            checkmark.style.right = '-5px';
+            checkmark.style.width = '20px';
+            checkmark.style.height = '20px';
+            checkmark.style.backgroundColor = 'var(--primary-color)';
+            checkmark.style.color = 'white';
+            checkmark.style.borderRadius = '50%';
+            checkmark.style.display = 'flex';
+            checkmark.style.alignItems = 'center';
+            checkmark.style.justifyContent = 'center';
+            checkmark.style.fontSize = '12px';
+            checkmark.style.fontWeight = 'bold';
+            checkmark.style.border = '2px solid white';
+            checkmark.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+            container.appendChild(checkmark);
+        } else {
+            avatar.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            avatar.style.border = '2px solid rgba(255, 255, 255, 0.2)';
+            avatar.style.transform = 'scale(1)';
+            avatar.style.filter = 'none';
+        }
+    });
 };
 
 
+        // All button is now handled in populateUsers function
     
-        assignedToDisplay.addEventListener("click", () => {
-            showModal(userModal);
-        });
-    
-        window.addEventListener("click", (e) => {
-            if (e.target === userModal) {
-                hideModal(userModal);
-            }
-        });
-    
-        document.getElementById("closeUserModal").addEventListener("click", () => {
-            hideModal(userModal);
-        });
+        // No modal needed for avatar selection
     
         // Reward Modal Logic
         const rewardModal = document.getElementById("rewardModal");
@@ -1799,7 +1974,7 @@ const dateFrom = document.getElementById("taskDate").value;
 const dateTo = document.getElementById("taskDateTo").value;
 const singleDate = document.getElementById("singleTaskDate").value;
 const dateMode = document.getElementById("dateModeSelection").value;
-const reminder = document.getElementById("taskReminder").checked;
+const dueTimeEnabled = document.getElementById("dueTimeToggle").checked;
 const users = document.getElementById("assignedToSelection").value
     .split(",")
     .map(u => u.trim())
@@ -1883,10 +2058,11 @@ const task = {
     repeat: repeat || undefined,
     settings: settings || undefined,
     date: dateValue,
-    reminder: reminder || undefined,
+    // reminder: reminder || undefined,  // COMMENTED OUT
+    dueTimes: dueTimeEnabled && dueTimes.length > 0 ? dueTimes : undefined,
     users,
     reward: reward || undefined,
-    alarms: alarms.length > 0 ? alarms : undefined,
+    // alarms: alarms.length > 0 ? alarms : undefined,  // COMMENTED OUT
     timesPerDay: repeat === "Daily" ? timesPerDay : undefined,
     timesPerWeek: repeat === "Weekly" ? timesPerWeek : undefined,
     timesPerMonth: repeat === "Monthly" ? timesPerMonth : undefined,
@@ -2086,13 +2262,56 @@ const closeTimesModal = document.getElementById("closeTimesModal");
 const saveCustomTimesBtn = document.getElementById("saveCustomTimesBtn");
 const customTimesInput = document.getElementById("customTimesInput");
 
-// Open modal when input clicked
-timesPerDayInput.addEventListener("focus", () => {
-    customTimesInput.value = ""; // Clear previous custom input
-    showModal(timesPerDayModal);
+// Direct input functionality for times per day (no modal needed)
+const decreaseBtn = document.getElementById("decreaseTimesPerDay");
+const increaseBtn = document.getElementById("increaseTimesPerDay");
+
+decreaseBtn.addEventListener("click", () => {
+    let currentValue = parseInt(timesPerDayInput.value) || 1;
+    if (currentValue > 1) {
+        timesPerDayInput.value = currentValue - 1;
+        timesPerDayInput.dispatchEvent(new Event('change'));
+    }
+});
+
+increaseBtn.addEventListener("click", () => {
+    let currentValue = parseInt(timesPerDayInput.value) || 1;
+    if (currentValue < 100) {
+        timesPerDayInput.value = currentValue + 1;
+        timesPerDayInput.dispatchEvent(new Event('change'));
+    }
+});
+
+// Add hover effects for stepper buttons
+decreaseBtn.addEventListener("mouseenter", () => {
+    decreaseBtn.style.background = "var(--primary-color)";
+    decreaseBtn.style.color = "var(--secondary-color)";
+});
+decreaseBtn.addEventListener("mouseleave", () => {
+    decreaseBtn.style.background = "var(--light-bg)";
+    decreaseBtn.style.color = "var(--text-color)";
+});
+
+increaseBtn.addEventListener("mouseenter", () => {
+    increaseBtn.style.background = "var(--primary-color)";
+    increaseBtn.style.color = "var(--secondary-color)";
+});
+increaseBtn.addEventListener("mouseleave", () => {
+    increaseBtn.style.background = "var(--light-bg)";
+    increaseBtn.style.color = "var(--text-color)";
+});
+
+// Validate input on change
+timesPerDayInput.addEventListener("input", () => {
+    let value = parseInt(timesPerDayInput.value) || 1;
+    if (value < 1) value = 1;
+    if (value > 100) value = 100;
+    timesPerDayInput.value = value;
 });
 
 
+// OLD MODAL FUNCTIONALITY COMMENTED OUT - NO LONGER NEEDED FOR TIMES PER DAY
+/*
 // Quick pick buttons (1–5)
 timesPerDayModal.querySelectorAll("button[data-value]").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -2126,6 +2345,7 @@ setupTimesModal(
     document.getElementById("customTimesInput"),
     document.getElementById("saveCustomTimesBtn")
 );
+*/
 
 // Existing setup for Monthly
 setupTimesModal(
@@ -2285,7 +2505,7 @@ modeButtons.forEach(button => {
 
 // Specific Days Logic
 const specificDaysInput = document.getElementById("specificDaysInput");
-let selectedDays = ["Any"]; // Default selected
+let selectedDays = []; // Will be set based on initial frequency
 
 const dayMapping = {
     "Any": "Any",
@@ -2321,8 +2541,12 @@ function updateSelectedDaysDisplay() {
             // For Any/All button - check if it's in selectedDays
             isSelected = selectedDays.includes(fullDay);
         } else {
-            // For specific days
-            isSelected = selectedDays.includes(fullDay);
+            // For specific days - not selected if "All" or "Any" is active
+            if (isDaily) {
+                isSelected = selectedDays.includes(fullDay) && !selectedDays.includes("All");
+            } else {
+                isSelected = selectedDays.includes(fullDay) && !selectedDays.includes("Any");
+            }
         }
         
         if (isSelected) {
@@ -2373,27 +2597,41 @@ document.querySelectorAll("#specificDaysButtons .day-btn").forEach(button => {
             }
         } else {
             // Clicking individual day button
-            // Remove Any/All if selecting specific day
-            selectedDays = selectedDays.filter(day => day !== "Any" && day !== "All");
-            
-            if (selectedDays.includes(fullDay)) {
-                // Deselect this day
-                selectedDays = selectedDays.filter(day => day !== fullDay);
-                if (selectedDays.length === 0) {
-                    // Re-select Any/All if none selected
-                    selectedDays = isDaily ? ["All"] : ["Any"];
+            if (isDaily) {
+                // For Daily frequency: when selecting individual days, remove "All"
+                if (selectedDays.includes("All")) {
+                    selectedDays = [fullDay]; // Replace "All" with this specific day
+                } else {
+                    // Toggle individual day
+                    if (selectedDays.includes(fullDay)) {
+                        selectedDays = selectedDays.filter(day => day !== fullDay);
+                        // If no days left, default back to "All"
+                        if (selectedDays.length === 0) {
+                            selectedDays = ["All"];
+                        }
+                    } else {
+                        selectedDays.push(fullDay);
+                        // Check if all 7 days are now selected
+                        const allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+                        if (allDays.every(day => selectedDays.includes(day))) {
+                            selectedDays = ["All"];
+                        }
+                    }
                 }
             } else {
-                // Select this day
-                selectedDays.push(fullDay);
+                // For non-Daily frequencies: existing logic
+                selectedDays = selectedDays.filter(day => day !== "Any" && day !== "All");
                 
-                // Check if all 7 days are now selected for Daily frequency
-                if (isDaily) {
-                    const allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-                    if (allDays.every(day => selectedDays.includes(day))) {
-                        // All individual days selected, switch to "All"
-                        selectedDays = ["All"];
+                if (selectedDays.includes(fullDay)) {
+                    // Deselect this day
+                    selectedDays = selectedDays.filter(day => day !== fullDay);
+                    if (selectedDays.length === 0) {
+                        // Re-select Any if none selected
+                        selectedDays = ["Any"];
                     }
+                } else {
+                    // Select this day
+                    selectedDays.push(fullDay);
                 }
             }
         }
@@ -2622,12 +2860,13 @@ window.addEventListener("click", (e) => {
 }
        });
     
-        // Reminder and Alarm Logic
+        // COMMENTED OUT - REMINDER AND ALARM LOGIC (keep for later implementation)
+        /*
         const reminderToggle = document.getElementById('taskReminder');
         const addAlarmBtn = document.getElementById('addAlarmBtn');
         const alarmContainer = document.getElementById('alarmContainer');
         let alarms = [];
-    
+
         reminderToggle.addEventListener('change', () => {
             if (reminderToggle.checked) {
                 addAlarmBtn.style.display = 'inline-block';
@@ -2637,13 +2876,13 @@ window.addEventListener("click", (e) => {
                 alarms = [];
             }
         });
-    
+
         addAlarmBtn.addEventListener('click', () => {
             const alarmWrapper = document.createElement('div');
             alarmWrapper.style.marginBottom = '10px';
             alarmWrapper.style.display = 'flex';
             alarmWrapper.style.alignItems = 'center';
-    
+
             const alarmInput = document.createElement('input');
             alarmInput.type = 'time';
             alarmInput.style.marginRight = '10px';
@@ -2651,29 +2890,165 @@ window.addEventListener("click", (e) => {
             alarmInput.style.border = '2px solid var(--primary-color)';
             alarmInput.style.borderRadius = '8px';
             alarmInput.style.background = 'var(--accent-color)';
-    
+
             const removeButton = document.createElement('button');
             removeButton.textContent = 'Remove';
             removeButton.style.padding = '5px 10px';
-            removeButton.style.backgroundColor = 'var(--danger-color)';
-            removeButton.style.color = 'var(--accent-color)';
-            removeButton.style.border = 'none';
-            removeButton.style.borderRadius = '8px';
-    
+            removeButton.style.marginLeft = '10px';
+
             removeButton.addEventListener('click', () => {
                 alarmWrapper.remove();
                 alarms = alarms.filter(a => a !== alarmInput.value);
             });
-    
+
             alarmInput.addEventListener('input', () => {
                 if (!alarms.includes(alarmInput.value)) {
                     alarms.push(alarmInput.value);
                 }
             });
-    
+
             alarmWrapper.appendChild(alarmInput);
             alarmWrapper.appendChild(removeButton);
             alarmContainer.appendChild(alarmWrapper);
+        });
+        */
+
+        // Due Time Logic
+        const dueTimeToggle = document.getElementById('dueTimeToggle');
+        const dueTimeContainer = document.getElementById('dueTimeContainer');
+        let dueTimes = [];
+
+        function updateDueTimeDisplay() {
+            dueTimeContainer.innerHTML = '';
+            
+            if (!dueTimeToggle.checked) {
+                dueTimeContainer.style.display = 'none';
+                return;
+            }
+            
+            dueTimeContainer.style.display = 'block';
+            
+            const repeatInput = document.getElementById("repeatSelection");
+            const timesPerDayInput = document.getElementById("timesPerDayInput");
+            const isDaily = repeatInput && repeatInput.value === "Daily";
+            const timesPerDay = isDaily ? parseInt(timesPerDayInput.value) || 1 : 1;
+            
+            // Ensure we have the right number of due times
+            while (dueTimes.length < timesPerDay) {
+                dueTimes.push("");
+            }
+            while (dueTimes.length > timesPerDay) {
+                dueTimes.pop();
+            }
+            
+            dueTimes.forEach((dueTime, index) => {
+                const timeWrapper = document.createElement('div');
+                timeWrapper.style.marginBottom = '10px';
+                timeWrapper.style.display = 'flex';
+                timeWrapper.style.alignItems = 'center';
+                timeWrapper.style.gap = '10px';
+                timeWrapper.style.flexWrap = 'nowrap';
+                
+                // Add ordinal text (1st, 2nd, 3rd, etc.) if more than one field
+                if (timesPerDay > 1) {
+                    const ordinalText = document.createElement('span');
+                    const ordinals = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
+                    ordinalText.textContent = ordinals[index] || `${index + 1}th`;
+                    ordinalText.style.fontSize = '14px';
+                    ordinalText.style.fontWeight = '600';
+                    ordinalText.style.minWidth = '35px';
+                    ordinalText.style.color = 'var(--text-color)';
+                    timeWrapper.appendChild(ordinalText);
+                }
+                
+                // Due Time input - made wider
+                const dueTimeInput = document.createElement('input');
+                dueTimeInput.type = 'time';
+                dueTimeInput.value = dueTime || '';
+                dueTimeInput.style.padding = '10px';
+                dueTimeInput.style.border = '2px solid var(--primary-color)';
+                dueTimeInput.style.borderRadius = '8px';
+                dueTimeInput.style.background = 'rgba(255, 193, 7, 0.1)';
+                dueTimeInput.style.color = 'var(--text-color)';
+                dueTimeInput.style.fontSize = '16px';
+                dueTimeInput.style.minWidth = '120px';
+                dueTimeInput.style.flex = '1';
+                dueTimeInput.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                
+                // Remove button (only show if more than 1 time slot)
+                let removeButton;
+                if (timesPerDay > 1) {
+                    removeButton = document.createElement('button');
+                    removeButton.textContent = '✖';
+                    removeButton.style.padding = '8px 10px';
+                    removeButton.style.background = 'var(--danger-color)';
+                    removeButton.style.color = 'white';
+                    removeButton.style.border = 'none';
+                    removeButton.style.borderRadius = '6px';
+                    removeButton.style.cursor = 'pointer';
+                    removeButton.style.fontSize = '12px';
+                    removeButton.style.marginLeft = '5px';
+                    removeButton.style.transition = 'background-color 0.3s ease, transform 0.2s ease';
+                    removeButton.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                    
+                    removeButton.addEventListener('click', () => {
+                        timeWrapper.remove();
+                        dueTimes.splice(index, 1);
+                    });
+                    
+                    // Add hover effects for remove button
+                    removeButton.addEventListener('mouseenter', () => {
+                        removeButton.style.background = '#c62828';
+                        removeButton.style.transform = 'translateY(-1px)';
+                    });
+                    
+                    removeButton.addEventListener('mouseleave', () => {
+                        removeButton.style.background = 'var(--danger-color)';
+                        removeButton.style.transform = 'translateY(0)';
+                    });
+                }
+                
+                // Update dueTimes array when input changes
+                dueTimeInput.addEventListener('change', () => {
+                    dueTimes[index] = dueTimeInput.value;
+                });
+                
+                // Add focus effects for input
+                dueTimeInput.addEventListener('focus', () => {
+                    dueTimeInput.style.borderColor = '#FFB300';
+                    dueTimeInput.style.boxShadow = '0 4px 12px rgba(255, 193, 7, 0.3)';
+                });
+                
+                dueTimeInput.addEventListener('blur', () => {
+                    dueTimeInput.style.borderColor = 'var(--primary-color)';
+                    dueTimeInput.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                });
+                
+                timeWrapper.appendChild(dueTimeInput);
+                if (removeButton) {
+                    timeWrapper.appendChild(removeButton);
+                }
+                
+                dueTimeContainer.appendChild(timeWrapper);
+            });
+        }
+
+        dueTimeToggle.addEventListener('change', () => {
+            updateDueTimeDisplay();
+        });
+
+        // Update due time display when times per day changes
+        document.getElementById("timesPerDayInput").addEventListener('change', () => {
+            if (dueTimeToggle.checked) {
+                updateDueTimeDisplay();
+            }
+        });
+
+        // Update due time display when frequency changes
+        document.getElementById("repeatSelection").addEventListener('change', () => {
+            if (dueTimeToggle.checked) {
+                updateDueTimeDisplay();
+            }
         });
     
 
@@ -2711,28 +3086,34 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Add delay to ensure all elements are loaded
     setTimeout(() => {
+        // Initialize selectedDays if empty
+        if (selectedDays.length === 0) {
+            const currentRepeat = repeatInput ? repeatInput.value : "One Time";
+            selectedDays = currentRepeat === "Daily" ? ["All"] : ["Any"];
+        }
+        
         // Set initial section label and Any/All button based on current frequency (default is "One Time")
         if (sectionLabel && anyAllButton) {
             if (repeatInput && repeatInput.value === "Daily") {
                 sectionLabel.textContent = "Days";
                 anyAllButton.textContent = "All";
                 anyAllButton.setAttribute("data-day", "All");
-                // Set default selection for Daily to "All"
-                if (selectedDays.length === 0 || selectedDays.includes("Any")) {
+                // Ensure "All" is selected for Daily by default
+                if (selectedDays.includes("Any")) {
                     selectedDays = ["All"];
-                    updateSelectedDaysDisplay();
                 }
             } else {
                 sectionLabel.textContent = "Dates";
                 anyAllButton.textContent = "Any";
                 anyAllButton.setAttribute("data-day", "Any");
-                // Set default selection for non-Daily to "Any"
-                if (selectedDays.length === 0 || selectedDays.includes("All")) {
+                // Ensure "Any" is selected for non-Daily by default
+                if (selectedDays.includes("All")) {
                     selectedDays = ["Any"];
-                    updateSelectedDaysDisplay();
                 }
             }
         }
+        
+        updateSelectedDaysDisplay();
     }, 100);
 });
 
