@@ -1,0 +1,276 @@
+/* BeeMazing Avatar Styles */
+/* CSS styles for user avatars with colorful circles and initials */
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-right: 10px;
+    flex-shrink: 0;
+    font-family: 'Poppins', Arial, sans-serif;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.user-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Profile Avatar (replaces profile icon) */
+.profile-avatar {
+    position: fixed;
+    top: 10px;
+    right: 20px;
+    cursor: pointer;
+    z-index: 202;
+    transition: transform 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    margin-right: 0;
+}
+
+.profile-avatar:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Size variations */
+.user-avatar.small {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+    margin-right: 8px;
+}
+
+.user-avatar.medium {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+    margin-right: 10px;
+}
+
+.user-avatar.large {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+    margin-right: 12px;
+}
+
+.user-avatar.xlarge {
+    width: 80px;
+    height: 80px;
+    font-size: 32px;
+    margin-right: 15px;
+}
+
+/* Avatar container for user lists */
+.user-item-with-avatar {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    transition: background-color 0.2s ease;
+}
+
+.user-item-with-avatar:hover {
+    background-color: rgba(251, 183, 64, 0.1);
+}
+
+.user-item-with-avatar .user-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.user-item-with-avatar .username {
+    font-weight: 600;
+    color: #5D4E41;
+    font-size: 16px;
+    line-height: 1.2;
+}
+
+.user-item-with-avatar .user-role {
+    font-size: 12px;
+    color: #FBB740;
+    opacity: 0.8;
+    margin-top: 2px;
+}
+
+/* Avatar in header/navigation */
+.header-avatar {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+    margin: 0;
+    cursor: pointer;
+}
+
+/* Avatar in footer */
+.footer-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+    margin: 0;
+}
+
+/* Avatar inline with text */
+.inline-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+    margin-right: 6px;
+    display: inline-flex;
+    vertical-align: middle;
+}
+
+/* Avatar in modals */
+.modal-avatar {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+    margin: 0 auto 15px;
+}
+
+/* Avatar group for multiple users */
+.avatar-group {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.avatar-group .user-avatar {
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+
+.avatar-group .user-avatar:last-child {
+    margin-right: 0;
+}
+
+/* Avatar with status indicator */
+.user-avatar.with-status {
+    position: relative;
+}
+
+.user-avatar.with-status::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.user-avatar.with-status.admin::after {
+    background: #00C4B4;
+}
+
+.user-avatar.with-status.user::after {
+    background: #8BC34A;
+}
+
+.user-avatar.with-status.offline::after {
+    background: #9E9E9E;
+}
+
+/* Loading state avatar */
+.user-avatar.loading {
+    background: #e4e3e0 !important;
+    color: #5D4E41 !important;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Avatar in task assignments */
+.task-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+    margin-right: 8px;
+}
+
+/* Avatar in reward assignments */
+.reward-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+    margin-right: 6px;
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    .user-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+        margin-right: 8px;
+    }
+    
+    .user-avatar.large {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .user-avatar.xlarge {
+        width: 65px;
+        height: 65px;
+        font-size: 26px;
+    }
+    
+    .user-item-with-avatar {
+        padding: 10px 12px;
+    }
+    
+    .user-item-with-avatar .username {
+        font-size: 15px;
+    }
+}
+
+/* Avatar colors (defined in JavaScript, but fallbacks here) */
+.avatar-color-1 { background: #FBB740; }
+.avatar-color-2 { background: #FF8A50; }
+.avatar-color-3 { background: #8BC34A; }
+.avatar-color-4 { background: #00C4B4; }
+.avatar-color-5 { background: #5D4E41; }
+.avatar-color-6 { background: #9C6644; }
+.avatar-color-7 { background: #FF7043; }
+.avatar-color-8 { background: #66BB6A; }
+.avatar-color-9 { background: #42A5F5; }
+.avatar-color-10 { background: #AB47BC; }
+
+/* Special styling for empty/default avatar */
+.user-avatar.empty {
+    background: #e4e3e0;
+    color: #5D4E41;
+    border: 2px dashed #5D4E41;
+}
+
+/* Avatar tooltip */
+.user-avatar[title] {
+    cursor: help;
+}
+
+/* Avatar in lists with actions */
+.user-list-item .user-avatar {
+    margin-right: 12px;
+}
+
+.user-list-item.active-user .user-avatar {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 3px rgba(251, 183, 64, 0.3);
+}
