@@ -711,11 +711,7 @@ cursor: pointer;
 .date-mode-selector {
     display: flex;
     gap: 8px;
-    margin-bottom: 16px;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 193, 7, 0.2);
+    margin-bottom: 1rem;
 }
 
 .mode-btn {
@@ -953,14 +949,10 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
             
 
             <div class="form-group-full date-section">
-                <label class="section-label" id="sectionLabel">Dates</label>
                 <div class="date-mode-selector">
-                    <button type="button" class="mode-btn active" data-mode="date">📅 Date Range</button>
-                    <button type="button" class="mode-btn" data-mode="specific-dates">📆 Specific Dates</button>
+                    <button type="button" class="mode-btn active" data-mode="date">Days</button>
+                    <button type="button" class="mode-btn" data-mode="specific-dates">Specific Dates</button>
                     <input type="hidden" id="dateModeSelection" value="date">
-                </div>
-                <div style="margin-bottom: 8px; padding: 8px; background: rgba(255, 193, 7, 0.1); border-radius: 4px; font-size: 13px; color: rgba(255, 255, 255, 0.8);">
-                    <span id="modeDescription">📅 Choose date range and days of the week for your task</span>
                 </div>
                 
             
