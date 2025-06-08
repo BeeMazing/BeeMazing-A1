@@ -13,6 +13,7 @@
             href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
             rel="stylesheet"
         />
+        <link rel="stylesheet" href="/BeeMazing-A1/shared/avatar-styles.css">
         <style>
             * {
                 margin: 0;
@@ -93,7 +94,7 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                background: var(--primary-color); /* yellow background */
+                background: #FFFFFF; /* white background for avatars */
                 padding: 15px;
                 margin: 10px 0;
                 border-radius: 10px;
@@ -101,15 +102,16 @@
                 transition:
                     transform 0.3s ease,
                     box-shadow 0.3s ease;
-                border: 2px solid var(--primary-color); /* yellow border */
-                color: white;
+                border: 2px solid #FBB740; /* orange border */
+                color: #5D4E41; /* warm brown text */
             }
             .user-list-item:hover {
                 transform: translateY(-5px);
-                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+                box-shadow: 0 4px 12px rgba(251, 183, 64, 0.3);
+                border-color: #5D4E41;
             }
             .remove-user-btn {
-                background: #8b4513;
+                background: #FBB740;
                 color: white;
                 border: none;
                 border-radius: 50%;
@@ -126,13 +128,13 @@
                     transform 0.2s ease;
             }
             .remove-user-btn:hover {
-                background-color: #a0522d;
+                background-color: #5D4E41;
                 transform: scale(1.1);
             }
 
             .settings-btn {
                 font-size: 16px; /* Adjust size if different from X button */
-                color: #8b4513;
+                color: #5D4E41;
             }
 
             .footer {
@@ -507,6 +509,7 @@
             src="https://kit.fontawesome.com/a076d05399.js"
             crossorigin="anonymous"
         ></script>
+        <script src="/BeeMazing-A1/shared/avatar-system.js"></script>
         <script src="home.js"></script>
     </body>
 </html>

@@ -82,7 +82,13 @@ body: JSON.stringify({
         }
 
         allUserData[currentAdmin].users.push(username);
+        allUserData[currentAdmin].permissions[username] = selectedRole;
         localStorage.setItem("userData", JSON.stringify(allUserData));
+
+        // Generate avatar for new user
+        if (window.avatarSystem) {
+          window.avatarSystem.addUser(username, currentAdmin);
+        }
 
         usernameInput.value = "";
         addUserModal.classList.remove("show");
@@ -176,6 +182,11 @@ body: JSON.stringify({
       console.log(`🔥 DEBUG renderUsers: users=`, users);
       console.log(`🔥 DEBUG renderUsers: permissions=`, userPermissions);
       
+      // Initialize avatar system for current admin
+      if (window.avatarSystem && currentAdmin) {
+        window.avatarSystem.initialize(currentAdmin);
+      }
+      
       // Determine the base path (mobile or web) based on the current URL
       const isMobile = window.location.pathname.includes("/BeeMazing-A1/mobile/");
       const basePath = isMobile ? "/BeeMazing-A1/mobile" : "/web";
@@ -183,15 +194,25 @@ body: JSON.stringify({
       users.forEach((username) => {
         const newUserItem = document.createElement("li");
         newUserItem.classList.add("user-list-item");
-    
+
         const nameContainer = document.createElement("div");
         nameContainer.style.display = "flex";
         nameContainer.style.alignItems = "center";
-        nameContainer.style.gap = "8px";
-    
+        nameContainer.style.gap = "12px";
+
+        // Add avatar before username
+        if (window.avatarSystem) {
+          const avatarHTML = window.avatarSystem.generateAvatarHTML(username, 40);
+          const avatarWrapper = document.createElement("div");
+          avatarWrapper.innerHTML = avatarHTML;
+          nameContainer.appendChild(avatarWrapper.firstElementChild);
+        }
+
         const userNameSpan = document.createElement("span");
         userNameSpan.textContent = username;
-    
+        userNameSpan.style.fontWeight = "600";
+        userNameSpan.style.color = "#5D4E41";
+
         if (userPermissions[username] === "Admin") {
           const checkmark = document.createElement("span");
           checkmark.textContent = "✓";
@@ -302,34 +323,41 @@ body: JSON.stringify({
   
 // Helper function to delete a user from the server
 async function deleteUserFromServer(username) {
-  try {
+    try {
       const res = await fetch(
-          `https://beemazing1.onrender.com/delete-user?adminEmail=${encodeURIComponent(currentAdmin)}&username=${encodeURIComponent(username)}`,
-          {
-              method: "DELETE",
-              headers: { "Content-Type": "application/json" },
-          }
+        `https://beemazing1.onrender.com/delete-user?adminEmail=${encodeURIComponent(currentAdmin)}&username=${encodeURIComponent(username)}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" }
+        }
       );
-
       const result = await res.json();
       if (result.success) {
-          // Update localStorage after successful server deletion
-          const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
-          let users = allUserData[currentAdmin]?.users || [];
-          users = users.filter(user => user !== username);
-          allUserData[currentAdmin].users = users;
-          localStorage.setItem("userData", JSON.stringify(allUserData));
+        // Update localStorage after successful server deletion
+        const allUserData = JSON.parse(localStorage.getItem("userData")) || {};
+        let users = allUserData[currentAdmin]?.users || [];
+        users = users.filter(user => user !== username);
+        if (!allUserData[currentAdmin]) {
+          allUserData[currentAdmin] = { users: [], permissions: {} };
+        }
+        allUserData[currentAdmin].users = users;
+        localStorage.setItem("userData", JSON.stringify(allUserData));
 
-          renderUsers();
-          renderManageMembers();
+        // Remove avatar for deleted user
+        if (window.avatarSystem) {
+          window.avatarSystem.removeUser(username, currentAdmin);
+        }
+
+        return true;
       } else {
-          alert("Failed to delete user from server: " + result.message);
+        alert("Failed to delete user from server: " + result.message);
+        return false;
       }
-  } catch (err) {
-      console.error("Failed to delete user:", err);
+    } catch (err) {
       alert("Error deleting user. Please try again.");
+      return false;
+    }
   }
-}
 
 
 
@@ -365,6 +393,11 @@ document.getElementById("confirmYesBtn").addEventListener("click", async () => {
         users = users.filter(user => user !== userToRemove);
         allUserData[currentAdmin].users = users;
         localStorage.setItem("userData", JSON.stringify(allUserData));
+
+        // Remove avatar for deleted user
+        if (window.avatarSystem) {
+          window.avatarSystem.removeUser(userToRemove, currentAdmin);
+        }
 
         userToRemove = null;
         document.getElementById("confirmModal").classList.remove("show");

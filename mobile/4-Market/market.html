@@ -270,15 +270,16 @@ transform: scale(1.1);
     justify-content: space-between;
     align-items: center;
     padding: 12px 20px;
-    border-bottom: 1px solid #e4e3e0;
+    border-bottom: 1px solid var(--primary-color);
     font-size: 16px;
-    color: #5D4E41 !important;
+    color: #6D4C41 !important;
     cursor: pointer;
     transition: background 0.2s ease;
-    background: #FFFFF8 !important;
+    background: var(--light-bg) !important;
 }
 .user-list li:hover {
-    background: #e4e3e0;
+    background: #F5F5DC !important;
+    border-bottom: 1px solid #ffb300;
 }
 .user-list li:last-child {
     border-bottom: none;
@@ -377,13 +378,13 @@ transform: scale(1.1);
             max-width: 500px;
         }
         .reward-item {
-            background: var(--card-bg);
-            color: var(--text-color);
+            background: var(--light-bg);
+            color: #6D4C41;
             padding: 15px;
             margin: 10px 0;
-            border: 2px solid var(--border-dark);
+            border: 2px solid var(--primary-color);
             border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             position: relative;
             overflow: hidden;
@@ -391,10 +392,11 @@ transform: scale(1.1);
         }
         .reward-item:hover {
             transform: translateY(-5px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 6px 20px rgba(255, 193, 7, 0.3);
+            border-color: #ffb300;
         }
         .reward-item strong {
-            color: var(--primary-color);
+            color: #5D4037;
         }
         .reward-item.swiped {
             transform: translateX(-100px);
@@ -787,13 +789,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     data.users.forEach(userName => {
                         const li = document.createElement("li");
-                        li.style.setProperty('color', '#5D4E41', 'important');
+                        li.style.setProperty('color', '#6D4C41', 'important');
                         
                         const nameContainer = document.createElement("div");
                         nameContainer.classList.add("user-list-item");
                         const userNameSpan = document.createElement("span");
                         userNameSpan.textContent = userName;
-                        userNameSpan.style.setProperty('color', '#5D4E41', 'important');
+                        userNameSpan.style.setProperty('color', '#6D4C41', 'important');
                         nameContainer.appendChild(userNameSpan);
                         
                         if (userPermissions[userName] === "Admin") {
@@ -1428,13 +1430,17 @@ let monthOffset = 0;
 // Determine who the reward is assigned to
 let assignedText = "Everyone";
 if (reward.assignedUsers && reward.assignedUsers.length > 0) {
-  assignedText = "To: " + reward.assignedUsers.join(", ");
+  assignedText = reward.assignedUsers.join(", ");
 }
 
 rewardItem.innerHTML = `
-  <strong>${reward.name}</strong><br>
-  Buzz Points: ${reward.diamonds} 🍯<br>
-  <small style="color: var(--accent-color); opacity: 0.8;">${assignedText}</small>
+  <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+    <div style="flex: 1;">
+      <strong>${reward.name}</strong>
+      <small style="color: #8D6E63; opacity: 0.9; font-weight: 500; margin-left: 8px;">${assignedText}</small>
+    </div>
+    <div style="font-weight: 600; color: var(--primary-color);">${reward.diamonds} 🍯</div>
+  </div>
 `;
 
         
