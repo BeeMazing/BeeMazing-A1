@@ -644,6 +644,44 @@ transform: scale(1.1);
             margin-left: 8px;
         }
 
+        /* Reward item avatar styles */
+        .reward-avatars {
+            display: flex;
+            gap: 4px;
+            margin-left: 8px;
+            align-items: center;
+        }
+
+        .reward-avatar {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            font-weight: 600;
+            color: white;
+            border: 1px solid rgba(109, 76, 65, 0.3);
+        }
+
+        .reward-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .everyone-badge {
+            background: linear-gradient(45deg, var(--primary-color), #ffb300);
+            color: #6D4C41;
+            font-size: 7px;
+            font-weight: bold;
+            padding: 2px 4px;
+            border-radius: 8px;
+            margin-left: 8px;
+        }
+
         .reward-form-container input::placeholder {
             color: #8D6E63;
         }
@@ -2087,17 +2125,38 @@ let monthOffset = 0;
             rewards.forEach((reward, index) => {
               const rewardItem = document.createElement("li");
               rewardItem.className = "reward-item";
-// Determine who the reward is assigned to
-let assignedText = "Everyone";
+// Create avatar display for assigned users
+let avatarsHTML = '';
 if (reward.assignedUsers && reward.assignedUsers.length > 0) {
-  assignedText = reward.assignedUsers.join(", ");
+  const avatarElements = reward.assignedUsers.map(username => {
+    // Check for character avatar first
+    const userAvatars = JSON.parse(localStorage.getItem("userAvatars") || "{}");
+    const chosenAvatarId = userAvatars[username];
+    
+    if (chosenAvatarId) {
+      return `<div class="reward-avatar"><img src="/BeeMazing-A1/shared/Avatars/${chosenAvatarId}.png" alt="${username}" /></div>`;
+    } else {
+      // Use generated avatar from avatar system
+      const userData = JSON.parse(localStorage.getItem("userData")) || {};
+      const avatarData = userData[adminEmail]?.avatars || {};
+      
+      if (avatarData[username]) {
+        return `<div class="reward-avatar" style="background-color: ${avatarData[username].color};">${avatarData[username].initials}</div>`;
+      } else {
+        return `<div class="reward-avatar" style="background-color: #FBB740;">${username.charAt(0).toUpperCase()}</div>`;
+      }
+    }
+  }).join('');
+  avatarsHTML = `<div class="reward-avatars">${avatarElements}</div>`;
+} else {
+  avatarsHTML = '<div class="everyone-badge">ALL</div>';
 }
 
 rewardItem.innerHTML = `
   <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-    <div style="flex: 1;">
+    <div style="flex: 1; display: flex; align-items: center;">
       <strong>${reward.name}</strong>
-      <small style="color: #8D6E63; opacity: 0.9; font-weight: 500; margin-left: 8px;">${assignedText}</small>
+      ${avatarsHTML}
     </div>
     <div style="font-weight: 600; color: var(--primary-color);">${reward.diamonds} 🍯</div>
   </div>
