@@ -1522,8 +1522,9 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
                                 const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
                                 const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
                                 const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : "—";
+                                const fairRotationText = task.fairRotation ? (task.fairRotationTimeBased ? " (Fair+Time)" : " (Fair)") : "";
                                 taskHTML += `
-                                    <br><em>Rotation Task</em>
+                                    <br><em>Rotation Task${fairRotationText}</em>
                                     <br>Turn: ${currentTurn}
                                     <br>Next: ${nextUser}
                                     <div class="task-progress">Progress: ${turnData.completedCount}/${turnData.requiredTimes}</div>
@@ -1629,6 +1630,7 @@ async function showTaskDetails(task) {
         })()}
         <strong>Users:</strong> ${userOrder.join(", ") || "None"}<br>
         ${task.reward && task.reward !== "0" ? `<strong>Reward:</strong> ${task.reward} 🍯<br>` : ""}
+        <strong>Parent Approval:</strong> ${task.parentApproval !== false ? "Required" : "Not Required"}<br>
     `;
 
     let turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
@@ -1659,8 +1661,9 @@ async function showTaskDetails(task) {
                         const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
                         const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
                         const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : "—";
+                        const fairRotationText = task.fairRotation ? (task.fairRotationTimeBased ? " (Fair Rotation - Time Based)" : " (Fair Rotation)") : "";
                         taskDetails += `
-                            <strong>Settings:</strong> Rotation<br>
+                            <strong>Settings:</strong> Rotation${fairRotationText}<br>
                             <strong>Current Turn:</strong> ${currentTurn}<br>
                             <strong>Next:</strong> ${nextUser}<br>
                             <div class="task-progress">Progress: ${turnData.completedCount}/${turnData.requiredTimes}</div>
@@ -1811,7 +1814,8 @@ async function finishTask(userName, task, button, selectedDate) {
                 adminEmail,
                 taskTitle: task.title,
                 user: userName,
-                date: todayStr
+                date: todayStr,
+                parentApproval: task.parentApproval
             })
         });
 
@@ -1819,9 +1823,27 @@ async function finishTask(userName, task, button, selectedDate) {
         if (!res.ok) throw new Error(result.error || "Failed to complete task");
 
         const rewardAmount = result.updatedTask.reward || 0;
+        const parentApprovalRequired = task.parentApproval !== false; // Default to true if not specified
 
-        // ✅ Trigger reward animation if available
-        if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
+        // ✅ Trigger reward animation or approval message based on setting
+        if (parentApprovalRequired) {
+            // Show pending approval message
+            if (rewardAmount > 0) {
+                alert(`Task completed! 🎉\n\nYour task is waiting for parent approval.\nOnce approved, you'll receive ${rewardAmount} 🍯 buzz points!`);
+            } else {
+                alert(`Task completed! 🎉\n\nYour task is waiting for parent approval.`);
+            }
+        } else {
+            // Instant completion - trigger reward animation
+            if (typeof triggerHoneyRain === 'function' && rewardAmount > 0) {
+                triggerHoneyRain(rewardAmount);
+            }
+            if (rewardAmount > 0) {
+                alert(`Task completed! 🎉\n\nYou instantly received ${rewardAmount} 🍯 buzz points!`);
+            } else {
+                alert(`Task completed! 🎉`);
+            }
+        }
 
         // ✅ Refresh task and user data after slight delay to allow DB sync
         if (typeof loadTasksForDate === 'function') {
