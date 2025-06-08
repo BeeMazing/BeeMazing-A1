@@ -757,9 +757,10 @@ cursor: pointer;
 .date-row {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 8px;
     margin-bottom: 8px;
-    padding: 8px 0;
+    flex-wrap: wrap;
+    min-height: 40px;
 }
 
 .date-label {
@@ -772,20 +773,53 @@ cursor: pointer;
 
 .add-end-date {
     color: var(--primary-color);
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: color 0.3s ease, transform 0.2s ease;
-    padding: 8px 12px;
-    border-radius: 6px;
+    padding: 4px 8px;
+    border-radius: 4px;
     display: inline-block;
-    margin-top: 8px;
+    margin-left: 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .add-end-date:hover {
     color: #FFB300;
     background: rgba(255, 193, 7, 0.2);
     transform: translateY(-1px);
+}
+
+.date-range-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.date-separator {
+    color: var(--text-color);
+    font-size: 14px;
+    margin: 0 4px;
+}
+
+/* Responsive layout for mobile */
+@media (max-width: 480px) {
+    .date-row {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    
+    .add-end-date {
+        margin-left: 4px;
+        font-size: 11px;
+        padding: 3px 6px;
+    }
+    
+    .date-range-container {
+        gap: 6px;
+    }
 }
 
 .remove-btn {
@@ -915,7 +949,7 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
             
 
             <div class="form-group-full date-section">
-                <label class="section-label"></label>
+                <label class="section-label" id="sectionLabel">Dates</label>
                 <div class="date-mode-selector">
                     <button type="button" class="mode-btn active" data-mode="date">Date</button>
                     <button type="button" class="mode-btn" data-mode="specific-dates">Specific Dates</button>
@@ -935,14 +969,14 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
                 <div id="fromToDateGroup" class="date-group">
                     <div class="date-row">
                         <span class="date-label">From</span>
-                        <div id="dateDisplay" class="date-display">Today</div>
+                        <div class="date-range-container">
+                            <div id="dateDisplay" class="date-display">Today</div>
+                            <span id="addEndDateBtn" class="add-end-date">+ Add End Date</span>
+                            <span id="dateToWrapper" class="date-separator" style="display: none;">to</span>
+                            <div id="dateDisplayTo" class="date-display" style="display: none;">To Date</div>
+                            <span id="removeEndDateBtn" class="remove-btn" style="display: none;">✖</span>
+                        </div>
                     </div>
-                    <div class="date-row" id="dateToWrapper" style="display: none;">
-                        <span class="date-label">To</span>
-                        <div id="dateDisplayTo" class="date-display">To Date</div>
-                        <span id="removeEndDateBtn" class="remove-btn">✖</span>
-                    </div>
-                    <span id="addEndDateBtn" class="add-end-date">+ Add End Date</span>
                 </div>
             
                 <!-- Specific Dates UI -->
@@ -1263,6 +1297,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("timesPerDayGroup").style.display = editTask.repeat === "Daily" ? "flex" : "none";
         document.getElementById("timesPerWeekGroup").style.display = editTask.repeat === "Weekly" ? "flex" : "none";
         document.getElementById("timesPerMonthGroup").style.display = editTask.repeat === "Monthly" ? "flex" : "none";
+        
+        // Update section label based on frequency
+        const sectionLabel = document.getElementById("sectionLabel");
+        if (editTask.repeat === "Daily") {
+            sectionLabel.textContent = "Days";
+        } else {
+            sectionLabel.textContent = "Dates";
+        }
 
         // Handle date mode
         if (editTask.specificDates) {
@@ -1298,14 +1340,18 @@ document.addEventListener("DOMContentLoaded", async () => {
                     month: "long",
                     day: "numeric",
                 });
-                dateToWrapper.style.display = "flex";
+                document.getElementById("dateToWrapper").style.display = "inline";
+                document.getElementById("dateDisplayTo").style.display = "inline-block";
+                document.getElementById("removeEndDateBtn").style.display = "inline-block";
                 addEndDateBtn.style.display = "none";
                 dateMode = "from-to";
             } else {
                 document.getElementById("taskDateTo").value = "";
                 document.getElementById("dateDisplayTo").textContent = "To Date";
-                dateToWrapper.style.display = "none";
-                addEndDateBtn.style.display = "block";
+                document.getElementById("dateToWrapper").style.display = "none";
+                document.getElementById("dateDisplayTo").style.display = "none";
+                document.getElementById("removeEndDateBtn").style.display = "none";
+                addEndDateBtn.style.display = "inline-block";
                 dateMode = "from";
             }
 
@@ -1365,7 +1411,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                     month: "long",
                     day: "numeric",
                 });
-                dateToWrapper.style.display = "flex";
+                document.getElementById("dateToWrapper").style.display = "inline";
+                document.getElementById("dateDisplayTo").style.display = "inline-block";
+                document.getElementById("removeEndDateBtn").style.display = "inline-block";
                 addEndDateBtn.style.display = "none";
             }
             
@@ -1978,6 +2026,14 @@ repeatModal.addEventListener('click', (e) => {
         timesPerWeekGroup.style.display = selected === "Weekly" ? "flex" : "none";
         timesPerMonthGroup.style.display = selected === "Monthly" ? "flex" : "none";
         
+        // Update section label based on frequency
+        const sectionLabel = document.getElementById("sectionLabel");
+        if (selected === "Daily") {
+            sectionLabel.textContent = "Days";
+        } else {
+            sectionLabel.textContent = "Dates";
+        }
+        
         // Toggle date input sections based on frequency
         const singleDateGroup = document.getElementById("singleDateGroup");
         const fromToDateGroup = document.getElementById("fromToDateGroup");
@@ -2098,7 +2154,9 @@ removeEndDateBtn.addEventListener("click", () => {
   dateMode = "from";
   document.getElementById("taskDateTo").value = "";
   document.getElementById("dateDisplayTo").textContent = "To Date";
-  dateToWrapper.style.display = "none";
+  document.getElementById("dateToWrapper").style.display = "none";
+  document.getElementById("dateDisplayTo").style.display = "none";
+  document.getElementById("removeEndDateBtn").style.display = "none";
   addEndDateBtn.style.display = "inline-block";
 });
 
@@ -2140,7 +2198,9 @@ removeEndDateBtn.addEventListener("click", () => {
       const formatted = toDate.toLocaleDateString(undefined, { month: "long", day: "numeric" });
       dateInputTo.value = toDate.toISOString().split("T")[0];
       dateDisplayTo.textContent = formatted;
-      dateToWrapper.style.display = "flex";
+      document.getElementById("dateToWrapper").style.display = "inline";
+      document.getElementById("dateDisplayTo").style.display = "inline-block";
+      document.getElementById("removeEndDateBtn").style.display = "inline-block";
       addEndDateBtn.style.display = "none";
       dateMode = "from-to";
     }
@@ -2182,7 +2242,9 @@ modeButtons.forEach(button => {
             document.getElementById("dateDisplay").textContent = "Today";
             document.getElementById("dateDisplayTo").textContent = "To Date";
             document.getElementById("dateToWrapper").style.display = "none";
-            document.getElementById("addEndDateBtn").style.display = "block";
+            document.getElementById("dateDisplayTo").style.display = "none";
+            document.getElementById("removeEndDateBtn").style.display = "none";
+            document.getElementById("addEndDateBtn").style.display = "inline-block";
             selectedDays = [];
             updateSelectedDaysDisplay();
         } else if (mode === "date") {
@@ -2550,15 +2612,20 @@ function handleCancel() {
     }
 }
 
+// Initialize section label on page load
+document.addEventListener("DOMContentLoaded", () => {
+    const sectionLabel = document.getElementById("sectionLabel");
+    const repeatInput = document.getElementById("repeatInput");
+    
+    // Set initial section label based on current frequency (default is "One Time")
+    if (repeatInput.value === "Daily") {
+        sectionLabel.textContent = "Days";
+    } else {
+        sectionLabel.textContent = "Dates";
+    }
+});
 
-
-
-
-
-
-
-
-    </script>    
+    </script>
 
 
 
