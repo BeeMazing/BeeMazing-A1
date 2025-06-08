@@ -711,7 +711,11 @@ cursor: pointer;
 .date-mode-selector {
     display: flex;
     gap: 8px;
-    margin-bottom: 1rem;
+    margin-bottom: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 193, 7, 0.2);
 }
 
 .mode-btn {
@@ -951,9 +955,12 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
             <div class="form-group-full date-section">
                 <label class="section-label" id="sectionLabel">Dates</label>
                 <div class="date-mode-selector">
-                    <button type="button" class="mode-btn active" data-mode="date">Date</button>
-                    <button type="button" class="mode-btn" data-mode="specific-dates">Specific Dates</button>
+                    <button type="button" class="mode-btn active" data-mode="date">📅 Date Range</button>
+                    <button type="button" class="mode-btn" data-mode="specific-dates">📆 Specific Dates</button>
                     <input type="hidden" id="dateModeSelection" value="date">
+                </div>
+                <div style="margin-bottom: 8px; padding: 8px; background: rgba(255, 193, 7, 0.1); border-radius: 4px; font-size: 13px; color: rgba(255, 255, 255, 0.8);">
+                    <span id="modeDescription">📅 Choose date range and days of the week for your task</span>
                 </div>
                 
             
@@ -966,7 +973,7 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
                 </div>
                 
                 <!-- From - To Date UI -->
-                <div id="fromToDateGroup" class="date-group">
+                <div id="fromToDateGroup" class="date-group active-section">
                     <div class="date-row">
                         <span class="date-label">From</span>
                         <div class="date-range-container">
@@ -980,7 +987,7 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
                 </div>
             
                 <!-- Specific Dates UI -->
-                <div id="specificDatesGroup" class="date-group" style="display: none;">
+                <div id="specificDatesGroup" class="date-group inactive-section" style="display: none;">
                     <div class="date-row">
                         <span class="date-label">Dates</span>
                         <button type="button" id="selectSpecificDates" class="plus-btn">+</button>
@@ -990,11 +997,11 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
             
                 <!-- Specific Days UI -->
 <!-- Day Selection UI (for Date mode) -->
-<div id="specificDaysGroup" class="date-group">
+<div id="specificDaysGroup" class="date-group active-section">
     <div class="date-row">
-        <span class="date-label">Days</span>
+        <span class="date-label">📋 Days of Week</span>
         <div id="specificDaysButtons" class="day-buttons-container">
-            <button type="button" class="day-btn" data-day="Any">Any</button>
+            <button type="button" class="day-btn" data-day="Any" id="anyAllButton">Any</button>
             <button type="button" class="day-btn" data-day="Mon">Mon</button>
             <button type="button" class="day-btn" data-day="Tue">Tue</button>
             <button type="button" class="day-btn" data-day="Wed">Wed</button>
@@ -1298,12 +1305,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("timesPerWeekGroup").style.display = editTask.repeat === "Weekly" ? "flex" : "none";
         document.getElementById("timesPerMonthGroup").style.display = editTask.repeat === "Monthly" ? "flex" : "none";
         
-        // Update section label based on frequency
+        // Update section label and Any/All button based on frequency
         const sectionLabel = document.getElementById("sectionLabel");
-        if (editTask.repeat === "Daily") {
-            sectionLabel.textContent = "Days";
-        } else {
-            sectionLabel.textContent = "Dates";
+        const anyAllButton = document.getElementById("anyAllButton");
+        if (sectionLabel && anyAllButton) {
+            if (editTask.repeat === "Daily") {
+                sectionLabel.textContent = "Days";
+                anyAllButton.textContent = "All";
+                anyAllButton.setAttribute("data-day", "All");
+            } else {
+                sectionLabel.textContent = "Dates";
+                anyAllButton.textContent = "Any";
+                anyAllButton.setAttribute("data-day", "Any");
+            }
         }
 
         // Handle date mode
@@ -1355,7 +1369,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 dateMode = "from";
             }
 
-            selectedDays = editTask.daysOfWeek || ["Any"];
+            // Handle days of week for edit mode
+            selectedDays = editTask.daysOfWeek || (editTask.repeat === "Daily" ? ["All"] : ["Any"]);
             updateSelectedDaysDisplay();
         }
 
@@ -1885,7 +1900,7 @@ const task = {
     timesPerWeek: repeat === "Weekly" ? timesPerWeek : undefined,
     timesPerMonth: repeat === "Monthly" ? timesPerMonth : undefined,
     specificDates: dateMode === "specific-dates" ? specificDates : undefined,
-    daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? selectedDays : ["Any"]) : undefined
+    daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? (selectedDays.includes("All") ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] : selectedDays) : (repeat === "Daily" ? ["All"] : ["Any"])) : undefined
 };
 
 console.log("Task being saved:", JSON.stringify(task, null, 2));
@@ -2026,12 +2041,29 @@ repeatModal.addEventListener('click', (e) => {
         timesPerWeekGroup.style.display = selected === "Weekly" ? "flex" : "none";
         timesPerMonthGroup.style.display = selected === "Monthly" ? "flex" : "none";
         
-        // Update section label based on frequency
+        // Update section label and Any/All button based on frequency
         const sectionLabel = document.getElementById("sectionLabel");
-        if (selected === "Daily") {
-            sectionLabel.textContent = "Days";
-        } else {
-            sectionLabel.textContent = "Dates";
+        const anyAllButton = document.getElementById("anyAllButton");
+        if (sectionLabel && anyAllButton) {
+            if (selected === "Daily") {
+                sectionLabel.textContent = "Days";
+                anyAllButton.textContent = "All";
+                anyAllButton.setAttribute("data-day", "All");
+                // Convert Any to All if it's currently selected, or set default
+                if (selectedDays.includes("Any") || selectedDays.length === 0) {
+                    selectedDays = ["All"];
+                    updateSelectedDaysDisplay();
+                }
+            } else {
+                sectionLabel.textContent = "Dates";
+                anyAllButton.textContent = "Any";
+                anyAllButton.setAttribute("data-day", "Any");
+                // Convert All to Any if it's currently selected, or set default
+                if (selectedDays.includes("All") || (selectedDays.length === 7 && ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].every(day => selectedDays.includes(day)))) {
+                    selectedDays = ["Any"];
+                    updateSelectedDaysDisplay();
+                }
+            }
         }
         
         // Toggle date input sections based on frequency
@@ -2266,6 +2298,7 @@ let selectedDays = ["Any"]; // Default selected
 
 const dayMapping = {
     "Any": "Any",
+    "All": "All",
     "Mon": "Monday",
     "Tue": "Tuesday",
     "Wed": "Wednesday",
@@ -2277,16 +2310,49 @@ const dayMapping = {
 
 function updateSelectedDaysDisplay() {
     const buttons = document.querySelectorAll("#specificDaysButtons .day-btn");
+    const repeatInput = document.getElementById("repeatSelection");
+    const specificDaysInput = document.getElementById("specificDaysInput");
+    
+    if (!buttons.length) return; // Exit if no buttons found
+    
+    const isDaily = repeatInput && repeatInput.value === "Daily";
+    
     buttons.forEach(button => {
         const shortDay = button.getAttribute("data-day");
         const fullDay = dayMapping[shortDay];
-        if (selectedDays.includes(fullDay)) {
+        
+        if (!fullDay) return; // Skip if mapping not found
+        
+        // Check if this button should be selected
+        let isSelected = false;
+        
+        if (fullDay === "Any" || fullDay === "All") {
+            // For Any/All button - check if it's in selectedDays
+            isSelected = selectedDays.includes(fullDay);
+        } else {
+            // For specific days
+            isSelected = selectedDays.includes(fullDay);
+        }
+        
+        if (isSelected) {
             button.classList.add("selected");
         } else {
             button.classList.remove("selected");
         }
     });
-    specificDaysInput.value = selectedDays.join(",");
+    
+    // Update the input value with better display text
+    if (specificDaysInput) {
+        if (isDaily && selectedDays.includes("All")) {
+            specificDaysInput.value = "All days (Mon-Sun)";
+        } else if (!isDaily && selectedDays.includes("Any")) {
+            specificDaysInput.value = "Any day";
+        } else if (selectedDays.length > 0) {
+            specificDaysInput.value = selectedDays.join(", ");
+        } else {
+            specificDaysInput.value = isDaily ? "All days (Mon-Sun)" : "Any day";
+        }
+    }
 }
 
 // Add click event listeners to day buttons
@@ -2294,16 +2360,50 @@ document.querySelectorAll("#specificDaysButtons .day-btn").forEach(button => {
     button.addEventListener("click", () => {
         const shortDay = button.getAttribute("data-day");
         const fullDay = dayMapping[shortDay];
+        const repeatInput = document.getElementById("repeatSelection");
+        const isDaily = repeatInput && repeatInput.value === "Daily";
 
-        if (fullDay === "Any") {
-            selectedDays = ["Any"];
-        } else {
-            selectedDays = selectedDays.filter(day => day !== "Any"); // Remove Any if selecting specific day
+        if (fullDay === "Any" || fullDay === "All") {
+            // Clicking Any/All button
             if (selectedDays.includes(fullDay)) {
-                selectedDays = selectedDays.filter(day => day !== fullDay);
-                if (selectedDays.length === 0) selectedDays = ["Any"]; // Re-select Any if none selected
+                // If already selected, deselect it (but keep at least one day)
+                if (isDaily) {
+                    selectedDays = ["Monday"]; // Default to Monday for Daily
+                } else {
+                    selectedDays = ["Any"]; // Keep Any for non-Daily
+                }
             } else {
+                // Select Any/All and clear individual selections
+                if (isDaily) {
+                    selectedDays = ["All"];
+                } else {
+                    selectedDays = ["Any"];
+                }
+            }
+        } else {
+            // Clicking individual day button
+            // Remove Any/All if selecting specific day
+            selectedDays = selectedDays.filter(day => day !== "Any" && day !== "All");
+            
+            if (selectedDays.includes(fullDay)) {
+                // Deselect this day
+                selectedDays = selectedDays.filter(day => day !== fullDay);
+                if (selectedDays.length === 0) {
+                    // Re-select Any/All if none selected
+                    selectedDays = isDaily ? ["All"] : ["Any"];
+                }
+            } else {
+                // Select this day
                 selectedDays.push(fullDay);
+                
+                // Check if all 7 days are now selected for Daily frequency
+                if (isDaily) {
+                    const allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+                    if (allDays.every(day => selectedDays.includes(day))) {
+                        // All individual days selected, switch to "All"
+                        selectedDays = ["All"];
+                    }
+                }
             }
         }
         updateSelectedDaysDisplay();
@@ -2615,14 +2715,34 @@ function handleCancel() {
 // Initialize section label on page load
 document.addEventListener("DOMContentLoaded", () => {
     const sectionLabel = document.getElementById("sectionLabel");
-    const repeatInput = document.getElementById("repeatInput");
+    const repeatInput = document.getElementById("repeatSelection");
+    const anyAllButton = document.getElementById("anyAllButton");
     
-    // Set initial section label based on current frequency (default is "One Time")
-    if (repeatInput.value === "Daily") {
-        sectionLabel.textContent = "Days";
-    } else {
-        sectionLabel.textContent = "Dates";
-    }
+    // Add delay to ensure all elements are loaded
+    setTimeout(() => {
+        // Set initial section label and Any/All button based on current frequency (default is "One Time")
+        if (sectionLabel && anyAllButton) {
+            if (repeatInput && repeatInput.value === "Daily") {
+                sectionLabel.textContent = "Days";
+                anyAllButton.textContent = "All";
+                anyAllButton.setAttribute("data-day", "All");
+                // Set default selection for Daily to "All"
+                if (selectedDays.length === 0 || selectedDays.includes("Any")) {
+                    selectedDays = ["All"];
+                    updateSelectedDaysDisplay();
+                }
+            } else {
+                sectionLabel.textContent = "Dates";
+                anyAllButton.textContent = "Any";
+                anyAllButton.setAttribute("data-day", "Any");
+                // Set default selection for non-Daily to "Any"
+                if (selectedDays.length === 0 || selectedDays.includes("All")) {
+                    selectedDays = ["Any"];
+                    updateSelectedDaysDisplay();
+                }
+            }
+        }
+    }, 100);
 });
 
     </script>
