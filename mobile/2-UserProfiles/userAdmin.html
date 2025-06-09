@@ -1036,52 +1036,77 @@ h3 {
   padding-bottom: 80px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 20px 15px 80px;
+  gap: 16px;
+  padding: 25px 20px 100px;
+  background: linear-gradient(135deg, #FFFFF8 0%, #FFF6E9 100%);
+  min-height: 100vh;
 }
 
 .admin-card {
-  background: #fff;
-  color: #212121;
-  border-radius: 12px;
-  padding: 12px 16px;
+  background: #FFFFFF;
+  color: #6D4C41;
+  border: 2px solid #FFC107;
+  border-radius: 16px;
+  padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.15);
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.15s ease;
+  transition: all 0.3s ease;
+  margin-bottom: 16px;
 }
 
 .admin-card:hover {
-  transform: scale(1.01);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(255, 193, 7, 0.25);
+  border-color: #FFB300;
 }
 
 .card-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
 .card-icon {
-  font-size: 20px;
+    font-size: 28px;
+    color: #FFC107;
+}
+
+.card-title {
+    font-weight: 600;
+    font-size: 18px;
+    color: #6D4C41;
 }
 
 .card-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #444;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .card-count {
-  font-weight: 500;
+    font-weight: 600;
+    font-size: 18px;
+    color: #6D4C41;
+    background: #FFF6E9;
+    padding: 6px 12px;
+    border-radius: 20px;
+    min-width: 32px;
+    text-align: center;
 }
 
 .card-arrow {
-  font-size: 18px;
+    font-size: 24px;
+    color: #FFC107;
+    transition: transform 0.3s ease;
+}
+
+.admin-card:hover .card-arrow {
+    transform: translateX(4px);
 }
 
 
@@ -1093,139 +1118,388 @@ h3 {
 
 /* Overdue task compact layout */
 .overdue-task {
-  background: #2A2B32;
-  border: 1px solid var(--border-dark);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-top: 8px;
-  color: white;
+  background: #FFFFFF;
+  border: 2px solid #FFC107;
+  border-left: 6px solid #D32F2F;
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 12px;
+  color: #6D4C41;
   font-size: 14px;
+  box-shadow: 0 3px 8px rgba(255, 193, 7, 0.2);
+  transition: all 0.3s ease;
+}
+.overdue-task:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
 }
 .overdue-task .task-title {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 16px;
   margin: 0;
+  color: #D32F2F;
 }
 .overdue-task .task-info {
   font-style: italic;
   font-size: 13px;
-  color: #ccc;
-  margin-top: 4px;
+  color: #795548;
+  margin-top: 6px;
 }
 
 
 
 .pending-task {
-  background: #2A2B32;
-  border: 1px solid var(--border-dark);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-top: 8px;
-  color: white;
+  background: #FFFFFF;
+  border: 2px solid #FFC107;
+  border-left: 6px solid #FF9800;
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 12px;
+  color: #6D4C41;
   font-size: 14px;
+  box-shadow: 0 3px 8px rgba(255, 193, 7, 0.2);
+  transition: all 0.3s ease;
+}
+.pending-task:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
 }
 .pending-task .task-title {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 16px;
   margin: 0;
+  color: #FF9800;
 }
 .pending-task .task-info {
   font-style: italic;
   font-size: 13px;
-  color: #ccc;
-  margin-top: 4px;
+  color: #795548;
+  margin-top: 6px;
 }
 .pending-task .task-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 8px;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
 }
 
 
 
 /* Reward Request Styles */
 .reward-request {
-    background: #2A2B32;
-    border: 1px solid var(--border-dark);
-    border-radius: 10px;
-    padding: 10px 12px;
-    margin-top: 8px;
-    color: white;
+    background: #FFFFFF;
+    border: 2px solid #FFC107;
+    border-left: 6px solid #4CAF50;
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 12px;
+    color: #6D4C41;
     font-size: 14px;
+    box-shadow: 0 3px 8px rgba(255, 193, 7, 0.2);
+    transition: all 0.3s ease;
+}
+.reward-request:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
 }
 .reward-request .request-title {
     font-weight: 600;
-    font-size: 15px;
+    font-size: 16px;
     margin: 0;
+    color: #4CAF50;
 }
 .reward-request .request-info {
     font-style: italic;
     font-size: 13px;
-    color: #ccc;
-    margin-top: 4px;
+    color: #795548;
+    margin-top: 6px;
 }
 .reward-request .request-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 8px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
 }
 .reward-request .approve-btn {
-    background-color: #4CAF50;
+    background: #4CAF50;
     color: white;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 6px;
+    padding: 10px 20px;
+    border: 2px solid #4CAF50;
+    border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.reward-request .approve-btn:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
 }
 .reward-request .decline-btn {
-    background-color: #D32F2F;
+    background: #D32F2F;
     color: white;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 6px;
+    padding: 10px 20px;
+    border: 2px solid #D32F2F;
+    border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.reward-request .decline-btn:hover {
+    background: #c62828;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
 }
 
 
 
 
 .your-task {
-    background: #2A2B32;
-    border: 1px solid var(--border-dark);
-    border-radius: 10px;
-    padding: 10px 12px;
-    margin-top: 8px;
-    color: white;
+    background: #FFFFFF;
+    border: 2px solid #FFC107;
+    border-left: 6px solid #2196F3;
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 12px;
+    color: #6D4C41;
     font-size: 14px;
+    box-shadow: 0 3px 8px rgba(255, 193, 7, 0.2);
+    transition: all 0.3s ease;
+}
+.your-task:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
 }
 .your-task .task-title {
     font-weight: 600;
-    font-size: 15px;
+    font-size: 16px;
     margin: 0;
+    color: #2196F3;
 }
 .your-task .task-info {
     font-style: italic;
     font-size: 13px;
-    color: #ccc;
-    margin-top: 4px;
+    color: #795548;
+    margin-top: 6px;
 }
 
 
 
 .complete-btn {
-    background-color: #4CAF50;
+    background: #4CAF50;
     color: white;
-    padding: 8px;
-    border: none;
-    border-radius: 6px;
+    border: 2px solid #4CAF50;
+    padding: 10px 20px;
+    border-radius: 8px;
     cursor: pointer;
-    margin-top: 8px;
     font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 12px;
 }
 .complete-btn:hover {
-    background-color: #333;
+    background: #45a049;
+    border-color: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+/* As Needed Task Styles */
+.as-needed-task {
+    background: #FFFFFF;
+    border: 2px solid #FFC107;
+    border-left: 6px solid #9C27B0;
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 12px;
+    color: #6D4C41;
+    font-size: 14px;
+    box-shadow: 0 3px 8px rgba(255, 193, 7, 0.2);
+    transition: all 0.3s ease;
+}
+.as-needed-task:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+.as-needed-task .task-title {
+    font-weight: 600;
+    font-size: 16px;
+    margin: 0;
+    color: #9C27B0;
+}
+.as-needed-task .task-info {
+    font-style: italic;
+    font-size: 13px;
+    color: #795548;
+    margin-top: 6px;
+}
+.as-needed-task .task-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+/* Activate/Deactivate buttons for As Needed tasks */
+.activate-btn {
+    background: #FF9800;
+    color: white;
+    border: 2px solid #FF9800;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.activate-btn:hover {
+    background: #f57c00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+}
+
+.deactivate-btn {
+    background: #607D8B;
+    color: white;
+    border: 2px solid #607D8B;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.deactivate-btn:hover {
+    background: #546e7a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(96, 125, 139, 0.4);
+}
+
+/* General task list container styling */
+.task-list {
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #FFC107 #f5f5f5;
+}
+
+.task-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.task-list::-webkit-scrollbar-track {
+    background: #f5f5f5;
+    border-radius: 3px;
+}
+
+.task-list::-webkit-scrollbar-thumb {
+    background: #FFC107;
+    border-radius: 3px;
+}
+
+.task-list::-webkit-scrollbar-thumb:hover {
+    background: #FFB300;
+}
+
+/* Admin sections container */
+#adminSections {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    background: #FFFFF8;
+}
+
+/* Action buttons styling */
+.accept-btn, .decline-btn, .replace-btn, .revert-btn {
+    padding: 10px 20px;
+    border: 2px solid;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 8px;
+}
+
+.accept-btn {
+    background: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
+}
+
+.accept-btn:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.decline-btn {
+    background: #D32F2F;
+    color: white;
+    border-color: #D32F2F;
+}
+
+.decline-btn:hover {
+    background: #c62828;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
+}
+
+.replace-btn {
+    background: #FF9800;
+    color: white;
+    border-color: #FF9800;
+}
+
+.replace-btn:hover {
+    background: #f57c00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+}
+
+.revert-btn {
+    background: #607D8B;
+    color: white;
+    border-color: #607D8B;
+}
+
+.revert-btn:hover {
+    background: #546e7a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(96, 125, 139, 0.4);
+}
+
+/* Edit button styling */
+.edit-btn {
+    background: #2196F3;
+    color: white;
+    border: 2px solid #2196F3;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.edit-btn:hover {
+    background: #1976d2;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
 }
 
 
@@ -1272,7 +1546,7 @@ h3 {
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div class="card-left">
                 <span class="card-icon">🕒</span>
-                <span class="card-title">Tasks Needing Approval 11</span>
+                <span class="card-title">Tasks Needing Approval</span>
               </div>
               <div class="card-right">
                 <span class="card-count" id="approvalCount">(0)</span>
