@@ -963,43 +963,119 @@ app.put("/api/tasks/future", async (req, res) => {
     }
 
     const tasks = admin.tasks || [];
-    const taskIndex = tasks.findIndex((task) => {
-      const taskStartDate = task.date.split(" to ")[0];
-      return (
-        task.title === originalTitle && taskStartDate === originalStartDate
+    
+    // Check if this is an occurrence group edit
+    if (modifiedTask.isOccurrenceGroupEdit && modifiedTask.totalOccurrences > 1) {
+      console.log(`🔍 BACKEND: Editing occurrence group for: ${originalTitle} with ${modifiedTask.totalOccurrences} occurrences`);
+      console.log(`🔍 BACKEND: Request body:`, JSON.stringify({ originalTitle, originalStartDate, splitDate, modifiedTask }, null, 2));
+      
+      // Find all related occurrence tasks
+      const relatedTasks = [];
+      for (let i = 0; i < tasks.length; i++) {
+        const task = tasks[i];
+        const taskStartDate = task.date.split(" to ")[0];
+        
+        // Check if this task is part of the occurrence group
+        const isRelated = (task.originalTitle === originalTitle || 
+                          (task.title && task.title.startsWith(originalTitle + " - "))) &&
+                         taskStartDate === originalStartDate;
+        
+        console.log(`🔍 BACKEND: Checking task "${task.title}" - originalTitle: ${task.originalTitle}, startDate: ${taskStartDate}, isRelated: ${isRelated}`);
+        
+        if (isRelated) {
+          relatedTasks.push({ task, index: i });
+        }
+      }
+      
+      console.log(`🔍 BACKEND: Found ${relatedTasks.length} related occurrence tasks`);
+      
+      if (relatedTasks.length === 0) {
+        console.log(`❌ BACKEND: No related occurrence tasks found for "${originalTitle}" starting on ${originalStartDate}`);
+        return res.status(404).json({ error: "No related occurrence tasks found" });
+      }
+      
+      // Process each related occurrence task
+      const newTasks = [];
+      const indicesToRemove = [];
+      
+      for (const { task, index } of relatedTasks) {
+        const originalRange = task.date.split(" to ");
+        const originalEnd = originalRange[1] || "3000-01-01";
+        
+        // Calculate the day before split date
+        const splitDateObj = new Date(splitDate);
+        splitDateObj.setDate(splitDateObj.getDate() - 1);
+        const dayBeforeSplit = splitDateObj.toISOString().split("T")[0];
+        
+        // Update the original task to end the day before the split date
+        tasks[index].date = `${originalRange[0]} to ${dayBeforeSplit}`;
+        
+        // Create new task for this occurrence starting from the split date
+        const newTask = {
+          ...modifiedTask,
+          title: task.title, // Preserve the occurrence-specific title
+          originalTitle: task.originalTitle || originalTitle,
+          occurrence: task.occurrence,
+          totalOccurrences: task.totalOccurrences,
+          users: task.users, // Preserve the occurrence-specific user assignment
+          currentTurnIndex: task.currentTurnIndex,
+          date: `${splitDate} to ${originalEnd}`,
+        };
+        
+        // Remove the isOccurrenceGroupEdit flag from the new task
+        delete newTask.isOccurrenceGroupEdit;
+        
+        newTasks.push(newTask);
+      }
+      
+      // Add all new tasks
+      tasks.push(...newTasks);
+      
+      await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
+      
+      console.log(`Occurrence group split successfully: ${relatedTasks.length} tasks processed`);
+      res.json({ success: true, message: `Occurrence group split successfully (${relatedTasks.length} tasks)` });
+      
+    } else {
+      // Regular single task future edit
+      const taskIndex = tasks.findIndex((task) => {
+        const taskStartDate = task.date.split(" to ")[0];
+        return (
+          task.title === originalTitle && taskStartDate === originalStartDate
+        );
+      });
+
+      if (taskIndex === -1) {
+        return res.status(404).json({ error: "Task not found" });
+      }
+
+      const originalTask = tasks[taskIndex];
+      const originalRange = originalTask.date.split(" to ");
+      const originalEnd = originalRange[1] || "3000-01-01";
+
+      // Calculate the day before split date for the original task's new end date
+      const splitDateObj = new Date(splitDate);
+      splitDateObj.setDate(splitDateObj.getDate() - 1);
+      const dayBeforeSplit = splitDateObj.toISOString().split("T")[0];
+
+      // Update the original task to end the day before the split date
+      tasks[taskIndex].date = `${originalRange[0]} to ${dayBeforeSplit}`;
+
+      // Create new task starting from the split date
+      const newTask = {
+        ...modifiedTask,
+        date: `${splitDate} to ${originalEnd}`,
+      };
+
+      tasks.push(newTask);
+
+      await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
+
+      console.log(
+        `Task split successfully: original ends ${dayBeforeSplit}, new starts ${splitDate}`,
       );
-    });
-
-    if (taskIndex === -1) {
-      return res.status(404).json({ error: "Task not found" });
+      res.json({ success: true, message: "Task split successfully" });
     }
-
-    const originalTask = tasks[taskIndex];
-    const originalRange = originalTask.date.split(" to ");
-    const originalEnd = originalRange[1] || "3000-01-01";
-
-    // Calculate the day before split date for the original task's new end date
-    const splitDateObj = new Date(splitDate);
-    splitDateObj.setDate(splitDateObj.getDate() - 1);
-    const dayBeforeSplit = splitDateObj.toISOString().split("T")[0];
-
-    // Update the original task to end the day before the split date
-    tasks[taskIndex].date = `${originalRange[0]} to ${dayBeforeSplit}`;
-
-    // Create new task starting from the split date
-    const newTask = {
-      ...modifiedTask,
-      date: `${splitDate} to ${originalEnd}`,
-    };
-
-    tasks.push(newTask);
-
-    await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
-
-    console.log(
-      `Task split successfully: original ends ${dayBeforeSplit}, new starts ${splitDate}`,
-    );
-    res.json({ success: true, message: "Task split successfully" });
   } catch (err) {
     console.error(`Error splitting task:`, err);
     res

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BeeMazing Add Task</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <script src="/BeeMazing-A1/redirect-interceptor.js"></script>
     <style>
     * {
         margin: 0;
@@ -1576,6 +1577,48 @@ input[name="monthlyOption"]:not(:checked) + .custom-radio > div {
                 </div>
             </div>
 
+            <!-- On-time Completion Important Toggle -->
+            <div class="form-group">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <label class="switch" style="flex-shrink: 0; margin-right: 15px;">
+                        <input type="checkbox" id="onTimeCompletionToggle">
+                        <span class="slider"></span>
+                    </label>
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; position: relative;">
+                        <label for="onTimeCompletionToggle" style="color: var(--text-color); font-weight: 600; cursor: pointer; flex: 1;">On-time completion important</label>
+                        <i id="onTimeCompletionInfo" style="
+                            font-size: 14px; 
+                            cursor: pointer; 
+                            border: 2px solid var(--text-color); 
+                            border-radius: 50%; 
+                            width: 20px; 
+                            height: 20px; 
+                            min-width: 20px;
+                            min-height: 20px;
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            font-style: normal; 
+                            font-weight: bold; 
+                            font-family: serif;
+                            transition: all 0.2s ease;
+                            background: var(--light-bg);
+                            color: var(--text-color);
+                            flex-shrink: 0;
+                        " 
+                        onmouseover="this.style.background='var(--primary-color)'; this.style.borderColor='var(--primary-color)'; this.style.color='var(--secondary-color)'" 
+                        onmouseout="this.style.background='var(--light-bg)'; this.style.borderColor='var(--text-color)'; this.style.color='var(--text-color)'"
+                        onclick="window.toggleOnTimeCompletionPopup(event)">i</i>
+                        
+                        <!-- Floating Popup -->
+                        <div id="onTimeCompletionPopup" class="info-popup">
+                            <strong>On-time completion important</strong><br><br>
+                            When you mark a task as 'On-time completion important', it indicates that the task has a strict deadline and should be completed by the specified due date/due time. Tasks with this label will appear in the 'Overdue' section if they are not completed on time, as completing them by the due date/time is critical.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="button-row">
                 <button type="submit" class="btn-save">SAVE</button>
                 <button type="button" class="btn-cancel" onclick="handleCancel()">CANCEL</button>
@@ -1765,10 +1808,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (editTask) {
+        // Update page title based on edit mode
+        const pageTitle = document.querySelector('.title');
+        if (editTask.isOccurrenceGroupEdit) {
+            pageTitle.textContent = "Edit All Occurrences";
+        } else if (isFutureEdit) {
+            pageTitle.textContent = "Edit Future Occurrences";
+        } else if (isOccurrenceEdit) {
+            pageTitle.textContent = "Edit This Occurrence";
+        } else {
+            pageTitle.textContent = "Edit Task";
+        }
+        
         // Set the full date range for the PUT request
         editTaskFullDate = editTask.date; // Assign value here
-        // Populate form for editing
-        document.getElementById("taskTitle").value = editTask.title || "";
+        // Populate form for editing - use original title if this is an occurrence task
+        const titleToEdit = editTask.originalTitle || editTask.title || "";
+        document.getElementById("taskTitle").value = titleToEdit;
         document.getElementById("taskNotes").value = editTask.notes || "";
         if (editTask.room) {
             selectedRooms = editTask.room.split(",").map(r => r.trim());
@@ -1831,9 +1887,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("fairRotationTimeBasedToggle").checked = editTask.fairRotationTimeBased || false;
         document.getElementById("fairRotationAdvanced").style.display = editTask.fairRotation ? "block" : "none";
         document.getElementById("parentApprovalToggle").checked = editTask.parentApproval !== undefined ? editTask.parentApproval : true;
+        document.getElementById("onTimeCompletionToggle").checked = editTask.onTimeCompletion || false;
 
-        // Handle times per day/week/month
-        document.getElementById("timesPerDayInput").value = editTask.timesPerDay || "1";
+        // Handle times per day/week/month - adjust for occurrence tasks
+        const timesPerDayValue = editTask.totalOccurrences || editTask.timesPerDay || "1";
+        document.getElementById("timesPerDayInput").value = timesPerDayValue;
         document.getElementById("timesPerWeekInput").value = editTask.timesPerWeek || "1";
         document.getElementById("timesPerMonthInput").value = editTask.timesPerMonth || "1";
         document.getElementById("monthIntervalInput").value = editTask.monthInterval || "1";
@@ -2689,6 +2747,19 @@ function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl)
             popup.classList.toggle('show');
         }
 
+        // On-time Completion Popup Toggle
+        function toggleOnTimeCompletionPopup(event) {
+            event.stopPropagation();
+            const popup = document.getElementById('onTimeCompletionPopup');
+            const isShowing = popup.classList.contains('show');
+            
+            if (!isShowing) {
+                positionPopup(popup, event.target);
+            }
+            
+            popup.classList.toggle('show');
+        }
+
         // Settings Popup Toggle
         function toggleSettingsPopup(event) {
             event.stopPropagation();
@@ -2708,6 +2779,8 @@ function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl)
             const parentIcon = document.getElementById('parentApprovalInfo');
             const settingsPopup = document.getElementById('settingsPopup');
             const settingsIcon = document.getElementById('settingsInfo');
+            const onTimePopup = document.getElementById('onTimeCompletionPopup');
+            const onTimeIcon = document.getElementById('onTimeCompletionInfo');
             
             if (parentPopup && parentIcon && !parentPopup.contains(event.target) && !parentIcon.contains(event.target)) {
                 parentPopup.classList.remove('show');
@@ -2716,11 +2789,16 @@ function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl)
             if (settingsPopup && settingsIcon && !settingsPopup.contains(event.target) && !settingsIcon.contains(event.target)) {
                 settingsPopup.classList.remove('show');
             }
+            
+            if (onTimePopup && onTimeIcon && !onTimePopup.contains(event.target) && !onTimeIcon.contains(event.target)) {
+                onTimePopup.classList.remove('show');
+            }
         });
 
         // Make functions globally available
         window.toggleParentApprovalPopup = toggleParentApprovalPopup;
         window.toggleSettingsPopup = toggleSettingsPopup;
+        window.toggleOnTimeCompletionPopup = toggleOnTimeCompletionPopup;
 
         // Custom setup for settings modal to handle rotation options
         const settingsModal = document.getElementById('settingsModal');
@@ -3020,6 +3098,31 @@ window.addEventListener("click", (e) => {
     }
 });
 
+// Add global URL monitoring to catch any unexpected navigation
+window.addEventListener('beforeunload', (e) => {
+    console.log("🔄 PAGE UNLOAD - Current URL:", window.location.href);
+    if (window.location.href.includes('taskz.html')) {
+        console.error("❌ LEAVING PAGE WITH taskz.html URL - This should not happen!");
+    }
+});
+
+// Monitor for any URL changes at the window level
+let lastUrl = window.location.href;
+new MutationObserver(() => {
+    const currentUrl = window.location.href;
+    if (currentUrl !== lastUrl) {
+        console.log("🔄 URL CHANGED:");
+        console.log("  - From:", lastUrl);
+        console.log("  - To:", currentUrl);
+        if (currentUrl.includes('taskz.html')) {
+            console.error("❌ URL CHANGED TO taskz.html - Attempting to fix...");
+            const correctUrl = currentUrl.replace('taskz.html', 'tasks.html');
+            window.location.replace(correctUrl);
+        }
+        lastUrl = currentUrl;
+    }
+}).observe(document, { subtree: true, childList: true });
+
 // Form submission handler - in global scope with access to global variables
 document.addEventListener("DOMContentLoaded", () => {
 document.getElementById("addTaskForm").addEventListener("submit", async function (event) {
@@ -3187,6 +3290,7 @@ const task = {
     fairRotation: document.getElementById("fairRotationToggle").checked || undefined,
     fairRotationTimeBased: (document.getElementById("fairRotationToggle").checked && document.getElementById("fairRotationTimeBasedToggle").checked) || undefined,
     parentApproval: document.getElementById("parentApprovalToggle").checked,
+    onTimeCompletion: document.getElementById("onTimeCompletionToggle").checked,
     // alarms: alarms.length > 0 ? alarms : undefined,  // COMMENTED OUT
     timesPerDay: repeat === "Daily" ? timesPerDay : undefined,
     timesPerWeek: repeat === "Weekly" ? timesPerWeek : undefined,
@@ -3205,15 +3309,51 @@ const task = {
     pendingCompletions: settings === "Rotation" ? {} : undefined
 };
 
-console.log("Task being saved:", JSON.stringify(task, null, 2));
-console.log("🐛 DEBUG SAVE: As Needed task details:", {
-    repeat: task.repeat,
-    asNeeded: task.asNeeded,
-    activated: task.activated,
-    settings: task.settings,
-    users: task.users,
-    currentTurnIndex: task.currentTurnIndex
-});
+// Generate separate tasks for multiple daily occurrences
+const tasksToSave = [];
+
+if (repeat === "Daily" && timesPerDay > 1) {
+    // Create separate tasks for each daily occurrence
+    for (let occurrence = 1; occurrence <= timesPerDay; occurrence++) {
+        const occurenceTask = {
+            ...task,
+            title: `${task.title} - ${occurrence}${getOrdinalSuffix(occurrence)}`,
+            originalTitle: task.title, // Store original title for grouping
+            occurrence: occurrence,
+            totalOccurrences: timesPerDay,
+            timesPerDay: 1, // Each occurrence is now a single daily task
+            // For rotation tasks, adjust user assignment
+            users: settings === "Rotation" ? [getRotationUserForOccurrence(task.users, occurrence - 1)] : task.users,
+            currentTurnIndex: settings === "Rotation" ? ((occurrence - 1) % task.users.length) : task.currentTurnIndex
+        };
+        tasksToSave.push(occurenceTask);
+    }
+} else {
+    // Single task (no multiple daily occurrences)
+    tasksToSave.push(task);
+}
+
+function getOrdinalSuffix(num) {
+    // Handle special cases for 11th, 12th, 13th
+    if (num % 100 >= 11 && num % 100 <= 13) {
+        return "th";
+    }
+    
+    // Handle regular cases
+    switch (num % 10) {
+        case 1: return "st";
+        case 2: return "nd";
+        case 3: return "rd";
+        default: return "th";
+    }
+}
+
+function getRotationUserForOccurrence(users, index) {
+    return users[index % users.length];
+}
+
+console.log("Tasks being saved:", JSON.stringify(tasksToSave, null, 2));
+console.log("🐛 DEBUG SAVE: Generated", tasksToSave.length, "task(s) for", repeat, "frequency");
 
 const currentAdmin = localStorage.getItem("currentAdminEmail");
 const urlParams = new URLSearchParams(window.location.search);
@@ -3230,64 +3370,111 @@ if (!originalUser) {
 
 try {
     const url = "https://beemazing1.onrender.com/api/tasks";
-    let body;
-    let method = "POST";
-    let endpoint = "https://beemazing1.onrender.com/api/tasks";
-
+    
     if (isOccurrenceEdit && targetDate && originalStartDate && editTask) {
         // Single occurrence edit
-        method = "PUT";
-        endpoint = "https://beemazing1.onrender.com/api/tasks/occurrence";
-        body = {
-            adminEmail: currentAdmin,
-            originalTitle: editTask.title,
-            originalStartDate: originalStartDate,
-            targetDate: targetDate,
-            modifiedTask: task
-        };
+        const response = await fetch("https://beemazing1.onrender.com/api/tasks/occurrence", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                adminEmail: currentAdmin,
+                originalTitle: editTask.title,
+                originalStartDate: originalStartDate,
+                targetDate: targetDate,
+                modifiedTask: tasksToSave[0] // Use first task from array
+            })
+        });
+        
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
+        alert("Single occurrence updated successfully!");
+        
     } else if (isFutureEdit && splitDate && originalStartDate && editTask) {
         // Future occurrences edit (split task)
-        method = "PUT";
-        endpoint = "https://beemazing1.onrender.com/api/tasks/future";
-        body = {
+        let originalTitleToUse = editTask.title;
+        let modifiedTaskToSend = tasksToSave[0];
+        
+        // Check if this is an occurrence group edit
+        if (editTask.isOccurrenceGroupEdit && editTask.originalTitle) {
+            console.log("🚀 FRONTEND: Setting up occurrence group edit");
+            originalTitleToUse = editTask.originalTitle;
+            modifiedTaskToSend = {
+                ...tasksToSave[0],
+                isOccurrenceGroupEdit: true,
+                totalOccurrences: editTask.totalOccurrences
+            };
+            console.log("🚀 FRONTEND: Group edit data:", {
+                originalTitle: originalTitleToUse,
+                totalOccurrences: editTask.totalOccurrences,
+                isOccurrenceGroupEdit: true
+            });
+        } else {
+            console.log("🚀 FRONTEND: Regular future edit");
+        }
+        
+        const requestBody = {
             adminEmail: currentAdmin,
-            originalTitle: editTask.title,
+            originalTitle: originalTitleToUse,
             originalStartDate: originalStartDate,
             splitDate: splitDate,
-            modifiedTask: task
+            modifiedTask: modifiedTaskToSend
         };
+        
+        console.log("🚀 FRONTEND: Sending future edit request:", JSON.stringify(requestBody, null, 2));
+        
+        const response = await fetch("https://beemazing1.onrender.com/api/tasks/future", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody)
+        });
+        
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
+        alert(editTask.isOccurrenceGroupEdit ? "All occurrences updated successfully!" : "Future occurrences updated successfully!");
+        
     } else if (editTitle && editDate) {
-        // Original edit mode
-        method = "PUT";
-        body = {
-            adminEmail: currentAdmin,
-            task,
-            originalTitle: editTitle,
-            originalDate: editTaskFullDate
-        };
+        // Original edit mode - update single task
+        const response = await fetch("https://beemazing1.onrender.com/api/tasks", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                adminEmail: currentAdmin,
+                task: tasksToSave[0], // Use first task from array
+                originalTitle: editTitle,
+                originalDate: editTaskFullDate
+            })
+        });
+        
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
+        alert("Task updated successfully!");
+        
     } else {
-        // New task
-        body = { adminEmail: currentAdmin, task };
+        // New task(s) - save all generated tasks
+        let savedCount = 0;
+        for (const taskToSave of tasksToSave) {
+            const response = await fetch("https://beemazing1.onrender.com/api/tasks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    adminEmail: currentAdmin,
+                    task: taskToSave
+                })
+            });
+            
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
+            savedCount++;
+        }
+        
+        if (tasksToSave.length > 1) {
+            alert(`Tasks saved successfully! Created ${savedCount} daily occurrences.`);
+        } else {
+            alert("Task saved successfully!");
+        }
     }
 
-    const response = await fetch(endpoint, {
-        method: method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-    });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
-
-    console.log("Server response:", data);
-
-    if (isOccurrenceEdit) {
-        alert("Single occurrence updated successfully!");
-    } else if (isFutureEdit) {
-        alert("Future occurrences updated successfully!");
-    } else {
-        alert("Task saved successfully!");
-    }
+    console.log("Server response: All tasks saved successfully");
 
     // Store task title in localStorage if coming from onboarding
     if (from === "onboarding") {
@@ -3300,13 +3487,109 @@ try {
 
     // Redirect back to the original user's tasks.html or onboarding
     const adminEmail = encodeURIComponent(currentAdmin || "");
+    
+    let redirectUrl;
     if (from === "onboarding") {
-        window.location.href = `/BeeMazing-A1/onboarding.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}#step4`;
+        redirectUrl = `/BeeMazing-A1/onboarding.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}#step4`;
     } else if (isOccurrenceEdit || isFutureEdit) {
-        // Redirect back to taskz.html for specific date views
-        window.location.href = `/BeeMazing-A1/taskz.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}`;
+        // Redirect back to tasks.html for specific date views
+        redirectUrl = `/BeeMazing-A1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}`;
     } else {
-        window.location.href = `/BeeMazing-A1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}`;
+        redirectUrl = `/BeeMazing-A1/mobile/3-Tasks/tasks.html?admin=${adminEmail}&user=${encodeURIComponent(originalUser)}`;
+    }
+    
+    // Debug logging to track redirect
+    console.log("🔄 REDIRECT DEBUG:");
+    console.log("  - isOccurrenceEdit:", isOccurrenceEdit);
+    console.log("  - isFutureEdit:", isFutureEdit);
+    console.log("  - from:", from);
+    console.log("  - adminEmail:", currentAdmin);
+    console.log("  - originalUser:", originalUser);
+    console.log("  - Final redirect URL:", redirectUrl);
+    console.log("  - About to redirect to:", redirectUrl);
+    
+    // Add cache busting parameter to prevent browser caching issues
+    const timestamp = Date.now();
+    const separator = redirectUrl.includes('?') ? '&' : '?';
+    const finalUrl = `${redirectUrl}${separator}t=${timestamp}`;
+    
+    console.log("  - Final URL with cache busting:", finalUrl);
+    console.log("  - Current page URL:", window.location.href);
+    
+    // Monitor URL changes to detect if browser changes the URL
+    const originalHref = window.location.href;
+    let urlChangeDetected = false;
+    
+    // Set up monitoring before redirect
+    const urlMonitor = setInterval(() => {
+        if (window.location.href !== originalHref && !urlChangeDetected) {
+            urlChangeDetected = true;
+            console.log("🚨 URL CHANGE DETECTED:");
+            console.log("  - Original:", originalHref);
+            console.log("  - Current:", window.location.href);
+            console.log("  - Expected:", finalUrl);
+            
+            if (window.location.href.includes('taskz.html')) {
+                console.error("❌ PROBLEM FOUND: Browser navigated to taskz.html instead of tasks.html!");
+                console.error("  - This suggests browser autocomplete or bookmark issue");
+                
+                // Force correct redirect
+                const correctUrl = window.location.href.replace('taskz.html', 'tasks.html');
+                console.log("  - Forcing redirect to correct URL:", correctUrl);
+                window.location.replace(correctUrl);
+            }
+            clearInterval(urlMonitor);
+        }
+    }, 100);
+    
+    // Clear monitor after 5 seconds
+    setTimeout(() => clearInterval(urlMonitor), 5000);
+    
+    console.log("  - Setting window.location.href to:", finalUrl);
+    
+    // Force correct URL by explicitly checking and preventing taskz.html
+    if (finalUrl.includes('taskz.html')) {
+        console.error("❌ CRITICAL: finalUrl contains taskz.html - fixing immediately!");
+        finalUrl = finalUrl.replace('taskz.html', 'tasks.html');
+        console.log("  - Corrected finalUrl:", finalUrl);
+    }
+    
+    // Use multiple redirect methods to ensure it works
+    try {
+        // First method: Direct assignment with validation
+        const urlBeforeSet = window.location.href;
+        window.location.href = finalUrl;
+        
+        // Immediate verification
+        setTimeout(() => {
+            if (window.location.href.includes('taskz.html')) {
+                console.error("❌ Method 1 failed - using replace method");
+                const correctUrl = finalUrl.replace('taskz.html', 'tasks.html');
+                window.location.replace(correctUrl);
+            }
+        }, 5);
+        
+        // Secondary verification
+        setTimeout(() => {
+            if (window.location.href.includes('taskz.html')) {
+                console.error("❌ Method 2 failed - forcing correct navigation");
+                // Build completely fresh URL to avoid any cached references
+                const params = new URLSearchParams();
+                params.append('admin', encodeURIComponent(currentAdmin || ""));
+                params.append('user', encodeURIComponent(originalUser));
+                params.append('t', Date.now().toString());
+                
+                const freshUrl = `/BeeMazing-A1/mobile/3-Tasks/tasks.html?${params.toString()}`;
+                console.log("  - Using fresh URL:", freshUrl);
+                window.location.assign(freshUrl);
+            }
+        }, 50);
+        
+    } catch (error) {
+        console.error("❌ Redirect failed:", error);
+        // Final fallback
+        const fallbackUrl = `/BeeMazing-A1/mobile/3-Tasks/tasks.html?admin=${encodeURIComponent(currentAdmin || "")}&user=${encodeURIComponent(originalUser)}&fallback=1`;
+        window.location.assign(fallbackUrl);
     }
 
 } catch (error) {

@@ -1,773 +1,196 @@
-<script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
-
-<script>
-
-
-// Append admin and user query parameters to Home link
-document.addEventListener("DOMContentLoaded", () => {
-const homeLink = document.getElementById("homeLink");
-const urlParams = new URLSearchParams(window.location.search);
-const admin = urlParams.get("admin");
-const user = urlParams.get("user");
-if (admin && user) {
-    homeLink.href = `/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
-}
-});
-
-
-
-
-
-// Verify taskrotations.js load
-fetch("/BeeMazing-A1/shared/taskrotations.js?t=" + Date.now(), { method: "HEAD" })
-.then(response => {
-    if (!response.ok) {
-        console.error(`Failed to fetch taskrotations.js: HTTP ${response.status}`);
-    } else {
-        console.log("taskrotations.js is accessible");
-    }
-})
-.catch(err => console.error("Error fetching taskrotations.js:", err));
-
-
-
-
-
-if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undefined') {
-console.error("taskrotations.js failed to load or does not contain mixedTurnData/individualTurnData");
-} else {
-console.log("taskrotations.js loaded successfully");
-}
-
-    // Dynamically highlight the active footer icon
-    document.querySelectorAll('.footer a').forEach(link => {
-        const currentPath = window.location.pathname.replace(/\/$/, '');
-        const linkPath = new URL(link.href).pathname.replace(/\/$/, '');
-        if (currentPath === linkPath) {
-            link.classList.add('active');
-        } else {
-            link.classList.remove('active');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting to Tasks...</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-    });
-    
-    // Helper to format dates as YYYY-MM-DD
-    const formatDate = (d) => d.toISOString().split("T")[0];
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // Load tasks for a specific date
-    async function loadTasksForDate(selectedDate) {
-const adminEmail = localStorage.getItem("currentAdminEmail");
-if (!adminEmail) {
-    document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">No admin email found 🌙</div>`;
-    return;
-}
-
-try {
-    const response = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: `HTTP error ${response.status}` }));
-        throw new Error(`Failed to fetch tasks: ${errorData.error || response.statusText}`);
-    }
-    const result = await response.json();
-    const tasks = result.tasks || [];
-    for (const task of tasks) {
-        if (!task.title || !task.date || !Array.isArray(task.users)) {
-            console.warn("Found invalid task, deleting:", task);
-            await deleteInvalidTask(task);
+        .redirect-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
         }
-    }
-
-    const taskList = document.getElementById("taskList");
-    taskList.innerHTML = "";
-
-    const visibleTasks = filterTasksForDate(tasks, selectedDate);
-
-    if (visibleTasks.length === 0) {
-        taskList.innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">No tasks for this day 🌙</div>`;
-        return;
-    }
-
-    visibleTasks.forEach((task) => {
-        const taskDiv = document.createElement("div");
-        taskDiv.className = "task-item";
-        taskDiv.dataset.taskTitle = task.title;
-        taskDiv.dataset.taskDate = task.date;
-
-        if (!Array.isArray(task.users) || task.users.length === 0) {
-            task.users = ["Unknown"];
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
         }
-
-        // Check if this is a modified occurrence
-        const isModified = task.isModified || false;
-        const modificationIndicator = isModified ? ' <span style="color: #ffeb3b; font-size: 12px;">📝 Modified</span>' : '';
-
-        let taskHTML = `<strong>${task.title}${modificationIndicator}</strong>`;
-        let turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
-
-        if (task.settings?.includes("Rotation")) {
-            if (typeof mixedTurnData !== 'function') {
-                console.error(`mixedTurnData is not defined for task: ${task.title}. Check if taskrotations.js loaded and inspect console for errors.`);
-                taskHTML += `<br><em style="color:#ff4444;">Error: Rotation calculation unavailable. See console for details.</em>`;
-            } else {
-                // Validate task data before calling mixedTurnData
-                let rotationError = null;
-                if (!task.date || typeof task.date !== "string") {
-                    rotationError = "Invalid or missing task date";
-                } else if (!task.users || !Array.isArray(task.users) || task.users.length === 0) {
-                    rotationError = "Invalid or empty task users";
-                } else if (task.repeat === "Daily" && (!Number.isInteger(task.timesPerDay) || task.timesPerDay <= 0)) {
-                    rotationError = "Invalid times per day for Daily task";
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <script>
+        // Immediate redirect to prevent any script loading issues
+        (function() {
+            'use strict';
+            
+            // Prevent any external scripts from trying to execute
+            window.stop && window.stop();
+            
+            console.log('🔄 taskz.html accessed - immediate redirect in progress');
+            console.log('📍 Current URL:', window.location.href);
+            console.log('📍 Referrer:', document.referrer);
+            console.log('📍 User Agent:', navigator.userAgent);
+            
+            // Clear any problematic browser storage that might cause this redirect
+            try {
+                // Clear any localStorage entries that might contain taskz.html
+                const keysToCheck = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    keysToCheck.push(localStorage.key(i));
                 }
-
-                if (rotationError) {
-                    console.error(`Error processing Rotation task "${task.title}" on ${selectedDate}: ${rotationError}`, task);
-                    taskHTML += `<br><em style="color:#ff4444;">Error: ${rotationError}. See console for details.</em>`;
-                } else {
-                    try {
-                        turnData = mixedTurnData(task, selectedDate);
-                        console.log(`Rotation task "${task.title}" on ${selectedDate}:`, turnData);
-                        if (turnData.turns.length === 0) {
-                            taskHTML += `<br><em style="color:#ff4444;">Error: No rotation turns available. Check task configuration.</em>`;
-                        } else {
-                            const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
-                            const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
-                            const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : "—";
-                            taskHTML += `
-                                <br><em>Rotation Task</em>
-                                <br>Turn: ${currentTurn}
-                                <br>Next: ${nextUser}
-                                <div class="task-progress">Progress: ${turnData.completedCount}/${turnData.requiredTimes}</div>
-                            `;
-                        }
-                    } catch (err) {
-                        console.error(`Error processing Rotation task "${task.title}" on ${selectedDate}:`, err, task);
-                        taskHTML += `<br><em style="color:#ff4444;">Error: Unable to calculate rotation (${err.message}). See console for details.</em>`;
+                
+                keysToCheck.forEach(key => {
+                    const value = localStorage.getItem(key);
+                    if (value && value.includes('taskz.html')) {
+                        console.log('🧹 Cleaning localStorage key:', key, 'value:', value);
+                        localStorage.setItem(key, value.replace(/taskz\.html/g, 'tasks.html'));
                     }
+                });
+                
+                // Clear sessionStorage entries too
+                const sessionKeysToCheck = [];
+                for (let i = 0; i < sessionStorage.length; i++) {
+                    sessionKeysToCheck.push(sessionStorage.key(i));
                 }
-            }
-        } else if (task.settings?.includes("Individual")) {
-            if (typeof individualTurnData !== 'function') {
-                console.error(`individualTurnData is not defined for task: ${task.title}`);
-                taskHTML += `<br><em style="color:#ff4444;">Error: Progress calculation unavailable</em>`;
-            } else {
-                try {
-                    turnData = individualTurnData(task, selectedDate);
-                    taskHTML += `<br><em>Individual Task</em>`;
-                    task.users.forEach(user => {
-                        const userTurns = turnData.turns.filter(t => t.user === user);
-                        const count = userTurns.filter(t => t.isCompleted || t.isPending).length;
-                        const required = turnData.requiredTimes;
-                        const check = count >= required ? '✅' : '';
-                        taskHTML += `<br>${user}: ${count}/${required} ${check}`;
-                    });
-                } catch (err) {
-                    console.error(`Error processing Individual task "${task.title}" on ${selectedDate}:`, err, task);
-                    taskHTML += `<br><em style="color:#ff4444;">Error: Unable to calculate progress (${err.message}). See console for details.</em>`;
-                }
-            }
-        } else {
-            taskHTML += `<br><em style="color:#aaa;">No rotation</em>`;
-        }
-
-        taskDiv.innerHTML = taskHTML + `<div class="delete-btn">Delete</div>`;
-
-        taskDiv.addEventListener("click", async (e) => {
-            if (taskDiv.dataset.swiping === "true") {
-                taskDiv.dataset.swiping = "false";
-                return;
+                
+                sessionKeysToCheck.forEach(key => {
+                    const value = sessionStorage.getItem(key);
+                    if (value && value.includes('taskz.html')) {
+                        console.log('🧹 Cleaning sessionStorage key:', key, 'value:', value);
+                        sessionStorage.setItem(key, value.replace(/taskz\.html/g, 'tasks.html'));
+                    }
+                });
+                
+            } catch (e) {
+                console.error('Storage cleanup error:', e);
             }
             
-            if (!e.target.classList.contains("delete-btn")) {
-                const latest = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-                const latestResult = await latest.json();
-                // Use the original task reference if this is a modified occurrence
-                const latestTask = task.originalTask || latestResult.tasks.find(t => t.title === task.title && t.date === task.date);
-                if (latestTask) showTaskDetails(latestTask);
+            // Get current URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const admin = urlParams.get('admin');
+            const user = urlParams.get('user');
+            
+            // Log analysis
+            console.log('🔍 Analysis:');
+            console.log('  - Admin:', admin);
+            console.log('  - User:', user);
+            console.log('  - All params:', Object.fromEntries(urlParams.entries()));
+            
+            // Build correct tasks URL with all parameters preserved
+            let correctUrl = '/BeeMazing-A1/mobile/3-Tasks/tasks.html';
+            const params = new URLSearchParams();
+            
+            if (admin) params.append('admin', admin);
+            if (user) params.append('user', user);
+            
+            // Preserve any other parameters
+            for (const [key, value] of urlParams.entries()) {
+                if (key !== 'admin' && key !== 'user') {
+                    params.append(key, value);
+                }
             }
-        });
-
-        taskDiv.querySelector(".delete-btn").addEventListener("click", async (e) => {
-            e.stopPropagation();
-            if (confirm("Are you sure you want to delete this entire task? This will affect all past and future occurrences.")) {
-                await deleteTaskFromBackend(task.title, task.date);
-                loadTasksForDate(selectedDate);
+            
+            // Add debug timestamp
+            params.append('debug_redirect_from_taskz', Date.now().toString());
+            
+            if (params.toString()) {
+                correctUrl += '?' + params.toString();
             }
-        });
-
-        taskList.appendChild(taskDiv);
-        enableSwipeToDelete(taskDiv);
-    });
-} catch (err) {
-    console.error("Error loading tasks:", err, { adminEmail, selectedDate });
-    document.getElementById("taskList").innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">Error loading tasks: ${err.message}</div>`;
-}
-}
-
-
-
-
-
-
-
-
-
-
-
-async function showTaskDetails(task) {
-const selectedDate = document.querySelector(".day.selected")?.dataset.date;
-if (!selectedDate) return;
-
-const userOrder = task.users && Array.isArray(task.users) ? [...task.users] : [];
-
-let taskDetails = `
-    <strong>Title:</strong> ${task.title}<br>
-    ${task.notes ? `<strong>Notes:</strong> ${task.notes}<br>` : ""}
-    ${task.room ? `<strong>Room:</strong> ${task.room}<br>` : ""}
-    <strong>Frequency:</strong> ${task.repeat || "Daily"}
-    ${task.repeat === "Daily" && task.timesPerDay ? ` - ${task.timesPerDay} time(s)/day` : ""}
-    ${task.repeat === "Weekly" && task.timesPerWeek ? ` - ${task.timesPerWeek} time(s)/week` : ""}
-    ${task.repeat === "Monthly" && task.timesPerMonth ? ` - ${task.timesPerMonth} time(s)/month` : ""}
-    <br>
-    <strong>Date:</strong> ${task.date || "Unknown"}<br>
-    <strong>Users:</strong> ${userOrder.join(", ") || "None"}<br>
-    ${task.reward && task.reward !== "0" ? `<strong>Reward:</strong> ${task.reward} 🍯<br>` : ""}
-`;
-
-let turnData = { turns: [], completedCount: 0, requiredTimes: 1 };
-if (task.settings?.includes("Rotation")) {
-    if (typeof mixedTurnData !== 'function') {
-        console.error(`mixedTurnData is not defined for task: ${task.title}. Check if taskrotations.js loaded and inspect console for errors.`);
-        taskDetails += `<em style="color:#ff4444;">Error: Rotation calculation unavailable. See console for details.</em><br>`;
-    } else {
-        let rotationError = null;
-        if (!task.date || typeof task.date !== "string") {
-            rotationError = "Invalid or missing task date";
-        } else if (!task.users || !Array.isArray(task.users) || task.users.length === 0) {
-            rotationError = "Invalid or empty task users";
-        } else if (task.repeat === "Daily" && (!Number.isInteger(task.timesPerDay) || task.timesPerDay <= 0)) {
-            rotationError = "Invalid times per day for Daily task";
-        }
-
-        if (rotationError) {
-            console.error(`Error processing Rotation task "${task.title}" on ${selectedDate} in showTaskDetails: ${rotationError}`, task);
-            taskDetails += `<em style="color:#ff4444;">Error: ${rotationError}. See console for details.</em><br>`;
-        } else {
+            
+            console.log('✅ Redirecting to:', correctUrl);
+            console.error('❌ taskz.html should not be accessed - this indicates:');
+            console.error('  1. Browser autocomplete suggestion');
+            console.error('  2. Cached bookmark');
+            console.error('  3. Hardcoded link somewhere');
+            console.error('  4. Form action pointing to wrong URL');
+            
+            // Multiple redirect methods to ensure it works
             try {
-                turnData = mixedTurnData(task, selectedDate);
-                console.log(`Rotation task "${task.title}" details on ${selectedDate}:`, turnData);
-                if (turnData.turns.length === 0) {
-                    taskDetails += `<em style="color:#ff4444;">Error: No rotation turns available. Check task configuration.</em><br>`;
-                } else {
-                    const currentTurn = turnData.turns.find(t => !t.isCompleted && !t.isPending)?.user || "All done!";
-                    const nextTurnIndex = turnData.turns.findIndex(t => !t.isCompleted && !t.isPending) + 1;
-                    const nextUser = nextTurnIndex < turnData.turns.length ? turnData.turns[nextTurnIndex]?.user : "—";
-                    taskDetails += `
-                        <strong>Settings:</strong> Rotation<br>
-                        <strong>Current Turn:</strong> ${currentTurn}<br>
-                        <strong>Next:</strong> ${nextUser}<br>
-                        <div class="task-progress">Progress: ${turnData.completedCount}/${turnData.requiredTimes}</div>
+                // First try: replace (doesn't add to history)
+                window.location.replace(correctUrl);
+            } catch (e) {
+                console.error('Replace failed:', e);
+                try {
+                    // Second try: href assignment
+                    window.location.href = correctUrl;
+                } catch (e2) {
+                    console.error('Href assignment failed:', e2);
+                    // Third try: assign method
+                    window.location.assign(correctUrl);
+                }
+            }
+            
+            // Fallback: Show user a clickable link
+            setTimeout(function() {
+                const container = document.querySelector('.redirect-container');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="spinner"></div>
+                        <h2>Redirecting...</h2>
+                        <p>If you're not redirected automatically, <a href="${correctUrl}" style="color: #FFD700; text-decoration: underline;">click here</a></p>
+                        <p style="margin-top: 20px; font-size: 0.9em; opacity: 0.8;">
+                            <strong>To prevent this:</strong><br>
+                            • Clear your browser's autocomplete for this site<br>
+                            • Update bookmarks to use tasks.html instead of taskz.html<br>
+                            • Check browser history and remove taskz.html entries
+                        </p>
                     `;
                 }
-            } catch (err) {
-                console.error(`Error processing Rotation task "${task.title}" on ${selectedDate} in showTaskDetails:`, err, task);
-                taskDetails += `<em style="color:#ff4444;">Error: Unable to calculate rotation (${err.message}). See console for details.</em><br>`;
-            }
+            }, 500);
+            
+        })();
+        
+        // Override common problematic functions to prevent errors
+        window.addEventListener = function() { /* no-op */ };
+        document.addEventListener = function() { /* no-op */ };
+        document.getElementById = function() { return null; };
+        document.querySelector = function() { return null; };
+        document.querySelectorAll = function() { return []; };
+        
+        // Prevent any scripts from the parent page from executing
+        if (window.parent && window.parent !== window) {
+            window.parent.location.replace(correctUrl);
         }
-    }
-} else if (task.settings?.includes("Individual")) {
-    if (typeof individualTurnData !== 'function') {
-        console.error(`individualTurnData is not defined for task: ${task.title}`);
-        taskDetails += `<em style="color:#ff4444;">Error: Progress calculation unavailable</em><br>`;
-    } else {
-        try {
-            turnData = individualTurnData(task, selectedDate);
-            taskDetails += `<strong>Settings:</strong> Individual<br><strong>Progress:</strong><br>`;
-            task.users.forEach(user => {
-                const userTurns = turnData.turns.filter(t => t.user === user);
-                const count = userTurns.filter(t => t.isCompleted || t.isPending).length;
-                const required = turnData.requiredTimes;
-                const check = count >= required ? '✅' : '';
-                taskDetails += `${user}: ${count}/${required} ${check}<br>`;
-            });
-        } catch (err) {
-            console.error(`Error processing Individual task "${task.title}" on ${selectedDate} in showTaskDetails:`, err, task);
-            taskDetails += `<em style="color:#ff4444;">Error: Unable to calculate progress (${err.message}). See console for details.</em><br>`;
-        }
-    }
-} else {
-    taskDetails += `<em style="color:#aaa;">No rotation logic for this task</em><br>`;
-}
-
-const completedUsers = Array.isArray(task.completions?.[selectedDate]) ? task.completions[selectedDate] : [];
-const uniqueUsers = [...new Set(completedUsers)];
-if (uniqueUsers.length > 0) {
-    taskDetails += `
-        <div style="margin-top: 8px;">
-            <strong>Completed by:</strong> ${uniqueUsers.join(", ")}
-        </div>
-    `;
-}
-
-taskDetails += `
-    <br>
-    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button id="editOccurrenceBtn" style="padding: 6px 10px; background: var(--secondary-color); color: var(--accent-color); font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">Edit This Occurrence</button>
-        <button id="editFutureBtn" style="padding: 6px 10px; background: var(--primary-color); color: white; font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">Edit Future Occurrences</button>
-        <button id="deleteOccurrenceBtn" style="padding: 6px 10px; background: #ff4444; color: white; font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">Delete This Occurrence</button>
-        <button id="editTaskBtn" style="padding: 6px 10px; background: var(--secondary-color); color: var(--accent-color); font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">Edit Entire Task</button>
-    </div>
-`;
-
-const modal = document.createElement("div");
-modal.className = "task-modal";
-modal.innerHTML = `<div class="modal-content">${taskDetails}</div>`;
-document.body.appendChild(modal);
-
-modal.addEventListener("click", (e) => {
-    if (e.target.classList.contains("task-modal")) modal.remove();
-});
-
-// Edit single occurrence
-document.getElementById("editOccurrenceBtn").addEventListener("click", () => {
-    const modifiedTask = { ...task };
-    // Mark this as a single occurrence edit
-    modifiedTask.isOccurrenceEdit = true;
-    modifiedTask.targetDate = selectedDate;
-    modifiedTask.originalStartDate = task.date.split(" to ")[0];
-    localStorage.setItem("familyApp_editTask", JSON.stringify(modifiedTask));
-    localStorage.setItem("familyApp_editTask_index", task.title + "-" + task.date + "-occurrence");
-    window.location.href = "/BeeMazing-A1/mobile/3-Tasks/addtasks.html";
-});
-
-// Edit future occurrences
-document.getElementById("editFutureBtn").addEventListener("click", () => {
-    const modifiedTask = { ...task };
-    // Mark this as a future edit (split task)
-    modifiedTask.isFutureEdit = true;
-    modifiedTask.splitDate = selectedDate;
-    modifiedTask.originalStartDate = task.date.split(" to ")[0];
-    localStorage.setItem("familyApp_editTask", JSON.stringify(modifiedTask));
-    localStorage.setItem("familyApp_editTask_index", task.title + "-" + task.date + "-future");
-    window.location.href = "/BeeMazing-A1/mobile/3-Tasks/addtasks.html";
-});
-
-// Delete single occurrence
-document.getElementById("deleteOccurrenceBtn").addEventListener("click", async () => {
-    if (confirm(`Are you sure you want to delete this task occurrence on ${selectedDate}? This will only affect this specific date.`)) {
-        modal.remove();
-        await deleteSingleOccurrence(task.title, selectedDate, task.date.split(" to ")[0]);
-        loadTasksForDate(selectedDate);
-    }
-});
-
-// Edit entire task (original functionality)
-document.getElementById("editTaskBtn").addEventListener("click", () => {
-    localStorage.setItem("familyApp_editTask", JSON.stringify(task));
-    localStorage.setItem("familyApp_editTask_index", task.title + "-" + task.date);
-    window.location.href = "/BeeMazing-A1/mobile/3-Tasks/addtasks.html";
-});
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // Handle task completion and turn advancement
-// ✅ Handle task completion and turn advancement
-async function finishTask(userName, task, button, selectedDate) {
-const adminEmail = localStorage.getItem("currentAdminEmail");
-const todayStr = selectedDate || new Date().toISOString().split("T")[0];
-
-try {
-    const res = await fetch("https://beemazing1.onrender.com/api/complete-task", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            adminEmail,
-            taskTitle: task.title,
-            user: userName,
-            date: todayStr
-        })
-    });
-
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.error || "Failed to complete task");
-
-    const rewardAmount = result.updatedTask.reward || 0;
-
-    // ✅ Trigger reward animation if available
-    if (typeof triggerHoneyRain === 'function') triggerHoneyRain(rewardAmount);
-
-    // ✅ Refresh task and user data after slight delay to allow DB sync
-    if (typeof loadTasksForDate === 'function') {
-        setTimeout(() => loadTasksForDate(todayStr), 150);
-    }
-    if (typeof loadUserTasks === 'function') loadUserTasks(userName, todayStr);
-    if (typeof loadUserReward === 'function') loadUserReward(userName);
-
-} catch (err) {
-    console.error("❌ Error completing task:", err);
-    alert("Failed to finish task. Please try again.");
-}
-}
-
-
-
-
-
-
-
-    // Delete a task from the backend
-    async function deleteTaskFromBackend(title, date) {
-        const adminEmail = localStorage.getItem("currentAdminEmail");
-        console.log("Deleting task with:", { adminEmail, title, date });
-        if (!adminEmail) {
-            alert("No admin email found.");
-            return;
-        }
-    
-        const startDate = date.split(" to ")[0];
-    
-        const maxRetries = 2;
-        let attempt = 0;
-    
-        while (attempt <= maxRetries) {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 seconds timeout
-    
-            try {
-                const response = await fetch(
-                    `https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(title)}&date=${encodeURIComponent(startDate)}`,
-                    {
-                        method: "DELETE",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        signal: controller.signal
-                    }
-                );
-    
-                clearTimeout(timeoutId);
-    
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(`Failed to delete task: ${errorData.error || response.statusText}`);
-                }
-    
-                console.log("Task deleted successfully");
-                return;
-            } catch (error) {
-                clearTimeout(timeoutId);
-                attempt++;
-                if (attempt > maxRetries) {
-                    console.error("Error deleting task after retries:", error);
-                    alert(`Failed to delete task: ${error.message}`);
-                    return;
-                }
-                console.log(`Retrying delete request (${attempt}/${maxRetries})...`);
-                await new Promise(resolve => setTimeout(resolve, 2000));
-            }
-        }
-    }
-    
-    // Save a task to the backend
-    async function saveTaskToBackend(task) {
-        const adminEmail = localStorage.getItem("currentAdminEmail");
-        if (!adminEmail) {
-            alert("No admin email found.");
-            return;
-        }
-    
-        try {
-            const response = await fetch("https://beemazing1.onrender.com/api/tasks", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    adminEmail,
-                    task
-                })
-            });
-    
-            if (!response.ok) {
-                throw new Error("Failed to save task to backend");
-            }
-        } catch (error) {
-            console.error("Error saving task:", error);
-            alert("Failed to save task. Please try again.");
-        }
-    }
-    
-
-
-
-
-    // Generate scrollable date picker
-    function generateScrollableDates(monthOffset = 0) {
-        const container = document.getElementById("dayScrollContainer");
-        container.innerHTML = "";
-    
-        const today = new Date();
-        today.setDate(1);
-        today.setMonth(today.getMonth() + monthOffset);
-    
-        const currentMonth = today.getMonth();
-        const currentYear = today.getFullYear();
-    
-        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    
-        document.getElementById("monthLabel").textContent = today.toLocaleDateString(undefined, {
-            month: 'long',
-            year: 'numeric'
-        });
-    
-        for (let i = 1; i <= daysInMonth; i++) {
-            const date = new Date(currentYear, currentMonth, i);
-            const btn = document.createElement("div");
-            btn.className = "day";
-            btn.textContent = i;
-            btn.dataset.date = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    
-            btn.addEventListener("click", () => {
-                document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-                btn.classList.add("selected");
-                loadTasksForDate(btn.dataset.date);
-            });
-    
-            const now = new Date();
-            if (date.toDateString() === now.toDateString()) {
-                btn.classList.add("selected");
-            }
-    
-            container.appendChild(btn);
-        }
-    
-        setTimeout(() => {
-const selected = document.querySelector(".day.selected");
-if (selected) {
-    selected.scrollIntoView({ behavior: "smooth", inline: "center" });
-    loadTasksForDate(selected.dataset.date); // 🐝 <-- Automatically load today's tasks
-}
-}, 50);
-
-
-
-    }
-    
-    // Initialize date navigation
-    let monthOffset = 0;
-    document.getElementById("prevMonth").addEventListener("click", () => {
-        monthOffset--;
-        generateScrollableDates(monthOffset);
-    });
-    
-    document.getElementById("nextMonth").addEventListener("click", () => {
-        monthOffset++;
-        generateScrollableDates(monthOffset);
-    });
-
-
-    if (!localStorage.getItem("currentAdminEmail")) {
-const email = prompt("Please enter your admin email:");
-if (email) {
-    localStorage.setItem("currentAdminEmail", email.trim());
-}
-}
-
-
-    
-    generateScrollableDates();
-    
-    document.getElementById("scrollLeft").addEventListener("click", () => {
-        document.getElementById("dayScrollContainer").scrollBy({
-            left: -200,
-            behavior: "smooth"
-        });
-    });
-    
-    document.getElementById("scrollRight").addEventListener("click", () => {
-        document.getElementById("dayScrollContainer").scrollBy({
-            left: 200,
-            behavior: "smooth"
-        });
-    });
-
-
-
-
-
-    function enableSwipeToDelete(taskElement) {
-let startX = 0;
-let currentX = 0;
-let isSwiping = false;
-let isTap = true;
-let startTime = 0;
-
-const swipeThreshold = 80; // 🐝 Now needs to move 80px left to trigger swipe (was too small before)
-const tapMoveThreshold = 10; // small movements = tap
-const maxTapTime = 300; // milliseconds
-
-const onStart = (x) => {
-startX = x;
-currentX = x;
-isSwiping = true;
-isTap = true;
-startTime = Date.now();
-taskElement.style.transition = 'none';
-};
-
-const onMove = (x, e) => {
-if (!isSwiping) return;
-currentX = x;
-const deltaX = currentX - startX;
-
-if (Math.abs(deltaX) > tapMoveThreshold) {
-isTap = false;
-e.preventDefault(); // stop scrolling
-taskElement.dataset.swiping = "true"; // 🐝 Mark swiping
-}
-
-
-if (deltaX < 0) { // Only allow swipe left
-  taskElement.style.transform = `translateX(${deltaX}px)`;
-}
-};
-
-const onEnd = (e) => {
-if (!isSwiping) return;
-isSwiping = false;
-
-const deltaX = currentX - startX;
-const elapsedTime = Date.now() - startTime;
-taskElement.style.transition = 'transform 0.2s ease';
-
-if (deltaX < -swipeThreshold) {
-  // Real swipe left detected
-  taskElement.classList.add('swiped-left');
-  taskElement.style.transform = 'translateX(-100px)';
-} else {
-  // Not enough swipe, snap back
-  taskElement.classList.remove('swiped-left');
-  taskElement.style.transform = 'translateX(0)';
-}
-
-// If tap, and clicked on delete-btn, trigger it
-if (isTap && elapsedTime < maxTapTime && e.target.classList.contains('delete-btn')) {
-  e.target.click();
-}
-};
-
-// Touch Events
-taskElement.addEventListener('touchstart', (e) => onStart(e.touches[0].clientX));
-taskElement.addEventListener('touchmove', (e) => onMove(e.touches[0].clientX, e));
-taskElement.addEventListener('touchend', (e) => onEnd(e));
-
-// Mouse Events (Desktop)
-taskElement.addEventListener('mousedown', (e) => {
-e.preventDefault();
-onStart(e.clientX);
-});
-taskElement.addEventListener('mousemove', (e) => {
-if (e.buttons === 1) onMove(e.clientX, e);
-});
-taskElement.addEventListener('mouseup', (e) => onEnd(e));
-taskElement.addEventListener('mouseleave', () => {
-if (isSwiping) onEnd({});
-});
-}
-
-
-
-
-async function deleteSingleOccurrence(title, date, originalStartDate) {
-    const adminEmail = localStorage.getItem("currentAdminEmail");
-    console.log("Deleting single occurrence with:", { adminEmail, title, date, originalStartDate });
-    if (!adminEmail) {
-        alert("No admin email found.");
-        return;
-    }
-
-    const maxRetries = 2;
-    let attempt = 0;
-
-    while (attempt <= maxRetries) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 90000);
-
-        try {
-            const response = await fetch(
-                `https://beemazing1.onrender.com/api/tasks/occurrence?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(title)}&date=${encodeURIComponent(date)}&originalStartDate=${encodeURIComponent(originalStartDate)}`,
-                {
-                    method: "DELETE",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    signal: controller.signal
-                }
-            );
-
-            clearTimeout(timeoutId);
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`Failed to delete occurrence: ${errorData.error || response.statusText}`);
-            }
-
-            console.log("Task occurrence deleted successfully");
-            alert("Task occurrence deleted successfully");
-            return;
-        } catch (error) {
-            clearTimeout(timeoutId);
-            attempt++;
-            if (attempt > maxRetries) {
-                console.error("Error deleting task occurrence after retries:", error);
-                alert(`Failed to delete task occurrence: ${error.message}`);
-                return;
-            }
-            console.log(`Retrying delete occurrence request (${attempt}/${maxRetries})...`);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-        }
-    }
-}
-
-async function deleteInvalidTask(title, date) {
-const adminEmail = localStorage.getItem("currentAdminEmail");
-if (!adminEmail) return;
-
-const startDate = task.date?.split(" to ")[0] || "";
-try {
-await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(task.title || "")}&date=${encodeURIComponent(startDate)}`, {
-  method: "DELETE",
-  headers: { "Content-Type": "application/json" }
-});
-console.log("Deleted invalid task:", task.title);
-} catch (error) {
-console.error("Error deleting invalid task:", error);
-}
-}
-
+        
     </script>
-
+</head>
+<body>
+    <div class="redirect-container">
+        <div class="spinner"></div>
+        <h2>Redirecting to Tasks...</h2>
+        <p>Please wait while we redirect you to the correct page.</p>
+    </div>
+    
+    <!-- Prevent any external scripts from loading -->
+    <script>
+        // Block any additional script loading
+        const originalCreateElement = document.createElement;
+        document.createElement = function(tagName) {
+            if (tagName.toLowerCase() === 'script') {
+                console.log('🚫 Blocked script creation in taskz.html');
+                return { src: '', onload: function() {}, onerror: function() {} };
+            }
+            return originalCreateElement.call(document, tagName);
+        };
+    </script>
+</body>
+</html>
