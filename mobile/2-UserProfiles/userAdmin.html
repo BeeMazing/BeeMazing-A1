@@ -2998,6 +2998,7 @@ function generateScrollableDates(monthOffset = 0) {
       loadPendingTasks();
       loadYourTasks();
       loadPendingRewardRequests();
+      loadAsNeededTasks();
     });
 
     // Always mark today's date with the "today" class when it exists in current month view
@@ -3016,6 +3017,7 @@ function generateScrollableDates(monthOffset = 0) {
         loadPendingTasks();
         loadYourTasks();
         loadPendingRewardRequests();
+        loadAsNeededTasks();
       }
     }
 
@@ -3363,12 +3365,24 @@ async function reviewReward(requestIndex, decision) {
 
 
 // Call on page load and date change
-document.addEventListener("DOMContentLoaded", loadPendingRewardRequests);
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("🚀 Page loaded - initializing all admin sections...");
+    loadPendingTasks();
+    loadPendingRewardRequests();
+    loadOverdueTasks();
+    loadYourTasks();
+    loadAsNeededTasks();
+    console.log("✅ All admin sections initialized");
+});
 // Also call when selectedDate changes
 const originalGenerateScrollableDates = generateScrollableDates;
 generateScrollableDates = function(monthOffset = 0) {
     originalGenerateScrollableDates(monthOffset);
+    loadPendingTasks();
     loadPendingRewardRequests();
+    loadOverdueTasks();
+    loadYourTasks();
+    loadAsNeededTasks();
 };
 
 
