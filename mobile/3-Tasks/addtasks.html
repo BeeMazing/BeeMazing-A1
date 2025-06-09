@@ -1617,6 +1617,7 @@ input[name="monthlyOption"]:not(:checked) + .custom-radio > div {
                 <li data-value="Daily">Daily</li>
                 <li data-value="Weekly">Weekly</li>
                 <li data-value="Monthly">Monthly</li>
+                <li data-value="As Needed">As Needed</li>
             </ul>
         </div>
     </div>
@@ -3116,17 +3117,20 @@ if (isFutureEdit && !splitDate) {
 }
         
 if (!isOccurrenceEdit && !isFutureEdit) {
-    if (repeat === "One Time" && !singleDate) {
-        alert("Please select a date for this one-time task.");
-        return;
-    }
-    if (dateMode === "date" && repeat !== "One Time" && !dateFrom) {
-        alert("Please select a start date.");
-        return;
-    }
-    if (dateMode === "specific-dates" && !specificDates) {
-        alert("Please select at least one date.");
-        return;
+    // Skip date validations for As Needed tasks
+    if (repeat !== "As Needed") {
+        if (repeat === "One Time" && !singleDate) {
+            alert("Please select a date for this one-time task.");
+            return;
+        }
+        if (dateMode === "date" && repeat !== "One Time" && !dateFrom) {
+            alert("Please select a start date.");
+            return;
+        }
+        if (dateMode === "specific-dates" && !specificDates) {
+            alert("Please select at least one date.");
+            return;
+        }
     }
 }
 
@@ -3149,6 +3153,8 @@ if (isOccurrenceEdit) {
     dateValue = `${splitDate} to ${originalEnd}`;
 } else if (repeat === "One Time") {
     dateValue = `${singleDate} to ${singleDate}`;
+} else if (repeat === "As Needed") {
+    dateValue = ""; // No date for As Needed tasks
 } else if (repeat === "Monthly" && monthlyOption === "times") {
     const fromDate = monthlyDateFrom || new Date().toISOString().split("T")[0];
     const toDate = monthlyDateTo || "3000-01-01";
@@ -3191,10 +3197,21 @@ const task = {
     monthlyDaysOfWeek: repeat === "Monthly" && monthlyOption === "times" && document.getElementById("specificDaysOfWeekCheckbox").checked ? getMonthlyDaysOfWeekData() : undefined,
     monthlySchedulingType: repeat === "Monthly" && monthlyOption === "times" ? (document.getElementById("specificDaysOfMonthCheckbox").checked ? "daysOfMonth" : document.getElementById("specificDaysOfWeekCheckbox").checked ? "daysOfWeek" : null) : undefined,
     specificDates: dateMode === "specific-dates" ? specificDates : undefined,
-    daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? (selectedDays.includes("All") ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] : selectedDays) : (repeat === "Daily" ? ["All"] : ["Any"])) : undefined
+    daysOfWeek: dateMode === "date" && repeat !== "As Needed" ? (selectedDays.length > 0 ? (selectedDays.includes("All") ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] : selectedDays) : (repeat === "Daily" ? ["All"] : ["Any"])) : undefined,
+    asNeeded: repeat === "As Needed" ? true : undefined,
+    activated: repeat === "As Needed" ? false : undefined,
+    currentTurnIndex: repeat === "As Needed" && settings === "Rotation" ? 0 : undefined
 };
 
 console.log("Task being saved:", JSON.stringify(task, null, 2));
+console.log("🐛 DEBUG SAVE: As Needed task details:", {
+    repeat: task.repeat,
+    asNeeded: task.asNeeded,
+    activated: task.activated,
+    settings: task.settings,
+    users: task.users,
+    currentTurnIndex: task.currentTurnIndex
+});
 
 const currentAdmin = localStorage.getItem("currentAdminEmail");
 const urlParams = new URLSearchParams(window.location.search);
@@ -3332,6 +3349,14 @@ repeatModal.addEventListener('click', (e) => {
         timesPerWeekGroup.style.display = selected === "Weekly" ? "flex" : "none";
         timesPerMonthGroup.style.display = selected === "Monthly" ? "flex" : "none";
         
+        // Hide due time for As Needed tasks
+        const dueTimeContainer = document.getElementById("dueTimeContainer");
+        const dueTimeToggle = document.getElementById("dueTimeToggle");
+        if (selected === "As Needed") {
+            dueTimeToggle.checked = false;
+            dueTimeContainer.style.display = "none";
+        }
+        
         // Show/hide date UI based on frequency selection
         const monthlyTimesDateGroup = document.getElementById('monthlyTimesDateGroup');
         const monthlySchedulingOptions = document.getElementById('monthlySchedulingOptions');
@@ -3354,6 +3379,17 @@ repeatModal.addEventListener('click', (e) => {
             specificDatesGroupEl.style.display = 'none';
             monthlyTimesDateGroup.style.setProperty('display', 'none', 'important');
             monthlySchedulingOptions.style.setProperty('display', 'none', 'important');
+        } else if (selected === "As Needed") {
+            // Hide all date UI for As Needed tasks
+            generalDateModeSelector.style.display = 'none';
+            singleDateGroup.style.display = 'none';
+            fromToDateGroupEl.style.display = 'none';
+            specificDaysGroupEl.style.display = 'none';
+            specificDatesGroupEl.style.display = 'none';
+            monthlyTimesDateGroup.style.setProperty('display', 'none', 'important');
+            monthlySchedulingOptions.style.setProperty('display', 'none', 'important');
+            // Keep defaultDateSelector hidden for As Needed
+            defaultDateSelector.style.display = 'none';
         } else if (selected === "Monthly") {
             // Check which monthly option is selected
             const checkedMonthlyOption = document.querySelector('input[name="monthlyOption"]:checked');
@@ -3956,6 +3992,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentFrequency || currentFrequency === "") {
             // Show popup to select frequency first
             showFrequencyFirstPopup();
+        } else if (currentFrequency === "As Needed") {
+            // Show popup that As Needed tasks don't need date selection
+            showAsNeededInfoPopup();
         } else {
             // Frequency is selected, trigger the appropriate date UI
             const event = new Event('click');
@@ -4027,6 +4066,68 @@ function showFrequencyFirstPopup() {
     setTimeout(() => {
         if (popup.parentElement) {
             popup.remove();
+        }
+    }, 3000);
+}
+
+// Function to show info popup for As Needed tasks
+function showAsNeededInfoPopup() {
+    const popup = document.createElement('div');
+    popup.className = 'center-warning-popup';
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--light-bg);
+        border: 2px solid var(--primary-color);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        z-index: 10000;
+        text-align: center;
+        max-width: 300px;
+        width: 90%;
+    `;
+    
+    popup.innerHTML = `
+        <div style="font-size: 16px; font-weight: 600; color: var(--text-color); margin-bottom: 15px;">
+            As Needed Tasks
+        </div>
+        <div style="font-size: 14px; color: var(--text-color); opacity: 0.8;">
+            No date selection needed. These tasks can be activated anytime as required.
+        </div>
+    `;
+    
+    // Create backdrop overlay
+    const backdrop = document.createElement('div');
+    backdrop.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 9999;
+    `;
+    
+    // Make backdrop closable by clicking anywhere
+    backdrop.addEventListener('click', () => {
+        backdrop.remove();
+    });
+    
+    // Prevent popup from closing when clicking on the popup itself
+    popup.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+    
+    backdrop.appendChild(popup);
+    document.body.appendChild(backdrop);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        if (backdrop.parentElement) {
+            backdrop.remove();
         }
     }, 3000);
 }

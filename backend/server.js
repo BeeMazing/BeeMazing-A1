@@ -2366,6 +2366,128 @@ app.post("/api/complete-task", async (req, res) => {
   }
 });
 
+// ✅ Toggle As Needed task activation
+app.post("/api/toggle-as-needed-task", async (req, res) => {
+  const { adminEmail, title, activated } = req.body;
+
+  if (!adminEmail || !title || activated === undefined) {
+    return res.status(400).json({ error: "Missing adminEmail, title, or activated status" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const tasks = admin.tasks || [];
+    const taskIndex = tasks.findIndex(task => 
+      task.title === title && task.repeat === "As Needed" && task.asNeeded === true
+    );
+
+    if (taskIndex === -1) {
+      return res.status(404).json({ error: "As Needed task not found" });
+    }
+
+    // Update the activation status
+    tasks[taskIndex].activated = activated;
+
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { tasks } }
+    );
+
+    res.json({ 
+      success: true, 
+      message: `Task ${activated ? 'activated' : 'deactivated'} successfully` 
+    });
+  } catch (error) {
+    console.error("🔥 /api/toggle-as-needed-task: Error", error);
+    res.status(500).json({ error: `Server error: ${error.message}` });
+  }
+});
+
+// ✅ Complete As Needed task
+app.post("/api/complete-as-needed-task", async (req, res) => {
+  const { adminEmail, taskTitle, user, date } = req.body;
+
+  if (!adminEmail || !taskTitle || !user || !date) {
+    return res.status(400).json({ error: "Missing adminEmail, taskTitle, user, or date" });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const tasks = admin.tasks || [];
+    const taskIndex = tasks.findIndex(task => 
+      task.title === taskTitle && task.repeat === "As Needed" && task.asNeeded === true
+    );
+
+    if (taskIndex === -1) {
+      return res.status(404).json({ error: "As Needed task not found" });
+    }
+
+    const task = tasks[taskIndex];
+    
+    if (!task.activated) {
+      return res.status(400).json({ error: "Task is not activated" });
+    }
+
+    // Initialize task completion tracking if it doesn't exist
+    if (!task.completedDates) {
+      task.completedDates = {};
+    }
+    if (!task.completedDates[date]) {
+      task.completedDates[date] = [];
+    }
+
+    // Add completion record
+    const completionRecord = {
+      user: user,
+      completedAt: new Date().toISOString(),
+      reward: task.reward || 0
+    };
+
+    task.completedDates[date].push(completionRecord);
+
+    // Update rewards
+    const rewards = admin.rewards || {};
+    rewards[user] = (rewards[user] || 0) + (task.reward || 0);
+
+    // For rotation tasks, advance to next user
+    if (task.settings && task.settings.includes("Rotation") && task.users && task.users.length > 1) {
+      const currentUserIndex = task.users.indexOf(user);
+      const nextUserIndex = (currentUserIndex + 1) % task.users.length;
+      task.currentTurnIndex = nextUserIndex;
+    }
+
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { tasks, rewards } }
+    );
+
+    res.json({
+      success: true,
+      message: "As Needed task completed successfully",
+      reward: task.reward || 0,
+      nextUser: task.users && task.users.length > 1 ? task.users[task.currentTurnIndex || 0] : null
+    });
+
+  } catch (error) {
+    console.error("🔥 /api/complete-as-needed-task: Error", error);
+    res.status(500).json({ error: `Server error: ${error.message}` });
+  }
+});
+
 // ✅ Clean up invalid tasks for an admin
 app.post("/api/cleanup-invalid-tasks", async (req, res) => {
   const { adminEmail } = req.body;
