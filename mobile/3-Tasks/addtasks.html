@@ -3090,10 +3090,10 @@ if (settings === "Team Work") {
 }
 
 const reward = document.getElementById("buzzpointsToggle").checked ? document.getElementById("RewardValue").value : undefined;
-let timesPerDay = parseInt(document.getElementById("timesPerDayInput").value) || null;
-let timesPerWeek = parseInt(document.getElementById("timesPerWeekInput").value) || null;
-let timesPerMonth = parseInt(document.getElementById("timesPerMonthInput").value) || null;
-let monthInterval = parseInt(document.getElementById("monthIntervalInput").value) || null;
+let timesPerDay = parseInt(document.getElementById("timesPerDayInput").value) || 1;
+let timesPerWeek = parseInt(document.getElementById("timesPerWeekInput").value) || 1;
+let timesPerMonth = parseInt(document.getElementById("timesPerMonthInput").value) || 1;
+let monthInterval = parseInt(document.getElementById("monthIntervalInput").value) || 1;
 const specificDates = document.getElementById("specificDatesInput").value;
 
 // Validations
@@ -3200,7 +3200,9 @@ const task = {
     daysOfWeek: dateMode === "date" && repeat !== "As Needed" ? (selectedDays.length > 0 ? (selectedDays.includes("All") ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] : selectedDays) : (repeat === "Daily" ? ["All"] : ["Any"])) : undefined,
     asNeeded: repeat === "As Needed" ? true : undefined,
     activated: repeat === "As Needed" ? false : undefined,
-    currentTurnIndex: repeat === "As Needed" && settings === "Rotation" ? 0 : undefined
+    currentTurnIndex: settings === "Rotation" ? 0 : undefined,
+    completions: settings === "Rotation" ? {} : undefined,
+    pendingCompletions: settings === "Rotation" ? {} : undefined
 };
 
 console.log("Task being saved:", JSON.stringify(task, null, 2));

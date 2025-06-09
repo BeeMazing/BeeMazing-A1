@@ -351,13 +351,16 @@ function fairRotationTurnData(task, selectedDate) {
         }
 
         const repeat = task.repeat || "Daily";
-        const requiredTimes = repeat === "Monthly"
-            ? (Number.isInteger(task.timesPerMonth) ? task.timesPerMonth : 1)
-            : repeat === "Weekly"
-            ? (Number.isInteger(task.timesPerWeek) ? task.timesPerWeek : 1)
-            : repeat === "Daily"
-            ? (Number.isInteger(task.timesPerDay) ? task.timesPerDay : 1)
-            : 1;
+        let requiredTimes;
+        if (repeat === "Monthly") {
+            requiredTimes = Number.isInteger(task.timesPerMonth) && task.timesPerMonth > 0 ? task.timesPerMonth : 1;
+        } else if (repeat === "Weekly") {
+            requiredTimes = Number.isInteger(task.timesPerWeek) && task.timesPerWeek > 0 ? task.timesPerWeek : 1;
+        } else if (repeat === "Daily") {
+            requiredTimes = Number.isInteger(task.timesPerDay) && task.timesPerDay > 0 ? task.timesPerDay : 1;
+        } else {
+            requiredTimes = 1;
+        }
 
         // Get all completions for this task to calculate lifetime completion counts per user
         const allUserCompletions = {};
@@ -595,7 +598,9 @@ function mixedTurnData(task, selectedDate) {
             userPendingCounts[p.user] = (userPendingCounts[p.user] || 0) + 1;
         });
 
-        const userOrder = [...task.users];
+        const userOrder = task.rotationOrder && Array.isArray(task.rotationOrder) && task.rotationOrder.length > 0 
+            ? [...task.rotationOrder] 
+            : [...task.users];
         const assignedUsers = [...userOrder];
 
         Object.entries(tempTurnReplacement).forEach(([index, user]) => {
@@ -605,8 +610,16 @@ function mixedTurnData(task, selectedDate) {
             }
         });
 
-        const rotationOffset = mixedTurnOffset(task, selectedDate);
-        const currentTurnIndex = task.currentTurnIndex ?? rotationOffset;
+        let currentTurnIndex;
+        if (typeof task.currentTurnIndex === 'number') {
+            currentTurnIndex = task.currentTurnIndex;
+        } else if (typeof mixedTurnOffset === 'function') {
+            currentTurnIndex = mixedTurnOffset(task, selectedDate);
+        } else {
+            // Simple fallback rotation based on date
+            const dateValue = new Date(selectedDate).getTime();
+            currentTurnIndex = Math.floor(dateValue / (1000 * 60 * 60 * 24)) % assignedUsers.length;
+        }
 
         for (let i = 0; i < requiredTimes; i++) {
             const userIndex = (i + currentTurnIndex) % assignedUsers.length;

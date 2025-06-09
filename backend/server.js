@@ -2160,15 +2160,16 @@ app.post("/api/complete-task", async (req, res) => {
         .json({ error: "Task already submitted maximum times today" });
     }
 
-    const userList = task.users || [];
+    const userList = Array.isArray(task.users) ? task.users : [];
     const tempTurnReplacement =
       task.tempTurnReplacement?.[normalizedDate] || {};
+    const tempReplacementValues = Object.values(tempTurnReplacement || {});
     const assignedUsers = [
-      ...new Set([...userList, ...Object.values(tempTurnReplacement)]),
+      ...new Set([...userList, ...tempReplacementValues]),
     ];
     const isAssigned =
       userList.includes(user) ||
-      Object.values(tempTurnReplacement).includes(user);
+      tempReplacementValues.includes(user);
     if (!isAssigned) {
       console.error("🔥 /api/complete-task: User not assigned", {
         user,
@@ -2190,6 +2191,11 @@ app.post("/api/complete-task", async (req, res) => {
     ) {
       task.currentTurnIndex = assignedUsers.indexOf(user);
       if (task.currentTurnIndex === -1) task.currentTurnIndex = 0;
+    }
+
+    // Ensure rotationOrder exists for rotation tasks
+    if (isRotation && (!task.rotationOrder || !Array.isArray(task.rotationOrder))) {
+      task.rotationOrder = [...userList];
     }
 
     const history = admin.history || {};
@@ -2229,15 +2235,16 @@ app.post("/api/complete-task", async (req, res) => {
         const prevDateStr = prevDate.toISOString().split("T")[0];
         const prevCompletions = task.completions?.[prevDateStr] || [];
         const prevPending = task.pendingCompletions?.[prevDateStr] || [];
+        const prevTempReplacement = task.tempTurnReplacement?.[prevDateStr] || {};
         const prevAssignedUsers = [
           ...new Set([
             ...userList,
-            ...(task.tempTurnReplacement?.[prevDateStr] || {}),
+            ...Object.values(prevTempReplacement),
           ]),
         ];
-        const prevTurnIndex =
+        const prevTurnIndex = prevAssignedUsers.length > 0 ?
           (task.currentTurnIndex - 1 + prevAssignedUsers.length) %
-          prevAssignedUsers.length;
+          prevAssignedUsers.length : 0;
         const prevTurnUser = prevAssignedUsers[prevTurnIndex];
 
         if (
@@ -2250,8 +2257,8 @@ app.post("/api/complete-task", async (req, res) => {
             { prevTurnUser, prevDateStr },
           );
         } else {
-          task.currentTurnIndex =
-            (task.currentTurnIndex + 1) % assignedUsers.length;
+          task.currentTurnIndex = assignedUsers.length > 0 ?
+            (task.currentTurnIndex + 1) % assignedUsers.length : 0;
           console.log("🔍 /api/complete-task: Advanced turn", {
             taskTitle,
             currentTurnIndex: task.currentTurnIndex,
@@ -2264,8 +2271,8 @@ app.post("/api/complete-task", async (req, res) => {
           task.completions[normalizedDate].length +
           task.pendingCompletions[normalizedDate].length;
         if (totalCompletions >= requiredTimes) {
-          task.currentTurnIndex =
-            (task.currentTurnIndex + 1) % assignedUsers.length;
+          task.currentTurnIndex = assignedUsers.length > 0 ?
+            (task.currentTurnIndex + 1) % assignedUsers.length : 0;
           console.log(
             "🔍 /api/complete-task: Advanced turn after required completions",
             {
@@ -2297,15 +2304,16 @@ app.post("/api/complete-task", async (req, res) => {
         const prevDateStr = prevDate.toISOString().split("T")[0];
         const prevCompletions = task.completions?.[prevDateStr] || [];
         const prevPending = task.pendingCompletions?.[prevDateStr] || [];
+        const prevTempReplacement = task.tempTurnReplacement?.[prevDateStr] || {};
         const prevAssignedUsers = [
           ...new Set([
             ...userList,
-            ...(task.tempTurnReplacement?.[prevDateStr] || {}),
+            ...Object.values(prevTempReplacement),
           ]),
         ];
-        const prevTurnIndex =
+        const prevTurnIndex = prevAssignedUsers.length > 0 ?
           (task.currentTurnIndex - 1 + prevAssignedUsers.length) %
-          prevAssignedUsers.length;
+          prevAssignedUsers.length : 0;
         const prevTurnUser = prevAssignedUsers[prevTurnIndex];
 
         if (
@@ -2318,8 +2326,8 @@ app.post("/api/complete-task", async (req, res) => {
             { prevTurnUser, prevDateStr },
           );
         } else {
-          task.currentTurnIndex =
-            (task.currentTurnIndex + 1) % assignedUsers.length;
+          task.currentTurnIndex = assignedUsers.length > 0 ?
+            (task.currentTurnIndex + 1) % assignedUsers.length : 0;
           console.log("🔍 /api/complete-task: Advanced turn", {
             taskTitle,
             currentTurnIndex: task.currentTurnIndex,
@@ -2331,8 +2339,8 @@ app.post("/api/complete-task", async (req, res) => {
           task.completions[normalizedDate].length +
           task.pendingCompletions[normalizedDate].length;
         if (totalCompletions >= requiredTimes) {
-          task.currentTurnIndex =
-            (task.currentTurnIndex + 1) % assignedUsers.length;
+          task.currentTurnIndex = assignedUsers.length > 0 ?
+            (task.currentTurnIndex + 1) % assignedUsers.length : 0;
           console.log(
             "🔍 /api/complete-task: Advanced turn after required completions",
             {

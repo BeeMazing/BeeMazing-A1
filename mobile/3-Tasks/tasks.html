@@ -1447,10 +1447,11 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
         const result = await response.json();
         const tasks = result.tasks || [];
         for (const task of tasks) {
-            if (!task.title || !task.date || !Array.isArray(task.users)) {
-                console.warn("Found invalid task, deleting:", task);
-                await deleteInvalidTask(task);
+            if (!task.title || !Array.isArray(task.users) || task.users.length === 0) {
+                console.warn("Found invalid task, skipping:", task);
+                continue; // Skip instead of delete
             }
+            // Don't validate date field - As Needed tasks have empty dates
         }
 
         const taskList = document.getElementById("taskList");
@@ -1461,9 +1462,23 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
             visibleTasks = filterTasksForDate(tasks, selectedDate);
         } else {
             console.error("filterTasksForDate function not available - using fallback filtering");
-            // Fallback: simple date range filtering without exceptions
+            // Fallback: robust filtering that handles new task types
             visibleTasks = tasks.filter(task => {
+                // Handle As Needed tasks
+                if (task.asNeeded || task.repeat === "As Needed") {
+                    return task.activated === true;
+                }
+                
+                // Handle tasks without dates
                 if (!task.date) return false;
+                
+                // Handle specific dates
+                if (task.specificDates) {
+                    const specificDates = task.specificDates.split(",").map(d => d.trim());
+                    return specificDates.includes(selectedDate);
+                }
+                
+                // Handle date ranges
                 const range = task.date.split(" to ");
                 const from = new Date(range[0]);
                 const to = range[1] ? new Date(range[1]) : new Date(3000, 0, 1);
@@ -1505,8 +1520,11 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
                         rotationError = "Invalid or missing task date";
                     } else if (!task.users || !Array.isArray(task.users) || task.users.length === 0) {
                         rotationError = "Invalid or empty task users";
-                    } else if (task.repeat === "Daily" && (!Number.isInteger(task.timesPerDay) || task.timesPerDay <= 0)) {
-                        rotationError = "Invalid times per day for Daily task";
+                    } else if (task.repeat === "Daily") {
+                        if (!Number.isInteger(task.timesPerDay) || task.timesPerDay <= 0) {
+                            task.timesPerDay = 1; // Fix instead of error
+                            console.log(`Fixed timesPerDay for ${task.title}`);
+                        }
                     }
 
                     if (rotationError) {
