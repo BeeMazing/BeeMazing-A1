@@ -1315,9 +1315,6 @@ input[name="monthlyOption"]:not(:checked) + .custom-radio > div {
             <button type="button" class="day-btn" data-day="Sat">Sat</button>
             <button type="button" class="day-btn" data-day="Sun">Sun</button>
         </div>
-        <div style="font-size: 12px; color: #666; margin-top: 5px; text-align: center;" id="daySelectionHelp">
-            Daily: "All" = every day (Mon-Sun) | Weekly: "Any" = flexible scheduling
-        </div>
     </div>
 </div>
 
@@ -3430,8 +3427,6 @@ repeatModal.addEventListener('click', (e) => {
         // Update section label and Any/All button based on frequency
         const sectionLabel = document.getElementById("sectionLabel");
         const anyAllButton = document.getElementById("anyAllButton");
-        const daySelectionHelp = document.getElementById("daySelectionHelp");
-        
         // Ensure the day button update happens immediately
         if (anyAllButton) {
             if (selected === "Daily") {
@@ -3439,9 +3434,7 @@ repeatModal.addEventListener('click', (e) => {
                 anyAllButton.setAttribute("data-day", "All");
                 anyAllButton.setAttribute("title", "All 7 days (Mon-Sun)");
                 if (sectionLabel) sectionLabel.textContent = "Days";
-                if (daySelectionHelp) {
-                    daySelectionHelp.textContent = 'Daily: "All" = every day (Mon-Sun) | Individual days = specific days only';
-                }
+
                 // Convert Any to All if it's currently selected, or set default
                 if (selectedDays.includes("Any") || selectedDays.length === 0) {
                     selectedDays = ["All"];
@@ -3452,9 +3445,7 @@ repeatModal.addEventListener('click', (e) => {
                 anyAllButton.setAttribute("data-day", "Any");
                 anyAllButton.setAttribute("title", "Any day (flexible scheduling)");
                 if (sectionLabel) sectionLabel.textContent = "Dates";
-                if (daySelectionHelp) {
-                    daySelectionHelp.textContent = 'Weekly: "Any" = flexible scheduling | Individual days = specific days';
-                }
+
                 // Convert All to Any if it's currently selected, or set default
                 if (selectedDays.includes("All") || (selectedDays.length === 7 && ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].every(day => selectedDays.includes(day)))) {
                     selectedDays = ["Any"];
@@ -5264,17 +5255,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         
         // Set initial section label and Any/All button based on current frequency (default is "One Time")
-        const daySelectionHelp = document.getElementById("daySelectionHelp");
-        
         if (sectionLabel && anyAllButton) {
             if (repeatInput && repeatInput.value === "Daily") {
                 sectionLabel.textContent = "Days";
                 anyAllButton.textContent = "All";
                 anyAllButton.setAttribute("data-day", "All");
                 anyAllButton.setAttribute("title", "All 7 days (Mon-Sun)");
-                if (daySelectionHelp) {
-                    daySelectionHelp.textContent = 'Daily: "All" = every day (Mon-Sun) | Individual days = specific days only';
-                }
+
                 // Ensure "All" is selected for Daily by default
                 if (selectedDays.includes("Any")) {
                     selectedDays = ["All"];
@@ -5284,9 +5271,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 anyAllButton.textContent = "Any";
                 anyAllButton.setAttribute("data-day", "Any");
                 anyAllButton.setAttribute("title", "Any day (flexible scheduling)");
-                if (daySelectionHelp) {
-                    daySelectionHelp.textContent = 'Weekly: "Any" = flexible scheduling | Individual days = specific days';
-                }
+
                 // Ensure "Any" is selected for non-Daily by default
                 if (selectedDays.includes("All")) {
                     selectedDays = ["Any"];
