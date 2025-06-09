@@ -49,13 +49,7 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
-.menu-icon {
-position: absolute;
-left: 15px;
-font-size: 24px;
-color: #FFFFFF; /* white for menu icon */
-cursor: pointer;
-}
+
 
 .close-icon {
 position: absolute;
@@ -582,11 +576,13 @@ color: #ffcccc;
 /* Ensure calendar in modal is centered and sized appropriately */
 #specificDatesCalendar .flatpickr-calendar {
     background: var(--light-bg);
-    border: 2px solid var(--border-dark);
-    border-radius: 8px;
-    width: 100%;
-    max-width: 300px;
+    border: 2px solid var(--primary-color);
+    border-radius: 12px;
+    width: 280px;
+    max-width: 280px;
     margin: 0 auto;
+    box-shadow: 0 6px 20px rgba(255, 193, 7, 0.2);
+    font-size: 14px;
 }
 
 #specificDatesCalendar .flatpickr-day.selected,
@@ -612,69 +608,102 @@ color: #ffcccc;
 .flatpickr-calendar {
     background: var(--light-bg) !important;
     border: 2px solid var(--primary-color) !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.15) !important;
+    font-family: inherit !important;
 }
 
 .flatpickr-months {
-    background: var(--primary-color) !important;
-    border-radius: 8px 8px 0 0 !important;
+    background: var(--light-bg) !important;
+    border-radius: 12px 12px 0 0 !important;
+    border-bottom: 1px solid rgba(255, 193, 7, 0.2) !important;
+    padding: 15px 0 !important;
 }
 
 .flatpickr-month {
-    background: var(--primary-color) !important;
-    color: var(--secondary-color) !important;
+    background: transparent !important;
+    color: var(--text-color) !important;
 }
 
 .flatpickr-current-month .flatpickr-monthDropdown-months {
-    background: var(--primary-color) !important;
-    color: var(--secondary-color) !important;
+    background: var(--light-bg) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--primary-color) !important;
+    border-radius: 6px !important;
 }
 
 .flatpickr-current-month input.cur-year {
-    background: var(--primary-color) !important;
-    color: var(--secondary-color) !important;
+    background: var(--light-bg) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--primary-color) !important;
+    border-radius: 6px !important;
 }
 
 .flatpickr-prev-month, .flatpickr-next-month {
-    color: var(--secondary-color) !important;
+    color: var(--text-color) !important;
+    border-radius: 6px !important;
 }
 
 .flatpickr-prev-month:hover, .flatpickr-next-month:hover {
-    color: var(--text-color) !important;
-    background: rgba(255, 255, 255, 0.2) !important;
+    color: var(--primary-color) !important;
+    background: rgba(255, 193, 7, 0.1) !important;
 }
 
-.flatpickr-weekdays {
-    background: var(--accent-color) !important;
+#specificDatesCalendar .flatpickr-weekdays {
+    background: var(--light-bg) !important;
     color: var(--text-color) !important;
+    border-bottom: 1px solid rgba(255, 193, 7, 0.2) !important;
+    padding: 0 !important;
+    width: 280px !important;
 }
 
-.flatpickr-weekday {
-    background: var(--accent-color) !important;
+#specificDatesCalendar .flatpickr-weekday {
+    background: transparent !important;
     color: var(--text-color) !important;
     font-weight: 600 !important;
+    opacity: 0.8 !important;
+    font-size: 13px !important;
+    height: 30px !important;
+    line-height: 30px !important;
+    text-align: center !important;
+    width: 40px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
 }
 
-.flatpickr-days {
+#specificDatesCalendar .flatpickr-days {
     background: var(--light-bg) !important;
+    padding: 0 !important;
+    width: 280px !important;
 }
 
-.flatpickr-day {
+#specificDatesCalendar .flatpickr-day {
     background: var(--light-bg) !important;
     color: var(--text-color) !important;
     border: 1px solid transparent !important;
+    border-radius: 6px !important;
+    margin: 0 !important;
+    width: 40px !important;
+    height: 30px !important;
+    line-height: 30px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
 }
 
 .flatpickr-day:hover {
-    background: rgba(255, 193, 7, 0.1) !important;
+    background: rgba(255, 193, 7, 0.15) !important;
     border-color: var(--primary-color) !important;
+    color: var(--text-color) !important;
 }
 
 .flatpickr-day.selected {
     background: var(--primary-color) !important;
     border-color: var(--primary-color) !important;
     color: var(--secondary-color) !important;
+    font-weight: 600 !important;
 }
 
 .flatpickr-day.today {
@@ -690,12 +719,160 @@ color: #ffcccc;
 }
 
 .flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay {
-    color: rgba(109, 76, 65, 0.4) !important;
+    color: rgba(109, 76, 65, 0.3) !important;
     background: var(--light-bg) !important;
 }
 
 .flatpickr-day.prevMonthDay:hover, .flatpickr-day.nextMonthDay:hover {
     background: rgba(255, 193, 7, 0.05) !important;
+}
+
+/* Custom disabled state for weekly limit */
+.flatpickr-day.disabled-by-weekly-limit,
+.flatpickr-day[data-disabled-by-limit="true"] {
+    background: rgba(109, 76, 65, 0.05) !important;
+    color: rgba(109, 76, 65, 0.4) !important;
+    cursor: not-allowed !important;
+    opacity: 0.3 !important;
+    pointer-events: auto !important;
+    position: relative !important;
+}
+
+.flatpickr-day.disabled-by-weekly-limit:hover,
+.flatpickr-day[data-disabled-by-limit="true"]:hover {
+    background: rgba(109, 76, 65, 0.05) !important;
+    border-color: transparent !important;
+    color: rgba(109, 76, 65, 0.4) !important;
+}
+
+.flatpickr-day.disabled-by-weekly-limit:before,
+.flatpickr-day[data-disabled-by-limit="true"]:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    z-index: 10;
+    cursor: not-allowed;
+}
+
+/* Center popup warning */
+.center-warning-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--light-bg);
+    border: 2px solid var(--primary-color);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+    max-width: 350px;
+    text-align: center;
+    animation: popupFadeIn 0.3s ease-out;
+}
+
+@keyframes popupFadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.center-warning-popup .warning-icon {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background: var(--primary-color);
+    color: var(--secondary-color);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 24px;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.center-warning-popup .warning-text {
+    color: #6D4C41;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.4;
+    margin-bottom: 15px;
+}
+
+.center-warning-popup .warning-close {
+    background: var(--primary-color);
+    color: var(--secondary-color);
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.center-warning-popup .warning-close:hover {
+    opacity: 0.9;
+}
+
+/* Custom radio button styling for monthly options */
+input[name="monthlyOption"]:checked + .custom-radio {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+input[name="monthlyOption"]:checked + .custom-radio > div {
+    opacity: 1 !important;
+    background: var(--secondary-color) !important;
+}
+
+input[name="monthlyOption"]:not(:checked) + .custom-radio > div {
+    opacity: 0 !important;
+}
+
+/* Monthly option container hover effects */
+.monthly-option-container:hover {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2) !important;
+}
+
+/* Force vertical layout for monthly options - override form-group flex */
+#timesPerMonthGroup {
+    flex-direction: column !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+}
+
+/* Ensure monthly elements are hidden by default */
+#monthlyTimesDateGroup {
+    display: none !important;
+}
+
+#monthlySchedulingOptions {
+    display: none !important;
+}
+
+#timesPerMonthGroup > div {
+    width: 100% !important;
+    margin-bottom: 10px !important;
+}
+
+/* Remove any icons from modal headings */
+#specificDatesModal h3::before,
+#specificDatesModal h3::after,
+.fancy-modal h3::before,
+.fancy-modal h3::after {
+    display: none !important;
+    content: none !important;
 }
 
 .flatpickr-day.disabled {
@@ -978,7 +1155,6 @@ color: #ffcccc;
 </head>
 <body>
     <div class="header">
-        <i class="fas fa-bars menu-icon"></i>
         <div class="title">Add Task</div>
         <span class="close-icon" onclick="closeAddTask()">✕</span>
     </div>
@@ -1022,25 +1198,73 @@ color: #ffcccc;
             <!-- Weekly Frequency Input -->
 <div class="form-group" id="timesPerWeekGroup" style="display: none; background-color: rgba(255, 193, 7, 0.1); border: 2px solid var(--primary-color); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);">
     <label>Times per Week</label>
-    <input type="text" id="timesPerWeekInput" value="1" readonly
-    style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--primary-color); border-radius: 8px; background: var(--light-bg); font-size: 16px; cursor: pointer; color: var(--text-color); font-weight: 400;">
-    
-
+    <div style="display: flex; flex-wrap: nowrap; gap: 3px; justify-content: center; margin-top: 8px; overflow-x: auto;">
+        <button type="button" class="week-option-btn" data-value="1" style="min-width: 28px; width: 28px; height: 28px; border: 1px solid var(--primary-color); border-radius: 6px; background: var(--primary-color); color: var(--secondary-color); font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">1</button>
+        <button type="button" class="week-option-btn" data-value="2" style="min-width: 28px; width: 28px; height: 28px; border: 1px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">2</button>
+        <button type="button" class="week-option-btn" data-value="3" style="min-width: 28px; width: 28px; height: 28px; border: 1px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">3</button>
+        <button type="button" class="week-option-btn" data-value="4" style="min-width: 28px; width: 28px; height: 28px; border: 1px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">4</button>
+        <button type="button" class="week-option-btn" data-value="5" style="min-width: 28px; width: 28px; height: 28px; border: 1px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">5</button>
+        <button type="button" class="week-option-btn" data-value="6" style="min-width: 28px; width: 28px; height: 28px; border: 1px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">6</button>
+        <button type="button" class="week-option-btn" data-value="7" style="min-width: 28px; width: 28px; height: 28px; border: 1px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">7</button>
+    </div>
+    <input type="hidden" id="timesPerWeekInput" value="1">
 </div>
 
 <!-- Monthly Frequency Input -->
-<div class="form-group" id="timesPerMonthGroup" style="display: none; background-color: rgba(255, 193, 7, 0.1); border: 2px solid var(--primary-color); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);">
-    <label>Times per Month</label>
-    <input type="text" id="timesPerMonthInput" value="1" readonly
-style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--primary-color); border-radius: 8px; background: var(--light-bg); font-size: 16px; cursor: pointer; color: var(--text-color); font-weight: 400;">
-
-
+<div class="form-group" id="timesPerMonthGroup" style="display: none; background-color: rgba(255, 193, 7, 0.1); border: 2px solid var(--primary-color); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1); flex-direction: column !important; width: 100%; justify-content: flex-start !important;">
+    <label style="font-weight: 600; margin-bottom: 15px; display: block; text-align: center; color: var(--text-color); font-size: 16px;">Monthly Options</label>
+    
+    <!-- Option 1: Times per month -->
+    <div id="timesOption" style="background: var(--light-bg); border: 2px solid var(--primary-color); border-radius: 8px; padding: 12px; margin-bottom: 10px; transition: all 0.2s; box-shadow: 0 2px 6px rgba(255, 193, 7, 0.1); display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
+        <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1;">
+            <div style="position: relative; width: 20px; height: 20px;">
+                <input type="radio" name="monthlyOption" value="times" checked style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;">
+                <div class="custom-radio" style="width: 20px; height: 20px; border: 2px solid var(--primary-color); border-radius: 50%; background: var(--light-bg); position: relative; transition: all 0.2s;">
+                    <div style="width: 10px; height: 10px; background: var(--primary-color); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 1; transition: opacity 0.2s;"></div>
+                </div>
+            </div>
+            <span class="option-label" style="font-weight: 600; font-size: 15px; color: var(--text-color);">Times per month</span>
+        </label>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" id="decrementTimesMonth" style="width: 32px; height: 32px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">-</button>
+            <input type="number" id="timesPerMonthInput" value="1" min="1" max="31"
+            style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); font-size: 16px; color: var(--text-color); font-weight: 500;">
+            <button type="button" id="incrementTimesMonth" style="width: 32px; height: 32px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">+</button>
+        </div>
+    </div>
+    
+    <!-- Option 2: Once every X months -->
+    <div id="intervalOption" style="background: var(--light-bg); border: 2px solid rgba(255, 193, 7, 0.3); border-radius: 8px; padding: 12px; transition: all 0.2s; box-shadow: 0 2px 6px rgba(255, 193, 7, 0.05); display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
+        <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1;">
+            <div style="position: relative; width: 20px; height: 20px;">
+                <input type="radio" name="monthlyOption" value="interval" style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;">
+                <div class="custom-radio" style="width: 20px; height: 20px; border: 2px solid var(--primary-color); border-radius: 50%; background: var(--light-bg); position: relative; transition: all 0.2s;">
+                    <div style="width: 10px; height: 10px; background: var(--primary-color); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0; transition: opacity 0.2s;"></div>
+                </div>
+            </div>
+            <span class="option-label" style="font-weight: 600; font-size: 15px; color: var(--text-color); opacity: 0.5;">Once every</span>
+        </label>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" id="decrementMonthInterval" style="width: 32px; height: 32px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; opacity: 0.5;" disabled>-</button>
+            <input type="number" id="monthIntervalInput" value="1" min="1" max="12"
+            style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); font-size: 16px; color: var(--text-color); font-weight: 500; opacity: 0.5;" disabled>
+            <button type="button" id="incrementMonthInterval" style="width: 32px; height: 32px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; opacity: 0.5;" disabled>+</button>
+            <span class="month-text" style="color: var(--text-color); font-size: 15px; font-weight: 500; opacity: 0.5;">month(s)</span>
+        </div>
+    </div>
 </div>
 
             
 
             <div class="form-group-full date-section">
-                <div class="date-mode-selector">
+                <!-- Default Select Dates Button -->
+                <div id="defaultDateSelector" style="display: block;">
+                    <button type="button" id="selectDatesBtn" class="select-btn" style="width: 100%; padding: 12px; background: var(--light-bg); border: 2px solid var(--primary-color); border-radius: 8px; color: var(--text-color); font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                        Select Dates
+                    </button>
+                </div>
+
+                <div class="date-mode-selector" id="generalDateModeSelector" style="display: none;">
                     <button type="button" class="mode-btn active" data-mode="date">Days</button>
                     <button type="button" class="mode-btn" data-mode="specific-dates">Specific Dates</button>
                     <input type="hidden" id="dateModeSelection" value="date">
@@ -1056,7 +1280,7 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
                 </div>
                 
                 <!-- From - To Date UI -->
-                <div id="fromToDateGroup" class="date-group active-section">
+                <div id="fromToDateGroup" class="date-group" style="display: none;">
                     <div class="date-row">
                         <span class="date-label">From</span>
                         <div class="date-range-container">
@@ -1070,7 +1294,7 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
                 </div>
             
                 <!-- Specific Dates UI -->
-                <div id="specificDatesGroup" class="date-group inactive-section" style="display: none;">
+                <div id="specificDatesGroup" class="date-group" style="display: none;">
                     <div class="date-row">
                         <span class="date-label">Dates</span>
                         <button type="button" id="selectSpecificDates" class="plus-btn">+</button>
@@ -1079,8 +1303,7 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
                 </div>
             
                 <!-- Specific Days UI -->
-<!-- Day Selection UI (for Date mode) -->
-<div id="specificDaysGroup" class="date-group active-section">
+<div id="specificDaysGroup" class="date-group" style="display: none;">
     <div class="date-row">
         <div id="specificDaysButtons" class="day-buttons-container">
             <button type="button" class="day-btn" data-day="Any" id="anyAllButton">Any</button>
@@ -1095,13 +1318,50 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
     </div>
 </div>
 
+                <!-- Monthly Times Date Range UI -->
+                <div id="monthlyTimesDateGroup" class="date-group" style="display: none;">
+                    <div class="date-row">
+                        <span class="date-label">From</span>
+                        <div class="date-range-container">
+                            <div id="monthlyDateDisplay" class="date-display">Today</div>
+                            <span id="addMonthlyEndDateBtn" class="add-end-date">+ Add End Date</span>
+                            <span id="monthlyDateToWrapper" class="date-separator" style="display: none;">to</span>
+                            <div id="monthlyDateDisplayTo" class="date-display" style="display: none;">To Date</div>
+                            <span id="removeMonthlyEndDateBtn" class="remove-btn" style="display: none;">✖</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Scheduling Options -->
+                <div id="monthlySchedulingOptions" class="date-group" style="display: none; flex-direction: column; gap: 15px; margin-top: 15px;">
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="specificDaysOfMonthCheckbox" name="monthlySchedulingType" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                            <span style="font-weight: 500; color: var(--text-color);">Specific days of the month</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="specificDaysOfWeekCheckbox" name="monthlySchedulingType" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                            <span style="font-weight: 500; color: var(--text-color);">Specific days of the week</span>
+                        </label>
+                    </div>
+
+                    <!-- Days of Month Fields -->
+                    <div id="daysOfMonthFields" style="display: none; flex-direction: column; gap: 8px;"></div>
+
+                    <!-- Days of Week Fields -->
+                    <div id="daysOfWeekFields" style="display: none; flex-direction: column; gap: 8px;"></div>
+                </div>
             
                 <!-- Hidden inputs -->
                 <input type="text" id="taskDate" class="date-input" />
                 <input type="text" id="taskDateTo" class="date-input" />
+                <input type="text" id="monthlyTaskDate" class="date-input" />
+                <input type="text" id="monthlyTaskDateTo" class="date-input" />
                 <input type="text" id="singleTaskDate" class="date-input" />
                 <input type="hidden" id="specificDatesInput" value="">
                 <input type="hidden" id="specificDaysInput" value="">
+                <input type="hidden" id="monthlyDaysOfMonthInput" value="">
+                <input type="hidden" id="monthlyDaysOfWeekInput" value="">
             </div>
                 
             
@@ -1255,27 +1515,31 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
                 <input type="hidden" id="assignedToSelection" value="">
             </div>
             <div class="form-group">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <label class="switch">
-                        <input type="checkbox" id="buzzpointsToggle" checked>
-                        <span class="slider"></span>
-                    </label>
-                    <label>Buzz Points:</label>
-                </div>
-                <div id="buzzpointsInputContainer" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                        <button type="button" id="decreaseBuzzpoints" style="width: 32px; height: 32px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 18px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">-</button>
-                        <input type="number" id="RewardValue" value="10" min="0" max="10000"
-                            style="width: 80px; text-align: center; padding: 8px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); font-size: 14px; color: var(--text-color);">
-                        <button type="button" id="increaseBuzzpoints" style="width: 32px; height: 32px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 18px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">+</button>
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="switch">
+                            <input type="checkbox" id="buzzpointsToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <label style="font-weight: 600; color: var(--text-color);">Buzz Points:</label>
                     </div>
-                    <span style="font-size: 20px; color: var(--primary-color);">🍯</span>
+                    <div id="buzzpointsInputContainer" style="display: flex; align-items: center; gap: 6px;">
+                        <button type="button" id="decreaseBuzzpoints" style="width: 32px; height: 32px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">-</button>
+                        <input type="number" id="RewardValue" value="10" min="0" max="10000"
+                            style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); font-size: 16px; color: var(--text-color); font-weight: 500;">
+                        <button type="button" id="increaseBuzzpoints" style="width: 32px; height: 32px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">+</button>
+                        <span style="font-size: 18px; color: var(--primary-color); margin-left: 4px;">🍯</span>
+                    </div>
                 </div>
             </div>
 
             <!-- Parent Approval Toggle -->
             <div class="form-group">
                 <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <label class="switch" style="flex-shrink: 0; margin-right: 15px;">
+                        <input type="checkbox" id="parentApprovalToggle" checked>
+                        <span class="slider"></span>
+                    </label>
                     <div style="display: flex; align-items: center; gap: 12px; flex: 1; position: relative;">
                         <label for="parentApprovalToggle" style="color: var(--text-color); font-weight: 600; cursor: pointer; flex: 1;">Parent Approval Required</label>
                         <i id="parentApprovalInfo" style="
@@ -1309,10 +1573,6 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
                             <strong>OFF:</strong> Tasks are instantly completed and points awarded immediately.
                         </div>
                     </div>
-                    <label class="switch" style="flex-shrink: 0; margin-left: 15px;">
-                        <input type="checkbox" id="parentApprovalToggle" checked>
-                        <span class="slider"></span>
-                    </label>
                 </div>
             </div>
 
@@ -1389,23 +1649,7 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
         </div>
     </div>
 
-    <div class="modal" id="timesPerWeekModal">
-        <div class="modal-content fancy-modal">
-            <h3>How many times per week?</h3>
-            <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin: 10px 0;">
-                <button class="btn-save" data-value="1">1</button>
-                <button class="btn-save" data-value="2">2</button>
-                <button class="btn-save" data-value="3">3</button>
-                <button class="btn-save" data-value="4">4</button>
-                <button class="btn-save" data-value="5">5</button>
-            </div>
-            <input type="number" id="customTimesWeekInput" placeholder="Or enter your own" min="1" class="fancy-input smaller-input">
-            <div class="button-row">
-                <button id="saveCustomTimesWeekBtn" class="btn-save">SAVE</button>
-                <button id="closeTimesWeekModal" class="btn-cancel">CANCEL</button>
-            </div>
-        </div>
-    </div>
+
     
 <div class="modal" id="timesPerMonthModal">
     <div class="modal-content fancy-modal">
@@ -1427,14 +1671,14 @@ style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--pr
 
 
 <div class="modal" id="specificDatesModal">
-    <div class="modal-content fancy-modal">
-        <h3>Select Specific Dates</h3>
-        <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 15px;">Choose dates for the task or leave empty for every day.</p>
-        <div class="button-row">
-            <button id="clearSpecificDates" class="btn-cancel">CLEAR</button>
-            <button id="saveSpecificDates" class="btn-save">SAVE</button>
+    <div class="modal-content fancy-modal" style="max-width: 380px; padding: 30px 25px; text-align: center; display: flex; flex-direction: column; align-items: center;">
+        <h3 style="margin: 0 0 15px 0; font-size: 20px; color: var(--text-color);">Select Specific Dates</h3>
+        <div id="specificDatesWarningContainer" style="margin-bottom: 15px; width: 100%;"></div>
+        <div id="specificDatesCalendar" style="margin: 0 0 30px 0; display: flex; justify-content: center;"></div>
+        <div style="display: flex; gap: 15px; width: 280px; margin: 0; padding-top: 10px;">
+            <button id="clearSpecificDates" class="btn-cancel" style="flex: 1; padding: 12px 16px; font-weight: 600;">CLEAR</button>
+            <button id="saveSpecificDates" class="btn-save" style="flex: 1; padding: 12px 16px; font-weight: 600;">SAVE</button>
         </div>
-        <div id="specificDatesCalendar" style="margin: 20px 0;"></div>
     </div>
 </div>
    
@@ -1536,7 +1780,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("selectSettings").textContent = editTask.settings || "Select";
         
         // Handle rotation settings for edit mode
-        if (editTask.settings === "Rotation") {
+        if (editTask.settings === "Rotation" && editTask.repeat !== "One Time") {
             document.getElementById("fairRotationSection").style.display = "block";
             document.getElementById("rotationOptions").style.display = "block";
             
@@ -1565,6 +1809,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             document.getElementById("fairRotationSection").style.display = "none";
             document.getElementById("rotationOptions").style.display = "none";
             rotationOrder = [];
+            
+            // If this is a One Time task with Rotation setting, change to Individual
+            if (editTask.settings === "Rotation" && editTask.repeat === "One Time") {
+                document.getElementById("settingsSelection").value = "Individual";
+                document.getElementById("selectSettings").textContent = "Individual";
+            }
         }
         // COMMENTED OUT - REMINDERS
         // document.getElementById("taskReminder").checked = !!editTask.reminder;
@@ -1585,6 +1835,80 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("timesPerDayInput").value = editTask.timesPerDay || "1";
         document.getElementById("timesPerWeekInput").value = editTask.timesPerWeek || "1";
         document.getElementById("timesPerMonthInput").value = editTask.timesPerMonth || "1";
+        document.getElementById("monthIntervalInput").value = editTask.monthInterval || "1";
+        
+        // Hide Select Dates button when editing
+        document.getElementById("defaultDateSelector").style.display = "none";
+        
+        // Handle monthly option selection
+        if (editTask.monthlyOption === "interval") {
+            const intervalRadio = document.querySelector('input[name="monthlyOption"][value="interval"]');
+            intervalRadio.checked = true;
+            intervalRadio.dispatchEvent(new Event('change'));
+        } else {
+            const timesRadio = document.querySelector('input[name="monthlyOption"][value="times"]');
+            timesRadio.checked = true;
+            timesRadio.dispatchEvent(new Event('change'));
+            
+            // Handle monthly times scheduling data
+            if (editTask.repeat === "Monthly" && editTask.monthlyOption === "times") {
+                // Set monthly dates
+                const [from, to] = editTask.date.split(" to ");
+                document.getElementById("monthlyTaskDate").value = from || "";
+                if (typeof flatpickrMonthlyFrom !== 'undefined') {
+                    flatpickrMonthlyFrom.setDate(from);
+                }
+                document.getElementById("monthlyDateDisplay").textContent = new Date(from).toLocaleDateString(undefined, {
+                    month: "long",
+                    day: "numeric",
+                });
+                
+                if (to && to !== "3000-01-01") {
+                    document.getElementById("monthlyTaskDateTo").value = to;
+                    if (typeof flatpickrMonthlyTo !== 'undefined') {
+                        flatpickrMonthlyTo.setDate(to);
+                    }
+                    document.getElementById("monthlyDateDisplayTo").textContent = new Date(to).toLocaleDateString(undefined, {
+                        month: "long",
+                        day: "numeric",
+                    });
+                    document.getElementById("monthlyDateToWrapper").style.display = "inline";
+                    document.getElementById("monthlyDateDisplayTo").style.display = "inline-block";
+                    document.getElementById("removeMonthlyEndDateBtn").style.display = "inline-block";
+                    document.getElementById("addMonthlyEndDateBtn").style.display = "none";
+                }
+                
+                // Handle monthly scheduling type
+                if (editTask.monthlySchedulingType === "daysOfMonth" && editTask.monthlyDaysOfMonth) {
+                    document.getElementById("specificDaysOfMonthCheckbox").checked = true;
+                    document.getElementById("daysOfMonthFields").style.display = "flex";
+                    setTimeout(() => {
+                        const daysData = editTask.monthlyDaysOfMonth.split(',');
+                        const selects = document.querySelectorAll('.day-of-month-select');
+                        selects.forEach((select, index) => {
+                            if (daysData[index]) {
+                                select.value = daysData[index];
+                            }
+                        });
+                    }, 100);
+                } else if (editTask.monthlySchedulingType === "daysOfWeek" && editTask.monthlyDaysOfWeek) {
+                    document.getElementById("specificDaysOfWeekCheckbox").checked = true;
+                    document.getElementById("daysOfWeekFields").style.display = "flex";
+                    setTimeout(() => {
+                        const weeksData = editTask.monthlyDaysOfWeek.split(',');
+                        const occurrenceSelects = document.querySelectorAll('.week-occurrence-select');
+                        const weekdaySelects = document.querySelectorAll('.weekday-select');
+                        weeksData.forEach((weekData, index) => {
+                            const [occurrence, weekday] = weekData.split(':');
+                            if (occurrenceSelects[index] && weekdaySelects[index]) {
+                                occurrenceSelects[index].value = occurrence;
+                                weekdaySelects[index].value = weekday;
+                            }
+                        });
+                    }, 100);
+                }
+            }
+        }
         document.getElementById("timesPerDayGroup").style.display = editTask.repeat === "Daily" ? "flex" : "none";
         document.getElementById("timesPerWeekGroup").style.display = editTask.repeat === "Weekly" ? "flex" : "none";
         document.getElementById("timesPerMonthGroup").style.display = editTask.repeat === "Monthly" ? "flex" : "none";
@@ -1604,8 +1928,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         }
 
-        // Handle date mode
-        if (editTask.specificDates) {
+        // Handle date mode (skip for monthly times option)
+        if (editTask.repeat === "Monthly" && editTask.monthlyOption === "times") {
+            // Monthly times date handling is done above, skip regular date mode handling
+        } else if (editTask.specificDates) {
+            // Show appropriate date UI for editing
+            document.getElementById("generalDateModeSelector").style.display = "flex";
             document.getElementById("dateModeSelection").value = "specific-dates";
             document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
             document.querySelector(".mode-btn[data-mode='specific-dates']").classList.add("active");
@@ -1617,17 +1945,28 @@ document.addEventListener("DOMContentLoaded", async () => {
             flatpickrSpecific.setDate(selectedDates);
             updateSelectedDatesDisplay();
         } else if (editTask.date) {
-            document.getElementById("dateModeSelection").value = "date";
-            document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
-            document.querySelector(".mode-btn[data-mode='date']").classList.add("active");
-            document.getElementById("fromToDateGroup").style.display = "block";
-            document.getElementById("specificDatesGroup").style.display = "none";
-            document.getElementById("specificDaysGroup").style.display = "block";
+            if (editTask.repeat === "One Time") {
+                document.getElementById("singleDateGroup").style.display = "block";
+                document.getElementById("fromToDateGroup").style.display = "none";
+                document.getElementById("specificDaysGroup").style.display = "none";
+                document.getElementById("generalDateModeSelector").style.display = "none";
+                
+                const [from] = editTask.date.split(" to ");
+                document.getElementById("singleTaskDate").value = from || "";
+                flatpickrSingle.setDate(from);
+            } else {
+                document.getElementById("dateModeSelection").value = "date";
+                document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
+                document.querySelector(".mode-btn[data-mode='date']").classList.add("active");
+                document.getElementById("fromToDateGroup").style.display = "block";
+                document.getElementById("specificDatesGroup").style.display = "none";
+                document.getElementById("specificDaysGroup").style.display = "block";
+                document.getElementById("generalDateModeSelector").style.display = "flex";
 
-            const [from, to] = editTask.date.split(" to ");
-            document.getElementById("taskDate").value = from || "";
-            flatpickrFrom.setDate(from);
-            document.getElementById("dateDisplay").textContent = new Date(from).toLocaleDateString(undefined, {
+                const [from, to] = editTask.date.split(" to ");
+                document.getElementById("taskDate").value = from || "";
+                flatpickrFrom.setDate(from);
+                document.getElementById("dateDisplay").textContent = new Date(from).toLocaleDateString(undefined, {
                 month: "long",
                 day: "numeric",
             });
@@ -1652,10 +1991,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                 addEndDateBtn.style.display = "inline-block";
                 dateMode = "from";
             }
+            }
 
-            // Handle days of week for edit mode
-            selectedDays = editTask.daysOfWeek || (editTask.repeat === "Daily" ? ["All"] : ["Any"]);
-            updateSelectedDaysDisplay();
+            // Handle days of week for edit mode (not for monthly times)
+            if (!(editTask.repeat === "Monthly" && editTask.monthlyOption === "times")) {
+                selectedDays = editTask.daysOfWeek || (editTask.repeat === "Daily" ? ["All"] : ["Any"]);
+                updateSelectedDaysDisplay();
+            }
+        
+            // Update settings modal for edit mode
+            setTimeout(() => updateSettingsModal(), 100);
         }
 
         // Special handling for single occurrence and future edits
@@ -1778,12 +2123,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
         // Initialize form for new task
         populateUsers();
-        document.getElementById("dateModeSelection").value = "date";
-        document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
-        document.querySelector(".mode-btn[data-mode='date']").classList.add("active");
-        document.getElementById("fromToDateGroup").style.display = "block";
+        
+        // Hide all date-related UI by default, show only Select Dates button
+        document.getElementById("defaultDateSelector").style.display = "block";
+        document.getElementById("generalDateModeSelector").style.display = "none";
+        document.getElementById("fromToDateGroup").style.display = "none";
         document.getElementById("specificDatesGroup").style.display = "none";
-        document.getElementById("specificDaysGroup").style.display = "block";
+        document.getElementById("specificDaysGroup").style.display = "none";
+        document.getElementById("singleDateGroup").style.display = "none";
+        document.getElementById("timesPerMonthGroup").style.display = "none";
+        document.getElementById("monthlyTimesDateGroup").style.setProperty('display', 'none', 'important');
+        document.getElementById("monthlySchedulingOptions").style.setProperty('display', 'none', 'important');
+        
+        // Update settings modal for new tasks
+        setTimeout(() => updateSettingsModal(), 100);
     }
 
 
@@ -2045,10 +2398,12 @@ function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl)
     // Set value for form submission
     assignedToSelection.value = selectedUsers.join(", ");
     
-    // Validate rotation if it's selected
+    // Validate settings if rotation or teamwork is selected
     const currentSettings = document.getElementById("settingsSelection").value;
     if (currentSettings === "Rotation") {
         validateRotationUsers();
+    } else if (currentSettings === "Team Work") {
+        validateTeamworkUsers();
     }
     
     // Update visual state of all avatars
@@ -2373,6 +2728,7 @@ function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl)
         const rotationOptions = document.getElementById('rotationOptions');
 
         settingsButton.addEventListener('click', () => {
+            updateSettingsModal();
             showModal(settingsModal);
         });
 
@@ -2381,6 +2737,35 @@ function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl)
                 hideModal(settingsModal);
             }
         });
+
+        // Update settings modal options based on frequency selection
+        function updateSettingsModal() {
+            const currentFrequency = document.getElementById("repeatSelection").value;
+            const rotationOption = settingsModal.querySelector('[data-value="Rotation"]');
+            
+            if (currentFrequency === "One Time") {
+                // Hide rotation option for one-time tasks
+                if (rotationOption) {
+                    rotationOption.style.display = 'none';
+                }
+                // If rotation was previously selected, reset to Individual
+                if (settingsInput.value === "Rotation") {
+                    settingsInput.value = "Individual";
+                    settingsButton.textContent = "Individual";
+                    document.getElementById("fairRotationSection").style.display = 'none';
+                    rotationOptions.style.display = 'none';
+                    rotationOrder = [];
+                }
+            } else {
+                // Show rotation option for recurring tasks
+                if (rotationOption) {
+                    rotationOption.style.display = 'block';
+                }
+            }
+        }
+
+        // Make function globally available
+        window.updateSettingsModal = updateSettingsModal;
 
         settingsModal.addEventListener('click', (e) => {
             if (e.target.tagName === 'LI') {
@@ -2403,6 +2788,11 @@ function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl)
                     document.getElementById("fairRotationSection").style.display = 'none';
                     rotationOptions.style.display = 'none';
                     rotationOrder = []; // Clear rotation order when not using rotation
+                    
+                    // Validate teamwork if selected
+                    if (selectedValue === 'Team Work') {
+                        validateTeamworkUsers();
+                    }
                 }
             }
         });
@@ -2533,7 +2923,7 @@ function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl)
             if (totalUsersSelected < 2) {
                 const warning = document.createElement('div');
                 warning.id = 'rotationWarning';
-                warning.style.color = 'var(--text-color)';
+                warning.style.color = '#6D4C41';
                 warning.style.fontSize = '14px';
                 warning.style.fontWeight = '500';
                 warning.style.marginTop = '8px';
@@ -2543,6 +2933,37 @@ function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl)
                 warning.style.borderRadius = '8px';
                 warning.style.borderLeft = '4px solid var(--primary-color)';
                 warning.innerHTML = '<span style="display: inline-block; width: 18px; height: 18px; background: var(--primary-color); color: var(--secondary-color); border-radius: 50%; text-align: center; line-height: 18px; font-size: 12px; font-weight: bold; margin-right: 8px; vertical-align: middle;">i</span>Choose at least 2 family members';
+                userAvatarContainer.appendChild(warning);
+            }
+        }
+
+        // Validation for teamwork requiring at least 2 users
+        function validateTeamworkUsers() {
+            const allUsersBtn = document.getElementById("allUsersBtn");
+            const isAllSelected = allUsersBtn && allUsersBtn.classList.contains('active');
+            const individualUsersSelected = selectedUsers.length;
+            const totalUsersSelected = isAllSelected ? (window.allUsers ? window.allUsers.length : 0) : individualUsersSelected;
+            
+            const userAvatarContainer = document.getElementById("userAvatarContainer");
+            const existingWarning = document.getElementById("teamworkWarning");
+            
+            if (existingWarning) {
+                existingWarning.remove();
+            }
+            
+            if (totalUsersSelected < 2) {
+                const warning = document.createElement('div');
+                warning.id = 'teamworkWarning';
+                warning.style.color = '#6D4C41';
+                warning.style.fontSize = '14px';
+                warning.style.fontWeight = '500';
+                warning.style.marginTop = '8px';
+                warning.style.padding = '10px 12px';
+                warning.style.backgroundColor = 'rgba(255, 193, 7, 0.15)';
+                warning.style.border = '1px solid rgba(255, 193, 7, 0.4)';
+                warning.style.borderRadius = '8px';
+                warning.style.borderLeft = '4px solid var(--primary-color)';
+                warning.innerHTML = '<span style="display: inline-block; width: 18px; height: 18px; background: var(--primary-color); color: var(--secondary-color); border-radius: 50%; text-align: center; line-height: 18px; font-size: 12px; font-weight: bold; margin-right: 8px; vertical-align: middle;">i</span>Choose at least 2 family members for teamwork';
                 userAvatarContainer.appendChild(warning);
             }
         }
@@ -2635,6 +3056,9 @@ const dateFrom = document.getElementById("taskDate").value;
 const dateTo = document.getElementById("taskDateTo").value;
 const singleDate = document.getElementById("singleTaskDate").value;
 const dateMode = document.getElementById("dateModeSelection").value;
+const monthlyDateFrom = document.getElementById("monthlyTaskDate").value;
+const monthlyDateTo = document.getElementById("monthlyTaskDateTo").value;
+const monthlyOption = document.querySelector('input[name="monthlyOption"]:checked').value;
 const dueTimeEnabled = document.getElementById("dueTimeToggle").checked;
 const users = document.getElementById("assignedToSelection").value
     .split(",")
@@ -2653,10 +3077,22 @@ if (settings === "Rotation") {
     }
 }
 
+if (settings === "Team Work") {
+    const allUsersBtn = document.getElementById("allUsersBtn");
+    const isAllSelected = allUsersBtn && allUsersBtn.classList.contains('active');
+    const totalUsersSelected = isAllSelected ? (window.allUsers ? window.allUsers.length : 0) : users.length;
+    
+    if (totalUsersSelected < 2) {
+        alert("⚠️ Team Work requires at least 2 family members to be assigned. Please select more users.");
+        return;
+    }
+}
+
 const reward = document.getElementById("buzzpointsToggle").checked ? document.getElementById("RewardValue").value : undefined;
 let timesPerDay = parseInt(document.getElementById("timesPerDayInput").value) || null;
 let timesPerWeek = parseInt(document.getElementById("timesPerWeekInput").value) || null;
 let timesPerMonth = parseInt(document.getElementById("timesPerMonthInput").value) || null;
+let monthInterval = parseInt(document.getElementById("monthIntervalInput").value) || null;
 const specificDates = document.getElementById("specificDatesInput").value;
 
 // Validations
@@ -2696,7 +3132,7 @@ if (!isOccurrenceEdit && !isFutureEdit) {
 
 // Cap and sanitize
 if (timesPerDay > 100) timesPerDay = 100;
-if (timesPerWeek > 100) timesPerWeek = 100;
+if (timesPerWeek > 7) timesPerWeek = 7;
 if (timesPerMonth > 100) timesPerMonth = 100;
 if (timesPerDay !== null && timesPerDay < 1) timesPerDay = 1;
 if (timesPerWeek !== null && timesPerWeek < 1) timesPerWeek = 1;
@@ -2713,6 +3149,10 @@ if (isOccurrenceEdit) {
     dateValue = `${splitDate} to ${originalEnd}`;
 } else if (repeat === "One Time") {
     dateValue = `${singleDate} to ${singleDate}`;
+} else if (repeat === "Monthly" && monthlyOption === "times") {
+    const fromDate = monthlyDateFrom || new Date().toISOString().split("T")[0];
+    const toDate = monthlyDateTo || "3000-01-01";
+    dateValue = `${fromDate} to ${toDate}`;
 } else if (dateMode === "date") {
     const fromDate = dateFrom;
     const toDate = dateTo || "3000-01-01";
@@ -2744,7 +3184,12 @@ const task = {
     // alarms: alarms.length > 0 ? alarms : undefined,  // COMMENTED OUT
     timesPerDay: repeat === "Daily" ? timesPerDay : undefined,
     timesPerWeek: repeat === "Weekly" ? timesPerWeek : undefined,
-    timesPerMonth: repeat === "Monthly" ? timesPerMonth : undefined,
+    timesPerMonth: repeat === "Monthly" && monthlyOption === "times" ? timesPerMonth : undefined,
+    monthInterval: repeat === "Monthly" && monthlyOption === "interval" ? monthInterval : undefined,
+    monthlyOption: repeat === "Monthly" ? monthlyOption : undefined,
+    monthlyDaysOfMonth: repeat === "Monthly" && monthlyOption === "times" && document.getElementById("specificDaysOfMonthCheckbox").checked ? getMonthlyDaysOfMonthData() : undefined,
+    monthlyDaysOfWeek: repeat === "Monthly" && monthlyOption === "times" && document.getElementById("specificDaysOfWeekCheckbox").checked ? getMonthlyDaysOfWeekData() : undefined,
+    monthlySchedulingType: repeat === "Monthly" && monthlyOption === "times" ? (document.getElementById("specificDaysOfMonthCheckbox").checked ? "daysOfMonth" : document.getElementById("specificDaysOfWeekCheckbox").checked ? "daysOfWeek" : null) : undefined,
     specificDates: dateMode === "specific-dates" ? specificDates : undefined,
     daysOfWeek: dateMode === "date" ? (selectedDays.length > 0 ? (selectedDays.includes("All") ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] : selectedDays) : (repeat === "Daily" ? ["All"] : ["Any"])) : undefined
 };
@@ -2887,6 +3332,60 @@ repeatModal.addEventListener('click', (e) => {
         timesPerWeekGroup.style.display = selected === "Weekly" ? "flex" : "none";
         timesPerMonthGroup.style.display = selected === "Monthly" ? "flex" : "none";
         
+        // Show/hide date UI based on frequency selection
+        const monthlyTimesDateGroup = document.getElementById('monthlyTimesDateGroup');
+        const monthlySchedulingOptions = document.getElementById('monthlySchedulingOptions');
+        const generalDateModeSelector = document.getElementById('generalDateModeSelector');
+        const fromToDateGroupEl = document.getElementById('fromToDateGroup');
+        const specificDaysGroupEl = document.getElementById('specificDaysGroup');
+        const specificDatesGroupEl = document.getElementById('specificDatesGroup');
+        const defaultDateSelector = document.getElementById('defaultDateSelector');
+        const singleDateGroup = document.getElementById('singleDateGroup');
+        
+        // Hide default selector when frequency is chosen
+        defaultDateSelector.style.display = 'none';
+        
+        if (selected === "One Time") {
+            // Show single date UI for One Time tasks
+            generalDateModeSelector.style.display = 'none';
+            singleDateGroup.style.display = 'block';
+            fromToDateGroupEl.style.display = 'none';
+            specificDaysGroupEl.style.display = 'none';
+            specificDatesGroupEl.style.display = 'none';
+            monthlyTimesDateGroup.style.setProperty('display', 'none', 'important');
+            monthlySchedulingOptions.style.setProperty('display', 'none', 'important');
+        } else if (selected === "Monthly") {
+            // Check which monthly option is selected
+            const checkedMonthlyOption = document.querySelector('input[name="monthlyOption"]:checked');
+            if (checkedMonthlyOption && checkedMonthlyOption.value === 'times') {
+                // Show monthly times UI
+                generalDateModeSelector.style.display = 'none';
+                fromToDateGroupEl.style.display = 'none';
+                specificDaysGroupEl.style.display = 'none';
+                specificDatesGroupEl.style.display = 'none';
+                monthlyTimesDateGroup.style.setProperty('display', 'block', 'important');
+                monthlySchedulingOptions.style.setProperty('display', 'flex', 'important');
+                generateMonthlySchedulingFields();
+            } else {
+                // Show regular interval UI
+                generalDateModeSelector.style.display = 'none';
+                fromToDateGroupEl.style.display = 'block';
+                specificDaysGroupEl.style.display = 'none';
+                specificDatesGroupEl.style.display = 'none';
+                monthlyTimesDateGroup.style.setProperty('display', 'none', 'important');
+                monthlySchedulingOptions.style.setProperty('display', 'none', 'important');
+            }
+        } else {
+            // Show regular date mode selector for Daily/Weekly frequencies
+            monthlyTimesDateGroup.style.setProperty('display', 'none', 'important');
+            monthlySchedulingOptions.style.setProperty('display', 'none', 'important');
+            singleDateGroup.style.display = 'none';
+            generalDateModeSelector.style.display = 'flex';
+            fromToDateGroupEl.style.display = 'block';
+            specificDaysGroupEl.style.display = 'block';
+            specificDatesGroupEl.style.display = 'none';
+        }
+        
         // Update section label and Any/All button based on frequency
         const sectionLabel = document.getElementById("sectionLabel");
         const anyAllButton = document.getElementById("anyAllButton");
@@ -2912,25 +3411,37 @@ repeatModal.addEventListener('click', (e) => {
             }
         }
         
-        // Toggle date input sections based on frequency
-        const singleDateGroup = document.getElementById("singleDateGroup");
-        const fromToDateGroup = document.getElementById("fromToDateGroup");
-        const specificDaysGroup = document.getElementById("specificDaysGroup");
-        
-        if (selected === "One Time") {
-            singleDateGroup.style.display = "block";
-            fromToDateGroup.style.display = "none";
-            specificDaysGroup.style.display = "none";
-        } else {
-            singleDateGroup.style.display = "none";
-            fromToDateGroup.style.display = "block";
-            specificDaysGroup.style.display = "block";
-        }
+        // Date sections are now handled above in the main frequency logic
+
+        // Update settings modal to hide/show rotation option
+        updateSettingsModal();
 
         // Set initial value to 1
         if (selected === "Daily") timesPerDayInput.value = "1";
-        if (selected === "Weekly") document.getElementById("timesPerWeekInput").value = "1";
-        if (selected === "Monthly") document.getElementById("timesPerMonthInput").value = "1";
+        if (selected === "Weekly") {
+            document.getElementById("timesPerWeekInput").value = "1";
+            // Reset weekly button styles to show "1" selected
+            weekOptionBtns.forEach(b => {
+                b.style.background = "var(--light-bg)";
+                b.style.color = "var(--text-color)";
+            });
+            document.querySelector('.week-option-btn[data-value="1"]').style.background = "var(--primary-color)";
+            document.querySelector('.week-option-btn[data-value="1"]').style.color = "var(--secondary-color)";
+            // Update day selection for weekly
+            updateDaySelectionForWeekly();
+            // Also update specific dates validation
+            updateSpecificDatesForWeekly();
+        }
+        if (selected === "Monthly") {
+            document.getElementById("timesPerMonthInput").value = "1";
+            document.getElementById("monthIntervalInput").value = "1";
+            // Reset to "times per month" option
+            const timesRadio = document.querySelector('input[name="monthlyOption"][value="times"]');
+            timesRadio.checked = true;
+            
+            // Trigger change event to update visual states
+            timesRadio.dispatchEvent(new Event('change'));
+        }
     }
 });
 
@@ -3027,28 +3538,511 @@ setupTimesModal(
 */
 
 // Existing setup for Monthly
-setupTimesModal(
-    document.getElementById("timesPerMonthInput"),
-    document.getElementById("timesPerMonthModal"),
-    document.getElementById("closeTimesMonthModal"),
-    document.getElementById("customTimesMonthInput"),
-    document.getElementById("saveCustomTimesMonthBtn")
-);
 
-// NEW: Setup for Weekly
-setupTimesModal(
-    document.getElementById("timesPerWeekInput"),
-    document.getElementById("timesPerWeekModal"),
-    document.getElementById("closeTimesWeekModal"),
-    document.getElementById("customTimesWeekInput"),
-    document.getElementById("saveCustomTimesWeekBtn")
-);
+
+// NEW: Setup for Weekly (button options)
+const timesPerWeekInput = document.getElementById("timesPerWeekInput");
+const weekOptionBtns = document.querySelectorAll(".week-option-btn");
+
+weekOptionBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+        const value = btn.getAttribute("data-value");
+        timesPerWeekInput.value = value;
+        
+        // Update button styles
+        weekOptionBtns.forEach(b => {
+            b.style.background = "var(--light-bg)";
+            b.style.color = "var(--text-color)";
+        });
+        btn.style.background = "var(--primary-color)";
+        btn.style.color = "var(--secondary-color)";
+        
+        // Update day selection limit for weekly frequency
+        updateDaySelectionForWeekly();
+        
+        // Also update specific dates validation if in specific dates mode
+        updateSpecificDatesForWeekly();
+    });
+});
+
+// Function to update day selection based on weekly frequency
+function updateDaySelectionForWeekly() {
+    const repeatSelection = document.getElementById("repeatSelection");
+    const timesPerWeekValue = parseInt(document.getElementById("timesPerWeekInput").value);
+    
+    if (repeatSelection && repeatSelection.value === "Weekly" && timesPerWeekValue) {
+        // If we have more days selected than allowed, reset to "Any"
+        const nonSpecialDays = selectedDays.filter(day => day !== "Any" && day !== "All");
+        if (nonSpecialDays.length > timesPerWeekValue) {
+            selectedDays = ["Any"];
+            updateSelectedDaysDisplay();
+        }
+    }
+}
+
+// Function to update specific dates validation when weekly frequency changes
+function updateSpecificDatesForWeekly() {
+    const repeatSelection = document.getElementById("repeatSelection");
+    const dateModeSelection = document.getElementById("dateModeSelection");
+    
+    if (repeatSelection && repeatSelection.value === "Weekly" && 
+        dateModeSelection && dateModeSelection.value === "specific-dates" && 
+        selectedDates.length > 0) {
+        
+        // Validate current selection against new frequency limit
+        if (!validateWeeklyFrequencyForDates(selectedDates)) {
+            // If validation fails, clear the selection
+            selectedDates = [];
+            if (typeof flatpickrSpecific !== 'undefined') {
+                flatpickrSpecific.clear();
+            }
+            updateSelectedDatesDisplay();
+        }
+    }
+}
+
+// Monthly option controls
+const monthlyOptions = document.querySelectorAll('input[name="monthlyOption"]');
+const decrementMonthBtn = document.getElementById("decrementMonthInterval");
+const incrementMonthBtn = document.getElementById("incrementMonthInterval");
+const decrementTimesMonthBtn = document.getElementById("decrementTimesMonth");
+const incrementTimesMonthBtn = document.getElementById("incrementTimesMonth");
+const monthIntervalInput = document.getElementById("monthIntervalInput");
+const timesPerMonthInput = document.getElementById("timesPerMonthInput");
+
+// Variable to store previous date mode when switching to interval
+let previousDateMode = 'date';
+
+// Handle monthly option radio button changes
+monthlyOptions.forEach(radio => {
+    radio.addEventListener('change', () => {
+        const timesContainer = document.getElementById('timesOption');
+        const intervalContainer = document.getElementById('intervalOption');
+        const generalDateModeSelector = document.getElementById('generalDateModeSelector');
+        const specificDaysGroup = document.getElementById('specificDaysGroup');
+        const specificDatesGroup = document.getElementById('specificDatesGroup');
+        const fromToDateGroup = document.getElementById('fromToDateGroup');
+        const monthlyTimesDateGroup = document.getElementById('monthlyTimesDateGroup');
+        const monthlySchedulingOptions = document.getElementById('monthlySchedulingOptions');
+        const dateModeInput = document.getElementById('dateModeSelection');
+        
+        if (radio.value === 'times') {
+            // Enable times per month option
+            timesPerMonthInput.disabled = false;
+            decrementTimesMonthBtn.disabled = false;
+            incrementTimesMonthBtn.disabled = false;
+            monthIntervalInput.disabled = true;
+            document.getElementById('decrementMonthInterval').disabled = true;
+            document.getElementById('incrementMonthInterval').disabled = true;
+            
+            // Visual feedback
+            timesPerMonthInput.style.opacity = '1';
+            decrementTimesMonthBtn.style.opacity = '1';
+            incrementTimesMonthBtn.style.opacity = '1';
+            monthIntervalInput.style.opacity = '0.5';
+            document.getElementById('decrementMonthInterval').style.opacity = '0.5';
+            document.getElementById('incrementMonthInterval').style.opacity = '0.5';
+            
+            // Update label opacity
+            timesContainer.querySelector('.option-label').style.opacity = '1';
+            intervalContainer.querySelector('.option-label').style.opacity = '0.5';
+            intervalContainer.querySelector('.month-text').style.opacity = '0.5';
+            
+            // Container styling
+            timesContainer.style.borderColor = 'var(--primary-color)';
+            timesContainer.style.boxShadow = '0 2px 6px rgba(255, 193, 7, 0.1)';
+            intervalContainer.style.borderColor = 'rgba(255, 193, 7, 0.3)';
+            intervalContainer.style.boxShadow = '0 2px 6px rgba(255, 193, 7, 0.05)';
+            
+            // Hide general date mode selector and show monthly times UI
+            generalDateModeSelector.style.display = 'none';
+            specificDaysGroup.style.display = 'none';
+            specificDatesGroup.style.display = 'none';
+            fromToDateGroup.style.display = 'none';
+            monthlyTimesDateGroup.style.setProperty('display', 'block', 'important');
+            monthlySchedulingOptions.style.setProperty('display', 'flex', 'important');
+            
+            // Generate monthly scheduling fields based on current times per month value
+            generateMonthlySchedulingFields();
+        } else {
+            // Enable interval option (Once every)
+            timesPerMonthInput.disabled = true;
+            decrementTimesMonthBtn.disabled = true;
+            incrementTimesMonthBtn.disabled = true;
+            monthIntervalInput.disabled = false;
+            document.getElementById('decrementMonthInterval').disabled = false;
+            document.getElementById('incrementMonthInterval').disabled = false;
+            
+            // Visual feedback
+            timesPerMonthInput.style.opacity = '0.5';
+            decrementTimesMonthBtn.style.opacity = '0.5';
+            incrementTimesMonthBtn.style.opacity = '0.5';
+            monthIntervalInput.style.opacity = '1';
+            document.getElementById('decrementMonthInterval').style.opacity = '1';
+            document.getElementById('incrementMonthInterval').style.opacity = '1';
+            
+            // Update label opacity
+            timesContainer.querySelector('.option-label').style.opacity = '0.5';
+            intervalContainer.querySelector('.option-label').style.opacity = '1';
+            intervalContainer.querySelector('.month-text').style.opacity = '1';
+            
+            // Container styling
+            intervalContainer.style.borderColor = 'var(--primary-color)';
+            intervalContainer.style.boxShadow = '0 2px 6px rgba(255, 193, 7, 0.1)';
+            timesContainer.style.borderColor = 'rgba(255, 193, 7, 0.3)';
+            
+            // Hide monthly times UI and show regular From/To date UI
+            generalDateModeSelector.style.display = 'none';
+            specificDaysGroup.style.display = 'none';
+            specificDatesGroup.style.display = 'none';
+            monthlyTimesDateGroup.style.setProperty('display', 'none', 'important');
+            monthlySchedulingOptions.style.setProperty('display', 'none', 'important');
+            fromToDateGroup.style.display = 'block';
+            
+            // Set date mode to 'date' for interval option
+            dateModeInput.value = 'date';
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.mode-btn[data-mode="date"]').classList.add('active');
+            timesContainer.style.boxShadow = '0 2px 6px rgba(255, 193, 7, 0.05)';
+        }
+    });
+});
+
+// Increment/decrement controls for times per month
+decrementTimesMonthBtn.addEventListener("click", () => {
+    let currentVal = parseInt(timesPerMonthInput.value) || 1;
+    if (currentVal > 1) {
+        timesPerMonthInput.value = currentVal - 1;
+        // Regenerate fields if times per month option is active
+        if (document.querySelector('input[name="monthlyOption"]:checked').value === 'times') {
+            generateMonthlySchedulingFields();
+        }
+    }
+});
+
+incrementTimesMonthBtn.addEventListener("click", () => {
+    let currentVal = parseInt(timesPerMonthInput.value) || 1;
+    if (currentVal < 31) {
+        timesPerMonthInput.value = currentVal + 1;
+        // Regenerate fields if times per month option is active
+        if (document.querySelector('input[name="monthlyOption"]:checked').value === 'times') {
+            generateMonthlySchedulingFields();
+        }
+    }
+});
+
+timesPerMonthInput.addEventListener("input", () => {
+    let val = parseInt(timesPerMonthInput.value);
+    if (isNaN(val) || val < 1) {
+        timesPerMonthInput.value = 1;
+    } else if (val > 31) {
+        timesPerMonthInput.value = 31;
+    }
+});
+
+// Increment/decrement controls for month interval
+decrementMonthBtn.addEventListener("click", () => {
+    let currentVal = parseInt(monthIntervalInput.value) || 1;
+    if (currentVal > 1) {
+        monthIntervalInput.value = currentVal - 1;
+    }
+});
+
+incrementMonthBtn.addEventListener("click", () => {
+    let currentVal = parseInt(monthIntervalInput.value) || 1;
+    if (currentVal < 12) {
+        monthIntervalInput.value = currentVal + 1;
+    }
+});
+
+// Initialize monthly options state
+// Function to generate monthly scheduling fields based on times per month
+function generateMonthlySchedulingFields() {
+    const timesPerMonth = parseInt(document.getElementById('timesPerMonthInput').value) || 1;
+    const daysOfMonthContainer = document.getElementById('daysOfMonthFields');
+    const daysOfWeekContainer = document.getElementById('daysOfWeekFields');
+    
+    // Clear existing fields
+    daysOfMonthContainer.innerHTML = '';
+    daysOfWeekContainer.innerHTML = '';
+    
+    // Generate days of month fields
+    for (let i = 1; i <= timesPerMonth; i++) {
+        const ordinal = getOrdinal(i);
+        const fieldHtml = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="min-width: 35px; font-weight: 500; color: var(--text-color);">${ordinal}:</span>
+                <select class="day-of-month-select" data-index="${i}" style="flex: 1; padding: 6px 8px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); font-size: 14px; color: var(--text-color);">
+                    <option value="1">1st</option>
+                    <option value="2">2nd</option>
+                    <option value="3">3rd</option>
+                    <option value="4">4th</option>
+                    <option value="5">5th</option>
+                    <option value="6">6th</option>
+                    <option value="7">7th</option>
+                    <option value="8">8th</option>
+                    <option value="9">9th</option>
+                    <option value="10">10th</option>
+                    <option value="11">11th</option>
+                    <option value="12">12th</option>
+                    <option value="13">13th</option>
+                    <option value="14">14th</option>
+                    <option value="15">15th</option>
+                    <option value="16">16th</option>
+                    <option value="17">17th</option>
+                    <option value="18">18th</option>
+                    <option value="19">19th</option>
+                    <option value="20">20th</option>
+                    <option value="21">21st</option>
+                    <option value="22">22nd</option>
+                    <option value="23">23rd</option>
+                    <option value="24">24th</option>
+                    <option value="25">25th</option>
+                    <option value="26">26th</option>
+                    <option value="27">27th</option>
+                    <option value="28">28th</option>
+                    <option value="29">29th</option>
+                    <option value="30">30th</option>
+                    <option value="31">31st</option>
+                    <option value="last">Last</option>
+                </select>
+                <span style="color: var(--text-color);">day of the month</span>
+            </div>
+        `;
+        daysOfMonthContainer.insertAdjacentHTML('beforeend', fieldHtml);
+    }
+    
+    // Generate days of week fields
+    for (let i = 1; i <= timesPerMonth; i++) {
+        const ordinal = getOrdinal(i);
+        const fieldHtml = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="min-width: 35px; font-weight: 500; color: var(--text-color);">${ordinal}:</span>
+                <select class="week-occurrence-select" data-index="${i}" style="padding: 6px 8px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); font-size: 14px; color: var(--text-color);">
+                    <option value="1">1st</option>
+                    <option value="2">2nd</option>
+                    <option value="3">3rd</option>
+                    <option value="4">4th</option>
+                    <option value="5">5th</option>
+                    <option value="last">Last</option>
+                </select>
+                <select class="weekday-select" data-index="${i}" style="flex: 1; padding: 6px 8px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); font-size: 14px; color: var(--text-color);">
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                </select>
+            </div>
+        `;
+        daysOfWeekContainer.insertAdjacentHTML('beforeend', fieldHtml);
+    }
+}
+
+// Helper function to get ordinal numbers
+function getOrdinal(num) {
+    const suffixes = ["th", "st", "nd", "rd"];
+    const v = num % 100;
+    return num + (suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]);
+}
+
+// Handle monthly scheduling checkbox changes
+// Handle monthly date display clicks
+document.getElementById("monthlyDateDisplay").addEventListener("click", () => {
+    flatpickrMonthlyFrom.open();
+});
+
+document.getElementById("monthlyDateDisplayTo").addEventListener("click", () => {
+    flatpickrMonthlyTo.open();
+});
+
+// Handle monthly end date add/remove
+document.getElementById("addMonthlyEndDateBtn").addEventListener("click", () => {
+    document.getElementById("monthlyDateToWrapper").style.display = "inline";
+    document.getElementById("monthlyDateDisplayTo").style.display = "inline-block";
+    document.getElementById("removeMonthlyEndDateBtn").style.display = "inline";
+    document.getElementById("addMonthlyEndDateBtn").style.display = "none";
+    // Open calendar immediately
+    flatpickrMonthlyTo.open();
+});
+
+document.getElementById("removeMonthlyEndDateBtn").addEventListener("click", () => {
+    document.getElementById("monthlyTaskDateTo").value = "";
+    document.getElementById("monthlyDateDisplayTo").textContent = "To Date";
+    document.getElementById("monthlyDateToWrapper").style.display = "none";
+    document.getElementById("monthlyDateDisplayTo").style.display = "none";
+    document.getElementById("removeMonthlyEndDateBtn").style.display = "none";
+    document.getElementById("addMonthlyEndDateBtn").style.display = "inline-block";
+    flatpickrMonthlyTo.clear();
+});
+
+document.addEventListener('change', (e) => {
+    if (e.target.id === 'specificDaysOfMonthCheckbox') {
+        const daysOfWeekCheckbox = document.getElementById('specificDaysOfWeekCheckbox');
+        const daysOfMonthFields = document.getElementById('daysOfMonthFields');
+        const daysOfWeekFields = document.getElementById('daysOfWeekFields');
+        
+        if (e.target.checked) {
+            daysOfWeekCheckbox.checked = false;
+            daysOfMonthFields.style.display = 'flex';
+            daysOfWeekFields.style.display = 'none';
+        } else {
+            daysOfMonthFields.style.display = 'none';
+        }
+    }
+    
+    if (e.target.id === 'specificDaysOfWeekCheckbox') {
+        const daysOfMonthCheckbox = document.getElementById('specificDaysOfMonthCheckbox');
+        const daysOfMonthFields = document.getElementById('daysOfMonthFields');
+        const daysOfWeekFields = document.getElementById('daysOfWeekFields');
+        
+        if (e.target.checked) {
+            daysOfMonthCheckbox.checked = false;
+            daysOfWeekFields.style.display = 'flex';
+            daysOfMonthFields.style.display = 'none';
+        } else {
+            daysOfWeekFields.style.display = 'none';
+        }
+    }
+});
+
+// Functions to collect monthly scheduling data
+function getMonthlyDaysOfMonthData() {
+    const selects = document.querySelectorAll('.day-of-month-select');
+    const data = [];
+    selects.forEach(select => {
+        if (select.value) {
+            data.push(select.value);
+        }
+    });
+    return data.join(',');
+}
+
+function getMonthlyDaysOfWeekData() {
+    const occurrenceSelects = document.querySelectorAll('.week-occurrence-select');
+    const weekdaySelects = document.querySelectorAll('.weekday-select');
+    const data = [];
+    
+    for (let i = 0; i < occurrenceSelects.length; i++) {
+        const occurrence = occurrenceSelects[i].value;
+        const weekday = weekdaySelects[i].value;
+        if (occurrence && weekday) {
+            data.push(`${occurrence}:${weekday}`);
+        }
+    }
+    return data.join(',');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Ensure monthly elements are hidden on load
+    document.getElementById("monthlyTimesDateGroup").style.setProperty('display', 'none', 'important');
+    document.getElementById("monthlySchedulingOptions").style.setProperty('display', 'none', 'important');
+    
+    const timesRadio = document.querySelector('input[name="monthlyOption"][value="times"]');
+    const repeatSelection = document.getElementById("repeatSelection");
+    
+    // Only trigger change if Monthly is actually selected
+    if (timesRadio && timesRadio.checked && repeatSelection && repeatSelection.value === "Monthly") {
+        timesRadio.dispatchEvent(new Event('change'));
+    }
+    
+    // Add click handler for Select Dates button
+    document.getElementById('selectDatesBtn').addEventListener('click', () => {
+        const repeatSelection = document.getElementById("repeatSelection");
+        const currentFrequency = repeatSelection ? repeatSelection.value : "";
+        
+        if (!currentFrequency || currentFrequency === "") {
+            // Show popup to select frequency first
+            showFrequencyFirstPopup();
+        } else {
+            // Frequency is selected, trigger the appropriate date UI
+            const event = new Event('click');
+            const li = document.createElement('li');
+            li.setAttribute('data-value', currentFrequency);
+            li.dispatchEvent = () => {
+                repeatSelection.dispatchEvent(new Event('change'));
+            };
+            li.dispatchEvent();
+        }
+    });
+});
+
+// Function to show popup asking user to select frequency first
+function showFrequencyFirstPopup() {
+    const popup = document.createElement('div');
+    popup.className = 'center-warning-popup';
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--light-bg);
+        border: 2px solid var(--primary-color);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        z-index: 10000;
+        text-align: center;
+        max-width: 300px;
+        width: 90%;
+    `;
+    
+    popup.innerHTML = `
+        <div style="font-size: 16px; font-weight: 600; color: var(--text-color); margin-bottom: 15px;">
+            Please select frequency first
+        </div>
+        <div style="font-size: 14px; color: var(--text-color); opacity: 0.8;">
+            Choose how often this task repeats, then date options will be available.
+        </div>
+    `;
+    
+    // Create backdrop overlay
+    const backdrop = document.createElement('div');
+    backdrop.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 9999;
+    `;
+    
+    // Make backdrop closable by clicking anywhere
+    backdrop.addEventListener('click', () => {
+        backdrop.remove();
+    });
+    
+    // Prevent popup from closing when clicking on the popup itself
+    popup.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+    
+    backdrop.appendChild(popup);
+    document.body.appendChild(backdrop);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        if (popup.parentElement) {
+            popup.remove();
+        }
+    }, 3000);
+}
+
+monthIntervalInput.addEventListener("input", () => {
+    let val = parseInt(monthIntervalInput.value);
+    if (isNaN(val) || val < 1) {
+        monthIntervalInput.value = 1;
+    } else if (val > 12) {
+        monthIntervalInput.value = 12;
+    }
+});
 
 // Close times modals when clicking outside
 window.addEventListener('click', (e) => {
     if (e.target === timesPerDayModal) hideModal(timesPerDayModal);
-    if (e.target === document.getElementById("timesPerWeekModal")) hideModal(document.getElementById("timesPerWeekModal"));
-    if (e.target === document.getElementById("timesPerMonthModal")) hideModal(document.getElementById("timesPerMonthModal"));
 });
 
 
@@ -3130,6 +4124,38 @@ removeEndDateBtn.addEventListener("click", () => {
   positionElement: addEndDateBtn,
   appendTo: document.body
 });
+
+        // Monthly date pickers
+        const flatpickrMonthlyFrom = flatpickr("#monthlyTaskDate", {
+            dateFormat: "Y-m-d",
+            defaultDate: "today",
+            disableMobile: true,
+            onChange: function (selectedDates) {
+                const formatted = new Date(selectedDates[0]).toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
+                document.getElementById("monthlyDateDisplay").textContent = formatted;
+            },
+            positionElement: document.getElementById("monthlyDateDisplay"),
+            appendTo: document.body
+        });
+
+        const flatpickrMonthlyTo = flatpickr("#monthlyTaskDateTo", {
+            dateFormat: "Y-m-d",
+            disableMobile: true,
+            onChange: function (selectedDates) {
+                if (selectedDates.length > 0) {
+                    const toDate = selectedDates[0];
+                    const formatted = toDate.toLocaleDateString(undefined, { month: "long", day: "numeric" });
+                    document.getElementById("monthlyTaskDateTo").value = toDate.toISOString().split("T")[0];
+                    document.getElementById("monthlyDateDisplayTo").textContent = formatted;
+                    document.getElementById("monthlyDateToWrapper").style.display = "inline";
+                    document.getElementById("monthlyDateDisplayTo").style.display = "inline-block";
+                    document.getElementById("removeMonthlyEndDateBtn").style.display = "inline-block";
+                    document.getElementById("addMonthlyEndDateBtn").style.display = "none";
+                }
+            },
+            positionElement: document.getElementById("monthlyDateDisplay"),
+            appendTo: document.body
+        });
 
 
 
@@ -3298,7 +4324,11 @@ document.querySelectorAll("#specificDaysButtons .day-btn").forEach(button => {
                     }
                 }
             } else {
-                // For non-Daily frequencies: existing logic
+                // For non-Daily frequencies: check weekly limit
+                const repeatSelection = document.getElementById("repeatSelection");
+                const timesPerWeekValue = parseInt(document.getElementById("timesPerWeekInput").value);
+                const isWeeklyWithLimit = repeatSelection && repeatSelection.value === "Weekly" && timesPerWeekValue;
+                
                 selectedDays = selectedDays.filter(day => day !== "Any" && day !== "All");
                 
                 if (selectedDays.includes(fullDay)) {
@@ -3309,6 +4339,12 @@ document.querySelectorAll("#specificDaysButtons .day-btn").forEach(button => {
                         selectedDays = ["Any"];
                     }
                 } else {
+                    // Check if we can select this day (weekly limit)
+                    if (isWeeklyWithLimit && selectedDays.length >= timesPerWeekValue) {
+                        // Show warning that limit is reached
+                        showDayLimitWarning(timesPerWeekValue);
+                        return; // Don't add the day
+                    }
                     // Select this day
                     selectedDays.push(fullDay);
                 }
@@ -3317,6 +4353,127 @@ document.querySelectorAll("#specificDaysButtons .day-btn").forEach(button => {
         updateSelectedDaysDisplay();
     });
 });
+
+// Function to show day limit warning
+function showDayLimitWarning(maxDays) {
+    const specificDaysGroup = document.getElementById("specificDaysGroup");
+    const existingWarning = document.getElementById("dayLimitWarning");
+    
+    if (existingWarning) {
+        existingWarning.remove();
+    }
+    
+    const warning = document.createElement('div');
+    warning.id = 'dayLimitWarning';
+    warning.style.color = '#6D4C41';
+    warning.style.fontSize = '14px';
+    warning.style.fontWeight = '500';
+    warning.style.marginTop = '8px';
+    warning.style.padding = '10px 12px';
+    warning.style.backgroundColor = 'rgba(255, 193, 7, 0.15)';
+    warning.style.border = '1px solid rgba(255, 193, 7, 0.4)';
+    warning.style.borderRadius = '8px';
+    warning.style.borderLeft = '4px solid var(--primary-color)';
+    warning.innerHTML = `<span style="display: inline-block; width: 18px; height: 18px; background: var(--primary-color); color: var(--secondary-color); border-radius: 50%; text-align: center; line-height: 18px; font-size: 12px; font-weight: bold; margin-right: 8px; vertical-align: middle;">!</span>You can only select up to ${maxDays} day${maxDays > 1 ? 's' : ''} for ${maxDays} time${maxDays > 1 ? 's' : ''} per week`;
+    
+    specificDaysGroup.appendChild(warning);
+    
+    // Remove warning after 3 seconds
+    setTimeout(() => {
+        if (warning && warning.parentNode) {
+            warning.remove();
+        }
+    }, 3000);
+}
+
+// Function to validate weekly frequency limit for specific dates
+function validateWeeklyFrequencyForDates(dates, newDate = null, isAdding = true) {
+    const repeatSelection = document.getElementById("repeatSelection");
+    const timesPerWeekValue = parseInt(document.getElementById("timesPerWeekInput").value);
+    
+    if (!repeatSelection || repeatSelection.value !== "Weekly" || !timesPerWeekValue || dates.length === 0) {
+        return true; // No validation needed
+    }
+    
+    // Group dates by week (Monday to Sunday)
+    const datesByWeek = {};
+    
+    dates.forEach(date => {
+        const weekStart = getWeekStart(date);
+        const weekKey = weekStart.toISOString().split('T')[0];
+        
+        if (!datesByWeek[weekKey]) {
+            datesByWeek[weekKey] = [];
+        }
+        datesByWeek[weekKey].push(date);
+    });
+    
+    // Check if any week exceeds the limit
+    for (const weekKey in datesByWeek) {
+        const weekDates = datesByWeek[weekKey];
+        if (weekDates.length > timesPerWeekValue) {
+            if (isAdding && newDate) {
+                const newWeekStart = getWeekStart(newDate);
+                const newWeekKey = newWeekStart.toISOString().split('T')[0];
+                if (weekKey === newWeekKey) {
+                    showWeeklyDateLimitWarning(timesPerWeekValue, weekKey, true);
+                } else {
+                    showWeeklyDateLimitWarning(timesPerWeekValue, weekKey, false);
+                }
+            }
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+// Function to get the start of week (Monday) for a given date
+function getWeekStart(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    return new Date(d.setDate(diff));
+}
+
+// Function to show weekly date limit warning as center popup
+function showWeeklyDateLimitWarning(maxDates, weekKey, isCurrentWeek) {
+    // Remove any existing center popup
+    const existingPopup = document.getElementById("centerWarningPopup");
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+    
+    const weekStart = new Date(weekKey);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    
+    const weekStr = weekStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + 
+                   ' - ' + weekEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    
+    const message = isCurrentWeek 
+        ? `Cannot select this date. Week ${weekStr} already has ${maxDates} date${maxDates > 1 ? 's' : ''} selected (${maxDates} time${maxDates > 1 ? 's' : ''} per week limit). Remove a date from this week first to select a different one.`
+        : `Week ${weekStr} exceeds the limit. You can only select up to ${maxDates} date${maxDates > 1 ? 's' : ''} per week.`;
+    
+    // Create center popup
+    const popup = document.createElement('div');
+    popup.id = 'centerWarningPopup';
+    popup.className = 'center-warning-popup';
+    popup.innerHTML = `
+        <div class="warning-icon">!</div>
+        <div class="warning-text">${message}</div>
+        <button class="warning-close" onclick="this.parentElement.remove()">OK</button>
+    `;
+    
+    document.body.appendChild(popup);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (popup && popup.parentNode) {
+            popup.remove();
+        }
+    }, 5000);
+}
 
 // Initialize display
 updateSelectedDaysDisplay();
@@ -3354,6 +4511,11 @@ const flatpickrSpecific = flatpickr("#specificDatesCalendar", {
     ],
     onReady: function(_, __, instance) {
         const calendar = instance.calendarContainer;
+        
+        // Initialize visual state when calendar is ready
+        setTimeout(() => {
+            updateDaysVisualState(instance);
+        }, 100);
 
         calendar.addEventListener("mousedown", (e) => {
             const dayElem = e.target.closest(".flatpickr-day");
@@ -3387,8 +4549,20 @@ const flatpickrSpecific = flatpickr("#specificDatesCalendar", {
                     );
                 }
 
-                selectedDates = newDates.sort((a, b) => a - b);
-                instance.setDate(selectedDates, false);
+                // Only validate if we're adding dates (selecting), not removing
+                const isAdding = dragMode === "select";
+                if (!isAdding || validateWeeklyFrequencyForDates(newDates)) {
+                    selectedDates = newDates.sort((a, b) => a - b);
+                    instance.setDate(selectedDates, false);
+                    // Clear warnings on successful selection
+                    const warningContainer = document.getElementById("specificDatesWarningContainer");
+                    if (warningContainer) {
+                        warningContainer.innerHTML = "";
+                    }
+                } else {
+                    // Validation failed - show visual feedback but don't change selection
+                    // The warning is already shown by validateWeeklyFrequencyForDates
+                }
             }
         });
 
@@ -3404,24 +4578,124 @@ const flatpickrSpecific = flatpickr("#specificDatesCalendar", {
 
         calendar.addEventListener("click", (e) => {
             const dayElem = e.target.closest(".flatpickr-day");
-            if (dayElem && !dayElem.classList.contains("disabled")) {
-                if (!isDragging && !startDate) {
+            if (dayElem) {
+                // FIRST: Check if this day is disabled by weekly limit
+                if (dayElem.classList.contains('disabled-by-weekly-limit') || dayElem.getAttribute('data-disabled-by-limit') === 'true') {
+                    e.preventDefault();
+                    e.stopPropagation();
                     const date = new Date(dayElem.getAttribute("aria-label"));
-                    const index = selectedDates.findIndex(d => d.getTime() === date.getTime());
-                    if (index >= 0) {
-                        selectedDates.splice(index, 1);
-                    } else {
-                        selectedDates.push(date);
+                    const timesPerWeekValue = parseInt(document.getElementById("timesPerWeekInput").value);
+                    const weekStart = getWeekStart(date);
+                    const weekKey = weekStart.toISOString().split('T')[0];
+                    showWeeklyDateLimitWarning(timesPerWeekValue, weekKey, true);
+                    return false;
+                }
+                
+                if (!isDragging && !startDate) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const date = new Date(dayElem.getAttribute("aria-label"));
+                    
+                    // Skip if day is disabled by flatpickr itself
+                    if (dayElem.classList.contains("disabled")) {
+                        return;
                     }
-                    selectedDates.sort((a, b) => a - b);
-                    instance.setDate(selectedDates, false);
+                    
+                    const index = selectedDates.findIndex(d => d.getTime() === date.getTime());
+                    
+                    if (index >= 0) {
+                        // Always allow deselection
+                        selectedDates.splice(index, 1);
+                        // Clear warnings when deselecting
+                        const warningContainer = document.getElementById("specificDatesWarningContainer");
+                        if (warningContainer) {
+                            warningContainer.innerHTML = "";
+                        }
+                        selectedDates.sort((a, b) => a - b);
+                        instance.setDate(selectedDates, false);
+                        updateSelectedDatesDisplay();
+                        // Update visual state after deselection
+                        setTimeout(() => updateDaysVisualState(instance), 50);
+                    } else {
+                        // Check if this day is disabled by weekly limit
+                        const repeatSelection = document.getElementById("repeatSelection");
+                        const timesPerWeekValue = parseInt(document.getElementById("timesPerWeekInput").value);
+                        
+                        if (repeatSelection && repeatSelection.value === "Weekly" && timesPerWeekValue) {
+                            // Check how many dates are already selected in this week
+                            const weekStart = getWeekStart(date);
+                            const weekKey = weekStart.toISOString().split('T')[0];
+                            const datesInThisWeek = selectedDates.filter(d => {
+                                const dWeekStart = getWeekStart(d);
+                                return dWeekStart.toISOString().split('T')[0] === weekKey;
+                            });
+                            
+                            if (datesInThisWeek.length >= timesPerWeekValue) {
+                                // Show warning for exceeding weekly limit
+                                showWeeklyDateLimitWarning(timesPerWeekValue, weekKey, true);
+                                return;
+                            }
+                        }
+                        
+                        // Add the date
+                        selectedDates.push(date);
+                        selectedDates.sort((a, b) => a - b);
+                        instance.setDate(selectedDates, false);
+                        updateSelectedDatesDisplay();
+                        
+                        // Clear warnings on successful addition
+                        const warningContainer = document.getElementById("specificDatesWarningContainer");
+                        if (warningContainer) {
+                            warningContainer.innerHTML = "";
+                        }
+                        
+                        // Update visual state after selection
+                        setTimeout(() => updateDaysVisualState(instance), 50);
+                    }
                 }
             }
         });
     },
     onChange: function(dates, text, instance) {
+        // Check if any new dates violate weekly limits and revert if needed
         if (!isDragging) {
+            const repeatSelection = document.getElementById("repeatSelection");
+            const timesPerWeekValue = parseInt(document.getElementById("timesPerWeekInput").value);
+            
+            if (repeatSelection && repeatSelection.value === "Weekly" && timesPerWeekValue) {
+                // Check if the new selection violates weekly limits
+                const datesByWeek = {};
+                dates.forEach(date => {
+                    const weekStart = getWeekStart(date);
+                    const weekKey = weekStart.toISOString().split('T')[0];
+                    if (!datesByWeek[weekKey]) {
+                        datesByWeek[weekKey] = [];
+                    }
+                    datesByWeek[weekKey].push(date);
+                });
+                
+                // Check for violations
+                let hasViolation = false;
+                for (const weekKey in datesByWeek) {
+                    if (datesByWeek[weekKey].length > timesPerWeekValue) {
+                        hasViolation = true;
+                        showWeeklyDateLimitWarning(timesPerWeekValue, weekKey, true);
+                        break;
+                    }
+                }
+                
+                if (hasViolation) {
+                    // Revert to previous valid selection
+                    instance.setDate(selectedDates, false);
+                    return;
+                }
+            }
+            
             selectedDates = dates.sort((a, b) => a - b);
+            updateSelectedDatesDisplay();
+            // Update visual state after any change
+            setTimeout(() => updateDaysVisualState(instance), 50);
         }
     }
 });
@@ -3460,15 +4734,17 @@ function updateSelectedDatesDisplay() {
         selectedDates.forEach(date => {
             const chip = document.createElement("div");
             chip.className = "date-chip";
+            chip.style.cssText = "display: inline-flex; align-items: center; gap: 8px; background: var(--primary-color); color: var(--secondary-color); padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 500; margin: 2px;";
             const dateText = document.createElement("span");
             dateText.textContent = date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-            const removeBtn = document.createElement("span");
-            removeBtn.className = "date-chip-remove";
-            removeBtn.textContent = "×";
+            const removeBtn = document.createElement("button");
+            removeBtn.innerHTML = "×";
+            removeBtn.style.cssText = "background: none; border: none; color: var(--secondary-color); font-size: 16px; font-weight: bold; cursor: pointer; padding: 0; margin: 0; line-height: 1;";
             removeBtn.addEventListener("click", () => {
                 selectedDates = selectedDates.filter(d => d.getTime() !== date.getTime());
                 flatpickrSpecific.setDate(selectedDates);
                 updateSelectedDatesDisplay();
+                updateDaysVisualState(flatpickrSpecific);
             });
             chip.appendChild(dateText);
             chip.appendChild(removeBtn);
@@ -3477,20 +4753,97 @@ function updateSelectedDatesDisplay() {
     }
 }
 
+// Function to update visual state of calendar days based on weekly limits
+function updateDaysVisualState(instance) {
+    const repeatSelection = document.getElementById("repeatSelection");
+    const timesPerWeekValue = parseInt(document.getElementById("timesPerWeekInput").value);
+    
+    if (!repeatSelection || repeatSelection.value !== "Weekly" || !timesPerWeekValue || !instance) {
+        return; // No weekly limit to enforce
+    }
+    
+    // Group selected dates by week
+    const datesByWeek = {};
+    selectedDates.forEach(date => {
+        const weekStart = getWeekStart(date);
+        const weekKey = weekStart.toISOString().split('T')[0];
+        if (!datesByWeek[weekKey]) {
+            datesByWeek[weekKey] = [];
+        }
+        datesByWeek[weekKey].push(date);
+    });
+    
+    // Get all calendar day elements from the flatpickr instance
+    const calendar = instance.calendarContainer;
+    if (!calendar) return;
+    
+    const calendarDays = calendar.querySelectorAll('.flatpickr-day:not(.prevMonthDay):not(.nextMonthDay)');
+    
+    calendarDays.forEach(dayElem => {
+        const dateStr = dayElem.getAttribute('aria-label');
+        if (!dateStr) return;
+        
+        const dayDate = new Date(dateStr);
+        if (isNaN(dayDate.getTime())) return;
+        
+        const weekStart = getWeekStart(dayDate);
+        const weekKey = weekStart.toISOString().split('T')[0];
+        const weekDates = datesByWeek[weekKey] || [];
+        
+        const isSelected = selectedDates.some(d => d.getTime() === dayDate.getTime());
+        
+        // Reset styles first
+        dayElem.classList.remove('disabled-by-weekly-limit');
+        dayElem.removeAttribute('data-disabled-by-limit');
+        
+        if (!isSelected && weekDates.length >= timesPerWeekValue) {
+            // This day cannot be selected - week is full
+            dayElem.classList.add('disabled-by-weekly-limit');
+            dayElem.setAttribute('data-disabled-by-limit', 'true');
+        }
+    });
+}
+
 
 
 
 
 specificDatesButton.addEventListener("click", () => {
+    // Clear any existing warnings when opening modal
+    const warningContainer = document.getElementById("specificDatesWarningContainer");
+    if (warningContainer) {
+        warningContainer.innerHTML = "";
+    }
     showModal(specificDatesModal);
+    // Update visual state when modal opens
+    setTimeout(() => {
+        if (typeof flatpickrSpecific !== 'undefined' && flatpickrSpecific.calendarContainer) {
+            updateDaysVisualState(flatpickrSpecific);
+        }
+    }, 200);
 });
 
 saveSpecificDatesBtn.addEventListener("click", () => {
+    // Validate before saving
+    if (!validateWeeklyFrequencyForDates(selectedDates)) {
+        // Don't close modal if validation fails
+        return;
+    }
+    // Clear warnings when saving
+    const warningContainer = document.getElementById("specificDatesWarningContainer");
+    if (warningContainer) {
+        warningContainer.innerHTML = "";
+    }
     updateSelectedDatesDisplay();
     hideModal(specificDatesModal);
 });
 
 clearSpecificDatesBtn.addEventListener("click", () => {
+    // Clear warnings when clearing dates
+    const warningContainer = document.getElementById("specificDatesWarningContainer");
+    if (warningContainer) {
+        warningContainer.innerHTML = "";
+    }
     selectedDates = [];
     flatpickrSpecific.clear();
     updateSelectedDatesDisplay();
@@ -3499,6 +4852,11 @@ clearSpecificDatesBtn.addEventListener("click", () => {
 
 window.addEventListener("click", (e) => {
     if (e.target === specificDatesModal) {
+        // Clear warnings when closing modal
+        const warningContainer = document.getElementById("specificDatesWarningContainer");
+        if (warningContainer) {
+            warningContainer.innerHTML = "";
+        }
         hideModal(specificDatesModal);
     }
 });
