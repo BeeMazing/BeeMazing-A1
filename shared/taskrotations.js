@@ -27,7 +27,10 @@ function filterTasksForDate(tasks, selectedDate) {
     selectedWeekStart.setDate(selectedWeekStart.getDate() - daysToMonday);
 
     return tasks.filter(task => {
-        if (!task.date) return false;
+        // Handle "as needed" tasks - always show them regardless of date
+        if (task.asNeeded || task.repeat === "As Needed" || !task.date) {
+            return true;
+        }
 
         // Check if this specific date has an exception
         if (task.exceptions && task.exceptions[selectedDateStr]) {
@@ -545,8 +548,13 @@ function mixedTurnData(task, selectedDate) {
             return fairRotationTurnData(task, selectedDate);
         }
 
-        if (!task || typeof task !== "object" || !Array.isArray(task.users) || !task.date) {
+        if (!task || typeof task !== "object" || !Array.isArray(task.users)) {
             console.error("Invalid task input in mixedTurnData:", task);
+            return { turns: [], completedCount: 0, requiredTimes: 1 };
+        }
+
+        // Handle "As Needed" tasks which don't have dates
+        if (task.asNeeded || task.repeat === "As Needed" || !task.date) {
             return { turns: [], completedCount: 0, requiredTimes: 1 };
         }
 

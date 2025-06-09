@@ -242,26 +242,15 @@ class AvatarSystem {
             return `<div class="user-avatar ${additionalClasses}" style="width: ${size}px; height: ${size}px; background: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; ${additionalStyles}">?</div>`;
         }
         
-        const fontSize = Math.max(size * 0.4, 12);
-        return `
-            <div class="user-avatar ${additionalClasses}" style="
-                width: ${size}px; 
-                height: ${size}px; 
-                background: ${avatar.color}; 
-                border-radius: 50%; 
-                display: flex; 
-                align-items: center; 
-                justify-content: center; 
-                font-weight: bold; 
-                color: white; 
-                font-size: ${fontSize}px;
-                text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                margin-right: 10px;
-                flex-shrink: 0;
-                ${additionalStyles}
-            ">${avatar.initials}</div>
-        `;
+        const fontSize = Math.max(size * 0.4, 10);
+        
+        // For task avatars, remove default margin and use inherited styles
+        const isTaskAvatar = additionalClasses.includes('task-avatar');
+        const baseStyles = isTaskAvatar ? 
+            `width: ${size}px; height: ${size}px; background: ${avatar.color}; font-size: ${fontSize}px; ${additionalStyles}` :
+            `width: ${size}px; height: ${size}px; background: ${avatar.color}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: ${fontSize}px; text-shadow: 0 1px 2px rgba(0,0,0,0.3); box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-right: 10px; flex-shrink: 0; ${additionalStyles}`;
+        
+        return `<div class="user-avatar ${additionalClasses}" style="${baseStyles}">${avatar.initials}</div>`;
     }
 
     // Generate profile avatar HTML (for replacing profile icon)

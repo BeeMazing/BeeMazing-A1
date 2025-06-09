@@ -283,6 +283,118 @@ app.post("/add-user", async (req, res) => {
   }
 });
 
+// ✅ USER ID MAPPING - Store user ID mappings for migration
+app.post("/api/user-id-mapping", async (req, res) => {
+  const { adminEmail, userIdMap } = req.body;
+
+  if (!adminEmail || !userIdMap) {
+    return res.status(400).json({ success: false, message: "Missing adminEmail or userIdMap" });
+  }
+
+  try {
+    const db = await connectDB();
+    const adminUsers = db.collection("adminUsers");
+
+    // Store the user ID mapping
+    await adminUsers.updateOne(
+      { email: adminEmail },
+      { 
+        $set: { 
+          userIdMap: userIdMap,
+          userIdMapCreated: new Date().toISOString()
+        } 
+      },
+      { upsert: true }
+    );
+
+    console.log(`✅ Saved user ID mapping for ${adminEmail}:`, userIdMap);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("🔥 Error in /api/user-id-mapping:", err);
+    res.status(500).json({ success: false, message: "Failed to save user ID mapping" });
+  }
+});
+
+// ✅ GET USER ID MAPPING - Retrieve stored user ID mappings
+app.get("/api/user-id-mapping", async (req, res) => {
+  const { adminEmail } = req.query;
+
+  if (!adminEmail) {
+    return res.status(400).json({ success: false, message: "Missing adminEmail" });
+  }
+
+  try {
+    const db = await connectDB();
+    const adminUsers = db.collection("adminUsers");
+
+    const adminDoc = await adminUsers.findOne({ email: adminEmail });
+    const userIdMap = adminDoc?.userIdMap || {};
+
+    res.json({ 
+      success: true, 
+      userIdMap: userIdMap,
+      created: adminDoc?.userIdMapCreated
+    });
+  } catch (err) {
+    console.error("🔥 Error in GET /api/user-id-mapping:", err);
+    res.status(500).json({ success: false, message: "Failed to retrieve user ID mapping" });
+  }
+});
+
+// ✅ RENAME USER - Update user name in admin users list and permissions
+app.post("/rename-user", async (req, res) => {
+  const { adminEmail, oldName, newName } = req.body;
+
+  if (!adminEmail || !oldName || !newName) {
+    return res.status(400).json({ success: false, message: "Missing adminEmail, oldName, or newName" });
+  }
+
+  try {
+    const db = await connectDB();
+    const adminUsers = db.collection("adminUsers");
+
+    const adminDoc = await adminUsers.findOne({ email: adminEmail });
+    if (!adminDoc) {
+      return res.status(404).json({ success: false, message: "Admin not found" });
+    }
+
+    // Update users array
+    const updatedUsers = adminDoc.users.map(user => user === oldName ? newName : user);
+    
+    // Update permissions object
+    const updatedPermissions = { ...adminDoc.permissions };
+    if (updatedPermissions[oldName]) {
+      updatedPermissions[newName] = updatedPermissions[oldName];
+      delete updatedPermissions[oldName];
+    }
+
+    // Update avatars object
+    const updatedAvatars = { ...adminDoc.avatars };
+    if (updatedAvatars[oldName]) {
+      updatedAvatars[newName] = updatedAvatars[oldName];
+      delete updatedAvatars[oldName];
+    }
+
+    // Save updates
+    await adminUsers.updateOne(
+      { email: adminEmail },
+      {
+        $set: {
+          users: updatedUsers,
+          permissions: updatedPermissions,
+          avatars: updatedAvatars
+        }
+      }
+    );
+
+    console.log(`✅ Renamed user: "${oldName}" → "${newName}" for admin ${adminEmail}`);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("🔥 Error in /rename-user:", err);
+    res.status(500).json({ success: false, message: "Failed to rename user" });
+  }
+});
+
 // ✅ HEALTH CHECK
 app.get("/", (req, res) => {
   res.send("BeeMazing backend is working!");
