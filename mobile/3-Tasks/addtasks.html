@@ -1306,7 +1306,7 @@ input[name="monthlyOption"]:not(:checked) + .custom-radio > div {
 <div id="specificDaysGroup" class="date-group" style="display: none;">
     <div class="date-row">
         <div id="specificDaysButtons" class="day-buttons-container">
-            <button type="button" class="day-btn" data-day="Any" id="anyAllButton">Any</button>
+            <button type="button" class="day-btn" data-day="Any" id="anyAllButton" title="Daily: All 7 days | Weekly: Any day">Any</button>
             <button type="button" class="day-btn" data-day="Mon">Mon</button>
             <button type="button" class="day-btn" data-day="Tue">Tue</button>
             <button type="button" class="day-btn" data-day="Wed">Wed</button>
@@ -1314,6 +1314,9 @@ input[name="monthlyOption"]:not(:checked) + .custom-radio > div {
             <button type="button" class="day-btn" data-day="Fri">Fri</button>
             <button type="button" class="day-btn" data-day="Sat">Sat</button>
             <button type="button" class="day-btn" data-day="Sun">Sun</button>
+        </div>
+        <div style="font-size: 12px; color: #666; margin-top: 5px; text-align: center;" id="daySelectionHelp">
+            Daily: "All" = every day (Mon-Sun) | Weekly: "Any" = flexible scheduling
         </div>
     </div>
 </div>
@@ -3427,20 +3430,31 @@ repeatModal.addEventListener('click', (e) => {
         // Update section label and Any/All button based on frequency
         const sectionLabel = document.getElementById("sectionLabel");
         const anyAllButton = document.getElementById("anyAllButton");
-        if (sectionLabel && anyAllButton) {
+        const daySelectionHelp = document.getElementById("daySelectionHelp");
+        
+        // Ensure the day button update happens immediately
+        if (anyAllButton) {
             if (selected === "Daily") {
-                sectionLabel.textContent = "Days";
                 anyAllButton.textContent = "All";
                 anyAllButton.setAttribute("data-day", "All");
+                anyAllButton.setAttribute("title", "All 7 days (Mon-Sun)");
+                if (sectionLabel) sectionLabel.textContent = "Days";
+                if (daySelectionHelp) {
+                    daySelectionHelp.textContent = 'Daily: "All" = every day (Mon-Sun) | Individual days = specific days only';
+                }
                 // Convert Any to All if it's currently selected, or set default
                 if (selectedDays.includes("Any") || selectedDays.length === 0) {
                     selectedDays = ["All"];
                     updateSelectedDaysDisplay();
                 }
             } else {
-                sectionLabel.textContent = "Dates";
                 anyAllButton.textContent = "Any";
                 anyAllButton.setAttribute("data-day", "Any");
+                anyAllButton.setAttribute("title", "Any day (flexible scheduling)");
+                if (sectionLabel) sectionLabel.textContent = "Dates";
+                if (daySelectionHelp) {
+                    daySelectionHelp.textContent = 'Weekly: "Any" = flexible scheduling | Individual days = specific days';
+                }
                 // Convert All to Any if it's currently selected, or set default
                 if (selectedDays.includes("All") || (selectedDays.length === 7 && ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].every(day => selectedDays.includes(day)))) {
                     selectedDays = ["Any"];
@@ -4388,27 +4402,32 @@ document.querySelectorAll("#specificDaysButtons .day-btn").forEach(button => {
 
         if (fullDay === "Any" || fullDay === "All") {
             // Clicking Any/All button
-            if (selectedDays.includes(fullDay)) {
-                // If already selected, deselect it (but keep at least one day)
-                if (isDaily) {
-                    selectedDays = ["Monday"]; // Default to Monday for Daily
+            if (isDaily) {
+                // For Daily tasks: "All" means every day (Mon-Sun)
+                if (selectedDays.includes("All")) {
+                    // If "All" is already selected, deselect it and default to Monday
+                    selectedDays = ["Monday"];
                 } else {
-                    selectedDays = ["Any"]; // Keep Any for non-Daily
+                    // Select "All" and clear any individual day selections
+                    selectedDays = ["All"];
                 }
             } else {
-                // Select Any/All and clear individual selections
-                if (isDaily) {
-                    selectedDays = ["All"];
+                // For non-Daily tasks: "Any" means any day is acceptable
+                if (selectedDays.includes("Any")) {
+                    // If "Any" is already selected, keep it (don't deselect)
+                    selectedDays = ["Any"];
                 } else {
+                    // Select "Any" and clear individual selections
                     selectedDays = ["Any"];
                 }
             }
         } else {
             // Clicking individual day button
             if (isDaily) {
-                // For Daily frequency: when selecting individual days, remove "All"
+                // For Daily frequency: individual days exclude "All"
                 if (selectedDays.includes("All")) {
-                    selectedDays = [fullDay]; // Replace "All" with this specific day
+                    // Replace "All" with this specific day
+                    selectedDays = [fullDay];
                 } else {
                     // Toggle individual day
                     if (selectedDays.includes(fullDay)) {
@@ -4419,7 +4438,7 @@ document.querySelectorAll("#specificDaysButtons .day-btn").forEach(button => {
                         }
                     } else {
                         selectedDays.push(fullDay);
-                        // Check if all 7 days are now selected
+                        // Check if all 7 days are now selected - convert to "All"
                         const allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
                         if (allDays.every(day => selectedDays.includes(day))) {
                             selectedDays = ["All"];
@@ -4427,11 +4446,12 @@ document.querySelectorAll("#specificDaysButtons .day-btn").forEach(button => {
                     }
                 }
             } else {
-                // For non-Daily frequencies: check weekly limit
+                // For non-Daily frequencies: check weekly limit and use "Any" logic
                 const repeatSelection = document.getElementById("repeatSelection");
                 const timesPerWeekValue = parseInt(document.getElementById("timesPerWeekInput").value);
                 const isWeeklyWithLimit = repeatSelection && repeatSelection.value === "Weekly" && timesPerWeekValue;
                 
+                // Remove "Any" when selecting individual days
                 selectedDays = selectedDays.filter(day => day !== "Any" && day !== "All");
                 
                 if (selectedDays.includes(fullDay)) {
@@ -5244,11 +5264,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         
         // Set initial section label and Any/All button based on current frequency (default is "One Time")
+        const daySelectionHelp = document.getElementById("daySelectionHelp");
+        
         if (sectionLabel && anyAllButton) {
             if (repeatInput && repeatInput.value === "Daily") {
                 sectionLabel.textContent = "Days";
                 anyAllButton.textContent = "All";
                 anyAllButton.setAttribute("data-day", "All");
+                anyAllButton.setAttribute("title", "All 7 days (Mon-Sun)");
+                if (daySelectionHelp) {
+                    daySelectionHelp.textContent = 'Daily: "All" = every day (Mon-Sun) | Individual days = specific days only';
+                }
                 // Ensure "All" is selected for Daily by default
                 if (selectedDays.includes("Any")) {
                     selectedDays = ["All"];
@@ -5257,6 +5283,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 sectionLabel.textContent = "Dates";
                 anyAllButton.textContent = "Any";
                 anyAllButton.setAttribute("data-day", "Any");
+                anyAllButton.setAttribute("title", "Any day (flexible scheduling)");
+                if (daySelectionHelp) {
+                    daySelectionHelp.textContent = 'Weekly: "Any" = flexible scheduling | Individual days = specific days';
+                }
                 // Ensure "Any" is selected for non-Daily by default
                 if (selectedDays.includes("All")) {
                     selectedDays = ["Any"];
