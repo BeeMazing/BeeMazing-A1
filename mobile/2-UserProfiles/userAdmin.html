@@ -25,6 +25,7 @@
     --accent-color: #FFFFFF;
     --light-bg: #FFFFF8;
     --text-color: #000000;
+    --header-height: 68px;
     --footer-height: 70px;
     --modal-bg: rgba(19, 19, 18, 0.4); /* Added */
     --border-dark: #444754; /* Added */
@@ -1032,14 +1033,15 @@ h3 {
 
 
 #adminSections {
-  margin-top: 130px;
-  padding-bottom: 80px;
+  margin-top: calc(var(--header-height) + 140px);
+  padding: 25px 20px 100px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 25px 20px 100px;
   background: linear-gradient(135deg, #FFFFF8 0%, #FFF6E9 100%);
-  min-height: 100vh;
+  min-height: calc(100vh - var(--header-height) - 140px);
+  position: relative;
+  z-index: 1;
 }
 
 .admin-card {
