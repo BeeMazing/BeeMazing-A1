@@ -950,10 +950,6 @@ app.post("/api/delete-rejected-reward", async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`✅ Server is running on http://localhost:${port}`);
-});
-
 // Save a single task for an admin
 app.post("/api/tasks", async (req, res) => {
   const { adminEmail, task } = req.body;
@@ -3527,3 +3523,7 @@ app.delete("/api/notifications", async (req, res) => {
 //- help notifications for userTasks.html
 
 // Endpoint helpCenter.html //
+
+app.listen(port, () => {
+  console.log(`✅ Server is running on http://localhost:${port}`);
+});
