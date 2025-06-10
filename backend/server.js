@@ -760,7 +760,45 @@ app.get("/api/tasks", async (req, res) => {
       ":",
       admin?.tasks?.map((t) => ({ title: t.title, users: t.users })),
     ); // Debug
-    res.json({ tasks: admin?.tasks || [] });
+    
+    // Merge completions and pendingCompletions for frontend compatibility
+    const tasks = (admin?.tasks || []).map(task => {
+      const mergedTask = { ...task };
+      mergedTask.completions = mergedTask.completions || {};
+      
+      // Merge pendingCompletions into completions with isPending flag
+      if (mergedTask.pendingCompletions) {
+        Object.keys(mergedTask.pendingCompletions).forEach(date => {
+          if (!mergedTask.completions[date]) {
+            mergedTask.completions[date] = [];
+          }
+          
+          // Add approved completions (isPending: false)
+          const approvedCompletions = (mergedTask.completions[date] || [])
+            .filter(c => typeof c.isPending === 'undefined' || !c.isPending)
+            .map(c => ({ ...c, isPending: false }));
+          
+          // Add pending completions (isPending: true)
+          const pendingCompletions = (mergedTask.pendingCompletions[date] || [])
+            .map(c => ({ ...c, isPending: true }));
+          
+          // Combine both arrays
+          mergedTask.completions[date] = [...approvedCompletions, ...pendingCompletions];
+        });
+      }
+      
+      // Also add any existing completions that weren't merged
+      Object.keys(mergedTask.completions).forEach(date => {
+        mergedTask.completions[date] = mergedTask.completions[date].map(c => ({
+          ...c,
+          isPending: typeof c.isPending !== 'undefined' ? c.isPending : false
+        }));
+      });
+      
+      return mergedTask;
+    });
+    
+    res.json({ tasks });
   } catch (err) {
     console.error("Error fetching tasks:", err);
     res.status(500).json({ error: "Failed to fetch tasks" });

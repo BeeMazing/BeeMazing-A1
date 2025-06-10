@@ -881,6 +881,11 @@ transform: scale(1.1);
     
     
 
+    <div style="display: flex; align-items: center; justify-content: space-between; margin: 10px 20px; gap: 10px;">
+        <div style="color: #5D4E41; font-weight: 600; font-size: 16px;">Today's Tasks</div>
+        <button class="refresh-btn" onclick="forceRefreshTasks()" style="background: #FBB740; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s; font-size: 16px;" title="Refresh Tasks">🔄</button>
+    </div>
+
     <div class="content" id="taskList">
         <!-- Tasks will be loaded dynamically here -->
     </div>
@@ -1628,15 +1633,37 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
         const result = await response.json();
         const tasks = result.tasks || [];
         
+        // Enhanced debugging for raw backend response
+        console.log(`🔍 RAW BACKEND RESPONSE for ${selectedDate}:`);
+        console.log(`📡 Response status: ${response.status}`);
+        console.log(`📡 Total tasks in response: ${tasks.length}`);
+        tasks.forEach(task => {
+            if (task.title && task.title.includes('final')) {
+                console.log(`📡 RAW Task "${task.title}":`, task);
+                console.log(`📡 RAW completions:`, task.completions);
+                console.log(`📡 RAW pendingCompletions:`, task.pendingCompletions);
+            }
+        });
+        
         // Enhanced debugging for completion data
         console.log(`🔍 COMPLETION DATA DEBUG for ${selectedDate}:`);
+        console.log(`📊 Total tasks received: ${tasks.length}`);
         tasks.forEach(task => {
             const completions = task.completions || {};
             const todayCompletions = completions[selectedDate] || [];
             if (todayCompletions.length > 0) {
                 console.log(`  ✅ Task "${task.title}" has ${todayCompletions.length} completion(s):`, todayCompletions);
-            } else if (task.title && task.title.toLowerCase().includes('test')) {
-                console.log(`  ❌ Task "${task.title}" has NO completions for ${selectedDate}:`, completions);
+                // Check if completions are pending or approved
+                const pending = todayCompletions.filter(c => c.isPending);
+                const approved = todayCompletions.filter(c => !c.isPending);
+                console.log(`    - Pending: ${pending.length}, Approved: ${approved.length}`);
+            } else {
+                console.log(`  ❌ Task "${task.title}" has NO completions for ${selectedDate}`);
+                // Show if there are completions for other dates
+                const otherDates = Object.keys(completions);
+                if (otherDates.length > 0) {
+                    console.log(`    - Has completions for other dates: ${otherDates.join(', ')}`);
+                }
             }
         });
         
@@ -1688,6 +1715,96 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
                 console.log(`❌ Task "${taskTitle}" not found`);
                 console.log(`Available tasks:`, tasks.map(t => t.title));
             }
+        };
+        
+        // Force refresh function for manual testing
+        window.forceRefreshTasks = function() {
+            console.log("🔄 FORCE REFRESH: Manually refreshing all task data");
+            const selectedDateElement = document.querySelector('.day.selected');
+            const currentSelectedDate = selectedDateElement ? selectedDateElement.dataset.date : new Date().toISOString().split("T")[0];
+            
+            // Add visual feedback
+            const refreshBtn = document.querySelector('.refresh-btn');
+            if (refreshBtn) {
+                refreshBtn.style.transform = 'scale(0.95) rotate(180deg)';
+                setTimeout(() => {
+                    refreshBtn.style.transform = '';
+                }, 300);
+            }
+            
+            loadTasksForDate(currentSelectedDate);
+        };
+        
+        // Comprehensive debugging function for completion flow
+        window.debugCompletionFlow = function(taskTitle) {
+            console.log("🔍 DEBUGGING COMPLETION FLOW for:", taskTitle);
+            const selectedDateElement = document.querySelector('.day.selected');
+            const selectedDate = selectedDateElement ? selectedDateElement.dataset.date : new Date().toISOString().split("T")[0];
+            const adminEmail = localStorage.getItem("currentAdminEmail");
+            
+            // Check current task status with forced fresh fetch
+            fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { 
+                cache: "no-store",
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            })
+                .then(response => {
+                    console.log("📡 RAW BACKEND RESPONSE:");
+                    console.log("📡 Response status:", response.status);
+                    return response.json();
+                })
+                .then(result => {
+                    console.log("📡 Total tasks in response:", result.tasks.length);
+                    
+                    const task = result.tasks.find(t => t.title === taskTitle);
+                    if (task) {
+                        console.log("📡 RAW Task data:", task);
+                        console.log("📡 RAW completions:", task.completions);
+                        console.log("📡 RAW pendingCompletions:", task.pendingCompletions);
+                        
+                        console.log("📊 BEFORE - Task found:", task.title);
+                        console.log("📊 BEFORE - All completions:", task.completions);
+                        console.log("📊 BEFORE - Completions for", selectedDate, ":", task.completions?.[selectedDate] || []);
+                        
+                        const completions = task.completions?.[selectedDate] || [];
+                        const pending = completions.filter(c => c.isPending);
+                        const approved = completions.filter(c => !c.isPending);
+                        console.log("📊 BEFORE - Status: Pending:", pending.length, "Approved:", approved.length);
+                        
+                        // Check UI status icon
+                        const taskCards = document.querySelectorAll('.task-item');
+                        taskCards.forEach(card => {
+                            if (card.querySelector('.task-title').textContent.includes(taskTitle)) {
+                                const statusIcon = card.querySelector('.task-status-icon');
+                                console.log("📊 BEFORE - UI Status Icon:", statusIcon ? statusIcon.textContent : 'not found');
+                            }
+                        });
+                    } else {
+                        console.log("❌ Task not found:", taskTitle);
+                        console.log("Available tasks:", result.tasks.map(t => t.title));
+                    }
+                })
+                .catch(error => console.error("❌ Error checking task status:", error));
+        };
+        
+        // Check completion after marking complete
+        window.checkCompletionAfter = function(taskTitle, delayMs = 1000) {
+            console.log("⏰ Checking completion status after", delayMs, "ms delay");
+            setTimeout(() => {
+                window.debugCompletionFlow(taskTitle);
+            }, delayMs);
+        };
+        
+        // List all available task names for easy copy-paste
+        window.listAllTasks = function() {
+            console.log("📋 ALL AVAILABLE TASKS:");
+            tasks.forEach((task, index) => {
+                console.log(`  ${index + 1}. "${task.title}"`);
+            });
+            console.log("💡 Copy the exact task name and use: debugCompletionFlow('Task Name Here')");
+            console.log("💡 OR hold Shift and click any task to debug it instantly!");
         };
         for (const task of tasks) {
             if (!task.title || !Array.isArray(task.users) || task.users.length === 0) {
@@ -1913,6 +2030,16 @@ if (typeof mixedTurnData === 'undefined' || typeof individualTurnData === 'undef
                 }
                 
                 if (!e.target.classList.contains("delete-btn")) {
+                    // Hold Shift + click to debug completion flow
+                    if (e.shiftKey) {
+                        e.preventDefault();
+                        console.log("🔍 SHIFT+CLICK DEBUG for task:", task.title);
+                        if (typeof window.debugCompletionFlow === 'function') {
+                            window.debugCompletionFlow(task.title);
+                        }
+                        return;
+                    }
+                    
                     const latest = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
                     const latestResult = await latest.json();
                     // Use the original task reference if this is a modified occurrence
@@ -2460,16 +2587,60 @@ async function showTaskDetails(task) {
             const result = await response.json();
             console.log("✅ Task completed successfully:", result);
             
+            // Enhanced debugging for completion data
+            console.log("🔍 COMPLETION DEBUG - Before UI refresh:");
+            console.log("  - Updated task from backend:", result.updatedTask);
+            console.log("  - Updated completions:", result.updatedTask?.completions);
+            console.log("  - Completions for today:", result.updatedTask?.completions?.[selectedDate]);
+            
+            // Store task title for debugging
+            const completedTaskTitle = task.title;
+            
+            // IMMEDIATE CHECK: Verify backend actually saved the data
+            console.log("🔍 IMMEDIATE BACKEND CHECK - Fetching fresh data to verify completion was saved...");
+            setTimeout(async () => {
+                try {
+                    const verifyResponse = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+                    if (verifyResponse.ok) {
+                        const verifyResult = await verifyResponse.json();
+                        const verifyTask = verifyResult.tasks.find(t => t.title === completedTaskTitle);
+                        if (verifyTask) {
+                            console.log("🔍 VERIFICATION - Fresh task data:", verifyTask.title);
+                            console.log("🔍 VERIFICATION - Fresh completions:", verifyTask.completions);
+                            console.log("🔍 VERIFICATION - Fresh completions for", selectedDate, ":", verifyTask.completions?.[selectedDate] || []);
+                            
+                            const freshCompletions = verifyTask.completions?.[selectedDate] || [];
+                            if (freshCompletions.length === 0) {
+                                console.error("❌ BACKEND ISSUE: Completion data NOT saved! Backend returned empty array after successful completion.");
+                                console.error("❌ This confirms the backend /api/complete-task endpoint is not properly saving completion data.");
+                            } else {
+                                console.log("✅ BACKEND OK: Completion data found:", freshCompletions);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("❌ Error verifying completion data:", error);
+                }
+            }, 100);
+            
             // Close modal and refresh
             modal.remove();
             
-            // Refresh the task list
+            // Add longer delay to ensure backend data is updated
             if (typeof loadTasksForDate === 'function') {
+                console.log("🔄 Refreshing task list after completion...");
                 setTimeout(() => {
                     const selectedDateElement = document.querySelector('.day.selected');
                     const currentSelectedDate = selectedDateElement ? selectedDateElement.dataset.date : new Date().toISOString().split("T")[0];
+                    console.log("🔄 Loading tasks for date:", currentSelectedDate);
                     loadTasksForDate(currentSelectedDate);
-                }, 150);
+                    
+                    // Auto-check completion status after refresh
+                    setTimeout(() => {
+                        console.log("🔍 AUTO-CHECKING completion status after refresh...");
+                        window.debugCompletionFlow(completedTaskTitle);
+                    }, 1000);
+                }, 500); // Increased delay to 500ms
             }
             
         } catch (error) {
