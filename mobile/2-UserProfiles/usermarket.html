@@ -975,7 +975,15 @@ document.querySelectorAll('.footer a').forEach(link => {
                       const cards = document.querySelectorAll('#claimed-grid .reward-card');
                       cards.forEach(card => {
                           const cardTitle = card.querySelector('h3').textContent;
-                          if (cardTitle!response.ok) throw new Error(data.error || 'Failed to delete rejected reward');
+                          if (cardTitle.includes(truncateTitle(rewardName))) {
+                              card.style.display = 'none';
+                          }
+                      });
+                      return;
+                  }
+                  
+                  const data = await response.json();
+                  if (!response.ok) throw new Error(data.error || 'Failed to delete rejected reward');
                   
                   showSuccessPopup(`Removed rejected reward: ${rewardName}`);
                   loadRewards(userName); // Reload all sections
