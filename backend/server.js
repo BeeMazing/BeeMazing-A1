@@ -1364,16 +1364,8 @@ app.delete("/api/market-rewards", async (req, res) => {
       }
     }
 
-    // Clean up rewardHistory
+    // Keep rewardHistory intact - historical records should be preserved
     const rewardHistory = admin.rewardHistory || {};
-    for (const user in rewardHistory) {
-      rewardHistory[user] = rewardHistory[user].filter(
-        (history) => history.rewardName !== rewardName,
-      );
-      if (rewardHistory[user].length === 0) {
-        delete rewardHistory[user];
-      }
-    }
 
     // Clean up pendingRewardRequests and refund points
     const pendingRewardRequests = admin.pendingRewardRequests || [];
