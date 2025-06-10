@@ -703,10 +703,7 @@ app.post("/test-email", async (req, res) => {
 
 // register.html forgot password ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// ✅ Test endpoint to verify route registration works
-app.get("/api/test-new-endpoints", (req, res) => {
-  res.json({ success: true, message: "New endpoints are working!", timestamp: Date.now() });
-});
+
 
 // ✅ Return a claimed reward (restore points and remove from requests)
 app.post("/api/return-reward", async (req, res) => {
