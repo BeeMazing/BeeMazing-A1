@@ -5,12 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BeeMazing</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
+        html {
+            background-color: #FFFFFF;
+        }
+
         :root {
     --primary-color: #FFC107;
     --secondary-color: #212121;
@@ -28,10 +34,12 @@
 
         body {
             font-family: 'Poppins', Arial, sans-serif;
-            background-color: var(--light-bg);
+            background-color: #FFFFFF;
             color: var(--text-color);
             height: 100vh;
             overflow: hidden;
+            margin: 0;
+            padding: 0;
         }
         .date-header {
         background: #FFF6E9;
@@ -350,18 +358,15 @@ transform: scale(1.1);
 }
         .content {
     position: absolute;
-    top: calc(var(--header-height) + 45px); /* was 110px — now much tighter */
+    top: calc(var(--header-height) + 70px);
     bottom: var(--footer-height);
     left: 0;
     right: 0;
-    padding: 20px;
+    padding: 0.5rem;
     overflow-y: auto;
-    background-color: var(--light-bg);
-    background-image: url('data:image/svg+xml,%3Csvg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"%3E%3Ccircle cx="20" cy="20" r="2" fill="%23FFC107" fill-opacity="0.1"/%3E%3C/svg%3E');
-    background-repeat: repeat;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+    background-color: #FFFFFF !important;
+    box-sizing: border-box;
+    margin: 0;
 }
 
 
@@ -374,44 +379,190 @@ transform: scale(1.1);
         .reward-list {
             list-style: none;
             padding: 0;
-            width: 90%;
-            max-width: 500px;
+            margin: 0 0 1rem 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+            background-color: #FFFFFF !important;
         }
         .reward-item {
-            background: var(--light-bg);
+            background-color: #FFFFFF !important;
             color: #6D4C41;
-            padding: 15px;
-            margin: 10px 0;
+            padding: 0.5rem 0.5rem 0 0.5rem;
+            margin: 0;
             border: 2px solid var(--primary-color);
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             position: relative;
-            overflow: hidden;
             user-select: none;
+            min-height: 95px;
+            height: auto;
+            box-sizing: border-box;
+            width: 100%;
+            overflow: hidden;
         }
         .reward-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 20px rgba(255, 193, 7, 0.3);
-            border-color: #ffb300;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
         }
         .reward-item strong {
             color: #5D4037;
         }
-        .reward-item.swiped {
-            transform: translateX(-150px);
+        .reward-item.swiped .reward-item-content {
+            transform: translateX(-160px);
+        }
+
+        .reward-item-header {
+            margin-bottom: 0.75rem;
+            position: relative;
+            width: 100%;
+        }
+
+        .reward-item-title {
+            font-weight: 600;
+            color: #6D4C41;
+            font-size: 1.1rem;
+            text-align: center;
+            line-height: 1.2;
+            padding: 0 30px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .reward-type-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(109, 76, 65, 0.15);
+            color: #6D4C41;
+            border: 1px solid rgba(109, 76, 65, 0.3);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        .reward-item-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            gap: 0.5rem;
+            min-height: 30px;
+        }
+
+        .reward-avatars {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            flex: 1;
+            max-width: none;
+            line-height: 1;
+        }
+
+        .reward-cost {
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            min-height: 1.875rem;
+            flex-shrink: 0;
+            min-width: 50px;
+        }
+
+        /* Mobile responsive styles */
+        @media (max-width: 640px) {
+        .reward-item {
+            padding: 0.375rem 0.375rem 0 0.375rem;
+            margin: 2px 0;
+            min-height: 85px;
+        }
+        .reward-item-title {
+            font-size: 1rem;
+        }
+        .reward-item-header {
+            margin-bottom: 0.5rem;
+        }
+        .reward-cost {
+            font-size: 1.1rem;
+        }
+        .reward-avatars {
+            max-width: none;
+            gap: 2px;
+        }
+        .reward-avatar {
+            width: 18px;
+            height: 18px;
+            font-size: 8px;
+        }
+        .reward-item-footer {
+            gap: 0.5rem;
+        }
+        .reward-cost {
+            min-width: 50px;
+        }
+        }
+
+        @media (max-width: 400px) {
+        .reward-item.swiped .reward-item-content {
+            transform: translateX(-140px);
+        }
+        .edit-btn, .delete-btn {
+            width: 70px;
+            font-size: 12px;
+        }
+        .action-buttons {
+            width: 140px;
+        }
+        
+        .edit-btn svg, .delete-btn svg {
+            width: 14px;
+            height: 14px;
+        }
         }
         
         .action-buttons {
             position: absolute;
-            right: -150px;
+            right: 0;
             top: 0;
             height: 100%;
             display: flex;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            width: 160px;
+        }
+        
+        .reward-item-content {
+            position: relative;
+            width: 100%;
+            min-height: 100%;
+            background-color: #FFFFFF;
+            border-radius: 0.5rem;
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 0.25rem 0;
         }
         
         .edit-btn {
-            width: 75px;
+            width: 80px;
             height: 100%;
             background: #FF9800;
             color: white;
@@ -426,12 +577,18 @@ transform: scale(1.1);
             transition: background-color 0.3s ease;
         }
         
+        .edit-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: white;
+        }
+        
         .edit-btn:hover {
             background: #F57C00;
         }
         
         .delete-btn {
-            width: 75px;
+            width: 80px;
             height: 100%;
             background: var(--danger-color);
             color: white;
@@ -447,13 +604,440 @@ transform: scale(1.1);
             transition: background-color 0.3s ease;
         }
         
+        .delete-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: white;
+        }
+        
         .reward-item.swiped .action-buttons {
-            right: 0;
+            opacity: 1;
+        }
+        
+        .reward-item:not(.swiped) .action-buttons {
+            opacity: 0;
+            pointer-events: none;
         }
         
         .delete-btn:hover {
             background: #B71C1C;
         }
+
+        /* Delete Confirmation Modal */
+        .delete-confirmation-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .delete-confirmation-modal.show {
+            display: flex;
+        }
+
+        .delete-confirmation-content {
+            background: #FFFFF8;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+            text-align: center;
+            max-width: 300px;
+            width: 85%;
+        }
+
+        .delete-confirmation-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        .delete-confirmation-header svg {
+            width: 18px;
+            height: 18px;
+            fill: #6D4C41;
+            margin-right: 8px;
+        }
+
+        .delete-confirmation-title {
+            color: #6D4C41;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .delete-confirmation-text {
+            color: #6D4C41;
+            font-size: 0.9rem;
+            margin: 12px 0 20px 0;
+            line-height: 1.3;
+        }
+
+        .delete-confirmation-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .delete-cancel-btn {
+            padding: 10px 20px;
+            background: var(--primary-color);
+            color: #6D4C41;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            min-width: 80px;
+        }
+
+        .delete-cancel-btn:hover {
+            background: #FBB740;
+        }
+
+        .delete-confirm-btn {
+            padding: 10px 20px;
+            background: #C85A5A;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            min-width: 80px;
+        }
+
+        .delete-confirm-btn:hover {
+            background: #B04545;
+        }
+
+        /* Tab styling */
+        .tab-button {
+            background-color: var(--light-bg) !important;
+            color: #6D4C41 !important;
+            border: 2px solid var(--primary-color) !important;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            opacity: 0.6;
+        }
+
+        .tab-button:hover {
+            background-color: rgba(255, 193, 7, 0.1) !important;
+            transform: translateY(-1px);
+        }
+
+        .tab-button.active {
+            background-color: var(--primary-color) !important;
+            color: #6D4C41 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+            opacity: 1;
+        }
+
+        .tab-content.hidden {
+            display: none;
+        }
+
+        /* Utility classes for layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 0.5rem;
+        }
+
+        .mx-auto {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .p-4 {
+            padding: 1rem;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .justify-center {
+            justify-content: center;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .px-4 {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        .py-2 {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .rounded-l-lg {
+            border-top-left-radius: 0.5rem;
+            border-bottom-left-radius: 0.5rem;
+        }
+
+        .rounded-r-lg {
+            border-top-right-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
+        }
+
+        .shadow-md {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .grid {
+            display: grid;
+        }
+
+        .grid-cols-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .gap-4 {
+            gap: 1rem;
+        }
+
+        #history-grid {
+            padding: 0;
+            margin: 0 0 1rem 0;
+            padding-bottom: 6rem;
+            min-height: 200px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+            background-color: #FFFFFF !important;
+        }
+
+        /* Utility classes for grid */
+        .grid {
+            display: grid;
+        }
+
+        .grid-cols-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .gap-4 {
+            gap: 1rem;
+        }
+
+        /* History grid styling - same as reward items */
+        #history-grid .history-item {
+            background-color: #FFFFFF !important;
+            color: #6D4C41;
+            padding: 0.5rem;
+            margin: 0;
+            border: 2px solid var(--primary-color);
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            user-select: none;
+            min-height: 95px;
+            height: auto;
+            box-sizing: border-box;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        #history-grid .history-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+        }
+
+        .history-item-content {
+            transition: transform 0.3s ease;
+            position: relative;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .history-item.swiped .history-item-content {
+            transform: translateX(-80px);
+        }
+
+        .history-item-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            width: 100%;
+        }
+
+        .history-item-title {
+            color: #6D4C41;
+            font-weight: 600;
+            font-size: 1rem;
+            line-height: 1.2;
+            margin: 0;
+            flex: 1;
+        }
+
+        .history-item-footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 0.5rem;
+            width: 100%;
+        }
+
+        .history-user-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .history-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            color: white;
+            border: 1px solid rgba(109, 76, 65, 0.2);
+        }
+
+        .history-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .history-cost {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .history-status {
+            font-size: 0.85rem;
+            color: #6D4C41;
+            margin-top: 0.25rem;
+            text-align: center;
+            width: 100%;
+        }
+
+        .history-action-buttons {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .history-item.swiped .history-action-buttons {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .history-delete-btn {
+            background: #F44336;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            height: 100%;
+            min-width: 80px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .history-delete-btn:hover {
+            background: #D32F2F;
+        }
+
+        .history-delete-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 400px) {
+            .history-item.swiped .history-item-content {
+                transform: translateX(-70px);
+            }
+            
+            .history-delete-btn {
+                min-width: 70px;
+                font-size: 12px;
+                padding: 6px 8px;
+            }
+        }
+
+        /* Status circle styling */
+        .status-circle {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 11px;
+            color: white;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        .status-circle svg {
+            width: 12px;
+            height: 12px;
+            fill: white;
+        }
+
+        .status-circle.pending {
+            background-color: #FF9800;
+        }
+
+        .status-circle.approved {
+            background-color: #4CAF50;
+        }
+
+        .status-circle.declined {
+            background-color: #F44336;
+        }
+
+        /* Delete history button */
+
+
         .add-reward-btn {
             position: fixed;
             bottom: calc(var(--footer-height) + 10px);
@@ -721,13 +1305,13 @@ transform: scale(1.1);
         }
 
         .reward-avatar {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 8px;
+            font-size: 9px;
             font-weight: 600;
             color: white;
             border: 1px solid rgba(109, 76, 65, 0.3);
@@ -750,23 +1334,136 @@ transform: scale(1.1);
             margin-left: 8px;
         }
 
-        .reward-type-badge {
-            font-size: 10px;
-            font-weight: 600;
-            padding: 2px 6px;
-            border-radius: 10px;
-            margin-left: 8px;
-            border: 1px solid;
-        }
 
-        .reward-type-badge.onetime {
-            background: rgba(255, 193, 7, 0.15);
-            color: #FFC107;
-            border: 1px solid rgba(255, 193, 7, 0.3);
-        }
 
         .reward-form-container input::placeholder {
             color: #8D6E63;
+        }
+
+        .add-description-text {
+            color: #FFC107;
+            font-size: 0.875rem;
+            cursor: pointer;
+            margin: 8px 0;
+            display: inline-block;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .add-description-text:hover {
+            color: #FFB300;
+            text-decoration: underline;
+        }
+
+        .description-container {
+            margin: 10px 0;
+        }
+
+        .description-container textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.875rem;
+            resize: vertical;
+            min-height: 60px;
+            box-sizing: border-box;
+        }
+
+        .description-container textarea::placeholder {
+            color: #8D6E63;
+        }
+
+        .info-icon {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 20px;
+            height: 20px;
+            background: rgba(109, 76, 65, 0.15);
+            color: #6D4C41;
+            border: 1px solid rgba(109, 76, 65, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .description-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .description-popup.show {
+            display: flex;
+        }
+
+        .description-popup-content {
+            background: #FFFFFF;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 0 20px rgba(255, 193, 7, 0.5);
+            text-align: left;
+            max-width: 300px;
+            width: 90%;
+            position: relative;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .description-popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .description-popup-title {
+            color: #6D4C41;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .description-popup-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .description-popup-close:hover {
+            color: #333;
+        }
+
+        .description-popup-text {
+            color: #6D4C41;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            white-space: pre-wrap;
         }
 
         .reward-form-container button {
@@ -959,9 +1656,21 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
     </div>
 
     <div class="content">
-        <ul class="reward-list" id="rewardList">
-            <!-- Rewards will be loaded here dynamically -->
-        </ul>
+        <div class="container mx-auto p-4">
+            <div class="flex justify-center mb-4">
+                <button onclick="showTab('rewards')" class="tab-button px-4 py-2 rounded-l-lg shadow-md active">Rewards</button>
+                <button onclick="showTab('received')" class="tab-button px-4 py-2 rounded-r-lg shadow-md">Received</button>
+            </div>
+        <div id="rewards" class="tab-content">
+            <ul class="reward-list" id="rewardList">
+                <!-- Active rewards will be loaded here dynamically -->
+            </ul>
+        </div>
+        <div id="received" class="tab-content hidden">
+            <div id="history-grid">
+                <!-- Received rewards will be loaded here -->
+            </div>
+        </div>
     </div>
     
 
@@ -1055,6 +1764,25 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
       </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
+    <div class="delete-confirmation-modal" id="deleteConfirmationModal">
+        <div class="delete-confirmation-content">
+            <div class="delete-confirmation-header">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                </svg>
+                <h3 class="delete-confirmation-title">Delete reward?</h3>
+            </div>
+            <p class="delete-confirmation-text">
+                "<span id="deleteRewardName"></span>" will be permanently deleted and cannot be retrieved.
+            </p>
+            <div class="delete-confirmation-buttons">
+                <button class="delete-cancel-btn" onclick="hideDeleteConfirmation()">Keep</button>
+                <button class="delete-confirm-btn" onclick="confirmDeleteReward()">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Add Reward Modal -->
     <div class="add-reward-modal" id="addRewardModal">
         <div class="add-reward-modal-content">
@@ -1064,7 +1792,13 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
             </div>
             
             <div class="reward-form-container">
-                <input type="text" id="modalRewardName" placeholder="Enter reward" />
+                <input type="text" id="modalRewardName" placeholder="Enter reward" maxlength="15" />
+                
+                <span id="addDescriptionBtn" class="add-description-text" onclick="toggleDescriptionField()">+ Add description</span>
+                
+                <div id="descriptionContainer" class="description-container" style="display: none;">
+                    <textarea id="modalRewardDescription" placeholder="Add additional details about this reward..." maxlength="200" rows="3"></textarea>
+                </div>
                 
                 <div class="value-input-container">
                     <div class="value-inputs-wrapper">
@@ -1143,6 +1877,9 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
             
             // Clear form
             document.getElementById('modalRewardName').value = '';
+            document.getElementById('modalRewardDescription').value = '';
+            document.getElementById('descriptionContainer').style.display = 'none';
+            document.getElementById('addDescriptionBtn').textContent = '+ Add description';
             initializeValuePicker();
             modalSelectedUsers = ["Everyone"];
             selectedRewardType = "oneTime";
@@ -1247,11 +1984,36 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
                 const userAvatar = createModalAvatarElement(user);
                 avatarsGrid.appendChild(userAvatar);
             });
+    
+
+    
         }
         
-        // Function to toggle user selection in modal
-        function toggleModalUserSelection(user) {
-            if (user === "Everyone") {
+        // Function to show description popup (moved to global scope)
+        function showDescriptionPopup(rewardName, description) {
+            const popup = document.getElementById('descriptionPopup');
+            const title = document.getElementById('descriptionPopupTitle');
+            const text = document.getElementById('descriptionPopupText');
+    
+            if (popup && title && text) {
+                title.textContent = rewardName;
+                text.textContent = description;
+                popup.classList.add('show');
+            }
+        }
+
+        // Function to close description popup
+        function closeDescriptionPopup() {
+            const popup = document.getElementById('descriptionPopup');
+            if (popup) {
+                popup.classList.remove('show');
+            }
+        }
+
+
+        
+        function toggleModalUserSelection(username) {
+            if (username === "Everyone") {
                 if (modalSelectedUsers.includes("Everyone")) {
                     if (modalSelectedUsers.length === 1) {
                         return;
@@ -1262,15 +2024,15 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
                 }
             } else {
                 if (modalSelectedUsers.includes("Everyone")) {
-                    modalSelectedUsers = [user];
+                    modalSelectedUsers = [username];
                 } else {
-                    if (modalSelectedUsers.includes(user)) {
-                        modalSelectedUsers = modalSelectedUsers.filter(u => u !== user);
+                    if (modalSelectedUsers.includes(username)) {
+                        modalSelectedUsers = modalSelectedUsers.filter(u => u !== username);
                         if (modalSelectedUsers.length === 0) {
                             modalSelectedUsers = ["Everyone"];
                         }
                     } else {
-                        modalSelectedUsers.push(user);
+                        modalSelectedUsers.push(username);
                     }
                 }
             }
@@ -1333,6 +2095,13 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
                 if (reward) {
                     // Set reward name
                     document.getElementById('modalRewardName').value = reward.name;
+                    
+                    // Set description if exists
+                    if (reward.description) {
+                        document.getElementById('modalRewardDescription').value = reward.description;
+                        document.getElementById('descriptionContainer').style.display = 'block';
+                        document.getElementById('addDescriptionBtn').textContent = '- Remove description';
+                    }
                     
                     // Set value
                     selectedValue = reward.diamonds;
@@ -1496,6 +2265,7 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
         // Function to save reward from modal (add or edit)
         async function saveNewReward() {
             const rewardName = document.getElementById("modalRewardName").value.trim();
+            const rewardDescription = document.getElementById("modalRewardDescription").value.trim();
             const rewardDiamonds = selectedValue;
 
             if (!rewardName || rewardDiamonds <= 0) {
@@ -1514,6 +2284,7 @@ a[href="/BeeMazing-A1/mobile/4-Market/market.html"] svg {
                 const rewardData = {
                     name: rewardName,
                     diamonds: rewardDiamonds,
+                    description: rewardDescription || undefined,
                     assignedUsers: modalSelectedUsers.includes("Everyone") ? undefined : modalSelectedUsers,
                     type: selectedRewardType,
                     claimedBy: [] // Track who has claimed this reward (for one-time rewards)
@@ -1558,6 +2329,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const user = urlParams.get("user");
     if (admin && user) {
         homeLink.href = `/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
+    }
+
+    // Enforce 15-character limit for reward name input
+    const rewardNameInput = document.getElementById("modalRewardName");
+    if (rewardNameInput) {
+        rewardNameInput.addEventListener('input', function() {
+            if (this.value.length > 15) {
+                this.value = this.value.substring(0, 15);
+            }
+        });
     }
 
     // Logout button functionality
@@ -2290,6 +3071,7 @@ let monthOffset = 0;
         
           // Show a loading state initially
           rewardList.innerHTML = "<p>Loading rewards...</p>";
+          rewardList.style.backgroundColor = "#FFFFFF";
         
           if (!adminEmail) {
             rewardList.innerHTML = "<p>Error: No admin email provided. Please log in again.</p>";
@@ -2306,6 +3088,7 @@ let monthOffset = 0;
         
             const rewards = data.rewards || [];
             rewardList.innerHTML = "";
+            rewardList.style.backgroundColor = "#FFFFFF";
             if (rewards.length === 0) {
               rewardList.innerHTML = "<p>No rewards in the hive. Click + to add one.</p>";
               return;
@@ -2314,6 +3097,7 @@ let monthOffset = 0;
             rewards.forEach((reward, index) => {
               const rewardItem = document.createElement("li");
               rewardItem.className = "reward-item";
+              rewardItem.style.backgroundColor = "#FFFFFF";
 // Create avatar display for assigned users
 let avatarsHTML = '';
 if (reward.assignedUsers && reward.assignedUsers.length > 0) {
@@ -2346,14 +3130,21 @@ const typeBadge = reward.type === 'continuous'
   ? ''
   : '<span class="reward-type-badge onetime">1×</span>';
 
+const infoIcon = reward.description && reward.description.trim() 
+  ? `<div class="info-icon" onclick="showDescriptionPopup('${reward.name.replace(/'/g, "\\'")}', '${reward.description.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, "\\n").replace(/\r/g, "")}')" title="View description">i</div>`
+  : '';
+
 rewardItem.innerHTML = `
-  <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-    <div style="flex: 1; display: flex; align-items: center;">
-      <strong>${reward.name}</strong>
-      ${avatarsHTML}
-      ${typeBadge}
+  ${infoIcon}
+  ${typeBadge}
+  <div class="reward-item-content">
+    <div class="reward-item-header">
+      <div class="reward-item-title">${reward.name}</div>
     </div>
-    <div style="font-weight: 600; color: var(--primary-color);">${reward.diamonds} 🍯</div>
+    <div class="reward-item-footer">
+      <div class="reward-avatars">${avatarsHTML}</div>
+      <div class="reward-cost">${reward.diamonds} 🍯</div>
+    </div>
   </div>
 `;
 
@@ -2365,7 +3156,7 @@ rewardItem.innerHTML = `
               // Create edit button
               const editButton = document.createElement("button");
               editButton.className = "edit-btn";
-              editButton.textContent = "Edit";
+              editButton.innerHTML = `<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
               editButton.addEventListener("click", async (e) => {
                 e.stopPropagation();
                 openEditRewardModal(index);
@@ -2374,11 +3165,10 @@ rewardItem.innerHTML = `
               // Create delete button
               const deleteButton = document.createElement("button");
               deleteButton.className = "delete-btn";
-              deleteButton.textContent = "Delete";
+              deleteButton.innerHTML = `<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
               deleteButton.addEventListener("click", async (e) => {
                 e.stopPropagation();
-                await deleteReward(index);
-                await loadRewards();
+                showDeleteConfirmation(index, reward.name);
               });
               
               actionButtons.appendChild(editButton);
@@ -2403,7 +3193,10 @@ rewardItem.innerHTML = `
                 if (!isSwiping) return;
                 currentX = e.touches[0].clientX;
                 const diffX = startX - currentX;
-                if (diffX > 50 && diffX < 150) {
+                const screenWidth = window.innerWidth;
+                const maxSwipe = screenWidth <= 400 ? 140 : 160;
+                const minSwipe = screenWidth <= 400 ? 20 : 25;
+                if (diffX > minSwipe && diffX < maxSwipe) {
                   rewardItem.classList.add("swiped");
                 } else if (diffX < -10) {
                   rewardItem.classList.remove("swiped");
@@ -2427,7 +3220,10 @@ rewardItem.innerHTML = `
                 if (!isSwiping) return;
                 currentX = e.clientX;
                 const diffX = startX - currentX;
-                if (diffX > 50 && diffX < 150) {
+                const screenWidth = window.innerWidth;
+                const maxSwipe = screenWidth <= 400 ? 140 : 160;
+                const minSwipe = screenWidth <= 400 ? 20 : 25;
+                if (diffX > minSwipe && diffX < maxSwipe) {
                   rewardItem.classList.add("swiped");
                 } else if (diffX < -10) {
                   rewardItem.classList.remove("swiped");
@@ -2453,24 +3249,372 @@ rewardItem.innerHTML = `
           }
         }
         
+        let rewardToDelete = null;
+        
+        function showDeleteConfirmation(index, rewardName) {
+          rewardToDelete = index;
+          document.getElementById('deleteRewardName').textContent = rewardName;
+          document.getElementById('deleteConfirmationModal').classList.add('show');
+        }
+        
+        function hideDeleteConfirmation() {
+          rewardToDelete = null;
+          document.getElementById('deleteConfirmationModal').classList.remove('show');
+        }
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && document.getElementById('deleteConfirmationModal').classList.contains('show')) {
+            hideDeleteConfirmation();
+          }
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('deleteConfirmationModal').addEventListener('click', function(e) {
+          if (e.target === this) {
+            hideDeleteConfirmation();
+          }
+        });
+        
+        async function confirmDeleteReward() {
+          if (rewardToDelete === null) return;
+          
+          try {
+            await deleteReward(rewardToDelete);
+            await loadRewards();
+            hideDeleteConfirmation();
+          } catch (err) {
+            console.error("Error deleting reward:", err);
+            alert("Error deleting reward: " + err.message);
+          }
+        }
+
         async function deleteReward(index) {
           try {
             const response = await fetch(`https://beemazing1.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}&index=${index}`, {
-              method: "DELETE"
+              method: 'DELETE'
             });
             const data = await response.json();
-        
             if (!response.ok) {
               throw new Error(data.error || "Failed to delete reward");
             }
           } catch (err) {
-            alert("Failed to delete reward. Please try again.");
+            console.error("Error deleting reward:", err);
+            throw err;
           }
         }
         
+        // Function to toggle description field
+        function toggleDescriptionField() {
+            const container = document.getElementById('descriptionContainer');
+            const btn = document.getElementById('addDescriptionBtn');
+    
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                btn.textContent = '- Remove description';
+            } else {
+                container.style.display = 'none';
+                btn.textContent = '+ Add description';
+                document.getElementById('modalRewardDescription').value = '';
+            }
+        }
+
+        // Tab functionality
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            const activeButton = document.querySelector(`button[onclick="showTab('${tabId}')"]`);
+            if (activeButton) {
+                activeButton.classList.add('active');
+            }
+            
+            if (tabId === 'received') {
+                loadReceivedRewards();
+            }
+        }
+
+        // Load received rewards for all users
+        async function loadReceivedRewards() {
+            const historyGrid = document.getElementById("history-grid");
+            historyGrid.innerHTML = "<p class='text-center'>Loading received rewards...</p>";
+
+            try {
+                const historyResponse = await fetch(`https://beemazing1.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+                const historyData = await historyResponse.json();
+                if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
+                
+                const allHistory = historyData.rewardHistory || {};
+                const allEntries = [];
+                
+                // Collect all entries from all users
+                Object.keys(allHistory).forEach(username => {
+                    allHistory[username].forEach(entry => {
+                        allEntries.push({
+                            ...entry,
+                            username: username
+                        });
+                    });
+                });
+
+                historyGrid.innerHTML = "";
+                if (allEntries.length === 0) {
+                    historyGrid.innerHTML = "<p style='text-align: center; padding: 2rem; color: #6D4C41;'>No rewards received yet.</p>";
+                } else {
+                    const reversedHistory = [...allEntries].reverse();
+                    reversedHistory.forEach((reward, index) => {
+                        const historyItem = document.createElement("div");
+                        historyItem.className = "history-item";
+                        
+                        const status = reward.status || 'Unknown';
+                        const isApproved = status.toLowerCase() === 'approved' || status.toLowerCase() === 'received';
+                        const isPending = status.toLowerCase() === 'pending';
+                        const isDeclined = status.toLowerCase() === 'declined' || status.toLowerCase() === 'rejected' || status.toLowerCase() === 'denied';
+                        
+                        let statusDisplay = '';
+                        if (isPending) {
+                            statusDisplay = '<span class="status-circle pending"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z"/></svg></span>';
+                        } else if (isApproved) {
+                            statusDisplay = '<span class="status-circle approved"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span>';
+                        } else if (isDeclined) {
+                            statusDisplay = '<span class="status-circle declined"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></span>';
+                        } else {
+                            statusDisplay = `<span class="status-circle">${status.charAt(0).toUpperCase()}</span>`;
+                        }
+                        
+                        let dateToShow = 'Unknown date';
+                        try {
+                            if (reward.timestamp) {
+                                dateToShow = new Date(reward.timestamp).toLocaleDateString();
+                            }
+                        } catch (e) {
+                            console.warn('Invalid timestamp:', reward.timestamp);
+                        }
+
+                        // Get user avatar
+                        const avatar = getModalAvatarForUser(reward.username);
+                        let avatarHtml = '';
+                        if (avatar.type === 'character') {
+                            avatarHtml = `<div class="history-avatar"><img src="${avatar.src}" alt="${reward.username}"></div>`;
+                        } else {
+                            avatarHtml = `<div class="history-avatar" style="background-color: ${avatar.color}">${avatar.initials}</div>`;
+                        }
+                        
+                        historyItem.innerHTML = `
+                            <div class="history-item-content">
+                                <div class="history-item-header">
+                                    <h3 class="history-item-title">${reward.rewardName || 'Unknown Reward'}</h3>
+                                </div>
+                                <div class="history-item-footer">
+                                    <div class="history-user-info">
+                                        ${avatarHtml}
+                                        <div class="history-cost">${reward.rewardCost || 0} 🍯</div>
+                                    </div>
+                                </div>
+                                <div class="history-status">${statusDisplay} ${dateToShow}</div>
+                            </div>
+                            <div class="history-action-buttons">
+                                <button class="history-delete-btn" data-username="${reward.username}" data-timestamp="${reward.timestamp}" title="Delete entry">
+                                    <svg viewBox="0 0 24 24" fill="white" style="width: 16px; height: 16px;">
+                                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        `;
+
+                        // Add swipe functionality
+                        let startX = 0;
+                        let currentX = 0;
+                        let isSwiping = false;
+
+                        // Touch events
+                        historyItem.addEventListener("touchstart", (e) => {
+                            startX = e.touches[0].clientX;
+                            isSwiping = true;
+                            document.querySelectorAll('.history-item.swiped').forEach(item => {
+                                if (item !== historyItem) item.classList.remove('swiped');
+                            });
+                        });
+
+                        historyItem.addEventListener("touchmove", (e) => {
+                            if (!isSwiping) return;
+                            currentX = e.touches[0].clientX;
+                            const diffX = startX - currentX;
+                            const maxSwipe = window.innerWidth <= 400 ? 70 : 80;
+                            const minSwipe = 15;
+                            if (diffX > minSwipe && diffX < maxSwipe) {
+                                historyItem.classList.add("swiped");
+                            } else if (diffX < -10) {
+                                historyItem.classList.remove("swiped");
+                            }
+                        });
+
+                        historyItem.addEventListener("touchend", () => {
+                            isSwiping = false;
+                        });
+
+                        // Mouse events for desktop
+                        historyItem.addEventListener("mousedown", (e) => {
+                            startX = e.clientX;
+                            isSwiping = true;
+                            document.querySelectorAll('.history-item.swiped').forEach(item => {
+                                if (item !== historyItem) item.classList.remove('swiped');
+                            });
+                        });
+
+                        historyItem.addEventListener("mousemove", (e) => {
+                            if (!isSwiping) return;
+                            currentX = e.clientX;
+                            const diffX = startX - currentX;
+                            const maxSwipe = window.innerWidth <= 400 ? 70 : 80;
+                            const minSwipe = 15;
+                            if (diffX > minSwipe && diffX < maxSwipe) {
+                                historyItem.classList.add("swiped");
+                            } else if (diffX < -10) {
+                                historyItem.classList.remove("swiped");
+                            }
+                        });
+
+                        historyItem.addEventListener("mouseup", () => {
+                            isSwiping = false;
+                        });
+
+                        // Click outside to close swipe
+                        document.addEventListener("click", (e) => {
+                            if (!historyItem.contains(e.target) && historyItem.classList.contains("swiped")) {
+                                historyItem.classList.remove("swiped");
+                            }
+                        });
+
+                        // Delete button click handler
+                        const deleteBtn = historyItem.querySelector('.history-delete-btn');
+                        deleteBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const username = deleteBtn.dataset.username;
+                            const timestamp = deleteBtn.dataset.timestamp;
+                            deleteHistoryEntry(username, timestamp, deleteBtn);
+                        });
+
+                        historyGrid.appendChild(historyItem);
+                    });
+                }
+            } catch (historyErr) {
+                console.error("Error loading reward history:", historyErr);
+                historyGrid.innerHTML = "<p class='text-center'>Failed to load history. Please try again later.</p>";
+            }
+        }
+
+        // Delete history entry
+        async function deleteHistoryEntry(username, timestamp, deleteBtn = null) {
+            if (!confirm(`Delete this reward entry for ${username}?`)) {
+                return;
+            }
+
+            // Add loading state
+            if (!deleteBtn) deleteBtn = event.target;
+            const originalText = deleteBtn.innerHTML;
+            deleteBtn.innerHTML = '⏳';
+            deleteBtn.disabled = true;
+
+            try {
+                console.log(`Attempting to delete entry for ${username} with timestamp:`, timestamp);
+                
+                // First fetch the current reward history
+                const historyResponse = await fetch(`https://beemazing1.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+                const historyData = await historyResponse.json();
+                if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
+                
+                const allHistory = historyData.rewardHistory || {};
+                console.log('Current history for user:', allHistory[username]);
+                
+                // Store original count for verification
+                const originalCount = allHistory[username] ? allHistory[username].length : 0;
+                
+                // Remove the specific entry with robust timestamp comparison
+                if (allHistory[username]) {
+                    const beforeFilter = allHistory[username].length;
+                    
+                    // Convert both timestamps to strings for comparison to handle number/string mismatch
+                    allHistory[username] = allHistory[username].filter(entry => {
+                        const entryTimestamp = String(entry.timestamp);
+                        const targetTimestamp = String(timestamp);
+                        const matches = entryTimestamp === targetTimestamp;
+                        if (matches) {
+                            console.log('Found matching entry to delete:', entry);
+                        }
+                        return !matches;
+                    });
+                    
+                    const afterFilter = allHistory[username].length;
+                    console.log(`Filtered ${beforeFilter} entries to ${afterFilter} entries`);
+                    
+                    // If user has no more entries, remove the user key
+                    if (allHistory[username].length === 0) {
+                        delete allHistory[username];
+                        console.log(`Removed empty user key for ${username}`);
+                    }
+                    
+                    // Verify that an entry was actually removed
+                    if (beforeFilter === afterFilter) {
+                        throw new Error(`No matching entry found to delete for timestamp ${timestamp}`);
+                    }
+                } else {
+                    throw new Error(`No history found for user ${username}`);
+                }
+
+                // Update the reward history using POST method
+                const response = await fetch(`https://beemazing1.onrender.com/api/reward-history`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        adminEmail: adminEmail,
+                        rewardHistory: allHistory
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to delete history entry');
+                }
+
+                // Show success message
+                console.log('Reward entry deleted successfully');
+                
+                // Reload the received rewards after a short delay
+                setTimeout(() => {
+                    loadReceivedRewards();
+                }, 300);
+            } catch (err) {
+                console.error('Error deleting history entry:', err);
+                alert('Failed to delete entry: ' + err.message);
+            } finally {
+                // Restore button state
+                deleteBtn.innerHTML = originalText;
+                deleteBtn.disabled = false;
+            }
+        }
+
         // Load rewards when the page loads
         document.addEventListener("DOMContentLoaded", () => {
           loadRewards();
+          
+          // Add event listeners for description popup after DOM is loaded
+          document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && document.getElementById('descriptionPopup').classList.contains('show')) {
+                closeDescriptionPopup();
+            }
+          });
+
+          const descriptionPopup = document.getElementById('descriptionPopup');
+          if (descriptionPopup) {
+            descriptionPopup.addEventListener('click', function(e) {
+              if (e.target === this) {
+                closeDescriptionPopup();
+              }
+            });
+          }
         });
         </script>
 
@@ -2485,6 +3629,16 @@ rewardItem.innerHTML = `
 
 
 
+    <!-- Description Popup -->
+    <div id="descriptionPopup" class="description-popup">
+        <div class="description-popup-content">
+            <div class="description-popup-header">
+                <h4 id="descriptionPopupTitle" class="description-popup-title">Reward Details</h4>
+                <button class="description-popup-close" onclick="closeDescriptionPopup()">&times;</button>
+            </div>
+            <div id="descriptionPopupText" class="description-popup-text"></div>
+        </div>
+    </div>
 
 </body>
 </html>

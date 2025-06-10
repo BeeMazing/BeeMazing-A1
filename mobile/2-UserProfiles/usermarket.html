@@ -63,6 +63,12 @@
             font-size: 1.1rem;
             text-align: center;
             line-height: 1.2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding: 0 30px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .reward-card .bottom-row {
@@ -70,14 +76,17 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            gap: 0.75rem;
+            gap: 1.5rem;
         }
 
         .reward-card .cost-display {
             color: var(--primary-color);
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 1.2rem;
             white-space: nowrap;
+            display: flex;
+            align-items: center;
+            height: 1.875rem;
         }
 
         .reward-type-indicator {
@@ -96,7 +105,100 @@
         }
 
         .reward-type-indicator.onetime {
-            background-color: #FFC107;
+            background: rgba(109, 76, 65, 0.15) !important;
+            color: #6D4C41 !important;
+            border: 1px solid rgba(109, 76, 65, 0.3) !important;
+        }
+
+        .info-icon {
+            position: absolute;
+            bottom: 0.375rem;
+            left: 0.375rem;
+            width: 20px;
+            height: 20px;
+            background: rgba(109, 76, 65, 0.15) !important;
+            color: #6D4C41 !important;
+            border: 1px solid rgba(109, 76, 65, 0.3) !important;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .description-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .description-popup.show {
+            display: flex;
+        }
+
+        .description-popup-content {
+            background: #FFFFFF;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 0 20px rgba(255, 193, 7, 0.5);
+            text-align: left;
+            max-width: 300px;
+            width: 90%;
+            position: relative;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .description-popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .description-popup-title {
+            color: #6D4C41;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .description-popup-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .description-popup-close:hover {
+            color: #333;
+        }
+
+        .description-popup-text {
+            color: #6D4C41;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            white-space: pre-wrap;
         }
 
 
@@ -227,17 +329,25 @@
 
 
             .reward-card { 
-                padding: 0.375rem 0.375rem 0 0.375rem;
+                padding: 0.375rem 0.375rem 0.5rem 0.375rem;
                 min-height: 80px;
             }
             .reward-card h3 { 
                 font-size: 1rem; 
                 color: #6D4C41;
-                font-weight: 600;
                 margin-bottom: 0.375rem;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                padding: 0 30px;
+                width: 100%;
+                box-sizing: border-box;
             }
             .reward-card .cost-display { 
-                font-size: 0.875rem; 
+                font-size: 1rem; 
+                height: 1.875rem;
+                display: flex;
+                align-items: center;
             }
             .btn-primary {
                 font-size: 0.75rem;
@@ -332,6 +442,7 @@
     font-weight: 600;
     transition: all 0.3s ease;
     text-decoration: none;
+    opacity: 0.6;
 }
 
 .tab-button:hover {
@@ -344,6 +455,7 @@
     color: #6D4C41 !important;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    opacity: 1;
 }
 
 /* History card specific styling */
@@ -351,6 +463,7 @@
     background-color: #FFFFFF;
     border: 2px solid var(--primary-color);
     color: #6D4C41;
+    padding: 0.5rem 0.5rem 0.75rem 0.5rem;
 }
 
 #history-grid .reward-card h3 {
@@ -376,12 +489,22 @@
     vertical-align: middle;
 }
 
+.status-circle svg {
+    width: 12px;
+    height: 12px;
+    fill: white;
+}
+
 .status-circle.pending {
     background-color: #FF9800; /* Orange for pending */
 }
 
 .status-circle.approved {
     background-color: #4CAF50; /* Green for approved */
+}
+
+.status-circle.declined {
+    background-color: #F44336; /* Red for declined */
 }
 
 /* Custom popup modal for insufficient honey */
@@ -579,7 +702,25 @@
         </div>
     </div>
 
+    <!-- Description Popup -->
+    <div id="descriptionPopup" class="description-popup">
+        <div class="description-popup-content">
+            <div class="description-popup-header">
+                <h4 id="descriptionPopupTitle" class="description-popup-title">Reward Details</h4>
+                <button class="description-popup-close" onclick="closeDescriptionPopup()">&times;</button>
+            </div>
+            <div id="descriptionPopupText" class="description-popup-text"></div>
+        </div>
+    </div>
+
     <script>
+      // Function to truncate reward titles to prevent overflow
+      function truncateTitle(title, maxLength = 15) {
+          if (!title) return '';
+          if (title.length <= maxLength) return title;
+          return title.substring(0, maxLength - 3) + '...';
+      }
+
       let keyTransferData = null;
       const urlParams = new URLSearchParams(window.location.search);
       const userName = urlParams.get('user');
@@ -721,7 +862,8 @@ document.querySelectorAll('.footer a').forEach(link => {
                 diamonds: reward.diamonds || 0,
                 type: reward.type || 'normal',
                 outcomes: reward.outcomes || [],
-                assignedUsers: reward.assignedUsers || []
+                assignedUsers: reward.assignedUsers || [],
+                description: reward.description || undefined
             };
         });
 
@@ -804,15 +946,22 @@ document.querySelectorAll('.footer a').forEach(link => {
                 }
 
                 const typeIndicator = isOneTime ? 
-                    '<div class="reward-type-indicator onetime">1</div>' : 
+                    '<div class="reward-type-indicator onetime">1×</div>' : 
                     '';
+
+
+                
+                const infoIcon = marketInfo.description 
+                    ? `<div class="info-icon" onclick="showDescriptionPopup('${rewardName.replace(/'/g, "\\'")}', '${marketInfo.description.replace(/'/g, "\\'").replace(/\n/g, "\\n")}')" title="View description">i</div>`
+                    : '';
 
                 card.innerHTML = `
                     <span class="purchase-indicator" data-count="${userRewardCount}"></span>
                     ${typeIndicator}
-                    <h3>${rewardName}</h3>
+                    ${infoIcon}
+                    <h3 title="${rewardName}">${truncateTitle(rewardName)}</h3>
                     <div class="bottom-row">
-                        <span class="cost-display">${rewardCost} 🍯</span>
+                        <span class="cost-display">${rewardCost} &nbsp;<span style="font-size: 1.1rem;">🍯</span></span>
                         ${buttonContent}
                     </div>
                 `;
@@ -870,12 +1019,15 @@ document.querySelectorAll('.footer a').forEach(link => {
                     const status = reward.status || 'Unknown';
                     const isApproved = status.toLowerCase() === 'approved' || status.toLowerCase() === 'received';
                     const isPending = status.toLowerCase() === 'pending';
+                    const isDeclined = status.toLowerCase() === 'declined' || status.toLowerCase() === 'rejected' || status.toLowerCase() === 'denied';
                     
                     let statusDisplay = '';
                     if (isPending) {
-                        statusDisplay = '<span class="status-circle pending">P</span>';
+                        statusDisplay = '<span class="status-circle pending"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z"/></svg></span>';
                     } else if (isApproved) {
-                        statusDisplay = '<span class="status-circle approved">A</span>';
+                        statusDisplay = '<span class="status-circle approved"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span>';
+                    } else if (isDeclined) {
+                        statusDisplay = '<span class="status-circle declined"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></span>';
                     } else {
                         statusDisplay = `<span class="status-circle">${status.charAt(0).toUpperCase()}</span>`;
                     }
@@ -891,9 +1043,9 @@ document.querySelectorAll('.footer a').forEach(link => {
                     }
                     
                     card.innerHTML = `
-                        <h3 class="text-lg font-semibold">${reward.rewardName || 'Unknown Reward'}</h3>
+                        <h3 class="text-lg font-semibold" title="${reward.rewardName || 'Unknown Reward'}">${truncateTitle(reward.rewardName || 'Unknown Reward')}</h3>
                         <p>${reward.rewardCost || 0} 🍯</p>
-                        <p>${statusDisplay} ${dateToShow}</p>
+                        <p style="margin-bottom: 0.25rem;">${statusDisplay} ${dateToShow}</p>
                     `;
                     historyGrid.appendChild(card);
                 });
@@ -1222,6 +1374,23 @@ async function claimReward(userName, rewardName, rewardType, honey, outcomes) {
 
       function closeSuccessPopup() {
           document.getElementById('successPopup').classList.remove('show');
+      }
+
+      // Function to show description popup
+      function showDescriptionPopup(rewardName, description) {
+          const popup = document.getElementById('descriptionPopup');
+          const title = document.getElementById('descriptionPopupTitle');
+          const text = document.getElementById('descriptionPopupText');
+
+          title.textContent = rewardName;
+          text.textContent = description;
+          popup.classList.add('show');
+      }
+
+      // Function to close description popup
+      function closeDescriptionPopup() {
+          const popup = document.getElementById('descriptionPopup');
+          popup.classList.remove('show');
       }
 
       document.getElementById("keyPopup").addEventListener("click", function(e) {
