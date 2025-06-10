@@ -871,38 +871,29 @@ app.post("/api/delete-rejected-reward", async (req, res) => {
       return res.status(404).json({ error: "Admin not found" });
     }
 
-    const pendingRewardRequests = admin?.pendingRewardRequests || [];
     const rewardHistory = admin?.rewardHistory || {};
 
-    // Find the rejected request
-    const requestIndex = pendingRewardRequests.findIndex(
-      req => req.user === user && 
-             req.rewardName === rewardName && 
-             req.timestamp === parseInt(timestamp) &&
-             (req.status === "declined" || req.status === "rejected" || req.status === "denied")
-    );
-
-    if (requestIndex === -1) {
-      return res.status(404).json({ error: "Rejected request not found" });
+    // Find the rejected request in reward history
+    if (!rewardHistory[user]) {
+      return res.status(404).json({ error: "No reward history found for user" });
     }
 
-    // Remove from pending requests
-    const rejectedRequest = pendingRewardRequests.splice(requestIndex, 1)[0];
+    const historyIndex = rewardHistory[user].findIndex(
+      item => item.rewardName === rewardName && 
+              new Date(item.timestamp).getTime() === parseInt(timestamp) &&
+              (item.status === "Declined" || item.status === "Rejected" || item.status === "Denied")
+    );
+
+    if (historyIndex === -1) {
+      return res.status(404).json({ error: "Rejected request not found in history" });
+    }
 
     // Remove from reward history
-    if (rewardHistory[user]) {
-      const historyIndex = rewardHistory[user].findIndex(
-        item => item.rewardName === rewardName && 
-                new Date(item.timestamp).getTime() === parseInt(timestamp)
-      );
-      if (historyIndex !== -1) {
-        rewardHistory[user].splice(historyIndex, 1);
-        
-        // Clean up empty user history
-        if (rewardHistory[user].length === 0) {
-          delete rewardHistory[user];
-        }
-      }
+    rewardHistory[user].splice(historyIndex, 1);
+    
+    // Clean up empty user history
+    if (rewardHistory[user].length === 0) {
+      delete rewardHistory[user];
     }
 
     // Update the database
@@ -910,7 +901,6 @@ app.post("/api/delete-rejected-reward", async (req, res) => {
       { email: adminEmail },
       { 
         $set: { 
-          pendingRewardRequests, 
           rewardHistory 
         } 
       },
@@ -1918,6 +1908,13 @@ app.post("/api/review-reward", async (req, res) => {
     } else {
       // Refund points if declined
       rewards[request.user] = (rewards[request.user] || 0) + request.rewardCost;
+      
+      // For one-time rewards, remove user from claimedBy array to make it available again
+      const marketRewards = admin?.marketRewards || [];
+      const marketReward = marketRewards.find(reward => reward.name === request.rewardName);
+      if (marketReward && marketReward.type === 'oneTime' && marketReward.claimedBy) {
+        marketReward.claimedBy = marketReward.claimedBy.filter(username => username !== request.user);
+      }
     }
 
     // Remove from pending requests
@@ -1925,7 +1922,7 @@ app.post("/api/review-reward", async (req, res) => {
 
     await admins.updateOne(
       { email: adminEmail },
-      { $set: { pendingRewardRequests, rewards, userRewards, rewardHistory } },
+      { $set: { pendingRewardRequests, rewards, userRewards, rewardHistory, marketRewards } },
     );
 
     res.json({ success: true, message: `Reward ${decision}d successfully` });
