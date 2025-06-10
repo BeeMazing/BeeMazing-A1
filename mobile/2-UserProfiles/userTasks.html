@@ -29,7 +29,7 @@
         body {
             font-family: 'Poppins', Arial, sans-serif;
             background-color: var(--light-bg);
-            color: var(--text-color);
+            color: #6D4C41;
             height: 100vh;
             overflow: hidden;
         }
@@ -69,29 +69,30 @@
 }
 
         .profile-card {
-            background: var(--card-bg); /* dark card background like task items */
-            border: 2px solid var(--border-dark); /* dark border like tasks */
+            background: #FFFFFF;
+            border: 2px solid var(--primary-color);
             border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
             padding: 20px;
             text-align: center;
             width: 100%;
             max-width: 480px;
             margin: 0 auto;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .profile-card:hover {
-            transform: translateY(-10px);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
         }
         .profile-card h1 {
             font-size: 32px;
             font-weight: 600;
-            color: var(--accent-color); /* white */
+            color: #6D4C41;
             margin-bottom: 15px;
         }
         .profile-card p {
             font-size: 18px;
-            color: var(--accent-color); /* white */
+            color: #6D4C41;
             margin-bottom: 20px;
         }
         .reward-container {
@@ -123,24 +124,25 @@
             gap: 15px;
         }
         .task-item {
-    background: #2A2B32; /* match tasks.html dark card background */
-    color: var(--text-color); /* ensure text is white */
-    padding: 16px;
-    border: 2px solid var(--border-dark);
-    border-radius: 12px;
-    margin-bottom: 12px;
-    cursor: pointer;
-    position: relative;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
+            background-color: #FFFFFF;
+            color: #6D4C41;
+            padding: 16px;
+            border: 2px solid var(--primary-color);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
+        }
 
-.task-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 0 8px rgba(255, 193, 7, 0.3); /* subtle yellow glow */
-}
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+        }
         .finished-btn {
             background: var(--primary-color);
-            color: var(--secondary-color);
+            color: #6D4C41;
             border: none;
             padding: 12px;
             border-radius: 8px;
@@ -152,6 +154,7 @@
         }
         .finished-btn:hover {
             background: #FFD54F;
+            color: #6D4C41;
         }
        
 

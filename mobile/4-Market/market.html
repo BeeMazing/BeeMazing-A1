@@ -419,6 +419,22 @@ transform: scale(1.1);
             margin-bottom: 0.75rem;
             position: relative;
             width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .reward-type-row {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 0.5rem;
+            min-height: 20px;
+        }
+
+        .reward-type-row:empty {
+            margin-bottom: 0.5rem;
+            min-height: 0;
         }
 
         .reward-item-title {
@@ -427,7 +443,6 @@ transform: scale(1.1);
             font-size: 1.1rem;
             text-align: center;
             line-height: 1.2;
-            padding: 0 30px;
             width: 100%;
             box-sizing: border-box;
             overflow: hidden;
@@ -436,9 +451,6 @@ transform: scale(1.1);
         }
 
         .reward-type-badge {
-            position: absolute;
-            top: 5px;
-            right: 5px;
             background: rgba(109, 76, 65, 0.15);
             color: #6D4C41;
             border: 1px solid rgba(109, 76, 65, 0.3);
@@ -515,6 +527,9 @@ transform: scale(1.1);
         }
         .reward-cost {
             min-width: 50px;
+        }
+        .reward-type-row {
+            margin-bottom: 0.375rem;
         }
         }
 
@@ -1377,8 +1392,8 @@ transform: scale(1.1);
 
         .info-icon {
             position: absolute;
-            top: 5px;
-            left: 5px;
+            top: 0.5rem;
+            left: 0.5rem;
             width: 20px;
             height: 20px;
             background: rgba(109, 76, 65, 0.15);
@@ -1392,6 +1407,8 @@ transform: scale(1.1);
             font-weight: bold;
             cursor: pointer;
             z-index: 10;
+            margin: 0;
+            padding: 0;
         }
 
         .description-popup {
@@ -3136,9 +3153,11 @@ const infoIcon = reward.description && reward.description.trim()
 
 rewardItem.innerHTML = `
   ${infoIcon}
-  ${typeBadge}
   <div class="reward-item-content">
     <div class="reward-item-header">
+      <div class="reward-type-row">
+        ${typeBadge}
+      </div>
       <div class="reward-item-title">${reward.name}</div>
     </div>
     <div class="reward-item-footer">

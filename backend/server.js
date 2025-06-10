@@ -703,6 +703,248 @@ app.post("/test-email", async (req, res) => {
 
 // register.html forgot password ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// ✅ Return a claimed reward (restore points and remove from requests)
+app.post("/api/return-reward", async (req, res) => {
+  const { adminEmail, user, rewardName, timestamp, rewardCost } = req.body;
+
+  if (!adminEmail || !user || !rewardName || !timestamp || rewardCost === undefined) {
+    return res.status(400).json({ 
+      error: "Missing adminEmail, user, rewardName, timestamp, or rewardCost" 
+    });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const rewards = admin?.rewards || {};
+    const pendingRewardRequests = admin?.pendingRewardRequests || [];
+    const rewardHistory = admin?.rewardHistory || {};
+
+    // Find and remove the specific request by timestamp
+    const requestIndex = pendingRewardRequests.findIndex(
+      req => req.user === user && 
+             req.rewardName === rewardName && 
+             req.timestamp === parseInt(timestamp) &&
+             req.status === "pending"
+    );
+
+    if (requestIndex === -1) {
+      return res.status(404).json({ error: "Pending request not found" });
+    }
+
+    // Remove the request from pending
+    const removedRequest = pendingRewardRequests.splice(requestIndex, 1)[0];
+
+    // Restore the honey points to the user
+    rewards[user] = (rewards[user] || 0) + rewardCost;
+
+    // Remove from reward history or update status
+    if (rewardHistory[user]) {
+      const historyIndex = rewardHistory[user].findIndex(
+        item => item.rewardName === rewardName && 
+                new Date(item.timestamp).getTime() === parseInt(timestamp)
+      );
+      if (historyIndex !== -1) {
+        rewardHistory[user].splice(historyIndex, 1);
+      }
+    }
+
+    // For one-time rewards, remove user from claimedBy array
+    const marketRewards = admin?.marketRewards || [];
+    const marketReward = marketRewards.find(reward => reward.name === rewardName);
+    if (marketReward && marketReward.type === 'oneTime' && marketReward.claimedBy) {
+      marketReward.claimedBy = marketReward.claimedBy.filter(username => username !== user);
+    }
+
+    // Update the database
+    await admins.updateOne(
+      { email: adminEmail },
+      { 
+        $set: { 
+          rewards, 
+          pendingRewardRequests, 
+          rewardHistory,
+          marketRewards
+        } 
+      },
+      { upsert: true }
+    );
+
+    res.json({ 
+      success: true, 
+      message: `Reward "${rewardName}" returned successfully. ${rewardCost} honey points restored.`,
+      restoredPoints: rewardCost
+    });
+
+  } catch (err) {
+    console.error("Error returning reward:", err);
+    res.status(500).json({ error: "Failed to return reward" });
+  }
+});
+
+// ✅ Mark an approved reward as received (move to history)
+app.post("/api/mark-received", async (req, res) => {
+  const { adminEmail, user, rewardName, timestamp } = req.body;
+
+  if (!adminEmail || !user || !rewardName || !timestamp) {
+    return res.status(400).json({ 
+      error: "Missing adminEmail, user, rewardName, or timestamp" 
+    });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const pendingRewardRequests = admin?.pendingRewardRequests || [];
+    const rewardHistory = admin?.rewardHistory || {};
+
+    // Find the approved request
+    const requestIndex = pendingRewardRequests.findIndex(
+      req => req.user === user && 
+             req.rewardName === rewardName && 
+             req.timestamp === parseInt(timestamp) &&
+             req.status === "approved"
+    );
+
+    if (requestIndex === -1) {
+      return res.status(404).json({ error: "Approved request not found" });
+    }
+
+    // Remove from pending requests
+    const approvedRequest = pendingRewardRequests.splice(requestIndex, 1)[0];
+
+    // Update reward history to "Received" status
+    if (rewardHistory[user]) {
+      const historyIndex = rewardHistory[user].findIndex(
+        item => item.rewardName === rewardName && 
+                new Date(item.timestamp).getTime() === parseInt(timestamp)
+      );
+      if (historyIndex !== -1) {
+        rewardHistory[user][historyIndex].status = "Received";
+        rewardHistory[user][historyIndex].receivedTimestamp = new Date().toISOString();
+      }
+    } else {
+      // Create history entry if it doesn't exist
+      rewardHistory[user] = [{
+        rewardName,
+        rewardCost: approvedRequest.rewardCost,
+        status: "Received",
+        timestamp: new Date(parseInt(timestamp)).toISOString(),
+        receivedTimestamp: new Date().toISOString()
+      }];
+    }
+
+    // Update the database
+    await admins.updateOne(
+      { email: adminEmail },
+      { 
+        $set: { 
+          pendingRewardRequests, 
+          rewardHistory 
+        } 
+      },
+      { upsert: true }
+    );
+
+    res.json({ 
+      success: true, 
+      message: `Reward "${rewardName}" marked as received and moved to history.`
+    });
+
+  } catch (err) {
+    console.error("Error marking reward as received:", err);
+    res.status(500).json({ error: "Failed to mark reward as received" });
+  }
+});
+
+// ✅ Delete a rejected reward request
+app.post("/api/delete-rejected-reward", async (req, res) => {
+  const { adminEmail, user, rewardName, timestamp } = req.body;
+
+  if (!adminEmail || !user || !rewardName || !timestamp) {
+    return res.status(400).json({ 
+      error: "Missing adminEmail, user, rewardName, or timestamp" 
+    });
+  }
+
+  try {
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const pendingRewardRequests = admin?.pendingRewardRequests || [];
+    const rewardHistory = admin?.rewardHistory || {};
+
+    // Find the rejected request
+    const requestIndex = pendingRewardRequests.findIndex(
+      req => req.user === user && 
+             req.rewardName === rewardName && 
+             req.timestamp === parseInt(timestamp) &&
+             (req.status === "declined" || req.status === "rejected" || req.status === "denied")
+    );
+
+    if (requestIndex === -1) {
+      return res.status(404).json({ error: "Rejected request not found" });
+    }
+
+    // Remove from pending requests
+    const rejectedRequest = pendingRewardRequests.splice(requestIndex, 1)[0];
+
+    // Remove from reward history
+    if (rewardHistory[user]) {
+      const historyIndex = rewardHistory[user].findIndex(
+        item => item.rewardName === rewardName && 
+                new Date(item.timestamp).getTime() === parseInt(timestamp)
+      );
+      if (historyIndex !== -1) {
+        rewardHistory[user].splice(historyIndex, 1);
+        
+        // Clean up empty user history
+        if (rewardHistory[user].length === 0) {
+          delete rewardHistory[user];
+        }
+      }
+    }
+
+    // Update the database
+    await admins.updateOne(
+      { email: adminEmail },
+      { 
+        $set: { 
+          pendingRewardRequests, 
+          rewardHistory 
+        } 
+      },
+      { upsert: true }
+    );
+
+    res.json({ 
+      success: true, 
+      message: `Rejected reward "${rewardName}" deleted successfully.`
+    });
+
+  } catch (err) {
+    console.error("Error deleting rejected reward:", err);
+    res.status(500).json({ error: "Failed to delete rejected reward" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`✅ Server is running on http://localhost:${port}`);
 });
