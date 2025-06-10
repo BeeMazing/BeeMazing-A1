@@ -1847,14 +1847,15 @@ app.post("/api/reward-request", async (req, res) => {
   }
 });
 
-// ✅ Approve or decline a reward request
+// ✅ Approve or decline a reward request (SIMPLIFIED FOR DEBUGGING)
 app.post("/api/review-reward", async (req, res) => {
   const { adminEmail, requestIndex, decision, user, rewardName, timestamp } = req.body;
 
+  console.log("=== REVIEW REWARD DEBUG START ===");
+  console.log("Request body:", { adminEmail, requestIndex, decision, user, rewardName, timestamp });
+
   if (!adminEmail || !decision) {
-    return res
-      .status(400)
-      .json({ error: "Missing adminEmail or decision" });
+    return res.status(400).json({ error: "Missing adminEmail or decision" });
   }
 
   if (!["approve", "decline"].includes(decision)) {
@@ -1871,106 +1872,57 @@ app.post("/api/review-reward", async (req, res) => {
     }
 
     const pendingRewardRequests = admin.pendingRewardRequests || [];
-    console.log("Debug: pendingRewardRequests length:", pendingRewardRequests.length);
-    console.log("Debug: Looking for request:", { user, rewardName, timestamp: parseInt(timestamp) });
+    console.log("Current pending requests:", pendingRewardRequests.length);
     
-    // Find request by timestamp, user, and rewardName (more reliable than index)
+    // Find request by timestamp, user, and rewardName
     let requestIndex_actual = -1;
-    let request = null;
     
     if (user && rewardName && timestamp) {
-      // Use specific identifiers if provided
       requestIndex_actual = pendingRewardRequests.findIndex(
         req => req.user === user && 
                req.rewardName === rewardName && 
-               req.timestamp === parseInt(timestamp) &&
-               req.status === "pending"
+               req.timestamp === parseInt(timestamp)
       );
-      console.log("Debug: Found request at index:", requestIndex_actual);
-    } else if (requestIndex !== undefined) {
-      // Fallback to index method for backward compatibility
-      if (requestIndex < 0 || requestIndex >= pendingRewardRequests.length) {
-        return res.status(400).json({ error: "Invalid request index" });
-      }
+      console.log("Found by identifiers at index:", requestIndex_actual);
+    } else if (requestIndex !== undefined && requestIndex < pendingRewardRequests.length) {
       requestIndex_actual = requestIndex;
-      console.log("Debug: Using fallback index:", requestIndex_actual);
-    } else {
-      return res.status(400).json({ error: "Missing request identification parameters" });
+      console.log("Using provided index:", requestIndex_actual);
     }
 
-    if (requestIndex_actual === -1) {
-      console.log("Debug: All pending requests:", pendingRewardRequests);
-      return res.status(404).json({ error: "Pending request not found" });
+    if (requestIndex_actual === -1 || !pendingRewardRequests[requestIndex_actual]) {
+      console.log("Request not found. Available requests:", pendingRewardRequests);
+      return res.status(404).json({ error: "Request not found" });
     }
 
-    request = pendingRewardRequests[requestIndex_actual];
-    console.log("Debug: Found request:", request);
-    if (request.status !== "pending") {
-      return res.status(400).json({ error: "Request already processed" });
-    }
+    const request = pendingRewardRequests[requestIndex_actual];
+    console.log("Processing request:", request);
 
+    // Simple operations only
     const rewards = admin.rewards || {};
-    const userRewards = admin.userRewards || {};
-    const rewardHistory = admin.rewardHistory || {};
-    const marketRewards = admin?.marketRewards || [];
-
-    // Update history
-    const userHistory = rewardHistory[request.user] || [];
-    const historyIndex = userHistory.findIndex(
-      (h) =>
-        h.rewardName === request.rewardName &&
-        h.rewardCost === request.rewardCost &&
-        h.status === "Pending" &&
-        new Date(h.timestamp).getTime() === request.timestamp,
-    );
-
-    if (historyIndex !== -1) {
-      userHistory[historyIndex].status =
-        decision === "approve" ? "Approved" : "Declined";
-    }
-
-    if (decision === "approve") {
-      // Add to user rewards
-      if (!userRewards[request.user]) userRewards[request.user] = [];
-      userRewards[request.user].push({
-        name: request.rewardName,
-        date: new Date().toLocaleString(),
-      });
-    } else {
-      // Refund points if declined
+    
+    if (decision === "decline") {
+      // Just refund points
       rewards[request.user] = (rewards[request.user] || 0) + request.rewardCost;
-      
-      // For one-time rewards, remove user from claimedBy array to make it available again
-      const marketReward = marketRewards.find(reward => reward.name === request.rewardName);
-      if (marketReward && marketReward.type === 'oneTime' && marketReward.claimedBy) {
-        marketReward.claimedBy = marketReward.claimedBy.filter(username => username !== request.user);
-      }
+      console.log("Refunded points to:", request.user, "New balance:", rewards[request.user]);
     }
 
-    // Remove from pending requests
+    // Remove from pending
     pendingRewardRequests.splice(requestIndex_actual, 1);
+    console.log("Removed request. Remaining:", pendingRewardRequests.length);
 
-    console.log("Debug: About to update database with:", {
-      pendingRewardRequestsLength: pendingRewardRequests.length,
-      rewardsKeys: Object.keys(rewards),
-      userRewardsKeys: Object.keys(userRewards),
-      rewardHistoryKeys: Object.keys(rewardHistory),
-      marketRewardsLength: (admin?.marketRewards || []).length
-    });
-
+    // Simple database update
     await admins.updateOne(
       { email: adminEmail },
-      { $set: { pendingRewardRequests, rewards, userRewards, rewardHistory, marketRewards } },
+      { $set: { pendingRewardRequests, rewards } }
     );
 
-    console.log("Debug: Database update completed successfully");
-
+    console.log("=== REVIEW REWARD DEBUG SUCCESS ===");
     res.json({ success: true, message: `Reward ${decision}d successfully` });
+
   } catch (err) {
-    console.error("Error reviewing reward request:", err);
-    console.error("Error details:", err.message);
-    console.error("Error stack:", err.stack);
-    console.error("Request data:", { adminEmail, requestIndex, decision, user, rewardName, timestamp });
+    console.error("=== REVIEW REWARD DEBUG ERROR ===");
+    console.error("Error:", err.message);
+    console.error("Stack:", err.stack);
     res.status(500).json({ error: "Failed to process reward request", details: err.message });
   }
 });
