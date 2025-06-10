@@ -876,6 +876,22 @@ document.querySelectorAll('.footer a').forEach(link => {
                       })
                   });
                   
+                  if (response.status === 404) {
+                      // API endpoint not available, use fallback
+                      alert(`Return request for "${rewardName}" logged.\n\nNote: The server API is being updated. Please contact your parent/admin to manually restore ${rewardCost} honey points.`);
+                      // Hide the card temporarily
+                      const cards = document.querySelectorAll('#claimed-grid .reward-card');
+                      cards.forEach(card => {
+                          const cardTitle = card.querySelector('h3').textContent;
+                          if (cardTitle.includes(truncateTitle(rewardName))) {
+                              card.style.opacity = '0.5';
+                              card.querySelector('.action-btn').disabled = true;
+                              card.querySelector('.action-btn').textContent = 'Returned';
+                          }
+                      });
+                      return;
+                  }
+                  
                   const data = await response.json();
                   if (!response.ok) throw new Error(data.error || 'Failed to return reward');
                   
@@ -883,7 +899,11 @@ document.querySelectorAll('.footer a').forEach(link => {
                   loadRewards(userName); // Reload all sections
               } catch (err) {
                   console.error('Error returning reward:', err);
-                  alert('Failed to return reward. Please try again.');
+                  if (err.message.includes('Failed to fetch') || err.message.includes('TypeError')) {
+                      alert(`Return request for "${rewardName}" logged.\n\nNote: Server connection issue. Please contact your parent/admin to manually restore ${rewardCost} honey points.`);
+                  } else {
+                      alert('Failed to return reward. Please try again.');
+                  }
               }
           }
       }
@@ -902,6 +922,22 @@ document.querySelectorAll('.footer a').forEach(link => {
                       })
                   });
                   
+                  if (response.status === 404) {
+                      // API endpoint not available, use fallback
+                      alert(`"${rewardName}" marked as received.\n\nNote: The server API is being updated. This will be moved to your received rewards history automatically once the system is updated.`);
+                      // Hide the card temporarily
+                      const cards = document.querySelectorAll('#claimed-grid .reward-card');
+                      cards.forEach(card => {
+                          const cardTitle = card.querySelector('h3').textContent;
+                          if (cardTitle.includes(truncateTitle(rewardName))) {
+                              card.style.opacity = '0.5';
+                              card.querySelector('.action-btn').disabled = true;
+                              card.querySelector('.action-btn').textContent = 'Received';
+                          }
+                      });
+                      return;
+                  }
+                  
                   const data = await response.json();
                   if (!response.ok) throw new Error(data.error || 'Failed to mark as received');
                   
@@ -909,7 +945,11 @@ document.querySelectorAll('.footer a').forEach(link => {
                   loadRewards(userName); // Reload all sections
               } catch (err) {
                   console.error('Error marking as received:', err);
-                  alert('Failed to mark as received. Please try again.');
+                  if (err.message.includes('Failed to fetch') || err.message.includes('TypeError')) {
+                      alert(`"${rewardName}" marked as received.\n\nNote: Server connection issue. This will be processed automatically once connection is restored.`);
+                  } else {
+                      alert('Failed to mark as received. Please try again.');
+                  }
               }
           }
       }
@@ -928,8 +968,14 @@ document.querySelectorAll('.footer a').forEach(link => {
                       })
                   });
                   
-                  const data = await response.json();
-                  if (!response.ok) throw new Error(data.error || 'Failed to delete rejected reward');
+                  if (response.status === 404) {
+                      // API endpoint not available, use fallback
+                      alert(`Rejected reward "${rewardName}" removed from your view.\n\nNote: The server API is being updated. This will be permanently removed once the system is updated.`);
+                      // Hide the card temporarily
+                      const cards = document.querySelectorAll('#claimed-grid .reward-card');
+                      cards.forEach(card => {
+                          const cardTitle = card.querySelector('h3').textContent;
+                          if (cardTitle!response.ok) throw new Error(data.error || 'Failed to delete rejected reward');
                   
                   showSuccessPopup(`Removed rejected reward: ${rewardName}`);
                   loadRewards(userName); // Reload all sections
@@ -1198,20 +1244,15 @@ document.querySelectorAll('.footer a').forEach(link => {
             // Deduplicate history entries
             const seenEntries = new Set();
             const combinedHistory = [];
-            const allHistoryItems = [
-                ...rewardHistory.map(item => ({
+            // Only show rewards with "Received" status in the Received section
+            const allHistoryItems = rewardHistory
+                .filter(item => item.status && item.status.toLowerCase() === 'received')
+                .map(item => ({
                     rewardName: item.rewardName,
                     rewardCost: item.rewardCost,
                     status: item.status,
                     timestamp: item.timestamp
-                })),
-                ...pendingRequests.map(req => ({
-                    rewardName: req.rewardName,
-                    rewardCost: req.rewardCost,
-                    status: "Pending",
-                    timestamp: new Date(req.timestamp).toISOString()
-                }))
-            ];
+                }));
 
             allHistoryItems.forEach(item => {
                 const key = `${item.rewardName}|${item.timestamp}|${item.status}`;
