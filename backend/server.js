@@ -809,51 +809,32 @@ app.post("/api/mark-received", async (req, res) => {
       return res.status(404).json({ error: "Admin not found" });
     }
 
-    const pendingRewardRequests = admin?.pendingRewardRequests || [];
     const rewardHistory = admin?.rewardHistory || {};
 
-    // Find the approved request
-    const requestIndex = pendingRewardRequests.findIndex(
-      req => req.user === user && 
-             req.rewardName === rewardName && 
-             req.timestamp === parseInt(timestamp) &&
-             req.status === "approved"
+    // Find the approved request in reward history
+    if (!rewardHistory[user]) {
+      return res.status(404).json({ error: "No reward history found for user" });
+    }
+
+    const historyIndex = rewardHistory[user].findIndex(
+      item => item.rewardName === rewardName && 
+              new Date(item.timestamp).getTime() === parseInt(timestamp) &&
+              item.status === "Approved"
     );
 
-    if (requestIndex === -1) {
-      return res.status(404).json({ error: "Approved request not found" });
+    if (historyIndex === -1) {
+      return res.status(404).json({ error: "Approved request not found in history" });
     }
-
-    // Remove from pending requests
-    const approvedRequest = pendingRewardRequests.splice(requestIndex, 1)[0];
 
     // Update reward history to "Received" status
-    if (rewardHistory[user]) {
-      const historyIndex = rewardHistory[user].findIndex(
-        item => item.rewardName === rewardName && 
-                new Date(item.timestamp).getTime() === parseInt(timestamp)
-      );
-      if (historyIndex !== -1) {
-        rewardHistory[user][historyIndex].status = "Received";
-        rewardHistory[user][historyIndex].receivedTimestamp = new Date().toISOString();
-      }
-    } else {
-      // Create history entry if it doesn't exist
-      rewardHistory[user] = [{
-        rewardName,
-        rewardCost: approvedRequest.rewardCost,
-        status: "Received",
-        timestamp: new Date(parseInt(timestamp)).toISOString(),
-        receivedTimestamp: new Date().toISOString()
-      }];
-    }
+    rewardHistory[user][historyIndex].status = "Received";
+    rewardHistory[user][historyIndex].receivedTimestamp = new Date().toISOString();
 
     // Update the database
     await admins.updateOne(
       { email: adminEmail },
       { 
         $set: { 
-          pendingRewardRequests, 
           rewardHistory 
         } 
       },
