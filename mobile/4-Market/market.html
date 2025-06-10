@@ -1588,6 +1588,19 @@ document.addEventListener("DOMContentLoaded", () => {
         const urlParams = new URLSearchParams(window.location.search);
         let adminEmail = urlParams.get('adminEmail') || localStorage.getItem("currentAdminEmail");
         
+        // Initialize avatar system with adminEmail (with error handling)
+        if (adminEmail && typeof AvatarSystem !== 'undefined') {
+            try {
+                if (!window.avatarSystem) {
+                    window.avatarSystem = new AvatarSystem();
+                }
+                window.avatarSystem.initialize(adminEmail);
+            } catch (error) {
+                console.warn('Avatar system initialization failed:', error);
+                window.avatarSystem = null;
+            }
+        }
+        
         // Add reward button is now handled by the modal
         
         // Fetch users from server function
