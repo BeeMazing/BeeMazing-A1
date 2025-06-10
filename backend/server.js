@@ -1574,7 +1574,7 @@ app.post("/api/reward-history", async (req, res) => {
 // ✅ Save a pending reward request
 
 app.post("/api/reward-request", async (req, res) => {
-  const { adminEmail, user, rewardName, rewardCost, deductPoints, rewardType } = req.body;
+  const { adminEmail, user, rewardName, rewardCost, deductPoints } = req.body;
 
   if (!adminEmail || !user || !rewardName || rewardCost === undefined) {
     return res
@@ -1607,7 +1607,6 @@ app.post("/api/reward-request", async (req, res) => {
       user,
       rewardName,
       rewardCost,
-      rewardType: rewardType || 'continuous',
       status: "pending",
       timestamp: Date.now(),
     });
@@ -1669,7 +1668,6 @@ app.post("/api/review-reward", async (req, res) => {
     const rewards = admin.rewards || {};
     const userRewards = admin.userRewards || {};
     const rewardHistory = admin.rewardHistory || {};
-    const marketRewards = admin.marketRewards || [];
 
     // Update history
     const userHistory = rewardHistory[request.user] || [];
@@ -1696,30 +1694,14 @@ app.post("/api/review-reward", async (req, res) => {
     } else {
       // Refund points if declined
       rewards[request.user] = (rewards[request.user] || 0) + request.rewardCost;
-      
-      // For one-time rewards, remove user from claimedBy array when declined
-      if (request.rewardType === 'oneTime' && marketRewards && Array.isArray(marketRewards)) {
-        const rewardIndex = marketRewards.findIndex(r => r && r.name === request.rewardName);
-        if (rewardIndex !== -1 && marketRewards[rewardIndex].claimedBy && Array.isArray(marketRewards[rewardIndex].claimedBy)) {
-          const userIndex = marketRewards[rewardIndex].claimedBy.indexOf(request.user);
-          if (userIndex !== -1) {
-            marketRewards[rewardIndex].claimedBy.splice(userIndex, 1);
-          }
-        }
-      }
     }
 
     // Remove from pending requests
     pendingRewardRequests.splice(requestIndex, 1);
 
-    const updateData = { pendingRewardRequests, rewards, userRewards, rewardHistory };
-    if (marketRewards && Array.isArray(marketRewards)) {
-      updateData.marketRewards = marketRewards;
-    }
-
     await admins.updateOne(
       { email: adminEmail },
-      { $set: updateData },
+      { $set: { pendingRewardRequests, rewards, userRewards, rewardHistory } },
     );
 
     res.json({ success: true, message: `Reward ${decision}d successfully` });
