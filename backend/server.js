@@ -1834,18 +1834,11 @@ app.post("/api/reward-request", async (req, res) => {
       timestamp: Date.now(),
     });
 
-    // Add to reward history as pending
-    if (!rewardHistory[user]) rewardHistory[user] = [];
-    rewardHistory[user].push({
-      rewardName,
-      rewardCost,
-      status: "Pending",
-      timestamp: new Date().toISOString(),
-    });
+    // Don't add to reward history yet - only add when approved/declined
 
     await admins.updateOne(
       { email: adminEmail },
-      { $set: { rewards, pendingRewardRequests, rewardHistory } },
+      { $set: { rewards, pendingRewardRequests } },
       { upsert: true },
     );
 
