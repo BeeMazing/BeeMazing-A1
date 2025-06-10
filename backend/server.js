@@ -1698,21 +1698,13 @@ app.post("/api/review-reward", async (req, res) => {
       rewards[request.user] = (rewards[request.user] || 0) + request.rewardCost;
       
       // For one-time rewards, remove user from claimedBy array when declined
-      if (request.rewardType === 'oneTime') {
-        console.log(`Processing one-time reward decline for user: ${request.user}, reward: ${request.rewardName}`);
-        const rewardIndex = marketRewards.findIndex(r => r.name === request.rewardName);
-        if (rewardIndex !== -1 && marketRewards[rewardIndex].claimedBy) {
-          console.log(`Found reward at index ${rewardIndex}, claimedBy array:`, marketRewards[rewardIndex].claimedBy);
+      if (request.rewardType === 'oneTime' && marketRewards && Array.isArray(marketRewards)) {
+        const rewardIndex = marketRewards.findIndex(r => r && r.name === request.rewardName);
+        if (rewardIndex !== -1 && marketRewards[rewardIndex].claimedBy && Array.isArray(marketRewards[rewardIndex].claimedBy)) {
           const userIndex = marketRewards[rewardIndex].claimedBy.indexOf(request.user);
           if (userIndex !== -1) {
-            console.log(`Removing user ${request.user} from claimedBy array at index ${userIndex}`);
             marketRewards[rewardIndex].claimedBy.splice(userIndex, 1);
-            console.log(`Updated claimedBy array:`, marketRewards[rewardIndex].claimedBy);
-          } else {
-            console.log(`User ${request.user} not found in claimedBy array`);
           }
-        } else {
-          console.log(`Reward not found or no claimedBy array for reward: ${request.rewardName}`);
         }
       }
     }
@@ -1720,9 +1712,14 @@ app.post("/api/review-reward", async (req, res) => {
     // Remove from pending requests
     pendingRewardRequests.splice(requestIndex, 1);
 
+    const updateData = { pendingRewardRequests, rewards, userRewards, rewardHistory };
+    if (marketRewards && Array.isArray(marketRewards)) {
+      updateData.marketRewards = marketRewards;
+    }
+
     await admins.updateOne(
       { email: adminEmail },
-      { $set: { pendingRewardRequests, rewards, userRewards, rewardHistory, marketRewards } },
+      { $set: updateData },
     );
 
     res.json({ success: true, message: `Reward ${decision}d successfully` });

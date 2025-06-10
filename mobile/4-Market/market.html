@@ -760,15 +760,9 @@ transform: scale(1.1);
         }
 
         .reward-type-badge.onetime {
-            background: rgba(255, 87, 34, 0.1);
-            color: #FF5722;
-            border-color: #FF5722;
-        }
-
-        .reward-type-badge.continuous {
-            background: rgba(76, 175, 80, 0.1);
-            color: #4CAF50;
-            border-color: #4CAF50;
+            background: rgba(255, 193, 7, 0.15);
+            color: #FFC107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
         }
 
         .reward-form-container input::placeholder {
@@ -2336,7 +2330,7 @@ if (reward.assignedUsers && reward.assignedUsers.length > 0) {
 
 // Add reward type badge
 const typeBadge = reward.type === 'continuous' 
-  ? '<span class="reward-type-badge continuous">∞</span>'
+  ? ''
   : '<span class="reward-type-badge onetime">1×</span>';
 
 rewardItem.innerHTML = `

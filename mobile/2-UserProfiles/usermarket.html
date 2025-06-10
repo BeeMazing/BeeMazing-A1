@@ -96,11 +96,7 @@
         }
 
         .reward-type-indicator.onetime {
-            background-color: #FF5722;
-        }
-
-        .reward-type-indicator.continuous {
-            background-color: #4CAF50;
+            background-color: #FFC107;
         }
 
 
@@ -809,7 +805,7 @@ document.querySelectorAll('.footer a').forEach(link => {
 
                 const typeIndicator = isOneTime ? 
                     '<div class="reward-type-indicator onetime">1</div>' : 
-                    '<div class="reward-type-indicator continuous">∞</div>';
+                    '';
 
                 card.innerHTML = `
                     <span class="purchase-indicator" data-count="${userRewardCount}"></span>
