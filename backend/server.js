@@ -859,15 +859,15 @@ app.delete("/api/delete-any-task", async (req, res) => {
 app.delete("/api/tasks", async (req, res) => {
   const { adminEmail, title, date } = req.query;
 
-  if (!adminEmail || !title || !date) {
+  if (!adminEmail || !title) {
     return res
       .status(400)
-      .json({ error: "Missing adminEmail, title, or date" });
+      .json({ error: "Missing adminEmail or title" });
   }
 
   try {
     console.log(
-      `Attempting to delete task: adminEmail=${adminEmail}, title=${title}, date=${date}`,
+      `Attempting to delete task: adminEmail=${adminEmail}, title=${title}, date=${date || 'no date (as needed)'}`,
     );
     const db = await connectDB();
     const admins = db.collection("admins");
@@ -879,8 +879,17 @@ app.delete("/api/tasks", async (req, res) => {
     }
 
     const updatedTasks = admin.tasks.filter((task) => {
-      const taskStartDate = task.date.split(" to ")[0];
-      return !(task.title === title && taskStartDate === date);
+      // For tasks with dates, match both title and date
+      if (date && task.date) {
+        const taskStartDate = task.date.split(" to ")[0];
+        return !(task.title === title && taskStartDate === date);
+      }
+      // For "as needed" tasks without dates, match only title
+      if (!date && (!task.date || task.asNeeded || task.repeat === "As Needed")) {
+        return task.title !== title;
+      }
+      // If date parameter provided but task has no date, or vice versa, don't match
+      return true;
     });
 
     await admins.updateOne(
@@ -888,7 +897,7 @@ app.delete("/api/tasks", async (req, res) => {
       { $set: { tasks: updatedTasks } },
     );
 
-    console.log(`Task deleted successfully: title=${title}, date=${date}`);
+    console.log(`Task deleted successfully: title=${title}, date=${date || 'no date (as needed)'}`);
     res.json({ success: true, message: "Task deleted successfully" });
   } catch (err) {
     console.error(`Error deleting task (title=${title}, date=${date}):`, err);
