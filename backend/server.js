@@ -1957,7 +1957,7 @@ app.post("/api/review-reward", async (req, res) => {
   }
 });
 
-// ✅ Get pending reward requests
+// ✅ Get all reward requests (pending + history)
 app.get("/api/reward-requests", async (req, res) => {
   const { adminEmail } = req.query;
 
@@ -1971,104 +1971,37 @@ app.get("/api/reward-requests", async (req, res) => {
 
     const admin = await admins.findOne({ email: adminEmail });
     const pendingRewardRequests = admin?.pendingRewardRequests || [];
+    const rewardHistory = admin?.rewardHistory || {};
 
-    res.json({ success: true, requests: pendingRewardRequests });
-  } catch (err) {
-    console.error("Error fetching pending reward requests:", err);
-    res.status(500).json({ error: "Failed to fetch pending reward requests" });
-  }
-});
+    // Combine pending requests with approved/declined requests from history
+    const allRequests = [...pendingRewardRequests];
 
-// ✅ Get pending reward requests
-app.get("/api/reward-requests", async (req, res) => {
-  const { adminEmail } = req.query;
-
-  if (!adminEmail) {
-    return res.status(400).json({ error: "Missing adminEmail" });
-  }
-
-  try {
-    const db = await connectDB();
-    const admins = db.collection("admins");
-
-    const admin = await admins.findOne({ email: adminEmail });
-    const pendingRewardRequests = admin?.pendingRewardRequests || [];
-
-    res.json({ success: true, requests: pendingRewardRequests });
-  } catch (err) {
-    console.error("Error fetching pending reward requests:", err);
-    res.status(500).json({ error: "Failed to fetch pending reward requests" });
-  }
-});
-
-// ✅ Approve or decline a reward request
-app.post("/api/review-reward", async (req, res) => {
-  const { adminEmail, requestIndex, decision } = req.body;
-
-  if (!adminEmail || requestIndex === undefined || !decision) {
-    return res
-      .status(400)
-      .json({ error: "Missing adminEmail, requestIndex, or decision" });
-  }
-
-  if (!["approve", "decline"].includes(decision)) {
-    return res.status(400).json({ error: "Invalid decision" });
-  }
-
-  try {
-    const db = await connectDB();
-    const admins = db.collection("admins");
-
-    const admin = await admins.findOne({ email: adminEmail });
-    if (!admin) {
-      return res.status(404).json({ error: "Admin not found" });
-    }
-
-    const pendingRewardRequests = admin.pendingRewardRequests || [];
-    if (requestIndex < 0 || requestIndex >= pendingRewardRequests.length) {
-      return res.status(400).json({ error: "Invalid request index" });
-    }
-
-    const request = pendingRewardRequests[requestIndex];
-    if (request.status !== "pending") {
-      return res.status(400).json({ error: "Request already processed" });
-    }
-
-    // Update request status
-    request.status = decision;
-    // Update reward history
-    const rewardHistory = admin.rewardHistory || {};
-    if (!rewardHistory[request.user]) {
-      rewardHistory[request.user] = [];
-    }
-    rewardHistory[request.user].push({
-      rewardName: request.rewardName,
-      rewardCost: request.rewardCost,
-      status: decision,
-      timestamp: new Date().toISOString(),
+    // Add approved/declined requests from history back to the requests list
+    Object.keys(rewardHistory).forEach(user => {
+      const userHistory = rewardHistory[user] || [];
+      userHistory.forEach(historyItem => {
+        // Only include approved/declined items (not received ones)
+        if (historyItem.status === 'Approved' || historyItem.status === 'Declined') {
+          allRequests.push({
+            user: user,
+            rewardName: historyItem.rewardName,
+            rewardCost: historyItem.rewardCost,
+            status: historyItem.status.toLowerCase(),
+            timestamp: new Date(historyItem.timestamp).getTime()
+          });
+        }
+      });
     });
 
-    if (decision === "approve") {
-      // Deduct points
-      const rewards = admin.rewards || {};
-      rewards[request.user] = (rewards[request.user] || 0) - request.rewardCost;
-      await admins.updateOne({ email: adminEmail }, { $set: { rewards } });
-    }
-
-    // Remove from pending requests
-    pendingRewardRequests.splice(requestIndex, 1);
-
-    await admins.updateOne(
-      { email: adminEmail },
-      { $set: { pendingRewardRequests, rewardHistory } },
-    );
-
-    res.json({ success: true, message: `Reward ${decision}d successfully` });
+    res.json({ success: true, requests: allRequests });
   } catch (err) {
-    console.error("Error reviewing reward request:", err);
-    res.status(500).json({ error: "Failed to process reward request" });
+    console.error("Error fetching reward requests:", err);
+    res.status(500).json({ error: "Failed to fetch reward requests" });
   }
 });
+
+
+
 
 // ✅ Get reward history for an admin
 app.get("/api/reward-history", async (req, res) => {
