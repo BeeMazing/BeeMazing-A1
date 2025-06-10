@@ -1574,7 +1574,7 @@ app.post("/api/reward-history", async (req, res) => {
 // ✅ Save a pending reward request
 
 app.post("/api/reward-request", async (req, res) => {
-  const { adminEmail, user, rewardName, rewardCost, deductPoints } = req.body;
+  const { adminEmail, user, rewardName, rewardCost, deductPoints, rewardType } = req.body;
 
   if (!adminEmail || !user || !rewardName || rewardCost === undefined) {
     return res
@@ -1607,6 +1607,7 @@ app.post("/api/reward-request", async (req, res) => {
       user,
       rewardName,
       rewardCost,
+      rewardType: rewardType || 'continuous',
       status: "pending",
       timestamp: Date.now(),
     });
@@ -1668,6 +1669,7 @@ app.post("/api/review-reward", async (req, res) => {
     const rewards = admin.rewards || {};
     const userRewards = admin.userRewards || {};
     const rewardHistory = admin.rewardHistory || {};
+    const marketRewards = admin.marketRewards || [];
 
     // Update history
     const userHistory = rewardHistory[request.user] || [];
@@ -1694,6 +1696,25 @@ app.post("/api/review-reward", async (req, res) => {
     } else {
       // Refund points if declined
       rewards[request.user] = (rewards[request.user] || 0) + request.rewardCost;
+      
+      // For one-time rewards, remove user from claimedBy array when declined
+      if (request.rewardType === 'oneTime') {
+        console.log(`Processing one-time reward decline for user: ${request.user}, reward: ${request.rewardName}`);
+        const rewardIndex = marketRewards.findIndex(r => r.name === request.rewardName);
+        if (rewardIndex !== -1 && marketRewards[rewardIndex].claimedBy) {
+          console.log(`Found reward at index ${rewardIndex}, claimedBy array:`, marketRewards[rewardIndex].claimedBy);
+          const userIndex = marketRewards[rewardIndex].claimedBy.indexOf(request.user);
+          if (userIndex !== -1) {
+            console.log(`Removing user ${request.user} from claimedBy array at index ${userIndex}`);
+            marketRewards[rewardIndex].claimedBy.splice(userIndex, 1);
+            console.log(`Updated claimedBy array:`, marketRewards[rewardIndex].claimedBy);
+          } else {
+            console.log(`User ${request.user} not found in claimedBy array`);
+          }
+        } else {
+          console.log(`Reward not found or no claimedBy array for reward: ${request.rewardName}`);
+        }
+      }
     }
 
     // Remove from pending requests
@@ -1701,7 +1722,7 @@ app.post("/api/review-reward", async (req, res) => {
 
     await admins.updateOne(
       { email: adminEmail },
-      { $set: { pendingRewardRequests, rewards, userRewards, rewardHistory } },
+      { $set: { pendingRewardRequests, rewards, userRewards, rewardHistory, marketRewards } },
     );
 
     res.json({ success: true, message: `Reward ${decision}d successfully` });
