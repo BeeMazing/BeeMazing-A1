@@ -1897,23 +1897,54 @@ app.post("/api/review-reward", async (req, res) => {
     const request = pendingRewardRequests[requestIndex_actual];
     console.log("Processing request:", request);
 
-    // Simple operations only
+    // Get all necessary data structures
     const rewards = admin.rewards || {};
-    
-    if (decision === "decline") {
-      // Just refund points
+    const userRewards = admin.userRewards || {};
+    const rewardHistory = admin.rewardHistory || {};
+    const marketRewards = admin.marketRewards || [];
+
+    // Update or create reward history entry
+    if (!rewardHistory[request.user]) {
+      rewardHistory[request.user] = [];
+    }
+
+    // Add to history with new status
+    rewardHistory[request.user].push({
+      rewardName: request.rewardName,
+      rewardCost: request.rewardCost,
+      status: decision === "approve" ? "Approved" : "Declined",
+      timestamp: new Date(request.timestamp).toISOString(),
+    });
+
+    if (decision === "approve") {
+      // Add to user rewards
+      if (!userRewards[request.user]) userRewards[request.user] = [];
+      userRewards[request.user].push({
+        name: request.rewardName,
+        date: new Date().toLocaleString(),
+      });
+      console.log("Added reward to user:", request.user);
+    } else {
+      // Refund points for declined rewards
       rewards[request.user] = (rewards[request.user] || 0) + request.rewardCost;
       console.log("Refunded points to:", request.user, "New balance:", rewards[request.user]);
+      
+      // For one-time rewards, remove user from claimedBy array to make it available again
+      const marketReward = marketRewards.find(reward => reward.name === request.rewardName);
+      if (marketReward && marketReward.type === 'oneTime' && marketReward.claimedBy) {
+        marketReward.claimedBy = marketReward.claimedBy.filter(username => username !== request.user);
+        console.log("Removed user from one-time reward claimedBy array:", request.rewardName);
+      }
     }
 
     // Remove from pending
     pendingRewardRequests.splice(requestIndex_actual, 1);
     console.log("Removed request. Remaining:", pendingRewardRequests.length);
 
-    // Simple database update
+    // Update database with all changes
     await admins.updateOne(
       { email: adminEmail },
-      { $set: { pendingRewardRequests, rewards } }
+      { $set: { pendingRewardRequests, rewards, userRewards, rewardHistory, marketRewards } }
     );
 
     console.log("=== REVIEW REWARD DEBUG SUCCESS ===");
