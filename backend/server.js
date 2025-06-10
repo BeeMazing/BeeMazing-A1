@@ -1847,13 +1847,14 @@ app.post("/api/reward-request", async (req, res) => {
   }
 });
 
+// ✅ Approve or decline a reward request
 app.post("/api/review-reward", async (req, res) => {
-  const { adminEmail, requestIndex, decision } = req.body;
+  const { adminEmail, requestIndex, decision, user, rewardName, timestamp } = req.body;
 
-  if (!adminEmail || requestIndex === undefined || !decision) {
+  if (!adminEmail || !decision) {
     return res
       .status(400)
-      .json({ error: "Missing adminEmail, requestIndex, or decision" });
+      .json({ error: "Missing adminEmail or decision" });
   }
 
   if (!["approve", "decline"].includes(decision)) {
@@ -1870,11 +1871,34 @@ app.post("/api/review-reward", async (req, res) => {
     }
 
     const pendingRewardRequests = admin.pendingRewardRequests || [];
-    if (requestIndex < 0 || requestIndex >= pendingRewardRequests.length) {
-      return res.status(400).json({ error: "Invalid request index" });
+    
+    // Find request by timestamp, user, and rewardName (more reliable than index)
+    let requestIndex_actual = -1;
+    let request = null;
+    
+    if (user && rewardName && timestamp) {
+      // Use specific identifiers if provided
+      requestIndex_actual = pendingRewardRequests.findIndex(
+        req => req.user === user && 
+               req.rewardName === rewardName && 
+               req.timestamp === parseInt(timestamp) &&
+               req.status === "pending"
+      );
+    } else if (requestIndex !== undefined) {
+      // Fallback to index method for backward compatibility
+      if (requestIndex < 0 || requestIndex >= pendingRewardRequests.length) {
+        return res.status(400).json({ error: "Invalid request index" });
+      }
+      requestIndex_actual = requestIndex;
+    } else {
+      return res.status(400).json({ error: "Missing request identification parameters" });
     }
 
-    const request = pendingRewardRequests[requestIndex];
+    if (requestIndex_actual === -1) {
+      return res.status(404).json({ error: "Pending request not found" });
+    }
+
+    request = pendingRewardRequests[requestIndex_actual];
     if (request.status !== "pending") {
       return res.status(400).json({ error: "Request already processed" });
     }
@@ -1918,7 +1942,7 @@ app.post("/api/review-reward", async (req, res) => {
     }
 
     // Remove from pending requests
-    pendingRewardRequests.splice(requestIndex, 1);
+    pendingRewardRequests.splice(requestIndex_actual, 1);
 
     await admins.updateOne(
       { email: adminEmail },

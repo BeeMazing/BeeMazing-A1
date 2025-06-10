@@ -3234,7 +3234,14 @@ async function reviewReward(requestIndex, decision, event) {
         const reviewResponse = await fetch("https://beemazing1.onrender.com/api/review-reward", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ adminEmail, requestIndex, decision })
+            body: JSON.stringify({ 
+                adminEmail, 
+                requestIndex, 
+                decision,
+                user: request.user,
+                rewardName: request.rewardName,
+                timestamp: request.timestamp
+            })
         });
         
         console.log("📡 Review response:", reviewResponse.status);
