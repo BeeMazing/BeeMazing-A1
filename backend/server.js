@@ -1871,6 +1871,8 @@ app.post("/api/review-reward", async (req, res) => {
     }
 
     const pendingRewardRequests = admin.pendingRewardRequests || [];
+    console.log("Debug: pendingRewardRequests length:", pendingRewardRequests.length);
+    console.log("Debug: Looking for request:", { user, rewardName, timestamp: parseInt(timestamp) });
     
     // Find request by timestamp, user, and rewardName (more reliable than index)
     let requestIndex_actual = -1;
@@ -1884,21 +1886,25 @@ app.post("/api/review-reward", async (req, res) => {
                req.timestamp === parseInt(timestamp) &&
                req.status === "pending"
       );
+      console.log("Debug: Found request at index:", requestIndex_actual);
     } else if (requestIndex !== undefined) {
       // Fallback to index method for backward compatibility
       if (requestIndex < 0 || requestIndex >= pendingRewardRequests.length) {
         return res.status(400).json({ error: "Invalid request index" });
       }
       requestIndex_actual = requestIndex;
+      console.log("Debug: Using fallback index:", requestIndex_actual);
     } else {
       return res.status(400).json({ error: "Missing request identification parameters" });
     }
 
     if (requestIndex_actual === -1) {
+      console.log("Debug: All pending requests:", pendingRewardRequests);
       return res.status(404).json({ error: "Pending request not found" });
     }
 
     request = pendingRewardRequests[requestIndex_actual];
+    console.log("Debug: Found request:", request);
     if (request.status !== "pending") {
       return res.status(400).json({ error: "Request already processed" });
     }
@@ -1944,15 +1950,28 @@ app.post("/api/review-reward", async (req, res) => {
     // Remove from pending requests
     pendingRewardRequests.splice(requestIndex_actual, 1);
 
+    console.log("Debug: About to update database with:", {
+      pendingRewardRequestsLength: pendingRewardRequests.length,
+      rewardsKeys: Object.keys(rewards),
+      userRewardsKeys: Object.keys(userRewards),
+      rewardHistoryKeys: Object.keys(rewardHistory),
+      marketRewardsLength: (admin?.marketRewards || []).length
+    });
+
     await admins.updateOne(
       { email: adminEmail },
-      { $set: { pendingRewardRequests, rewards, userRewards, rewardHistory, marketRewards } },
+      { $set: { pendingRewardRequests, rewards, userRewards, rewardHistory, marketRewards: admin?.marketRewards || [] } },
     );
+
+    console.log("Debug: Database update completed successfully");
 
     res.json({ success: true, message: `Reward ${decision}d successfully` });
   } catch (err) {
     console.error("Error reviewing reward request:", err);
-    res.status(500).json({ error: "Failed to process reward request" });
+    console.error("Error details:", err.message);
+    console.error("Error stack:", err.stack);
+    console.error("Request data:", { adminEmail, requestIndex, decision, user, rewardName, timestamp });
+    res.status(500).json({ error: "Failed to process reward request", details: err.message });
   }
 });
 
