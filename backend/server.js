@@ -830,12 +830,21 @@ app.post("/api/mark-received", async (req, res) => {
     rewardHistory[user][historyIndex].status = "Received";
     rewardHistory[user][historyIndex].receivedTimestamp = new Date().toISOString();
 
+    // Add to userRewards for "Received" section
+    const userRewards = admin?.userRewards || {};
+    if (!userRewards[user]) userRewards[user] = [];
+    userRewards[user].push({
+      name: rewardName,
+      date: new Date().toLocaleString(),
+    });
+
     // Update the database
     await admins.updateOne(
       { email: adminEmail },
       { 
         $set: { 
-          rewardHistory 
+          rewardHistory,
+          userRewards
         } 
       },
       { upsert: true }
@@ -1917,13 +1926,8 @@ app.post("/api/review-reward", async (req, res) => {
     });
 
     if (decision === "approve") {
-      // Add to user rewards
-      if (!userRewards[request.user]) userRewards[request.user] = [];
-      userRewards[request.user].push({
-        name: request.rewardName,
-        date: new Date().toLocaleString(),
-      });
-      console.log("Added reward to user:", request.user);
+      // Don't add to userRewards yet - child must click "Received" button first
+      console.log("Approved reward for user:", request.user);
     } else {
       // Refund points for declined rewards
       rewards[request.user] = (rewards[request.user] || 0) + request.rewardCost;
