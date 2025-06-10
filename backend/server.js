@@ -1379,7 +1379,12 @@ app.put("/api/tasks/future", async (req, res) => {
       const newTasks = [];
       const indicesToRemove = [];
       
-      for (const { task, index } of relatedTasks) {
+      // Check if we have new occurrence data with individual due times
+      const hasAllOccurrences = modifiedTask.allOccurrences && Array.isArray(modifiedTask.allOccurrences);
+      console.log(`🔍 BACKEND: Has allOccurrences: ${hasAllOccurrences}, count: ${hasAllOccurrences ? modifiedTask.allOccurrences.length : 0}`);
+      
+      for (let i = 0; i < relatedTasks.length; i++) {
+        const { task, index } = relatedTasks[i];
         const originalRange = task.date.split(" to ");
         const originalEnd = originalRange[1] || "3000-01-01";
         
@@ -1391,9 +1396,22 @@ app.put("/api/tasks/future", async (req, res) => {
         // Update the original task to end the day before the split date
         tasks[index].date = `${originalRange[0]} to ${dayBeforeSplit}`;
         
+        // Find the corresponding new occurrence data or use modified task
+        let occurrenceData = modifiedTask;
+        if (hasAllOccurrences && i < modifiedTask.allOccurrences.length) {
+          occurrenceData = modifiedTask.allOccurrences[i];
+          console.log(`🔍 BACKEND: Using specific occurrence data for ${task.title}:`, {
+            dueTimes: occurrenceData.dueTimes,
+            occurrence: occurrenceData.occurrence
+          });
+        } else {
+          console.log(`🔍 BACKEND: Using fallback data for ${task.title}`);
+        }
+        
         // Create new task for this occurrence starting from the split date
         const newTask = {
           ...modifiedTask,
+          ...occurrenceData, // Override with specific occurrence data
           title: task.title, // Preserve the occurrence-specific title
           originalTitle: task.originalTitle || originalTitle,
           occurrence: task.occurrence,
@@ -1403,9 +1421,11 @@ app.put("/api/tasks/future", async (req, res) => {
           date: `${splitDate} to ${originalEnd}`,
         };
         
-        // Remove the isOccurrenceGroupEdit flag from the new task
+        // Remove the isOccurrenceGroupEdit flag and allOccurrences from the new task
         delete newTask.isOccurrenceGroupEdit;
+        delete newTask.allOccurrences;
         
+        console.log(`🔍 BACKEND: Created new task for ${newTask.title} with dueTimes:`, newTask.dueTimes);
         newTasks.push(newTask);
       }
       

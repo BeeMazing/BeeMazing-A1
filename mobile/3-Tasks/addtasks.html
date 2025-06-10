@@ -1162,13 +1162,52 @@ input[name="monthlyOption"]:not(:checked) + .custom-radio > div {
 
     <div class="content">
         <form id="addTaskForm">
-            <div class="form-group-full">
+            <div class="form-group-full" style="margin-bottom: 10px;">
                 <label for="taskTitle"></label>
                 <input type="text" id="taskTitle" placeholder="Enter task title" required>
             </div>
-            <div class="form-group-full">
-                <label for="taskNotes"></label>
-                <textarea id="taskNotes" placeholder="Enter any additional notes"></textarea>
+            <div class="form-group-full" style="display: flex; align-items: center; gap: 10px; margin-bottom: 0px;">
+                <label class="switch">
+                    <input type="checkbox" id="privateTask">
+                    <span class="slider"></span>
+                </label>
+                <label style="margin: 0; font-weight: 600;">Private Task</label>
+                <i id="privateTaskInfo" style="
+                    font-size: 14px; 
+                    cursor: pointer; 
+                    border: 2px solid var(--text-color); 
+                    border-radius: 50%; 
+                    width: 20px; 
+                    height: 20px; 
+                    min-width: 20px;
+                    min-height: 20px;
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    font-style: normal; 
+                    font-weight: bold; 
+                    font-family: serif;
+                    transition: all 0.2s ease;
+                    background: var(--light-bg);
+                    color: var(--text-color);
+                    flex-shrink: 0;
+                " 
+                onmouseover="this.style.background='var(--primary-color)'; this.style.borderColor='var(--primary-color)'; this.style.color='var(--secondary-color)'" 
+                onmouseout="this.style.background='var(--light-bg)'; this.style.borderColor='var(--text-color)'; this.style.color='var(--text-color)'"
+                onclick="window.togglePrivateTaskPopup(event)">i</i>
+                
+                <!-- Private Task Info Popup -->
+                <div id="privateTaskPopup" class="info-popup">
+                    <strong>Private Tasks</strong><br><br>
+                    Mark tasks such as "Brush Teeth," "Practice Piano," or "Read Book" as private, and they won't appear in the 'All Tasks' list for everyone.
+                </div>
+            </div>
+            <div class="form-group-full" style="margin-top: 0px;">
+                <button type="button" id="addNotesBtn" style="background: none; border: none; color: var(--primary-color); font-size: 16px; font-weight: 600; cursor: pointer; padding: 8px 0; text-decoration: none;" onclick="toggleNotesField()">+ Add notes/description</button>
+                <div id="notesContainer" style="display: none; margin-top: 10px;">
+                    <label for="taskNotes"></label>
+                    <textarea id="taskNotes" placeholder="Enter any additional notes"></textarea>
+                </div>
             </div>
             <div class="form-group room-section">
                 <label>Room</label>
@@ -1178,9 +1217,36 @@ input[name="monthlyOption"]:not(:checked) + .custom-radio > div {
             
             
             <div class="form-group frequency-section">
-                <label>Frequency</label>
+                <label>Frequency
+                    <i style="font-style: normal; 
+                    color: var(--text-color); 
+                    cursor: pointer; 
+                    font-size: 18px; 
+                    margin-left: 8px; 
+                    display: inline-flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    width: 20px; 
+                    height: 20px; 
+                    border: 2px solid var(--text-color); 
+                    border-radius: 50%; 
+                    transition: all 0.2s ease;
+                    background: var(--light-bg);
+                    color: var(--text-color);
+                    flex-shrink: 0;
+                " 
+                onmouseover="this.style.background='var(--primary-color)'; this.style.borderColor='var(--primary-color)'; this.style.color='var(--secondary-color)'" 
+                onmouseout="this.style.background='var(--light-bg)'; this.style.borderColor='var(--text-color)'; this.style.color='var(--text-color)'"
+                onclick="window.toggleFrequencyInfoPopup(event)">i</i>
+                </label>
                 <button type="button" id="selectRepeat" class="select-btn">Select</button>
                 <input type="hidden" id="repeatSelection" value="">
+                
+                <!-- Frequency Info Popup -->
+                <div id="frequencyInfoPopup" class="info-popup">
+                    <strong>"Occasional" Frequency</strong><br><br>
+                    Choose "Occasional" frequency for tasks that occur irregularly. Assign tasks like "Unload the Dishwasher" or "Empty the Vacuum Cleaner" to family members and activate them when necessary. Set a rotation to ensure everyone takes their turn.
+                </div>
             </div>
             
             <!-- NEW: Times Per Day input (only shown when Daily is selected) -->
@@ -1660,7 +1726,7 @@ input[name="monthlyOption"]:not(:checked) + .custom-radio > div {
                 <li data-value="Daily">Daily</li>
                 <li data-value="Weekly">Weekly</li>
                 <li data-value="Monthly">Monthly</li>
-                <li data-value="As Needed">As Needed</li>
+                <li data-value="Occasional">Occasional</li>
             </ul>
         </div>
     </div>
@@ -2793,12 +2859,62 @@ function setupTimesModal(inputEl, modalEl, closeBtnEl, customInputEl, saveBtnEl)
             if (onTimePopup && onTimeIcon && !onTimePopup.contains(event.target) && !onTimeIcon.contains(event.target)) {
                 onTimePopup.classList.remove('show');
             }
+            
+            const privatePopup = document.getElementById('privateTaskPopup');
+            const privateIcon = document.getElementById('privateTaskInfo');
+            if (privatePopup && privateIcon && !privatePopup.contains(event.target) && !privateIcon.contains(event.target)) {
+                privatePopup.classList.remove('show');
+            }
         });
+
+        // Private Task Popup Toggle
+        function togglePrivateTaskPopup(event) {
+            event.stopPropagation();
+            const popup = document.getElementById('privateTaskPopup');
+            const isShowing = popup.classList.contains('show');
+            
+            if (!isShowing) {
+                positionPopup(popup, event.target);
+            }
+            
+            popup.classList.toggle('show');
+        }
+
+        // Frequency Info Popup Toggle
+        function toggleFrequencyInfoPopup(event) {
+            event.stopPropagation();
+            const popup = document.getElementById('frequencyInfoPopup');
+            const isShowing = popup.classList.contains('show');
+            
+            if (!isShowing) {
+                positionPopup(popup, event.target);
+            }
+            
+            popup.classList.toggle('show');
+        }
+
+        // Toggle notes field function
+        function toggleNotesField() {
+            const notesContainer = document.getElementById('notesContainer');
+            const addNotesBtn = document.getElementById('addNotesBtn');
+            
+            if (notesContainer.style.display === 'none') {
+                notesContainer.style.display = 'block';
+                addNotesBtn.textContent = '- Hide notes/description';
+            } else {
+                notesContainer.style.display = 'none';
+                addNotesBtn.textContent = '+ Add notes/description';
+                document.getElementById('taskNotes').value = ''; // Clear the field when hidden
+            }
+        }
 
         // Make functions globally available
         window.toggleParentApprovalPopup = toggleParentApprovalPopup;
         window.toggleSettingsPopup = toggleSettingsPopup;
         window.toggleOnTimeCompletionPopup = toggleOnTimeCompletionPopup;
+        window.togglePrivateTaskPopup = togglePrivateTaskPopup;
+        window.toggleFrequencyInfoPopup = toggleFrequencyInfoPopup;
+        window.toggleNotesField = toggleNotesField;
 
         // Custom setup for settings modal to handle rotation options
         const settingsModal = document.getElementById('settingsModal');
@@ -3204,6 +3320,35 @@ if (!title) {
     alert("Task title is required!");
     return;
 }
+if (!repeat || repeat === "") {
+    alert("Please select a frequency option before saving the task!");
+    return;
+}
+if (repeat === "Monthly" && monthlyOption === "times") {
+    const daysOfMonthChecked = document.getElementById("specificDaysOfMonthCheckbox").checked;
+    const daysOfWeekChecked = document.getElementById("specificDaysOfWeekCheckbox").checked;
+    
+    if (!daysOfMonthChecked && !daysOfWeekChecked) {
+        alert("For monthly tasks, please select either 'Specific days of the month' or 'Specific days of the week' scheduling option.");
+        return;
+    }
+    
+    if (daysOfMonthChecked) {
+        const monthlyDaysData = getMonthlyDaysOfMonthData();
+        if (!monthlyDaysData || monthlyDaysData.trim() === "") {
+            alert("Please select at least one day of the month for your monthly task.");
+            return;
+        }
+    }
+    
+    if (daysOfWeekChecked) {
+        const monthlyWeeksData = getMonthlyDaysOfWeekData();
+        if (!monthlyWeeksData || monthlyWeeksData.trim() === "") {
+            alert("Please select at least one week occurrence and day for your monthly task.");
+            return;
+        }
+    }
+}
 if (users.length === 0) {
     alert("Please assign at least one user.");
     return;
@@ -3220,8 +3365,8 @@ if (isFutureEdit && !splitDate) {
 }
         
 if (!isOccurrenceEdit && !isFutureEdit) {
-    // Skip date validations for As Needed tasks
-    if (repeat !== "As Needed") {
+    // Skip date validations for Occasional tasks
+    if (repeat !== "Occasional") {
         if (repeat === "One Time" && !singleDate) {
             alert("Please select a date for this one-time task.");
             return;
@@ -3256,8 +3401,8 @@ if (isOccurrenceEdit) {
     dateValue = `${splitDate} to ${originalEnd}`;
 } else if (repeat === "One Time") {
     dateValue = `${singleDate} to ${singleDate}`;
-} else if (repeat === "As Needed") {
-    dateValue = ""; // No date for As Needed tasks
+} else if (repeat === "Occasional") {
+    dateValue = ""; // No date for Occasional tasks
 } else if (repeat === "Monthly" && monthlyOption === "times") {
     const fromDate = monthlyDateFrom || new Date().toISOString().split("T")[0];
     const toDate = monthlyDateTo || "3000-01-01";
@@ -3301,9 +3446,9 @@ const task = {
     monthlyDaysOfWeek: repeat === "Monthly" && monthlyOption === "times" && document.getElementById("specificDaysOfWeekCheckbox").checked ? getMonthlyDaysOfWeekData() : undefined,
     monthlySchedulingType: repeat === "Monthly" && monthlyOption === "times" ? (document.getElementById("specificDaysOfMonthCheckbox").checked ? "daysOfMonth" : document.getElementById("specificDaysOfWeekCheckbox").checked ? "daysOfWeek" : null) : undefined,
     specificDates: dateMode === "specific-dates" ? specificDates : undefined,
-    daysOfWeek: dateMode === "date" && repeat !== "As Needed" ? (selectedDays.length > 0 ? (selectedDays.includes("All") ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] : selectedDays) : (repeat === "Daily" ? ["All"] : ["Any"])) : undefined,
-    asNeeded: repeat === "As Needed" ? true : undefined,
-    activated: repeat === "As Needed" ? false : undefined,
+    daysOfWeek: dateMode === "date" && repeat !== "Occasional" && !(repeat === "Monthly" && monthlyOption === "times") ? (selectedDays.length > 0 ? (selectedDays.includes("All") ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] : selectedDays) : (repeat === "Daily" ? ["All"] : ["Any"])) : undefined,
+    asNeeded: repeat === "Occasional" ? true : undefined,
+    activated: repeat === "Occasional" ? false : undefined,
     currentTurnIndex: settings === "Rotation" ? 0 : undefined,
     completions: settings === "Rotation" ? {} : undefined,
     pendingCompletions: settings === "Rotation" ? {} : undefined
@@ -3322,6 +3467,8 @@ if (repeat === "Daily" && timesPerDay > 1) {
             occurrence: occurrence,
             totalOccurrences: timesPerDay,
             timesPerDay: 1, // Each occurrence is now a single daily task
+            // Assign specific due time for this occurrence
+            dueTimes: task.dueTimes && task.dueTimes[occurrence - 1] ? [task.dueTimes[occurrence - 1]] : undefined,
             // For rotation tasks, adjust user assignment
             users: settings === "Rotation" ? [getRotationUserForOccurrence(task.users, occurrence - 1)] : task.users,
             currentTurnIndex: settings === "Rotation" ? ((occurrence - 1) % task.users.length) : task.currentTurnIndex
@@ -3398,16 +3545,38 @@ try {
         if (editTask.isOccurrenceGroupEdit && editTask.originalTitle) {
             console.log("🚀 FRONTEND: Setting up occurrence group edit");
             originalTitleToUse = editTask.originalTitle;
-            modifiedTaskToSend = {
-                ...tasksToSave[0],
-                isOccurrenceGroupEdit: true,
-                totalOccurrences: editTask.totalOccurrences
-            };
+            
+            // For multiple daily occurrences, send all generated tasks
+            if (tasksToSave.length > 1) {
+                console.log(`🚀 FRONTEND: Sending ${tasksToSave.length} occurrence tasks`);
+                modifiedTaskToSend = {
+                    ...tasksToSave[0],
+                    isOccurrenceGroupEdit: true,
+                    totalOccurrences: tasksToSave.length,
+                    allOccurrences: tasksToSave // Send all occurrence tasks
+                };
+            } else {
+                modifiedTaskToSend = {
+                    ...tasksToSave[0],
+                    isOccurrenceGroupEdit: true,
+                    totalOccurrences: editTask.totalOccurrences
+                };
+            }
+            
             console.log("🚀 FRONTEND: Group edit data:", {
                 originalTitle: originalTitleToUse,
-                totalOccurrences: editTask.totalOccurrences,
-                isOccurrenceGroupEdit: true
+                totalOccurrences: modifiedTaskToSend.totalOccurrences,
+                isOccurrenceGroupEdit: true,
+                occurrenceCount: tasksToSave.length
             });
+            
+            // Debug due times for each occurrence
+            if (modifiedTaskToSend.allOccurrences) {
+                console.log("🚀 FRONTEND: Due times for each occurrence:");
+                modifiedTaskToSend.allOccurrences.forEach((occ, index) => {
+                    console.log(`  ${index + 1}. ${occ.title} - dueTimes:`, occ.dueTimes);
+                });
+            }
         } else {
             console.log("🚀 FRONTEND: Regular future edit");
         }
@@ -3634,10 +3803,10 @@ repeatModal.addEventListener('click', (e) => {
         timesPerWeekGroup.style.display = selected === "Weekly" ? "flex" : "none";
         timesPerMonthGroup.style.display = selected === "Monthly" ? "flex" : "none";
         
-        // Hide due time for As Needed tasks
+        // Hide due time for Occasional tasks
         const dueTimeContainer = document.getElementById("dueTimeContainer");
         const dueTimeToggle = document.getElementById("dueTimeToggle");
-        if (selected === "As Needed") {
+        if (selected === "Occasional") {
             dueTimeToggle.checked = false;
             dueTimeContainer.style.display = "none";
         }
@@ -3664,8 +3833,8 @@ repeatModal.addEventListener('click', (e) => {
             specificDatesGroupEl.style.display = 'none';
             monthlyTimesDateGroup.style.setProperty('display', 'none', 'important');
             monthlySchedulingOptions.style.setProperty('display', 'none', 'important');
-        } else if (selected === "As Needed") {
-            // Hide all date UI for As Needed tasks
+        } else if (selected === "Occasional") {
+            // Hide all date UI for Occasional tasks
             generalDateModeSelector.style.display = 'none';
             singleDateGroup.style.display = 'none';
             fromToDateGroupEl.style.display = 'none';
@@ -3673,7 +3842,7 @@ repeatModal.addEventListener('click', (e) => {
             specificDatesGroupEl.style.display = 'none';
             monthlyTimesDateGroup.style.setProperty('display', 'none', 'important');
             monthlySchedulingOptions.style.setProperty('display', 'none', 'important');
-            // Keep defaultDateSelector hidden for As Needed
+            // Keep defaultDateSelector hidden for Occasional
             defaultDateSelector.style.display = 'none';
         } else if (selected === "Monthly") {
             // Check which monthly option is selected
@@ -4282,9 +4451,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentFrequency || currentFrequency === "") {
             // Show popup to select frequency first
             showFrequencyFirstPopup();
-        } else if (currentFrequency === "As Needed") {
-            // Show popup that As Needed tasks don't need date selection
-            showAsNeededInfoPopup();
+        } else if (currentFrequency === "Occasional") {
+            // Show popup that Occasional tasks don't need date selection
+            showOccasionalInfoPopup();
         } else {
             // Frequency is selected, trigger the appropriate date UI
             const event = new Event('click');
@@ -4360,8 +4529,8 @@ function showFrequencyFirstPopup() {
     }, 3000);
 }
 
-// Function to show info popup for As Needed tasks
-function showAsNeededInfoPopup() {
+// Function to show info popup for Occasional tasks
+function showOccasionalInfoPopup() {
     const popup = document.createElement('div');
     popup.className = 'center-warning-popup';
     popup.style.cssText = `
@@ -4382,7 +4551,7 @@ function showAsNeededInfoPopup() {
     
     popup.innerHTML = `
         <div style="font-size: 16px; font-weight: 600; color: var(--text-color); margin-bottom: 15px;">
-            As Needed Tasks
+            Occasional Tasks
         </div>
         <div style="font-size: 14px; color: var(--text-color); opacity: 0.8;">
             No date selection needed. These tasks can be activated anytime as required.
