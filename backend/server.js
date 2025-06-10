@@ -1912,6 +1912,7 @@ app.post("/api/review-reward", async (req, res) => {
     const rewards = admin.rewards || {};
     const userRewards = admin.userRewards || {};
     const rewardHistory = admin.rewardHistory || {};
+    const marketRewards = admin?.marketRewards || [];
 
     // Update history
     const userHistory = rewardHistory[request.user] || [];
@@ -1940,7 +1941,6 @@ app.post("/api/review-reward", async (req, res) => {
       rewards[request.user] = (rewards[request.user] || 0) + request.rewardCost;
       
       // For one-time rewards, remove user from claimedBy array to make it available again
-      const marketRewards = admin?.marketRewards || [];
       const marketReward = marketRewards.find(reward => reward.name === request.rewardName);
       if (marketReward && marketReward.type === 'oneTime' && marketReward.claimedBy) {
         marketReward.claimedBy = marketReward.claimedBy.filter(username => username !== request.user);
@@ -1960,7 +1960,7 @@ app.post("/api/review-reward", async (req, res) => {
 
     await admins.updateOne(
       { email: adminEmail },
-      { $set: { pendingRewardRequests, rewards, userRewards, rewardHistory, marketRewards: admin?.marketRewards || [] } },
+      { $set: { pendingRewardRequests, rewards, userRewards, rewardHistory, marketRewards } },
     );
 
     console.log("Debug: Database update completed successfully");
