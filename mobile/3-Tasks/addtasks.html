@@ -4151,20 +4151,52 @@ if (!originalUser) {
             }
             console.log("🔧 No deletion needed - just updating properties");
             
+            let taskToSend = tasksToSave[0];
+            
+            // Check if this is an occurrence group edit
+            if (editTask.isOccurrenceGroupEdit || (editTask.originalTitle && editTask.totalOccurrences > 1)) {
+                console.log("🚀 FRONTEND: Setting up entire occurrence group edit");
+                
+                // For multiple daily occurrences, send all generated tasks
+                if (tasksToSave.length > 1) {
+                    console.log(`🚀 FRONTEND: Sending ${tasksToSave.length} occurrence tasks for entire edit`);
+                    taskToSend = {
+                        ...tasksToSave[0],
+                        isOccurrenceGroupEdit: true,
+                        totalOccurrences: tasksToSave.length,
+                        allOccurrences: tasksToSave // Send all occurrence tasks
+                    };
+                } else {
+                    taskToSend = {
+                        ...tasksToSave[0],
+                        isOccurrenceGroupEdit: true,
+                        totalOccurrences: editTask.totalOccurrences || 1
+                    };
+                }
+                
+                console.log("🚀 FRONTEND: Entire group edit data:", {
+                    originalTitle: originalTitle,
+                    totalOccurrences: taskToSend.totalOccurrences,
+                    isOccurrenceGroupEdit: true,
+                    allOccurrences: taskToSend.allOccurrences ? taskToSend.allOccurrences.length : 0
+                });
+            }
+            
             const response = await fetch("https://beemazing1.onrender.com/api/tasks", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     adminEmail: currentAdmin,
-                    task: tasksToSave[0],
-                    originalTitle: taskTitle,
+                    task: taskToSend,
+                    originalTitle: originalTitle,
                     originalDate: taskDate
                 })
             });
             
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
-            alert("Task updated successfully!");
+            alert(editTask.isOccurrenceGroupEdit || (editTask.originalTitle && editTask.totalOccurrences > 1) ? 
+                  "All occurrences updated successfully!" : "Task updated successfully!");
         }
         
     } else {

@@ -1155,18 +1155,163 @@ app.put("/api/tasks", async (req, res) => {
       return res.status(404).json({ error: "Admin not found" });
     }
     const tasks = admin.tasks || [];
-    const taskIndex = tasks.findIndex(
-      (t) => t.title === originalTitle && t.date === originalDate,
-    );
-    if (taskIndex === -1) {
-      console.log(`Task not found: ${originalTitle}, ${originalDate}`);
-      return res.status(404).json({ error: "Task not found" });
+    
+    // Check if this is an occurrence group edit
+    if (task.isOccurrenceGroupEdit && task.totalOccurrences > 1) {
+      console.log(`🔍 BACKEND: Editing entire occurrence group for: ${originalTitle} with ${task.totalOccurrences} occurrences`);
+      console.log(`🔍 BACKEND: Request body:`, JSON.stringify({ originalTitle, originalDate, task }, null, 2));
+      
+      // Find all related occurrence tasks
+      const relatedTasks = [];
+      for (let i = 0; i < tasks.length; i++) {
+        const existingTask = tasks[i];
+        
+        // Check if this task is part of the occurrence group
+        const isRelated = (existingTask.originalTitle === originalTitle || 
+                          (existingTask.title && existingTask.title.startsWith(originalTitle + " - "))) &&
+                         existingTask.date === originalDate;
+        
+        console.log(`🔍 BACKEND: Checking task "${existingTask.title}" - originalTitle: ${existingTask.originalTitle}, date: ${existingTask.date}, isRelated: ${isRelated}`);
+        
+        if (isRelated) {
+          relatedTasks.push({ task: existingTask, index: i });
+        }
+      }
+      
+      console.log(`🔍 BACKEND: Found ${relatedTasks.length} related occurrence tasks`);
+      
+      if (relatedTasks.length === 0) {
+        console.log(`❌ BACKEND: No related occurrence tasks found for "${originalTitle}" on ${originalDate}`);
+        return res.status(404).json({ error: "No related occurrence tasks found" });
+      }
+      
+      // Determine how many new occurrences we need
+      const hasAllOccurrences = task.allOccurrences && Array.isArray(task.allOccurrences);
+      const newOccurrenceCount = hasAllOccurrences ? task.allOccurrences.length : task.totalOccurrences;
+      
+      console.log(`🔍 BACKEND: Processing ${newOccurrenceCount} occurrences (was ${relatedTasks.length})`);
+      
+      // Check if we need to delete occurrences (count decreased) or just update them
+      const needsDeletion = newOccurrenceCount < relatedTasks.length;
+      
+      if (needsDeletion) {
+        console.log(`🔍 BACKEND: Occurrence count decreased (${relatedTasks.length} → ${newOccurrenceCount}), removing excess tasks`);
+        
+        // Remove excess tasks
+        for (let i = newOccurrenceCount; i < relatedTasks.length; i++) {
+          const taskToRemove = relatedTasks[i];
+          tasks.splice(taskToRemove.index, 1);
+          // Adjust indices for remaining tasks
+          for (let j = i + 1; j < relatedTasks.length; j++) {
+            if (relatedTasks[j].index > taskToRemove.index) {
+              relatedTasks[j].index--;
+            }
+          }
+        }
+        
+        // Update remaining tasks
+        for (let i = 0; i < newOccurrenceCount; i++) {
+          const { task: existingTask, index } = relatedTasks[i];
+          
+          // Find the corresponding new occurrence data
+          let occurrenceData = task;
+          if (hasAllOccurrences && i < task.allOccurrences.length) {
+            occurrenceData = task.allOccurrences[i];
+          }
+          
+          // Update the existing task with new properties
+          Object.assign(tasks[index], {
+            ...task,
+            ...occurrenceData,
+            title: existingTask.title, // Keep original occurrence title
+            originalTitle: originalTitle,
+            occurrence: existingTask.occurrence,
+            totalOccurrences: newOccurrenceCount
+          });
+          
+          // Remove temporary flags
+          delete tasks[index].isOccurrenceGroupEdit;
+          delete tasks[index].allOccurrences;
+        }
+        
+      } else {
+        console.log(`🔍 BACKEND: Occurrence count same or increased (${relatedTasks.length} → ${newOccurrenceCount}), updating existing tasks`);
+        
+        // Update existing tasks
+        for (const { task: existingTask, index } of relatedTasks) {
+          const occurrenceIndex = existingTask.occurrence ? existingTask.occurrence - 1 : 0;
+          let occurrenceData = task;
+          if (hasAllOccurrences && occurrenceIndex < task.allOccurrences.length) {
+            occurrenceData = task.allOccurrences[occurrenceIndex];
+          }
+          
+          // Update the existing task with new properties
+          Object.assign(tasks[index], {
+            ...task,
+            ...occurrenceData,
+            title: existingTask.title, // Keep original occurrence title
+            originalTitle: originalTitle,
+            occurrence: existingTask.occurrence,
+            totalOccurrences: newOccurrenceCount
+          });
+          
+          // Remove temporary flags
+          delete tasks[index].isOccurrenceGroupEdit;
+          delete tasks[index].allOccurrences;
+        }
+        
+        // Create additional new tasks if count increased
+        if (newOccurrenceCount > relatedTasks.length) {
+          const tasksToCreate = newOccurrenceCount - relatedTasks.length;
+          console.log(`🔍 BACKEND: Creating ${tasksToCreate} additional occurrence tasks`);
+          
+          for (let i = relatedTasks.length; i < newOccurrenceCount; i++) {
+            const originalTask = relatedTasks[0]?.task; // Use first task as template
+            
+            // Find the corresponding new occurrence data
+            let occurrenceData = task;
+            if (hasAllOccurrences && i < task.allOccurrences.length) {
+              occurrenceData = task.allOccurrences[i];
+            }
+            
+            // Create new task for this occurrence
+            const newTask = {
+              ...task,
+              ...occurrenceData, // Override with specific occurrence data
+              originalTitle: originalTitle,
+              totalOccurrences: newOccurrenceCount
+            };
+            
+            // Remove temporary flags
+            delete newTask.isOccurrenceGroupEdit;
+            delete newTask.allOccurrences;
+            
+            console.log(`🔍 BACKEND: Created additional task "${newTask.title}"`);
+            tasks.push(newTask);
+          }
+        }
+      }
+      
+      await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
+      
+      console.log(`Entire occurrence group updated successfully: ${relatedTasks.length} → ${newOccurrenceCount} tasks`);
+      res.json({ success: true, message: `Occurrence group updated successfully (${newOccurrenceCount} tasks)` });
+      
+    } else {
+      // Regular single task edit
+      const taskIndex = tasks.findIndex(
+        (t) => t.title === originalTitle && t.date === originalDate,
+      );
+      if (taskIndex === -1) {
+        console.log(`Task not found: ${originalTitle}, ${originalDate}`);
+        return res.status(404).json({ error: "Task not found" });
+      }
+      console.log("Before update:", tasks[taskIndex]);
+      tasks[taskIndex] = task;
+      console.log("After update:", tasks[taskIndex]);
+      await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
+      res.json({ success: true });
     }
-    console.log("Before update:", tasks[taskIndex]);
-    tasks[taskIndex] = task;
-    console.log("After update:", tasks[taskIndex]);
-    await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
-    res.json({ success: true });
   } catch (err) {
     console.error("Error updating task:", err);
     res.status(500).json({ error: "Failed to update task" });
