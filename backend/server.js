@@ -1503,8 +1503,10 @@ app.put("/api/tasks/future", async (req, res) => {
         const taskStartDate = task.date.split(" to ")[0];
         
         // Check if this task is part of the occurrence group
+        // For single tasks being converted to multiple, also match by exact title
         const isRelated = (task.originalTitle === originalTitle || 
-                          (task.title && task.title.startsWith(originalTitle + " - "))) &&
+                          (task.title && task.title.startsWith(originalTitle + " - ")) ||
+                          (task.title === originalTitle)) &&
                          taskStartDate === originalStartDate;
         
         console.log(`🔍 BACKEND: Checking task "${task.title}" - originalTitle: ${task.originalTitle}, startDate: ${taskStartDate}, isRelated: ${isRelated}`);
