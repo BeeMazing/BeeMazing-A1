@@ -2396,6 +2396,7 @@ async function showTaskDetails(task) {
                 <button id="deleteOccurrenceBtn" style="padding: 8px 16px; background: #D32F2F; color: white; font-weight: 500; border-radius: 6px; border: none; cursor: pointer; font-size: 13px;">Delete This Day</button>
                 <button id="deleteFutureBtn" style="padding: 8px 16px; background: #D32F2F; color: white; font-weight: 500; border-radius: 6px; border: none; cursor: pointer; font-size: 13px;">Delete Future</button>
                 <button id="deleteEntireTaskBtn" style="padding: 8px 16px; background: #D32F2F; color: white; font-weight: 500; border-radius: 6px; border: none; cursor: pointer; font-size: 13px;">Delete Entire Task</button>
+                <button id="debugTaskBtn" style="padding: 8px 16px; background: #9C27B0; color: white; font-weight: 500; border-radius: 6px; border: none; cursor: pointer; font-size: 13px;">Debug & Cleanup</button>
             </div>
         </div>
     `;
@@ -2655,8 +2656,55 @@ async function showTaskDetails(task) {
     // Edit single occurrence
     const editOccurrenceBtn = modal.querySelector("#editOccurrenceBtn");
     if (editOccurrenceBtn) {
-        editOccurrenceBtn.addEventListener("click", () => {
-            const modifiedTask = { ...task };
+        editOccurrenceBtn.addEventListener("click", async () => {
+            // Check if this is an occurrence task (part of multiple daily occurrences)
+            const isOccurrenceTask = task.originalTitle && task.totalOccurrences;
+            const isOccurrenceByTitle = task.title.includes(" - ") && (task.title.includes("1st") || task.title.includes("2nd") || task.title.includes("3rd"));
+            
+            let modifiedTask = { ...task };
+            
+            if (isOccurrenceTask || isOccurrenceByTitle) {
+                // For occurrence tasks, reconstruct the original complete task data
+                const originalTitle = task.originalTitle || task.title.split(" - ")[0];
+                const adminEmail = localStorage.getItem("currentAdminEmail");
+                
+                try {
+                    // Fetch all tasks to find all related occurrences
+                    const response = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+                    if (response.ok) {
+                        const result = await response.json();
+                        const allOccurrences = result.tasks.filter(t => 
+                            (t.originalTitle === originalTitle || t.title.startsWith(originalTitle + " - ")) &&
+                            t.date === task.date
+                        );
+                        
+                        if (allOccurrences.length > 0) {
+                            // Sort occurrences by occurrence number
+                            allOccurrences.sort((a, b) => (a.occurrence || 1) - (b.occurrence || 1));
+                            
+                            // Reconstruct original task data with all assignees, but keep occurrence-specific info
+                            modifiedTask = {
+                                ...allOccurrences[0],
+                                title: originalTitle, // Use original title
+                                timesPerDay: allOccurrences.length, // Set correct times per day
+                                totalOccurrences: allOccurrences.length,
+                                // Collect all users from all occurrences (for rotation tasks)
+                                users: [...new Set(allOccurrences.flatMap(occ => occ.users || []))],
+                                // Collect all due times from all occurrences
+                                dueTimes: allOccurrences.map(occ => occ.dueTimes && occ.dueTimes[0] ? occ.dueTimes[0] : '').filter(time => time),
+                                // Keep occurrence info for single occurrence edit
+                                occurrence: task.occurrence,
+                                originalTitle: task.originalTitle
+                            };
+                            
+                            console.log("🔍 Reconstructed original task data for occurrence edit:", modifiedTask);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error fetching occurrence data for occurrence edit:", error);
+                }
+            }
+            
             // Mark this as a single occurrence edit
             modifiedTask.isOccurrenceEdit = true;
             modifiedTask.targetDate = selectedDate;
@@ -2667,61 +2715,118 @@ async function showTaskDetails(task) {
         });
     }
 
+    // Debug and cleanup button
+    const debugTaskBtn = modal.querySelector("#debugTaskBtn");
+    if (debugTaskBtn) {
+        debugTaskBtn.addEventListener("click", async () => {
+            const isOccurrenceTask = task.originalTitle && task.totalOccurrences;
+            const isOccurrenceByTitle = task.title.includes(" - ") && (task.title.includes("1st") || task.title.includes("2nd") || task.title.includes("3rd"));
+            
+            let titleToUse;
+            if (isOccurrenceTask || isOccurrenceByTitle) {
+                titleToUse = task.originalTitle || task.title.split(" - ")[0];
+            } else {
+                titleToUse = task.title;
+            }
+            
+            modal.remove();
+            await cleanupDuplicateOccurrences(titleToUse);
+            
+            // Refresh the task list
+            const selectedDateElement = document.querySelector('.day.selected');
+            const currentSelectedDate = selectedDateElement ? selectedDateElement.dataset.date : new Date().toISOString().split("T")[0];
+            loadTasksForDate(currentSelectedDate);
+        });
+    }
+
+}
     // Edit future occurrences
     const editFutureBtn = modal.querySelector("#editFutureBtn");
     if (editFutureBtn) {
-        editFutureBtn.addEventListener("click", () => {
-            const modifiedTask = { ...task };
-        
-        console.log("🔍 Debugging task for future edit:", task);
-        console.log("🔍 Task title:", task.title);
-        console.log("🔍 Original title:", task.originalTitle);
-        console.log("🔍 Occurrence:", task.occurrence);
-        console.log("🔍 Total occurrences:", task.totalOccurrences);
-        
-        // Check if this is an occurrence task (part of multiple daily occurrences)
-        const isOccurrenceTask = task.originalTitle && task.totalOccurrences;
-        const isOccurrenceByTitle = task.title.includes(" - ") && (task.title.includes("1st") || task.title.includes("2nd") || task.title.includes("3rd"));
-        
-        console.log("🔍 Is occurrence task (by metadata):", isOccurrenceTask);
-        console.log("🔍 Is occurrence task (by title pattern):", isOccurrenceByTitle);
-        
-        if (isOccurrenceTask || isOccurrenceByTitle) {
-            // For occurrence tasks, we need to edit all related occurrences
-            console.log("✅ Detected occurrence task - setting up group edit");
+        editFutureBtn.addEventListener("click", async () => {
+            console.log("🔍 Debugging task for future edit:", task);
+            console.log("🔍 Task title:", task.title);
+            console.log("🔍 Original title:", task.originalTitle);
+            console.log("🔍 Occurrence:", task.occurrence);
+            console.log("🔍 Total occurrences:", task.totalOccurrences);
             
-            // Extract original title if not available
-            let originalTitle = task.originalTitle;
-            if (!originalTitle && isOccurrenceByTitle) {
-                // Extract from title pattern "Original Title - 1st" -> "Original Title"
-                originalTitle = task.title.split(" - ")[0];
+            // Check if this is an occurrence task (part of multiple daily occurrences)
+            const isOccurrenceTask = task.originalTitle && task.totalOccurrences;
+            const isOccurrenceByTitle = task.title.includes(" - ") && (task.title.includes("1st") || task.title.includes("2nd") || task.title.includes("3rd"));
+            
+            console.log("🔍 Is occurrence task (by metadata):", isOccurrenceTask);
+            console.log("🔍 Is occurrence task (by title pattern):", isOccurrenceByTitle);
+            
+            let modifiedTask = { ...task };
+            
+            if (isOccurrenceTask || isOccurrenceByTitle) {
+                // For occurrence tasks, reconstruct the original complete task data
+                const originalTitle = task.originalTitle || task.title.split(" - ")[0];
+                const adminEmail = localStorage.getItem("currentAdminEmail");
+                
+                try {
+                    // Fetch all tasks to find all related occurrences
+                    const response = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+                    if (response.ok) {
+                        const result = await response.json();
+                        const allOccurrences = result.tasks.filter(t => 
+                            (t.originalTitle === originalTitle || t.title.startsWith(originalTitle + " - ")) &&
+                            t.date === task.date
+                        );
+                        
+                        if (allOccurrences.length > 0) {
+                            // Sort occurrences by occurrence number
+                            allOccurrences.sort((a, b) => (a.occurrence || 1) - (b.occurrence || 1));
+                            
+                            // Reconstruct original task data with all assignees
+                            modifiedTask = {
+                                ...allOccurrences[0],
+                                title: originalTitle, // Use original title
+                                timesPerDay: allOccurrences.length, // Set correct times per day
+                                totalOccurrences: allOccurrences.length,
+                                // Collect all users from all occurrences (for rotation tasks)
+                                users: [...new Set(allOccurrences.flatMap(occ => occ.users || []))],
+                                // Collect all due times from all occurrences
+                                dueTimes: allOccurrences.map(occ => occ.dueTimes && occ.dueTimes[0] ? occ.dueTimes[0] : '').filter(time => time),
+                                // Remove occurrence-specific fields
+                                occurrence: undefined,
+                                originalTitle: undefined
+                            };
+                            
+                            console.log("🔍 Reconstructed original task data for future edit:", modifiedTask);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error fetching occurrence data for future edit:", error);
+                }
+                
+                console.log("✅ Detected occurrence task - setting up group edit");
+                modifiedTask.isFutureEdit = true;
+                modifiedTask.isOccurrenceGroupEdit = true; // Flag to indicate editing all occurrences
+                modifiedTask.splitDate = selectedDate;
+                modifiedTask.originalStartDate = task.date.split(" to ")[0];
+                modifiedTask.originalTitle = originalTitle; // Use the original title for grouping
+                modifiedTask.totalOccurrences = modifiedTask.totalOccurrences || task.totalOccurrences || 3; // Default if not available
+                
+                console.log("🚀 Setting up occurrence group edit with:", {
+                    originalTitle: originalTitle,
+                    totalOccurrences: modifiedTask.totalOccurrences,
+                    splitDate: selectedDate,
+                    allUsers: modifiedTask.users
+                });
+                
+                localStorage.setItem("familyApp_editTask", JSON.stringify(modifiedTask));
+                localStorage.setItem("familyApp_editTask_index", originalTitle + "-" + task.date + "-future-group");
+            } else {
+                // Regular single task future edit
+                console.log("✅ Regular single task edit");
+                modifiedTask.isFutureEdit = true;
+                modifiedTask.splitDate = selectedDate;
+                modifiedTask.originalStartDate = task.date.split(" to ")[0];
+                localStorage.setItem("familyApp_editTask", JSON.stringify(modifiedTask));
+                localStorage.setItem("familyApp_editTask_index", task.title + "-" + task.date + "-future");
             }
             
-            modifiedTask.isFutureEdit = true;
-            modifiedTask.isOccurrenceGroupEdit = true; // Flag to indicate editing all occurrences
-            modifiedTask.splitDate = selectedDate;
-            modifiedTask.originalStartDate = task.date.split(" to ")[0];
-            modifiedTask.originalTitle = originalTitle; // Use the original title for grouping
-            modifiedTask.totalOccurrences = task.totalOccurrences || 3; // Default if not available
-            
-            console.log("🚀 Setting up occurrence group edit with:", {
-                originalTitle: originalTitle,
-                totalOccurrences: modifiedTask.totalOccurrences,
-                splitDate: selectedDate
-            });
-            
-            localStorage.setItem("familyApp_editTask", JSON.stringify(modifiedTask));
-            localStorage.setItem("familyApp_editTask_index", originalTitle + "-" + task.date + "-future-group");
-        } else {
-            // Regular single task future edit
-            console.log("✅ Regular single task edit");
-            modifiedTask.isFutureEdit = true;
-            modifiedTask.splitDate = selectedDate;
-            modifiedTask.originalStartDate = task.date.split(" to ")[0];
-            localStorage.setItem("familyApp_editTask", JSON.stringify(modifiedTask));
-            localStorage.setItem("familyApp_editTask_index", task.title + "-" + task.date + "-future");
-        }
-        
             window.location.href = "/BeeMazing-A1/mobile/3-Tasks/addtasks.html";
         });
     }
@@ -2815,29 +2920,63 @@ async function showTaskDetails(task) {
     // Edit entire task (enhanced for multiple daily occurrences)
     const editTaskBtn = modal.querySelector("#editTaskBtn");
     if (editTaskBtn) {
-        editTaskBtn.addEventListener("click", () => {
-            // Check if this is a multiple daily occurrence task
+        editTaskBtn.addEventListener("click", async () => {
+            // For occurrence tasks, we need to reconstruct the original complete task data
             const isOccurrenceTask = task.originalTitle && task.totalOccurrences;
             const isOccurrenceByTitle = task.title.includes(" - ") && (task.title.includes("1st") || task.title.includes("2nd") || task.title.includes("3rd"));
             
-            let titleToUse;
-            if (isOccurrenceTask) {
-                // Use original title for multiple daily occurrences
-                titleToUse = task.originalTitle;
-            } else if (isOccurrenceByTitle) {
-                // Extract original title from "Title - 1st" pattern
-                titleToUse = task.title.split(" - ")[0];
-            } else {
-                // Use regular title for single tasks
-                titleToUse = task.title;
+            let taskDataToEdit = { ...task };
+            
+            if (isOccurrenceTask || isOccurrenceByTitle) {
+                // For occurrence tasks, reconstruct the original complete task
+                const originalTitle = task.originalTitle || task.title.split(" - ")[0];
+                const adminEmail = localStorage.getItem("currentAdminEmail");
+                
+                try {
+                    // Fetch all tasks to find all related occurrences
+                    const response = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+                    if (response.ok) {
+                        const result = await response.json();
+                        const allOccurrences = result.tasks.filter(t => 
+                            (t.originalTitle === originalTitle || t.title.startsWith(originalTitle + " - ")) &&
+                            t.date === task.date
+                        );
+                        
+                        if (allOccurrences.length > 0) {
+                            // Sort occurrences by occurrence number
+                            allOccurrences.sort((a, b) => (a.occurrence || 1) - (b.occurrence || 1));
+                            
+                            // Reconstruct original task data
+                            taskDataToEdit = {
+                                ...allOccurrences[0],
+                                title: originalTitle, // Use original title
+                                timesPerDay: allOccurrences.length, // Set correct times per day
+                                totalOccurrences: allOccurrences.length,
+                                // Collect all users from all occurrences (for rotation tasks)
+                                users: [...new Set(allOccurrences.flatMap(occ => occ.users || []))],
+                                // Collect all due times from all occurrences
+                                dueTimes: allOccurrences.map(occ => occ.dueTimes && occ.dueTimes[0] ? occ.dueTimes[0] : '').filter(time => time),
+                                // Remove occurrence-specific fields
+                                occurrence: undefined,
+                                originalTitle: undefined
+                            };
+                            
+                            console.log("🔍 Reconstructed original task data:", taskDataToEdit);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error fetching occurrence data:", error);
+                }
             }
             
-            const encodedTitle = encodeURIComponent(titleToUse);
-            const encodedDate = encodeURIComponent(task.date.split(" to ")[0]); // Use start date
+            // Store the complete task data in localStorage
+            localStorage.setItem("familyApp_editTask", JSON.stringify(taskDataToEdit));
+            localStorage.setItem("familyApp_editTask_index", taskDataToEdit.title + "-" + task.date + "-entire");
+            
             const admin = localStorage.getItem("currentAdminEmail");
             const user = localStorage.getItem("currentUser");
             if (admin && user) {
-                window.location.href = `/BeeMazing-A1/mobile/3-Tasks/addtasks.html?editTitle=${encodedTitle}&editDate=${encodedDate}&admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
+                window.location.href = `/BeeMazing-A1/mobile/3-Tasks/addtasks.html?admin=${encodeURIComponent(admin)}&user=${encodeURIComponent(user)}`;
             } else {
                 alert("Admin or user information missing. Please log in again.");
             }
@@ -2949,28 +3088,58 @@ async function finishTask(userName, task, button, selectedDate) {
                 const result = await response.json();
                 const allTasks = result.tasks || [];
                 
+                // Debug: Log all tasks to see what we're working with
+                console.log("🔍 DEBUG: Total tasks in database:", allTasks.length);
+                console.log("🔍 DEBUG: All tasks:", allTasks.map(t => ({ title: t.title, originalTitle: t.originalTitle, date: t.date })));
+                
                 // Find all related occurrence tasks
                 const startDate = date.split(" to ")[0];
+                console.log("🔍 DEBUG: Looking for tasks with startDate:", startDate);
+                console.log("🔍 DEBUG: Looking for originalTitle:", originalTitle);
+                
                 const relatedTasks = allTasks.filter(task => {
                     const taskStartDate = task.date.split(" to ")[0];
-                    return (task.originalTitle === originalTitle || 
-                            (task.title && task.title.startsWith(originalTitle + " - "))) &&
-                           taskStartDate === startDate;
+                    const matchesOriginalTitle = task.originalTitle === originalTitle;
+                    const matchesTitlePattern = task.title && task.title.startsWith(originalTitle + " - ");
+                    const matchesDate = taskStartDate === startDate;
+                    
+                    console.log(`🔍 DEBUG: Checking task "${task.title}":`, {
+                        taskStartDate,
+                        matchesOriginalTitle,
+                        matchesTitlePattern,
+                        matchesDate,
+                        isMatch: (matchesOriginalTitle || matchesTitlePattern) && matchesDate
+                    });
+                    
+                    return (matchesOriginalTitle || matchesTitlePattern) && matchesDate;
                 });
                 
                 console.log("🗑️ Found related tasks to delete:", relatedTasks.length);
+                console.log("🗑️ Related tasks details:", relatedTasks.map(t => ({ title: t.title, originalTitle: t.originalTitle, date: t.date })));
+                
+                if (relatedTasks.length === 0) {
+                    alert("No related occurrences found to delete.");
+                    return;
+                }
+                
+                // Confirm before deleting multiple tasks
+                if (!confirm(`Are you sure you want to delete ${relatedTasks.length} related task occurrences?`)) {
+                    return;
+                }
                 
                 // Delete each related task
+                let deletedCount = 0;
                 for (const task of relatedTasks) {
                     console.log("🗑️ Deleting occurrence:", task.title);
-                    await deleteTaskFromBackend(task.title, task.date);
+                    try {
+                        await deleteTaskFromBackend(task.title, task.date);
+                        deletedCount++;
+                    } catch (error) {
+                        console.error("Failed to delete task:", task.title, error);
+                    }
                 }
                 
-                if (relatedTasks.length > 0) {
-                    alert(`Successfully deleted ${relatedTasks.length} related occurrences!`);
-                } else {
-                    alert("No related occurrences found to delete.");
-                }
+                alert(`Successfully deleted ${deletedCount} out of ${relatedTasks.length} related occurrences!`);
                 
             } catch (error) {
                 console.error("Error deleting occurrence group:", error);
@@ -3077,7 +3246,88 @@ async function finishTask(userName, task, button, selectedDate) {
             }
         }
 
-        // Helper function to get current tasks for debugging
+        // Cleanup utility to fix duplicate occurrences
+        async function cleanupDuplicateOccurrences(originalTitle) {
+            const adminEmail = localStorage.getItem("currentAdminEmail");
+            if (!adminEmail) {
+                alert("No admin email found.");
+                return;
+            }
+
+            try {
+                // Get all tasks
+                const response = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+                const result = await response.json();
+                const allTasks = result.tasks || [];
+                
+                // Find all tasks related to this original title
+                const relatedTasks = allTasks.filter(task => 
+                    task.originalTitle === originalTitle || 
+                    (task.title && task.title.startsWith(originalTitle + " - "))
+                );
+                
+                console.log("🧹 Found related tasks:", relatedTasks.length);
+                
+                // Group by date range
+                const tasksByDate = {};
+                relatedTasks.forEach(task => {
+                    const key = task.date;
+                    if (!tasksByDate[key]) {
+                        tasksByDate[key] = [];
+                    }
+                    tasksByDate[key].push(task);
+                });
+                
+                console.log("🧹 Tasks grouped by date:", Object.keys(tasksByDate).length, "date ranges");
+                
+                // Identify duplicates within each date range
+                const duplicatesToDelete = [];
+                Object.entries(tasksByDate).forEach(([dateRange, tasks]) => {
+                    // Count occurrences by occurrence number
+                    const occurrenceMap = {};
+                    tasks.forEach(task => {
+                        const occNum = task.occurrence || 1;
+                        if (!occurrenceMap[occNum]) {
+                            occurrenceMap[occNum] = [];
+                        }
+                        occurrenceMap[occNum].push(task);
+                    });
+                    
+                    // Find duplicates (more than one task with same occurrence number)
+                    Object.entries(occurrenceMap).forEach(([occNum, tasksWithSameOcc]) => {
+                        if (tasksWithSameOcc.length > 1) {
+                            console.log(`🧹 Found ${tasksWithSameOcc.length} duplicates for occurrence ${occNum} in ${dateRange}`);
+                            // Keep the first one, mark the rest for deletion
+                            duplicatesToDelete.push(...tasksWithSameOcc.slice(1));
+                        }
+                    });
+                });
+                
+                if (duplicatesToDelete.length > 0) {
+                    console.log("🧹 Found duplicates to delete:", duplicatesToDelete.map(t => t.title));
+                    
+                    if (confirm(`Found ${duplicatesToDelete.length} duplicate occurrences. Delete them?`)) {
+                        for (const task of duplicatesToDelete) {
+                            try {
+                                await deleteTaskFromBackend(task.title, task.date);
+                                console.log("🧹 Deleted duplicate:", task.title);
+                            } catch (error) {
+                                console.error("Failed to delete duplicate:", task.title, error);
+                            }
+                        }
+                        alert(`Cleaned up ${duplicatesToDelete.length} duplicate occurrences!`);
+                    }
+                } else {
+                    alert("No duplicates found for this task group.");
+                }
+                
+            } catch (error) {
+                console.error("Error during cleanup:", error);
+                alert("Failed to cleanup duplicates. Please try again.");
+            }
+        }
+
+        // Get all current tasks for debugging
         async function getAllCurrentTasks() {
             try {
                 const adminEmail = localStorage.getItem("currentAdminEmail");

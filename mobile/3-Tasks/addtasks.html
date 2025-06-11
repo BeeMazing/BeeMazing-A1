@@ -2204,8 +2204,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (editTask.users) {
             selectedUsers = [...editTask.users].map(u => u.trim()).filter(u => u);
+            // First populate users to render avatars, then update display
+            await populateUsers();
             updateSelectedUsersDisplay();
-            populateUsers();
         }
 
         // COMMENTED OUT - ALARMS

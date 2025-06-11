@@ -1375,57 +1375,55 @@ app.put("/api/tasks/future", async (req, res) => {
         return res.status(404).json({ error: "No related occurrence tasks found" });
       }
       
-      // Process each related occurrence task
-      const newTasks = [];
-      const indicesToRemove = [];
+      // Calculate the day before split date
+      const splitDateObj = new Date(splitDate);
+      splitDateObj.setDate(splitDateObj.getDate() - 1);
+      const dayBeforeSplit = splitDateObj.toISOString().split("T")[0];
       
-      // Check if we have new occurrence data with individual due times
-      const hasAllOccurrences = modifiedTask.allOccurrences && Array.isArray(modifiedTask.allOccurrences);
-      console.log(`🔍 BACKEND: Has allOccurrences: ${hasAllOccurrences}, count: ${hasAllOccurrences ? modifiedTask.allOccurrences.length : 0}`);
-      
-      for (let i = 0; i < relatedTasks.length; i++) {
-        const { task, index } = relatedTasks[i];
+      // Update existing tasks to end the day before split date
+      for (const { task, index } of relatedTasks) {
         const originalRange = task.date.split(" to ");
+        tasks[index].date = `${originalRange[0]} to ${dayBeforeSplit}`;
+      }
+      
+      // Determine how many new occurrences we need to create
+      const hasAllOccurrences = modifiedTask.allOccurrences && Array.isArray(modifiedTask.allOccurrences);
+      const newOccurrenceCount = hasAllOccurrences ? modifiedTask.allOccurrences.length : modifiedTask.totalOccurrences;
+      
+      console.log(`🔍 BACKEND: Creating ${newOccurrenceCount} new occurrences (was ${relatedTasks.length})`);
+      
+      // Create only the required number of new tasks
+      const newTasks = [];
+      for (let i = 0; i < newOccurrenceCount; i++) {
+        const originalTask = relatedTasks[0]?.task; // Use first task as template
+        const originalRange = originalTask.date.split(" to ");
         const originalEnd = originalRange[1] || "3000-01-01";
         
-        // Calculate the day before split date
-        const splitDateObj = new Date(splitDate);
-        splitDateObj.setDate(splitDateObj.getDate() - 1);
-        const dayBeforeSplit = splitDateObj.toISOString().split("T")[0];
-        
-        // Update the original task to end the day before the split date
-        tasks[index].date = `${originalRange[0]} to ${dayBeforeSplit}`;
-        
-        // Find the corresponding new occurrence data or use modified task
+        // Find the corresponding new occurrence data
         let occurrenceData = modifiedTask;
         if (hasAllOccurrences && i < modifiedTask.allOccurrences.length) {
           occurrenceData = modifiedTask.allOccurrences[i];
-          console.log(`🔍 BACKEND: Using specific occurrence data for ${task.title}:`, {
+          console.log(`🔍 BACKEND: Using specific occurrence data for occurrence ${i + 1}:`, {
+            title: occurrenceData.title,
             dueTimes: occurrenceData.dueTimes,
             occurrence: occurrenceData.occurrence
           });
-        } else {
-          console.log(`🔍 BACKEND: Using fallback data for ${task.title}`);
         }
         
         // Create new task for this occurrence starting from the split date
         const newTask = {
           ...modifiedTask,
           ...occurrenceData, // Override with specific occurrence data
-          title: task.title, // Preserve the occurrence-specific title
-          originalTitle: task.originalTitle || originalTitle,
-          occurrence: task.occurrence,
-          totalOccurrences: task.totalOccurrences,
-          users: task.users, // Preserve the occurrence-specific user assignment
-          currentTurnIndex: task.currentTurnIndex,
+          originalTitle: originalTitle,
           date: `${splitDate} to ${originalEnd}`,
+          totalOccurrences: newOccurrenceCount
         };
         
         // Remove the isOccurrenceGroupEdit flag and allOccurrences from the new task
         delete newTask.isOccurrenceGroupEdit;
         delete newTask.allOccurrences;
         
-        console.log(`🔍 BACKEND: Created new task for ${newTask.title} with dueTimes:`, newTask.dueTimes);
+        console.log(`🔍 BACKEND: Created new task "${newTask.title}" with dueTimes:`, newTask.dueTimes);
         newTasks.push(newTask);
       }
       
@@ -1434,8 +1432,8 @@ app.put("/api/tasks/future", async (req, res) => {
       
       await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
       
-      console.log(`Occurrence group split successfully: ${relatedTasks.length} tasks processed`);
-      res.json({ success: true, message: `Occurrence group split successfully (${relatedTasks.length} tasks)` });
+      console.log(`Occurrence group split successfully: ${relatedTasks.length} original tasks updated, ${newTasks.length} new tasks created`);
+      res.json({ success: true, message: `Occurrence group split successfully (${relatedTasks.length} → ${newTasks.length} tasks)` });
       
     } else {
       // Regular single task future edit
