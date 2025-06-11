@@ -2797,10 +2797,13 @@ app.post("/api/complete-task", async (req, res) => {
     if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
     if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
+    const userList = Array.isArray(task.users) ? task.users : [];
+    const tempTurnReplacement =
+      task.tempTurnReplacement?.[normalizedDate] || {};
+    
     // For cross-completion: check if task is fully completed by all users, not just current user
-    const assignedUsers = Array.isArray(task.users) ? task.users : [];
-    const tempTurnReplacement = task.tempTurnReplacement?.[normalizedDate] || {};
-    const allAssignedUsers = [...new Set([...assignedUsers, ...Object.values(tempTurnReplacement || {})])];
+    const tempReplacementValues = Object.values(tempTurnReplacement || {});
+    const allAssignedUsers = [...new Set([...userList, ...tempReplacementValues])];
     
     // Calculate total completions needed for all assigned users
     const totalRequiredCompletions = allAssignedUsers.length * requiredTimes;
@@ -2830,11 +2833,6 @@ app.post("/api/complete-task", async (req, res) => {
         allowingCrossCompletion: true
       });
     }
-
-    const userList = Array.isArray(task.users) ? task.users : [];
-    const tempTurnReplacement =
-      task.tempTurnReplacement?.[normalizedDate] || {};
-    const tempReplacementValues = Object.values(tempTurnReplacement || {});
     const assignedUsers = [
       ...new Set([...userList, ...tempReplacementValues]),
     ];
