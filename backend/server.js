@@ -1532,8 +1532,15 @@ app.put("/api/tasks/future", async (req, res) => {
         hasAllOccurrences,
         allOccurrencesLength: modifiedTask.allOccurrences?.length,
         totalOccurrences: modifiedTask.totalOccurrences,
-        newOccurrenceCount
+        newOccurrenceCount,
+        modifiedTaskKeys: Object.keys(modifiedTask),
+        isOccurrenceGroupEdit: modifiedTask.isOccurrenceGroupEdit
       });
+      
+      if (newOccurrenceCount === 0 || newOccurrenceCount === undefined) {
+        console.log(`❌ BACKEND: Invalid newOccurrenceCount: ${newOccurrenceCount}`);
+        console.log(`🔍 BACKEND: Full modifiedTask:`, JSON.stringify(modifiedTask, null, 2));
+      }
       
       // For Edit Future, always split tasks regardless of count change
       console.log(`🔍 BACKEND: Splitting tasks from ${splitDate} forward (${relatedTasks.length} → ${newOccurrenceCount} occurrences)`);
