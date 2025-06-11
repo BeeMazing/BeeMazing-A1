@@ -1542,10 +1542,14 @@ app.put("/api/tasks/future", async (req, res) => {
       const dayBeforeSplit = splitDateObj.toISOString().split("T")[0];
       
       // Always end existing tasks on the day before split date
+      console.log(`🔍 BACKEND: About to end ${relatedTasks.length} original tasks on ${dayBeforeSplit}`);
       for (const { task, index } of relatedTasks) {
         const originalRange = task.date.split(" to ");
+        const oldDate = tasks[index].date;
         tasks[index].date = `${originalRange[0]} to ${dayBeforeSplit}`;
+        console.log(`🔍 BACKEND: Updated task "${task.title}" at index ${index}: "${oldDate}" → "${tasks[index].date}"`);
       }
+      console.log(`🔍 BACKEND: All original tasks ended successfully`);
       
       // Always create new tasks from split date forward
       const newTasks = [];
