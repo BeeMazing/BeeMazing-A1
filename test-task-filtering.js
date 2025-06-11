@@ -51,6 +51,57 @@ function filterTasksForDate(tasks, selectedDate) {
         const to = range[1] ? parseLocalDate(range[1]) : new Date(3000, 0, 1);
         const inRange = selected >= from && selected <= to;
 
+        // Filter monthly tasks by specific days of month
+        if (task.repeat === "Monthly" && task.monthlySchedulingType === "daysOfMonth" && task.monthlyDaysOfMonth) {
+            const selectedDayOfMonth = selected.getDate();
+            const allowedDays = task.monthlyDaysOfMonth.split(',').map(day => parseInt(day.trim()));
+            
+            // Only show if today's day of month matches one of the allowed days
+            if (!allowedDays.includes(selectedDayOfMonth)) {
+                return false;
+            }
+        }
+
+        // Filter monthly tasks by specific days of week (e.g., 2nd Tuesday, last Friday)
+        if (task.repeat === "Monthly" && task.monthlySchedulingType === "daysOfWeek" && task.monthlyDaysOfWeek) {
+            const selectedDayOfWeek = selected.getDay(); // 0=Sunday, 1=Monday, etc.
+            const selectedDate = selected.getDate();
+            const selectedMonth = selected.getMonth();
+            const selectedYear = selected.getFullYear();
+            
+            // Parse the monthlyDaysOfWeek format: "1:1,3:5" (1st Monday, 3rd Friday) or "2:Wednesday"
+            const weekdayMap = {
+                'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+                'Thursday': 4, 'Friday': 5, 'Saturday': 6
+            };
+            
+            const allowedWeekDays = task.monthlyDaysOfWeek.split(',').map(dayData => {
+                const [occurrence, weekdayStr] = dayData.split(':').map(x => x.trim());
+                const weekday = isNaN(weekdayStr) ? weekdayMap[weekdayStr] : parseInt(weekdayStr);
+                return { occurrence: parseInt(occurrence), weekday };
+            });
+            
+            let matchesWeekdaySchedule = false;
+            
+            for (const { occurrence, weekday } of allowedWeekDays) {
+                if (selectedDayOfWeek === weekday) {
+                    // Calculate which occurrence of this weekday this is in the month
+                    const firstDayOfMonth = new Date(selectedYear, selectedMonth, 1);
+                    const firstOccurrenceOfWeekday = (weekday - firstDayOfMonth.getDay() + 7) % 7 + 1;
+                    const weekOccurrence = Math.floor((selectedDate - firstOccurrenceOfWeekday) / 7) + 1;
+                    
+                    if (weekOccurrence === occurrence) {
+                        matchesWeekdaySchedule = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (!matchesWeekdaySchedule) {
+                return false;
+            }
+        }
+
         // Skip Monthly tasks after full completion in current month
         const isMonthly = task.repeat === "Monthly";
         const monthlyRequired = task.timesPerMonth || 1;
