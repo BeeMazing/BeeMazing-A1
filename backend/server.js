@@ -1527,113 +1527,63 @@ app.put("/api/tasks/future", async (req, res) => {
       
       console.log(`🔍 BACKEND: Processing ${newOccurrenceCount} new occurrences (was ${relatedTasks.length})`);
       
-      // Check if we need to delete occurrences (count decreased) or just update them
-      const needsDeletion = newOccurrenceCount < relatedTasks.length;
+      // For Edit Future, always split tasks regardless of count change
+      console.log(`🔍 BACKEND: Splitting tasks from ${splitDate} forward (${relatedTasks.length} → ${newOccurrenceCount} occurrences)`);
       
-      if (needsDeletion) {
-        console.log(`🔍 BACKEND: Occurrence count decreased (${relatedTasks.length} → ${newOccurrenceCount}), performing deletion`);
+      // Calculate the day before split date
+      const splitDateObj = new Date(splitDate);
+      splitDateObj.setDate(splitDateObj.getDate() - 1);
+      const dayBeforeSplit = splitDateObj.toISOString().split("T")[0];
+      
+      // Always end existing tasks on the day before split date
+      for (const { task, index } of relatedTasks) {
+        const originalRange = task.date.split(" to ");
+        tasks[index].date = `${originalRange[0]} to ${dayBeforeSplit}`;
+      }
+      
+      // Always create new tasks from split date forward
+      const newTasks = [];
+      for (let i = 0; i < newOccurrenceCount; i++) {
+        const originalTask = relatedTasks[0]?.task; // Use first task as template
+        const originalRange = originalTask.date.split(" to ");
+        const originalEnd = originalRange[1] || "3000-01-01";
         
-        // Calculate the day before split date
-        const splitDateObj = new Date(splitDate);
-        splitDateObj.setDate(splitDateObj.getDate() - 1);
-        const dayBeforeSplit = splitDateObj.toISOString().split("T")[0];
-        
-        // Update existing tasks to end the day before split date
-        for (const { task, index } of relatedTasks) {
-          const originalRange = task.date.split(" to ");
-          tasks[index].date = `${originalRange[0]} to ${dayBeforeSplit}`;
-        }
-      } else {
-        console.log(`🔍 BACKEND: Occurrence count same or increased (${relatedTasks.length} → ${newOccurrenceCount}), updating existing tasks`);
-        
-        // Update existing tasks from split date forward instead of deleting them
-        for (const { task, index } of relatedTasks) {
-          const originalRange = task.date.split(" to ");
-          const originalEnd = originalRange[1] || "3000-01-01";
-          
-          // Update the start date to split date, keeping the end date
-          tasks[index].date = `${splitDate} to ${originalEnd}`;
-          
-          // Apply the modified task properties to existing tasks
-          const occurrenceIndex = task.occurrence ? task.occurrence - 1 : 0;
-          let occurrenceData = modifiedTask;
-          if (hasAllOccurrences && occurrenceIndex < modifiedTask.allOccurrences.length) {
-            occurrenceData = modifiedTask.allOccurrences[occurrenceIndex];
-          }
-          
-          // Update the existing task with new properties
-          Object.assign(tasks[index], {
-            ...modifiedTask,
-            ...occurrenceData,
-            title: task.title, // Keep original occurrence title
-            originalTitle: originalTitle,
-            date: `${splitDate} to ${originalEnd}`,
-            occurrence: task.occurrence,
-            totalOccurrences: newOccurrenceCount
+        // Find the corresponding new occurrence data
+        let occurrenceData = modifiedTask;
+        if (hasAllOccurrences && i < modifiedTask.allOccurrences.length) {
+          occurrenceData = modifiedTask.allOccurrences[i];
+          console.log(`🔍 BACKEND: Using specific occurrence data for occurrence ${i + 1}:`, {
+            title: occurrenceData.title,
+            dueTimes: occurrenceData.dueTimes,
+            occurrence: occurrenceData.occurrence
           });
-          
-          // Remove temporary flags
-          delete tasks[index].isOccurrenceGroupEdit;
-          delete tasks[index].allOccurrences;
         }
+        
+        // Create new task for this occurrence starting from the split date
+        const newTask = {
+          ...modifiedTask,
+          ...occurrenceData, // Override with specific occurrence data
+          originalTitle: originalTitle,
+          date: `${splitDate} to ${originalEnd}`,
+          totalOccurrences: newOccurrenceCount
+        };
+        
+        // Remove the isOccurrenceGroupEdit flag and allOccurrences from the new task
+        delete newTask.isOccurrenceGroupEdit;
+        delete newTask.allOccurrences;
+        
+        console.log(`🔍 BACKEND: Created new task "${newTask.title}" with dueTimes:`, newTask.dueTimes);
+        newTasks.push(newTask);
       }
       
-      // Create additional new tasks only if we need more occurrences
-      let newTasksCreated = 0;
-      if (needsDeletion || newOccurrenceCount > relatedTasks.length) {
-        const newTasks = [];
-        const tasksToCreate = needsDeletion ? newOccurrenceCount : (newOccurrenceCount - relatedTasks.length);
-        
-        for (let i = 0; i < tasksToCreate; i++) {
-          const originalTask = relatedTasks[0]?.task; // Use first task as template
-          const originalRange = originalTask.date.split(" to ");
-          const originalEnd = originalRange[1] || "3000-01-01";
-          
-          // For deletion case, create all new tasks; for increase case, create additional tasks
-          const occurrenceIndex = needsDeletion ? i : (relatedTasks.length + i);
-          
-          // Find the corresponding new occurrence data
-          let occurrenceData = modifiedTask;
-          if (hasAllOccurrences && occurrenceIndex < modifiedTask.allOccurrences.length) {
-            occurrenceData = modifiedTask.allOccurrences[occurrenceIndex];
-            console.log(`🔍 BACKEND: Using specific occurrence data for occurrence ${occurrenceIndex + 1}:`, {
-              title: occurrenceData.title,
-              dueTimes: occurrenceData.dueTimes,
-              occurrence: occurrenceData.occurrence
-            });
-          }
-          
-          // Create new task for this occurrence starting from the split date
-          const newTask = {
-            ...modifiedTask,
-            ...occurrenceData, // Override with specific occurrence data
-            originalTitle: originalTitle,
-            date: `${splitDate} to ${originalEnd}`,
-            totalOccurrences: newOccurrenceCount
-          };
-          
-          // Remove the isOccurrenceGroupEdit flag and allOccurrences from the new task
-          delete newTask.isOccurrenceGroupEdit;
-          delete newTask.allOccurrences;
-          
-          console.log(`🔍 BACKEND: Created new task "${newTask.title}" with dueTimes:`, newTask.dueTimes);
-          newTasks.push(newTask);
-        }
-        
-        // Add all new tasks
-        tasks.push(...newTasks);
-        newTasksCreated = newTasks.length;
-      }
+      // Add all new tasks
+      tasks.push(...newTasks);
+      const newTasksCreated = newTasks.length;
       
       await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
       
-      if (needsDeletion) {
-        console.log(`Occurrence group split with deletion: ${relatedTasks.length} original tasks ended, ${newTasksCreated} new tasks created`);
-        res.json({ success: true, message: `Occurrence group updated successfully (${relatedTasks.length} → ${newOccurrenceCount} tasks)` });
-      } else {
-        console.log(`Occurrence group updated: ${relatedTasks.length} tasks modified, ${newTasksCreated} additional tasks created`);
-        res.json({ success: true, message: `Occurrence group updated successfully (${relatedTasks.length} tasks updated)` });
-      }
+      console.log(`Occurrence group split successfully: ${relatedTasks.length} original tasks ended, ${newTasksCreated} new tasks created`);
+      res.json({ success: true, message: `Occurrence group split successfully (${relatedTasks.length} → ${newOccurrenceCount} tasks)` });
       
     } else {
       // Regular single task future edit
