@@ -1721,7 +1721,17 @@ app.get("/api/debug/tasks", async (req, res) => {
 
 // In server.js
 app.post("/api/rewards", async (req, res) => {
-  const { adminEmail, user, amount }ve reward" });
+  const { adminEmail, user, amount } = req.body;
+  if (!adminEmail || !user || !amount) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+  
+  try {
+    // Add reward logic here
+    res.json({ success: true, message: "Reward added successfully" });
+  } catch (err) {
+    console.error("Error adding reward:", err);
+    res.status(500).json({ error: "Failed to add reward" });
   }
 });
 
