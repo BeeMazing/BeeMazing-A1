@@ -1526,6 +1526,12 @@ app.put("/api/tasks/future", async (req, res) => {
       const newOccurrenceCount = hasAllOccurrences ? modifiedTask.allOccurrences.length : modifiedTask.totalOccurrences;
       
       console.log(`🔍 BACKEND: Processing ${newOccurrenceCount} new occurrences (was ${relatedTasks.length})`);
+      console.log(`🔍 BACKEND: Debug data:`, {
+        hasAllOccurrences,
+        allOccurrencesLength: modifiedTask.allOccurrences?.length,
+        totalOccurrences: modifiedTask.totalOccurrences,
+        newOccurrenceCount
+      });
       
       // For Edit Future, always split tasks regardless of count change
       console.log(`🔍 BACKEND: Splitting tasks from ${splitDate} forward (${relatedTasks.length} → ${newOccurrenceCount} occurrences)`);
@@ -1543,6 +1549,7 @@ app.put("/api/tasks/future", async (req, res) => {
       
       // Always create new tasks from split date forward
       const newTasks = [];
+      console.log(`🔍 BACKEND: About to create ${newOccurrenceCount} new tasks`);
       for (let i = 0; i < newOccurrenceCount; i++) {
         const originalTask = relatedTasks[0]?.task; // Use first task as template
         const originalRange = originalTask.date.split(" to ");
@@ -1564,8 +1571,8 @@ app.put("/api/tasks/future", async (req, res) => {
           ...modifiedTask,
           ...occurrenceData, // Override with specific occurrence data
           originalTitle: originalTitle,
-          date: `${splitDate} to ${originalEnd}`,
-          totalOccurrences: newOccurrenceCount
+          totalOccurrences: newOccurrenceCount,
+          date: `${splitDate} to ${originalEnd}` // Ensure correct date range (set after occurrenceData)
         };
         
         // Remove the isOccurrenceGroupEdit flag and allOccurrences from the new task
@@ -1579,6 +1586,9 @@ app.put("/api/tasks/future", async (req, res) => {
       // Add all new tasks
       tasks.push(...newTasks);
       const newTasksCreated = newTasks.length;
+      
+      console.log(`🔍 BACKEND: Final result: ${relatedTasks.length} tasks ended, ${newTasksCreated} new tasks created`);
+      console.log(`🔍 BACKEND: New task titles:`, newTasks.map(t => t.title));
       
       await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
       
