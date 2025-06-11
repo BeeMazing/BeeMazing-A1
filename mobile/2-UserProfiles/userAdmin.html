@@ -1074,7 +1074,7 @@ h3 {
 }
 
 .card-icon {
-    font-size: 22px;
+    font-size: 28px;
     color: #FFC107;
 }
 
@@ -1152,38 +1152,95 @@ h3 {
 
 .pending-task {
   background: #FFFFFF;
-  border: 1px solid #FFC107;
-  border-left: 3px solid #FF9800;
-  border-radius: 8px;
-  padding: 8px 12px;
-  margin-top: 4px;
+  border: 2px solid #FFC107;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 8px 0;
   color: #6D4C41;
-  font-size: 13px;
-  box-shadow: 0 1px 4px rgba(255, 193, 7, 0.1);
-  transition: all 0.2s ease;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.15);
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
 }
+
 .pending-task:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(255, 193, 7, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 193, 7, 0.25);
   border-color: #FFB300;
 }
+
+.pending-task .task-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .pending-task .task-title {
   font-weight: 600;
-  font-size: 15px;
-  margin: 0 0 4px 0;
-  color: #FF9800;
+  font-size: 16px;
+  margin: 0;
+  color: #6D4C41;
+  line-height: 1.2;
 }
+
+.pending-task .task-user-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pending-task .user-avatar {
+  margin: 0;
+}
+
 .pending-task .task-info {
-  font-size: 12px;
+  font-size: 13px;
   color: #795548;
-  margin-top: 2px;
-  line-height: 1.3;
+  line-height: 1.4;
 }
+
 .pending-task .task-actions {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 8px;
+  align-items: center;
+}
+
+.pending-task .accept-btn,
+.pending-task .decline-btn {
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 22px;
+}
+
+.pending-task .accept-btn {
+  background: #28a745;
+  color: white;
+}
+
+.pending-task .accept-btn:hover {
+  background: #218838;
+  transform: scale(1.05);
+}
+
+.pending-task .decline-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.pending-task .decline-btn:hover {
+  background: #c82333;
+  transform: scale(1.05);
 }
 
 
@@ -1535,7 +1592,12 @@ h3 {
           <div class="admin-card" id="approvalCard" style="flex-direction: column; align-items: stretch;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div class="card-left">
-                <span class="card-icon">⏳</span>
+                <span class="card-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 24 24">
+                    <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <path d="M8 12l3 3 5-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
                 <span class="card-title">Tasks Waiting Approval</span>
               </div>
               <div class="card-right">
@@ -1549,7 +1611,13 @@ h3 {
           <div class="admin-card" id="overdueCard" style="flex-direction: column; align-items: stretch;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div class="card-left">
-                <span class="card-icon">⚠️</span>
+                <span class="card-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <path d="M12 8v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="12" cy="16" r="1" fill="currentColor"/>
+                  </svg>
+                </span>
                 <span class="card-title">Overdue Tasks</span>
               </div>
               <div class="card-right">
@@ -1564,7 +1632,13 @@ h3 {
           <div class="admin-card" id="rewardCard" style="flex-direction: column; align-items: stretch;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div class="card-left">
-                    <span class="card-icon">🎁</span>
+                    <span class="card-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L14.5 8.5L21 9L16 14L17.5 21L12 18L6.5 21L8 14L3 9L9.5 8.5L12 2Z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M8 18h8l-1-3H9l-1 3z"/>
+                      </svg>
+                    </span>
                     <span class="card-title">Rewards Needing Approval</span>
                 </div>
                 <div class="card-right">
@@ -1580,7 +1654,11 @@ h3 {
           <div class="admin-card" id="asNeededCard" style="flex-direction: column; align-items: stretch;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div class="card-left">
-                <span class="card-icon">⚡</span>
+                <span class="card-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.52 17.92 11 21 11 21z"/>
+                  </svg>
+                </span>
                 <span class="card-title">Occasional Tasks</span>
               </div>
               <div class="card-right">
@@ -3064,12 +3142,48 @@ async function loadPendingTasks() {
         task.pendingCompletions[todayStr].forEach((pending, index) => {
           const div = document.createElement("div");
           div.className = "pending-task";
+          
+          // Log pending object to see available fields
+          console.log("🔍 Pending object structure:", pending);
+          
+          // Generate avatar HTML
+          let avatarHTML = `<span style="font-size: 14px;">👤</span>`;
+          if (window.avatarSystem) {
+            try {
+              avatarHTML = window.avatarSystem.generateAvatarHTML(pending.user, 28, 'pending-avatar');
+            } catch (error) {
+              console.warn("Failed to generate avatar for:", pending.user);
+            }
+          }
+          
+          // Format completion time
+          let completionTimeText = '';
+          if (pending.timestamp || pending.completedAt || pending.time) {
+            const timestamp = pending.timestamp || pending.completedAt || pending.time;
+            try {
+              const date = new Date(timestamp);
+              completionTimeText = date.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+              });
+            } catch (error) {
+              console.warn("Failed to parse timestamp:", timestamp);
+              completionTimeText = timestamp;
+            }
+          }
+          
           div.innerHTML = `
-            <div class="task-title">${task.title}</div>
-            <div class="task-info">Submitted by: ${pending.user} (Attempt ${pending.repetition})</div>
+            <div class="task-content">
+              <div class="task-title">${task.title}</div>
+              <div class="task-user-section">
+                ${avatarHTML}
+                ${completionTimeText ? `<div class="task-info"><span>Completed at ${completionTimeText}</span></div>` : ''}
+              </div>
+            </div>
             <div class="task-actions">
-              <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', '${todayStr}', ${index}, 'accept', '${pending.user}', ${pending.repetition}, event)">Accept</button>
-              <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', '${todayStr}', ${index}, 'decline', '${pending.user}', ${pending.repetition}, event)">Decline</button>
+              <button class="accept-btn" onclick="handleDecision('${task.title}', '${task.date}', '${todayStr}', ${index}, 'accept', '${pending.user}', ${pending.repetition}, event)">✓</button>
+              <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', '${todayStr}', ${index}, 'decline', '${pending.user}', ${pending.repetition}, event)">✕</button>
             </div>
           `;
           pendingContainer.appendChild(div);
@@ -3351,6 +3465,84 @@ rewardCard.addEventListener("click", (event) => {
 
 
 // Occasional Tasks functionality
+// Swipe functionality for pending tasks
+function enableSwipeForPendingTask(taskElement) {
+  let startX = 0;
+  let currentX = 0;
+  let isSwiping = false;
+  let isTap = true;
+  let startTime = 0;
+
+  const swipeThreshold = 80;
+  const tapMoveThreshold = 10;
+  const maxTapTime = 300;
+
+  const onStart = (x) => {
+    startX = x;
+    currentX = x;
+    isSwiping = true;
+    isTap = true;
+    startTime = Date.now();
+    taskElement.style.transition = 'none';
+  };
+
+  const onMove = (x, e) => {
+    if (!isSwiping) return;
+    currentX = x;
+    const deltaX = currentX - startX;
+
+    if (Math.abs(deltaX) > tapMoveThreshold) {
+      isTap = false;
+      e.preventDefault();
+      taskElement.dataset.swiping = "true";
+    }
+
+    if (deltaX < 0) {
+      taskElement.style.transform = `translateX(${deltaX}px)`;
+    }
+  };
+
+  const onEnd = (e) => {
+    if (!isSwiping) return;
+    isSwiping = false;
+
+    const deltaX = currentX - startX;
+    const elapsedTime = Date.now() - startTime;
+    taskElement.style.transition = 'transform 0.3s ease';
+
+    if (deltaX < -swipeThreshold) {
+      taskElement.classList.add('swiped-left');
+      taskElement.style.transform = 'translateX(-120px)';
+    } else {
+      taskElement.classList.remove('swiped-left');
+      taskElement.style.transform = 'translateX(0)';
+    }
+
+    if (isTap && elapsedTime < maxTapTime && e.target.closest('.task-actions')) {
+      // Allow button clicks
+      return;
+    }
+  };
+
+  // Touch Events
+  taskElement.addEventListener('touchstart', (e) => onStart(e.touches[0].clientX));
+  taskElement.addEventListener('touchmove', (e) => onMove(e.touches[0].clientX, e));
+  taskElement.addEventListener('touchend', (e) => onEnd(e));
+
+  // Mouse Events (Desktop)
+  taskElement.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    onStart(e.clientX);
+  });
+  taskElement.addEventListener('mousemove', (e) => {
+    if (e.buttons === 1) onMove(e.clientX, e);
+  });
+  taskElement.addEventListener('mouseup', (e) => onEnd(e));
+  taskElement.addEventListener('mouseleave', () => {
+    if (isSwiping) onEnd({});
+  });
+}
+
 async function loadAsNeededTasks() {
   const asNeededContainer = document.getElementById("asNeededTasks");
   const asNeededCount = document.getElementById("asNeededCount");
