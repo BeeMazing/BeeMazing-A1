@@ -985,6 +985,7 @@ async function loadAllTasks(userName, selectedDate = new Date().toLocaleDateStri
         // Show only tasks NOT originally assigned to current user AND not private
         const otherTasks = filterTasksForDate(tasks, selectedDate).filter(task => {
             if (!task || !task.users || !task.title || !task.date) return false;
+            
             if (task.users.includes(userName)) return false; // Don't show tasks assigned to current user
             if (task.isPrivate === true) return false; // Don't show private tasks
             return true;
@@ -1076,7 +1077,7 @@ async function loadAllTasks(userName, selectedDate = new Date().toLocaleDateStri
                                 const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
                                 canFinish = !!activeTurn;
                             } else {
-                                // For individual tasks, check if there are still incomplete instances
+                                // For individual tasks, anyone can complete if not all instances are done
                                 const totalCompleted = turnData.turns.reduce((sum, turn) => sum + (turn.isCompleted || turn.isPending ? 1 : 0), 0);
                                 const totalRequired = turnData.requiredTimes * task.users.length;
                                 canFinish = totalCompleted < totalRequired;
@@ -1866,10 +1867,16 @@ async function finishTask(currentUser, task, selectedDate) {
     return;
   }
 
-  // Fetch avatar and derive video path
-  const avatarPath = await fetchAvatarPath(currentUser);
-  const avatarId = avatarPath?.match(/\/([^/]+)\.png$/)?.[1];
-  const videoPath = avatarId ? `/BeeMazing-A1/shared/Avatars/Selected/Preview/${avatarId}.mp4` : null;
+  // Try to fetch avatar and derive video path (skip if not available)
+  let videoPath = null;
+  try {
+    const avatarPath = await fetchAvatarPath(currentUser);
+    const avatarId = avatarPath?.match(/\/([^/]+)\.png$/)?.[1];
+    videoPath = avatarId ? `/BeeMazing-A1/shared/Avatars/Selected/Preview/${avatarId}.mp4` : null;
+  } catch (err) {
+    // Avatar not available - continue without video preview
+    console.log("🔍 finishTask: Avatar not available for", currentUser, "- skipping video preview");
+  }
 
   // Show video overlay if videoPath exists
   if (videoPath) {

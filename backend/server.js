@@ -2797,16 +2797,38 @@ app.post("/api/complete-task", async (req, res) => {
     if (task.repeat === "Weekly") requiredTimes = task.timesPerWeek || 1;
     if (task.repeat === "Monthly") requiredTimes = task.timesPerMonth || 1;
 
-    if (totalCount >= requiredTimes) {
-      console.error("🔥 /api/complete-task: Max submissions reached", {
+    // For cross-completion: check if task is fully completed by all users, not just current user
+    const assignedUsers = Array.isArray(task.users) ? task.users : [];
+    const tempTurnReplacement = task.tempTurnReplacement?.[normalizedDate] || {};
+    const allAssignedUsers = [...new Set([...assignedUsers, ...Object.values(tempTurnReplacement || {})])];
+    
+    // Calculate total completions needed for all assigned users
+    const totalRequiredCompletions = allAssignedUsers.length * requiredTimes;
+    const totalCompletionsToday = task.completions[normalizedDate].length + (task.pendingCompletions[normalizedDate]?.length || 0);
+    
+    // Only block if ALL users have completed their required times
+    if (totalCompletionsToday >= totalRequiredCompletions) {
+      console.error("🔥 /api/complete-task: Task fully completed by all users", {
         user,
         taskTitle,
-        totalCount,
-        requiredTimes,
+        totalCompletionsToday,
+        totalRequiredCompletions,
+        allAssignedUsers,
       });
       return res
         .status(400)
-        .json({ error: "Task already submitted maximum times today" });
+        .json({ error: "Task already completed by all assigned users today" });
+    }
+    
+    // Log cross-completion info
+    if (totalCount >= requiredTimes) {
+      console.log("🔍 /api/complete-task: Cross-completion - user already completed their part", {
+        user,
+        taskTitle,
+        userCompletions: totalCount,
+        userRequired: requiredTimes,
+        allowingCrossCompletion: true
+      });
     }
 
     const userList = Array.isArray(task.users) ? task.users : [];
