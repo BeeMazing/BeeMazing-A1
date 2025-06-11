@@ -2728,7 +2728,7 @@ app.post("/api/review-task", async (req, res) => {
 // taskrotations.js
 
 app.post("/api/complete-task", async (req, res) => {
-  const { adminEmail, taskTitle, user, date } = req.body;
+  const { adminEmail, taskTitle, user, date, isPrivate } = req.body;
   try {
     if (!adminEmail || !taskTitle || !user || !date) {
       console.error("🔥 /api/complete-task: Missing fields", {
@@ -2819,14 +2819,27 @@ app.post("/api/complete-task", async (req, res) => {
     const isAssigned =
       userList.includes(user) ||
       tempReplacementValues.includes(user);
-    if (!isAssigned) {
-      console.error("🔥 /api/complete-task: User not assigned", {
+    
+    // Only enforce assignment for private tasks
+    if (task.isPrivate === true && !isAssigned) {
+      console.error("🔥 /api/complete-task: Private task - user not assigned", {
         user,
         taskTitle,
         userList,
         tempTurnReplacement,
+        isPrivate: task.isPrivate
       });
-      return res.status(400).json({ error: "User not assigned to this task" });
+      return res.status(400).json({ error: "Private task can only be completed by assigned users" });
+    }
+    
+    // Log completion info for audit trail
+    if (!isAssigned) {
+      console.log("🔍 /api/complete-task: Cross-completion", {
+        completer: user,
+        taskTitle,
+        originallyAssignedTo: userList,
+        isPrivate: task.isPrivate
+      });
     }
 
     const repetition = totalCount + 1;
@@ -3069,7 +3082,7 @@ app.post("/api/toggle-as-needed-task", async (req, res) => {
 
 // ✅ Complete As Needed task
 app.post("/api/complete-as-needed-task", async (req, res) => {
-  const { adminEmail, taskTitle, user, date } = req.body;
+  const { adminEmail, taskTitle, user, date, isPrivate } = req.body;
 
   if (!adminEmail || !taskTitle || !user || !date) {
     return res.status(400).json({ error: "Missing adminEmail, taskTitle, user, or date" });
@@ -3097,6 +3110,31 @@ app.post("/api/complete-as-needed-task", async (req, res) => {
     
     if (!task.activated) {
       return res.status(400).json({ error: "Task is not activated" });
+    }
+
+    // Check if user is assigned to the task (for private task validation)
+    const userList = Array.isArray(task.users) ? task.users : [];
+    const isAssigned = userList.includes(user);
+    
+    // Only enforce assignment for private tasks
+    if (task.isPrivate === true && !isAssigned) {
+      console.error("🔥 /api/complete-as-needed-task: Private task - user not assigned", {
+        user,
+        taskTitle,
+        userList,
+        isPrivate: task.isPrivate
+      });
+      return res.status(400).json({ error: "Private task can only be completed by assigned users" });
+    }
+    
+    // Log completion info for audit trail
+    if (!isAssigned) {
+      console.log("🔍 /api/complete-as-needed-task: Cross-completion", {
+        completer: user,
+        taskTitle,
+        originallyAssignedTo: userList,
+        isPrivate: task.isPrivate
+      });
     }
 
     // Initialize task completion tracking if it doesn't exist

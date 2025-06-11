@@ -2047,6 +2047,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
     }
 
+    // Initialize flatpickr early to ensure it's available
+    window.flatpickrSingle = flatpickr("#singleTaskDate", {
+        dateFormat: "Y-m-d",
+        defaultDate: "today",
+        onChange: function(selectedDates, dateStr) {
+            document.getElementById("singleDateDisplay").textContent = selectedDates[0] 
+                ? selectedDates[0].toLocaleDateString(undefined, { month: "long", day: "numeric" })
+                : "Select Date";
+        }
+    });
+    
+    document.getElementById("singleDateDisplay").addEventListener("click", () => {
+        window.flatpickrSingle.open();
+    });
+
     // Debug function availability
     console.log("🔧 Functions available:", {
         handleCancel: typeof window.handleCancel,
@@ -2369,7 +2384,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 
                 const [from] = editTask.date.split(" to ");
                 document.getElementById("singleTaskDate").value = from || "";
-                flatpickrSingle.setDate(from);
+                window.flatpickrSingle.setDate(from);
             } else {
                 document.getElementById("dateModeSelection").value = "date";
                 document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.remove("active"));
@@ -4520,6 +4535,11 @@ repeatModal.addEventListener('click', (e) => {
             specificDatesGroupEl.style.display = 'none';
             monthlyTimesDateGroup.style.setProperty('display', 'none', 'important');
             monthlySchedulingOptions.style.setProperty('display', 'none', 'important');
+            
+            // Initialize single date display with today's date
+            const today = new Date();
+            window.flatpickrSingle.setDate(today);
+            document.getElementById("singleDateDisplay").textContent = today.toLocaleDateString(undefined, { month: "long", day: "numeric" });
         } else if (selected === "Occasional") {
             // Hide all date UI for Occasional tasks
             generalDateModeSelector.style.display = 'none';
@@ -5325,20 +5345,7 @@ removeEndDateBtn.addEventListener("click", () => {
 
 
     
-        // Single date picker for One Time tasks
-        const flatpickrSingle = flatpickr("#singleTaskDate", {
-            dateFormat: "Y-m-d",
-            defaultDate: "today",
-            onChange: function(selectedDates, dateStr) {
-                document.getElementById("singleDateDisplay").textContent = selectedDates[0] 
-                    ? selectedDates[0].toLocaleDateString(undefined, { month: "long", day: "numeric" })
-                    : "Select Date";
-            }
-        });
-        
-        document.getElementById("singleDateDisplay").addEventListener("click", () => {
-            flatpickrSingle.open();
-        });
+        // flatpickrSingle is now initialized early in DOMContentLoaded
         
         const flatpickrFrom = flatpickr("#taskDate", {
             dateFormat: "Y-m-d",

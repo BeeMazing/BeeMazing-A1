@@ -1354,6 +1354,311 @@ if (typeof window.avatarSystem === 'undefined') {
     await window.avatarSystem.initialize(admin);
 }
 
+// AUTO-EDIT FUNCTIONS FOR OVERDUE TASKS
+async function checkAndTriggerOverdueEdit(targetDate) {
+    // Check localStorage for edit data
+    const editOverdueData = localStorage.getItem('familyApp_editOverdueTask');
+    const autoTrigger = localStorage.getItem('familyApp_autoTriggerEdit');
+
+    if (!editOverdueData || autoTrigger !== 'true') {
+        console.log('No overdue edit data found or auto-trigger disabled');
+        return;
+    }
+
+    try {
+        const editData = JSON.parse(editOverdueData);
+        console.log('🔧 Processing overdue task edit:', editData);
+    
+        if (editData.source === 'overdueTaskEdit' && editData.taskTitle) {
+            // Clear the localStorage items to prevent repeat triggers
+            localStorage.removeItem('familyApp_editOverdueTask');
+            localStorage.removeItem('familyApp_autoTriggerEdit');
+        
+            // Set the correct date if provided
+            if (targetDate || editData.specificDate) {
+                const dateToSelect = targetDate || editData.specificDate;
+                await selectDateAndFindTask(dateToSelect, editData.taskTitle);
+            } else {
+                await findAndEditTask(editData.taskTitle);
+            }
+        }
+    } catch (error) {
+        console.error('Error processing overdue edit data:', error);
+        // Clean up localStorage on error
+        localStorage.removeItem('familyApp_editOverdueTask');
+        localStorage.removeItem('familyApp_autoTriggerEdit');
+        removeLoadingOverlay();
+    }
+}
+
+async function selectDateAndFindTask(targetDate, taskTitle) {
+    console.log(`🔧 Selecting date ${targetDate} and finding task: ${taskTitle}`);
+
+    // First, select the correct date
+    const dayElements = document.querySelectorAll('.day');
+    let dateSelected = false;
+
+    dayElements.forEach(dayEl => {
+        if (dayEl.dataset.date === targetDate) {
+            // Remove previous selection
+            document.querySelectorAll('.day.selected').forEach(el => el.classList.remove('selected'));
+            // Select the target date
+            dayEl.classList.add('selected');
+            dateSelected = true;
+            console.log(`📅 Selected date: ${targetDate}`);
+        }
+    });
+
+    if (!dateSelected) {
+        console.warn(`Date ${targetDate} not found in calendar`);
+    }
+
+    // Wait for tasks to load for the selected date
+    if (typeof window.loadTasksForDate === 'function') {
+        await window.loadTasksForDate(targetDate);
+        console.log('📋 Tasks loaded for selected date');
+    }
+
+    // Wait a bit more for DOM to update
+    setTimeout(() => {
+        findAndEditTask(taskTitle);
+    }, 1000);
+}
+
+async function findAndEditTask(taskTitle) {
+    console.log(`🔍 Looking for task: ${taskTitle}`);
+
+    // Find task elements using multiple selectors
+    const taskSelectors = [
+        '.task-item',
+        '.task-card', 
+        '[data-task-title]',
+        '.task'
+    ];
+
+    let targetTask = null;
+
+    for (const selector of taskSelectors) {
+        const taskElements = document.querySelectorAll(selector);
+        console.log(`🔍 Found ${taskElements.length} elements with selector: ${selector}`);
+    
+        taskElements.forEach(taskEl => {
+            // Try multiple ways to find the task title
+            const titleSelectors = [
+                '.task-title',
+                '.task-name', 
+                'h3',
+                'h2',
+                '[data-task-title]'
+            ];
+        
+            let titleElement = null;
+            let titleText = '';
+        
+            // Try to find title element
+            for (const titleSelector of titleSelectors) {
+                titleElement = taskEl.querySelector(titleSelector);
+                if (titleElement) {
+                    titleText = titleElement.textContent.trim();
+                    break;
+                }
+            }
+        
+            // Also check dataset
+            if (!titleText && taskEl.dataset.taskTitle) {
+                titleText = taskEl.dataset.taskTitle.trim();
+            }
+        
+            // Also check if the task element itself contains the title
+            if (!titleText) {
+                titleText = taskEl.textContent.trim();
+            }
+        
+            console.log(`🔍 Checking task with title: "${titleText}"`);
+        
+            if (titleText === taskTitle || titleText.includes(taskTitle)) {
+                targetTask = taskEl;
+                console.log(`✅ Found matching task: ${titleText}`);
+            }
+        });
+    
+        if (targetTask) break;
+    }
+
+    if (targetTask) {
+        console.log('🎯 Target task found, opening task card...');
+    
+        // Click on the task to open its modal/card (but keep it hidden)
+        targetTask.click();
+    
+        // Wait for modal to open, then find and click "Edit This Day"
+        setTimeout(() => {
+            triggerEditThisDay();
+        }, 800);
+    
+    } else {
+        console.error(`❌ Task not found: "${taskTitle}"`);
+        console.log('Available tasks:', 
+            Array.from(document.querySelectorAll('.task-item')).map(el => {
+                const title = el.querySelector('.task-title');
+                return title ? title.textContent.trim() : 'No title found';
+            })
+        );
+    
+        removeLoadingOverlay();
+        alert(`Task "${taskTitle}" not found. Please make sure you're viewing the correct date.`);
+    }
+}
+
+function triggerEditThisDay() {
+    console.log('🔧 Looking for "Edit This Day" button...');
+
+    // Wait for modal to be fully rendered
+    const waitForModal = (attempts = 0) => {
+        if (attempts > 10) {
+            console.error('❌ Modal took too long to load');
+            alert('Edit This Day button not found. The task card may have opened, please click "Edit This Day" manually.');
+            return;
+        }
+
+        // Check if modal exists
+        const modal = document.querySelector('.task-modal');
+        if (!modal) {
+            console.log(`🔧 Waiting for modal... attempt ${attempts + 1}`);
+            setTimeout(() => waitForModal(attempts + 1), 200);
+            return;
+        }
+
+        // Hide the modal from user view
+        modal.style.display = 'none';
+        console.log('✅ Modal found and hidden, looking for Edit This Day button...');
+
+        // Multiple selectors for the Edit This Day button (removed invalid :contains selector)
+        const editButtonSelectors = [
+            '#editOccurrenceBtn',
+            'button[id="editOccurrenceBtn"]',
+            '.edit-this-day-btn',
+            '.edit-occurrence-btn'
+        ];
+
+        let editButton = null;
+
+        // First try standard selectors
+        for (const selector of editButtonSelectors) {
+            editButton = modal.querySelector(selector);
+            if (editButton) {
+                console.log(`✅ Found Edit This Day button with selector: ${selector}`);
+                break;
+            }
+        }
+
+        // If not found by selector, search by text content
+        if (!editButton) {
+            console.log('🔧 Searching buttons by text content...');
+            const allButtons = modal.querySelectorAll('button');
+            console.log(`🔧 Found ${allButtons.length} buttons in modal`);
+        
+            allButtons.forEach((btn, index) => {
+                const btnText = btn.textContent.trim().toLowerCase();
+                console.log(`🔧 Button ${index + 1}: "${btn.textContent.trim()}" (ID: ${btn.id})`);
+            
+                if (btnText.includes('edit this day') || btnText === 'edit this day') {
+                    editButton = btn;
+                    console.log('✅ Found Edit This Day button by text content');
+                }
+            });
+        }
+
+        if (editButton) {
+            console.log('🎯 Clicking "Edit This Day" button...');
+            editButton.click();
+
+            // Wait for edit form to load, then remove overlay
+            setTimeout(() => {
+                console.log('✅ Auto-edit process completed successfully!');
+                // Clean up hidden modal
+                const hiddenModal = document.querySelector('.task-modal[style*="display: none"]');
+                if (hiddenModal) {
+                    hiddenModal.remove();
+                }
+                removeLoadingOverlay();
+            }, 1000);
+
+        } else {
+            console.error('❌ "Edit This Day" button not found in modal');
+            console.log('Available buttons in modal:', 
+                Array.from(modal.querySelectorAll('button')).map(btn => `"${btn.textContent.trim()}" (ID: ${btn.id})`)
+            );
+
+            removeLoadingOverlay();
+            alert('Edit This Day button not found. The task card may have opened, please click "Edit This Day" manually.');
+        }
+    };
+
+    // Start the modal waiting process
+    waitForModal();
+}
+
+// Function to create loading overlay
+function createLoadingOverlay() {
+    const overlay = document.createElement('div');
+    overlay.id = 'autoEditOverlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #FFFFFF;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-family: 'Poppins', sans-serif;
+    `;
+    
+    overlay.innerHTML = `
+        <div style="text-align: center;">
+            <div style="width: 60px; height: 60px; border: 4px solid #FFC107; border-top: 4px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+            <h3 style="color: #6D4C41; margin: 0 0 10px 0; font-size: 18px; font-weight: 600;">Opening Task Editor</h3>
+            <p style="color: #795548; margin: 0; font-size: 14px;">Please wait...</p>
+        </div>
+        <style>
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+    `;
+    
+    document.body.appendChild(overlay);
+}
+
+function removeLoadingOverlay() {
+    const overlay = document.getElementById('autoEditOverlay');
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
+console.log('🔧 Auto-edit functionality loaded for overdue tasks');
+
+// AUTO-EDIT FUNCTIONALITY FOR OVERDUE TASKS
+// Check URL parameters for auto-edit trigger
+const autoEdit = urlParams.get('autoEdit');
+const targetDate = urlParams.get('date');
+
+if (autoEdit === 'true') {
+    // Hide the page content and show loading overlay
+    createLoadingOverlay();
+    
+    // Wait for page to fully load, then check for overdue task edit
+    setTimeout(() => {
+        checkAndTriggerOverdueEdit(targetDate);
+    }, 1500);
+}
+
 // Add debugging functions for testing task deletion
 window.debugTaskStatus = async function(titlePattern) {
     console.log("🚨 TASK STATUS CHECK! 🚨");

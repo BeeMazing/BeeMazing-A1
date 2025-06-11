@@ -1122,31 +1122,111 @@ h3 {
 .overdue-task {
   background: #FFFFFF;
   border: 2px solid #FFC107;
-  border-left: 4px solid #D32F2F;
-  border-radius: 8px;
-  padding: 10px;
-  margin-top: 6px;
+  border-radius: 12px;
+  padding: 0;
+  margin: 6px 0;
   color: #6D4C41;
-  font-size: 13px;
-  box-shadow: 0 2px 6px rgba(255, 193, 7, 0.2);
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.15);
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  min-height: 60px;
 }
+
 .overdue-task:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 193, 7, 0.25);
+  border-color: #FFB300;
 }
+
+.overdue-task .task-content-wrapper {
+  position: relative;
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 60px;
+  box-sizing: border-box;
+}
+
+.overdue-task .task-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
 .overdue-task .task-title {
   font-weight: 600;
   font-size: 16px;
   margin: 0;
-  color: #D32F2F;
+  color: #6D4C41;
+  line-height: 1.2;
+  text-align: center;
 }
+
+.overdue-task .task-user-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.overdue-task .user-avatar {
+  margin: 0;
+}
+
 .overdue-task .task-info {
-  font-style: italic;
   font-size: 13px;
   color: #795548;
-  margin-top: 6px;
+  line-height: 1.4;
+  font-weight: normal;
 }
+
+.overdue-task.swiped .task-content-wrapper {
+  transform: translateX(-70px);
+}
+
+.overdue-task .task-actions {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 70px;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 0 12px 12px 0;
+}
+
+.overdue-task.swiped .task-actions {
+  opacity: 1;
+}
+
+.overdue-task .edit-btn {
+  width: 70px;
+  height: 100%;
+  background: #FF9800;
+  color: white;
+  border: none;
+  border-radius: 0 12px 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 18px;
+}
+
+.overdue-task .edit-btn:hover {
+  background: #F57C00;
+}
+
 
 
 
@@ -1154,16 +1234,15 @@ h3 {
   background: #FFFFFF;
   border: 2px solid #FFC107;
   border-radius: 12px;
-  padding: 16px;
-  margin: 8px 0;
+  padding: 0;
+  margin: 6px 0;
   color: #6D4C41;
   font-size: 14px;
   box-shadow: 0 4px 12px rgba(255, 193, 7, 0.15);
   transition: all 0.3s ease;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  min-height: 60px;
 }
 
 .pending-task:hover {
@@ -1172,11 +1251,29 @@ h3 {
   border-color: #FFB300;
 }
 
-.pending-task .task-content {
-  flex: 1;
+.pending-task .task-content-wrapper {
+  position: relative;
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: 12px;
+  transition: transform 0.3s ease;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
+  min-height: 60px;
+  box-sizing: border-box;
+}
+
+.pending-task.swiped .task-content-wrapper {
+  transform: translateX(-140px);
+}
+
+.pending-task .task-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2px;
 }
 
 .pending-task .task-title {
@@ -1185,11 +1282,13 @@ h3 {
   margin: 0;
   color: #6D4C41;
   line-height: 1.2;
+  text-align: center;
 }
 
 .pending-task .task-user-section {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 
@@ -1201,20 +1300,33 @@ h3 {
   font-size: 13px;
   color: #795548;
   line-height: 1.4;
+  font-weight: normal;
 }
 
 .pending-task .task-actions {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 140px;
   display: flex;
-  gap: 8px;
+  gap: 0;
   align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 0 12px 12px 0;
+}
+
+.pending-task.swiped .task-actions {
+  opacity: 1;
 }
 
 .pending-task .accept-btn,
 .pending-task .decline-btn {
-  width: 56px;
-  height: 56px;
+  width: 70px;
+  height: 100%;
   border: none;
-  border-radius: 8px;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1230,17 +1342,16 @@ h3 {
 
 .pending-task .accept-btn:hover {
   background: #218838;
-  transform: scale(1.05);
 }
 
 .pending-task .decline-btn {
   background: #dc3545;
   color: white;
+  border-radius: 0 12px 12px 0;
 }
 
 .pending-task .decline-btn:hover {
   background: #c82333;
-  transform: scale(1.05);
 }
 
 
@@ -3031,6 +3142,9 @@ async function loadOverdueTasks() {
     const overdueTasks = allTasks.filter(task => {
       if (!task || !task.users || !task.title || !task.date) return false;
       if (!filterTasksForDate([task], todayStr).length) return false;
+      
+      // Only show overdue tasks if "On-time completion important" is enabled
+      if (!task.onTimeCompletion) return false;
 
       if (!Array.isArray(task.users) || task.users.length === 0) {
         task.users = ["Unknown"];
@@ -3065,13 +3179,66 @@ async function loadOverdueTasks() {
       overdueTasks.forEach(task => {
         const div = document.createElement("div");
         div.className = "overdue-task";
+        
+        // Get overdue users
         const overdueUsers = task.settings?.includes("Individual") && task.usersNotDone?.length > 0
-          ? task.usersNotDone.join(", ")
-          : task.users.join(", ");
+          ? task.usersNotDone
+          : task.users;
+        
+        // Generate avatar HTML for the first overdue user
+        let avatarHTML = `<span style="font-size: 14px;">👤</span>`;
+        if (window.avatarSystem && overdueUsers && overdueUsers.length > 0) {
+          try {
+            avatarHTML = window.avatarSystem.generateAvatarHTML(overdueUsers[0], 28, 'overdue-avatar');
+          } catch (error) {
+            console.warn("Failed to generate avatar for:", overdueUsers[0]);
+          }
+        }
+        
+        // Format due date/time (use task date)
+        let dueDateText = '';
+        if (task.date) {
+          try {
+            const [dateStart] = task.date.split(" to ");
+            const date = new Date(dateStart);
+            if (!isNaN(date.getTime())) {
+              const dateStr = date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric'
+              });
+              const timeStr = date.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+              });
+              dueDateText = `Due: ${dateStr} at ${timeStr}`;
+            }
+          } catch (error) {
+            console.warn("Failed to parse task date:", task.date);
+          }
+        }
+        
         div.innerHTML = `
-          <div class="task-title">${task.title}</div>
-          <div class="task-info">Task overdue for: ${overdueUsers || "Unknown"}</div>
+          <div class="task-content-wrapper">
+            <div class="task-header">
+              <div class="task-title">${task.title}</div>
+            </div>
+            <div class="task-user-section">
+              <div class="task-info"><span>${dueDateText}</span></div>
+              ${avatarHTML}
+            </div>
+          </div>
+          <div class="task-actions">
+            <button class="edit-btn" onclick="editOverdueTask('${task.title}', '${task.date}', event)">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+              </svg>
+            </button>
+          </div>
         `;
+        
+        // Enable swipe functionality for this overdue task
+        enableSwipeForOverdueTask(div);
         overdueContainer.appendChild(div);
       });
     }
@@ -3145,6 +3312,8 @@ async function loadPendingTasks() {
           
           // Log pending object to see available fields
           console.log("🔍 Pending object structure:", pending);
+          console.log("🔍 All pending object keys:", Object.keys(pending));
+          console.log("🔍 Pending object values:", Object.values(pending));
           
           // Generate avatar HTML
           let avatarHTML = `<span style="font-size: 14px;">👤</span>`;
@@ -3156,29 +3325,66 @@ async function loadPendingTasks() {
             }
           }
           
-          // Format completion time
+          // Format completion date and time - try multiple field names
           let completionTimeText = '';
-          if (pending.timestamp || pending.completedAt || pending.time) {
-            const timestamp = pending.timestamp || pending.completedAt || pending.time;
+          const possibleTimeFields = [
+            pending.timestamp, 
+            pending.completedAt, 
+            pending.time, 
+            pending.date,
+            pending.completionTime,
+            pending.submittedAt,
+            pending.createdAt
+          ];
+          
+          const timeValue = possibleTimeFields.find(field => field != null);
+          console.log("🔍 Found time value:", timeValue);
+          
+          if (timeValue) {
             try {
-              const date = new Date(timestamp);
-              completionTimeText = date.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true 
-              });
+              const date = new Date(timeValue);
+              if (!isNaN(date.getTime())) {
+                const dateStr = date.toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric'
+                });
+                const timeStr = date.toLocaleTimeString('en-US', { 
+                  hour: '2-digit', 
+                  minute: '2-digit',
+                  hour12: true 
+                });
+                completionTimeText = `${dateStr} at ${timeStr}`;
+                console.log("🔍 Formatted time:", completionTimeText);
+              } else {
+                console.warn("Invalid date created from:", timeValue);
+              }
             } catch (error) {
-              console.warn("Failed to parse timestamp:", timestamp);
-              completionTimeText = timestamp;
+              console.warn("Failed to parse timestamp:", timeValue, error);
             }
+          } else {
+            // Fallback - use current time as placeholder for testing
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric'
+            });
+            const timeStr = now.toLocaleTimeString('en-US', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              hour12: true 
+            });
+            completionTimeText = `${dateStr} at ${timeStr}`;
+            console.log("🔍 Using fallback time:", completionTimeText);
           }
           
           div.innerHTML = `
-            <div class="task-content">
-              <div class="task-title">${task.title}</div>
+            <div class="task-content-wrapper">
+              <div class="task-header">
+                <div class="task-title">${task.title}</div>
+              </div>
               <div class="task-user-section">
+                <div class="task-info"><span>${completionTimeText}</span></div>
                 ${avatarHTML}
-                ${completionTimeText ? `<div class="task-info"><span>Completed at ${completionTimeText}</span></div>` : ''}
               </div>
             </div>
             <div class="task-actions">
@@ -3186,6 +3392,9 @@ async function loadPendingTasks() {
               <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', '${todayStr}', ${index}, 'decline', '${pending.user}', ${pending.repetition}, event)">✕</button>
             </div>
           `;
+          
+          // Enable swipe functionality
+          enableSwipeForPendingTask(div);
           pendingContainer.appendChild(div);
         });
       });
@@ -3470,77 +3679,187 @@ function enableSwipeForPendingTask(taskElement) {
   let startX = 0;
   let currentX = 0;
   let isSwiping = false;
-  let isTap = true;
-  let startTime = 0;
 
-  const swipeThreshold = 80;
-  const tapMoveThreshold = 10;
-  const maxTapTime = 300;
-
-  const onStart = (x) => {
-    startX = x;
-    currentX = x;
-    isSwiping = true;
-    isTap = true;
-    startTime = Date.now();
-    taskElement.style.transition = 'none';
-  };
-
-  const onMove = (x, e) => {
-    if (!isSwiping) return;
-    currentX = x;
-    const deltaX = currentX - startX;
-
-    if (Math.abs(deltaX) > tapMoveThreshold) {
-      isTap = false;
-      e.preventDefault();
-      taskElement.dataset.swiping = "true";
-    }
-
-    if (deltaX < 0) {
-      taskElement.style.transform = `translateX(${deltaX}px)`;
-    }
-  };
-
-  const onEnd = (e) => {
-    if (!isSwiping) return;
-    isSwiping = false;
-
-    const deltaX = currentX - startX;
-    const elapsedTime = Date.now() - startTime;
-    taskElement.style.transition = 'transform 0.3s ease';
-
-    if (deltaX < -swipeThreshold) {
-      taskElement.classList.add('swiped-left');
-      taskElement.style.transform = 'translateX(-120px)';
-    } else {
-      taskElement.classList.remove('swiped-left');
-      taskElement.style.transform = 'translateX(0)';
-    }
-
-    if (isTap && elapsedTime < maxTapTime && e.target.closest('.task-actions')) {
-      // Allow button clicks
-      return;
-    }
-  };
+  const swipeThreshold = 50;
+  const maxSwipeDistance = 140;
 
   // Touch Events
-  taskElement.addEventListener('touchstart', (e) => onStart(e.touches[0].clientX));
-  taskElement.addEventListener('touchmove', (e) => onMove(e.touches[0].clientX, e));
-  taskElement.addEventListener('touchend', (e) => onEnd(e));
+  taskElement.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    isSwiping = true;
+    // Close other swiped items
+    document.querySelectorAll('.pending-task.swiped').forEach(item => {
+      if (item !== taskElement) item.classList.remove('swiped');
+    });
+  });
+
+  taskElement.addEventListener('touchmove', (e) => {
+    if (!isSwiping) return;
+    currentX = e.touches[0].clientX;
+    const diffX = startX - currentX;
+    
+    if (diffX > 10 && diffX < maxSwipeDistance) {
+      taskElement.classList.add('swiped');
+    } else if (diffX < -10) {
+      taskElement.classList.remove('swiped');
+    }
+  });
+
+  taskElement.addEventListener('touchend', () => {
+    isSwiping = false;
+  });
 
   // Mouse Events (Desktop)
   taskElement.addEventListener('mousedown', (e) => {
-    e.preventDefault();
-    onStart(e.clientX);
+    if (e.target.closest('.task-actions')) return; // Don't swipe when clicking buttons
+    startX = e.clientX;
+    isSwiping = true;
+    // Close other swiped items
+    document.querySelectorAll('.pending-task.swiped').forEach(item => {
+      if (item !== taskElement) item.classList.remove('swiped');
+    });
   });
+
   taskElement.addEventListener('mousemove', (e) => {
-    if (e.buttons === 1) onMove(e.clientX, e);
+    if (!isSwiping) return;
+    currentX = e.clientX;
+    const diffX = startX - currentX;
+    
+    if (diffX > 10 && diffX < maxSwipeDistance) {
+      taskElement.classList.add('swiped');
+    } else if (diffX < -10) {
+      taskElement.classList.remove('swiped');
+    }
   });
-  taskElement.addEventListener('mouseup', (e) => onEnd(e));
+
+  taskElement.addEventListener('mouseup', () => {
+    isSwiping = false;
+  });
+
   taskElement.addEventListener('mouseleave', () => {
-    if (isSwiping) onEnd({});
+    isSwiping = false;
   });
+
+  // Click outside to close
+  document.addEventListener('click', (e) => {
+    if (!taskElement.contains(e.target) && taskElement.classList.contains('swiped')) {
+      taskElement.classList.remove('swiped');
+    }
+  });
+}
+
+function enableSwipeForOverdueTask(taskElement) {
+  let startX = 0;
+  let currentX = 0;
+  let isSwiping = false;
+
+  const maxSwipeDistance = 70;
+
+  // Touch Events
+  taskElement.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    isSwiping = true;
+    // Close other swiped items
+    document.querySelectorAll('.overdue-task.swiped, .pending-task.swiped').forEach(item => {
+      if (item !== taskElement) item.classList.remove('swiped');
+    });
+  });
+
+  taskElement.addEventListener('touchmove', (e) => {
+    if (!isSwiping) return;
+    currentX = e.touches[0].clientX;
+    const diffX = startX - currentX;
+    
+    if (diffX > 10 && diffX < maxSwipeDistance) {
+      taskElement.classList.add('swiped');
+    } else if (diffX < -10) {
+      taskElement.classList.remove('swiped');
+    }
+  });
+
+  taskElement.addEventListener('touchend', () => {
+    isSwiping = false;
+  });
+
+  // Mouse Events (Desktop)
+  taskElement.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.task-actions')) return; // Don't swipe when clicking buttons
+    startX = e.clientX;
+    isSwiping = true;
+    // Close other swiped items
+    document.querySelectorAll('.overdue-task.swiped, .pending-task.swiped').forEach(item => {
+      if (item !== taskElement) item.classList.remove('swiped');
+    });
+  });
+
+  taskElement.addEventListener('mousemove', (e) => {
+    if (!isSwiping) return;
+    currentX = e.clientX;
+    const diffX = startX - currentX;
+    
+    if (diffX > 10 && diffX < maxSwipeDistance) {
+      taskElement.classList.add('swiped');
+    } else if (diffX < -10) {
+      taskElement.classList.remove('swiped');
+    }
+  });
+
+  taskElement.addEventListener('mouseup', () => {
+    isSwiping = false;
+  });
+
+  taskElement.addEventListener('mouseleave', () => {
+    isSwiping = false;
+  });
+
+  // Click outside to close
+  document.addEventListener('click', (e) => {
+    if (!taskElement.contains(e.target) && taskElement.classList.contains('swiped')) {
+      taskElement.classList.remove('swiped');
+    }
+  });
+}
+
+function editOverdueTask(taskTitle, taskDate, event) {
+  event.stopPropagation();
+  
+  // Parse the date to get the specific date for the overdue task
+  let specificDate = '';
+  try {
+    const [dateStart] = taskDate.split(" to ");
+    specificDate = dateStart;
+  } catch (error) {
+    console.warn("Failed to parse task date:", taskDate);
+    specificDate = new Date().toISOString().split('T')[0]; // fallback to today
+  }
+  
+  // Store comprehensive edit data in localStorage
+  const editData = {
+    taskTitle: taskTitle,
+    taskDate: taskDate,
+    specificDate: specificDate,
+    editMode: 'editThisDay',
+    triggerEdit: true,
+    timestamp: Date.now(),
+    source: 'overdueTaskEdit'
+  };
+  
+  localStorage.setItem('familyApp_editOverdueTask', JSON.stringify(editData));
+  localStorage.setItem('familyApp_autoTriggerEdit', 'true');
+  
+  // Navigate to tasks page with correct path and admin/user parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
+  const userName = urlParams.get('user') || '';
+  
+  let tasksUrl = '/BeeMazing-A1/mobile/3-Tasks/tasks.html';
+  if (adminEmail && userName) {
+    tasksUrl += `?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}&autoEdit=true&date=${encodeURIComponent(specificDate)}`;
+  } else {
+    tasksUrl += `?autoEdit=true&date=${encodeURIComponent(specificDate)}`;
+  }
+  
+  window.location.href = tasksUrl;
 }
 
 async function loadAsNeededTasks() {
