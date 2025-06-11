@@ -972,10 +972,20 @@ async function loadAllTasks(userName, selectedDate = new Date().toLocaleDateStri
         let tasks = [];
 
         try {
-            const res = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+            // Add random parameter to ensure fresh data after task completion
+            const cacheBuster = `t=${Date.now()}&r=${Math.random()}`;
+            const res = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&${cacheBuster}`, { 
+                cache: "no-store",
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
             tasks = data.tasks || [];
+            console.log("🔍 loadAllTasks: Fetched fresh task data", { taskCount: tasks.length, cacheBuster });
         } catch (err) {
             console.error("Failed to fetch tasks from server:", err);
             allTasksDiv.innerHTML = "<p>Failed to load tasks. Please try again later.</p>";
@@ -1044,22 +1054,31 @@ async function loadAllTasks(userName, selectedDate = new Date().toLocaleDateStri
                     taskHTML += `<em style="color: #666;">Originally assigned to: ${task.users.join(', ')}</em><br>`;
 
                     if (isRotation) {
-                        const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
-                        if (activeTurn) {
-                            const nextTurnIndex = (activeTurn.index + 1) % task.users.length;
-                            const nextUser = turnData.turns.find(t => t.index === nextTurnIndex)?.user || task.users[nextTurnIndex] || "—";
-                            taskHTML += `Current Turn: ${activeTurn.user}<br>Next: ${nextUser}<br>`;
-                        } else {
+                        // Check if all required turns are completed for today
+                        const totalCompletionsToday = turnData.completedCount;
+                        const totalRequiredCompletions = turnData.requiredTimes;
+                        
+                        if (totalCompletionsToday >= totalRequiredCompletions) {
                             taskHTML += `<span style="color: green;">Turn: All done!</span><br>`;
+                        } else {
+                            const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
+                            if (activeTurn) {
+                                const nextTurnIndex = (activeTurn.index + 1) % task.users.length;
+                                const nextUser = turnData.turns.find(t => t.index === nextTurnIndex)?.user || task.users[nextTurnIndex] || "—";
+                                taskHTML += `Current Turn: ${activeTurn.user}<br>Next: ${nextUser}<br>`;
+                            } else {
+                                taskHTML += `<span style="color: orange;">Turn: Pending review</span><br>`;
+                            }
                         }
                     }
 
                     taskHTML += `Buzz Points: ${task.reward || 0} 🍯 (goes to completer)<br>`;
                     
                     // Show total progress for other users' tasks
-                    const totalCompleted = turnData.turns.reduce((sum, turn) => sum + (turn.isCompleted || turn.isPending ? 1 : 0), 0);
-                    const totalRequired = isRotation ? turnData.turns.length : (turnData.requiredTimes * task.users.length);
-                    taskHTML += `Total Progress: ${totalCompleted}/${totalRequired}<br>`;
+                    // Use the global completedCount which includes all completions + pending
+                    const totalCompletionsToday = turnData.completedCount;
+                    const totalRequired = isRotation ? turnData.requiredTimes : (turnData.requiredTimes * task.users.length);
+                    taskHTML += `Total Progress: ${totalCompletionsToday}/${totalRequired}<br>`;
 
                     taskDiv.innerHTML = taskHTML;
 
@@ -1073,23 +1092,46 @@ async function loadAllTasks(userName, selectedDate = new Date().toLocaleDateStri
                             canFinish = false;
                         } else {
                             if (isRotation) {
-                                // For rotation tasks, anyone can complete if there's an active turn
-                                const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
-                                canFinish = !!activeTurn;
-                            } else {
-                                // For individual tasks, anyone can complete if not all instances are done
-                                const totalCompleted = turnData.turns.reduce((sum, turn) => sum + (turn.isCompleted || turn.isPending ? 1 : 0), 0);
-                                const totalRequired = turnData.requiredTimes * task.users.length;
-                                canFinish = totalCompleted < totalRequired;
+                                // For rotation tasks in All Tasks, check if there are incomplete turns
+                                // Use the global completedCount which includes all completions + pending
+                                const totalCompletionsToday = turnData.completedCount;
+                                const totalRequiredCompletions = turnData.requiredTimes;
+                            
+                                // Task can be completed if not all required completions are done
+                                canFinish = totalCompletionsToday < totalRequiredCompletions;
                                 
-                                console.log("🔍 loadAllTasks: All Tasks completion debug", {
+                                console.log("🔍 loadAllTasks: Rotation task button visibility check", {
                                     taskTitle: task.title,
-                                    totalCompleted,
-                                    totalRequired,
+                                    totalCompletionsToday,
+                                    totalRequiredCompletions,
                                     canFinish,
-                                    turnData: turnData.turns,
-                                    pendingTurns: turnData.turns.filter(turn => turn.isPending),
-                                    completedTurns: turnData.turns.filter(turn => turn.isCompleted)
+                                    isToday,
+                                    isPrivate: task.isPrivate,
+                                    currentUser: userName
+                                });
+                            } else {
+                                // For individual tasks in All Tasks, check total completions across all users
+                                // Use the global completedCount which includes all completions + pending
+                                const totalCompletionsToday = turnData.completedCount;
+                                
+                                // Calculate total required completions for all assigned users
+                                const allAssignedUsers = task.users || [];
+                                const totalRequiredCompletions = allAssignedUsers.length * turnData.requiredTimes;
+                                
+                                // Task can be completed if not all required completions are done
+                                canFinish = totalCompletionsToday < totalRequiredCompletions;
+                                
+                                console.log("🔍 loadAllTasks: Individual task button visibility check", {
+                                    taskTitle: task.title,
+                                    totalCompletionsToday,
+                                    totalRequiredCompletions,
+                                    allAssignedUsers,
+                                    requiredTimes: turnData.requiredTimes,
+                                    canFinish,
+                                    completedCount: turnData.completedCount,
+                                    isToday,
+                                    isPrivate: task.isPrivate,
+                                    currentUser: userName
                                 });
                             }
                         }
@@ -1146,10 +1188,20 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
         let tasks = [];
 
         try {
-            const res = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
+            // Add random parameter to ensure fresh data after task completion
+            const cacheBuster = `t=${Date.now()}&r=${Math.random()}`;
+            const res = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&${cacheBuster}`, { 
+                cache: "no-store",
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Failed to fetch tasks");
             tasks = data.tasks || [];
+            console.log("🔍 loadUserTasks: Fetched fresh task data", { taskCount: tasks.length, cacheBuster });
 
             console.log("loadUserTasks tasks:", tasks.map(t => ({
                 title: t.title,
@@ -1233,34 +1285,35 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
                     }
 
                     if (isRotation) {
-                        const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
-                        if (activeTurn) {
-                            const nextTurnIndex = (activeTurn.index + 1) % task.users.length;
-                            const nextUser = turnData.turns.find(t => t.index === nextTurnIndex)?.user || task.users[nextTurnIndex] || "—";
-                            taskHTML += `Current Turn: ${activeTurn.user}<br>Next: ${nextUser}<br>`;
-                        } else {
+                        // Check if all required turns are completed for today
+                        const totalCompletionsToday = turnData.completedCount;
+                        const totalRequiredCompletions = turnData.requiredTimes;
+                        
+                        if (totalCompletionsToday >= totalRequiredCompletions) {
                             taskHTML += `<span style="color: green;">Turn: All done!</span><br>`;
+                        } else {
+                            const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
+                            if (activeTurn) {
+                                const nextTurnIndex = (activeTurn.index + 1) % task.users.length;
+                                const nextUser = turnData.turns.find(t => t.index === nextTurnIndex)?.user || task.users[nextTurnIndex] || "—";
+                                taskHTML += `Current Turn: ${activeTurn.user}<br>Next: ${nextUser}<br>`;
+                            } else {
+                                taskHTML += `<span style="color: orange;">Turn: Pending review</span><br>`;
+                            }
                         }
                     }
 
                     taskHTML += `Buzz Points: ${task.reward || 0} 🍯 (goes to completer)<br>`;
                     
                     // Show progress for the current user vs. total task progress
-                    const totalCompleted = turnData.turns.reduce((sum, turn) => sum + (turn.isCompleted || turn.isPending ? 1 : 0), 0);
-                    const totalRequired = turnData.requiredTimes * task.users.length;
+                    // Use the global completedCount which includes all completions + pending (including cross-completions)
+                    const totalCompletionsToday = turnData.completedCount;
+                    const totalRequired = isRotation ? turnData.requiredTimes : (turnData.requiredTimes * task.users.length);
                     
-                    console.log("🔍 loadUserTasks: My Tasks completion debug", {
-                        taskTitle: task.title,
-                        userTotal,
-                        userRequiredTimes,
-                        totalCompleted,
-                        totalRequired,
-                        turnData: turnData.turns,
-                        isCompleted
-                    });
+
                     
                     taskHTML += `Your Progress: ${userTotal}/${userRequiredTimes}<br>`;
-                    taskHTML += `Total Progress: ${totalCompleted}/${totalRequired}<br>`;
+                    taskHTML += `Total Progress: ${totalCompletionsToday}/${totalRequired}<br>`;
 
                     taskDiv.innerHTML = taskHTML;
 
@@ -1274,14 +1327,37 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
                             canFinish = false;
                         } else {
                             if (isRotation) {
-                                // For rotation tasks, anyone can complete if there's an active turn
-                                const activeTurn = turnData.turns.find(turn => !turn.isCompleted && !turn.isPending);
-                                canFinish = !!activeTurn;
+                                // For rotation tasks, check if all required completions are done
+                                const totalCompletionsToday = turnData.completedCount;
+                                const totalRequiredCompletions = turnData.requiredTimes;
+                                canFinish = totalCompletionsToday < totalRequiredCompletions;
+                                
+                                console.log("🔍 loadUserTasks: Rotation task button visibility check", {
+                                    taskTitle: task.title,
+                                    totalCompletionsToday,
+                                    totalRequiredCompletions,
+                                    canFinish,
+                                    isToday,
+                                    currentUser: userName
+                                });
                             } else {
-                                // For individual tasks, check if there are still incomplete instances
-                                const totalCompleted = turnData.turns.reduce((sum, turn) => sum + (turn.isCompleted || turn.isPending ? 1 : 0), 0);
-                                const totalRequired = turnData.requiredTimes * task.users.length;
-                                canFinish = totalCompleted < totalRequired;
+                                // For individual tasks, check total completions across all users (including cross-completions)
+                                const totalCompletionsToday = turnData.completedCount;
+                                const allAssignedUsers = task.users || [];
+                                const totalRequiredCompletions = allAssignedUsers.length * turnData.requiredTimes;
+                                canFinish = totalCompletionsToday < totalRequiredCompletions;
+                                
+                                console.log("🔍 loadUserTasks: Individual task button visibility check", {
+                                    taskTitle: task.title,
+                                    totalCompletionsToday,
+                                    totalRequiredCompletions,
+                                    allAssignedUsers,
+                                    requiredTimes: turnData.requiredTimes,
+                                    canFinish,
+                                    completedCount: turnData.completedCount,
+                                    isToday,
+                                    currentUser: userName
+                                });
                             }
                         }
                     }
@@ -1455,11 +1531,7 @@ async function finishAsNeededTask(userName, task, selectedDate) {
     }
     
     try {
-        console.log("🔍 finishAsNeededTask: Task completion by:", {
-            taskTitle: task.title,
-            completer: userName,
-            isPrivate: task.isPrivate
-        });
+
         
         const response = await fetch("https://beemazing1.onrender.com/api/complete-as-needed-task", {
             method: "POST",
@@ -1489,8 +1561,15 @@ async function finishAsNeededTask(userName, task, selectedDate) {
         // Show success popup and trigger honey rain
         triggerHoneyRain(task.reward || 0);
         
-        // Reload user tasks to reflect changes
-        loadUserTasks(userName, selectedDate);
+        // Reload the correct tab to reflect changes
+        const myTasksTab = document.getElementById("myTasks");
+        const allTasksTab = document.getElementById("allTasks");
+        
+        if (!myTasksTab.classList.contains("hidden")) {
+          loadUserTasks(userName, selectedDate);
+        } else if (!allTasksTab.classList.contains("hidden")) {
+          loadAllTasks(userName, selectedDate);
+        }
         loadUserReward(userName);
 
     } catch (error) {
@@ -1877,7 +1956,7 @@ async function finishTask(currentUser, task, selectedDate) {
   button.disabled = true;
 
   console.log("🔍 finishTask: Starting submission", { currentUser, taskTitle: task.title, selectedDate: today, adminEmail });
-  console.log("🔍 finishTask: Task will be completed by:", currentUser, "regardless of original assignment");
+
   
   // Validation
   if (!currentUser) {
@@ -1895,7 +1974,6 @@ async function finishTask(currentUser, task, selectedDate) {
     videoPath = avatarId ? `/BeeMazing-A1/shared/Avatars/Selected/Preview/${avatarId}.mp4` : null;
   } catch (err) {
     // Avatar not available - continue without video preview
-    console.log("🔍 finishTask: Avatar not available for", currentUser, "- skipping video preview");
   }
 
   // Show video overlay if videoPath exists
@@ -1922,11 +2000,7 @@ async function finishTask(currentUser, task, selectedDate) {
   document.body.appendChild(popup);
 
   try {
-    console.log("🔍 finishTask: Task completion by:", {
-      taskTitle: task.title,
-      completer: currentUser,
-      isPrivate: task.isPrivate
-    });
+
     
     const response = await fetch("https://beemazing1.onrender.com/api/complete-task", {
       method: "POST",
@@ -2002,7 +2076,34 @@ async function finishTask(currentUser, task, selectedDate) {
 
     setTimeout(() => {
       popup.remove();
-      loadUserTasks(currentUser, today); // Full refresh to ensure consistency
+      // Refresh the currently active tab
+      const myTasksTab = document.getElementById("myTasks");
+      const allTasksTab = document.getElementById("allTasks");
+      
+      console.log("🔍 finishTask: Refreshing tabs after completion", {
+        myTasksHidden: myTasksTab.classList.contains("hidden"),
+        allTasksHidden: allTasksTab.classList.contains("hidden"),
+        taskTitle: task.title
+      });
+      
+      if (!myTasksTab.classList.contains("hidden")) {
+        console.log("🔍 finishTask: Refreshing My Tasks");
+        // Force refresh with cache busting to ensure fresh data
+        setTimeout(() => {
+          loadUserTasks(currentUser, today);
+        }, 100);
+      } else if (!allTasksTab.classList.contains("hidden")) {
+          console.log("🔍 finishTask: Refreshing All Tasks");
+          console.log("🔍 finishTask: Refreshing All Tasks with params", { 
+              currentUser, 
+              today, 
+              completedTask: task.title 
+          });
+          // Force refresh with cache busting to ensure fresh data
+          setTimeout(() => {
+            loadAllTasks(currentUser, today);
+          }, 100);
+      }
     }, 2000);
   } catch (err) {
     console.error("🔥 finishTask: Error submitting task", {
