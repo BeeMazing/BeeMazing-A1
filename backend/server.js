@@ -1593,6 +1593,14 @@ app.put("/api/tasks/future", async (req, res) => {
       
       console.log(`🔍 BACKEND: Final result: ${relatedTasks.length} tasks ended, ${newTasksCreated} new tasks created`);
       console.log(`🔍 BACKEND: New task titles:`, newTasks.map(t => t.title));
+      console.log(`🔍 BACKEND: New task details:`, newTasks.map(t => ({ 
+        title: t.title, 
+        date: t.date, 
+        users: t.users,
+        dueTimes: t.dueTimes,
+        occurrence: t.occurrence,
+        totalOccurrences: t.totalOccurrences
+      })));
       
       await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
       

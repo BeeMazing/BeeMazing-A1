@@ -3682,7 +3682,18 @@ if (isOccurrenceEdit) {
     // For future edit, use split date as start
     const originalRange = editTask.date.split(" to ");
     const originalEnd = originalRange[1] || "3000-01-01";
-    dateValue = `${splitDate} to ${originalEnd}`;
+    
+    // If original task ends on or before split date, extend new tasks indefinitely
+    const splitDateObj = new Date(splitDate);
+    const originalEndObj = new Date(originalEnd);
+    
+    if (originalEndObj <= splitDateObj) {
+        // Extend indefinitely for recurring tasks
+        dateValue = `${splitDate} to 3000-01-01`;
+    } else {
+        // Use original end date
+        dateValue = `${splitDate} to ${originalEnd}`;
+    }
 } else if (repeat === "One Time") {
     dateValue = `${singleDate} to ${singleDate}`;
 } else if (repeat === "Occasional") {
@@ -3848,61 +3859,92 @@ if (!originalUser) {
                            confirm(`⚠️ SAFETY CHECK ⚠️\n\nYou are about to REDUCE Times per Day from ${originalTimesPerDay} to ${currentTimesPerDayField}.\n\nThis will DELETE ALL future occurrences and recreate them.\n\nAre you sure you want to continue?`);
         
         if (shouldDelete) {
-            // DECREASED: Delete all future occurrences and recreate
-            console.log("🔧 User CONFIRMED decrease of Times per Day field - using delete and recreate approach");
+            // DECREASED: End existing tasks and create new ones
+            console.log("🔧 User CONFIRMED decrease of Times per Day field - ending existing tasks and creating new ones");
             
-            // Import working deletion function for future dates
-            const deleteAllFutureOccurrences = async function(originalTitle, fromDate) {
+            // Function to end existing tasks at split date
+            const endTasksAtSplitDate = async function(originalTitle, fromDate) {
                 const adminEmail = localStorage.getItem("currentAdminEmail");
-                console.log("🗑️ Deleting all future occurrences for:", { adminEmail, originalTitle, fromDate });
+                console.log("🗑️ Ending existing tasks at split date:", { adminEmail, originalTitle, fromDate });
                 
                 try {
                     const response = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
                     if (!response.ok) throw new Error("Failed to fetch tasks");
                     
                     const result = await response.json();
+                    
+                    // Calculate the day before split date
+                    const splitDateObj = new Date(fromDate);
+                    const dayBeforeSplit = new Date(splitDateObj);
+                    dayBeforeSplit.setDate(dayBeforeSplit.getDate() - 1);
+                    const dayBeforeSplitStr = dayBeforeSplit.toISOString().split("T")[0];
+                    
                     const relatedTasks = result.tasks.filter(t => {
-                        const taskStartDate = new Date(t.date.split(" to ")[0]);
+                        const taskRange = t.date.split(" to ");
+                        const taskEndDate = new Date(taskRange[1] || "3000-01-01");
                         const fromDateObj = new Date(fromDate);
-                        return (t.originalTitle === originalTitle || t.title.startsWith(originalTitle + " - ")) &&
-                               taskStartDate >= fromDateObj;
+                        
+                        // Task is related if it matches the originalTitle
+                        const isRelatedTask = t.originalTitle === originalTitle || t.title.startsWith(originalTitle + " - ");
+                        
+                        // Task needs updating if it extends beyond the split date
+                        const extendsBeyondSplitDate = taskEndDate >= fromDateObj;
+                        
+                        return isRelatedTask && extendsBeyondSplitDate;
                     });
                     
-                    console.log("🗑️ Found future tasks to delete:", relatedTasks.length);
-                    let deletedCount = 0;
+                    console.log("🗑️ Found tasks that extend beyond split date:", relatedTasks.length);
                     
+                    // Update the end date to day before split
+                    let updatedCount = 0;
                     for (const task of relatedTasks) {
                         try {
-                            const startDate = task.date.split(" to ")[0];
-                            const deleteUrl = `https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&title=${encodeURIComponent(task.title)}&date=${encodeURIComponent(startDate)}`;
+                            const taskRange = task.date.split(" to ");
+                            const newEndDate = dayBeforeSplitStr;
                             
-                            const deleteResponse = await fetch(deleteUrl, {
-                                method: "DELETE",
-                                headers: { "Content-Type": "application/json" }
-                            });
-                            
-                            if (deleteResponse.ok) {
-                                deletedCount++;
-                                console.log("🗑️ Deleted future:", task.title);
+                            // Only update if the task actually needs to be shortened
+                            if (new Date(taskRange[1] || "3000-01-01") > new Date(dayBeforeSplitStr)) {
+                                const updatedTask = {
+                                    ...task,
+                                    date: `${taskRange[0]} to ${newEndDate}`
+                                };
+                                
+                                const updateResponse = await fetch("https://beemazing1.onrender.com/api/tasks", {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        adminEmail: adminEmail,
+                                        task: updatedTask,
+                                        originalTitle: task.title,
+                                        originalDate: task.date
+                                    })
+                                });
+                                
+                                if (updateResponse.ok) {
+                                    updatedCount++;
+                                    console.log("🗑️ Updated task end date:", task.title, "now ends on", newEndDate);
+                                } else {
+                                    console.error("🗑️ Failed to update task:", task.title);
+                                }
                             }
                         } catch (err) {
-                            console.error("🗑️ Failed to delete future:", task.title, err);
+                            console.error("🗑️ Failed to update task:", task.title, err);
                         }
                     }
                     
-                    console.log(`🗑️ Deleted ${deletedCount}/${relatedTasks.length} future tasks`);
-                    return deletedCount;
+                    console.log(`🗑️ Updated ${updatedCount}/${relatedTasks.length} tasks to end before split date`);
+                    return updatedCount;
                 } catch (error) {
-                    console.error("🗑️ Delete future occurrences failed:", error);
+                    console.error("🗑️ Update future occurrences failed:", error);
                     throw error;
                 }
             };
             
-            // Delete all future occurrences
-            await deleteAllFutureOccurrences(originalTitle, splitDate);
+            // End existing tasks at split date
+            await endTasksAtSplitDate(originalTitle, splitDate);
             
-            // Wait for deletion to process
-            console.log("🔧 Waiting for future deletion to process...");
+            // Wait for updates to process
+            console.log("🔧 Waiting for task updates to process...");
             await new Promise(resolve => setTimeout(resolve, 2000));
             
             // Create new future occurrences
@@ -3928,24 +3970,28 @@ if (!originalUser) {
                 }
             }
             
-            alert(`✅ Future occurrences updated successfully!\n\nReduced from ${originalTimesPerDay} to ${currentTimesPerDayField} occurrences\nCreated: ${savedCount} new future occurrences`);
+            alert(`✅ Future occurrences updated successfully!\n\nReduced from ${originalTimesPerDay} to ${currentTimesPerDayField} occurrences\nUpdated existing tasks and created: ${savedCount} new future occurrences`);
             
         } else {
-            // INCREASED, SAME, or just changing other properties: Use existing future edit API
+            // INCREASED, SAME, or user cancelled: Use backend Edit Future API
             if (currentTimesPerDayField < originalTimesPerDay) {
-                console.log("🔧 User CANCELLED deletion - using safe API instead");
+                console.log("🔧 User CANCELLED deletion - using backend Edit Future API");
             } else {
-                console.log("🔧 Times per Day unchanged or increased - using existing API");
+                console.log("🔧 Times per Day unchanged or increased - using backend Edit Future API");
             }
-            console.log("🔧 No deletion needed - just updating properties");
+            console.log("🔧 Using backend Edit Future API for proper splitting");
+            console.log("🔧 DEBUG: tasksToSave array:", tasksToSave.map(t => ({ title: t.title, date: t.date })));
             
             let originalTitleToUse = editTask.title;
             let modifiedTaskToSend = tasksToSave[0];
             
-            // Check if this is an occurrence group edit
-            if (editTask.isOccurrenceGroupEdit && editTask.originalTitle) {
+            // Check if this is an occurrence group edit (existing or new)
+            const isOccurrenceGroupEdit = (editTask.isOccurrenceGroupEdit && editTask.originalTitle) || 
+                                        (tasksToSave.length > 1);
+            
+            if (isOccurrenceGroupEdit) {
                 console.log("🚀 FRONTEND: Setting up occurrence group edit");
-                originalTitleToUse = editTask.originalTitle;
+                originalTitleToUse = editTask.originalTitle || editTask.title;
                 
                 // For multiple daily occurrences, send all generated tasks
                 if (tasksToSave.length > 1) {
@@ -3998,8 +4044,14 @@ if (!originalUser) {
                 body: JSON.stringify(requestBody)
             });
             
+            console.log("🔧 DEBUG: Backend response status:", response.status);
             const data = await response.json();
-            if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
+            console.log("🔧 DEBUG: Backend response data:", data);
+            
+            if (!response.ok) {
+                console.error("🔧 DEBUG: Backend error:", data);
+                throw new Error(data.error || `HTTP error ${response.status}`);
+            }
             alert(editTask.isOccurrenceGroupEdit ? "All future occurrences updated successfully!" : "Future occurrences updated successfully!");
         }
         
