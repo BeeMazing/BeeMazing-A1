@@ -1545,6 +1545,12 @@ app.put("/api/tasks/future", async (req, res) => {
       // For Edit Future, always split tasks regardless of count change
       console.log(`🔍 BACKEND: Splitting tasks from ${splitDate} forward (${relatedTasks.length} → ${newOccurrenceCount} occurrences)`);
       
+      // Capture the original end date BEFORE modifying existing tasks
+      const firstOriginalTask = relatedTasks[0]?.task;
+      const firstOriginalRange = firstOriginalTask.date.split(" to ");
+      const originalEndDate = firstOriginalRange[1] || "3000-01-01";
+      console.log(`🔍 BACKEND: Original end date captured: ${originalEndDate}`);
+      
       // Calculate the day before split date
       const splitDateObj = new Date(splitDate);
       splitDateObj.setDate(splitDateObj.getDate() - 1);
@@ -1565,8 +1571,6 @@ app.put("/api/tasks/future", async (req, res) => {
       console.log(`🔍 BACKEND: About to create ${newOccurrenceCount} new tasks`);
       for (let i = 0; i < newOccurrenceCount; i++) {
         const originalTask = relatedTasks[0]?.task; // Use first task as template
-        const originalRange = originalTask.date.split(" to ");
-        const originalEnd = originalRange[1] || "3000-01-01";
         
         // Find the corresponding new occurrence data
         let occurrenceData = modifiedTask;
@@ -1588,7 +1592,8 @@ app.put("/api/tasks/future", async (req, res) => {
         };
         
         // Ensure correct date range is set AFTER occurrenceData to prevent override
-        newTask.date = `${splitDate} to ${originalEnd}`;
+        newTask.date = `${splitDate} to ${originalEndDate}`;
+        console.log(`🔍 BACKEND: Set new task date: ${newTask.date}`);
         
         // Remove the isOccurrenceGroupEdit flag and allOccurrences from the new task
         delete newTask.isOccurrenceGroupEdit;
