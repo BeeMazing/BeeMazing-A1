@@ -133,7 +133,226 @@
             }
         };
 
-        console.log("🔧 Debug functions loaded! Run debugTaskStatus('Multiple') to check current status");
+        // Enhanced cleanup function for duplicate tasks
+        window.debugCleanupDuplicates = async function() {
+            console.log("🧹 COMPREHENSIVE DUPLICATE CLEANUP STARTED! 🧹");
+            
+            const currentAdmin = localStorage.getItem("currentAdminEmail");
+            if (!currentAdmin) {
+                console.error("🔧 No admin email found!");
+                return;
+            }
+            
+            try {
+                // Fetch all tasks
+                const fetchResponse = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(currentAdmin)}&t=${Date.now()}`, { cache: "no-store" });
+                if (!fetchResponse.ok) {
+                    throw new Error("Failed to fetch tasks for cleanup");
+                }
+                
+                const result = await fetchResponse.json();
+                const allTasks = result.tasks;
+                
+                console.log("🧹 Total tasks found:", allTasks.length);
+                
+                // Group tasks by title and date
+                const taskGroups = {};
+                allTasks.forEach(task => {
+                    const key = `${task.title}|${task.date}`;
+                    if (!taskGroups[key]) {
+                        taskGroups[key] = [];
+                    }
+                    taskGroups[key].push(task);
+                });
+                
+                // Find duplicates
+                const duplicateGroups = Object.entries(taskGroups).filter(([key, tasks]) => tasks.length > 1);
+                console.log("🧹 Found duplicate groups:", duplicateGroups.length);
+                
+                let totalDeleted = 0;
+                
+                // Delete duplicates (keep only the first one)
+                for (const [key, tasks] of duplicateGroups) {
+                    const [title, date] = key.split('|');
+                    console.log(`🧹 Processing duplicates for "${title}" on ${date}: ${tasks.length} copies`);
+                    
+                    // Keep the first task, delete the rest
+                    const tasksToDelete = tasks.slice(1);
+                    
+                    for (const task of tasksToDelete) {
+                        try {
+                            const deleteUrl = `https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(currentAdmin)}&title=${encodeURIComponent(task.title)}&date=${encodeURIComponent(task.date)}`;
+                            
+                            const deleteResponse = await fetch(deleteUrl, {
+                                method: "DELETE",
+                                headers: { "Content-Type": "application/json" }
+                            });
+                            
+                            if (deleteResponse.ok) {
+                                console.log("🧹 Deleted duplicate:", task.title, "on", task.date);
+                                totalDeleted++;
+                            } else {
+                                console.error("🧹 Failed to delete duplicate:", task.title, "Status:", deleteResponse.status);
+                            }
+                        } catch (err) {
+                            console.error("🧹 Exception deleting duplicate:", task.title, err);
+                        }
+                    }
+                }
+                
+                console.log(`🧹 CLEANUP COMPLETE: ${totalDeleted} duplicate tasks deleted`);
+                
+                // Verification
+                console.log("🧹 Verifying cleanup...");
+                const verifyResponse = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(currentAdmin)}&t=${Date.now()}`, { cache: "no-store" });
+                if (verifyResponse.ok) {
+                    const verifyResult = await verifyResponse.json();
+                    console.log("🧹 Tasks remaining after cleanup:", verifyResult.tasks.length);
+                    
+                    // Check for remaining duplicates
+                    const remainingGroups = {};
+                    verifyResult.tasks.forEach(task => {
+                        const key = `${task.title}|${task.date}`;
+                        if (!remainingGroups[key]) {
+                            remainingGroups[key] = [];
+                        }
+                        remainingGroups[key].push(task);
+                    });
+                    
+                    const remainingDuplicates = Object.entries(remainingGroups).filter(([key, tasks]) => tasks.length > 1);
+                    if (remainingDuplicates.length > 0) {
+                        console.warn("🧹 WARNING: Still have duplicates:", remainingDuplicates.length, "groups");
+                    } else {
+                        console.log("🧹 SUCCESS: No duplicates remaining!");
+                    }
+                }
+                
+            } catch (error) {
+                console.error("🧹 Cleanup failed:", error);
+            }
+        };
+
+        // Delete all tasks with specific pattern
+        window.debugDeleteAllMatching = async function(titlePattern) {
+            console.log("🗑️ MASS DELETION STARTED! 🗑️");
+            console.log("🗑️ Deleting all tasks matching pattern:", titlePattern);
+            
+            const currentAdmin = localStorage.getItem("currentAdminEmail");
+            if (!currentAdmin) {
+                console.error("🔧 No admin email found!");
+                return;
+            }
+            
+            try {
+                // Fetch all tasks
+                const fetchResponse = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(currentAdmin)}&t=${Date.now()}`, { cache: "no-store" });
+                if (!fetchResponse.ok) {
+                    throw new Error("Failed to fetch tasks for mass deletion");
+                }
+                
+                const result = await fetchResponse.json();
+                const tasksToDelete = result.tasks.filter(t => 
+                    t.title.toLowerCase().includes(titlePattern.toLowerCase()) ||
+                    (t.originalTitle && t.originalTitle.toLowerCase().includes(titlePattern.toLowerCase()))
+                );
+                
+                console.log("🗑️ Found tasks to delete:", tasksToDelete.length);
+                console.log("🗑️ Tasks:", tasksToDelete.map(t => ({title: t.title, date: t.date})));
+                
+                if (tasksToDelete.length === 0) {
+                    console.log("🗑️ No matching tasks found");
+                    return;
+                }
+                
+                let deletedCount = 0;
+                for (const task of tasksToDelete) {
+                    try {
+                        const deleteUrl = `https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(currentAdmin)}&title=${encodeURIComponent(task.title)}&date=${encodeURIComponent(task.date)}`;
+                        
+                        const deleteResponse = await fetch(deleteUrl, {
+                            method: "DELETE",
+                            headers: { "Content-Type": "application/json" }
+                        });
+                        
+                        if (deleteResponse.ok) {
+                            console.log("🗑️ Deleted:", task.title, "on", task.date);
+                            deletedCount++;
+                        } else {
+                            console.error("🗑️ Failed to delete:", task.title, "Status:", deleteResponse.status);
+                        }
+                    } catch (err) {
+                        console.error("🗑️ Exception deleting:", task.title, err);
+                    }
+                }
+                
+                console.log(`🗑️ MASS DELETION COMPLETE: ${deletedCount}/${tasksToDelete.length} tasks deleted`);
+                
+            } catch (error) {
+                console.error("🗑️ Mass deletion failed:", error);
+            }
+        };
+
+        // Debug function to check why tasks aren't displaying
+        window.debugDisplayIssue = async function() {
+            console.log("🔍 DEBUGGING DISPLAY ISSUE 🔍");
+            
+            const currentAdmin = localStorage.getItem("currentAdminEmail");
+            if (!currentAdmin) {
+                console.error("🔧 No admin email found!");
+                return;
+            }
+            
+            try {
+                // Get current date being viewed
+                const currentDate = new Date().toISOString().split('T')[0];
+                console.log("🔍 Current date:", currentDate);
+                
+                // Fetch all tasks
+                const fetchResponse = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(currentAdmin)}&t=${Date.now()}`, { cache: "no-store" });
+                if (!fetchResponse.ok) {
+                    throw new Error("Failed to fetch tasks");
+                }
+                
+                const result = await fetchResponse.json();
+                console.log("🔍 Total tasks in database:", result.tasks.length);
+                
+                // Check what tasks should show for today
+                const todayTasks = result.tasks.filter(task => {
+                    const taskDate = task.date;
+                    console.log(`🔍 Task "${task.title}" - Date: ${taskDate}, Today: ${currentDate}, Match: ${taskDate === currentDate}`);
+                    return taskDate === currentDate;
+                });
+                
+                console.log("🔍 Tasks that should show today:", todayTasks.length);
+                todayTasks.forEach(task => {
+                    console.log(`  - ${task.title} (${task.date})`);
+                });
+                
+                // Check what's actually rendered in the DOM
+                const taskElements = document.querySelectorAll('.task-item, .task-card, [data-task]');
+                console.log("🔍 Task elements found in DOM:", taskElements.length);
+                
+                // Show all unique dates in the database
+                const allDates = [...new Set(result.tasks.map(t => t.date))].sort();
+                console.log("🔍 All dates with tasks:", allDates);
+                
+                // Show tasks by date
+                allDates.forEach(date => {
+                    const tasksForDate = result.tasks.filter(t => t.date === date);
+                    console.log(`🔍 ${date}: ${tasksForDate.length} tasks - ${tasksForDate.map(t => t.title).join(', ')}`);
+                });
+                
+            } catch (error) {
+                console.error("🔍 Display debug failed:", error);
+            }
+        };
+
+        console.log("🔧 Debug functions loaded! Available functions:");
+        console.log("  - debugTaskStatus('Multiple') - Check current tasks");
+        console.log("  - debugDeleteOccurrences(originalTitle, dateRange) - Test deletion");
+        console.log("  - debugCleanupDuplicates() - Remove duplicate tasks");
+        console.log("  - debugDeleteAllMatching('pattern') - Delete all tasks matching pattern");
+        console.log("  - debugDisplayIssue() - Check why tasks aren't showing in UI");
     </script>
     <style>
         * {
@@ -1177,6 +1396,9 @@ window.debugTaskStatus = async function(titlePattern) {
 console.log("🔧 Added debugging functions:");
 console.log("  - debugTaskStatus(titlePattern) - Check current tasks");
 console.log("  - debugDeleteOccurrences(originalTitle, dateRange) - Test deletion");
+console.log("  - debugCleanupDuplicates() - Remove duplicate tasks");
+console.log("  - debugDeleteAllMatching('pattern') - Delete all tasks matching pattern");
+console.log("  - debugDisplayIssue() - Check why tasks aren't showing in UI");
 
 // fallback if still missing
 if (!admin || !user) {

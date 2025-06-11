@@ -1585,8 +1585,10 @@ app.put("/api/tasks/future", async (req, res) => {
           ...occurrenceData, // Override with specific occurrence data
           originalTitle: originalTitle,
           totalOccurrences: newOccurrenceCount,
-          date: `${splitDate} to ${originalEnd}` // Ensure correct date range (set after occurrenceData)
         };
+        
+        // Ensure correct date range is set AFTER occurrenceData to prevent override
+        newTask.date = `${splitDate} to ${originalEnd}`;
         
         // Remove the isOccurrenceGroupEdit flag and allOccurrences from the new task
         delete newTask.isOccurrenceGroupEdit;
