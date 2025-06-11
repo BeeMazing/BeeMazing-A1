@@ -1546,9 +1546,20 @@ app.put("/api/tasks/future", async (req, res) => {
       console.log(`🔍 BACKEND: Splitting tasks from ${splitDate} forward (${relatedTasks.length} → ${newOccurrenceCount} occurrences)`);
       
       // Capture the original end date BEFORE modifying existing tasks
-      const firstOriginalTask = relatedTasks[0]?.task;
-      const firstOriginalRange = firstOriginalTask.date.split(" to ");
-      const originalEndDate = firstOriginalRange[1] || "3000-01-01";
+      // Find a task that hasn't been split yet (has proper end date like 3000-01-01)
+      let originalEndDate = "3000-01-01"; // Default fallback
+      for (const { task } of relatedTasks) {
+        const taskRange = task.date.split(" to ");
+        const endDate = taskRange[1] || "3000-01-01";
+        // Look for an end date that's not a recent date (indicating it's the original)
+        const endDateObj = new Date(endDate);
+        const currentYear = new Date().getFullYear();
+        if (endDateObj.getFullYear() > currentYear + 10) {
+          originalEndDate = endDate;
+          console.log(`🔍 BACKEND: Found original end date from task "${task.title}": ${originalEndDate}`);
+          break;
+        }
+      }
       console.log(`🔍 BACKEND: Original end date captured: ${originalEndDate}`);
       
       // Calculate the day before split date
