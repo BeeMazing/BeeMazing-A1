@@ -1081,6 +1081,16 @@ async function loadAllTasks(userName, selectedDate = new Date().toLocaleDateStri
                                 const totalCompleted = turnData.turns.reduce((sum, turn) => sum + (turn.isCompleted || turn.isPending ? 1 : 0), 0);
                                 const totalRequired = turnData.requiredTimes * task.users.length;
                                 canFinish = totalCompleted < totalRequired;
+                                
+                                console.log("🔍 loadAllTasks: All Tasks completion debug", {
+                                    taskTitle: task.title,
+                                    totalCompleted,
+                                    totalRequired,
+                                    canFinish,
+                                    turnData: turnData.turns,
+                                    pendingTurns: turnData.turns.filter(turn => turn.isPending),
+                                    completedTurns: turnData.turns.filter(turn => turn.isCompleted)
+                                });
                             }
                         }
                     }
@@ -1237,7 +1247,17 @@ async function loadUserTasks(userName, selectedDate = new Date().toLocaleDateStr
                     
                     // Show progress for the current user vs. total task progress
                     const totalCompleted = turnData.turns.reduce((sum, turn) => sum + (turn.isCompleted || turn.isPending ? 1 : 0), 0);
-                    const totalRequired = isRotation ? turnData.turns.length : (turnData.requiredTimes * task.users.length);
+                    const totalRequired = turnData.requiredTimes * task.users.length;
+                    
+                    console.log("🔍 loadUserTasks: My Tasks completion debug", {
+                        taskTitle: task.title,
+                        userTotal,
+                        userRequiredTimes,
+                        totalCompleted,
+                        totalRequired,
+                        turnData: turnData.turns,
+                        isCompleted
+                    });
                     
                     taskHTML += `Your Progress: ${userTotal}/${userRequiredTimes}<br>`;
                     taskHTML += `Total Progress: ${totalCompleted}/${totalRequired}<br>`;

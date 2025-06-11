@@ -2809,6 +2809,24 @@ app.post("/api/complete-task", async (req, res) => {
     const totalRequiredCompletions = allAssignedUsers.length * requiredTimes;
     const totalCompletionsToday = task.completions[normalizedDate].length + (task.pendingCompletions[normalizedDate]?.length || 0);
     
+    const debugInfo = {
+      taskTitle,
+      user,
+      normalizedDate,
+      allAssignedUsers,
+      requiredTimes,
+      totalRequiredCompletions,
+      totalCompletionsToday,
+      completionsArray: task.completions[normalizedDate],
+      pendingArray: task.pendingCompletions[normalizedDate],
+      wouldBlock: totalCompletionsToday >= totalRequiredCompletions
+    };
+    
+    console.log("🔍 /api/complete-task: Completion calculation debug", debugInfo);
+    
+    // Also log to help see in server logs
+    console.log(`🔍 Task "${taskTitle}": ${totalCompletionsToday}/${totalRequiredCompletions} completions (users: ${allAssignedUsers.join(',')}) - ${debugInfo.wouldBlock ? 'BLOCKING' : 'ALLOWING'}`);
+
     // Only block if ALL users have completed their required times
     if (totalCompletionsToday >= totalRequiredCompletions) {
       console.error("🔥 /api/complete-task: Task fully completed by all users", {
