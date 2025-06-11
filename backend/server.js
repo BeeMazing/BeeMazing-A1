@@ -1611,7 +1611,24 @@ app.put("/api/tasks/future", async (req, res) => {
         totalOccurrences: t.totalOccurrences
       })));
       
-      await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
+      console.log(`🔍 BACKEND: Total tasks before DB update: ${tasks.length}`);
+      
+      const updateResult = await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
+      
+      console.log(`🔍 BACKEND: Database update result:`, updateResult);
+      console.log(`🔍 BACKEND: Database update acknowledged: ${updateResult.acknowledged}, modified: ${updateResult.modifiedCount}`);
+      
+      // Verify tasks were saved by re-fetching
+      const verifyAdmin = await admins.findOne({ email: adminEmail });
+      const finalTaskCount = verifyAdmin.tasks.length;
+      const futureTasksCreated = verifyAdmin.tasks.filter(t => 
+        (t.originalTitle === originalTitle || t.title.startsWith(originalTitle + " - ")) &&
+        t.date.includes(splitDate)
+      );
+      
+      console.log(`🔍 BACKEND: Verification - Total tasks in DB: ${finalTaskCount}`);
+      console.log(`🔍 BACKEND: Verification - Future tasks found: ${futureTasksCreated.length}`);
+      console.log(`🔍 BACKEND: Verification - Future task titles:`, futureTasksCreated.map(t => t.title));
       
       console.log(`Occurrence group split successfully: ${relatedTasks.length} original tasks ended, ${newTasksCreated} new tasks created`);
       res.json({ success: true, message: `Occurrence group split successfully (${relatedTasks.length} → ${newOccurrenceCount} tasks)` });
@@ -1664,27 +1681,41 @@ app.put("/api/tasks/future", async (req, res) => {
   }
 });
 
-// In server.js
-app.post("/api/rewards", async (req, res) => {
-  const { adminEmail, user, amount } = req.body;
-  if (!adminEmail || !user || amount === undefined) {
-    return res.status(400).json({ error: "Missing data" });
+// Debug endpoint to view all tasks
+app.get("/api/debug/tasks", async (req, res) => {
+  const { adminEmail } = req.query;
+  if (!adminEmail) {
+    return res.status(400).json({ error: "Missing adminEmail" });
   }
   try {
     const db = await connectDB();
     const admins = db.collection("admins");
     const admin = await admins.findOne({ email: adminEmail });
-    const rewards = admin?.rewards || {};
-    rewards[user] = (rewards[user] || 0) + amount;
-    await admins.updateOne(
-      { email: adminEmail },
-      { $set: { rewards } },
-      { upsert: true },
-    );
-    res.json({ success: true });
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+    const tasks = admin.tasks || [];
+    console.log(`🔍 DEBUG: Found ${tasks.length} total tasks for ${adminEmail}`);
+    res.json({ 
+      success: true, 
+      totalTasks: tasks.length,
+      tasks: tasks.map(t => ({
+        title: t.title,
+        date: t.date,
+        originalTitle: t.originalTitle,
+        occurrence: t.occurrence,
+        totalOccurrences: t.totalOccurrences
+      }))
+    });
   } catch (err) {
-    console.error("Error saving reward:", err);
-    res.status(500).json({ error: "Failed to save reward" });
+    console.error("Error fetching debug tasks:", err);
+    res.status(500).json({ error: "Failed to fetch tasks" });
+  }
+});
+
+// In server.js
+app.post("/api/rewards", async (req, res) => {
+  const { adminEmail, user, amount }ve reward" });
   }
 });
 
