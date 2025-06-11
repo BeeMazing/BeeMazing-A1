@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeeMazing Assign Task - v1.0.3</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <script src="/BeeMazing-A1/redirect-interceptor.js?v=1.0.3"></script>
+    <!-- Cache buster: Force reload v1.0.3 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Assign Task - BeeMazing</title>
+    <script src="/BeeMazing-A1/shared/avatar-system.js"></script>
+    <script src="/BeeMazing-A1/shared/taskrotations.js"></script>
+    <style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    :root {
+        --primary-color: #FFC107; /* bright yellow matching other pages */
+        --secondary-color: #6D4C41;
+        --accent-color: #5D4E41;
+        --light-bg: #FFFFF8;
+        --text-color: #6D4C41; /* brown text matching other pages */
+        --card-bg: #FFFFFF; /* white card backgrounds */
+        --danger-color: #D32F2F;
+        --muted-button: #5D4E41;
+        --hover-accent: #6D4C41;
+        --border-dark: #8D6E63;
+        --selection-border: #8D6E63;
+        --selection-bg: #5D4E41;
+    }
+
+    html, body {
+        height: 100%;
+        width: 100%;
+        overflow-x: hidden;
+        font-family: 'Poppins', Arial, sans-serif;
+        background-color: var(--light-bg);
+        color: var(--text-color);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .header {
+        position: relative;
+        display: flex;
+        justify-content: center; /* Center the title */
+        align-items: center;
+        background: var(--primary-color);
+        padding: 15px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    .close-icon {
+        position: absolute;
+        right: 20px;
+        font-size: 28px;
+        color: #FFFFFF; /* white for close icon */
+        cursor: pointer;
+        transition: transform 0.2s ease;
+        z-index: 10;
+        font-weight: bold;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+
+    .close-icon:hover {
+        transform: scale(1.1);
+        color: #ffcccc;
+    }
+
+    .title {
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--text-color); /* brown text for title */
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .content {
+        padding: 20px;
+        padding-bottom: 110px;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .task-info-card {
+        background-color: rgba(255, 193, 7, 0.1);
+        border: 2px solid var(--primary-color);
+        border-radius: 0.5rem;
+        padding: 0.5rem 1rem;
+        margin-bottom: 20px;
+    }
+
+    .task-info-card h3 {
+        color: var(--text-color);
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .task-info-card p {
+        color: var(--text-color);
+        font-size: 14px;
+        margin: 4px 0;
+    }
+
+    .form-group, .form-group-full {
+        padding: 8px 0;
+        margin-bottom: 12px;
+    }
+
+    .form-group {
+        background-color: rgba(255, 193, 7, 0.1);
+        border: 2px solid var(--primary-color);
+        border-radius: 0.5rem;
+        padding: 1rem;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--text-color);
+        font-size: 16px;
+    }
+
+    input, select, textarea {
+        background: rgba(255, 193, 7, 0.1);
+        color: var(--text-color);
+        border: 2px solid var(--border-dark);
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 16px;
+        width: 100%;
+        box-shadow: 0 4px 8px rgba(109, 76, 65, 0.1);
+        font-family: 'Poppins', Arial, sans-serif;
+    }
+
+    input:focus, select:focus, textarea:focus {
+        border-color: #FFB300;
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.5);
+        outline: none;
+    }
+
+    /* Toggle switch styles */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 28px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: white;
+        border: 2px solid #8D6E63;
+        transition: 0.4s;
+        border-radius: 28px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 4px;
+        bottom: 4px;
+        background-color: #6D4C41;
+        transition: 0.4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .slider {
+        background-color: white;
+        border-color: var(--primary-color);
+    }
+
+    input:checked + .slider:before {
+        background-color: var(--primary-color);
+        transform: translateX(22px);
+    }
+
+    .toggle-group {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: rgba(255, 193, 7, 0.1);
+        border: 2px solid var(--primary-color);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 12px;
+    }
+
+    .toggle-label {
+        color: var(--text-color);
+        font-weight: 600;
+        cursor: pointer;
+        flex: 1;
+        font-size: 16px;
+    }
+
+    .button-row {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        padding: 0 20px 20px;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--light-bg);
+        box-shadow: 0 -4px 10px rgba(109, 76, 65, 0.1);
+    }
+
+    .btn-save {
+        flex: 1;
+        padding: 15px;
+        background: var(--primary-color);
+        color: var(--secondary-color);
+        border: 2px solid var(--secondary-color);
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-save:hover {
+        background: #FFB300;
+    }
+
+    .btn-cancel {
+        flex: 1;
+        padding: 15px;
+        background: var(--muted-button);
+        color: var(--light-bg);
+        border: 2px solid var(--border-dark);
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-cancel:hover {
+        background: var(--hover-accent);
+    }
+
+    .error-message {
+        color: var(--danger-color);
+        font-size: 14px;
+        margin-top: 8px;
+        display: none;
+    }
+
+    .success-message {
+        color: #4CAF50;
+        font-size: 14px;
+        margin-top: 8px;
+        display: none;
+    }
+
+    /* Date styling matching addtasks.html */
+    .date-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 0;
+        background: transparent;
+        border: none;
+    }
+
+    .date-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+        min-height: 40px;
+    }
+
+    .date-label {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-color);
+        min-width: 60px;
+        text-transform: capitalize;
+    }
+
+    .date-display {
+        background: var(--light-bg);
+        border: 2px solid var(--primary-color);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-color);
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+        min-width: 80px;
+        box-shadow: 0 1px 3px rgba(255, 193, 7, 0.1);
+    }
+
+    .date-display:hover {
+        background: rgba(255, 193, 7, 0.15);
+        transform: translateY(-1px);
+        box-shadow: 0 3px 6px rgba(255, 193, 7, 0.2);
+    }
+
+    @media (max-width: 600px) {
+        .content {
+            padding: 15px;
+            padding-bottom: 120px;
+        }
+        
+        .button-row {
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+        }
+        
+        .title {
+            font-size: 20px;
+        }
+        
+        input, select, textarea {
+            font-size: 16px; /* Prevent zoom on iOS */
+        }
+        
+        .date-row {
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+    }
+
+    /* Loading spinner */
+    .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255,255,255,.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 8px;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Reward popup styles */
+    .reward-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--card-bg);
+        border: 2px solid var(--primary-color);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(109, 76, 65, 0.15);
+        z-index: 1000;
+        font-weight: 600;
+        color: var(--text-color);
+        text-align: center;
+        animation: fadeInScale 0.3s ease;
+    }
+
+    @keyframes fadeInScale {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+    }
+
+    /* Flatpickr Custom Styling to match addtasks.html */
+    .flatpickr-calendar {
+        background: var(--light-bg) !important;
+        border: 2px solid var(--primary-color) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.15) !important;
+        font-family: inherit !important;
+    }
+
+    .flatpickr-months {
+        background: var(--light-bg) !important;
+        border-radius: 12px 12px 0 0 !important;
+        border-bottom: 1px solid rgba(255, 193, 7, 0.2) !important;
+        padding: 15px 0 !important;
+    }
+
+    .flatpickr-month {
+        background: transparent !important;
+        color: var(--text-color) !important;
+    }
+
+    .flatpickr-current-month .flatpickr-monthDropdown-months {
+        background: var(--light-bg) !important;
+        color: var(--text-color) !important;
+        border: 1px solid var(--primary-color) !important;
+        border-radius: 6px !important;
+    }
+
+    .flatpickr-current-month input.cur-year {
+        background: var(--light-bg) !important;
+        color: var(--text-color) !important;
+        border: 1px solid var(--primary-color) !important;
+        border-radius: 6px !important;
+    }
+
+    .flatpickr-prev-month, .flatpickr-next-month {
+        color: var(--text-color) !important;
+        border-radius: 6px !important;
+    }
+
+    .flatpickr-prev-month:hover, .flatpickr-next-month:hover {
+        color: var(--primary-color) !important;
+        background: rgba(255, 193, 7, 0.1) !important;
+    }
+
+    .flatpickr-weekdays {
+        background: var(--light-bg) !important;
+        color: var(--text-color) !important;
+        border-bottom: 1px solid rgba(255, 193, 7, 0.2) !important;
+        padding: 0 !important;
+    }
+
+    .flatpickr-weekday {
+        background: transparent !important;
+        color: var(--text-color) !important;
+        font-weight: 600 !important;
+        opacity: 0.8 !important;
+        font-size: 13px !important;
+        height: 30px !important;
+        line-height: 30px !important;
+        text-align: center !important;
+        padding: 0 !important;
+    }
+
+    .flatpickr-days {
+        background: var(--light-bg) !important;
+        padding: 0 !important;
+    }
+
+    .flatpickr-day {
+        background: var(--light-bg) !important;
+        color: var(--text-color) !important;
+        border: 1px solid transparent !important;
+        border-radius: 6px !important;
+        margin: 0 !important;
+        height: 30px !important;
+        line-height: 30px !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+    }
+
+    .flatpickr-day:hover {
+        background: rgba(255, 193, 7, 0.15) !important;
+        border-color: var(--primary-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    .flatpickr-day.selected {
+        background: var(--primary-color) !important;
+        border-color: var(--primary-color) !important;
+        color: var(--secondary-color) !important;
+        font-weight: 600 !important;
+    }
+
+    .flatpickr-day.today {
+        border-color: var(--primary-color) !important;
+        background: rgba(255, 193, 7, 0.1) !important;
+        color: var(--text-color) !important;
+        font-weight: 600 !important;
+    }
+
+    .flatpickr-day.today.selected {
+        background: var(--primary-color) !important;
+        color: var(--secondary-color) !important;
+    }
+
+    /* Avatar Selection Styles - matching addtasks.html */
+    .avatar-selection {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+        margin-bottom: 20px;
+        align-items: center;
+    }
+
+    .avatar-option {
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .avatar-option:hover .user-avatar {
+        transform: scale(1.1);
+    }
+
+    .avatar-option.selected .user-avatar {
+        box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.9);
+        border: 3px solid var(--primary-color);
+        transform: scale(1.1);
+        filter: brightness(1.2);
+    }
+
+    .avatar-option .user-avatar {
+        margin-right: 0;
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .avatar-checkmark {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        width: 20px;
+        height: 20px;
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .user-selection-label {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 8px;
+    }
+
+    /* Custom styling for native date picker calendar */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        background: var(--primary-color);
+        border-radius: 4px;
+        padding: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator:hover {
+        background: #e6a636;
+        transform: scale(1.1);
+    }
+
+    /* Style the date input when it appears */
+    input[type="date"]:focus {
+        outline: none;
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 3px rgba(251, 183, 64, 0.3) !important;
+    }
+
+    /* Custom date picker popup styling (WebKit browsers) */
+    input[type="date"]::-webkit-datetime-edit {
+        color: var(--text-color);
+        background: var(--light-bg);
+    }
+
+    input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+        background: var(--light-bg);
+        color: var(--text-color);
+    }
+
+    input[type="date"]::-webkit-datetime-edit-text {
+        color: var(--text-color);
+        padding: 0 1px;
+    }
+
+    input[type="date"]::-webkit-datetime-edit-month-field,
+    input[type="date"]::-webkit-datetime-edit-day-field,
+    input[type="date"]::-webkit-datetime-edit-year-field {
+        color: var(--text-color);
+        background: var(--light-bg);
+        border: none;
+        padding: 2px;
+    }
+
+    input[type="date"]::-webkit-datetime-edit-month-field:focus,
+    input[type="date"]::-webkit-datetime-edit-day-field:focus,
+    input[type="date"]::-webkit-datetime-edit-year-field:focus {
+        background: rgba(251, 183, 64, 0.1);
+        color: var(--primary-color);
+        outline: none;
+    }
+
+    /* Additional styling for the temporary date input */
+    .temp-date-input {
+        font-family: 'Poppins', Arial, sans-serif !important;
+        font-weight: 600 !important;
+        color: var(--text-color) !important;
+        background: var(--light-bg) !important;
+        border: 2px solid var(--primary-color) !important;
+        border-radius: 8px !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .temp-date-input:focus {
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 3px rgba(251, 183, 64, 0.3) !important;
+        outline: none !important;
+    }
+
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">Assign Occasional Task</h1>
+        <span class="close-icon" onclick="handleCancel()">✕</span>
+    </div>
+
+    <div class="content">
+        <!-- Task Information Card -->
+        <div class="task-info-card">
+            <h3 id="originalTaskTitle">Loading task...</h3>
+        </div>
+
+        <form id="assignmentForm">
+            <!-- Add Description Button -->
+            <div class="form-group-full" style="margin-bottom: 12px;">
+                <button type="button" id="addDescriptionBtn" style="background: none; border: none; color: var(--primary-color); font-size: 16px; font-weight: 600; cursor: pointer; padding: 8px 0; text-decoration: none;" onclick="toggleDescriptionField()">+ Add description</button>
+                <div id="descriptionContainer" style="display: none; margin-top: 10px;">
+                    <input type="text" id="assignmentDescription" placeholder="Enter task description" style="width: 100%; padding: 12px; font-size: 16px; border: 2px solid var(--border-dark); border-radius: 8px; background: rgba(255, 193, 7, 0.1); color: var(--text-color); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" />
+                </div>
+                <div class="error-message" id="descriptionError">Please enter a task description.</div>
+            </div>
+
+            <div class="form-group">
+                <div class="date-group">
+                    <div class="date-row">
+                        <span class="date-label">Date</span>
+                        <div class="date-display" id="dateDisplay">Select Date</div>
+                    </div>
+                </div>
+                <div class="error-message" id="dateError">Please select a date.</div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                <label class="switch">
+                    <input type="checkbox" id="dueTimeToggle">
+                    <span class="slider"></span>
+                </label>
+                <label for="dueTimeToggle" style="color: var(--text-color); font-weight: 600; cursor: pointer; font-size: 16px;">Due Time</label>
+            </div>
+            <div id="dueTimeContainer" style="margin-top: 10px; display: none;"></div>
+
+            <div class="user-selection-label">Assign To:</div>
+            <div class="avatar-selection" id="avatarSelection">
+                <!-- Avatars will be populated here -->
+            </div>
+            <input type="hidden" id="assignmentUser" required />
+            <div class="error-message" id="userError">Please select a user.</div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label class="switch">
+                        <input type="checkbox" id="buzzpointsToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <label style="font-weight: 600; color: var(--text-color);">Buzz Points:</label>
+                </div>
+                <div id="buzzpointsInputContainer" style="display: flex; align-items: center; gap: 6px;">
+                    <button type="button" id="decreaseBuzzpoints" style="width: 32px; height: 32px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">-</button>
+                    <input type="number" id="assignmentPoints" value="10" min="0" max="10000"
+                        style="width: 60px; text-align: center; padding: 8px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); font-size: 16px; color: var(--text-color); font-weight: 500;">
+                    <button type="button" id="increaseBuzzpoints" style="width: 32px; height: 32px; border: 2px solid var(--primary-color); border-radius: 6px; background: var(--light-bg); color: var(--text-color); font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">+</button>
+                    <span style="font-size: 18px; color: var(--primary-color); margin-left: 4px;">🍯</span>
+                </div>
+            </div>
+            <div class="error-message" id="pointsError">Please enter buzz points (1-100).</div>
+
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 12px; margin-bottom: 12px;">
+                <label class="switch">
+                    <input type="checkbox" id="assignmentParentApproval" />
+                    <span class="slider"></span>
+                </label>
+                <label for="assignmentParentApproval" style="color: var(--text-color); font-weight: 600; cursor: pointer; font-size: 16px;">Parent Approval Required</label>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                <label class="switch">
+                    <input type="checkbox" id="assignmentOnTime" />
+                    <span class="slider"></span>
+                </label>
+                <label for="assignmentOnTime" style="color: var(--text-color); font-weight: 600; cursor: pointer; font-size: 16px;">On-time completion important</label>
+            </div>
+
+            <div class="success-message" id="successMessage">Task assigned successfully!</div>
+        </form>
+    </div>
+
+    <div class="button-row">
+        <button type="button" class="btn-cancel" onclick="handleCancel()">Cancel</button>
+        <button type="submit" form="assignmentForm" class="btn-save" id="submitBtn">Assign Task</button>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const adminEmail = urlParams.get('admin');
+        const taskTitle = urlParams.get('task');
+        const userName = urlParams.get('user');
+
+        let currentTask = null;
+        let allUsers = [];
+
+        // Initialize page
+        // Simple date picker fix function
+        window.fixDatePicker = function() {
+            console.log('🔧 Fixing date picker...');
+            const dateInput = document.getElementById('assignmentDate');
+            const dateDisplay = document.getElementById('dateDisplay');
+            
+            if (dateInput && dateDisplay) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.value = today;
+                updateDateDisplay(today);
+                
+                console.log('✅ Date picker fixed with today\'s date:', today);
+                return true;
+            } else {
+                console.error('❌ Date picker elements not found');
+                return false;
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!adminEmail || !taskTitle) {
+                alert('Missing required parameters');
+                window.history.back();
+                return;
+            }
+
+            // Initialize avatar system first
+            if (window.avatarSystem) {
+                await window.avatarSystem.initialize(adminEmail);
+                console.log('✅ Avatar system initialized for:', adminEmail);
+            }
+
+            await loadTaskDetails();
+            await loadUsers();
+            setupForm();
+            setupDatePicker();
+            setupDueTimeToggle();
+            
+            // Verify date picker is working
+            setTimeout(() => {
+                const dateInput = document.getElementById('assignmentDate');
+                if (!dateInput.value) {
+                    console.warn('⚠️ Date picker not initialized, running fix...');
+                    window.fixDatePicker();
+                }
+            }, 500);
+        });
+
+        // Load task details
+        async function loadTaskDetails() {
+            try {
+                const response = await fetch(`https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
+                    cache: "no-store"
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || "Failed to load tasks");
+
+                const allTasks = data.tasks || [];
+                currentTask = allTasks.find(task => task.title === taskTitle && task.repeat === "Occasional");
+
+                if (!currentTask) {
+                    throw new Error("Occasional task not found");
+                }
+
+                // Update task info display
+                document.getElementById('originalTaskTitle').textContent = currentTask.title;
+
+            } catch (error) {
+                console.error("Error loading task details:", error);
+                alert(`Error: ${error.message}`);
+                window.history.back();
+            }
+        }
+
+        // Load users for assignment with avatar display
+        async function loadUsers() {
+            try {
+                const response = await fetch(`https://beemazing1.onrender.com/get-users?adminEmail=${encodeURIComponent(adminEmail)}`);
+                const data = await response.json();
+                if (data.success) {
+                    allUsers = data.users || [];
+                    
+                    // Initialize avatar system
+                    if (window.avatarSystem) {
+                        await window.avatarSystem.initialize(adminEmail);
+                    }
+                    
+                    setupAvatarSelection();
+                } else {
+                    throw new Error("Failed to load users");
+                }
+            } catch (error) {
+                console.error("Error loading users:", error);
+                alert(`Error loading users: ${error.message}`);
+            }
+        }
+
+        // Setup avatar-based user selection
+        function setupAvatarSelection() {
+            const avatarContainer = document.getElementById('avatarSelection');
+            const hiddenInput = document.getElementById('assignmentUser');
+            
+            avatarContainer.innerHTML = '';
+            
+            // Determine default user based on rotation
+            let defaultUser = null;
+            if (currentTask && currentTask.users && currentTask.users.length > 0) {
+                const nextUserIndex = (currentTask.currentUserIndex || 0) % currentTask.users.length;
+                defaultUser = currentTask.users[nextUserIndex];
+                console.log('🔄 Default user from rotation:', defaultUser);
+            }
+            
+            // Create avatar options for all users
+            allUsers.forEach(user => {
+                const avatarOption = document.createElement('div');
+                avatarOption.className = 'avatar-option';
+                avatarOption.dataset.user = user;
+                
+                // Generate avatar HTML
+                if (window.avatarSystem) {
+                    const avatarHTML = window.avatarSystem.generateAvatarHTML(user, 40, 'assignment-avatar');
+                    avatarOption.innerHTML = avatarHTML;
+                    
+                    // Ensure consistent styling for avatar generated by avatar system
+                    const avatar = avatarOption.querySelector('.user-avatar');
+                    if (avatar) {
+                        avatar.title = user; // Tooltip with username
+                        avatar.style.width = "40px";
+                        avatar.style.height = "40px";
+                        avatar.style.borderRadius = "50%";
+                        avatar.style.display = "flex";
+                        avatar.style.alignItems = "center";
+                        avatar.style.justifyContent = "center";
+                        avatar.style.fontSize = "14px";
+                        avatar.style.transition = "all 0.3s ease";
+                    }
+                } else {
+                    // Fallback if avatar system not available
+                    avatarOption.innerHTML = `<div class="user-avatar" style="width: 40px; height: 40px; background: #FBB740; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 14px;" title="${user}">${user.charAt(0)}</div>`;
+                }
+                
+                // Add click handler
+                avatarOption.addEventListener('click', function() {
+                    selectUser(user);
+                });
+                
+                // Add hover tooltip
+                avatarOption.title = `Assign to ${user}`;
+                
+                avatarContainer.appendChild(avatarOption);
+                
+                // Select default user
+                if (user === defaultUser) {
+                    selectUser(user);
+                }
+            });
+            
+            // If no default user from rotation, select first user
+            if (!defaultUser && allUsers.length > 0) {
+                selectUser(allUsers[0]);
+            }
+        }
+
+        // Select a user by updating visual selection and hidden input
+        function selectUser(username) {
+            console.log('👤 Selecting user:', username);
+            
+            // Update visual selection - remove all previous selections
+            document.querySelectorAll('.avatar-option').forEach(option => {
+                option.classList.remove('selected');
+                const avatar = option.querySelector('.user-avatar');
+                if (avatar) {
+                    avatar.style.boxShadow = '';
+                    avatar.style.border = '';
+                    avatar.style.transform = '';
+                    avatar.style.filter = '';
+                }
+                // Remove existing checkmarks
+                const existingCheckmark = option.querySelector('.avatar-checkmark');
+                if (existingCheckmark) {
+                    existingCheckmark.remove();
+                }
+            });
+            
+            // Select the new user
+            const selectedOption = document.querySelector(`[data-user="${username}"]`);
+            if (selectedOption) {
+                selectedOption.classList.add('selected');
+                
+                // Add checkmark overlay
+                const checkmark = document.createElement('div');
+                checkmark.className = 'avatar-checkmark';
+                checkmark.innerHTML = '✓';
+                selectedOption.appendChild(checkmark);
+            }
+            
+            // Update hidden input
+            document.getElementById('assignmentUser').value = username;
+            
+            // Clear any error message
+            document.getElementById('userError').style.display = 'none';
+        }
+
+        // Setup form with default values
+        function setupForm() {
+            if (!currentTask) return;
+
+            // Pre-fill form (but not description since it starts hidden)
+            document.getElementById('assignmentPoints').value = currentTask.reward || currentTask.buzzPoints || 10;
+            document.getElementById('assignmentParentApproval').checked = currentTask.parentApproval || false;
+            document.getElementById('assignmentOnTime').checked = currentTask.onTimeCompletion || false;
+
+            // Setup buzz points functionality
+            setupBuzzPointsControls();
+
+            // Date is now set in setupDatePicker()
+        }
+
+        // Setup buzz points toggle and stepper controls
+        function setupBuzzPointsControls() {
+            const buzzpointsToggle = document.getElementById("buzzpointsToggle");
+            const buzzpointsContainer = document.getElementById("buzzpointsInputContainer");
+            const pointsInput = document.getElementById("assignmentPoints");
+            const decreaseBtn = document.getElementById("decreaseBuzzpoints");
+            const increaseBtn = document.getElementById("increaseBuzzpoints");
+
+            // Toggle functionality
+            buzzpointsToggle.addEventListener("change", () => {
+                if (buzzpointsToggle.checked) {
+                    buzzpointsContainer.style.display = "flex";
+                    if (!pointsInput.value || pointsInput.value === "0") {
+                        pointsInput.value = "10";
+                    }
+                } else {
+                    buzzpointsContainer.style.display = "none";
+                }
+            });
+
+            // Decrease button
+            decreaseBtn.addEventListener("click", () => {
+                let currentValue = parseInt(pointsInput.value) || 0;
+                let decreaseAmount = currentValue >= 100 ? 50 : (currentValue >= 50 ? 10 : 5);
+                pointsInput.value = Math.max(0, currentValue - decreaseAmount);
+            });
+
+            // Increase button
+            increaseBtn.addEventListener("click", () => {
+                let currentValue = parseInt(pointsInput.value) || 0;
+                let increaseAmount = currentValue >= 100 ? 50 : (currentValue >= 50 ? 10 : 5);
+                pointsInput.value = Math.min(10000, currentValue + increaseAmount);
+            });
+
+            // Add hover effects for stepper buttons
+            [decreaseBtn, increaseBtn].forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.background = 'var(--primary-color)';
+                    btn.style.color = 'var(--secondary-color)';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.background = 'var(--light-bg)';
+                    btn.style.color = 'var(--text-color)';
+                });
+            });
+        }
+
+        // Toggle description field visibility
+        function toggleDescriptionField() {
+            const container = document.getElementById('descriptionContainer');
+            const btn = document.getElementById('addDescriptionBtn');
+            const input = document.getElementById('assignmentDescription');
+            
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                btn.textContent = '- Remove description';
+                input.focus();
+            } else {
+                container.style.display = 'none';
+                btn.textContent = '+ Add description';
+                input.value = currentTask ? currentTask.title : '';
+            }
+        }
+
+        // Setup date picker functionality with simple approach
+        function setupDatePicker() {
+            const dateDisplay = document.getElementById('dateDisplay');
+            
+            // Set today's date as default
+            const today = new Date().toISOString().split('T')[0];
+            dateDisplay.dataset.selectedDate = today;
+            updateDateDisplay(today);
+            
+            console.log('📅 Date picker initialized with today\'s date:', today);
+            
+            // Add click handler that replaces display with date input temporarily
+            dateDisplay.addEventListener('click', function() {
+                console.log('📅 Date display clicked, opening date picker');
+                
+                // Create date input to replace the display temporarily
+                const dateInput = document.createElement('input');
+                dateInput.type = 'date';
+                dateInput.value = dateDisplay.dataset.selectedDate || today;
+                dateInput.className = dateDisplay.className + ' temp-date-input';
+                dateInput.style.cssText = dateDisplay.style.cssText;
+                dateInput.style.background = 'var(--light-bg)';
+                dateInput.style.border = '2px solid var(--primary-color)';
+                dateInput.style.borderRadius = '8px';
+                dateInput.style.padding = '8px 12px';
+                dateInput.style.fontSize = '14px';
+                dateInput.style.fontWeight = '600';
+                dateInput.style.color = 'var(--text-color)';
+                dateInput.style.fontFamily = "'Poppins', Arial, sans-serif";
+                dateInput.style.width = dateDisplay.offsetWidth + 'px';
+                
+                // Replace display with input
+                dateDisplay.style.display = 'none';
+                dateDisplay.parentNode.insertBefore(dateInput, dateDisplay);
+                
+                // Focus the input to open picker
+                dateInput.focus();
+                if (dateInput.showPicker) {
+                    try {
+                        dateInput.showPicker();
+                    } catch (e) {
+                        console.log('showPicker not supported');
+                    }
+                }
+                
+                // Handle date selection
+                dateInput.addEventListener('change', function() {
+                    const selectedDate = this.value;
+                    console.log('📅 Date changed to:', selectedDate);
+                    dateDisplay.dataset.selectedDate = selectedDate;
+                    updateDateDisplay(selectedDate);
+                    
+                    // Restore display and remove input
+                    dateDisplay.style.display = '';
+                    this.parentNode.removeChild(this);
+                });
+                
+                // Handle click outside or blur
+                dateInput.addEventListener('blur', function() {
+                    setTimeout(() => {
+                        if (this.parentNode) {
+                            dateDisplay.style.display = '';
+                            this.parentNode.removeChild(this);
+                        }
+                    }, 100);
+                });
+            });
+            
+            // Add visual feedback for date display
+            dateDisplay.style.cursor = 'pointer';
+            dateDisplay.title = 'Click to select a different date';
+            
+            console.log('📅 Date picker setup complete. Click the date to change it.');
+        }
+
+        // Setup due time toggle functionality
+        function setupDueTimeToggle() {
+            const dueTimeToggle = document.getElementById('dueTimeToggle');
+            const dueTimeContainer = document.getElementById('dueTimeContainer');
+
+            dueTimeToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    dueTimeContainer.style.display = 'block';
+                    updateDueTimeDisplay();
+                } else {
+                    dueTimeContainer.style.display = 'none';
+                }
+            });
+        }
+
+        // Update due time display
+        function updateDueTimeDisplay() {
+            const dueTimeContainer = document.getElementById('dueTimeContainer');
+            dueTimeContainer.innerHTML = '';
+
+            const timeWrapper = document.createElement('div');
+            timeWrapper.style.marginBottom = '10px';
+
+            const dueTimeInput = document.createElement('input');
+            dueTimeInput.type = 'time';
+            dueTimeInput.id = 'assignmentTime';
+            dueTimeInput.style.padding = '12px';
+            dueTimeInput.style.border = '2px solid var(--border-dark)';
+            dueTimeInput.style.borderRadius = '8px';
+            dueTimeInput.style.background = 'rgba(255, 193, 7, 0.1)';
+            dueTimeInput.style.color = 'var(--text-color)';
+            dueTimeInput.style.fontSize = '16px';
+            dueTimeInput.style.width = '100%';
+            dueTimeInput.style.boxShadow = '0 4px 8px rgba(109, 76, 65, 0.1)';
+            dueTimeInput.style.fontFamily = "'Poppins', Arial, sans-serif";
+
+            // Add focus effects
+            dueTimeInput.addEventListener('focus', () => {
+                dueTimeInput.style.borderColor = '#FFB300';
+                dueTimeInput.style.boxShadow = '0 4px 12px rgba(255, 193, 7, 0.5)';
+            });
+
+            dueTimeInput.addEventListener('blur', () => {
+                dueTimeInput.style.borderColor = 'var(--border-dark)';
+                dueTimeInput.style.boxShadow = '0 4px 8px rgba(109, 76, 65, 0.1)';
+            });
+
+            timeWrapper.appendChild(dueTimeInput);
+            dueTimeContainer.appendChild(timeWrapper);
+        }
+
+        // Update date display text
+        function updateDateDisplay(dateValue) {
+            const dateDisplay = document.getElementById('dateDisplay');
+            if (dateValue) {
+                const date = new Date(dateValue + 'T00:00:00'); // Prevent timezone issues
+                const today = new Date();
+                const isToday = dateValue === today.toISOString().split('T')[0];
+                
+                let displayText = date.toLocaleDateString(undefined, {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric"
+                });
+                
+                if (isToday) {
+                    displayText += " (Today)";
+                    dateDisplay.style.color = "#FBB740";
+                    dateDisplay.style.fontWeight = "600";
+                } else {
+                    dateDisplay.style.color = "";
+                    dateDisplay.style.fontWeight = "";
+                }
+                
+                dateDisplay.textContent = displayText;
+                console.log('📅 Date display updated:', displayText);
+            } else {
+                dateDisplay.textContent = "Select Date";
+                dateDisplay.style.color = "";
+                dateDisplay.style.fontWeight = "";
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('assignmentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.textContent;
+            submitBtn.innerHTML = '<span class="loading"></span>Assigning...';
+            submitBtn.disabled = true;
+
+            try {
+                await submitAssignment();
+            } catch (error) {
+                console.error('Assignment error:', error);
+                alert(`Error: ${error.message}`);
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Validate form
+        function validateForm() {
+            let isValid = true;
+                
+            const description = document.getElementById('assignmentDescription').value.trim();
+            const dateDisplay = document.getElementById('dateDisplay');
+            const date = dateDisplay.dataset.selectedDate;
+            const user = document.getElementById('assignmentUser').value;
+            const buzzpointsToggle = document.getElementById('buzzpointsToggle');
+            const points = buzzpointsToggle.checked ? parseInt(document.getElementById('assignmentPoints').value) : 0;
+
+            // Clear previous error messages
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+
+            // Description is optional now, use original task title if empty
+            const finalDescription = description || (currentTask ? currentTask.title : '');
+            if (!finalDescription) {
+                document.getElementById('descriptionError').style.display = 'block';
+                isValid = false;
+            }
+
+            if (!date) {
+                document.getElementById('dateError').style.display = 'block';
+                isValid = false;
+            }
+
+            if (!user) {
+                document.getElementById('userError').style.display = 'block';
+                isValid = false;
+            }
+
+            if (buzzpointsToggle.checked && (!points || points < 1 || points > 10000)) {
+                document.getElementById('pointsError').style.display = 'block';
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // Submit assignment
+        async function submitAssignment() {
+            const description = document.getElementById('assignmentDescription').value.trim();
+            const dateDisplay = document.getElementById('dateDisplay');
+            const date = dateDisplay.dataset.selectedDate;
+            const dueTimeToggle = document.getElementById('dueTimeToggle');
+            const timeInput = document.getElementById('assignmentTime');
+            const time = dueTimeToggle.checked && timeInput ? timeInput.value : '';
+            const user = document.getElementById('assignmentUser').value;
+            const buzzpointsToggle = document.getElementById('buzzpointsToggle');
+            const points = buzzpointsToggle.checked ? parseInt(document.getElementById('assignmentPoints').value) : 0;
+            const parentApproval = document.getElementById('assignmentParentApproval').checked;
+            const onTime = document.getElementById('assignmentOnTime').checked;
+
+            // Use description if provided, otherwise use original task title
+            const finalTitle = description || (currentTask ? currentTask.title : '');
+
+            const taskData = {
+                title: finalTitle,
+                date: date,
+                dueTimes: time ? [time] : undefined,
+                users: [user],
+                reward: points,
+                parentApproval: parentApproval,
+                onTimeCompletion: onTime,
+                repeat: "One Time",
+                settings: "Individual",
+                originalOccasionalTask: currentTask.title,
+                taskType: "assigned_occasional",
+                asNeeded: false,
+                activated: true
+            };
+
+            const response = await fetch("https://beemazing1.onrender.com/api/tasks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    adminEmail: adminEmail,
+                    task: taskData
+                })
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Failed to assign task");
+
+            // Show success message
+            const successMessage = document.getElementById('successMessage');
+            successMessage.style.display = 'block';
+            successMessage.scrollIntoView({ behavior: 'smooth' });
+
+            // Show success popup
+            const popup = document.createElement('div');
+            popup.className = 'reward-popup';
+            popup.textContent = `Task assigned to ${user} successfully!`;
+            document.body.appendChild(popup);
+
+            setTimeout(() => {
+                popup.remove();
+                // Redirect back to admin page
+                const returnUrl = `/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName || 'Admin')}`;
+                window.location.href = returnUrl;
+            }, 2000);
+        }
+
+        // Handle cancel/back
+        function handleCancel() {
+            const returnUrl = `/BeeMazing-A1/mobile/2-UserProfiles/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName || 'Admin')}`;
+            window.location.href = returnUrl;
+        }
+
+        // Handle browser back button
+        window.addEventListener('beforeunload', function(e) {
+            // Only show warning if form has been modified
+            const form = document.getElementById('assignmentForm');
+            const formData = new FormData(form);
+            let hasChanges = false;
+            
+            for (let [key, value] of formData.entries()) {
+                if (value && value.trim() !== '') {
+                    hasChanges = true;
+                    break;
+                }
+            }
+            
+            if (hasChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    </script>
+</body>
+</html>
