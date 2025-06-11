@@ -4154,7 +4154,12 @@ if (!originalUser) {
             let taskToSend = tasksToSave[0];
             
             // Check if this is an occurrence group edit
-            if (editTask.isOccurrenceGroupEdit || (editTask.originalTitle && editTask.totalOccurrences > 1)) {
+            const isOccurrenceGroupEdit = editTask.isOccurrenceGroupEdit || 
+                                        (editTask.originalTitle && editTask.totalOccurrences > 1) ||
+                                        (originalTimesPerDay > 1) ||
+                                        (tasksToSave.length > 1);
+            
+            if (isOccurrenceGroupEdit) {
                 console.log("🚀 FRONTEND: Setting up entire occurrence group edit");
                 
                 // For multiple daily occurrences, send all generated tasks
@@ -4170,17 +4175,12 @@ if (!originalUser) {
                     taskToSend = {
                         ...tasksToSave[0],
                         isOccurrenceGroupEdit: true,
-                        totalOccurrences: editTask.totalOccurrences || 1
+                        totalOccurrences: editTask.totalOccurrences || originalTimesPerDay || 1
                     };
                 }
-                
-                console.log("🚀 FRONTEND: Entire group edit data:", {
-                    originalTitle: originalTitle,
-                    totalOccurrences: taskToSend.totalOccurrences,
-                    isOccurrenceGroupEdit: true,
-                    allOccurrences: taskToSend.allOccurrences ? taskToSend.allOccurrences.length : 0
-                });
             }
+            
+            const titleToUse = isOccurrenceGroupEdit ? originalTitle : taskTitle;
             
             const response = await fetch("https://beemazing1.onrender.com/api/tasks", {
                 method: "PUT",
@@ -4188,15 +4188,14 @@ if (!originalUser) {
                 body: JSON.stringify({
                     adminEmail: currentAdmin,
                     task: taskToSend,
-                    originalTitle: originalTitle,
+                    originalTitle: titleToUse,
                     originalDate: taskDate
                 })
             });
             
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || `HTTP error ${response.status}`);
-            alert(editTask.isOccurrenceGroupEdit || (editTask.originalTitle && editTask.totalOccurrences > 1) ? 
-                  "All occurrences updated successfully!" : "Task updated successfully!");
+            alert(isOccurrenceGroupEdit ? "All occurrences updated successfully!" : "Task updated successfully!");
         }
         
     } else {

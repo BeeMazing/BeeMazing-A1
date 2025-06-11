@@ -3233,9 +3233,11 @@ async function showTaskDetails(task) {
                                 users: [...new Set(allOccurrences.flatMap(occ => occ.users || []))],
                                 // Collect all due times from all occurrences
                                 dueTimes: allOccurrences.map(occ => occ.dueTimes && occ.dueTimes[0] ? occ.dueTimes[0] : '').filter(time => time),
-                                // Remove occurrence-specific fields
-                                occurrence: undefined,
-                                originalTitle: undefined
+                                // Preserve occurrence group metadata for editing
+                                originalTitle: originalTitle,
+                                isOccurrenceGroupEdit: true,
+                                // Remove individual occurrence number
+                                occurrence: undefined
                             };
                             
                             console.log("🔍 Reconstructed original task data:", JSON.stringify(taskDataToEdit, null, 2));

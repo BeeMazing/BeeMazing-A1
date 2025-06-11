@@ -1146,7 +1146,8 @@ app.put("/api/tasks", async (req, res) => {
     console.log("PUT /api/tasks - Received:", {
       originalTitle,
       originalDate,
-      newTask: { title: task.title, date: task.date, users: task.users },
+      isOccurrenceGroupEdit: task.isOccurrenceGroupEdit,
+      totalOccurrences: task.totalOccurrences
     });
     const db = await connectDB();
     const admins = db.collection("admins");
@@ -1159,7 +1160,6 @@ app.put("/api/tasks", async (req, res) => {
     // Check if this is an occurrence group edit
     if (task.isOccurrenceGroupEdit && task.totalOccurrences > 1) {
       console.log(`🔍 BACKEND: Editing entire occurrence group for: ${originalTitle} with ${task.totalOccurrences} occurrences`);
-      console.log(`🔍 BACKEND: Request body:`, JSON.stringify({ originalTitle, originalDate, task }, null, 2));
       
       // Find all related occurrence tasks
       const relatedTasks = [];
@@ -1171,7 +1171,7 @@ app.put("/api/tasks", async (req, res) => {
                           (existingTask.title && existingTask.title.startsWith(originalTitle + " - "))) &&
                          existingTask.date === originalDate;
         
-        console.log(`🔍 BACKEND: Checking task "${existingTask.title}" - originalTitle: ${existingTask.originalTitle}, date: ${existingTask.date}, isRelated: ${isRelated}`);
+
         
         if (isRelated) {
           relatedTasks.push({ task: existingTask, index: i });
@@ -1299,11 +1299,12 @@ app.put("/api/tasks", async (req, res) => {
       
     } else {
       // Regular single task edit
+      
       const taskIndex = tasks.findIndex(
         (t) => t.title === originalTitle && t.date === originalDate,
       );
       if (taskIndex === -1) {
-        console.log(`Task not found: ${originalTitle}, ${originalDate}`);
+        console.log(`❌ Task not found: ${originalTitle}, ${originalDate}`);
         return res.status(404).json({ error: "Task not found" });
       }
       console.log("Before update:", tasks[taskIndex]);
