@@ -1025,40 +1025,48 @@ app.get("/api/tasks", async (req, res) => {
       const mergedTask = { ...task };
       mergedTask.completions = mergedTask.completions || {};
 
-      // Merge pendingCompletions into completions with isPending flag
+      // First, mark all existing completions as approved (isPending: false)
+      Object.keys(mergedTask.completions).forEach((date) => {
+        mergedTask.completions[date] = mergedTask.completions[date].map(
+          (c) => ({
+            ...c,
+            isPending: false,
+          }),
+        );
+      });
+
+      // Then merge pendingCompletions into completions with isPending flag
       if (mergedTask.pendingCompletions) {
         Object.keys(mergedTask.pendingCompletions).forEach((date) => {
+          console.log(
+            `🔍 Merging data for task "${mergedTask.title}" on ${date}:`,
+            {
+              existingCompletions: mergedTask.completions[date] || [],
+              pendingCompletions: mergedTask.pendingCompletions[date] || [],
+            },
+          );
+
           if (!mergedTask.completions[date]) {
             mergedTask.completions[date] = [];
           }
-
-          // Add approved completions (isPending: false)
-          const approvedCompletions = (mergedTask.completions[date] || [])
-            .filter((c) => typeof c.isPending === "undefined" || !c.isPending)
-            .map((c) => ({ ...c, isPending: false }));
 
           // Add pending completions (isPending: true)
           const pendingCompletions = (
             mergedTask.pendingCompletions[date] || []
           ).map((c) => ({ ...c, isPending: true }));
 
-          // Combine both arrays
+          // Only add pending completions, don't duplicate approved ones
           mergedTask.completions[date] = [
-            ...approvedCompletions,
+            ...mergedTask.completions[date],
             ...pendingCompletions,
           ];
+
+          console.log(
+            `🔍 Final merged completions for "${mergedTask.title}" on ${date}:`,
+            mergedTask.completions[date],
+          );
         });
       }
-
-      // Also add any existing completions that weren't merged
-      Object.keys(mergedTask.completions).forEach((date) => {
-        mergedTask.completions[date] = mergedTask.completions[date].map(
-          (c) => ({
-            ...c,
-            isPending: typeof c.isPending !== "undefined" ? c.isPending : false,
-          }),
-        );
-      });
 
       return mergedTask;
     });
