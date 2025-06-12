@@ -54,8 +54,6 @@ app.post("/login", async (req, res) => {
   res.json({ success: true, message: "Login successful" });
 });
 
-
-
 // login.html //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ✅ SET ADMIN PASSWORD
@@ -175,12 +173,10 @@ app.post("/change-admin-password", async (req, res) => {
   const { email, currentPassword, newPassword } = req.body;
 
   if (!email || !currentPassword || !newPassword) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "Missing email, current password, or new password",
-      });
+    return res.status(400).json({
+      success: false,
+      message: "Missing email, current password, or new password",
+    });
   }
 
   try {
@@ -290,7 +286,9 @@ app.post("/api/user-id-mapping", async (req, res) => {
   const { adminEmail, userIdMap } = req.body;
 
   if (!adminEmail || !userIdMap) {
-    return res.status(400).json({ success: false, message: "Missing adminEmail or userIdMap" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing adminEmail or userIdMap" });
   }
 
   try {
@@ -300,20 +298,22 @@ app.post("/api/user-id-mapping", async (req, res) => {
     // Store the user ID mapping
     await adminUsers.updateOne(
       { email: adminEmail },
-      { 
-        $set: { 
+      {
+        $set: {
           userIdMap: userIdMap,
-          userIdMapCreated: new Date().toISOString()
-        } 
+          userIdMapCreated: new Date().toISOString(),
+        },
       },
-      { upsert: true }
+      { upsert: true },
     );
 
     console.log(`✅ Saved user ID mapping for ${adminEmail}:`, userIdMap);
     res.json({ success: true });
   } catch (err) {
     console.error("🔥 Error in /api/user-id-mapping:", err);
-    res.status(500).json({ success: false, message: "Failed to save user ID mapping" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to save user ID mapping" });
   }
 });
 
@@ -322,7 +322,9 @@ app.get("/api/user-id-mapping", async (req, res) => {
   const { adminEmail } = req.query;
 
   if (!adminEmail) {
-    return res.status(400).json({ success: false, message: "Missing adminEmail" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing adminEmail" });
   }
 
   try {
@@ -332,14 +334,16 @@ app.get("/api/user-id-mapping", async (req, res) => {
     const adminDoc = await adminUsers.findOne({ email: adminEmail });
     const userIdMap = adminDoc?.userIdMap || {};
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       userIdMap: userIdMap,
-      created: adminDoc?.userIdMapCreated
+      created: adminDoc?.userIdMapCreated,
     });
   } catch (err) {
     console.error("🔥 Error in GET /api/user-id-mapping:", err);
-    res.status(500).json({ success: false, message: "Failed to retrieve user ID mapping" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to retrieve user ID mapping" });
   }
 });
 
@@ -348,7 +352,10 @@ app.post("/rename-user", async (req, res) => {
   const { adminEmail, oldName, newName } = req.body;
 
   if (!adminEmail || !oldName || !newName) {
-    return res.status(400).json({ success: false, message: "Missing adminEmail, oldName, or newName" });
+    return res.status(400).json({
+      success: false,
+      message: "Missing adminEmail, oldName, or newName",
+    });
   }
 
   try {
@@ -357,12 +364,16 @@ app.post("/rename-user", async (req, res) => {
 
     const adminDoc = await adminUsers.findOne({ email: adminEmail });
     if (!adminDoc) {
-      return res.status(404).json({ success: false, message: "Admin not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Admin not found" });
     }
 
     // Update users array
-    const updatedUsers = adminDoc.users.map(user => user === oldName ? newName : user);
-    
+    const updatedUsers = adminDoc.users.map((user) =>
+      user === oldName ? newName : user,
+    );
+
     // Update permissions object
     const updatedPermissions = { ...adminDoc.permissions };
     if (updatedPermissions[oldName]) {
@@ -384,12 +395,14 @@ app.post("/rename-user", async (req, res) => {
         $set: {
           users: updatedUsers,
           permissions: updatedPermissions,
-          avatars: updatedAvatars
-        }
-      }
+          avatars: updatedAvatars,
+        },
+      },
     );
 
-    console.log(`✅ Renamed user: "${oldName}" → "${newName}" for admin ${adminEmail}`);
+    console.log(
+      `✅ Renamed user: "${oldName}" → "${newName}" for admin ${adminEmail}`,
+    );
     res.json({ success: true });
   } catch (err) {
     console.error("🔥 Error in /rename-user:", err);
@@ -703,15 +716,19 @@ app.post("/test-email", async (req, res) => {
 
 // register.html forgot password ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
 // ✅ Return a claimed reward (restore points and remove from requests)
 app.post("/api/return-reward", async (req, res) => {
   const { adminEmail, user, rewardName, timestamp, rewardCost } = req.body;
 
-  if (!adminEmail || !user || !rewardName || !timestamp || rewardCost === undefined) {
-    return res.status(400).json({ 
-      error: "Missing adminEmail, user, rewardName, timestamp, or rewardCost" 
+  if (
+    !adminEmail ||
+    !user ||
+    !rewardName ||
+    !timestamp ||
+    rewardCost === undefined
+  ) {
+    return res.status(400).json({
+      error: "Missing adminEmail, user, rewardName, timestamp, or rewardCost",
     });
   }
 
@@ -730,10 +747,11 @@ app.post("/api/return-reward", async (req, res) => {
 
     // Find and remove the specific request by timestamp
     const requestIndex = pendingRewardRequests.findIndex(
-      req => req.user === user && 
-             req.rewardName === rewardName && 
-             req.timestamp === parseInt(timestamp) &&
-             req.status === "pending"
+      (req) =>
+        req.user === user &&
+        req.rewardName === rewardName &&
+        req.timestamp === parseInt(timestamp) &&
+        req.status === "pending",
     );
 
     if (requestIndex === -1) {
@@ -749,8 +767,9 @@ app.post("/api/return-reward", async (req, res) => {
     // Remove from reward history or update status
     if (rewardHistory[user]) {
       const historyIndex = rewardHistory[user].findIndex(
-        item => item.rewardName === rewardName && 
-                new Date(item.timestamp).getTime() === parseInt(timestamp)
+        (item) =>
+          item.rewardName === rewardName &&
+          new Date(item.timestamp).getTime() === parseInt(timestamp),
       );
       if (historyIndex !== -1) {
         rewardHistory[user].splice(historyIndex, 1);
@@ -759,31 +778,38 @@ app.post("/api/return-reward", async (req, res) => {
 
     // For one-time rewards, remove user from claimedBy array
     const marketRewards = admin?.marketRewards || [];
-    const marketReward = marketRewards.find(reward => reward.name === rewardName);
-    if (marketReward && marketReward.type === 'oneTime' && marketReward.claimedBy) {
-      marketReward.claimedBy = marketReward.claimedBy.filter(username => username !== user);
+    const marketReward = marketRewards.find(
+      (reward) => reward.name === rewardName,
+    );
+    if (
+      marketReward &&
+      marketReward.type === "oneTime" &&
+      marketReward.claimedBy
+    ) {
+      marketReward.claimedBy = marketReward.claimedBy.filter(
+        (username) => username !== user,
+      );
     }
 
     // Update the database
     await admins.updateOne(
       { email: adminEmail },
-      { 
-        $set: { 
-          rewards, 
-          pendingRewardRequests, 
+      {
+        $set: {
+          rewards,
+          pendingRewardRequests,
           rewardHistory,
-          marketRewards
-        } 
+          marketRewards,
+        },
       },
-      { upsert: true }
+      { upsert: true },
     );
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: `Reward "${rewardName}" returned successfully. ${rewardCost} honey points restored.`,
-      restoredPoints: rewardCost
+      restoredPoints: rewardCost,
     });
-
   } catch (err) {
     console.error("Error returning reward:", err);
     res.status(500).json({ error: "Failed to return reward" });
@@ -795,8 +821,8 @@ app.post("/api/mark-received", async (req, res) => {
   const { adminEmail, user, rewardName, timestamp } = req.body;
 
   if (!adminEmail || !user || !rewardName || !timestamp) {
-    return res.status(400).json({ 
-      error: "Missing adminEmail, user, rewardName, or timestamp" 
+    return res.status(400).json({
+      error: "Missing adminEmail, user, rewardName, or timestamp",
     });
   }
 
@@ -813,22 +839,28 @@ app.post("/api/mark-received", async (req, res) => {
 
     // Find the approved request in reward history
     if (!rewardHistory[user]) {
-      return res.status(404).json({ error: "No reward history found for user" });
+      return res
+        .status(404)
+        .json({ error: "No reward history found for user" });
     }
 
     const historyIndex = rewardHistory[user].findIndex(
-      item => item.rewardName === rewardName && 
-              new Date(item.timestamp).getTime() === parseInt(timestamp) &&
-              item.status === "Approved"
+      (item) =>
+        item.rewardName === rewardName &&
+        new Date(item.timestamp).getTime() === parseInt(timestamp) &&
+        item.status === "Approved",
     );
 
     if (historyIndex === -1) {
-      return res.status(404).json({ error: "Approved request not found in history" });
+      return res
+        .status(404)
+        .json({ error: "Approved request not found in history" });
     }
 
     // Update reward history to "Received" status
     rewardHistory[user][historyIndex].status = "Received";
-    rewardHistory[user][historyIndex].receivedTimestamp = new Date().toISOString();
+    rewardHistory[user][historyIndex].receivedTimestamp =
+      new Date().toISOString();
 
     // Add to userRewards for "Received" section
     const userRewards = admin?.userRewards || {};
@@ -841,20 +873,19 @@ app.post("/api/mark-received", async (req, res) => {
     // Update the database
     await admins.updateOne(
       { email: adminEmail },
-      { 
-        $set: { 
+      {
+        $set: {
           rewardHistory,
-          userRewards
-        } 
+          userRewards,
+        },
       },
-      { upsert: true }
+      { upsert: true },
     );
 
-    res.json({ 
-      success: true, 
-      message: `Reward "${rewardName}" marked as received and moved to history.`
+    res.json({
+      success: true,
+      message: `Reward "${rewardName}" marked as received and moved to history.`,
     });
-
   } catch (err) {
     console.error("Error marking reward as received:", err);
     res.status(500).json({ error: "Failed to mark reward as received" });
@@ -866,8 +897,8 @@ app.post("/api/delete-rejected-reward", async (req, res) => {
   const { adminEmail, user, rewardName, timestamp } = req.body;
 
   if (!adminEmail || !user || !rewardName || !timestamp) {
-    return res.status(400).json({ 
-      error: "Missing adminEmail, user, rewardName, or timestamp" 
+    return res.status(400).json({
+      error: "Missing adminEmail, user, rewardName, or timestamp",
     });
   }
 
@@ -884,22 +915,29 @@ app.post("/api/delete-rejected-reward", async (req, res) => {
 
     // Find the rejected request in reward history
     if (!rewardHistory[user]) {
-      return res.status(404).json({ error: "No reward history found for user" });
+      return res
+        .status(404)
+        .json({ error: "No reward history found for user" });
     }
 
     const historyIndex = rewardHistory[user].findIndex(
-      item => item.rewardName === rewardName && 
-              new Date(item.timestamp).getTime() === parseInt(timestamp) &&
-              (item.status === "Declined" || item.status === "Rejected" || item.status === "Denied")
+      (item) =>
+        item.rewardName === rewardName &&
+        new Date(item.timestamp).getTime() === parseInt(timestamp) &&
+        (item.status === "Declined" ||
+          item.status === "Rejected" ||
+          item.status === "Denied"),
     );
 
     if (historyIndex === -1) {
-      return res.status(404).json({ error: "Rejected request not found in history" });
+      return res
+        .status(404)
+        .json({ error: "Rejected request not found in history" });
     }
 
     // Remove from reward history
     rewardHistory[user].splice(historyIndex, 1);
-    
+
     // Clean up empty user history
     if (rewardHistory[user].length === 0) {
       delete rewardHistory[user];
@@ -908,19 +946,18 @@ app.post("/api/delete-rejected-reward", async (req, res) => {
     // Update the database
     await admins.updateOne(
       { email: adminEmail },
-      { 
-        $set: { 
-          rewardHistory 
-        } 
+      {
+        $set: {
+          rewardHistory,
+        },
       },
-      { upsert: true }
+      { upsert: true },
     );
 
-    res.json({ 
-      success: true, 
-      message: `Rejected reward "${rewardName}" deleted successfully.`
+    res.json({
+      success: true,
+      message: `Rejected reward "${rewardName}" deleted successfully.`,
     });
-
   } catch (err) {
     console.error("Error deleting rejected reward:", err);
     res.status(500).json({ error: "Failed to delete rejected reward" });
@@ -982,44 +1019,50 @@ app.get("/api/tasks", async (req, res) => {
       ":",
       admin?.tasks?.map((t) => ({ title: t.title, users: t.users })),
     ); // Debug
-    
+
     // Merge completions and pendingCompletions for frontend compatibility
-    const tasks = (admin?.tasks || []).map(task => {
+    const tasks = (admin?.tasks || []).map((task) => {
       const mergedTask = { ...task };
       mergedTask.completions = mergedTask.completions || {};
-      
+
       // Merge pendingCompletions into completions with isPending flag
       if (mergedTask.pendingCompletions) {
-        Object.keys(mergedTask.pendingCompletions).forEach(date => {
+        Object.keys(mergedTask.pendingCompletions).forEach((date) => {
           if (!mergedTask.completions[date]) {
             mergedTask.completions[date] = [];
           }
-          
+
           // Add approved completions (isPending: false)
           const approvedCompletions = (mergedTask.completions[date] || [])
-            .filter(c => typeof c.isPending === 'undefined' || !c.isPending)
-            .map(c => ({ ...c, isPending: false }));
-          
+            .filter((c) => typeof c.isPending === "undefined" || !c.isPending)
+            .map((c) => ({ ...c, isPending: false }));
+
           // Add pending completions (isPending: true)
-          const pendingCompletions = (mergedTask.pendingCompletions[date] || [])
-            .map(c => ({ ...c, isPending: true }));
-          
+          const pendingCompletions = (
+            mergedTask.pendingCompletions[date] || []
+          ).map((c) => ({ ...c, isPending: true }));
+
           // Combine both arrays
-          mergedTask.completions[date] = [...approvedCompletions, ...pendingCompletions];
+          mergedTask.completions[date] = [
+            ...approvedCompletions,
+            ...pendingCompletions,
+          ];
         });
       }
-      
+
       // Also add any existing completions that weren't merged
-      Object.keys(mergedTask.completions).forEach(date => {
-        mergedTask.completions[date] = mergedTask.completions[date].map(c => ({
-          ...c,
-          isPending: typeof c.isPending !== 'undefined' ? c.isPending : false
-        }));
+      Object.keys(mergedTask.completions).forEach((date) => {
+        mergedTask.completions[date] = mergedTask.completions[date].map(
+          (c) => ({
+            ...c,
+            isPending: typeof c.isPending !== "undefined" ? c.isPending : false,
+          }),
+        );
       });
-      
+
       return mergedTask;
     });
-    
+
     res.json({ tasks });
   } catch (err) {
     console.error("Error fetching tasks:", err);
@@ -1080,14 +1123,12 @@ app.delete("/api/tasks", async (req, res) => {
   const { adminEmail, title, date } = req.query;
 
   if (!adminEmail || !title) {
-    return res
-      .status(400)
-      .json({ error: "Missing adminEmail or title" });
+    return res.status(400).json({ error: "Missing adminEmail or title" });
   }
 
   try {
     console.log(
-      `Attempting to delete task: adminEmail=${adminEmail}, title=${title}, date=${date || 'no date (as needed)'}`,
+      `Attempting to delete task: adminEmail=${adminEmail}, title=${title}, date=${date || "no date (as needed)"}`,
     );
     const db = await connectDB();
     const admins = db.collection("admins");
@@ -1105,7 +1146,10 @@ app.delete("/api/tasks", async (req, res) => {
         return !(task.title === title && taskStartDate === date);
       }
       // For "as needed" tasks without dates, match only title
-      if (!date && (!task.date || task.asNeeded || task.repeat === "As Needed")) {
+      if (
+        !date &&
+        (!task.date || task.asNeeded || task.repeat === "As Needed")
+      ) {
         return task.title !== title;
       }
       // If date parameter provided but task has no date, or vice versa, don't match
@@ -1117,7 +1161,9 @@ app.delete("/api/tasks", async (req, res) => {
       { $set: { tasks: updatedTasks } },
     );
 
-    console.log(`Task deleted successfully: title=${title}, date=${date || 'no date (as needed)'}`);
+    console.log(
+      `Task deleted successfully: title=${title}, date=${date || "no date (as needed)"}`,
+    );
     res.json({ success: true, message: "Task deleted successfully" });
   } catch (err) {
     console.error(`Error deleting task (title=${title}, date=${date}):`, err);
@@ -1131,11 +1177,9 @@ app.delete("/api/tasks", async (req, res) => {
 app.put("/api/tasks", async (req, res) => {
   const { adminEmail, task, originalTitle, originalDate } = req.body;
   if (!adminEmail || !task || !originalTitle || !originalDate) {
-    return res
-      .status(400)
-      .json({
-        error: "Missing adminEmail, task, originalTitle, or originalDate",
-      });
+    return res.status(400).json({
+      error: "Missing adminEmail, task, originalTitle, or originalDate",
+    });
   }
   if (!task.title || !task.date || !Array.isArray(task.users)) {
     return res
@@ -1147,7 +1191,7 @@ app.put("/api/tasks", async (req, res) => {
       originalTitle,
       originalDate,
       isOccurrenceGroupEdit: task.isOccurrenceGroupEdit,
-      totalOccurrences: task.totalOccurrences
+      totalOccurrences: task.totalOccurrences,
     });
     const db = await connectDB();
     const admins = db.collection("admins");
@@ -1156,47 +1200,62 @@ app.put("/api/tasks", async (req, res) => {
       return res.status(404).json({ error: "Admin not found" });
     }
     const tasks = admin.tasks || [];
-    
+
     // Check if this is an occurrence group edit
     if (task.isOccurrenceGroupEdit && task.totalOccurrences > 1) {
-      console.log(`🔍 BACKEND: Editing entire occurrence group for: ${originalTitle} with ${task.totalOccurrences} occurrences`);
-      
+      console.log(
+        `🔍 BACKEND: Editing entire occurrence group for: ${originalTitle} with ${task.totalOccurrences} occurrences`,
+      );
+
       // Find all related occurrence tasks
       const relatedTasks = [];
       for (let i = 0; i < tasks.length; i++) {
         const existingTask = tasks[i];
-        
-        // Check if this task is part of the occurrence group
-        const isRelated = (existingTask.originalTitle === originalTitle || 
-                          (existingTask.title && existingTask.title.startsWith(originalTitle + " - "))) &&
-                         existingTask.date === originalDate;
-        
 
-        
+        // Check if this task is part of the occurrence group
+        const isRelated =
+          (existingTask.originalTitle === originalTitle ||
+            (existingTask.title &&
+              existingTask.title.startsWith(originalTitle + " - "))) &&
+          existingTask.date === originalDate;
+
         if (isRelated) {
           relatedTasks.push({ task: existingTask, index: i });
         }
       }
-      
-      console.log(`🔍 BACKEND: Found ${relatedTasks.length} related occurrence tasks`);
-      
+
+      console.log(
+        `🔍 BACKEND: Found ${relatedTasks.length} related occurrence tasks`,
+      );
+
       if (relatedTasks.length === 0) {
-        console.log(`❌ BACKEND: No related occurrence tasks found for "${originalTitle}" on ${originalDate}`);
-        return res.status(404).json({ error: "No related occurrence tasks found" });
+        console.log(
+          `❌ BACKEND: No related occurrence tasks found for "${originalTitle}" on ${originalDate}`,
+        );
+        return res
+          .status(404)
+          .json({ error: "No related occurrence tasks found" });
       }
-      
+
       // Determine how many new occurrences we need
-      const hasAllOccurrences = task.allOccurrences && Array.isArray(task.allOccurrences);
-      const newOccurrenceCount = hasAllOccurrences ? task.allOccurrences.length : task.totalOccurrences;
-      
-      console.log(`🔍 BACKEND: Processing ${newOccurrenceCount} occurrences (was ${relatedTasks.length})`);
-      
+      const hasAllOccurrences =
+        task.allOccurrences && Array.isArray(task.allOccurrences);
+      const newOccurrenceCount = hasAllOccurrences
+        ? task.allOccurrences.length
+        : task.totalOccurrences;
+
+      console.log(
+        `🔍 BACKEND: Processing ${newOccurrenceCount} occurrences (was ${relatedTasks.length})`,
+      );
+
       // Check if we need to delete occurrences (count decreased) or just update them
       const needsDeletion = newOccurrenceCount < relatedTasks.length;
-      
+
       if (needsDeletion) {
-        console.log(`🔍 BACKEND: Occurrence count decreased (${relatedTasks.length} → ${newOccurrenceCount}), removing excess tasks`);
-        
+        console.log(
+          `🔍 BACKEND: Occurrence count decreased (${relatedTasks.length} → ${newOccurrenceCount}), removing excess tasks`,
+        );
+
         // Remove excess tasks
         for (let i = newOccurrenceCount; i < relatedTasks.length; i++) {
           const taskToRemove = relatedTasks[i];
@@ -1208,17 +1267,17 @@ app.put("/api/tasks", async (req, res) => {
             }
           }
         }
-        
+
         // Update remaining tasks
         for (let i = 0; i < newOccurrenceCount; i++) {
           const { task: existingTask, index } = relatedTasks[i];
-          
+
           // Find the corresponding new occurrence data
           let occurrenceData = task;
           if (hasAllOccurrences && i < task.allOccurrences.length) {
             occurrenceData = task.allOccurrences[i];
           }
-          
+
           // Update the existing task with new properties
           Object.assign(tasks[index], {
             ...task,
@@ -1226,25 +1285,31 @@ app.put("/api/tasks", async (req, res) => {
             title: existingTask.title, // Keep original occurrence title
             originalTitle: originalTitle,
             occurrence: existingTask.occurrence,
-            totalOccurrences: newOccurrenceCount
+            totalOccurrences: newOccurrenceCount,
           });
-          
+
           // Remove temporary flags
           delete tasks[index].isOccurrenceGroupEdit;
           delete tasks[index].allOccurrences;
         }
-        
       } else {
-        console.log(`🔍 BACKEND: Occurrence count same or increased (${relatedTasks.length} → ${newOccurrenceCount}), updating existing tasks`);
-        
+        console.log(
+          `🔍 BACKEND: Occurrence count same or increased (${relatedTasks.length} → ${newOccurrenceCount}), updating existing tasks`,
+        );
+
         // Update existing tasks
         for (const { task: existingTask, index } of relatedTasks) {
-          const occurrenceIndex = existingTask.occurrence ? existingTask.occurrence - 1 : 0;
+          const occurrenceIndex = existingTask.occurrence
+            ? existingTask.occurrence - 1
+            : 0;
           let occurrenceData = task;
-          if (hasAllOccurrences && occurrenceIndex < task.allOccurrences.length) {
+          if (
+            hasAllOccurrences &&
+            occurrenceIndex < task.allOccurrences.length
+          ) {
             occurrenceData = task.allOccurrences[occurrenceIndex];
           }
-          
+
           // Update the existing task with new properties
           Object.assign(tasks[index], {
             ...task,
@@ -1252,54 +1317,62 @@ app.put("/api/tasks", async (req, res) => {
             title: existingTask.title, // Keep original occurrence title
             originalTitle: originalTitle,
             occurrence: existingTask.occurrence,
-            totalOccurrences: newOccurrenceCount
+            totalOccurrences: newOccurrenceCount,
           });
-          
+
           // Remove temporary flags
           delete tasks[index].isOccurrenceGroupEdit;
           delete tasks[index].allOccurrences;
         }
-        
+
         // Create additional new tasks if count increased
         if (newOccurrenceCount > relatedTasks.length) {
           const tasksToCreate = newOccurrenceCount - relatedTasks.length;
-          console.log(`🔍 BACKEND: Creating ${tasksToCreate} additional occurrence tasks`);
-          
+          console.log(
+            `🔍 BACKEND: Creating ${tasksToCreate} additional occurrence tasks`,
+          );
+
           for (let i = relatedTasks.length; i < newOccurrenceCount; i++) {
             const originalTask = relatedTasks[0]?.task; // Use first task as template
-            
+
             // Find the corresponding new occurrence data
             let occurrenceData = task;
             if (hasAllOccurrences && i < task.allOccurrences.length) {
               occurrenceData = task.allOccurrences[i];
             }
-            
+
             // Create new task for this occurrence
             const newTask = {
               ...task,
               ...occurrenceData, // Override with specific occurrence data
               originalTitle: originalTitle,
-              totalOccurrences: newOccurrenceCount
+              totalOccurrences: newOccurrenceCount,
             };
-            
+
             // Remove temporary flags
             delete newTask.isOccurrenceGroupEdit;
             delete newTask.allOccurrences;
-            
-            console.log(`🔍 BACKEND: Created additional task "${newTask.title}"`);
+
+            console.log(
+              `🔍 BACKEND: Created additional task "${newTask.title}"`,
+            );
             tasks.push(newTask);
           }
         }
       }
-      
+
       await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
-      
-      console.log(`Entire occurrence group updated successfully: ${relatedTasks.length} → ${newOccurrenceCount} tasks`);
-      res.json({ success: true, message: `Occurrence group updated successfully (${newOccurrenceCount} tasks)` });
-      
+
+      console.log(
+        `Entire occurrence group updated successfully: ${relatedTasks.length} → ${newOccurrenceCount} tasks`,
+      );
+      res.json({
+        success: true,
+        message: `Occurrence group updated successfully (${newOccurrenceCount} tasks)`,
+      });
     } else {
       // Regular single task edit
-      
+
       const taskIndex = tasks.findIndex(
         (t) => t.title === originalTitle && t.date === originalDate,
       );
@@ -1373,12 +1446,10 @@ app.delete("/api/tasks/occurrence", async (req, res) => {
       `Error deleting single occurrence (title=${title}, date=${date}):`,
       err,
     );
-    res
-      .status(500)
-      .json({
-        error: "Failed to delete single occurrence",
-        details: err.message,
-      });
+    res.status(500).json({
+      error: "Failed to delete single occurrence",
+      details: err.message,
+    });
   }
 });
 
@@ -1448,12 +1519,10 @@ app.put("/api/tasks/occurrence", async (req, res) => {
     });
   } catch (err) {
     console.error(`Error modifying single occurrence:`, err);
-    res
-      .status(500)
-      .json({
-        error: "Failed to modify single occurrence",
-        details: err.message,
-      });
+    res.status(500).json({
+      error: "Failed to modify single occurrence",
+      details: err.message,
+    });
   }
 });
 
@@ -1490,98 +1559,143 @@ app.put("/api/tasks/future", async (req, res) => {
     }
 
     const tasks = admin.tasks || [];
-    
+
     // Check if this is an occurrence group edit
-    if (modifiedTask.isOccurrenceGroupEdit && modifiedTask.totalOccurrences > 1) {
-      console.log(`🔍 BACKEND: Editing occurrence group for: ${originalTitle} with ${modifiedTask.totalOccurrences} occurrences`);
-      console.log(`🔍 BACKEND: Request body:`, JSON.stringify({ originalTitle, originalStartDate, splitDate, modifiedTask }, null, 2));
-      
+    if (
+      modifiedTask.isOccurrenceGroupEdit &&
+      modifiedTask.totalOccurrences > 1
+    ) {
+      console.log(
+        `🔍 BACKEND: Editing occurrence group for: ${originalTitle} with ${modifiedTask.totalOccurrences} occurrences`,
+      );
+      console.log(
+        `🔍 BACKEND: Request body:`,
+        JSON.stringify(
+          { originalTitle, originalStartDate, splitDate, modifiedTask },
+          null,
+          2,
+        ),
+      );
+
       // Find all related occurrence tasks
       const relatedTasks = [];
       for (let i = 0; i < tasks.length; i++) {
         const task = tasks[i];
         const taskStartDate = task.date.split(" to ")[0];
-        
+
         // Check if this task is part of the occurrence group
         // For single tasks being converted to multiple, also match by exact title
-        const isRelated = (task.originalTitle === originalTitle || 
-                          (task.title && task.title.startsWith(originalTitle + " - ")) ||
-                          (task.title === originalTitle)) &&
-                         taskStartDate === originalStartDate;
-        
-        console.log(`🔍 BACKEND: Checking task "${task.title}" - originalTitle: ${task.originalTitle}, startDate: ${taskStartDate}, isRelated: ${isRelated}`);
-        
+        const isRelated =
+          (task.originalTitle === originalTitle ||
+            (task.title && task.title.startsWith(originalTitle + " - ")) ||
+            task.title === originalTitle) &&
+          taskStartDate === originalStartDate;
+
+        console.log(
+          `🔍 BACKEND: Checking task "${task.title}" - originalTitle: ${task.originalTitle}, startDate: ${taskStartDate}, isRelated: ${isRelated}`,
+        );
+
         if (isRelated) {
           relatedTasks.push({ task, index: i });
         }
       }
-      
-      console.log(`🔍 BACKEND: Found ${relatedTasks.length} related occurrence tasks`);
-      
+
+      console.log(
+        `🔍 BACKEND: Found ${relatedTasks.length} related occurrence tasks`,
+      );
+
       if (relatedTasks.length === 0) {
-        console.log(`❌ BACKEND: No related occurrence tasks found for "${originalTitle}" starting on ${originalStartDate}`);
-        return res.status(404).json({ error: "No related occurrence tasks found" });
+        console.log(
+          `❌ BACKEND: No related occurrence tasks found for "${originalTitle}" starting on ${originalStartDate}`,
+        );
+        return res
+          .status(404)
+          .json({ error: "No related occurrence tasks found" });
       }
-      
+
       // Determine how many new occurrences we need to create
-      const hasAllOccurrences = modifiedTask.allOccurrences && Array.isArray(modifiedTask.allOccurrences);
-      const newOccurrenceCount = hasAllOccurrences ? modifiedTask.allOccurrences.length : modifiedTask.totalOccurrences;
-      
-      console.log(`🔍 BACKEND: Processing ${newOccurrenceCount} new occurrences (was ${relatedTasks.length})`);
+      const hasAllOccurrences =
+        modifiedTask.allOccurrences &&
+        Array.isArray(modifiedTask.allOccurrences);
+      const newOccurrenceCount = hasAllOccurrences
+        ? modifiedTask.allOccurrences.length
+        : modifiedTask.totalOccurrences;
+
+      console.log(
+        `🔍 BACKEND: Processing ${newOccurrenceCount} new occurrences (was ${relatedTasks.length})`,
+      );
       console.log(`🔍 BACKEND: Debug data:`, {
         hasAllOccurrences,
         allOccurrencesLength: modifiedTask.allOccurrences?.length,
         totalOccurrences: modifiedTask.totalOccurrences,
         newOccurrenceCount,
         modifiedTaskKeys: Object.keys(modifiedTask),
-        isOccurrenceGroupEdit: modifiedTask.isOccurrenceGroupEdit
+        isOccurrenceGroupEdit: modifiedTask.isOccurrenceGroupEdit,
       });
-      
+
       if (newOccurrenceCount === 0 || newOccurrenceCount === undefined) {
-        console.log(`❌ BACKEND: Invalid newOccurrenceCount: ${newOccurrenceCount}`);
-        console.log(`🔍 BACKEND: Full modifiedTask:`, JSON.stringify(modifiedTask, null, 2));
+        console.log(
+          `❌ BACKEND: Invalid newOccurrenceCount: ${newOccurrenceCount}`,
+        );
+        console.log(
+          `🔍 BACKEND: Full modifiedTask:`,
+          JSON.stringify(modifiedTask, null, 2),
+        );
       }
-      
+
       // For Edit Future, always split tasks regardless of count change
-      console.log(`🔍 BACKEND: Splitting tasks from ${splitDate} forward (${relatedTasks.length} → ${newOccurrenceCount} occurrences)`);
-      
+      console.log(
+        `🔍 BACKEND: Splitting tasks from ${splitDate} forward (${relatedTasks.length} → ${newOccurrenceCount} occurrences)`,
+      );
+
       // Use the end date from the frontend form data (modifiedTask)
       const modifiedTaskRange = modifiedTask.date?.split(" to ");
       const originalEndDate = modifiedTaskRange?.[1] || "3000-01-01";
-      console.log(`🔍 BACKEND: Using end date from form data: ${originalEndDate}`);
-      
+      console.log(
+        `🔍 BACKEND: Using end date from form data: ${originalEndDate}`,
+      );
+
       // Calculate the day before split date
       const splitDateObj = new Date(splitDate);
       splitDateObj.setDate(splitDateObj.getDate() - 1);
       const dayBeforeSplit = splitDateObj.toISOString().split("T")[0];
-      
+
       // Always end existing tasks on the day before split date
-      console.log(`🔍 BACKEND: About to end ${relatedTasks.length} original tasks on ${dayBeforeSplit}`);
+      console.log(
+        `🔍 BACKEND: About to end ${relatedTasks.length} original tasks on ${dayBeforeSplit}`,
+      );
       for (const { task, index } of relatedTasks) {
         const originalRange = task.date.split(" to ");
         const oldDate = tasks[index].date;
         tasks[index].date = `${originalRange[0]} to ${dayBeforeSplit}`;
-        console.log(`🔍 BACKEND: Updated task "${task.title}" at index ${index}: "${oldDate}" → "${tasks[index].date}"`);
+        console.log(
+          `🔍 BACKEND: Updated task "${task.title}" at index ${index}: "${oldDate}" → "${tasks[index].date}"`,
+        );
       }
       console.log(`🔍 BACKEND: All original tasks ended successfully`);
-      
+
       // Always create new tasks from split date forward
       const newTasks = [];
-      console.log(`🔍 BACKEND: About to create ${newOccurrenceCount} new tasks`);
+      console.log(
+        `🔍 BACKEND: About to create ${newOccurrenceCount} new tasks`,
+      );
       for (let i = 0; i < newOccurrenceCount; i++) {
         const originalTask = relatedTasks[0]?.task; // Use first task as template
-        
+
         // Find the corresponding new occurrence data
         let occurrenceData = modifiedTask;
         if (hasAllOccurrences && i < modifiedTask.allOccurrences.length) {
           occurrenceData = modifiedTask.allOccurrences[i];
-          console.log(`🔍 BACKEND: Using specific occurrence data for occurrence ${i + 1}:`, {
-            title: occurrenceData.title,
-            dueTimes: occurrenceData.dueTimes,
-            occurrence: occurrenceData.occurrence
-          });
+          console.log(
+            `🔍 BACKEND: Using specific occurrence data for occurrence ${i + 1}:`,
+            {
+              title: occurrenceData.title,
+              dueTimes: occurrenceData.dueTimes,
+              occurrence: occurrenceData.occurrence,
+            },
+          );
         }
-        
+
         // Create new task for this occurrence starting from the split date
         const newTask = {
           ...modifiedTask,
@@ -1589,56 +1703,85 @@ app.put("/api/tasks/future", async (req, res) => {
           originalTitle: originalTitle,
           totalOccurrences: newOccurrenceCount,
         };
-        
+
         // Ensure correct date range is set AFTER occurrenceData to prevent override
         newTask.date = `${splitDate} to ${originalEndDate}`;
         console.log(`🔍 BACKEND: Set new task date: ${newTask.date}`);
-        
+
         // Remove the isOccurrenceGroupEdit flag and allOccurrences from the new task
         delete newTask.isOccurrenceGroupEdit;
         delete newTask.allOccurrences;
-        
-        console.log(`🔍 BACKEND: Created new task "${newTask.title}" with dueTimes:`, newTask.dueTimes);
+
+        console.log(
+          `🔍 BACKEND: Created new task "${newTask.title}" with dueTimes:`,
+          newTask.dueTimes,
+        );
         newTasks.push(newTask);
       }
-      
+
       // Add all new tasks
       tasks.push(...newTasks);
       const newTasksCreated = newTasks.length;
-      
-      console.log(`🔍 BACKEND: Final result: ${relatedTasks.length} tasks ended, ${newTasksCreated} new tasks created`);
-      console.log(`🔍 BACKEND: New task titles:`, newTasks.map(t => t.title));
-      console.log(`🔍 BACKEND: New task details:`, newTasks.map(t => ({ 
-        title: t.title, 
-        date: t.date, 
-        users: t.users,
-        dueTimes: t.dueTimes,
-        occurrence: t.occurrence,
-        totalOccurrences: t.totalOccurrences
-      })));
-      
+
+      console.log(
+        `🔍 BACKEND: Final result: ${relatedTasks.length} tasks ended, ${newTasksCreated} new tasks created`,
+      );
+      console.log(
+        `🔍 BACKEND: New task titles:`,
+        newTasks.map((t) => t.title),
+      );
+      console.log(
+        `🔍 BACKEND: New task details:`,
+        newTasks.map((t) => ({
+          title: t.title,
+          date: t.date,
+          users: t.users,
+          dueTimes: t.dueTimes,
+          occurrence: t.occurrence,
+          totalOccurrences: t.totalOccurrences,
+        })),
+      );
+
       console.log(`🔍 BACKEND: Total tasks before DB update: ${tasks.length}`);
-      
-      const updateResult = await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
-      
+
+      const updateResult = await admins.updateOne(
+        { email: adminEmail },
+        { $set: { tasks } },
+      );
+
       console.log(`🔍 BACKEND: Database update result:`, updateResult);
-      console.log(`🔍 BACKEND: Database update acknowledged: ${updateResult.acknowledged}, modified: ${updateResult.modifiedCount}`);
-      
+      console.log(
+        `🔍 BACKEND: Database update acknowledged: ${updateResult.acknowledged}, modified: ${updateResult.modifiedCount}`,
+      );
+
       // Verify tasks were saved by re-fetching
       const verifyAdmin = await admins.findOne({ email: adminEmail });
       const finalTaskCount = verifyAdmin.tasks.length;
-      const futureTasksCreated = verifyAdmin.tasks.filter(t => 
-        (t.originalTitle === originalTitle || t.title.startsWith(originalTitle + " - ")) &&
-        t.date.includes(splitDate)
+      const futureTasksCreated = verifyAdmin.tasks.filter(
+        (t) =>
+          (t.originalTitle === originalTitle ||
+            t.title.startsWith(originalTitle + " - ")) &&
+          t.date.includes(splitDate),
       );
-      
-      console.log(`🔍 BACKEND: Verification - Total tasks in DB: ${finalTaskCount}`);
-      console.log(`🔍 BACKEND: Verification - Future tasks found: ${futureTasksCreated.length}`);
-      console.log(`🔍 BACKEND: Verification - Future task titles:`, futureTasksCreated.map(t => t.title));
-      
-      console.log(`Occurrence group split successfully: ${relatedTasks.length} original tasks ended, ${newTasksCreated} new tasks created`);
-      res.json({ success: true, message: `Occurrence group split successfully (${relatedTasks.length} → ${newOccurrenceCount} tasks)` });
-      
+
+      console.log(
+        `🔍 BACKEND: Verification - Total tasks in DB: ${finalTaskCount}`,
+      );
+      console.log(
+        `🔍 BACKEND: Verification - Future tasks found: ${futureTasksCreated.length}`,
+      );
+      console.log(
+        `🔍 BACKEND: Verification - Future task titles:`,
+        futureTasksCreated.map((t) => t.title),
+      );
+
+      console.log(
+        `Occurrence group split successfully: ${relatedTasks.length} original tasks ended, ${newTasksCreated} new tasks created`,
+      );
+      res.json({
+        success: true,
+        message: `Occurrence group split successfully (${relatedTasks.length} → ${newOccurrenceCount} tasks)`,
+      });
     } else {
       // Regular single task future edit
       const taskIndex = tasks.findIndex((task) => {
@@ -1701,17 +1844,19 @@ app.get("/api/debug/tasks", async (req, res) => {
       return res.status(404).json({ error: "Admin not found" });
     }
     const tasks = admin.tasks || [];
-    console.log(`🔍 DEBUG: Found ${tasks.length} total tasks for ${adminEmail}`);
-    res.json({ 
-      success: true, 
+    console.log(
+      `🔍 DEBUG: Found ${tasks.length} total tasks for ${adminEmail}`,
+    );
+    res.json({
+      success: true,
       totalTasks: tasks.length,
-      tasks: tasks.map(t => ({
+      tasks: tasks.map((t) => ({
         title: t.title,
         date: t.date,
         originalTitle: t.originalTitle,
         occurrence: t.occurrence,
-        totalOccurrences: t.totalOccurrences
-      }))
+        totalOccurrences: t.totalOccurrences,
+      })),
     });
   } catch (err) {
     console.error("Error fetching debug tasks:", err);
@@ -1725,7 +1870,7 @@ app.post("/api/rewards", async (req, res) => {
   if (!adminEmail || !user || !amount) {
     return res.status(400).json({ error: "Missing required fields" });
   }
-  
+
   try {
     // Add reward logic here
     res.json({ success: true, message: "Reward added successfully" });
@@ -2097,10 +2242,18 @@ app.post("/api/reward-request", async (req, res) => {
 
 // ✅ Approve or decline a reward request (SIMPLIFIED FOR DEBUGGING)
 app.post("/api/review-reward", async (req, res) => {
-  const { adminEmail, requestIndex, decision, user, rewardName, timestamp } = req.body;
+  const { adminEmail, requestIndex, decision, user, rewardName, timestamp } =
+    req.body;
 
   console.log("=== REVIEW REWARD DEBUG START ===");
-  console.log("Request body:", { adminEmail, requestIndex, decision, user, rewardName, timestamp });
+  console.log("Request body:", {
+    adminEmail,
+    requestIndex,
+    decision,
+    user,
+    rewardName,
+    timestamp,
+  });
 
   if (!adminEmail || !decision) {
     return res.status(400).json({ error: "Missing adminEmail or decision" });
@@ -2121,24 +2274,34 @@ app.post("/api/review-reward", async (req, res) => {
 
     const pendingRewardRequests = admin.pendingRewardRequests || [];
     console.log("Current pending requests:", pendingRewardRequests.length);
-    
+
     // Find request by timestamp, user, and rewardName
     let requestIndex_actual = -1;
-    
+
     if (user && rewardName && timestamp) {
       requestIndex_actual = pendingRewardRequests.findIndex(
-        req => req.user === user && 
-               req.rewardName === rewardName && 
-               req.timestamp === parseInt(timestamp)
+        (req) =>
+          req.user === user &&
+          req.rewardName === rewardName &&
+          req.timestamp === parseInt(timestamp),
       );
       console.log("Found by identifiers at index:", requestIndex_actual);
-    } else if (requestIndex !== undefined && requestIndex < pendingRewardRequests.length) {
+    } else if (
+      requestIndex !== undefined &&
+      requestIndex < pendingRewardRequests.length
+    ) {
       requestIndex_actual = requestIndex;
       console.log("Using provided index:", requestIndex_actual);
     }
 
-    if (requestIndex_actual === -1 || !pendingRewardRequests[requestIndex_actual]) {
-      console.log("Request not found. Available requests:", pendingRewardRequests);
+    if (
+      requestIndex_actual === -1 ||
+      !pendingRewardRequests[requestIndex_actual]
+    ) {
+      console.log(
+        "Request not found. Available requests:",
+        pendingRewardRequests,
+      );
       return res.status(404).json({ error: "Request not found" });
     }
 
@@ -2170,13 +2333,29 @@ app.post("/api/review-reward", async (req, res) => {
     } else {
       // Refund points for declined rewards
       rewards[request.user] = (rewards[request.user] || 0) + request.rewardCost;
-      console.log("Refunded points to:", request.user, "New balance:", rewards[request.user]);
-      
+      console.log(
+        "Refunded points to:",
+        request.user,
+        "New balance:",
+        rewards[request.user],
+      );
+
       // For one-time rewards, remove user from claimedBy array to make it available again
-      const marketReward = marketRewards.find(reward => reward.name === request.rewardName);
-      if (marketReward && marketReward.type === 'oneTime' && marketReward.claimedBy) {
-        marketReward.claimedBy = marketReward.claimedBy.filter(username => username !== request.user);
-        console.log("Removed user from one-time reward claimedBy array:", request.rewardName);
+      const marketReward = marketRewards.find(
+        (reward) => reward.name === request.rewardName,
+      );
+      if (
+        marketReward &&
+        marketReward.type === "oneTime" &&
+        marketReward.claimedBy
+      ) {
+        marketReward.claimedBy = marketReward.claimedBy.filter(
+          (username) => username !== request.user,
+        );
+        console.log(
+          "Removed user from one-time reward claimedBy array:",
+          request.rewardName,
+        );
       }
     }
 
@@ -2187,17 +2366,27 @@ app.post("/api/review-reward", async (req, res) => {
     // Update database with all changes
     await admins.updateOne(
       { email: adminEmail },
-      { $set: { pendingRewardRequests, rewards, userRewards, rewardHistory, marketRewards } }
+      {
+        $set: {
+          pendingRewardRequests,
+          rewards,
+          userRewards,
+          rewardHistory,
+          marketRewards,
+        },
+      },
     );
 
     console.log("=== REVIEW REWARD DEBUG SUCCESS ===");
     res.json({ success: true, message: `Reward ${decision}d successfully` });
-
   } catch (err) {
     console.error("=== REVIEW REWARD DEBUG ERROR ===");
     console.error("Error:", err.message);
     console.error("Stack:", err.stack);
-    res.status(500).json({ error: "Failed to process reward request", details: err.message });
+    res.status(500).json({
+      error: "Failed to process reward request",
+      details: err.message,
+    });
   }
 });
 
@@ -2221,17 +2410,20 @@ app.get("/api/reward-requests", async (req, res) => {
     const allRequests = [...pendingRewardRequests];
 
     // Add approved/declined requests from history back to the requests list
-    Object.keys(rewardHistory).forEach(user => {
+    Object.keys(rewardHistory).forEach((user) => {
       const userHistory = rewardHistory[user] || [];
-      userHistory.forEach(historyItem => {
+      userHistory.forEach((historyItem) => {
         // Only include approved/declined items (not received ones)
-        if (historyItem.status === 'Approved' || historyItem.status === 'Declined') {
+        if (
+          historyItem.status === "Approved" ||
+          historyItem.status === "Declined"
+        ) {
           allRequests.push({
             user: user,
             rewardName: historyItem.rewardName,
             rewardCost: historyItem.rewardCost,
             status: historyItem.status.toLowerCase(),
-            timestamp: new Date(historyItem.timestamp).getTime()
+            timestamp: new Date(historyItem.timestamp).getTime(),
           });
         }
       });
@@ -2243,9 +2435,6 @@ app.get("/api/reward-requests", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch reward requests" });
   }
 });
-
-
-
 
 // ✅ Get reward history for an admin
 app.get("/api/reward-history", async (req, res) => {
@@ -2667,11 +2856,9 @@ app.post("/api/review-task", async (req, res) => {
       (p) => p.user === user && p.repetition === repetition,
     );
     if (pendingEntryIndex === -1 && decision === "accept") {
-      return res
-        .status(400)
-        .json({
-          error: "User has not submitted this task for this repetition",
-        });
+      return res.status(400).json({
+        error: "User has not submitted this task for this repetition",
+      });
     }
 
     let rewardAmount = 0;
@@ -2681,12 +2868,10 @@ app.post("/api/review-task", async (req, res) => {
       // Count current completions for this user
       const userCompletions = completions.filter((c) => c.user === user).length;
       if (userCompletions >= requiredTimes) {
-        return res
-          .status(400)
-          .json({
-            error:
-              "User has already completed the maximum number of tasks for this day",
-          });
+        return res.status(400).json({
+          error:
+            "User has already completed the maximum number of tasks for this day",
+        });
       }
 
       // Move from pending to completions
@@ -2737,12 +2922,9 @@ app.post("/api/complete-task", async (req, res) => {
         user,
         date,
       });
-      return res
-        .status(400)
-        .json({
-          error:
-            "Missing required fields: adminEmail, taskTitle, user, or date",
-        });
+      return res.status(400).json({
+        error: "Missing required fields: adminEmail, taskTitle, user, or date",
+      });
     }
 
     const db = await connectDB();
@@ -2800,15 +2982,19 @@ app.post("/api/complete-task", async (req, res) => {
     const userList = Array.isArray(task.users) ? task.users : [];
     const tempTurnReplacement =
       task.tempTurnReplacement?.[normalizedDate] || {};
-    
+
     // For cross-completion: check if task is fully completed by all users, not just current user
     const tempReplacementValues = Object.values(tempTurnReplacement || {});
-    const allAssignedUsers = [...new Set([...userList, ...tempReplacementValues])];
-    
+    const allAssignedUsers = [
+      ...new Set([...userList, ...tempReplacementValues]),
+    ];
+
     // Calculate total completions needed for all assigned users
     const totalRequiredCompletions = allAssignedUsers.length * requiredTimes;
-    const totalCompletionsToday = task.completions[normalizedDate].length + (task.pendingCompletions[normalizedDate]?.length || 0);
-    
+    const totalCompletionsToday =
+      task.completions[normalizedDate].length +
+      (task.pendingCompletions[normalizedDate]?.length || 0);
+
     const debugInfo = {
       taskTitle,
       user,
@@ -2819,45 +3005,53 @@ app.post("/api/complete-task", async (req, res) => {
       totalCompletionsToday,
       completionsArray: task.completions[normalizedDate],
       pendingArray: task.pendingCompletions[normalizedDate],
-      wouldBlock: totalCompletionsToday >= totalRequiredCompletions
+      wouldBlock: totalCompletionsToday >= totalRequiredCompletions,
     };
-    
-    console.log("🔍 /api/complete-task: Completion calculation debug", debugInfo);
-    
+
+    console.log(
+      "🔍 /api/complete-task: Completion calculation debug",
+      debugInfo,
+    );
+
     // Also log to help see in server logs
-    console.log(`🔍 Task "${taskTitle}": ${totalCompletionsToday}/${totalRequiredCompletions} completions (users: ${allAssignedUsers.join(',')}) - ${debugInfo.wouldBlock ? 'BLOCKING' : 'ALLOWING'}`);
+    console.log(
+      `🔍 Task "${taskTitle}": ${totalCompletionsToday}/${totalRequiredCompletions} completions (users: ${allAssignedUsers.join(",")}) - ${debugInfo.wouldBlock ? "BLOCKING" : "ALLOWING"}`,
+    );
 
     // Only block if ALL users have completed their required times
     if (totalCompletionsToday >= totalRequiredCompletions) {
-      console.error("🔥 /api/complete-task: Task fully completed by all users", {
-        user,
-        taskTitle,
-        totalCompletionsToday,
-        totalRequiredCompletions,
-        allAssignedUsers,
-      });
+      console.error(
+        "🔥 /api/complete-task: Task fully completed by all users",
+        {
+          user,
+          taskTitle,
+          totalCompletionsToday,
+          totalRequiredCompletions,
+          allAssignedUsers,
+        },
+      );
       return res
         .status(400)
         .json({ error: "Task already completed by all assigned users today" });
     }
-    
+
     // Log cross-completion info
     if (totalCount >= requiredTimes) {
-      console.log("🔍 /api/complete-task: Cross-completion - user already completed their part", {
-        user,
-        taskTitle,
-        userCompletions: totalCount,
-        userRequired: requiredTimes,
-        allowingCrossCompletion: true
-      });
+      console.log(
+        "🔍 /api/complete-task: Cross-completion - user already completed their part",
+        {
+          user,
+          taskTitle,
+          userCompletions: totalCount,
+          userRequired: requiredTimes,
+          allowingCrossCompletion: true,
+        },
+      );
     }
-    const assignedUsers = [
-      ...new Set([...userList, ...tempReplacementValues]),
-    ];
+    const assignedUsers = [...new Set([...userList, ...tempReplacementValues])];
     const isAssigned =
-      userList.includes(user) ||
-      tempReplacementValues.includes(user);
-    
+      userList.includes(user) || tempReplacementValues.includes(user);
+
     // Only enforce assignment for private tasks
     if (task.isPrivate === true && !isAssigned) {
       console.error("🔥 /api/complete-task: Private task - user not assigned", {
@@ -2865,18 +3059,20 @@ app.post("/api/complete-task", async (req, res) => {
         taskTitle,
         userList,
         tempTurnReplacement,
-        isPrivate: task.isPrivate
+        isPrivate: task.isPrivate,
       });
-      return res.status(400).json({ error: "Private task can only be completed by assigned users" });
+      return res.status(400).json({
+        error: "Private task can only be completed by assigned users",
+      });
     }
-    
+
     // Log completion info for audit trail
     if (!isAssigned) {
       console.log("🔍 /api/complete-task: Cross-completion", {
         completer: user,
         taskTitle,
         originallyAssignedTo: userList,
-        isPrivate: task.isPrivate
+        isPrivate: task.isPrivate,
       });
     }
 
@@ -2894,7 +3090,10 @@ app.post("/api/complete-task", async (req, res) => {
     }
 
     // Ensure rotationOrder exists for rotation tasks
-    if (isRotation && (!task.rotationOrder || !Array.isArray(task.rotationOrder))) {
+    if (
+      isRotation &&
+      (!task.rotationOrder || !Array.isArray(task.rotationOrder))
+    ) {
       task.rotationOrder = [...userList];
     }
 
@@ -2906,9 +3105,52 @@ app.post("/api/complete-task", async (req, res) => {
     if (!history[month]) history[month] = {};
     if (!history[month][day]) history[month][day] = [];
 
-    if (isAdmin) {
-      // For Admins, mark as completed directly
+    // Check if task requires parent approval OR if user is admin (admins can bypass approval)
+    const requiresApproval = task.parentApproval === true && !isAdmin;
+
+    console.log("🔍 /api/complete-task: Task properties debug", {
+      taskTitle,
+      taskObject: {
+        title: task.title,
+        parentApproval: task.parentApproval,
+        parentApprovalType: typeof task.parentApproval,
+        parentApprovalValue: task.parentApproval,
+        users: task.users,
+        settings: task.settings,
+        allTaskKeys: Object.keys(task),
+      },
+    });
+
+    console.log("🔍 /api/complete-task: Approval decision debug", {
+      taskTitle,
+      user,
+      parentApproval: task.parentApproval,
+      isAdmin,
+      requiresApproval,
+      decision: requiresApproval ? "PENDING_APPROVAL" : "DIRECT_COMPLETION",
+    });
+
+    if (!requiresApproval) {
+      // For tasks that don't require approval OR admin users, mark as completed directly
       task.completions[normalizedDate].push({ user, repetition });
+
+      // Initialize completedDates if it doesn't exist
+      if (!task.completedDates) {
+        task.completedDates = {};
+      }
+      if (!task.completedDates[normalizedDate]) {
+        task.completedDates[normalizedDate] = [];
+      }
+
+      // Add completion record with timestamp
+      const completionRecord = {
+        user: user,
+        completedAt: new Date().toISOString(),
+        reward: task.reward || 0,
+        repetition: repetition,
+      };
+      task.completedDates[normalizedDate].push(completionRecord);
+
       const rewardAmount = Number(task.reward || 0);
       if (rewardAmount > 0) {
         const rewards = admin.rewards || {};
@@ -2921,10 +3163,13 @@ app.post("/api/complete-task", async (req, res) => {
         timestamp: new Date().toISOString(),
         action: "completed",
       });
-      console.log("✅ /api/complete-task: Admin task completed", {
+      console.log("✅ /api/complete-task: Task completed", {
         user,
         taskTitle,
         rewardAmount,
+        requiresApproval: false,
+        isAdmin,
+        parentApproval: task.parentApproval,
       });
 
       // Advance turn for rotation tasks
@@ -2935,16 +3180,16 @@ app.post("/api/complete-task", async (req, res) => {
         const prevDateStr = prevDate.toISOString().split("T")[0];
         const prevCompletions = task.completions?.[prevDateStr] || [];
         const prevPending = task.pendingCompletions?.[prevDateStr] || [];
-        const prevTempReplacement = task.tempTurnReplacement?.[prevDateStr] || {};
+        const prevTempReplacement =
+          task.tempTurnReplacement?.[prevDateStr] || {};
         const prevAssignedUsers = [
-          ...new Set([
-            ...userList,
-            ...Object.values(prevTempReplacement),
-          ]),
+          ...new Set([...userList, ...Object.values(prevTempReplacement)]),
         ];
-        const prevTurnIndex = prevAssignedUsers.length > 0 ?
-          (task.currentTurnIndex - 1 + prevAssignedUsers.length) %
-          prevAssignedUsers.length : 0;
+        const prevTurnIndex =
+          prevAssignedUsers.length > 0
+            ? (task.currentTurnIndex - 1 + prevAssignedUsers.length) %
+              prevAssignedUsers.length
+            : 0;
         const prevTurnUser = prevAssignedUsers[prevTurnIndex];
 
         if (
@@ -2957,8 +3202,10 @@ app.post("/api/complete-task", async (req, res) => {
             { prevTurnUser, prevDateStr },
           );
         } else {
-          task.currentTurnIndex = assignedUsers.length > 0 ?
-            (task.currentTurnIndex + 1) % assignedUsers.length : 0;
+          task.currentTurnIndex =
+            assignedUsers.length > 0
+              ? (task.currentTurnIndex + 1) % assignedUsers.length
+              : 0;
           console.log("🔍 /api/complete-task: Advanced turn", {
             taskTitle,
             currentTurnIndex: task.currentTurnIndex,
@@ -2971,8 +3218,10 @@ app.post("/api/complete-task", async (req, res) => {
           task.completions[normalizedDate].length +
           task.pendingCompletions[normalizedDate].length;
         if (totalCompletions >= requiredTimes) {
-          task.currentTurnIndex = assignedUsers.length > 0 ?
-            (task.currentTurnIndex + 1) % assignedUsers.length : 0;
+          task.currentTurnIndex =
+            assignedUsers.length > 0
+              ? (task.currentTurnIndex + 1) % assignedUsers.length
+              : 0;
           console.log(
             "🔍 /api/complete-task: Advanced turn after required completions",
             {
@@ -2984,18 +3233,40 @@ app.post("/api/complete-task", async (req, res) => {
         }
       }
     } else {
-      // For non-Admins, submit for review
+      // For tasks requiring approval, submit for review
       task.pendingCompletions[normalizedDate].push({ user, repetition });
+
+      // Initialize completedDates if it doesn't exist for pending tasks too
+      if (!task.completedDates) {
+        task.completedDates = {};
+      }
+      if (!task.completedDates[normalizedDate]) {
+        task.completedDates[normalizedDate] = [];
+      }
+
+      // Add pending completion record with timestamp
+      const pendingRecord = {
+        user: user,
+        completedAt: new Date().toISOString(),
+        reward: task.reward || 0,
+        repetition: repetition,
+        isPending: true,
+      };
+      task.completedDates[normalizedDate].push(pendingRecord);
       history[month][day].push({
         title: taskTitle,
         user,
         timestamp: new Date().toISOString(),
         action: "submitted",
       });
-      console.log(
-        "✅ /api/complete-task: Non-admin task submitted for review",
-        { user, taskTitle, repetition },
-      );
+      console.log("✅ /api/complete-task: Task submitted for review", {
+        user,
+        taskTitle,
+        repetition,
+        requiresApproval: true,
+        isAdmin,
+        parentApproval: task.parentApproval,
+      });
 
       // Advance turn for rotation tasks only after all required completions
       if (isRotation && task.repeat === "Daily" && task.timesPerDay === 1) {
@@ -3004,16 +3275,16 @@ app.post("/api/complete-task", async (req, res) => {
         const prevDateStr = prevDate.toISOString().split("T")[0];
         const prevCompletions = task.completions?.[prevDateStr] || [];
         const prevPending = task.pendingCompletions?.[prevDateStr] || [];
-        const prevTempReplacement = task.tempTurnReplacement?.[prevDateStr] || {};
+        const prevTempReplacement =
+          task.tempTurnReplacement?.[prevDateStr] || {};
         const prevAssignedUsers = [
-          ...new Set([
-            ...userList,
-            ...Object.values(prevTempReplacement),
-          ]),
+          ...new Set([...userList, ...Object.values(prevTempReplacement)]),
         ];
-        const prevTurnIndex = prevAssignedUsers.length > 0 ?
-          (task.currentTurnIndex - 1 + prevAssignedUsers.length) %
-          prevAssignedUsers.length : 0;
+        const prevTurnIndex =
+          prevAssignedUsers.length > 0
+            ? (task.currentTurnIndex - 1 + prevAssignedUsers.length) %
+              prevAssignedUsers.length
+            : 0;
         const prevTurnUser = prevAssignedUsers[prevTurnIndex];
 
         if (
@@ -3026,8 +3297,10 @@ app.post("/api/complete-task", async (req, res) => {
             { prevTurnUser, prevDateStr },
           );
         } else {
-          task.currentTurnIndex = assignedUsers.length > 0 ?
-            (task.currentTurnIndex + 1) % assignedUsers.length : 0;
+          task.currentTurnIndex =
+            assignedUsers.length > 0
+              ? (task.currentTurnIndex + 1) % assignedUsers.length
+              : 0;
           console.log("🔍 /api/complete-task: Advanced turn", {
             taskTitle,
             currentTurnIndex: task.currentTurnIndex,
@@ -3039,8 +3312,10 @@ app.post("/api/complete-task", async (req, res) => {
           task.completions[normalizedDate].length +
           task.pendingCompletions[normalizedDate].length;
         if (totalCompletions >= requiredTimes) {
-          task.currentTurnIndex = assignedUsers.length > 0 ?
-            (task.currentTurnIndex + 1) % assignedUsers.length : 0;
+          task.currentTurnIndex =
+            assignedUsers.length > 0
+              ? (task.currentTurnIndex + 1) % assignedUsers.length
+              : 0;
           console.log(
             "🔍 /api/complete-task: Advanced turn after required completions",
             {
@@ -3062,9 +3337,9 @@ app.post("/api/complete-task", async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: isAdmin
-        ? "Task completed successfully"
-        : "Task submitted for review",
+      message: requiresApproval
+        ? "Task submitted for review"
+        : "Task completed successfully",
       currentTurnIndex: task.currentTurnIndex,
       nextUser: assignedUsers[task.currentTurnIndex],
     });
@@ -3079,7 +3354,9 @@ app.post("/api/toggle-as-needed-task", async (req, res) => {
   const { adminEmail, title, activated } = req.body;
 
   if (!adminEmail || !title || activated === undefined) {
-    return res.status(400).json({ error: "Missing adminEmail, title, or activated status" });
+    return res
+      .status(400)
+      .json({ error: "Missing adminEmail, title, or activated status" });
   }
 
   try {
@@ -3092,8 +3369,11 @@ app.post("/api/toggle-as-needed-task", async (req, res) => {
     }
 
     const tasks = admin.tasks || [];
-    const taskIndex = tasks.findIndex(task => 
-      task.title === title && task.repeat === "As Needed" && task.asNeeded === true
+    const taskIndex = tasks.findIndex(
+      (task) =>
+        task.title === title &&
+        task.repeat === "As Needed" &&
+        task.asNeeded === true,
     );
 
     if (taskIndex === -1) {
@@ -3103,14 +3383,11 @@ app.post("/api/toggle-as-needed-task", async (req, res) => {
     // Update the activation status
     tasks[taskIndex].activated = activated;
 
-    await admins.updateOne(
-      { email: adminEmail },
-      { $set: { tasks } }
-    );
+    await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
 
-    res.json({ 
-      success: true, 
-      message: `Task ${activated ? 'activated' : 'deactivated'} successfully` 
+    res.json({
+      success: true,
+      message: `Task ${activated ? "activated" : "deactivated"} successfully`,
     });
   } catch (error) {
     console.error("🔥 /api/toggle-as-needed-task: Error", error);
@@ -3123,7 +3400,9 @@ app.post("/api/complete-as-needed-task", async (req, res) => {
   const { adminEmail, taskTitle, user, date, isPrivate } = req.body;
 
   if (!adminEmail || !taskTitle || !user || !date) {
-    return res.status(400).json({ error: "Missing adminEmail, taskTitle, user, or date" });
+    return res
+      .status(400)
+      .json({ error: "Missing adminEmail, taskTitle, user, or date" });
   }
 
   try {
@@ -3136,8 +3415,11 @@ app.post("/api/complete-as-needed-task", async (req, res) => {
     }
 
     const tasks = admin.tasks || [];
-    const taskIndex = tasks.findIndex(task => 
-      task.title === taskTitle && task.repeat === "As Needed" && task.asNeeded === true
+    const taskIndex = tasks.findIndex(
+      (task) =>
+        task.title === taskTitle &&
+        task.repeat === "As Needed" &&
+        task.asNeeded === true,
     );
 
     if (taskIndex === -1) {
@@ -3145,7 +3427,7 @@ app.post("/api/complete-as-needed-task", async (req, res) => {
     }
 
     const task = tasks[taskIndex];
-    
+
     if (!task.activated) {
       return res.status(400).json({ error: "Task is not activated" });
     }
@@ -3153,25 +3435,30 @@ app.post("/api/complete-as-needed-task", async (req, res) => {
     // Check if user is assigned to the task (for private task validation)
     const userList = Array.isArray(task.users) ? task.users : [];
     const isAssigned = userList.includes(user);
-    
+
     // Only enforce assignment for private tasks
     if (task.isPrivate === true && !isAssigned) {
-      console.error("🔥 /api/complete-as-needed-task: Private task - user not assigned", {
-        user,
-        taskTitle,
-        userList,
-        isPrivate: task.isPrivate
+      console.error(
+        "🔥 /api/complete-as-needed-task: Private task - user not assigned",
+        {
+          user,
+          taskTitle,
+          userList,
+          isPrivate: task.isPrivate,
+        },
+      );
+      return res.status(400).json({
+        error: "Private task can only be completed by assigned users",
       });
-      return res.status(400).json({ error: "Private task can only be completed by assigned users" });
     }
-    
+
     // Log completion info for audit trail
     if (!isAssigned) {
       console.log("🔍 /api/complete-as-needed-task: Cross-completion", {
         completer: user,
         taskTitle,
         originallyAssignedTo: userList,
-        isPrivate: task.isPrivate
+        isPrivate: task.isPrivate,
       });
     }
 
@@ -3187,7 +3474,7 @@ app.post("/api/complete-as-needed-task", async (req, res) => {
     const completionRecord = {
       user: user,
       completedAt: new Date().toISOString(),
-      reward: task.reward || 0
+      reward: task.reward || 0,
     };
 
     task.completedDates[date].push(completionRecord);
@@ -3197,24 +3484,28 @@ app.post("/api/complete-as-needed-task", async (req, res) => {
     rewards[user] = (rewards[user] || 0) + (task.reward || 0);
 
     // For rotation tasks, advance to next user
-    if (task.settings && task.settings.includes("Rotation") && task.users && task.users.length > 1) {
+    if (
+      task.settings &&
+      task.settings.includes("Rotation") &&
+      task.users &&
+      task.users.length > 1
+    ) {
       const currentUserIndex = task.users.indexOf(user);
       const nextUserIndex = (currentUserIndex + 1) % task.users.length;
       task.currentTurnIndex = nextUserIndex;
     }
 
-    await admins.updateOne(
-      { email: adminEmail },
-      { $set: { tasks, rewards } }
-    );
+    await admins.updateOne({ email: adminEmail }, { $set: { tasks, rewards } });
 
     res.json({
       success: true,
       message: "As Needed task completed successfully",
       reward: task.reward || 0,
-      nextUser: task.users && task.users.length > 1 ? task.users[task.currentTurnIndex || 0] : null
+      nextUser:
+        task.users && task.users.length > 1
+          ? task.users[task.currentTurnIndex || 0]
+          : null,
     });
-
   } catch (error) {
     console.error("🔥 /api/complete-as-needed-task: Error", error);
     res.status(500).json({ error: `Server error: ${error.message}` });
