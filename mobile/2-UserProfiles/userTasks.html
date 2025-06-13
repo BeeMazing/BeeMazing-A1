@@ -3301,44 +3301,7 @@
                 }
             });
 
-            // Auto-refresh to detect task status changes after parent approval
-            let autoRefreshInterval;
-            function startAutoRefresh() {
-                // Refresh every 10 seconds to check for approval updates
-                autoRefreshInterval = setInterval(() => {
-                    console.log(
-                        "🔄 Auto-refreshing to check for task updates...",
-                    );
-                    const selectedDate =
-                        document.querySelector(".day.selected")?.dataset.date ||
-                        new Date().toLocaleDateString("sv-SE");
-                    if (userName) {
-                        const myTasksTab = document.getElementById("myTasks");
-                        if (!myTasksTab.classList.contains("hidden")) {
-                            loadUserTasks(userName, selectedDate);
-                        }
-                    }
-                }, 10000); // 10 seconds
-            }
-
-            function stopAutoRefresh() {
-                if (autoRefreshInterval) {
-                    clearInterval(autoRefreshInterval);
-                    autoRefreshInterval = null;
-                }
-            }
-
-            // Start auto-refresh when page loads
-            startAutoRefresh();
-
-            // Stop auto-refresh when page is hidden/closed
-            document.addEventListener("visibilitychange", () => {
-                if (document.hidden) {
-                    stopAutoRefresh();
-                } else {
-                    startAutoRefresh();
-                }
-            });
+            // Auto-refresh functionality removed - users can manually refresh to check approval status
 
             async function loadNotifications(userName) {
                 const adminEmail = localStorage.getItem("currentAdminEmail");
