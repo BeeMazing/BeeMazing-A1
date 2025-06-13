@@ -3150,12 +3150,31 @@ app.post("/api/complete-task", async (req, res) => {
         task.completedDates[normalizedDate] = [];
       }
 
-      // Add completion record with timestamp
+      // Determine original assignee if this is a replacement completion
+      let originalAssignee = null;
+      if (tempTurnReplacement && Object.keys(tempTurnReplacement).length > 0) {
+        // Find if the current user is a replacement
+        for (const [index, replacementUser] of Object.entries(
+          tempTurnReplacement,
+        )) {
+          if (replacementUser === user) {
+            // The original assignee would be the user at this index in the original assignment
+            const originalIndex = parseInt(index);
+            if (userList && userList[originalIndex]) {
+              originalAssignee = userList[originalIndex];
+              break;
+            }
+          }
+        }
+      }
+
+      // Add completion record with timestamp and original assignee info
       const completionRecord = {
         user: user,
         completedAt: new Date().toISOString(),
         reward: task.reward || 0,
         repetition: repetition,
+        originalAssignee: originalAssignee, // Store original assignee if different
       };
       task.completedDates[normalizedDate].push(completionRecord);
 
@@ -3253,12 +3272,32 @@ app.post("/api/complete-task", async (req, res) => {
       }
 
       // Add pending completion record with timestamp
+      // Determine original assignee if this is a replacement completion
+      let originalAssignee = null;
+      if (tempTurnReplacement && Object.keys(tempTurnReplacement).length > 0) {
+        // Find if the current user is a replacement
+        for (const [index, replacementUser] of Object.entries(
+          tempTurnReplacement,
+        )) {
+          if (replacementUser === user) {
+            // The original assignee would be the user at this index in the original assignment
+            const originalIndex = parseInt(index);
+            if (userList && userList[originalIndex]) {
+              originalAssignee = userList[originalIndex];
+              break;
+            }
+          }
+        }
+      }
+
+      // Add to pendingCompletions for parent approval
       const pendingRecord = {
         user: user,
         completedAt: new Date().toISOString(),
         reward: task.reward || 0,
         repetition: repetition,
         isPending: true,
+        originalAssignee: originalAssignee, // Store original assignee if different
       };
       task.completedDates[normalizedDate].push(pendingRecord);
       history[month][day].push({

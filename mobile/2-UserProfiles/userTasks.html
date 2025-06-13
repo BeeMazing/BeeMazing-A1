@@ -996,6 +996,153 @@
             let isLoadingUserTasks = false;
             let userName = null; // Global userName variable
 
+            // Helper function to determine original assignee for a task
+            function getOriginalAssignee(task, selectedDate, completerUser) {
+                // First check if there's completion data that has original assignee info
+                if (task.completedDates && task.completedDates[selectedDate]) {
+                    const completions = task.completedDates[selectedDate];
+                    // Look for completion entry for the completer user
+                    const completion = completions.find(
+                        (c) => c.user === completerUser,
+                    );
+                    if (completion && completion.originalAssignee) {
+                        console.log(
+                            "🔍 Found original assignee from completion data:",
+                            {
+                                completerUser,
+                                originalAssignee: completion.originalAssignee,
+                                taskTitle: task.title,
+                            },
+                        );
+                        return completion.originalAssignee;
+                    }
+                }
+
+                // Check if there are temp turn replacements that would indicate original assignee
+                if (
+                    task.tempTurnReplacement &&
+                    task.tempTurnReplacement[selectedDate]
+                ) {
+                    const replacements = task.tempTurnReplacement[selectedDate];
+                    // Find if the completer was a replacement
+                    for (const [index, replacementUser] of Object.entries(
+                        replacements,
+                    )) {
+                        if (replacementUser === completerUser) {
+                            // The original assignee would be the user at this index in the original assignment
+                            const originalIndex = parseInt(index);
+                            if (task.users && task.users[originalIndex]) {
+                                console.log(
+                                    "🔍 Found original assignee from temp replacement:",
+                                    {
+                                        completerUser: replacementUser,
+                                        originalAssignee:
+                                            task.users[originalIndex],
+                                        taskTitle: task.title,
+                                    },
+                                );
+                                return task.users[originalIndex];
+                            }
+                        }
+                    }
+                }
+
+                // If no replacement info found, return null (same user completion)
+                console.log(
+                    "🔍 No original assignee found - same user completion:",
+                    {
+                        completerUser,
+                        taskTitle: task.title,
+                    },
+                );
+                return null;
+            }
+
+            // Helper function to build completion display with proper avatar logic
+            function buildCompletionDisplay(
+                completerUser,
+                originalAssignee,
+                timeStr,
+                isAllTasks = false,
+            ) {
+                const avatarSize = isAllTasks ? 16 : 20;
+                const marginRight = isAllTasks ? "2px" : "4px";
+                const checkmarkColor = "#6d4c41"; // Completed tasks are grey/brown
+
+                let avatarHTML = "";
+
+                console.log("🔍 Building completion display:", {
+                    completerUser,
+                    originalAssignee,
+                    timeStr,
+                    avatarSystemExists: !!window.avatarSystem,
+                });
+
+                if (window.avatarSystem) {
+                    if (
+                        originalAssignee &&
+                        originalAssignee !== completerUser
+                    ) {
+                        // Show original user in brackets, then completer
+                        const originalAvatarHTML =
+                            window.avatarSystem.generateAvatarHTML(
+                                originalAssignee,
+                                avatarSize,
+                                "original-user-avatar",
+                                `margin-right: ${marginRight};`,
+                            );
+                        const completerAvatarHTML =
+                            window.avatarSystem.generateAvatarHTML(
+                                completerUser,
+                                avatarSize,
+                                "completer-user-avatar",
+                                `margin-right: ${marginRight};`,
+                            );
+                        avatarHTML = `(${originalAvatarHTML}) ${completerAvatarHTML}`;
+                        console.log(
+                            "🔍 Built completion display with both avatars:",
+                            {
+                                originalAssignee,
+                                completerUser,
+                                avatarHTML: avatarHTML.length,
+                            },
+                        );
+                    } else {
+                        // Same user completion - just show completer avatar
+                        avatarHTML = window.avatarSystem.generateAvatarHTML(
+                            completerUser,
+                            avatarSize,
+                            "completer-user-avatar",
+                            `margin-right: ${marginRight};`,
+                        );
+                        console.log(
+                            "🔍 Built completion display with single avatar:",
+                            {
+                                completerUser,
+                                avatarHTML: avatarHTML.length,
+                            },
+                        );
+                    }
+                } else {
+                    // Fallback if avatar system not available
+                    console.warn(
+                        "Avatar system not available, using text fallback",
+                    );
+                    if (
+                        originalAssignee &&
+                        originalAssignee !== completerUser
+                    ) {
+                        avatarHTML = `<span style="font-size: 12px; color: #666;">(${originalAssignee.substring(0, 3).toUpperCase()}) ${completerUser.substring(0, 3).toUpperCase()}</span>`;
+                    } else {
+                        avatarHTML = `<span style="font-size: 12px; color: #666;">${completerUser.substring(0, 3).toUpperCase()}</span>`;
+                    }
+                }
+
+                const checkmarkSVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${checkmarkColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><circle cx="12" cy="12" r="10"></circle></svg>`;
+
+                return `<span style="color: ${checkmarkColor}; font-size: 15px; display: ${isAllTasks ? "inline-flex" : "flex"}; align-items: center; gap: 4px;">${avatarHTML}${checkmarkSVG}${timeStr}</span>`;
+            }
+
             async function loadAllTasks(
                 userName,
                 selectedDate = new Date().toLocaleDateString("sv-SE"),
@@ -1050,7 +1197,7 @@
                         return;
                     }
 
-                    // Show only tasks NOT originally assigned to current user AND not private
+                    // Show only public tasks NOT assigned to current user in All Tasks view
                     const otherTasks = filterTasksForDate(
                         tasks,
                         selectedDate,
@@ -1191,7 +1338,7 @@
 
                                 taskHTML += `Buzz Points: ${task.reward || 0} 🍯 (goes to completer)<br>`;
 
-                                // Add due times if available
+                                Tsskstatus; // Add due times if available
                                 if (task.dueTimes && task.dueTimes.length > 0) {
                                     const dueTimeStr = task.dueTimes.join(", ");
                                     taskHTML += `<span style="color: #6d4c41; font-size: 15px; display: inline-flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6d4c41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12,6 12,12 16,14"></polyline></svg>Due: ${dueTimeStr}</span><br>`;
@@ -1223,7 +1370,7 @@
                                         selectedDate
                                     ].filter((c) => c.user === userName);
                                     console.log(
-                                        "🔍 [All Tasks] Found completedDates entries for user:",
+                                        "🔍 [All Tasks] Found completedDates entries for task:",
                                         userCompletions,
                                     );
                                     if (userCompletions.length > 0) {
@@ -1244,7 +1391,26 @@
                                                         hour12: true,
                                                     },
                                                 );
-                                            taskHTML += `<span style="color: #28a745; font-size: 15px; display: inline-flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#28a745" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><circle cx="12" cy="12" r="10"></circle></svg>Completed at ${timeStr}</span><br>`;
+
+                                            // Build completion display with avatar and time for All Tasks using helper function
+                                            const completerUser =
+                                                latestCompletion.user;
+                                            const originalAssignee =
+                                                getOriginalAssignee(
+                                                    task,
+                                                    selectedDate,
+                                                    completerUser,
+                                                );
+
+                                            const completionDisplay =
+                                                buildCompletionDisplay(
+                                                    completerUser,
+                                                    originalAssignee,
+                                                    timeStr,
+                                                    true, // isAllTasks = true
+                                                );
+
+                                            taskHTML += `${completionDisplay}<br>`;
                                             console.log(
                                                 "🔍 [All Tasks] Set completion time from completedDates:",
                                                 timeStr,
@@ -1265,7 +1431,7 @@
                                             (c.isCompleted || !c.isPending),
                                     );
                                     console.log(
-                                        "🔍 [All Tasks] Found completions entries for user:",
+                                        "🔍 [All Tasks] Found completions entries for task:",
                                         userCompletions,
                                     );
                                     if (userCompletions.length > 0) {
@@ -1286,7 +1452,26 @@
                                                         hour12: true,
                                                     },
                                                 );
-                                            taskHTML += `<span style="color: #28a745; font-size: 15px; display: inline-flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#28a745" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><circle cx="12" cy="12" r="10"></circle></svg>Completed at ${timeStr}</span><br>`;
+
+                                            // Build completion display with avatar and time for All Tasks using helper function
+                                            const completerUser =
+                                                latestCompletion.user;
+                                            const originalAssignee =
+                                                getOriginalAssignee(
+                                                    task,
+                                                    selectedDate,
+                                                    completerUser,
+                                                );
+
+                                            const completionDisplay =
+                                                buildCompletionDisplay(
+                                                    completerUser,
+                                                    originalAssignee,
+                                                    timeStr,
+                                                    true, // isAllTasks = true
+                                                );
+
+                                            taskHTML += `${completionDisplay}<br>`;
                                             console.log(
                                                 "🔍 [All Tasks] Set completion time from completions:",
                                                 timeStr,
@@ -1803,7 +1988,25 @@
                                                         hour12: true,
                                                     },
                                                 );
-                                            completionTimeStr = `<span style="color: #28a745; font-size: 15px; display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#28a745" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><circle cx="12" cy="12" r="10"></circle></svg>Completed at ${timeStr}</span>`;
+
+                                            // Build completion display with avatar and time using helper function
+                                            const completerUser =
+                                                latestCompletion.user;
+                                            const originalAssignee =
+                                                getOriginalAssignee(
+                                                    task,
+                                                    selectedDate,
+                                                    completerUser,
+                                                );
+
+                                            completionTimeStr =
+                                                buildCompletionDisplay(
+                                                    completerUser,
+                                                    originalAssignee,
+                                                    timeStr,
+                                                    false, // isAllTasks = false
+                                                );
+
                                             console.log(
                                                 "🔍 Set completion time from completedDates:",
                                                 timeStr,
@@ -1845,7 +2048,25 @@
                                                         hour12: true,
                                                     },
                                                 );
-                                            completionTimeStr = `<span style="color: #28a745; font-size: 15px; display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#28a745" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><circle cx="12" cy="12" r="10"></circle></svg>Completed at ${timeStr}</span>`;
+
+                                            // Build completion display with avatar and time using helper function
+                                            const completerUser =
+                                                latestCompletion.user;
+                                            const originalAssignee =
+                                                getOriginalAssignee(
+                                                    task,
+                                                    selectedDate,
+                                                    completerUser,
+                                                );
+
+                                            completionTimeStr =
+                                                buildCompletionDisplay(
+                                                    completerUser,
+                                                    originalAssignee,
+                                                    timeStr,
+                                                    false, // isAllTasks = false
+                                                );
+
                                             console.log(
                                                 "🔍 Set completion time from completions:",
                                                 timeStr,
