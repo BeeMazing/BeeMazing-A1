@@ -936,13 +936,22 @@ function individualTurnData(task, selectedDate) {
 
     let globalIndex = 0;
     for (const user of userOrder) {
-      const userCompletions = completions.filter((c) => c.user === user);
-      const userPendings = pendingCompletions.filter((p) => p.user === user);
+      // Handle merged completion data that includes isPending flag
+      const userCompletions = completions.filter(
+        (c) => c.user === user && c.isPending !== true,
+      );
+      const userPendings = completions.filter(
+        (c) => c.user === user && c.isPending === true,
+      );
+      // Legacy pending completions (if any still exist separately)
+      const legacyPendings = pendingCompletions.filter((p) => p.user === user);
 
       for (let rep = 1; rep <= requiredTimes; rep++) {
         const isCompleted = userCompletions.some((c) => c.repetition === rep);
         const isPending =
-          !isCompleted && userPendings.some((p) => p.repetition === rep);
+          !isCompleted &&
+          (userPendings.some((p) => p.repetition === rep) ||
+            legacyPendings.some((p) => p.repetition === rep));
 
         turns.push({
           user,
