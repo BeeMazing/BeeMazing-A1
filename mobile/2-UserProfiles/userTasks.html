@@ -2277,55 +2277,101 @@
                                     const pendingUsers = [];
                                     const approvedUsers = [];
 
-                                    task.users.forEach((user) => {
-                                        let userCompleted = false;
-                                        let userPending = false;
+                                    // Check ALL completions (including cross-completions)
+                                    const allCompletions = [];
 
-                                        // Check completedDates format first
-                                        if (
-                                            task.completedDates &&
-                                            task.completedDates[selectedDate]
-                                        ) {
-                                            const userCompletion =
-                                                task.completedDates[
-                                                    selectedDate
-                                                ].find((c) => c.user === user);
-                                            if (userCompletion) {
-                                                userCompleted = true;
-                                                userPending =
-                                                    userCompletion.isPending ===
-                                                    true;
-                                            }
-                                        }
-                                        // Fallback to completions format
-                                        else if (
-                                            task.completions &&
-                                            task.completions[selectedDate]
-                                        ) {
-                                            const userCompletion =
-                                                task.completions[
-                                                    selectedDate
-                                                ].find((c) => c.user === user);
-                                            if (
-                                                userCompletion &&
-                                                (userCompletion.isCompleted ||
-                                                    !userCompletion.isPending)
-                                            ) {
-                                                userCompleted = true;
-                                                userPending =
-                                                    userCompletion.isPending ===
-                                                    true;
-                                            }
-                                        }
+                                    // Get all completions from completedDates format
+                                    if (
+                                        task.completedDates &&
+                                        task.completedDates[selectedDate]
+                                    ) {
+                                        allCompletions.push(
+                                            ...task.completedDates[
+                                                selectedDate
+                                            ],
+                                        );
+                                    }
+                                    // Fallback to completions format
+                                    else if (
+                                        task.completions &&
+                                        task.completions[selectedDate]
+                                    ) {
+                                        allCompletions.push(
+                                            ...task.completions[
+                                                selectedDate
+                                            ].filter(
+                                                (c) =>
+                                                    c.isCompleted ||
+                                                    !c.isPending,
+                                            ),
+                                        );
+                                    }
 
-                                        if (userCompleted) {
-                                            if (userPending) {
-                                                pendingUsers.push(user);
+                                    // CROSS-COMPLETION FIX: Also check task.completions for isPending status
+                                    // (completedDates may have isPending=true while completions has isPending=false)
+                                    if (
+                                        task.completions &&
+                                        task.completions[selectedDate]
+                                    ) {
+                                        const completionsData =
+                                            task.completions[selectedDate];
+                                        // Update isPending status from completions data
+                                        allCompletions.forEach((completion) => {
+                                            const matchingCompletion =
+                                                completionsData.find(
+                                                    (c) =>
+                                                        c.user ===
+                                                        completion.user,
+                                                );
+                                            if (matchingCompletion) {
+                                                // Use the isPending status from completions data (more accurate)
+                                                completion.isPending =
+                                                    matchingCompletion.isPending;
+                                            }
+                                        });
+                                    }
+
+                                    // Process all completions (including cross-completions)
+                                    console.log(
+                                        `🔍 COMPLETION PROCESSING DEBUG: "${task.title}" → allCompletions:`,
+                                        allCompletions,
+                                    );
+
+                                    allCompletions.forEach(
+                                        (completion, index) => {
+                                            const user = completion.user;
+                                            console.log(
+                                                `🔍 Processing completion ${index + 1}/${allCompletions.length} for "${task.title}": user="${user}", isPending=${completion.isPending}, isCompleted=${completion.isCompleted}, completion=`,
+                                                completion,
+                                            );
+
+                                            if (completion.isPending === true) {
+                                                if (
+                                                    !pendingUsers.includes(user)
+                                                ) {
+                                                    pendingUsers.push(user);
+                                                    console.log(
+                                                        `➕ Added to PENDING: "${user}" for task "${task.title}"`,
+                                                    );
+                                                }
                                             } else {
-                                                approvedUsers.push(user);
+                                                if (
+                                                    !approvedUsers.includes(
+                                                        user,
+                                                    )
+                                                ) {
+                                                    approvedUsers.push(user);
+                                                    console.log(
+                                                        `➕ Added to APPROVED: "${user}" for task "${task.title}"`,
+                                                    );
+                                                }
                                             }
-                                        }
-                                    });
+                                        },
+                                    );
+
+                                    console.log(
+                                        `🔍 FINAL ARRAYS for "${task.title}": pendingUsers=[${pendingUsers.join(", ")}], approvedUsers=[${approvedUsers.join(", ")}]`,
+                                    );
 
                                     if (
                                         approvedUsers.length > 0 &&
@@ -2549,19 +2595,35 @@
 
                                 // Determine if task is fully approved for fading effect
                                 let isFullyApproved = false;
+
+                                // Check if current user completed this task (original logic)
+                                const userTurn = turnData.turns.find(
+                                    (t) => t.user === userName,
+                                );
+                                const userCompletedTask =
+                                    userTurn &&
+                                    userTurn.isCompleted &&
+                                    (!task.parentApproval ||
+                                        !userTurn.isPending);
+
+                                // Check if task was cross-completed (completed by someone else)
+                                const isCrossCompleted =
+                                    task._calculatedStatus === "approved" &&
+                                    !userCompletedTask;
+
                                 if (task.parentApproval === true) {
-                                    // For approval tasks, check if completed and not pending
-                                    const userTurn = turnData.turns.find(
-                                        (t) => t.user === userName,
-                                    );
+                                    // For approval tasks: user completed OR cross-completed and approved
                                     isFullyApproved =
-                                        userTurn &&
-                                        userTurn.isCompleted &&
-                                        !userTurn.isPending;
+                                        userCompletedTask || isCrossCompleted;
                                 } else {
-                                    // For non-approval tasks, completed = approved
-                                    isFullyApproved = isCompleted;
+                                    // For non-approval tasks: user completed OR cross-completed
+                                    isFullyApproved =
+                                        isCompleted || isCrossCompleted;
                                 }
+
+                                console.log(
+                                    `🎨 FADING LOGIC: "${task.title}" → userCompleted: ${userCompletedTask}, crossCompleted: ${isCrossCompleted}, calculatedStatus: ${task._calculatedStatus}, isFullyApproved: ${isFullyApproved}, opacity: ${isFullyApproved ? "0.6" : "1"}`,
+                                );
 
                                 // Create main container with flexbox layout and optional fading
                                 const opacity = isFullyApproved ? "0.6" : "1";
@@ -3643,10 +3705,16 @@
                                                     );
                                                 checkmark.innerHTML = "✓";
                                                 checkmark.style.cssText =
-                                                    "width: 28px; height: 28px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;";
+                                                    isPending
+                                                        ? "width: 28px; height: 28px; border-radius: 50%; background: #FFC107; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;"
+                                                        : "width: 28px; height: 28px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;";
                                                 completerContainer.appendChild(
                                                     checkmark,
                                                 );
+                                                completerContainer.title =
+                                                    isPending
+                                                        ? `Pending approval - completed by ${completerUser}`
+                                                        : `Completed by ${completerUser}`;
                                             }
 
                                             buttonContainer.appendChild(
