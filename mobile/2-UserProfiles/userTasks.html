@@ -1917,7 +1917,7 @@
                                         "width: 28px; height: 28px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;";
                                     completerContainer.appendChild(checkmark);
 
-                                    rightContainer.appendChild(
+                                    buttonContainer.appendChild(
                                         completerContainer,
                                     );
                                 } else if (canFinish) {
@@ -1956,9 +1956,145 @@
                                         },
                                     );
                                     buttonContainer.appendChild(finishBtn);
-                                    buttonContainer.appendChild(finishBtn);
                                 } else {
-                                    // Status already set before sorting
+                                    // Show pending/approved status for completed tasks
+                                    const pendingUsers = [];
+                                    const approvedUsers = [];
+
+                                    // Get turn data to check status
+                                    const isRotation =
+                                        task.settings?.includes("Rotation");
+                                    let turnData;
+
+                                    if (isRotation) {
+                                        turnData =
+                                            typeof mixedTurnData === "function"
+                                                ? mixedTurnData(
+                                                      task,
+                                                      selectedDate,
+                                                  )
+                                                : {
+                                                      turns: [],
+                                                      completedCount: 0,
+                                                      requiredTimes: 1,
+                                                  };
+                                    } else {
+                                        turnData =
+                                            typeof individualTurnData ===
+                                            "function"
+                                                ? individualTurnData(
+                                                      task,
+                                                      selectedDate,
+                                                  )
+                                                : {
+                                                      turns: [],
+                                                      completedCount: 0,
+                                                      requiredTimes: 1,
+                                                  };
+                                    }
+
+                                    // Check if task has completions
+                                    if (turnData.completedCount > 0) {
+                                        // Check approval status
+                                        if (task.parentApproval === true) {
+                                            turnData.turns.forEach((turn) => {
+                                                if (
+                                                    turn.isPending &&
+                                                    !pendingUsers.includes(
+                                                        turn.user,
+                                                    )
+                                                ) {
+                                                    pendingUsers.push(
+                                                        turn.user,
+                                                    );
+                                                } else if (
+                                                    turn.isCompleted &&
+                                                    !turn.isPending &&
+                                                    !approvedUsers.includes(
+                                                        turn.user,
+                                                    )
+                                                ) {
+                                                    approvedUsers.push(
+                                                        turn.user,
+                                                    );
+                                                }
+                                            });
+                                        } else {
+                                            // Non-approval tasks are approved when completed
+                                            turnData.turns.forEach((turn) => {
+                                                if (
+                                                    turn.isCompleted &&
+                                                    !approvedUsers.includes(
+                                                        turn.user,
+                                                    )
+                                                ) {
+                                                    approvedUsers.push(
+                                                        turn.user,
+                                                    );
+                                                }
+                                            });
+                                        }
+
+                                        // Show avatars with checkmarks
+                                        if (
+                                            pendingUsers.length > 0 ||
+                                            approvedUsers.length > 0
+                                        ) {
+                                            const allUsers = [
+                                                ...pendingUsers,
+                                                ...approvedUsers,
+                                            ];
+
+                                            allUsers
+                                                .slice(0, 3)
+                                                .forEach((user) => {
+                                                    if (window.avatarSystem) {
+                                                        const isPending =
+                                                            pendingUsers.includes(
+                                                                user,
+                                                            );
+                                                        const avatarHTML =
+                                                            window.avatarSystem.generateAvatarHTML(
+                                                                user,
+                                                                24,
+                                                                "task-completed-avatar",
+                                                                "margin-right: 2px;",
+                                                            );
+
+                                                        const userWrapper =
+                                                            document.createElement(
+                                                                "div",
+                                                            );
+                                                        userWrapper.style.cssText =
+                                                            "display: flex; align-items: center; gap: 2px;";
+                                                        userWrapper.innerHTML =
+                                                            avatarHTML;
+
+                                                        const checkmark =
+                                                            document.createElement(
+                                                                "div",
+                                                            );
+                                                        checkmark.innerHTML =
+                                                            "✓";
+                                                        checkmark.style.cssText =
+                                                            isPending
+                                                                ? "width: 20px; height: 20px; border-radius: 50%; background: #FFC107; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;"
+                                                                : "width: 20px; height: 20px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;";
+
+                                                        userWrapper.appendChild(
+                                                            checkmark,
+                                                        );
+                                                        userWrapper.title =
+                                                            isPending
+                                                                ? `Pending approval by ${user}`
+                                                                : `Approved - completed by ${user}`;
+                                                        buttonContainer.appendChild(
+                                                            userWrapper,
+                                                        );
+                                                    }
+                                                });
+                                        }
+                                    }
                                 }
 
                                 taskDiv.appendChild(buttonContainer);
