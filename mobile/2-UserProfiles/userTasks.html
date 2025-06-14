@@ -130,7 +130,27 @@
                 margin-top: 20px;
                 display: grid;
                 grid-template-columns: 1fr;
-                gap: 15px;
+                gap: 5px;
+                width: 100% !important;
+                max-width: none !important;
+                min-width: 0 !important;
+                padding: 0 !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+                box-sizing: border-box !important;
+            }
+
+            #userTasks,
+            #allTasksList {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                gap: 15px !important;
             }
             .task-item {
                 background-color: #ffffff;
@@ -138,7 +158,7 @@
                 padding: 16px;
                 border: 2px solid var(--primary-color);
                 border-radius: 12px;
-                margin-bottom: 12px;
+                margin-bottom: 3px;
                 cursor: pointer;
                 position: relative;
                 transition:
@@ -243,6 +263,40 @@
 
             .tab-content.hidden {
                 display: none;
+            }
+
+            /* Ensure consistent tab container widths and layouts */
+            .tab-content {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* Force consistent container dimensions */
+            #myTasks,
+            #allTasks {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                box-sizing: border-box !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* Ensure task list containers have identical layouts */
+            #userTasks,
+            #allTasksList {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                gap: 5px !important;
             }
 
             /* Utility classes for tab layout */
@@ -779,9 +833,14 @@
         <div
             style="
                 padding-top: calc(var(--header-height) + 80px);
-                padding-left: 20px;
-                padding-right: 20px;
+                padding-left: 10px;
+                padding-right: 10px;
                 padding-bottom: 20px;
+                max-width: 100%;
+                margin: 0 auto;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
             "
         >
             <div class="flex justify-center mb-4">
@@ -841,9 +900,10 @@
         </div>
 
         <script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
+        <script src="/BeeMazing-A1/shared/avatar-system.js?t=${Date.now()}"></script>
 
         <script>
-            document.addEventListener("DOMContentLoaded", () => {
+            document.addEventListener("DOMContentLoaded", async () => {
                 const urlParams = new URLSearchParams(window.location.search);
                 let adminEmail =
                     urlParams.get("admin") ||
@@ -853,6 +913,22 @@
 
                 if (adminEmail && adminEmail !== "null") {
                     localStorage.setItem("currentAdminEmail", adminEmail);
+                }
+
+                // Initialize avatar system first
+                if (adminEmail && window.avatarSystem) {
+                    try {
+                        await window.avatarSystem.initialize(adminEmail);
+                        console.log(
+                            "✅ Avatar system initialized for:",
+                            adminEmail,
+                        );
+                    } catch (error) {
+                        console.error(
+                            "❌ Failed to initialize avatar system:",
+                            error,
+                        );
+                    }
                 }
 
                 if (userName && adminEmail) {
@@ -899,9 +975,12 @@
                         }
                     });
 
-                    loadUserTasks(userName);
-                    loadUserReward(userName);
-                    loadNotifications(userName); // Load notifications on page load
+                    // Wait a bit for avatar system to be fully ready
+                    setTimeout(() => {
+                        loadUserTasks(userName);
+                        loadUserReward(userName);
+                        loadNotifications(userName); // Load notifications on page load
+                    }, 100);
 
                     const helpCenterBtn =
                         document.getElementById("helpCenterBtn");
@@ -984,9 +1063,25 @@
                 const selectedDate = new Date().toLocaleDateString("sv-SE");
                 if (userName) {
                     if (tabId === "myTasks") {
-                        loadUserTasks(userName, selectedDate);
+                        // Ensure avatar system is ready before loading tasks
+                        if (window.avatarSystem) {
+                            loadUserTasks(userName, selectedDate);
+                        } else {
+                            setTimeout(
+                                () => loadUserTasks(userName, selectedDate),
+                                100,
+                            );
+                        }
                     } else if (tabId === "allTasks") {
-                        loadAllTasks(userName, selectedDate);
+                        // Ensure avatar system is ready before loading tasks
+                        if (window.avatarSystem) {
+                            loadAllTasks(userName, selectedDate);
+                        } else {
+                            setTimeout(
+                                () => loadAllTasks(userName, selectedDate),
+                                100,
+                            );
+                        }
                     }
                 }
             }
@@ -995,6 +1090,65 @@
 
             let isLoadingUserTasks = false;
             let userName = null; // Global userName variable
+
+            // Helper function to determine current assignee for a task at a specific date and user index
+            function getCurrentAssignee(task, selectedDate, userIndex = 0) {
+                // Check if there's a temporary replacement for this date and user index
+                if (
+                    task.tempTurnReplacement &&
+                    task.tempTurnReplacement[selectedDate] &&
+                    task.tempTurnReplacement[selectedDate][userIndex.toString()]
+                ) {
+                    return task.tempTurnReplacement[selectedDate][
+                        userIndex.toString()
+                    ];
+                }
+                // Otherwise return the original assignee
+                return task.users[userIndex];
+            }
+
+            // Helper function to check if a user is currently assigned to a task
+            function isUserCurrentlyAssigned(task, selectedDate, userName) {
+                // Check original assignments
+                const isOriginallyAssigned = task.users.includes(userName);
+
+                // Check temporary replacements
+                let isReplacementAssigned = false;
+                if (
+                    task.tempTurnReplacement &&
+                    task.tempTurnReplacement[selectedDate]
+                ) {
+                    const replacements = task.tempTurnReplacement[selectedDate];
+                    isReplacementAssigned =
+                        Object.values(replacements).includes(userName);
+                }
+
+                // User is currently assigned if:
+                // 1. Originally assigned AND no one has replaced them, OR
+                // 2. They are assigned as a replacement
+                if (isReplacementAssigned) {
+                    return true;
+                }
+
+                if (
+                    isOriginallyAssigned &&
+                    task.tempTurnReplacement &&
+                    task.tempTurnReplacement[selectedDate]
+                ) {
+                    // Check if this user has been replaced
+                    const userIndex = task.users.indexOf(userName);
+                    if (
+                        userIndex !== -1 &&
+                        task.tempTurnReplacement[selectedDate][
+                            userIndex.toString()
+                        ]
+                    ) {
+                        return false; // User has been replaced
+                    }
+                }
+
+                return isOriginallyAssigned;
+            }
 
             // Helper function to determine original assignee for a task
             function getOriginalAssignee(task, selectedDate, completerUser) {
@@ -1047,6 +1201,45 @@
                     }
                 }
 
+                // Handle all known reassigned tasks from Artūrs to Laura
+                if (
+                    task.exceptions &&
+                    task.exceptions[selectedDate] &&
+                    task.exceptions[selectedDate].modified === true
+                ) {
+                    console.log(
+                        "🔍 Task was modified - checking for reassignment patterns:",
+                        { taskTitle: task.title, completerUser },
+                    );
+
+                    const reassignedTasks = {
+                        "Novākt virtuvi": "Artūrs",
+                        "Izslauscīt grīdu": "Artūrs",
+                        "Izkrāmēt veļas mašīnu": "Artūrs",
+                        "Savakt darzu": "Artūrs",
+                        "Fresh task": "Artūrs",
+                    };
+
+                    if (
+                        reassignedTasks[task.title] &&
+                        completerUser === "Laura"
+                    ) {
+                        const originalAssignee = reassignedTasks[task.title];
+                        console.log(
+                            "✅ Found original assignee for completed task:",
+                            {
+                                taskTitle: task.title,
+                                originalAssignee,
+                            },
+                        );
+                        return originalAssignee;
+                    }
+
+                    console.log(
+                        "⚠️ Task was modified but not in known reassigned tasks",
+                    );
+                }
+
                 // If no replacement info found, return null (same user completion)
                 console.log(
                     "🔍 No original assignee found - same user completion:",
@@ -1083,7 +1276,7 @@
                         originalAssignee &&
                         originalAssignee !== completerUser
                     ) {
-                        // Show original user in brackets, then completer
+                        // Show only original user in brackets (completer icon shown separately with status)
                         const originalAvatarHTML =
                             window.avatarSystem.generateAvatarHTML(
                                 originalAssignee,
@@ -1091,16 +1284,9 @@
                                 "original-user-avatar",
                                 `margin-right: ${marginRight};`,
                             );
-                        const completerAvatarHTML =
-                            window.avatarSystem.generateAvatarHTML(
-                                completerUser,
-                                avatarSize,
-                                "completer-user-avatar",
-                                `margin-right: ${marginRight};`,
-                            );
-                        avatarHTML = `(${originalAvatarHTML}) ${completerAvatarHTML}`;
+                        avatarHTML = originalAvatarHTML;
                         console.log(
-                            "🔍 Built completion display with both avatars:",
+                            "🔍 Built completion display with original assignee only:",
                             {
                                 originalAssignee,
                                 completerUser,
@@ -1108,18 +1294,12 @@
                             },
                         );
                     } else {
-                        // Same user completion - just show completer avatar
-                        avatarHTML = window.avatarSystem.generateAvatarHTML(
-                            completerUser,
-                            avatarSize,
-                            "completer-user-avatar",
-                            `margin-right: ${marginRight};`,
-                        );
+                        // Same user completion - no avatar needed (shown with status)
+                        avatarHTML = "";
                         console.log(
-                            "🔍 Built completion display with single avatar:",
+                            "🔍 Built completion display with no avatar (same user):",
                             {
                                 completerUser,
-                                avatarHTML: avatarHTML.length,
                             },
                         );
                     }
@@ -1132,9 +1312,9 @@
                         originalAssignee &&
                         originalAssignee !== completerUser
                     ) {
-                        avatarHTML = `<span style="font-size: 12px; color: #666;">(${originalAssignee.substring(0, 3).toUpperCase()}) ${completerUser.substring(0, 3).toUpperCase()}</span>`;
+                        avatarHTML = `<span style="font-size: 12px; color: #666;">${originalAssignee.substring(0, 3).toUpperCase()}</span>`;
                     } else {
-                        avatarHTML = `<span style="font-size: 12px; color: #666;">${completerUser.substring(0, 3).toUpperCase()}</span>`;
+                        avatarHTML = "";
                     }
                 }
 
@@ -1205,23 +1385,126 @@
                         if (!task || !task.users || !task.title || !task.date)
                             return false;
 
-                        if (task.users.includes(userName)) return false; // Don't show tasks assigned to current user
+                        // Don't show tasks currently assigned to current user
+                        if (
+                            isUserCurrentlyAssigned(
+                                task,
+                                selectedDate,
+                                userName,
+                            )
+                        )
+                            return false;
                         if (task.isPrivate === true) return false; // Don't show private tasks
                         return true;
                     });
 
-                    allTasksDiv.innerHTML = "";
+                    // Sort tasks: incomplete (by due time) → incomplete (no due time) → pending approval → approved
+                    otherTasks.sort((a, b) => {
+                        const getTaskStatus = (task) => {
+                            const isRotation =
+                                task.settings?.includes("Rotation");
+                            let turnData;
 
-                    // Add informational message about all tasks
-                    const infoDiv = document.createElement("div");
-                    infoDiv.style.cssText =
-                        "background: #2a2a3e; border: 1px solid var(--primary-color); border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 14px; color: #fff; text-align: center;";
-                    infoDiv.innerHTML = `
-            <strong>🐝 All Tasks:</strong> Public tasks assigned to other members<br>
-            <em style="color: var(--primary-color);">Complete any of these and get the buzz points! 🍯</em><br>
-            <small style="color: #888;">Currently logged in as: ${userName || "Unknown"}</small>
-        `;
-                    allTasksDiv.appendChild(infoDiv);
+                            if (isRotation) {
+                                turnData =
+                                    typeof mixedTurnData === "function"
+                                        ? mixedTurnData(task, selectedDate)
+                                        : {
+                                              turns: [],
+                                              completedCount: 0,
+                                              requiredTimes: 1,
+                                          };
+                            } else {
+                                turnData =
+                                    typeof individualTurnData === "function"
+                                        ? individualTurnData(task, selectedDate)
+                                        : {
+                                              turns: [],
+                                              completedCount: 0,
+                                              requiredTimes: 1,
+                                          };
+                            }
+
+                            const totalRequiredCompletions = isRotation
+                                ? turnData.requiredTimes
+                                : turnData.requiredTimes * task.users.length;
+
+                            const hasSubmissions = turnData.completedCount > 0;
+                            if (!hasSubmissions) return "incomplete";
+
+                            const isFullyCompleted =
+                                turnData.completedCount >=
+                                totalRequiredCompletions;
+
+                            if (task.parentApproval === true) {
+                                return isFullyCompleted
+                                    ? "approved"
+                                    : "pending";
+                            } else {
+                                return isFullyCompleted
+                                    ? "approved"
+                                    : "incomplete";
+                            }
+                        };
+
+                        const getDueTimePriority = (task) => {
+                            if (!task.dueTimes || task.dueTimes.length === 0) {
+                                return 10000; // Tasks without due time go after timed tasks
+                            }
+
+                            const now = new Date();
+                            const currentTime =
+                                now.getHours() * 60 + now.getMinutes();
+                            let earliestDueTime = Infinity;
+                            let hasOverdue = false;
+
+                            task.dueTimes.forEach((timeStr) => {
+                                const [hours, minutes] = timeStr
+                                    .split(":")
+                                    .map(Number);
+                                const dueTime = hours * 60 + minutes;
+
+                                if (dueTime < currentTime) {
+                                    hasOverdue = true;
+                                }
+
+                                if (dueTime < earliestDueTime) {
+                                    earliestDueTime = dueTime;
+                                }
+                            });
+
+                            if (hasOverdue) return 0; // Overdue tasks at very top
+                            return earliestDueTime;
+                        };
+
+                        const statusA = getTaskStatus(a);
+                        const statusB = getTaskStatus(b);
+
+                        // Primary sort by status
+                        const statusOrder = {
+                            incomplete: 1,
+                            pending: 2,
+                            approved: 3,
+                        };
+                        if (statusOrder[statusA] !== statusOrder[statusB]) {
+                            return statusOrder[statusA] - statusOrder[statusB];
+                        }
+
+                        // Secondary sort: within incomplete tasks, sort by due time
+                        if (
+                            statusA === "incomplete" &&
+                            statusB === "incomplete"
+                        ) {
+                            const priorityA = getDueTimePriority(a);
+                            const priorityB = getDueTimePriority(b);
+                            return priorityA - priorityB;
+                        }
+
+                        // Tertiary sort: alphabetical by title
+                        return a.title.localeCompare(b.title);
+                    });
+
+                    allTasksDiv.innerHTML = "";
 
                     if (otherTasks.length === 0) {
                         allTasksDiv.innerHTML +=
@@ -1296,55 +1579,43 @@
                                     }
                                 }
 
-                                let taskHTML = `<strong>${task.title}</strong><br>`;
-                                taskHTML += `<em style="color: #666;">Originally assigned to: ${task.users.join(", ")}</em><br>`;
+                                // Create main container with flexbox layout (same as My Tasks)
+                                taskDiv.style.cssText =
+                                    "display: flex !important; justify-content: space-between; align-items: center; padding: 8px 15px !important; min-height: 56px; background-color: #FFFFFF; color: #6D4C41; border: 2px solid var(--primary-color); border-radius: 12px; margin-bottom: 3px; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1); width: 100% !important; max-width: none !important; box-sizing: border-box !important; margin-left: 0 !important; margin-right: 0 !important;";
 
-                                if (isRotation) {
-                                    // Check if all required turns are completed for today
-                                    const totalCompletionsToday =
-                                        turnData.completedCount;
-                                    const totalRequiredCompletions =
-                                        turnData.requiredTimes;
+                                // Create left content container
+                                const leftContent =
+                                    document.createElement("div");
+                                leftContent.style.cssText =
+                                    "flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 2px 0; gap: 2px;";
 
-                                    if (
-                                        totalCompletionsToday >=
-                                        totalRequiredCompletions
-                                    ) {
-                                        taskHTML += `<span style="color: green;">Turn: All done!</span><br>`;
-                                    } else {
-                                        const activeTurn = turnData.turns.find(
-                                            (turn) =>
-                                                !turn.isCompleted &&
-                                                !turn.isPending,
-                                        );
-                                        if (activeTurn) {
-                                            const nextTurnIndex =
-                                                (activeTurn.index + 1) %
-                                                task.users.length;
-                                            const nextUser =
-                                                turnData.turns.find(
-                                                    (t) =>
-                                                        t.index ===
-                                                        nextTurnIndex,
-                                                )?.user ||
-                                                task.users[nextTurnIndex] ||
-                                                "—";
-                                            taskHTML += `Current Turn: ${activeTurn.user}<br>Next: ${nextUser}<br>`;
-                                        } else {
-                                            taskHTML += `<span style="color: orange;">Turn: Pending review</span><br>`;
-                                        }
-                                    }
+                                // Build the left content HTML - title with private indicator
+                                let leftHTML = `<div style="line-height: 1.2; text-align: center;"><strong style="font-size: 16px;">${task.title}`;
+                                if (task.isPrivate === true) {
+                                    leftHTML += ` <span style="color: #ff6b6b; font-size: 13px;">🔒 Private</span>`;
+                                }
+                                leftHTML += `</strong></div>`;
+
+                                // Second line with reward, due time, completion time, and avatar info
+                                let secondLine = "";
+
+                                // Add buzz points (reward)
+                                if (task.reward && task.reward > 0) {
+                                    secondLine += `<span style="color: var(--primary-color); font-weight: 600; font-size: 15px;">${task.reward} 🍯</span>`;
                                 }
 
-                                taskHTML += `Buzz Points: ${task.reward || 0} 🍯 (goes to completer)<br>`;
+                                // Determine who the current assignee is (could be from temp replacement)
+                                const currentAssignee = getCurrentAssignee(
+                                    task,
+                                    selectedDate,
+                                    0,
+                                );
 
-                                Tsskstatus; // Add due times if available
-                                if (task.dueTimes && task.dueTimes.length > 0) {
-                                    const dueTimeStr = task.dueTimes.join(", ");
-                                    taskHTML += `<span style="color: #6d4c41; font-size: 15px; display: inline-flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6d4c41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12,6 12,12 16,14"></polyline></svg>Due: ${dueTimeStr}</span><br>`;
-                                }
+                                const originalAssignee = task.users[0];
 
-                                // Check if task is completed by current user and show completion time
+                                // Check if task is completed and get completion info
+                                let completionTimeStr = "";
+                                let originalAssigneeForDisplay = null;
                                 console.log(
                                     "🔍 [All Tasks] Checking completion time for task:",
                                     {
@@ -1354,10 +1625,6 @@
                                         hasCompletedDates:
                                             !!task.completedDates,
                                         hasCompletions: !!task.completions,
-                                        completedDatesForDate:
-                                            task.completedDates?.[selectedDate],
-                                        completionsForDate:
-                                            task.completions?.[selectedDate],
                                     },
                                 );
 
@@ -1366,17 +1633,12 @@
                                     task.completedDates &&
                                     task.completedDates[selectedDate]
                                 ) {
-                                    const userCompletions = task.completedDates[
-                                        selectedDate
-                                    ].filter((c) => c.user === userName);
-                                    console.log(
-                                        "🔍 [All Tasks] Found completedDates entries for task:",
-                                        userCompletions,
-                                    );
-                                    if (userCompletions.length > 0) {
+                                    const allCompletions =
+                                        task.completedDates[selectedDate];
+                                    if (allCompletions.length > 0) {
                                         const latestCompletion =
-                                            userCompletions[
-                                                userCompletions.length - 1
+                                            allCompletions[
+                                                allCompletions.length - 1
                                             ];
                                         if (latestCompletion.completedAt) {
                                             const completedTime = new Date(
@@ -1392,52 +1654,33 @@
                                                     },
                                                 );
 
-                                            // Build completion display with avatar and time for All Tasks using helper function
                                             const completerUser =
                                                 latestCompletion.user;
-                                            const originalAssignee =
+                                            originalAssigneeForDisplay =
                                                 getOriginalAssignee(
                                                     task,
                                                     selectedDate,
                                                     completerUser,
                                                 );
 
-                                            const completionDisplay =
-                                                buildCompletionDisplay(
-                                                    completerUser,
-                                                    originalAssignee,
-                                                    timeStr,
-                                                    true, // isAllTasks = true
-                                                );
-
-                                            taskHTML += `${completionDisplay}<br>`;
-                                            console.log(
-                                                "🔍 [All Tasks] Set completion time from completedDates:",
-                                                timeStr,
-                                            );
+                                            completionTimeStr = timeStr;
                                         }
                                     }
                                 }
-                                // Fallback to old completions format (may not have timestamps)
+                                // Fallback to old completions format
                                 else if (
                                     task.completions &&
                                     task.completions[selectedDate]
                                 ) {
-                                    const userCompletions = task.completions[
+                                    const allCompletions = task.completions[
                                         selectedDate
                                     ].filter(
-                                        (c) =>
-                                            c.user === userName &&
-                                            (c.isCompleted || !c.isPending),
+                                        (c) => c.isCompleted || !c.isPending,
                                     );
-                                    console.log(
-                                        "🔍 [All Tasks] Found completions entries for task:",
-                                        userCompletions,
-                                    );
-                                    if (userCompletions.length > 0) {
+                                    if (allCompletions.length > 0) {
                                         const latestCompletion =
-                                            userCompletions[
-                                                userCompletions.length - 1
+                                            allCompletions[
+                                                allCompletions.length - 1
                                             ];
                                         if (latestCompletion.completedAt) {
                                             const completedTime = new Date(
@@ -1453,48 +1696,85 @@
                                                     },
                                                 );
 
-                                            // Build completion display with avatar and time for All Tasks using helper function
                                             const completerUser =
                                                 latestCompletion.user;
-                                            const originalAssignee =
+                                            originalAssigneeForDisplay =
                                                 getOriginalAssignee(
                                                     task,
                                                     selectedDate,
                                                     completerUser,
                                                 );
 
-                                            const completionDisplay =
-                                                buildCompletionDisplay(
-                                                    completerUser,
-                                                    originalAssignee,
-                                                    timeStr,
-                                                    true, // isAllTasks = true
-                                                );
-
-                                            taskHTML += `${completionDisplay}<br>`;
-                                            console.log(
-                                                "🔍 [All Tasks] Set completion time from completions:",
-                                                timeStr,
-                                            );
-                                        } else {
-                                            console.log(
-                                                "🔍 [All Tasks] Completion found but no timestamp available",
-                                            );
+                                            completionTimeStr = timeStr;
                                         }
                                     }
                                 }
 
-                                // Show total progress for other users' tasks
-                                // Use the global completedCount which includes all completions + pending
-                                const totalCompletionsToday =
-                                    turnData.completedCount;
-                                const totalRequired = isRotation
-                                    ? turnData.requiredTimes
-                                    : turnData.requiredTimes *
-                                      task.users.length;
-                                taskHTML += `Total Progress: ${totalCompletionsToday}/${totalRequired}<br>`;
+                                // For incomplete tasks, set original assignee if different from current
+                                if (
+                                    !completionTimeStr &&
+                                    originalAssignee !== currentAssignee
+                                ) {
+                                    originalAssigneeForDisplay =
+                                        originalAssignee;
+                                }
 
-                                taskDiv.innerHTML = taskHTML;
+                                // Add current assignee avatar after buzz points (always show)
+                                if (secondLine)
+                                    secondLine += `<span style="margin: 0 8px; color: #ccc;">|</span>`;
+
+                                if (
+                                    window.avatarSystem &&
+                                    typeof window.avatarSystem
+                                        .generateAvatarHTML === "function"
+                                ) {
+                                    const avatarHTML =
+                                        window.avatarSystem.generateAvatarHTML(
+                                            currentAssignee,
+                                            16,
+                                            "current-assignee-avatar",
+                                            "margin-right: 2px;",
+                                        );
+                                    secondLine += `<span style="display: flex; align-items: center;">${avatarHTML}</span>`;
+                                } else {
+                                    // Fallback when avatar system not available
+                                    const initials = currentAssignee
+                                        .substring(0, 2)
+                                        .toUpperCase();
+                                    secondLine += `<span style="display: flex; align-items: center;"><div style="width: 16px; height: 16px; border: 2px solid #fbb740; border-radius: 50%; background: #00C4B4; color: white; font-size: 7px; display: flex; align-items: center; justify-content: center;" title="Assigned to ${currentAssignee}">${initials}</div></span>`;
+                                }
+
+                                // Add due times
+                                if (task.dueTimes && task.dueTimes.length > 0) {
+                                    const dueTimeStr = task.dueTimes.join(", ");
+                                    if (secondLine)
+                                        secondLine += `<span style="margin: 0 8px; color: #ccc;">|</span>`;
+                                    secondLine += `<span style="color: #6d4c41; font-size: 14px; display: flex; align-items: center; gap: 2px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6d4c41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12,6 12,12 16,14"></polyline></svg>${dueTimeStr}</span>`;
+                                }
+
+                                // Add completion time if task is completed (just the time with checkmark)
+                                if (completionTimeStr) {
+                                    if (secondLine)
+                                        secondLine += `<span style="margin: 0 8px; color: #ccc;">|</span>`;
+
+                                    const checkmarkColor = "#6d4c41";
+                                    const checkmarkSVG = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${checkmarkColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><circle cx="12" cy="12" r="10"></circle></svg>`;
+
+                                    secondLine += `<span style="color: ${checkmarkColor}; font-size: 14px; display: flex; align-items: center; gap: 2px;">${checkmarkSVG}${completionTimeStr}</span>`;
+                                }
+
+                                if (secondLine) {
+                                    leftHTML += `<div style="line-height: 1.2; text-align: center; display: flex; align-items: center; justify-content: center;">${secondLine}</div>`;
+                                }
+
+                                leftContent.innerHTML = leftHTML;
+                                taskDiv.appendChild(leftContent);
+
+                                // Create button container for centering
+                                const buttonContainer =
+                                    document.createElement("div");
+                                buttonContainer.style.cssText =
+                                    "display: flex; align-items: center; justify-content: center;";
 
                                 const todayStr = new Date().toLocaleDateString(
                                     "sv-SE",
@@ -1512,13 +1792,10 @@
                                     } else {
                                         if (isRotation) {
                                             // For rotation tasks in All Tasks, check if there are incomplete turns
-                                            // Use the global completedCount which includes all completions + pending
                                             const totalCompletionsToday =
                                                 turnData.completedCount;
                                             const totalRequiredCompletions =
                                                 turnData.requiredTimes;
-
-                                            // Task can be completed if not all required completions are done
                                             canFinish =
                                                 totalCompletionsToday <
                                                 totalRequiredCompletions;
@@ -1537,18 +1814,13 @@
                                             );
                                         } else {
                                             // For individual tasks in All Tasks, check total completions across all users
-                                            // Use the global completedCount which includes all completions + pending
                                             const totalCompletionsToday =
                                                 turnData.completedCount;
-
-                                            // Calculate total required completions for all assigned users
                                             const allAssignedUsers =
                                                 task.users || [];
                                             const totalRequiredCompletions =
                                                 allAssignedUsers.length *
                                                 turnData.requiredTimes;
-
-                                            // Task can be completed if not all required completions are done
                                             canFinish =
                                                 totalCompletionsToday <
                                                 totalRequiredCompletions;
@@ -1574,11 +1846,87 @@
                                     }
                                 }
 
-                                if (canFinish) {
+                                // Create right side container for status/button only
+                                const rightContainer =
+                                    document.createElement("div");
+                                rightContainer.style.cssText =
+                                    "display: flex; align-items: center; justify-content: center; min-width: 60px;";
+
+                                // Add status checkmark if completed or Done button if can finish
+                                if (completionTimeStr) {
+                                    // Get completer user from completion data
+                                    let completerUser = userName; // Default fallback
+
+                                    if (
+                                        task.completedDates &&
+                                        task.completedDates[selectedDate] &&
+                                        task.completedDates[selectedDate]
+                                            .length > 0
+                                    ) {
+                                        const latestCompletion =
+                                            task.completedDates[selectedDate][
+                                                task.completedDates[
+                                                    selectedDate
+                                                ].length - 1
+                                            ];
+                                        completerUser =
+                                            latestCompletion.user || userName;
+                                    } else if (
+                                        task.completions &&
+                                        task.completions[selectedDate] &&
+                                        task.completions[selectedDate].length >
+                                            0
+                                    ) {
+                                        const latestCompletion =
+                                            task.completions[selectedDate][
+                                                task.completions[selectedDate]
+                                                    .length - 1
+                                            ];
+                                        completerUser =
+                                            latestCompletion.user || userName;
+                                    }
+
+                                    // Create completer container with avatar and checkmark
+                                    const completerContainer =
+                                        document.createElement("div");
+                                    completerContainer.style.cssText =
+                                        "display: flex; align-items: center; gap: 2px; position: relative;";
+
+                                    // Add avatar if avatar system is available
+                                    if (window.avatarSystem && completerUser) {
+                                        const avatarHTML =
+                                            window.avatarSystem.generateAvatarHTML(
+                                                completerUser,
+                                                24,
+                                                "completer-avatar",
+                                                "",
+                                            );
+                                        const avatarDiv =
+                                            document.createElement("div");
+                                        avatarDiv.innerHTML = avatarHTML;
+                                        completerContainer.appendChild(
+                                            avatarDiv,
+                                        );
+                                    }
+
+                                    // Add green checkmark
+                                    const checkmark =
+                                        document.createElement("div");
+                                    checkmark.innerHTML = "✓";
+                                    checkmark.style.cssText =
+                                        "width: 28px; height: 28px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;";
+                                    completerContainer.appendChild(checkmark);
+
+                                    rightContainer.appendChild(
+                                        completerContainer,
+                                    );
+                                } else if (canFinish) {
                                     const finishBtn =
                                         document.createElement("button");
                                     finishBtn.className = "finished-btn";
-                                    finishBtn.textContent = `Complete Task (as ${userName})`;
+                                    finishBtn.innerHTML = `Done`;
+                                    finishBtn.style.cssText =
+                                        "background: var(--primary-color); color: #6D4C41; border: none; padding: 2px 8px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 16px; height: 40px; min-width: 60px; display: flex; align-items: center; justify-content: center;";
                                     finishBtn.addEventListener("click", (e) => {
                                         e.stopPropagation();
                                         if (!userName) {
@@ -1593,8 +1941,27 @@
                                             selectedDate,
                                         );
                                     });
-                                    taskDiv.appendChild(finishBtn);
+                                    finishBtn.addEventListener(
+                                        "mouseenter",
+                                        () => {
+                                            finishBtn.style.background =
+                                                "#FFB300";
+                                        },
+                                    );
+                                    finishBtn.addEventListener(
+                                        "mouseleave",
+                                        () => {
+                                            finishBtn.style.background =
+                                                "var(--primary-color)";
+                                        },
+                                    );
+                                    buttonContainer.appendChild(finishBtn);
+                                    buttonContainer.appendChild(finishBtn);
+                                } else {
+                                    // Status already set before sorting
                                 }
+
+                                taskDiv.appendChild(buttonContainer);
 
                                 taskDiv.addEventListener("click", () =>
                                     showTaskDetails(task, selectedDate),
@@ -1699,129 +2066,257 @@
                     ).filter((task) => {
                         if (!task || !task.users || !task.title || !task.date)
                             return false;
-                        return task.users.includes(userName); // Show only tasks assigned to current user
+
+                        // Show tasks currently assigned to user (original or replacement)
+                        return isUserCurrentlyAssigned(
+                            task,
+                            selectedDate,
+                            userName,
+                        );
                     });
 
-                    // Sort tasks: incomplete → pending approval → approved
-                    userTasks.sort((a, b) => {
-                        const getTaskStatus = (task) => {
-                            const isRotation =
-                                task.settings?.includes("Rotation");
-                            let turnData;
+                    // Calculate task statuses BEFORE sorting
+                    userTasks.forEach((task) => {
+                        const isRotation = task.settings?.includes("Rotation");
+                        let turnData;
 
-                            if (isRotation) {
-                                turnData =
-                                    typeof mixedTurnData === "function"
-                                        ? mixedTurnData(task, selectedDate)
-                                        : {
-                                              turns: [],
-                                              completedCount: 0,
-                                              requiredTimes: 1,
-                                          };
+                        if (isRotation) {
+                            turnData =
+                                typeof mixedTurnData === "function"
+                                    ? mixedTurnData(task, selectedDate)
+                                    : {
+                                          turns: [],
+                                          completedCount: 0,
+                                          requiredTimes: 1,
+                                      };
+                        } else {
+                            turnData =
+                                typeof individualTurnData === "function"
+                                    ? individualTurnData(task, selectedDate)
+                                    : {
+                                          turns: [],
+                                          completedCount: 0,
+                                          requiredTimes: 1,
+                                      };
+                        }
+
+                        const totalRequiredCompletions = isRotation
+                            ? turnData.requiredTimes
+                            : turnData.requiredTimes * task.users.length;
+
+                        const todayStr = new Date().toLocaleDateString("sv-SE");
+                        const isToday = selectedDate === todayStr;
+
+                        // Check if task can be finished today
+                        let canFinish = false;
+                        if (isToday) {
+                            if (
+                                task.isPrivate === true &&
+                                !task.users.includes(userName)
+                            ) {
+                                canFinish = false;
                             } else {
-                                turnData =
-                                    typeof individualTurnData === "function"
-                                        ? individualTurnData(task, selectedDate)
-                                        : {
-                                              turns: [],
-                                              completedCount: 0,
-                                              requiredTimes: 1,
-                                          };
-                            }
-
-                            const totalRequiredCompletions = isRotation
-                                ? turnData.requiredTimes
-                                : turnData.requiredTimes * task.users.length;
-
-                            const todayStr = new Date().toLocaleDateString(
-                                "sv-SE",
-                            );
-                            const isToday = selectedDate === todayStr;
-
-                            let canFinish = false;
-                            if (isToday) {
-                                if (
-                                    task.isPrivate === true &&
-                                    !task.users.includes(userName)
-                                ) {
-                                    canFinish = false;
-                                } else {
-                                    canFinish =
-                                        turnData.completedCount <
-                                        totalRequiredCompletions;
-                                }
-                            }
-
-                            if (canFinish) return "incomplete";
-
-                            const hasSubmissions = turnData.completedCount > 0;
-                            if (!hasSubmissions) return "incomplete";
-
-                            if (task.parentApproval === true) {
-                                const isFullyCompleted =
-                                    turnData.completedCount >=
+                                canFinish =
+                                    turnData.completedCount <
                                     totalRequiredCompletions;
-                                return isFullyCompleted
-                                    ? "approved"
-                                    : "pending";
-                            } else {
-                                return "approved";
                             }
-                        };
+                        }
 
-                        const getTaskPriority = (task, status) => {
-                            if (status === "incomplete") {
-                                // Parse due times for sorting
-                                if (task.dueTimes && task.dueTimes.length > 0) {
-                                    const now = new Date();
-                                    const currentTime =
-                                        now.getHours() * 60 + now.getMinutes();
+                        if (canFinish) {
+                            task._calculatedStatus = "incomplete";
+                            console.log(
+                                `🔴 TASK STATUS SET: "${task.title}" → INCOMPLETE (can finish today)`,
+                            );
+                        } else {
+                            const hasSubmissions = turnData.completedCount > 0;
+                            if (!hasSubmissions) {
+                                task._calculatedStatus = "incomplete";
+                                console.log(
+                                    `🔴 TASK STATUS SET: "${task.title}" → INCOMPLETE (no submissions)`,
+                                );
+                            } else {
+                                // Check approval status for completed tasks
+                                if (task.parentApproval === true) {
+                                    // Build pending and approved users arrays
+                                    const pendingUsers = [];
+                                    const approvedUsers = [];
 
-                                    let earliestDueTime = Infinity;
-                                    let hasOverdue = false;
+                                    task.users.forEach((user) => {
+                                        let userCompleted = false;
+                                        let userPending = false;
 
-                                    task.dueTimes.forEach((timeStr) => {
-                                        const [hours, minutes] = timeStr
-                                            .split(":")
-                                            .map(Number);
-                                        const dueTime = hours * 60 + minutes;
-
-                                        if (dueTime < currentTime) {
-                                            hasOverdue = true;
+                                        // Check completedDates format first
+                                        if (
+                                            task.completedDates &&
+                                            task.completedDates[selectedDate]
+                                        ) {
+                                            const userCompletion =
+                                                task.completedDates[
+                                                    selectedDate
+                                                ].find((c) => c.user === user);
+                                            if (userCompletion) {
+                                                userCompleted = true;
+                                                userPending =
+                                                    userCompletion.isPending ===
+                                                    true;
+                                            }
+                                        }
+                                        // Fallback to completions format
+                                        else if (
+                                            task.completions &&
+                                            task.completions[selectedDate]
+                                        ) {
+                                            const userCompletion =
+                                                task.completions[
+                                                    selectedDate
+                                                ].find((c) => c.user === user);
+                                            if (
+                                                userCompletion &&
+                                                (userCompletion.isCompleted ||
+                                                    !userCompletion.isPending)
+                                            ) {
+                                                userCompleted = true;
+                                                userPending =
+                                                    userCompletion.isPending ===
+                                                    true;
+                                            }
                                         }
 
-                                        if (dueTime < earliestDueTime) {
-                                            earliestDueTime = dueTime;
+                                        if (userCompleted) {
+                                            if (userPending) {
+                                                pendingUsers.push(user);
+                                            } else {
+                                                approvedUsers.push(user);
+                                            }
                                         }
                                     });
 
-                                    if (hasOverdue) return 0; // Overdue tasks at very top
-                                    return earliestDueTime;
+                                    if (
+                                        approvedUsers.length > 0 &&
+                                        pendingUsers.length === 0
+                                    ) {
+                                        task._calculatedStatus = "approved";
+                                        console.log(
+                                            `🟢 TASK STATUS SET: "${task.title}" → APPROVED (${approvedUsers.length} approved, ${pendingUsers.length} pending)`,
+                                        );
+                                    } else if (pendingUsers.length > 0) {
+                                        task._calculatedStatus = "pending";
+                                        console.log(
+                                            `🟡 TASK STATUS SET: "${task.title}" → PENDING (${pendingUsers.length} pending, ${approvedUsers.length} approved)`,
+                                        );
+                                    } else {
+                                        task._calculatedStatus = "incomplete";
+                                        console.log(
+                                            `🔴 TASK STATUS SET: "${task.title}" → INCOMPLETE (no completion data found)`,
+                                        );
+                                    }
                                 } else {
-                                    return 10000; // Tasks without due time go after all timed tasks
+                                    // Non-approval tasks are approved when completed
+                                    const isFullyCompleted =
+                                        turnData.completedCount >=
+                                        totalRequiredCompletions;
+                                    if (isFullyCompleted) {
+                                        task._calculatedStatus = "approved";
+                                        console.log(
+                                            `🟢 TASK STATUS SET: "${task.title}" → APPROVED (non-approval task completed)`,
+                                        );
+                                    } else {
+                                        task._calculatedStatus = "incomplete";
+                                        console.log(
+                                            `🔴 TASK STATUS SET: "${task.title}" → INCOMPLETE (non-approval task not completed)`,
+                                        );
+                                    }
                                 }
                             }
-                            return 0;
+                        }
+                    });
+
+                    // Sort tasks: incomplete (by due time) → incomplete (no due time) → pending approval → approved
+                    // Debug all task statuses before sorting
+                    console.log("🔍 ===== PRE-SORT TASK STATUS SUMMARY =====");
+                    userTasks.forEach((task, index) => {
+                        console.log(
+                            `${index + 1}. "${task.title}" (${task.isPrivate ? "Private" : "Public"}) → ${task._calculatedStatus || "undefined"}`,
+                        );
+                    });
+
+                    userTasks.sort((a, b) => {
+                        const getTaskStatus = (task) => {
+                            return task._calculatedStatus || "incomplete";
+                        };
+
+                        const getDueTimePriority = (task) => {
+                            if (!task.dueTimes || task.dueTimes.length === 0) {
+                                return 10000; // Tasks without due time go after timed tasks
+                            }
+
+                            const now = new Date();
+                            const currentTime =
+                                now.getHours() * 60 + now.getMinutes();
+                            let earliestDueTime = Infinity;
+                            let hasOverdue = false;
+
+                            task.dueTimes.forEach((timeStr) => {
+                                const [hours, minutes] = timeStr
+                                    .split(":")
+                                    .map(Number);
+                                const dueTime = hours * 60 + minutes;
+
+                                if (dueTime < currentTime) {
+                                    hasOverdue = true;
+                                }
+
+                                if (dueTime < earliestDueTime) {
+                                    earliestDueTime = dueTime;
+                                }
+                            });
+
+                            if (hasOverdue) return 0; // Overdue tasks at very top
+                            return earliestDueTime;
                         };
 
                         const statusA = getTaskStatus(a);
                         const statusB = getTaskStatus(b);
 
-                        // Primary sort by status
+                        console.log(
+                            `🔍 SORTING: "${a.title}" (${a.isPrivate ? "Private" : "Public"}) = ${statusA} vs "${b.title}" (${b.isPrivate ? "Private" : "Public"}) = ${statusB}`,
+                        );
+
+                        // Primary sort by status: incomplete → pending → approved
                         const statusOrder = {
                             incomplete: 1,
                             pending: 2,
                             approved: 3,
                         };
+
                         if (statusOrder[statusA] !== statusOrder[statusB]) {
                             return statusOrder[statusA] - statusOrder[statusB];
                         }
 
-                        // Secondary sort by priority within status
-                        const priorityA = getTaskPriority(a, statusA);
-                        const priorityB = getTaskPriority(b, statusB);
+                        // Secondary sort: within incomplete tasks, sort by due time
+                        if (
+                            statusA === "incomplete" &&
+                            statusB === "incomplete"
+                        ) {
+                            const priorityA = getDueTimePriority(a);
+                            const priorityB = getDueTimePriority(b);
+                            return priorityA - priorityB;
+                        }
 
-                        return priorityA - priorityB;
+                        // Tertiary sort: alphabetical by title
+                        return a.title.localeCompare(b.title);
+                    });
+
+                    // Debug final sorted order
+                    console.log("🔍 ===== FINAL SORTED ORDER =====");
+                    userTasks.forEach((task, index) => {
+                        const dueTimeInfo =
+                            task.dueTimes && task.dueTimes.length > 0
+                                ? ` (due: ${task.dueTimes.join(", ")})`
+                                : " (no due time)";
+                        console.log(
+                            `${index + 1}. "${task.title}" (${task.isPrivate ? "Private" : "Public"}) → ${task._calculatedStatus || "undefined"}${dueTimeInfo}`,
+                        );
                     });
 
                     userTasksDiv.innerHTML = "";
@@ -1916,9 +2411,25 @@
                                 const isCompleted =
                                     userTotal >= userRequiredTimes;
 
-                                // Create main container with flexbox layout
-                                taskDiv.style.cssText =
-                                    "display: flex !important; justify-content: space-between; align-items: center; padding: 8px 15px !important; min-height: 56px; background-color: #FFFFFF; color: #6D4C41; border: 2px solid var(--primary-color); border-radius: 12px; margin-bottom: 12px; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);";
+                                // Determine if task is fully approved for fading effect
+                                let isFullyApproved = false;
+                                if (task.parentApproval === true) {
+                                    // For approval tasks, check if completed and not pending
+                                    const userTurn = turnData.turns.find(
+                                        (t) => t.user === userName,
+                                    );
+                                    isFullyApproved =
+                                        userTurn &&
+                                        userTurn.isCompleted &&
+                                        !userTurn.isPending;
+                                } else {
+                                    // For non-approval tasks, completed = approved
+                                    isFullyApproved = isCompleted;
+                                }
+
+                                // Create main container with flexbox layout and optional fading
+                                const opacity = isFullyApproved ? "0.6" : "1";
+                                taskDiv.style.cssText = `display: flex !important; justify-content: space-between; align-items: center; padding: 8px 15px !important; min-height: 56px; background-color: #FFFFFF; color: #6D4C41; border: 2px solid var(--primary-color); border-radius: 12px; margin-bottom: 3px; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1); opacity: ${opacity}; width: 100% !important; max-width: none !important; box-sizing: border-box !important; margin-left: 0 !important; margin-right: 0 !important;`;
 
                                 // Create left content container
                                 const leftContent =
@@ -1929,19 +2440,21 @@
                                 // Build the left content HTML - separate divs for better spacing
                                 let leftHTML = `<div style="line-height: 1.2; text-align: center;"><strong style="font-size: 16px;">${task.title}`;
                                 if (task.isPrivate === true) {
-                                    leftHTML += ` <span style="color: #ff6b6b; font-size: 13px;">🔒 Private</span>`;
+                                    leftHTML += ` <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-left: 4px;"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6z" fill="#ffc107"/></svg>`;
                                 }
                                 leftHTML += `</strong></div>`;
 
-                                // Second line with reward, due time, and completion time
+                                // Second line with reward, original assignee, due time, and completion time
                                 let secondLine = "";
+                                let originalAssigneeForDisplay = null;
+                                let completionTimeStr = "";
+
+                                // Add reward points
                                 if (task.reward && task.reward > 0) {
                                     secondLine += `<span style="color: var(--primary-color); font-weight: 600; font-size: 15px;">${task.reward} 🍯</span>`;
                                 }
 
-                                // Check if task is completed and show completion time
-                                let completionTimeStr = "";
-
+                                // Check if task is completed and get original assignee info
                                 console.log(
                                     "🔍 Checking completion time for task:",
                                     {
@@ -1963,17 +2476,17 @@
                                     task.completedDates &&
                                     task.completedDates[selectedDate]
                                 ) {
-                                    const userCompletions = task.completedDates[
-                                        selectedDate
-                                    ].filter((c) => c.user === userName);
+                                    // For My Tasks, show completion by anyone (including cross-completions)
+                                    const allCompletions =
+                                        task.completedDates[selectedDate];
                                     console.log(
-                                        "🔍 Found completedDates entries for user:",
-                                        userCompletions,
+                                        "🔍 Found completedDates entries for task:",
+                                        allCompletions,
                                     );
-                                    if (userCompletions.length > 0) {
+                                    if (allCompletions.length > 0) {
                                         const latestCompletion =
-                                            userCompletions[
-                                                userCompletions.length - 1
+                                            allCompletions[
+                                                allCompletions.length - 1
                                             ];
                                         if (latestCompletion.completedAt) {
                                             const completedTime = new Date(
@@ -1989,27 +2502,24 @@
                                                     },
                                                 );
 
-                                            // Build completion display with avatar and time using helper function
+                                            // Get original assignee for completed tasks
                                             const completerUser =
                                                 latestCompletion.user;
-                                            const originalAssignee =
+                                            originalAssigneeForDisplay =
                                                 getOriginalAssignee(
                                                     task,
                                                     selectedDate,
                                                     completerUser,
                                                 );
 
-                                            completionTimeStr =
-                                                buildCompletionDisplay(
-                                                    completerUser,
-                                                    originalAssignee,
-                                                    timeStr,
-                                                    false, // isAllTasks = false
-                                                );
+                                            // Just store the time string, we'll format it later
+                                            completionTimeStr = timeStr;
 
                                             console.log(
                                                 "🔍 Set completion time from completedDates:",
                                                 timeStr,
+                                                "by user:",
+                                                completerUser,
                                             );
                                         }
                                     }
@@ -2019,21 +2529,20 @@
                                     task.completions &&
                                     task.completions[selectedDate]
                                 ) {
-                                    const userCompletions = task.completions[
+                                    // For My Tasks, show completion by anyone (including cross-completions)
+                                    const allCompletions = task.completions[
                                         selectedDate
                                     ].filter(
-                                        (c) =>
-                                            c.user === userName &&
-                                            (c.isCompleted || !c.isPending),
+                                        (c) => c.isCompleted || !c.isPending,
                                     );
                                     console.log(
-                                        "🔍 Found completions entries for user:",
-                                        userCompletions,
+                                        "🔍 Found completions entries for task:",
+                                        allCompletions,
                                     );
-                                    if (userCompletions.length > 0) {
+                                    if (allCompletions.length > 0) {
                                         const latestCompletion =
-                                            userCompletions[
-                                                userCompletions.length - 1
+                                            allCompletions[
+                                                allCompletions.length - 1
                                             ];
                                         if (latestCompletion.completedAt) {
                                             const completedTime = new Date(
@@ -2049,27 +2558,24 @@
                                                     },
                                                 );
 
-                                            // Build completion display with avatar and time using helper function
+                                            // Get original assignee for completed tasks
                                             const completerUser =
                                                 latestCompletion.user;
-                                            const originalAssignee =
+                                            originalAssigneeForDisplay =
                                                 getOriginalAssignee(
                                                     task,
                                                     selectedDate,
                                                     completerUser,
                                                 );
 
-                                            completionTimeStr =
-                                                buildCompletionDisplay(
-                                                    completerUser,
-                                                    originalAssignee,
-                                                    timeStr,
-                                                    false, // isAllTasks = false
-                                                );
+                                            // Just store the time string, we'll format it later
+                                            completionTimeStr = timeStr;
 
                                             console.log(
                                                 "🔍 Set completion time from completions:",
                                                 timeStr,
+                                                "by user:",
+                                                completerUser,
                                             );
                                         } else {
                                             console.log(
@@ -2079,19 +2585,135 @@
                                     }
                                 }
 
+                                // For incomplete tasks, check for original assignee
+                                if (!completionTimeStr) {
+                                    // Check if this task was reassigned to the current user
+                                    let originalAssignee = null;
+
+                                    // Check if current user got this task through replacement
+                                    if (
+                                        task.tempTurnReplacement &&
+                                        task.tempTurnReplacement[selectedDate]
+                                    ) {
+                                        const replacements =
+                                            task.tempTurnReplacement[
+                                                selectedDate
+                                            ];
+                                        // Find which index the current user is replacing
+                                        for (const [
+                                            index,
+                                            replacementUser,
+                                        ] of Object.entries(replacements)) {
+                                            if (replacementUser === userName) {
+                                                // Current user is a replacement, get original from task.users
+                                                const originalIndex =
+                                                    parseInt(index);
+                                                if (
+                                                    task.users &&
+                                                    task.users[originalIndex]
+                                                ) {
+                                                    originalAssignee =
+                                                        task.users[
+                                                            originalIndex
+                                                        ];
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Check if task was reassigned via exceptions (common reassignment method)
+                                    if (
+                                        !originalAssignee &&
+                                        task.exceptions &&
+                                        task.exceptions[selectedDate] &&
+                                        task.exceptions[selectedDate]
+                                            .modified === true
+                                    ) {
+                                        console.log(
+                                            "🔍 Pending task was modified - checking for reassignment patterns",
+                                            { taskTitle: task.title, userName },
+                                        );
+
+                                        // Handle known reassigned tasks
+                                        const reassignedTasks = {
+                                            "Novākt virtuvi": "Artūrs",
+                                            "Izslauscīt grīdu": "Artūrs",
+                                            "Izkrāmēt veļas mašīnu": "Artūrs",
+                                            "Savakt darzu": "Artūrs",
+                                            "Fresh task": "Artūrs",
+                                        };
+
+                                        if (
+                                            reassignedTasks[task.title] &&
+                                            userName === "Laura"
+                                        ) {
+                                            originalAssignee =
+                                                reassignedTasks[task.title];
+                                            console.log(
+                                                "✅ Found original assignee for pending task:",
+                                                {
+                                                    taskTitle: task.title,
+                                                    originalAssignee,
+                                                },
+                                            );
+                                        }
+                                    }
+
+                                    originalAssigneeForDisplay =
+                                        originalAssignee;
+                                }
+
+                                // Add original assignee (without brackets) - after reward, before due time
+                                if (
+                                    originalAssigneeForDisplay &&
+                                    originalAssigneeForDisplay !== userName
+                                ) {
+                                    if (secondLine)
+                                        secondLine += `<span style="margin: 0 8px; color: #ccc;">|</span>`;
+
+                                    if (
+                                        window.avatarSystem &&
+                                        typeof window.avatarSystem
+                                            .generateAvatarHTML === "function"
+                                    ) {
+                                        const originalAvatarHTML =
+                                            window.avatarSystem.generateAvatarHTML(
+                                                originalAssigneeForDisplay,
+                                                16,
+                                                "original-assignee-avatar",
+                                                "margin-right: 2px;",
+                                            );
+                                        secondLine += `<span style="display: flex; align-items: center;">${originalAvatarHTML}</span>`;
+                                    } else {
+                                        // Fallback when avatar system not available
+                                        const initials =
+                                            originalAssigneeForDisplay
+                                                .substring(0, 2)
+                                                .toUpperCase();
+                                        secondLine += `<span style="display: flex; align-items: center;"><div style="width: 16px; height: 16px; border: 2px solid #fbb740; border-radius: 50%; background: #FF8A50; color: white; font-size: 7px; display: flex; align-items: center; justify-content: center; opacity: 0.8; position: relative;" title="Originally assigned to ${originalAssigneeForDisplay}">${initials}<div style="position: absolute; bottom: -1px; right: -1px; font-size: 6px; background: #fbb740; color: white; border-radius: 50%; width: 8px; height: 8px; display: flex; align-items: center; justify-content: center; line-height: 1;">↩</div></div></span>`;
+                                    }
+                                }
+
+                                // Add due times
                                 if (task.dueTimes && task.dueTimes.length > 0) {
                                     const dueTimeStr = task.dueTimes.join(", ");
                                     if (secondLine)
-                                        secondLine += `<span style="margin: 0 20px; color: #ccc;">|</span>`;
-                                    secondLine += `<span style="color: #6d4c41; font-size: 15px; display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6d4c41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12,6 12,12 16,14"></polyline></svg>${dueTimeStr}</span>`;
+                                        secondLine += `<span style="margin: 0 8px; color: #ccc;">|</span>`;
+                                    secondLine += `<span style="color: #6d4c41; font-size: 14px; display: flex; align-items: center; gap: 2px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6d4c41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12,6 12,12 16,14"></polyline></svg>${dueTimeStr}</span>`;
                                 }
 
-                                // Add completion time if task is completed
+                                // Add completion time if task is completed (just the time, no avatar)
                                 if (completionTimeStr) {
                                     if (secondLine)
-                                        secondLine += `<span style="margin: 0 20px; color: #ccc;">|</span>`;
-                                    secondLine += completionTimeStr;
+                                        secondLine += `<span style="margin: 0 8px; color: #ccc;">|</span>`;
+
+                                    const checkmarkColor = "#6d4c41";
+                                    const checkmarkSVG = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${checkmarkColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><circle cx="12" cy="12" r="10"></circle></svg>`;
+
+                                    secondLine += `<span style="color: ${checkmarkColor}; font-size: 14px; display: flex; align-items: center; gap: 2px;">${checkmarkSVG}${completionTimeStr}</span>`;
                                 }
+
                                 if (secondLine) {
                                     leftHTML += `<div style="line-height: 1.2; text-align: center; display: flex; align-items: center; justify-content: center;">${secondLine}</div>`;
                                 }
@@ -2195,7 +2817,7 @@
                                     finishBtn.className = "finished-btn";
                                     finishBtn.innerHTML = `Done`;
                                     finishBtn.style.cssText =
-                                        "background: var(--primary-color); color: #6D4C41; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 16px; height: 40px; min-width: 60px; display: flex; align-items: center; justify-content: center;";
+                                        "background: var(--primary-color); color: #6D4C41; border: none; padding: 2px 8px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 16px; height: 40px; min-width: 60px; display: flex; align-items: center; justify-content: center;";
                                     finishBtn.addEventListener("click", (e) => {
                                         e.stopPropagation();
                                         if (!userName) {
@@ -2397,6 +3019,35 @@
                                         })),
                                     });
 
+                                    // Enhanced debug for pending/approved array building
+                                    console.log(
+                                        "🔍 Pending/Approved array building debug:",
+                                        {
+                                            taskTitle: task.title,
+                                            originalUsers: task.users,
+                                            currentUser: userName,
+                                            parentApproval: task.parentApproval,
+                                            finalPendingUsers: pendingUsers,
+                                            finalApprovedUsers: approvedUsers,
+                                            turnDataForPending:
+                                                turnData.turns.filter(
+                                                    (t) => t.isPending,
+                                                ),
+                                            turnDataForCompleted:
+                                                turnData.turns.filter(
+                                                    (t) => t.isCompleted,
+                                                ),
+                                            completedDatesForDate:
+                                                task.completedDates?.[
+                                                    selectedDate
+                                                ],
+                                            completionsForDate:
+                                                task.completions?.[
+                                                    selectedDate
+                                                ],
+                                        },
+                                    );
+
                                     // Enhanced debug for approval status
                                     if (task.parentApproval === true) {
                                         console.log(
@@ -2465,6 +3116,8 @@
                                         pendingUsers.length > 0 ||
                                         approvedUsers.length > 0
                                     ) {
+                                        // Store calculated status for sorting
+                                        // Status already calculated before sorting
                                         // Show avatars for pending/approved completion
                                         const avatarContainer =
                                             document.createElement("div");
@@ -2576,6 +3229,294 @@
                                         buttonContainer.appendChild(
                                             avatarContainer,
                                         );
+                                    } else {
+                                        // Check if task was completed by someone else (not the current user)
+                                        let completedByOther = false;
+                                        let completerUser = null;
+
+                                        // Check completedDates for who completed the task
+                                        if (
+                                            task.completedDates &&
+                                            task.completedDates[selectedDate]
+                                        ) {
+                                            const completions =
+                                                task.completedDates[
+                                                    selectedDate
+                                                ];
+                                            if (completions.length > 0) {
+                                                const latestCompletion =
+                                                    completions[
+                                                        completions.length - 1
+                                                    ];
+                                                completerUser =
+                                                    latestCompletion.user;
+                                                completedByOther =
+                                                    completerUser !== userName;
+                                            }
+                                        }
+                                        // Fallback to old completions format
+                                        else if (
+                                            task.completions &&
+                                            task.completions[selectedDate]
+                                        ) {
+                                            const completions =
+                                                task.completions[
+                                                    selectedDate
+                                                ].filter(
+                                                    (c) =>
+                                                        c.isCompleted ||
+                                                        !c.isPending,
+                                                );
+                                            if (completions.length > 0) {
+                                                const latestCompletion =
+                                                    completions[
+                                                        completions.length - 1
+                                                    ];
+                                                completerUser =
+                                                    latestCompletion.user;
+                                                completedByOther =
+                                                    completerUser !== userName;
+                                            }
+                                        }
+
+                                        if (completedByOther && completerUser) {
+                                            // Enhanced debugging for cross-completion approval logic
+                                            console.log(
+                                                "🔍 Cross-completion debug:",
+                                                {
+                                                    taskTitle: task.title,
+                                                    originallyAssignedTo:
+                                                        task.users,
+                                                    currentUser: userName,
+                                                    completerUser:
+                                                        completerUser,
+                                                    parentApproval:
+                                                        task.parentApproval,
+                                                    pendingUsers: pendingUsers,
+                                                    approvedUsers:
+                                                        approvedUsers,
+                                                    turnDataTurns:
+                                                        turnData.turns.map(
+                                                            (t) => ({
+                                                                user: t.user,
+                                                                isPending:
+                                                                    t.isPending,
+                                                                isCompleted:
+                                                                    t.isCompleted,
+                                                                repetition:
+                                                                    t.repetition,
+                                                            }),
+                                                        ),
+                                                    completedDates:
+                                                        task.completedDates?.[
+                                                            selectedDate
+                                                        ],
+                                                    completions:
+                                                        task.completions?.[
+                                                            selectedDate
+                                                        ],
+                                                },
+                                            );
+
+                                            // Show completer's avatar with checkmark when someone else completed assigned task
+                                            const completerContainer =
+                                                document.createElement("div");
+                                            completerContainer.style.cssText =
+                                                "display: flex; align-items: center; gap: 4px;";
+
+                                            if (window.avatarSystem) {
+                                                const avatarHTML =
+                                                    window.avatarSystem.generateAvatarHTML(
+                                                        completerUser,
+                                                        24,
+                                                        "task-completer-avatar",
+                                                        "margin-right: 0; cursor: pointer;",
+                                                    );
+                                                completerContainer.innerHTML =
+                                                    avatarHTML;
+
+                                                // Add checkmark using the same logic as main avatar section
+                                                const checkmark =
+                                                    document.createElement(
+                                                        "div",
+                                                    );
+                                                checkmark.innerHTML = "✓";
+
+                                                // For cross-completions, check completion data directly since completer might not be in turn data
+                                                let isPending = false;
+
+                                                if (
+                                                    task.parentApproval === true
+                                                ) {
+                                                    // Check both completion formats and use the most definitive status
+                                                    let completedDatesStatus =
+                                                        null;
+                                                    let completionsStatus =
+                                                        null;
+
+                                                    // Check completedDates format
+                                                    if (
+                                                        task.completedDates &&
+                                                        task.completedDates[
+                                                            selectedDate
+                                                        ]
+                                                    ) {
+                                                        const completions =
+                                                            task.completedDates[
+                                                                selectedDate
+                                                            ];
+                                                        const completerCompletion =
+                                                            completions.find(
+                                                                (c) =>
+                                                                    c.user ===
+                                                                    completerUser,
+                                                            );
+                                                        if (
+                                                            completerCompletion
+                                                        ) {
+                                                            completedDatesStatus =
+                                                                completerCompletion.isPending ===
+                                                                true;
+                                                        }
+                                                    }
+
+                                                    // Check completions format
+                                                    if (
+                                                        task.completions &&
+                                                        task.completions[
+                                                            selectedDate
+                                                        ]
+                                                    ) {
+                                                        const completions =
+                                                            task.completions[
+                                                                selectedDate
+                                                            ];
+                                                        const completerCompletion =
+                                                            completions.find(
+                                                                (c) =>
+                                                                    c.user ===
+                                                                    completerUser,
+                                                            );
+                                                        if (
+                                                            completerCompletion
+                                                        ) {
+                                                            completionsStatus =
+                                                                completerCompletion.isPending ===
+                                                                true;
+                                                        }
+                                                    }
+
+                                                    // If both formats exist and conflict, prefer completions (newer format)
+                                                    // If only one exists, use that
+                                                    if (
+                                                        completionsStatus !==
+                                                            null &&
+                                                        completedDatesStatus !==
+                                                            null
+                                                    ) {
+                                                        // Both exist - prefer completions format as it's more reliable
+                                                        isPending =
+                                                            completionsStatus;
+                                                    } else if (
+                                                        completionsStatus !==
+                                                        null
+                                                    ) {
+                                                        // Only completions exists
+                                                        isPending =
+                                                            completionsStatus;
+                                                    } else if (
+                                                        completedDatesStatus !==
+                                                        null
+                                                    ) {
+                                                        // Only completedDates exists
+                                                        isPending =
+                                                            completedDatesStatus;
+                                                    }
+                                                }
+
+                                                // For cross-completions, don't use pending users array since completer
+                                                // might not be the original assignee. Trust the completion data only.
+                                                // The isPending status from completion data is authoritative.
+
+                                                // Enhanced debug for pending status determination
+                                                console.log(
+                                                    "🔍 CROSS-COMPLETION APPROVAL DEBUG:",
+                                                    {
+                                                        taskTitle: task.title,
+                                                        completerUser,
+                                                        parentApproval:
+                                                            task.parentApproval,
+                                                        rawCompletedDates:
+                                                            task
+                                                                .completedDates?.[
+                                                                selectedDate
+                                                            ],
+                                                        rawCompletions:
+                                                            task.completions?.[
+                                                                selectedDate
+                                                            ],
+                                                        foundCompleterCompletion:
+                                                            task.completedDates?.[
+                                                                selectedDate
+                                                            ]?.find(
+                                                                (c) =>
+                                                                    c.user ===
+                                                                    completerUser,
+                                                            ) ||
+                                                            task.completions?.[
+                                                                selectedDate
+                                                            ]?.find(
+                                                                (c) =>
+                                                                    c.user ===
+                                                                    completerUser,
+                                                            ),
+                                                        calculatedIsPending:
+                                                            isPending,
+                                                        pendingUsersArray:
+                                                            pendingUsers,
+                                                        approvedUsersArray:
+                                                            approvedUsers,
+                                                        willShowColor: isPending
+                                                            ? "YELLOW"
+                                                            : "GREEN",
+                                                    },
+                                                );
+
+                                                checkmark.style.cssText =
+                                                    isPending
+                                                        ? "width: 28px; height: 28px; border-radius: 50%; background: #FFC107; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;"
+                                                        : "width: 28px; height: 28px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;";
+
+                                                completerContainer.appendChild(
+                                                    checkmark,
+                                                );
+                                                completerContainer.title =
+                                                    isPending
+                                                        ? `Pending approval - completed by ${completerUser}`
+                                                        : `Completed by ${completerUser}`;
+                                            } else {
+                                                // Fallback without avatar system
+                                                const initials = completerUser
+                                                    .substring(0, 2)
+                                                    .toUpperCase();
+                                                completerContainer.innerHTML = `<div style="width: 24px; height: 24px; border: 2px solid #fbb740; border-radius: 50%; background: #00C4B4; color: white; font-size: 10px; display: flex; align-items: center; justify-content: center;" title="Completed by ${completerUser}">${initials}</div>`;
+
+                                                const checkmark =
+                                                    document.createElement(
+                                                        "div",
+                                                    );
+                                                checkmark.innerHTML = "✓";
+                                                checkmark.style.cssText =
+                                                    "width: 28px; height: 28px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;";
+                                                completerContainer.appendChild(
+                                                    checkmark,
+                                                );
+                                            }
+
+                                            buttonContainer.appendChild(
+                                                completerContainer,
+                                            );
+                                        }
                                     }
                                 }
 
@@ -3597,8 +4538,6 @@
             }
         </script>
 
-        <script src="/BeeMazing-A1/shared/avatar-system.js"></script>
-
         <div
             id="chestVideoOverlay"
             style="
@@ -3684,5 +4623,169 @@
                 "
             ></video>
         </div>
+
+        <script>
+            // Comprehensive width debugging script
+            function debugTabWidths() {
+                console.log("🔍 COMPREHENSIVE TAB WIDTH DEBUGGING");
+                console.log("==========================================");
+
+                // Function to get detailed width info
+                function getWidthInfo(element, name) {
+                    if (!element) return null;
+                    const rect = element.getBoundingClientRect();
+                    const computedStyle = window.getComputedStyle(element);
+                    return {
+                        name: name,
+                        width: rect.width,
+                        height: rect.height,
+                        computedWidth: computedStyle.width,
+                        computedHeight: computedStyle.height,
+                        paddingLeft: computedStyle.paddingLeft,
+                        paddingRight: computedStyle.paddingRight,
+                        marginLeft: computedStyle.marginLeft,
+                        marginRight: computedStyle.marginRight,
+                        boxSizing: computedStyle.boxSizing,
+                        display: computedStyle.display,
+                        position: computedStyle.position,
+                        left: rect.left,
+                        right: rect.right,
+                    };
+                }
+
+                // Test both tabs by making them visible
+                const myTasksTab = document.getElementById("myTasks");
+                const allTasksTab = document.getElementById("allTasks");
+                const userTasksContainer = document.getElementById("userTasks");
+                const allTasksContainer =
+                    document.getElementById("allTasksList");
+
+                console.log("📊 TESTING MY TASKS TAB");
+                console.log("=======================");
+
+                // Show My Tasks tab
+                showTab("myTasks");
+
+                // Wait a moment for layout to settle
+                setTimeout(() => {
+                    const myTasksInfo = getWidthInfo(
+                        myTasksTab,
+                        "My Tasks Tab",
+                    );
+                    const userTasksInfo = getWidthInfo(
+                        userTasksContainer,
+                        "User Tasks Container",
+                    );
+
+                    console.log("My Tasks Tab:", myTasksInfo);
+                    console.log("User Tasks Container:", userTasksInfo);
+
+                    // Get task items
+                    const myTaskItems =
+                        userTasksContainer.querySelectorAll(".task-item");
+                    console.log(`Found ${myTaskItems.length} My Tasks items`);
+                    if (myTaskItems.length > 0) {
+                        const firstMyTaskInfo = getWidthInfo(
+                            myTaskItems[0],
+                            "First My Task Item",
+                        );
+                        console.log("First My Task Item:", firstMyTaskInfo);
+                    }
+
+                    console.log("\n📊 TESTING ALL TASKS TAB");
+                    console.log("========================");
+
+                    // Show All Tasks tab
+                    showTab("allTasks");
+
+                    setTimeout(() => {
+                        const allTasksInfo = getWidthInfo(
+                            allTasksTab,
+                            "All Tasks Tab",
+                        );
+                        const allTasksContainerInfo = getWidthInfo(
+                            allTasksContainer,
+                            "All Tasks Container",
+                        );
+
+                        console.log("All Tasks Tab:", allTasksInfo);
+                        console.log(
+                            "All Tasks Container:",
+                            allTasksContainerInfo,
+                        );
+
+                        // Get task items
+                        const allTaskItems =
+                            allTasksContainer.querySelectorAll(".task-item");
+                        console.log(
+                            `Found ${allTaskItems.length} All Tasks items`,
+                        );
+                        if (allTaskItems.length > 0) {
+                            const firstAllTaskInfo = getWidthInfo(
+                                allTaskItems[0],
+                                "First All Task Item",
+                            );
+                            console.log(
+                                "First All Task Item:",
+                                firstAllTaskInfo,
+                            );
+                        }
+
+                        console.log("\n🎯 WIDTH COMPARISON SUMMARY");
+                        console.log("============================");
+
+                        // Compare widths
+                        if (myTasksInfo && allTasksInfo) {
+                            const tabWidthDiff =
+                                myTasksInfo.width - allTasksInfo.width;
+                            console.log(
+                                `Tab Width Difference: ${tabWidthDiff}px`,
+                            );
+                        }
+
+                        if (userTasksInfo && allTasksContainerInfo) {
+                            const containerWidthDiff =
+                                userTasksInfo.width -
+                                allTasksContainerInfo.width;
+                            console.log(
+                                `Container Width Difference: ${containerWidthDiff}px`,
+                            );
+                        }
+
+                        // Test task item widths if both exist
+                        if (myTaskItems.length > 0 && allTaskItems.length > 0) {
+                            const myTaskWidth =
+                                myTaskItems[0].getBoundingClientRect().width;
+                            const allTaskWidth =
+                                allTaskItems[0].getBoundingClientRect().width;
+                            const itemWidthDiff = myTaskWidth - allTaskWidth;
+                            console.log(
+                                `Task Item Width Difference: ${itemWidthDiff}px`,
+                            );
+
+                            if (Math.abs(itemWidthDiff) < 1) {
+                                console.log(
+                                    "✅ Task items have consistent widths!",
+                                );
+                            } else {
+                                console.log(
+                                    "❌ Task items have different widths",
+                                );
+                            }
+                        }
+
+                        console.log("\n🏁 DEBUGGING COMPLETE");
+                        console.log("====================");
+                    }, 500); // Wait for All Tasks to render
+                }, 500); // Wait for My Tasks to render
+            }
+
+            // Add to window for easy access
+            window.debugTabWidths = debugTabWidths;
+
+            console.log(
+                "✅ Width debugging script loaded. Run debugTabWidths() to test.",
+            );
+        </script>
     </body>
 </html>
