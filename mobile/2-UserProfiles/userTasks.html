@@ -1432,18 +1432,94 @@
                             const hasSubmissions = turnData.completedCount > 0;
                             if (!hasSubmissions) return "incomplete";
 
-                            const isFullyCompleted =
-                                turnData.completedCount >=
-                                totalRequiredCompletions;
-
                             if (task.parentApproval === true) {
-                                return isFullyCompleted
-                                    ? "approved"
-                                    : "pending";
+                                // Use improved cross-completion status calculation
+                                const pendingUsers = [];
+                                const approvedUsers = [];
+
+                                // Check ALL completions (including cross-completions)
+                                const allCompletions = [];
+
+                                // Get all completions from completedDates format
+                                if (
+                                    task.completedDates &&
+                                    task.completedDates[selectedDate]
+                                ) {
+                                    allCompletions.push(
+                                        ...task.completedDates[selectedDate],
+                                    );
+                                }
+                                // Fallback to completions format
+                                else if (
+                                    task.completions &&
+                                    task.completions[selectedDate]
+                                ) {
+                                    allCompletions.push(
+                                        ...task.completions[
+                                            selectedDate
+                                        ].filter(
+                                            (c) =>
+                                                c.isCompleted || !c.isPending,
+                                        ),
+                                    );
+                                }
+
+                                // CROSS-COMPLETION FIX: Also check task.completions for isPending status
+                                if (
+                                    task.completions &&
+                                    task.completions[selectedDate]
+                                ) {
+                                    const completionsData =
+                                        task.completions[selectedDate];
+                                    // Update isPending status from completions data
+                                    allCompletions.forEach((completion) => {
+                                        const matchingCompletion =
+                                            completionsData.find(
+                                                (c) =>
+                                                    c.user === completion.user,
+                                            );
+                                        if (matchingCompletion) {
+                                            // Use the isPending status from completions data (more accurate)
+                                            completion.isPending =
+                                                matchingCompletion.isPending;
+                                        }
+                                    });
+                                }
+
+                                // Process all completions (including cross-completions)
+                                allCompletions.forEach((completion) => {
+                                    const user = completion.user;
+                                    if (completion.isPending === true) {
+                                        if (!pendingUsers.includes(user)) {
+                                            pendingUsers.push(user);
+                                        }
+                                    } else {
+                                        if (!approvedUsers.includes(user)) {
+                                            approvedUsers.push(user);
+                                        }
+                                    }
+                                });
+
+                                if (
+                                    approvedUsers.length > 0 &&
+                                    pendingUsers.length === 0
+                                ) {
+                                    return "approved";
+                                } else if (pendingUsers.length > 0) {
+                                    return "pending";
+                                } else {
+                                    return "incomplete";
+                                }
                             } else {
-                                return isFullyCompleted
-                                    ? "approved"
-                                    : "incomplete";
+                                // Non-approval tasks are approved when completed
+                                const isFullyCompleted =
+                                    turnData.completedCount >=
+                                    totalRequiredCompletions;
+                                if (isFullyCompleted) {
+                                    return "approved";
+                                } else {
+                                    return "incomplete";
+                                }
                             }
                         };
 
@@ -1579,9 +1655,99 @@
                                     }
                                 }
 
-                                // Create main container with flexbox layout (same as My Tasks)
-                                taskDiv.style.cssText =
-                                    "display: flex !important; justify-content: space-between; align-items: center; padding: 8px 15px !important; min-height: 56px; background-color: #FFFFFF; color: #6D4C41; border: 2px solid var(--primary-color); border-radius: 12px; margin-bottom: 3px; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1); width: 100% !important; max-width: none !important; box-sizing: border-box !important; margin-left: 0 !important; margin-right: 0 !important;";
+                                // Determine if task is fully approved for fading effect
+                                let isFullyApproved = false;
+                                if (task.parentApproval === true) {
+                                    // Check if task has any approved completions
+                                    const pendingUsers = [];
+                                    const approvedUsers = [];
+
+                                    // Check ALL completions (including cross-completions)
+                                    const allCompletions = [];
+
+                                    // Get all completions from completedDates format
+                                    if (
+                                        task.completedDates &&
+                                        task.completedDates[selectedDate]
+                                    ) {
+                                        allCompletions.push(
+                                            ...task.completedDates[
+                                                selectedDate
+                                            ],
+                                        );
+                                    }
+                                    // Fallback to completions format
+                                    else if (
+                                        task.completions &&
+                                        task.completions[selectedDate]
+                                    ) {
+                                        allCompletions.push(
+                                            ...task.completions[
+                                                selectedDate
+                                            ].filter(
+                                                (c) =>
+                                                    c.isCompleted ||
+                                                    !c.isPending,
+                                            ),
+                                        );
+                                    }
+
+                                    // CROSS-COMPLETION FIX: Also check task.completions for isPending status
+                                    if (
+                                        task.completions &&
+                                        task.completions[selectedDate]
+                                    ) {
+                                        const completionsData =
+                                            task.completions[selectedDate];
+                                        // Update isPending status from completions data
+                                        allCompletions.forEach((completion) => {
+                                            const matchingCompletion =
+                                                completionsData.find(
+                                                    (c) =>
+                                                        c.user ===
+                                                        completion.user,
+                                                );
+                                            if (matchingCompletion) {
+                                                // Use the isPending status from completions data (more accurate)
+                                                completion.isPending =
+                                                    matchingCompletion.isPending;
+                                            }
+                                        });
+                                    }
+
+                                    // Process all completions
+                                    allCompletions.forEach((completion) => {
+                                        const user = completion.user;
+                                        if (completion.isPending === true) {
+                                            if (!pendingUsers.includes(user)) {
+                                                pendingUsers.push(user);
+                                            }
+                                        } else {
+                                            if (!approvedUsers.includes(user)) {
+                                                approvedUsers.push(user);
+                                            }
+                                        }
+                                    });
+
+                                    // Task is fully approved if it has approved users and no pending users
+                                    isFullyApproved =
+                                        approvedUsers.length > 0 &&
+                                        pendingUsers.length === 0;
+                                } else {
+                                    // For non-approval tasks, completed = approved
+                                    const totalRequiredCompletions = isRotation
+                                        ? turnData.requiredTimes
+                                        : turnData.requiredTimes *
+                                          task.users.length;
+                                    isFullyApproved =
+                                        turnData.completedCount >=
+                                        totalRequiredCompletions;
+                                }
+
+                                // Create main container with flexbox layout and optional fading
+                                const backgroundColor = isFullyApproved ? "#f5f2e9" : "#FFFFFF";
+                                const opacity = isFullyApproved ? "0.85" : "1";
+                                taskDiv.style.cssText = `display: flex !important; justify-content: space-between; align-items: center; padding: 8px 15px !important; min-height: 56px; background-color: ${backgroundColor}; color: #6D4C41; border: 2px solid var(--primary-color); border-radius: 12px; margin-bottom: 3px; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1); opacity: ${opacity}; width: 100% !important; max-width: none !important; box-sizing: border-box !important; margin-left: 0 !important; margin-right: 0 !important;`;
 
                                 // Create left content container
                                 const leftContent =
@@ -1890,7 +2056,7 @@
                                     const completerContainer =
                                         document.createElement("div");
                                     completerContainer.style.cssText =
-                                        "display: flex; align-items: center; gap: 2px; position: relative;";
+                                        "display: flex; align-items: center; gap: 4px;";
 
                                     // Add avatar if avatar system is available
                                     if (window.avatarSystem && completerUser) {
@@ -1899,22 +2065,86 @@
                                                 completerUser,
                                                 24,
                                                 "completer-avatar",
-                                                "",
+                                                "margin-right: 0;",
                                             );
-                                        const avatarDiv =
-                                            document.createElement("div");
-                                        avatarDiv.innerHTML = avatarHTML;
-                                        completerContainer.appendChild(
-                                            avatarDiv,
-                                        );
+                                        completerContainer.innerHTML =
+                                            avatarHTML;
                                     }
 
-                                    // Add green checkmark
+                                    // Add checkmark (yellow for pending, green for approved)
                                     const checkmark =
                                         document.createElement("div");
                                     checkmark.innerHTML = "✓";
-                                    checkmark.style.cssText =
-                                        "width: 28px; height: 28px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;";
+
+                                    // Determine if completion is pending or approved
+                                    let isPending = false;
+                                    if (task.parentApproval === true) {
+                                        // Check completion status
+                                        let foundCompletion = null;
+                                        if (
+                                            task.completedDates &&
+                                            task.completedDates[selectedDate]
+                                        ) {
+                                            foundCompletion =
+                                                task.completedDates[
+                                                    selectedDate
+                                                ].find(
+                                                    (c) =>
+                                                        c.user ===
+                                                        completerUser,
+                                                );
+                                        }
+                                        if (
+                                            !foundCompletion &&
+                                            task.completions &&
+                                            task.completions[selectedDate]
+                                        ) {
+                                            foundCompletion = task.completions[
+                                                selectedDate
+                                            ].find(
+                                                (c) => c.user === completerUser,
+                                            );
+                                        }
+
+                                        // Use completions data for more accurate isPending status
+                                        if (foundCompletion) {
+                                            if (
+                                                task.completions &&
+                                                task.completions[selectedDate]
+                                            ) {
+                                                const completionData =
+                                                    task.completions[
+                                                        selectedDate
+                                                    ].find(
+                                                        (c) =>
+                                                            c.user ===
+                                                            completerUser,
+                                                    );
+                                                isPending = completionData
+                                                    ? completionData.isPending
+                                                    : foundCompletion.isPending;
+                                            } else {
+                                                isPending =
+                                                    foundCompletion.isPending ||
+                                                    false;
+                                            }
+                                        }
+                                    }
+
+                                    if (isPending) {
+                                        checkmark.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z" fill="white"/></svg>`;
+                                        checkmark.style.cssText =
+                                            "width: 28px; height: 28px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center;";
+                                    } else {
+                                        checkmark.innerHTML = "✓";
+                                        checkmark.style.cssText =
+                                            "width: 28px; height: 28px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;";
+                                    }
+
+                                    completerContainer.title = isPending
+                                        ? `🕐 Pending approval - completed by ${completerUser}`
+                                        : `✅ Approved - completed by ${completerUser}`;
+
                                     completerContainer.appendChild(checkmark);
 
                                     buttonContainer.appendChild(
@@ -2045,6 +2275,12 @@
                                                 ...approvedUsers,
                                             ];
 
+                                            // Create avatar container to match My Tasks spacing
+                                            const avatarContainer =
+                                                document.createElement("div");
+                                            avatarContainer.style.cssText =
+                                                "display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; max-width: 60px;";
+
                                             allUsers
                                                 .slice(0, 3)
                                                 .forEach((user) => {
@@ -2058,7 +2294,7 @@
                                                                 user,
                                                                 24,
                                                                 "task-completed-avatar",
-                                                                "margin-right: 2px;",
+                                                                "margin-right: 0;",
                                                             );
 
                                                         const userWrapper =
@@ -2066,7 +2302,7 @@
                                                                 "div",
                                                             );
                                                         userWrapper.style.cssText =
-                                                            "display: flex; align-items: center; gap: 2px;";
+                                                            "display: flex; align-items: center; gap: 4px;";
                                                         userWrapper.innerHTML =
                                                             avatarHTML;
 
@@ -2076,10 +2312,14 @@
                                                             );
                                                         checkmark.innerHTML =
                                                             "✓";
-                                                        checkmark.style.cssText =
-                                                            isPending
-                                                                ? "width: 20px; height: 20px; border-radius: 50%; background: #FFC107; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;"
-                                                                : "width: 20px; height: 20px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;";
+                                                        if (isPending) {
+                                                            checkmark.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z" fill="white"/></svg>`;
+                                                            checkmark.style.cssText =
+                                                                "width: 20px; height: 20px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center;";
+                                                        } else {
+                                                            checkmark.style.cssText =
+                                                                "width: 20px; height: 20px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;";
+                                                        }
 
                                                         userWrapper.appendChild(
                                                             checkmark,
@@ -2088,11 +2328,30 @@
                                                             isPending
                                                                 ? `Pending approval by ${user}`
                                                                 : `Approved - completed by ${user}`;
-                                                        buttonContainer.appendChild(
+                                                        avatarContainer.appendChild(
                                                             userWrapper,
                                                         );
                                                     }
                                                 });
+
+                                            // Show count if more than 3 users
+                                            if (allUsers.length > 3) {
+                                                const moreDiv =
+                                                    document.createElement(
+                                                        "div",
+                                                    );
+                                                moreDiv.textContent = `+${allUsers.length - 3}`;
+                                                moreDiv.title = `${allUsers.length} users involved`;
+                                                moreDiv.style.cssText =
+                                                    "width: 24px; height: 24px; border-radius: 50%; border: 2px solid #666; background: #666; color: white; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; margin-right: 0;";
+                                                avatarContainer.appendChild(
+                                                    moreDiv,
+                                                );
+                                            }
+
+                                            buttonContainer.appendChild(
+                                                avatarContainer,
+                                            );
                                         }
                                     }
                                 }
@@ -2626,8 +2885,9 @@
                                 );
 
                                 // Create main container with flexbox layout and optional fading
-                                const opacity = isFullyApproved ? "0.6" : "1";
-                                taskDiv.style.cssText = `display: flex !important; justify-content: space-between; align-items: center; padding: 8px 15px !important; min-height: 56px; background-color: #FFFFFF; color: #6D4C41; border: 2px solid var(--primary-color); border-radius: 12px; margin-bottom: 3px; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1); opacity: ${opacity}; width: 100% !important; max-width: none !important; box-sizing: border-box !important; margin-left: 0 !important; margin-right: 0 !important;`;
+                                const backgroundColor = isFullyApproved ? "#f5f2e9" : "#FFFFFF";
+                                const opacity = isFullyApproved ? "0.85" : "1";
+                                taskDiv.style.cssText = `display: flex !important; justify-content: space-between; align-items: center; padding: 8px 15px !important; min-height: 56px; background-color: ${backgroundColor}; color: #6D4C41; border: 2px solid var(--primary-color); border-radius: 12px; margin-bottom: 3px; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1); opacity: ${opacity}; width: 100% !important; max-width: none !important; box-sizing: border-box !important; margin-left: 0 !important; margin-right: 0 !important;`;
 
                                 // Create left content container
                                 const leftContent =
@@ -3393,18 +3653,22 @@
                                                     document.createElement(
                                                         "div",
                                                     );
-                                                checkmark.innerHTML = "✓";
-                                                checkmark.style.cssText =
-                                                    isPending
-                                                        ? "width: 28px; height: 28px; border-radius: 50%; background: #FFC107; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;"
-                                                        : "width: 28px; height: 28px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;";
+                                                if (isPending) {
+                                                    checkmark.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z" fill="white"/></svg>`;
+                                                    checkmark.style.cssText =
+                                                        "width: 28px; height: 28px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center;";
+                                                } else {
+                                                    checkmark.innerHTML = "✓";
+                                                    checkmark.style.cssText =
+                                                        "width: 28px; height: 28px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;";
+                                                }
 
                                                 userWrapper.appendChild(
                                                     checkmark,
                                                 );
                                                 userWrapper.title = isPending
-                                                    ? `Pending approval by ${user}`
-                                                    : `Approved - completed by ${user}`;
+                                                    ? `🕐 Pending approval by ${user}`
+                                                    : `✅ Approved - completed by ${user}`;
                                                 avatarContainer.appendChild(
                                                     userWrapper,
                                                 );
@@ -3680,10 +3944,15 @@
                                                     },
                                                 );
 
-                                                checkmark.style.cssText =
-                                                    isPending
-                                                        ? "width: 28px; height: 28px; border-radius: 50%; background: #FFC107; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;"
-                                                        : "width: 28px; height: 28px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;";
+                                                if (isPending) {
+                                                    checkmark.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z" fill="white"/></svg>`;
+                                                    checkmark.style.cssText =
+                                                        "width: 28px; height: 28px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center;";
+                                                } else {
+                                                    checkmark.innerHTML = "✓";
+                                                    checkmark.style.cssText =
+                                                        "width: 28px; height: 28px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;";
+                                                }
 
                                                 completerContainer.appendChild(
                                                     checkmark,
@@ -3703,11 +3972,15 @@
                                                     document.createElement(
                                                         "div",
                                                     );
-                                                checkmark.innerHTML = "✓";
-                                                checkmark.style.cssText =
-                                                    isPending
-                                                        ? "width: 28px; height: 28px; border-radius: 50%; background: #FFC107; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;"
-                                                        : "width: 28px; height: 28px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;";
+                                                if (isPending) {
+                                                    checkmark.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z" fill="white"/></svg>`;
+                                                    checkmark.style.cssText =
+                                                        "width: 28px; height: 28px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center;";
+                                                } else {
+                                                    checkmark.innerHTML = "✓";
+                                                    checkmark.style.cssText =
+                                                        "width: 28px; height: 28px; border-radius: 50%; background: #28a745; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border: 2px solid white;";
+                                                }
                                                 completerContainer.appendChild(
                                                     checkmark,
                                                 );
