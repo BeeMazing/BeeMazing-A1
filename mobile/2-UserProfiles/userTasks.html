@@ -370,19 +370,36 @@
             .sell-modal-content strong {
                 color: #5d4e41;
                 font-weight: 600;
-                font-size: 14px;
+                font-size: 12px;
             }
             .modal-content h2 {
                 color: #5d4e41;
-                margin: 0 0 20px 0;
-                font-size: 20px;
+                margin: 0 0 12px 0;
+                font-size: 16px;
                 font-weight: 600;
                 border-bottom: 2px solid #fbb740;
-                padding-bottom: 10px;
+                padding-bottom: 6px;
             }
             .task-info-row {
                 padding: 8px 0;
                 border-bottom: 1px solid #fff6e9;
+                font-size: 12px;
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 4px;
+                min-height: 32px;
+            }
+            .task-info-row strong {
+                min-width: fit-content;
+                margin-right: 8px;
+            }
+            .task-info-row .avatar-container {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 2px;
+                flex: 1;
             }
             .task-info-row:last-child {
                 border-bottom: none;
@@ -4435,12 +4452,13 @@
                 let isApproved = false;
 
                 // Check if task is overdue
-                if (task.dueTimes && task.dueTimes.length > 0) {
-                    const now = new Date();
-                    const currentTime = now.getHours() * 60 + now.getMinutes();
-                    const currentDate = new Date().toLocaleDateString("sv-SE");
+                const now = new Date();
+                const currentTime = now.getHours() * 60 + now.getMinutes();
+                const currentDate = new Date().toLocaleDateString("sv-SE");
 
-                    if (selectedDate === currentDate) {
+                if (selectedDate === currentDate) {
+                    if (task.dueTimes && task.dueTimes.length > 0) {
+                        // Tasks with specific due times - check if any due time has passed
                         for (const timeStr of task.dueTimes) {
                             const [hours, minutes] = timeStr
                                 .split(":")
@@ -4451,6 +4469,19 @@
                                 break;
                             }
                         }
+                    } else {
+                        // Tasks without due times - overdue after midnight if not completed
+                        const hasCompletions = turnData.completedCount > 0;
+                        if (!hasCompletions && currentTime > 0) {
+                            // It's past midnight and task is not completed
+                            isOverdue = true;
+                        }
+                    }
+                } else if (selectedDate < currentDate) {
+                    // Task is from a previous date and not completed
+                    const hasCompletions = turnData.completedCount > 0;
+                    if (!hasCompletions) {
+                        isOverdue = true;
                     }
                 }
 
@@ -4526,123 +4557,294 @@
                 // Set status symbol
                 if (isOverdue) {
                     statusSymbol =
-                        ' <span style="color: #d32f2f; font-size: 16px; margin-left: 8px;">⚠️</span>';
+                        ' <span style="display: inline-flex; align-items: center; justify-content: center; margin-left: 8px; width: 20px; height: 20px; border-radius: 50%; background: #d32f2f; color: white; font-size: 14px; font-weight: bold;">!</span>';
                 } else if (isPending) {
                     statusSymbol =
                         ' <span style="display: inline-flex; align-items: center; justify-content: center; margin-left: 8px; width: 20px; height: 20px; border-radius: 50%; background: var(--primary-color);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z" fill="white"/></svg></span>';
                 } else if (isApproved) {
                     statusSymbol =
-                        ' <span style="color: #28a745; font-size: 16px; margin-left: 8px;">✓</span>';
+                        ' <span style="display: inline-flex; align-items: center; justify-content: center; margin-left: 8px; width: 20px; height: 20px; border-radius: 50%; background: #28a745; color: white; font-size: 14px; font-weight: bold;">✓</span>';
                 }
 
                 let modalHTML = `<h2>${task.title}${statusSymbol}</h2>`;
 
+                // Check if this is an occurrence task and add master task button
+                if (
+                    task.originalTitle &&
+                    task.occurrence &&
+                    task.totalOccurrences
+                ) {
+                    modalHTML += `<div style="border-bottom: 1px solid var(--primary-color); padding: 3px 0; margin-bottom: 6px; font-size: 12px; line-height: 1;">`;
+                    modalHTML += `<strong style="margin: 0; padding: 0; line-height: 1;">This is occurrence ${task.occurrence} of ${task.totalOccurrences}</strong> `;
+                    modalHTML += `<button type="button" onclick="showMasterTaskDetails('${task.originalTitle}', '${selectedDate}', ${JSON.stringify(task).replace(/"/g, "&quot;")})" style="
+                        margin-left: 8px;
+                        padding: 4px 8px;
+                        background: var(--primary-color);
+                        color: var(--secondary-color);
+                        border: none;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        vertical-align: middle;
+                    " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                        View Full Task
+                    </button>`;
+                    modalHTML += `</div>`;
+                }
+
                 // Buzz Points
                 modalHTML += `<div class="task-info-row"><strong>Buzz Points:</strong> ${task.reward || 0} 🍯</div>`;
 
-                // Status with completion details
+                // Status (simple)
                 let statusDisplay = "";
-                if (isApproved) {
+                if (isOverdue && !isApproved && !isPending) {
+                    statusDisplay = "Overdue";
+                } else if (isApproved) {
                     statusDisplay = "Approved";
-                    // Get completion details
-                    let completionTime = "";
-                    let completerUser = "";
-
-                    if (
-                        task.completedDates &&
-                        task.completedDates[selectedDate] &&
-                        task.completedDates[selectedDate].length > 0
-                    ) {
-                        const latestCompletion =
-                            task.completedDates[selectedDate][
-                                task.completedDates[selectedDate].length - 1
-                            ];
-                        if (latestCompletion.completedAt) {
-                            const completedTimeObj = new Date(
-                                latestCompletion.completedAt,
-                            );
-                            completionTime =
-                                completedTimeObj.toLocaleTimeString("en-US", {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                });
-                            completerUser = latestCompletion.user;
-                        }
-                    }
-
-                    if (completionTime && completerUser) {
-                        let avatarHTML = "";
-                        if (
-                            window.avatarSystem &&
-                            typeof window.avatarSystem.generateAvatarHTML ===
-                                "function"
-                        ) {
-                            avatarHTML = window.avatarSystem.generateAvatarHTML(
-                                completerUser,
-                                16,
-                                "completer-avatar",
-                                "margin-right: 4px;",
-                            );
-                        }
-                        statusDisplay += ` - completed at ${completionTime} by ${avatarHTML}${completerUser}`;
-                    }
                 } else if (isPending) {
                     statusDisplay = "Pending";
-                    // Get completion details for pending
-                    let completionTime = "";
-                    let completerUser = "";
-
-                    if (
-                        task.completedDates &&
-                        task.completedDates[selectedDate] &&
-                        task.completedDates[selectedDate].length > 0
-                    ) {
-                        const latestCompletion =
-                            task.completedDates[selectedDate][
-                                task.completedDates[selectedDate].length - 1
-                            ];
-                        if (latestCompletion.completedAt) {
-                            const completedTimeObj = new Date(
-                                latestCompletion.completedAt,
-                            );
-                            completionTime =
-                                completedTimeObj.toLocaleTimeString("en-US", {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                });
-                            completerUser = latestCompletion.user;
-                        }
-                    }
-
-                    if (completionTime && completerUser) {
-                        let avatarHTML = "";
-                        if (
-                            window.avatarSystem &&
-                            typeof window.avatarSystem.generateAvatarHTML ===
-                                "function"
-                        ) {
-                            avatarHTML = window.avatarSystem.generateAvatarHTML(
-                                completerUser,
-                                16,
-                                "completer-avatar",
-                                "margin-right: 4px;",
-                            );
-                        }
-                        statusDisplay += ` - completed at ${completionTime} by ${avatarHTML}${completerUser}`;
-                    }
                 } else {
                     statusDisplay = "Active";
                 }
                 modalHTML += `<div class="task-info-row"><strong>Status:</strong> ${statusDisplay}</div>`;
 
-                // Frequency
-                let frequencyDisplay = task.repeat || "Daily";
-                if (task.requiredTimes && task.requiredTimes > 1) {
-                    frequencyDisplay += `, ${task.requiredTimes} times per ${task.repeat?.toLowerCase() || "day"}`;
+                // Completion Details (separate section)
+                let completionTime = "";
+                let completerUser = "";
+
+                if (
+                    (isApproved || isPending) &&
+                    task.completedDates &&
+                    task.completedDates[selectedDate] &&
+                    task.completedDates[selectedDate].length > 0
+                ) {
+                    const latestCompletion =
+                        task.completedDates[selectedDate][
+                            task.completedDates[selectedDate].length - 1
+                        ];
+                    if (latestCompletion.completedAt) {
+                        const completedTimeObj = new Date(
+                            latestCompletion.completedAt,
+                        );
+                        completionTime = completedTimeObj.toLocaleTimeString(
+                            "en-US",
+                            {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: true,
+                            },
+                        );
+                        completerUser = latestCompletion.user;
+                    }
                 }
+
+                if (completionTime && completerUser) {
+                    let avatarHTML = "";
+                    if (
+                        window.avatarSystem &&
+                        typeof window.avatarSystem.generateAvatarHTML ===
+                            "function"
+                    ) {
+                        avatarHTML = window.avatarSystem.generateAvatarHTML(
+                            completerUser,
+                            24,
+                            "completer-avatar",
+                            "",
+                        );
+                    }
+                    modalHTML += `<div class="task-info-row"><strong>Completion Details:</strong> ${completionTime} by ${avatarHTML}</div>`;
+                }
+
+                // Notes (if present)
+                if (task.notes) {
+                    modalHTML += `<div class="task-info-row"><strong>Notes:</strong> ${task.notes}</div>`;
+                }
+
+                // Room (if present)
+                if (task.room) {
+                    modalHTML += `<div class="task-info-row"><strong>Room:</strong> ${task.room}</div>`;
+                }
+
+                // Frequency (simple)
+                let frequencyDisplay = task.repeat || "Daily";
                 modalHTML += `<div class="task-info-row"><strong>Frequency:</strong> ${frequencyDisplay}</div>`;
+
+                // Additional Settings (when applicable)
+                if (task.repeat && task.repeat !== "One time") {
+                    let additionalSettings = [];
+
+                    if (task.repeat === "Daily") {
+                        // Check for times per day
+                        if (task.timesPerDay && task.timesPerDay > 1) {
+                            additionalSettings.push(
+                                `${task.timesPerDay} times per day`,
+                            );
+                        }
+                        // Check for specific days of week
+                        if (task.daysOfWeek && task.daysOfWeek.length > 0) {
+                            if (
+                                task.daysOfWeek.includes("All") ||
+                                task.daysOfWeek.length === 7
+                            ) {
+                                additionalSettings.push("All days");
+                            } else if (!task.daysOfWeek.includes("Any")) {
+                                // Filter out day names that are actually day names
+                                const validDays = task.daysOfWeek.filter(
+                                    (day) =>
+                                        typeof day === "string" &&
+                                        [
+                                            "Monday",
+                                            "Tuesday",
+                                            "Wednesday",
+                                            "Thursday",
+                                            "Friday",
+                                            "Saturday",
+                                            "Sunday",
+                                        ].includes(day),
+                                );
+                                if (validDays.length > 0) {
+                                    const shortDays = validDays.map((day) =>
+                                        day.substring(0, 3),
+                                    );
+                                    additionalSettings.push(
+                                        shortDays.join(", "),
+                                    );
+                                }
+                            }
+                        }
+                    } else if (task.repeat === "Weekly") {
+                        // Check for times per week
+                        if (task.timesPerWeek && task.timesPerWeek > 1) {
+                            additionalSettings.push(
+                                `${task.timesPerWeek} times per week`,
+                            );
+                        }
+                        // Check for specific days of week
+                        if (task.daysOfWeek && task.daysOfWeek.length > 0) {
+                            if (!task.daysOfWeek.includes("Any")) {
+                                const validDays = task.daysOfWeek.filter(
+                                    (day) =>
+                                        typeof day === "string" &&
+                                        [
+                                            "Monday",
+                                            "Tuesday",
+                                            "Wednesday",
+                                            "Thursday",
+                                            "Friday",
+                                            "Saturday",
+                                            "Sunday",
+                                        ].includes(day),
+                                );
+                                if (validDays.length > 0) {
+                                    const shortDays = validDays.map((day) =>
+                                        day.substring(0, 3),
+                                    );
+                                    additionalSettings.push(
+                                        shortDays.join(", "),
+                                    );
+                                }
+                            }
+                        }
+                    } else if (task.repeat === "Monthly") {
+                        // Handle new monthly options structure
+                        if (task.monthlyOption === "times") {
+                            // Check for times per month
+                            if (task.timesPerMonth && task.timesPerMonth > 1) {
+                                additionalSettings.push(
+                                    `${task.timesPerMonth} times per month`,
+                                );
+                            }
+
+                            // Handle specific days of the month
+                            if (
+                                task.monthlySchedulingType === "daysOfMonth" &&
+                                task.monthlyDaysOfMonth
+                            ) {
+                                const days = task.monthlyDaysOfMonth.split(",");
+                                const dayNames = days.map((day) => {
+                                    if (day === "last") return "Last";
+                                    const num = parseInt(day);
+                                    if (num === 1) return "1st";
+                                    if (num === 2) return "2nd";
+                                    if (num === 3) return "3rd";
+                                    if (num === 21) return "21st";
+                                    if (num === 22) return "22nd";
+                                    if (num === 23) return "23rd";
+                                    if (num === 31) return "31st";
+                                    return `${num}th`;
+                                });
+                                additionalSettings.push(
+                                    `Days: ${dayNames.join(", ")}`,
+                                );
+                            }
+
+                            // Handle specific days of the week patterns
+                            if (
+                                task.monthlySchedulingType === "daysOfWeek" &&
+                                task.monthlyDaysOfWeek
+                            ) {
+                                const patterns =
+                                    task.monthlyDaysOfWeek.split(",");
+                                const patternNames = patterns.map((pattern) => {
+                                    const [occurrence, weekday] =
+                                        pattern.split(":");
+                                    const occurrenceNames = {
+                                        1: "1st",
+                                        2: "2nd",
+                                        3: "3rd",
+                                        4: "4th",
+                                        last: "Last",
+                                    };
+                                    return `${occurrenceNames[occurrence]} ${weekday}`;
+                                });
+                                additionalSettings.push(
+                                    `Patterns: ${patternNames.join(", ")}`,
+                                );
+                            }
+                        } else if (task.monthlyOption === "interval") {
+                            const interval = task.monthInterval || 1;
+                            additionalSettings.push(
+                                interval === 1
+                                    ? "Every month"
+                                    : `Every ${interval} months`,
+                            );
+                        }
+                        // Legacy support for old format
+                        else if (task.monthlyOption === "specific") {
+                            additionalSettings.push(`Day ${task.monthlyDay}`);
+                        } else if (
+                            task.monthlyOption === "pattern" &&
+                            task.monthlyWeek &&
+                            task.monthlyWeekday
+                        ) {
+                            const weekNames = [
+                                "First",
+                                "Second",
+                                "Third",
+                                "Fourth",
+                                "Last",
+                            ];
+                            const dayNames = [
+                                "Sun",
+                                "Mon",
+                                "Tue",
+                                "Wed",
+                                "Thu",
+                                "Fri",
+                                "Sat",
+                            ];
+                            additionalSettings.push(
+                                `${weekNames[task.monthlyWeek - 1]} ${dayNames[task.monthlyWeekday]}`,
+                            );
+                        }
+                    }
+
+                    if (additionalSettings.length > 0) {
+                        modalHTML += `<div class="task-info-row"><strong>Additional Settings:</strong> ${additionalSettings.join(", ")}</div>`;
+                    }
+                }
 
                 // Date
                 const [fromDate, toDate] = (task.date || "").split(" to ");
@@ -4667,85 +4869,67 @@
                     modalHTML += `<div class="task-info-row"><strong>Due Time:</strong> ${task.dueTimes.join(", ")}</div>`;
                 }
 
-                // Settings
+                // Setting
                 let settingDisplay = "Individual";
-                let settingDetails = "";
-
                 if (task.settings?.includes("Rotation")) {
                     settingDisplay = "Rotational";
-
-                    // Add rotation details
-                    const activeTurn = turnData.turns.find(
-                        (turn) => !turn.isCompleted && !turn.isPending,
-                    );
-                    if (activeTurn) {
-                        const nextTurnIndex =
-                            (activeTurn.index + 1) % task.users.length;
-                        const nextUser =
-                            turnData.turns.find(
-                                (t) => t.index === nextTurnIndex,
-                            )?.user ||
-                            task.users[nextTurnIndex] ||
-                            "—";
-                        settingDetails = ` - Current: ${activeTurn.user}, Next: ${nextUser}`;
-                    }
-
-                    // Add rotation options
-                    if (task.fairRotation) {
-                        settingDetails += " (Fair Rotation enabled";
-                        if (task.fairRotationTimeBased) {
-                            settingDetails += ", Time-based tie breaking";
-                        }
-                        settingDetails += ")";
-                    }
                 } else if (task.settings?.includes("Teamwork")) {
                     settingDisplay = "Teamwork";
                 }
+                modalHTML += `<div class="task-info-row"><strong>Setting:</strong> ${settingDisplay}</div>`;
 
-                modalHTML += `<div class="task-info-row"><strong>Setting:</strong> ${settingDisplay}${settingDetails}</div>`;
+                // Additional Details for Rotational
+                if (task.settings?.includes("Rotation")) {
+                    let rotationDetails = [];
+                    if (task.fairRotation) {
+                        rotationDetails.push("Fair Task Rotation");
+                    }
+                    if (task.fairRotationTimeBased) {
+                        rotationDetails.push("Time-based tie breaking");
+                    }
+                    if (rotationDetails.length > 0) {
+                        modalHTML += `<div class="task-info-row"><strong>Additional Details:</strong> ${rotationDetails.join(", ")}</div>`;
+                    }
+                }
 
-                // Assigned To
+                // Assigned To (avatars only)
                 let assignedDisplay = "";
                 if (task.settings?.includes("Teamwork")) {
                     // For teamwork, list all avatars
-                    let teamAvatars = "";
                     task.users.forEach((user) => {
                         if (
                             window.avatarSystem &&
                             typeof window.avatarSystem.generateAvatarHTML ===
                                 "function"
                         ) {
-                            teamAvatars +=
+                            assignedDisplay +=
                                 window.avatarSystem.generateAvatarHTML(
                                     user,
-                                    16,
+                                    24,
                                     "assigned-avatar",
                                     "margin-right: 2px;",
                                 );
                         }
                     });
-                    assignedDisplay = `${teamAvatars}${task.users.join(", ")}`;
                 } else if (task.settings?.includes("Rotation")) {
                     // For rotation, show current assignee first, then order
                     const activeTurn = turnData.turns.find(
                         (turn) => !turn.isCompleted && !turn.isPending,
                     );
                     if (activeTurn) {
-                        let currentAvatar = "";
                         if (
                             window.avatarSystem &&
                             typeof window.avatarSystem.generateAvatarHTML ===
                                 "function"
                         ) {
-                            currentAvatar =
+                            assignedDisplay +=
                                 window.avatarSystem.generateAvatarHTML(
                                     activeTurn.user,
-                                    16,
+                                    24,
                                     "current-avatar",
-                                    "margin-right: 2px;",
+                                    "margin-right: 2px; border: 2px solid var(--primary-color);",
                                 );
                         }
-                        assignedDisplay = `${currentAvatar}${activeTurn.user} (current)`;
 
                         // Add rotation order
                         const orderedUsers = task.users.slice();
@@ -4758,65 +4942,59 @@
                         ];
 
                         if (rotationOrder.length > 0) {
-                            let orderAvatars = "";
                             rotationOrder.forEach((user) => {
                                 if (
                                     window.avatarSystem &&
                                     typeof window.avatarSystem
                                         .generateAvatarHTML === "function"
                                 ) {
-                                    orderAvatars +=
+                                    assignedDisplay +=
                                         window.avatarSystem.generateAvatarHTML(
                                             user,
-                                            16,
+                                            24,
                                             "rotation-avatar",
                                             "margin-right: 2px;",
                                         );
                                 }
                             });
-                            assignedDisplay += ` → ${orderAvatars}${rotationOrder.join(" → ")}`;
                         }
                     } else {
                         // Fallback
-                        let allAvatars = "";
                         task.users.forEach((user) => {
                             if (
                                 window.avatarSystem &&
                                 typeof window.avatarSystem
                                     .generateAvatarHTML === "function"
                             ) {
-                                allAvatars +=
+                                assignedDisplay +=
                                     window.avatarSystem.generateAvatarHTML(
                                         user,
-                                        16,
+                                        24,
                                         "assigned-avatar",
                                         "margin-right: 2px;",
                                     );
                             }
                         });
-                        assignedDisplay = `${allAvatars}${task.users.join(", ")}`;
                     }
                 } else {
                     // For individual, list all assigned users
-                    let individualAvatars = "";
                     task.users.forEach((user) => {
                         if (
                             window.avatarSystem &&
                             typeof window.avatarSystem.generateAvatarHTML ===
                                 "function"
                         ) {
-                            individualAvatars +=
+                            assignedDisplay +=
                                 window.avatarSystem.generateAvatarHTML(
                                     user,
-                                    16,
+                                    24,
                                     "assigned-avatar",
                                     "margin-right: 2px;",
                                 );
                         }
                     });
-                    assignedDisplay = `${individualAvatars}${task.users.join(", ")}`;
                 }
-                modalHTML += `<div class="task-info-row"><strong>Assigned To:</strong> ${assignedDisplay}</div>`;
+                modalHTML += `<div class="task-info-row"><strong>Assigned To:</strong><div class="avatar-container">${assignedDisplay}</div></div>`;
 
                 // Reassigned To (if applicable)
                 let reassignedUser = null;
@@ -4845,13 +5023,23 @@
                         reassignedAvatar =
                             window.avatarSystem.generateAvatarHTML(
                                 reassignedUser,
-                                16,
+                                24,
                                 "reassigned-avatar",
-                                "margin-right: 4px;",
+                                "",
                             );
                     }
-                    modalHTML += `<div class="task-info-row"><strong>Reassigned To:</strong> ${reassignedAvatar}${reassignedUser}</div>`;
+                    modalHTML += `<div class="task-info-row"><strong>Reassigned To:</strong><div class="avatar-container">${reassignedAvatar}</div></div>`;
                 }
+
+                // Parental Approval
+                const approvalDisplay =
+                    task.parentApproval === true ? "Yes" : "No";
+                modalHTML += `<div class="task-info-row"><strong>Parental Approval:</strong> ${approvalDisplay}</div>`;
+
+                // On-time Completion
+                const onTimeDisplay =
+                    task.onTimeCompletion === true ? "Yes" : "No";
+                modalHTML += `<div class="task-info-row"><strong>On-time Completion:</strong> ${onTimeDisplay}</div>`;
 
                 // Privacy Status
                 const privacyDisplay =
@@ -4859,21 +5047,6 @@
                         ? "Private"
                         : "Visible to all users";
                 modalHTML += `<div class="task-info-row"><strong>Privacy Status:</strong> ${privacyDisplay}</div>`;
-
-                // Parental Approval
-                const approvalDisplay =
-                    task.parentApproval === true ? "Yes" : "No";
-                modalHTML += `<div class="task-info-row"><strong>Parental Approval:</strong> ${approvalDisplay}</div>`;
-
-                // Notes (if present)
-                if (task.notes) {
-                    modalHTML += `<div class="task-info-row"><strong>Notes:</strong> ${task.notes}</div>`;
-                }
-
-                // Room (if present)
-                if (task.room) {
-                    modalHTML += `<div class="task-info-row"><strong>Room:</strong> ${task.room}</div>`;
-                }
 
                 const modal = document.createElement("div");
                 modal.className = "modal";
@@ -4885,6 +5058,87 @@
                         modal.remove();
                     }
                 });
+            }
+
+            // Function to show master task details for occurrence tasks
+            async function showMasterTaskDetails(
+                originalTitle,
+                selectedDate,
+                currentTask,
+            ) {
+                // Fetch all tasks to find all occurrences of this task group
+                const adminEmail = localStorage.getItem("currentAdminEmail");
+                let allDueTimes = [];
+
+                try {
+                    const cacheBuster = `t=${Date.now()}&r=${Math.random()}`;
+                    const res = await fetch(
+                        `https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&${cacheBuster}`,
+                        {
+                            cache: "no-store",
+                            headers: {
+                                "Cache-Control":
+                                    "no-cache, no-store, must-revalidate",
+                                Pragma: "no-cache",
+                                Expires: "0",
+                            },
+                        },
+                    );
+                    const data = await res.json();
+                    if (res.ok && data.tasks) {
+                        // Find all occurrences of this task group
+                        const occurrences = data.tasks.filter(
+                            (t) =>
+                                t.originalTitle === originalTitle ||
+                                (t.title &&
+                                    t.title.startsWith(originalTitle + " - ")),
+                        );
+
+                        // Collect all due times from occurrences
+                        occurrences.forEach((occurrence) => {
+                            if (
+                                occurrence.dueTimes &&
+                                occurrence.dueTimes.length > 0
+                            ) {
+                                allDueTimes.push(...occurrence.dueTimes);
+                            }
+                        });
+
+                        // Sort due times chronologically
+                        allDueTimes = [...new Set(allDueTimes)].sort();
+                    }
+                } catch (err) {
+                    console.error(
+                        "Failed to fetch tasks for master details:",
+                        err,
+                    );
+                    // Fallback to current task's due times
+                    allDueTimes = currentTask.dueTimes || [];
+                }
+
+                // Reconstruct master task from the current occurrence task data
+                const masterTask = {
+                    ...currentTask,
+                    title: originalTitle,
+                    timesPerDay: currentTask.totalOccurrences || 1,
+                    dueTimes:
+                        allDueTimes.length > 0
+                            ? allDueTimes
+                            : currentTask.dueTimes,
+                    // Remove occurrence-specific fields
+                    occurrence: undefined,
+                    totalOccurrences: undefined,
+                    originalTitle: undefined,
+                };
+
+                // Close current modal
+                const existingModal = document.querySelector(".modal");
+                if (existingModal) {
+                    existingModal.remove();
+                }
+
+                // Show master task details
+                showTaskDetails(masterTask, selectedDate);
             }
 
             // addtasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
