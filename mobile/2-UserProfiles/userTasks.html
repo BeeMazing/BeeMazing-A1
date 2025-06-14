@@ -353,19 +353,48 @@
             }
             .modal-content,
             .sell-modal-content {
-                background: #2a2b32; /* match task card background */
-                color: var(--accent-color); /* white text */
+                background: #fffff8;
                 padding: 25px;
-                border-radius: 15px;
-                width: 85%;
-                max-width: 400px;
-                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-                border: 2px solid var(--primary-color);
+                border-radius: 12px;
+                width: 100%;
+                max-width: 420px;
+                max-height: 85vh;
+                overflow-y: auto;
+                text-align: left;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                border: 2px solid #fbb740;
+                color: #5d4e41;
+                font-family: "Poppins", Arial, sans-serif;
             }
             .modal-content strong,
             .sell-modal-content strong {
-                color: var(--accent-color); /* white */
+                color: #5d4e41;
                 font-weight: 600;
+                font-size: 14px;
+            }
+            .modal-content h2 {
+                color: #5d4e41;
+                margin: 0 0 20px 0;
+                font-size: 20px;
+                font-weight: 600;
+                border-bottom: 2px solid #fbb740;
+                padding-bottom: 10px;
+            }
+            .task-info-row {
+                padding: 8px 0;
+                border-bottom: 1px solid #fff6e9;
+            }
+            .task-info-row:last-child {
+                border-bottom: none;
+            }
+            .task-progress {
+                background: #fff6e9;
+                padding: 10px 12px;
+                border-radius: 6px;
+                margin: 10px 0;
+                font-weight: 500;
+                color: #5d4e41;
+                border-left: 3px solid #fbb740;
             }
 
             @keyframes fadeIn {
@@ -1745,7 +1774,9 @@
                                 }
 
                                 // Create main container with flexbox layout and optional fading
-                                const backgroundColor = isFullyApproved ? "#f5f2e9" : "#FFFFFF";
+                                const backgroundColor = isFullyApproved
+                                    ? "#f5f2e9"
+                                    : "#FFFFFF";
                                 const opacity = isFullyApproved ? "0.85" : "1";
                                 taskDiv.style.cssText = `display: flex !important; justify-content: space-between; align-items: center; padding: 8px 15px !important; min-height: 56px; background-color: ${backgroundColor}; color: #6D4C41; border: 2px solid var(--primary-color); border-radius: 12px; margin-bottom: 3px; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1); opacity: ${opacity}; width: 100% !important; max-width: none !important; box-sizing: border-box !important; margin-left: 0 !important; margin-right: 0 !important;`;
 
@@ -2885,7 +2916,9 @@
                                 );
 
                                 // Create main container with flexbox layout and optional fading
-                                const backgroundColor = isFullyApproved ? "#f5f2e9" : "#FFFFFF";
+                                const backgroundColor = isFullyApproved
+                                    ? "#f5f2e9"
+                                    : "#FFFFFF";
                                 const opacity = isFullyApproved ? "0.85" : "1";
                                 taskDiv.style.cssText = `display: flex !important; justify-content: space-between; align-items: center; padding: 8px 15px !important; min-height: 56px; background-color: ${backgroundColor}; color: #6D4C41; border: 2px solid var(--primary-color); border-radius: 12px; margin-bottom: 3px; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1); opacity: ${opacity}; width: 100% !important; max-width: none !important; box-sizing: border-box !important; margin-left: 0 !important; margin-right: 0 !important;`;
 
@@ -4395,33 +4428,253 @@
                     ? userTurns.length
                     : turnData.requiredTimes;
 
-                let modalHTML = `<strong>Title:</strong> ${task.title}<br>`;
-                if (task.notes)
-                    modalHTML += `<strong>Notes:</strong> ${task.notes}<br>`;
-                if (task.room)
-                    modalHTML += `<strong>Room:</strong> ${task.room}<br>`;
-                modalHTML += `<strong>Reward:</strong> ${task.reward || 0} 🍯<br>`;
-                modalHTML += `<strong>Repeat:</strong> ${task.repeat || "Daily"}<br>`;
+                // Determine task status and symbol
+                let statusSymbol = "";
+                let isOverdue = false;
+                let isPending = false;
+                let isApproved = false;
+
+                // Check if task is overdue
+                if (task.dueTimes && task.dueTimes.length > 0) {
+                    const now = new Date();
+                    const currentTime = now.getHours() * 60 + now.getMinutes();
+                    const currentDate = new Date().toLocaleDateString("sv-SE");
+
+                    if (selectedDate === currentDate) {
+                        for (const timeStr of task.dueTimes) {
+                            const [hours, minutes] = timeStr
+                                .split(":")
+                                .map(Number);
+                            const dueTime = hours * 60 + minutes;
+                            if (currentTime > dueTime) {
+                                isOverdue = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Check completion status using proper completion data
+                const hasCompletions = turnData.completedCount > 0;
+                if (hasCompletions && task.parentApproval === true) {
+                    // Check pending and approved users using same logic as main code
+                    const pendingUsers = [];
+                    const approvedUsers = [];
+
+                    // Check ALL completions (including cross-completions)
+                    const allCompletions = [];
+
+                    // Get all completions from completedDates format
+                    if (
+                        task.completedDates &&
+                        task.completedDates[selectedDate]
+                    ) {
+                        allCompletions.push(
+                            ...task.completedDates[selectedDate],
+                        );
+                    }
+                    // Fallback to completions format
+                    else if (
+                        task.completions &&
+                        task.completions[selectedDate]
+                    ) {
+                        allCompletions.push(
+                            ...task.completions[selectedDate].filter(
+                                (c) => c.isCompleted || !c.isPending,
+                            ),
+                        );
+                    }
+
+                    // Update isPending status from completions data
+                    if (task.completions && task.completions[selectedDate]) {
+                        const completionsData = task.completions[selectedDate];
+                        allCompletions.forEach((completion) => {
+                            const matchingCompletion = completionsData.find(
+                                (c) => c.user === completion.user,
+                            );
+                            if (matchingCompletion) {
+                                completion.isPending =
+                                    matchingCompletion.isPending;
+                            }
+                        });
+                    }
+
+                    // Process all completions
+                    allCompletions.forEach((completion) => {
+                        const user = completion.user;
+                        if (completion.isPending === true) {
+                            if (!pendingUsers.includes(user)) {
+                                pendingUsers.push(user);
+                            }
+                        } else {
+                            if (!approvedUsers.includes(user)) {
+                                approvedUsers.push(user);
+                            }
+                        }
+                    });
+
+                    if (pendingUsers.length > 0 && approvedUsers.length === 0) {
+                        isPending = true;
+                    } else if (approvedUsers.length > 0) {
+                        isApproved = true;
+                    }
+                } else if (hasCompletions) {
+                    // Non-approval tasks are approved when completed
+                    isApproved = true;
+                }
+
+                // Set status symbol
+                if (isOverdue) {
+                    statusSymbol =
+                        ' <span style="color: #d32f2f; font-size: 16px; margin-left: 8px;">⚠️</span>';
+                } else if (isPending) {
+                    statusSymbol =
+                        ' <span style="display: inline-flex; align-items: center; justify-content: center; margin-left: 8px; width: 20px; height: 20px; border-radius: 50%; background: var(--primary-color);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z" fill="white"/></svg></span>';
+                } else if (isApproved) {
+                    statusSymbol =
+                        ' <span style="color: #28a745; font-size: 16px; margin-left: 8px;">✓</span>';
+                }
+
+                let modalHTML = `<h2>${task.title}${statusSymbol}</h2>`;
+
+                // Buzz Points
+                modalHTML += `<div class="task-info-row"><strong>Buzz Points:</strong> ${task.reward || 0} 🍯</div>`;
+
+                // Status with completion details
+                let statusDisplay = "";
+                if (isApproved) {
+                    statusDisplay = "Approved";
+                    // Get completion details
+                    let completionTime = "";
+                    let completerUser = "";
+
+                    if (
+                        task.completedDates &&
+                        task.completedDates[selectedDate] &&
+                        task.completedDates[selectedDate].length > 0
+                    ) {
+                        const latestCompletion =
+                            task.completedDates[selectedDate][
+                                task.completedDates[selectedDate].length - 1
+                            ];
+                        if (latestCompletion.completedAt) {
+                            const completedTimeObj = new Date(
+                                latestCompletion.completedAt,
+                            );
+                            completionTime =
+                                completedTimeObj.toLocaleTimeString("en-US", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                });
+                            completerUser = latestCompletion.user;
+                        }
+                    }
+
+                    if (completionTime && completerUser) {
+                        let avatarHTML = "";
+                        if (
+                            window.avatarSystem &&
+                            typeof window.avatarSystem.generateAvatarHTML ===
+                                "function"
+                        ) {
+                            avatarHTML = window.avatarSystem.generateAvatarHTML(
+                                completerUser,
+                                16,
+                                "completer-avatar",
+                                "margin-right: 4px;",
+                            );
+                        }
+                        statusDisplay += ` - completed at ${completionTime} by ${avatarHTML}${completerUser}`;
+                    }
+                } else if (isPending) {
+                    statusDisplay = "Pending";
+                    // Get completion details for pending
+                    let completionTime = "";
+                    let completerUser = "";
+
+                    if (
+                        task.completedDates &&
+                        task.completedDates[selectedDate] &&
+                        task.completedDates[selectedDate].length > 0
+                    ) {
+                        const latestCompletion =
+                            task.completedDates[selectedDate][
+                                task.completedDates[selectedDate].length - 1
+                            ];
+                        if (latestCompletion.completedAt) {
+                            const completedTimeObj = new Date(
+                                latestCompletion.completedAt,
+                            );
+                            completionTime =
+                                completedTimeObj.toLocaleTimeString("en-US", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                });
+                            completerUser = latestCompletion.user;
+                        }
+                    }
+
+                    if (completionTime && completerUser) {
+                        let avatarHTML = "";
+                        if (
+                            window.avatarSystem &&
+                            typeof window.avatarSystem.generateAvatarHTML ===
+                                "function"
+                        ) {
+                            avatarHTML = window.avatarSystem.generateAvatarHTML(
+                                completerUser,
+                                16,
+                                "completer-avatar",
+                                "margin-right: 4px;",
+                            );
+                        }
+                        statusDisplay += ` - completed at ${completionTime} by ${avatarHTML}${completerUser}`;
+                    }
+                } else {
+                    statusDisplay = "Active";
+                }
+                modalHTML += `<div class="task-info-row"><strong>Status:</strong> ${statusDisplay}</div>`;
+
+                // Frequency
+                let frequencyDisplay = task.repeat || "Daily";
+                if (task.requiredTimes && task.requiredTimes > 1) {
+                    frequencyDisplay += `, ${task.requiredTimes} times per ${task.repeat?.toLowerCase() || "day"}`;
+                }
+                modalHTML += `<div class="task-info-row"><strong>Frequency:</strong> ${frequencyDisplay}</div>`;
+
+                // Date
                 const [fromDate, toDate] = (task.date || "").split(" to ");
-                if (!fromDate) {
-                    modalHTML += `<strong>Date:</strong> Unknown<br>`;
+                let dateDisplay = "";
+                if (task.repeat === "Occasional") {
+                    dateDisplay = "No fixed date";
+                } else if (!fromDate) {
+                    dateDisplay = "Unknown";
                 } else if (
                     !toDate ||
                     toDate === "3000-01-01" ||
                     toDate === fromDate
                 ) {
-                    modalHTML += `<strong>Date:</strong> ${fromDate}<br>`;
+                    dateDisplay = fromDate;
                 } else {
-                    modalHTML += `<strong>Date:</strong> ${fromDate} to ${toDate}<br>`;
+                    dateDisplay = `From ${fromDate} to ${toDate}`;
+                }
+                modalHTML += `<div class="task-info-row"><strong>Date:</strong> ${dateDisplay}</div>`;
+
+                // Due Time
+                if (task.dueTimes && task.dueTimes.length > 0) {
+                    modalHTML += `<div class="task-info-row"><strong>Due Time:</strong> ${task.dueTimes.join(", ")}</div>`;
                 }
 
-                modalHTML += `<strong>Originally Assigned To:</strong> ${task.users.join(", ")}<br>`;
-                modalHTML += `<strong>Privacy:</strong> ${task.isPrivate === true ? "🔒 Private (hidden from other users)" : "🌐 Public (visible to all users)"}<br>`;
-                modalHTML += `<strong>Can Be Completed By:</strong> ${task.isPrivate === true ? "Only assigned users" : "Anyone 🐝"}<br>`;
-                modalHTML += `<strong>Buzz Points Go To:</strong> Whoever completes it<br>`;
+                // Settings
+                let settingDisplay = "Individual";
+                let settingDetails = "";
 
-                if (isRotation) {
-                    modalHTML += `<strong>Rotation:</strong> Yes<br>`;
+                if (task.settings?.includes("Rotation")) {
+                    settingDisplay = "Rotational";
+
+                    // Add rotation details
                     const activeTurn = turnData.turns.find(
                         (turn) => !turn.isCompleted && !turn.isPending,
                     );
@@ -4434,28 +4687,193 @@
                             )?.user ||
                             task.users[nextTurnIndex] ||
                             "—";
-                        modalHTML += `<strong>Current Turn:</strong> ${activeTurn.user}<br>`;
-                        modalHTML += `<strong>Next:</strong> ${nextUser}<br>`;
+                        settingDetails = ` - Current: ${activeTurn.user}, Next: ${nextUser}`;
+                    }
+
+                    // Add rotation options
+                    if (task.fairRotation) {
+                        settingDetails += " (Fair Rotation enabled";
+                        if (task.fairRotationTimeBased) {
+                            settingDetails += ", Time-based tie breaking";
+                        }
+                        settingDetails += ")";
+                    }
+                } else if (task.settings?.includes("Teamwork")) {
+                    settingDisplay = "Teamwork";
+                }
+
+                modalHTML += `<div class="task-info-row"><strong>Setting:</strong> ${settingDisplay}${settingDetails}</div>`;
+
+                // Assigned To
+                let assignedDisplay = "";
+                if (task.settings?.includes("Teamwork")) {
+                    // For teamwork, list all avatars
+                    let teamAvatars = "";
+                    task.users.forEach((user) => {
+                        if (
+                            window.avatarSystem &&
+                            typeof window.avatarSystem.generateAvatarHTML ===
+                                "function"
+                        ) {
+                            teamAvatars +=
+                                window.avatarSystem.generateAvatarHTML(
+                                    user,
+                                    16,
+                                    "assigned-avatar",
+                                    "margin-right: 2px;",
+                                );
+                        }
+                    });
+                    assignedDisplay = `${teamAvatars}${task.users.join(", ")}`;
+                } else if (task.settings?.includes("Rotation")) {
+                    // For rotation, show current assignee first, then order
+                    const activeTurn = turnData.turns.find(
+                        (turn) => !turn.isCompleted && !turn.isPending,
+                    );
+                    if (activeTurn) {
+                        let currentAvatar = "";
+                        if (
+                            window.avatarSystem &&
+                            typeof window.avatarSystem.generateAvatarHTML ===
+                                "function"
+                        ) {
+                            currentAvatar =
+                                window.avatarSystem.generateAvatarHTML(
+                                    activeTurn.user,
+                                    16,
+                                    "current-avatar",
+                                    "margin-right: 2px;",
+                                );
+                        }
+                        assignedDisplay = `${currentAvatar}${activeTurn.user} (current)`;
+
+                        // Add rotation order
+                        const orderedUsers = task.users.slice();
+                        const currentIndex = orderedUsers.indexOf(
+                            activeTurn.user,
+                        );
+                        const rotationOrder = [
+                            ...orderedUsers.slice(currentIndex + 1),
+                            ...orderedUsers.slice(0, currentIndex),
+                        ];
+
+                        if (rotationOrder.length > 0) {
+                            let orderAvatars = "";
+                            rotationOrder.forEach((user) => {
+                                if (
+                                    window.avatarSystem &&
+                                    typeof window.avatarSystem
+                                        .generateAvatarHTML === "function"
+                                ) {
+                                    orderAvatars +=
+                                        window.avatarSystem.generateAvatarHTML(
+                                            user,
+                                            16,
+                                            "rotation-avatar",
+                                            "margin-right: 2px;",
+                                        );
+                                }
+                            });
+                            assignedDisplay += ` → ${orderAvatars}${rotationOrder.join(" → ")}`;
+                        }
                     } else {
-                        modalHTML += `<strong>All turns completed!</strong><br>`;
+                        // Fallback
+                        let allAvatars = "";
+                        task.users.forEach((user) => {
+                            if (
+                                window.avatarSystem &&
+                                typeof window.avatarSystem
+                                    .generateAvatarHTML === "function"
+                            ) {
+                                allAvatars +=
+                                    window.avatarSystem.generateAvatarHTML(
+                                        user,
+                                        16,
+                                        "assigned-avatar",
+                                        "margin-right: 2px;",
+                                    );
+                            }
+                        });
+                        assignedDisplay = `${allAvatars}${task.users.join(", ")}`;
+                    }
+                } else {
+                    // For individual, list all assigned users
+                    let individualAvatars = "";
+                    task.users.forEach((user) => {
+                        if (
+                            window.avatarSystem &&
+                            typeof window.avatarSystem.generateAvatarHTML ===
+                                "function"
+                        ) {
+                            individualAvatars +=
+                                window.avatarSystem.generateAvatarHTML(
+                                    user,
+                                    16,
+                                    "assigned-avatar",
+                                    "margin-right: 2px;",
+                                );
+                        }
+                    });
+                    assignedDisplay = `${individualAvatars}${task.users.join(", ")}`;
+                }
+                modalHTML += `<div class="task-info-row"><strong>Assigned To:</strong> ${assignedDisplay}</div>`;
+
+                // Reassigned To (if applicable)
+                let reassignedUser = null;
+                if (
+                    task.tempTurnReplacement &&
+                    task.tempTurnReplacement[selectedDate]
+                ) {
+                    const replacements = task.tempTurnReplacement[selectedDate];
+                    for (const [index, replacementUser] of Object.entries(
+                        replacements,
+                    )) {
+                        if (task.users && task.users[parseInt(index)]) {
+                            reassignedUser = replacementUser;
+                            break;
+                        }
                     }
                 }
 
-                const totalCompleted = turnData.turns.reduce(
-                    (sum, turn) =>
-                        sum + (turn.isCompleted || turn.isPending ? 1 : 0),
-                    0,
-                );
-                const totalRequired = isRotation
-                    ? turnData.turns.length
-                    : turnData.requiredTimes * task.users.length;
-
-                if (task.users.includes(userName)) {
-                    modalHTML += `<strong>Your Progress:</strong> ${userTotal}/${userRequiredTimes}<br>`;
-                } else {
-                    modalHTML += `<strong>Your Progress:</strong> 0/0 (not originally assigned)<br>`;
+                if (reassignedUser) {
+                    let reassignedAvatar = "";
+                    if (
+                        window.avatarSystem &&
+                        typeof window.avatarSystem.generateAvatarHTML ===
+                            "function"
+                    ) {
+                        reassignedAvatar =
+                            window.avatarSystem.generateAvatarHTML(
+                                reassignedUser,
+                                16,
+                                "reassigned-avatar",
+                                "margin-right: 4px;",
+                            );
+                    }
+                    modalHTML += `<div class="task-info-row"><strong>Reassigned To:</strong> ${reassignedAvatar}${reassignedUser}</div>`;
                 }
-                modalHTML += `<strong>Total Progress:</strong> ${totalCompleted}/${totalRequired}<br>`;
+
+                // Privacy Status
+                const privacyDisplay =
+                    task.isPrivate === true
+                        ? "Private"
+                        : "Visible to all users";
+                modalHTML += `<div class="task-info-row"><strong>Privacy Status:</strong> ${privacyDisplay}</div>`;
+
+                // Parental Approval
+                const approvalDisplay =
+                    task.parentApproval === true ? "Yes" : "No";
+                modalHTML += `<div class="task-info-row"><strong>Parental Approval:</strong> ${approvalDisplay}</div>`;
+
+                // Notes (if present)
+                if (task.notes) {
+                    modalHTML += `<div class="task-info-row"><strong>Notes:</strong> ${task.notes}</div>`;
+                }
+
+                // Room (if present)
+                if (task.room) {
+                    modalHTML += `<div class="task-info-row"><strong>Room:</strong> ${task.room}</div>`;
+                }
 
                 const modal = document.createElement("div");
                 modal.className = "modal";
