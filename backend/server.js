@@ -3,6 +3,11 @@ const cors = require("cors");
 const path = require("path");
 const { registerUser, getAllUsers } = require("./register");
 const { connectDB } = require("./db");
+const {
+  shouldAdvanceRotation,
+  advanceRotation,
+  getCurrentTurnUser,
+} = require("../shared/rotation-logic");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -3385,64 +3390,35 @@ app.post("/api/complete-task", async (req, res) => {
         parentApproval: task.parentApproval,
       });
 
-      // Advance turn for rotation tasks
-      if (isRotation && task.repeat === "Daily" && task.timesPerDay === 1) {
-        // Check if previous day's turn was missed
-        const prevDate = new Date(normalizedDate);
-        prevDate.setDate(prevDate.getDate() - 1);
-        const prevDateStr = prevDate.toISOString().split("T")[0];
-        const prevCompletions = task.completions?.[prevDateStr] || [];
-        const prevPending = task.pendingCompletions?.[prevDateStr] || [];
-        const prevTempReplacement =
-          task.tempTurnReplacement?.[prevDateStr] || {};
-        const prevAssignedUsers = [
-          ...new Set([...userList, ...Object.values(prevTempReplacement)]),
-        ];
-        const prevTurnIndex =
-          prevAssignedUsers.length > 0
-            ? (task.currentTurnIndex - 1 + prevAssignedUsers.length) %
-              prevAssignedUsers.length
-            : 0;
-        const prevTurnUser = prevAssignedUsers[prevTurnIndex];
+      // Advance turn for rotation tasks based on rotation settings
+      if (isRotation) {
+        const rotationCheck = shouldAdvanceRotation(
+          task,
+          normalizedDate,
+          user,
+          task.completions || {},
+          task.pendingCompletions || {},
+        );
 
-        if (
-          !prevCompletions.some((c) => c.user === prevTurnUser) &&
-          !prevPending.some((p) => p.user === prevTurnUser)
-        ) {
-          // Previous turn was missed; don't advance
-          console.log(
-            "🔍 /api/complete-task: Previous turn missed, not advancing",
-            { prevTurnUser, prevDateStr },
+        console.log("🔍 /api/complete-task: Rotation check", {
+          taskTitle,
+          shouldAdvance: rotationCheck.shouldAdvance,
+          reason: rotationCheck.reason,
+          rotationSettings: task.rotationSettings,
+        });
+
+        if (rotationCheck.shouldAdvance) {
+          const rotationResult = advanceRotation(
+            task,
+            normalizedDate,
+            rotationCheck.reason,
           );
-        } else {
-          task.currentTurnIndex =
-            assignedUsers.length > 0
-              ? (task.currentTurnIndex + 1) % assignedUsers.length
-              : 0;
-          console.log("🔍 /api/complete-task: Advanced turn", {
+          console.log("🔍 /api/complete-task: Rotation advanced", {
             taskTitle,
+            previousUser: rotationResult.previousUser,
+            newUser: rotationResult.newUser,
             currentTurnIndex: task.currentTurnIndex,
-            nextUser: assignedUsers[task.currentTurnIndex],
           });
-        }
-      } else if (isRotation) {
-        // For other rotation tasks, advance based on total completions
-        const totalCompletions =
-          task.completions[normalizedDate].length +
-          task.pendingCompletions[normalizedDate].length;
-        if (totalCompletions >= requiredTimes) {
-          task.currentTurnIndex =
-            assignedUsers.length > 0
-              ? (task.currentTurnIndex + 1) % assignedUsers.length
-              : 0;
-          console.log(
-            "🔍 /api/complete-task: Advanced turn after required completions",
-            {
-              taskTitle,
-              currentTurnIndex: task.currentTurnIndex,
-              nextUser: assignedUsers[task.currentTurnIndex],
-            },
-          );
         }
       }
     } else {
@@ -3501,62 +3477,35 @@ app.post("/api/complete-task", async (req, res) => {
         parentApproval: task.parentApproval,
       });
 
-      // Advance turn for rotation tasks only after all required completions
-      if (isRotation && task.repeat === "Daily" && task.timesPerDay === 1) {
-        const prevDate = new Date(normalizedDate);
-        prevDate.setDate(prevDate.getDate() - 1);
-        const prevDateStr = prevDate.toISOString().split("T")[0];
-        const prevCompletions = task.completions?.[prevDateStr] || [];
-        const prevPending = task.pendingCompletions?.[prevDateStr] || [];
-        const prevTempReplacement =
-          task.tempTurnReplacement?.[prevDateStr] || {};
-        const prevAssignedUsers = [
-          ...new Set([...userList, ...Object.values(prevTempReplacement)]),
-        ];
-        const prevTurnIndex =
-          prevAssignedUsers.length > 0
-            ? (task.currentTurnIndex - 1 + prevAssignedUsers.length) %
-              prevAssignedUsers.length
-            : 0;
-        const prevTurnUser = prevAssignedUsers[prevTurnIndex];
+      // Advance turn for rotation tasks based on rotation settings (pending completions)
+      if (isRotation) {
+        const rotationCheck = shouldAdvanceRotation(
+          task,
+          normalizedDate,
+          user,
+          task.completions || {},
+          task.pendingCompletions || {},
+        );
 
-        if (
-          !prevCompletions.some((c) => c.user === prevTurnUser) &&
-          !prevPending.some((p) => p.user === prevTurnUser)
-        ) {
-          // Previous turn was missed; don't advance
-          console.log(
-            "🔍 /api/complete-task: Previous turn missed, not advancing",
-            { prevTurnUser, prevDateStr },
+        console.log("🔍 /api/complete-task: Rotation check (pending)", {
+          taskTitle,
+          shouldAdvance: rotationCheck.shouldAdvance,
+          reason: rotationCheck.reason,
+          rotationSettings: task.rotationSettings,
+        });
+
+        if (rotationCheck.shouldAdvance) {
+          const rotationResult = advanceRotation(
+            task,
+            normalizedDate,
+            rotationCheck.reason,
           );
-        } else {
-          task.currentTurnIndex =
-            assignedUsers.length > 0
-              ? (task.currentTurnIndex + 1) % assignedUsers.length
-              : 0;
-          console.log("🔍 /api/complete-task: Advanced turn", {
+          console.log("🔍 /api/complete-task: Rotation advanced (pending)", {
             taskTitle,
+            previousUser: rotationResult.previousUser,
+            newUser: rotationResult.newUser,
             currentTurnIndex: task.currentTurnIndex,
-            nextUser: assignedUsers[task.currentTurnIndex],
           });
-        }
-      } else if (isRotation) {
-        const totalCompletions =
-          task.completions[normalizedDate].length +
-          task.pendingCompletions[normalizedDate].length;
-        if (totalCompletions >= requiredTimes) {
-          task.currentTurnIndex =
-            assignedUsers.length > 0
-              ? (task.currentTurnIndex + 1) % assignedUsers.length
-              : 0;
-          console.log(
-            "🔍 /api/complete-task: Advanced turn after required completions",
-            {
-              taskTitle,
-              currentTurnIndex: task.currentTurnIndex,
-              nextUser: assignedUsers[task.currentTurnIndex],
-            },
-          );
         }
       }
     }

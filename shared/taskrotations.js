@@ -274,7 +274,87 @@ function filterTasksForDate(tasks, selectedDate) {
 
 // addtasks.html settings: Rotation Daily ////////////////////////////////////////////////////////////////////////
 
+function calculateGlobalOccurrenceNumber(
+  task,
+  selectedDate,
+  occurrenceIndex = 0,
+) {
+  // Calculate global occurrence number for continuous rotation
+  const repeat = task.repeat || "Daily";
+  const requiredTimes =
+    repeat === "Monthly"
+      ? Number.isInteger(task.timesPerMonth)
+        ? task.timesPerMonth
+        : 1
+      : repeat === "Weekly"
+        ? Number.isInteger(task.timesPerWeek)
+          ? task.timesPerWeek
+          : 1
+        : repeat === "Daily"
+          ? Number.isInteger(task.timesPerDay)
+            ? task.timesPerDay
+            : 1
+          : 1;
+
+  const range = task.date.split(" to ");
+  const taskStartDate = parseLocalDate(range[0]);
+  const selected = parseLocalDate(selectedDate);
+
+  let totalOccurrences = 0;
+
+  // Count all occurrences from task start to selected date
+  for (
+    let currentDate = new Date(taskStartDate);
+    currentDate < selected;
+    currentDate.setDate(currentDate.getDate() + 1)
+  ) {
+    if (repeat === "Daily") {
+      totalOccurrences += requiredTimes;
+    } else if (repeat === "Weekly") {
+      // Add weekly logic if needed
+      totalOccurrences += requiredTimes;
+    } else if (repeat === "Monthly") {
+      // Add monthly logic if needed
+      totalOccurrences += requiredTimes;
+    }
+  }
+
+  // Add current occurrence index (0-based)
+  totalOccurrences += occurrenceIndex + 1;
+
+  return totalOccurrences;
+}
+
 function mixedTurnOffset(task, selectedDate) {
+  const repeat = task.repeat || "Daily";
+  const requiredTimes =
+    repeat === "Monthly"
+      ? Number.isInteger(task.timesPerMonth)
+        ? task.timesPerMonth
+        : 1
+      : repeat === "Weekly"
+        ? Number.isInteger(task.timesPerWeek)
+          ? task.timesPerWeek
+          : 1
+        : repeat === "Daily"
+          ? Number.isInteger(task.timesPerDay)
+            ? task.timesPerDay
+            : 1
+          : 1;
+
+  const assignedUsers = task.users || [];
+  if (assignedUsers.length === 0) return 0;
+
+  // Use global occurrence number for continuous rotation
+  const globalOccurrenceNumber = calculateGlobalOccurrenceNumber(
+    task,
+    selectedDate,
+    0,
+  );
+  return (globalOccurrenceNumber - 1) % assignedUsers.length;
+}
+
+function mixedTurnOffsetLegacy(task, selectedDate) {
   const repeat = task.repeat || "Daily";
   const requiredTimes =
     repeat === "Monthly"
@@ -434,7 +514,7 @@ function mixedTurnOffset(task, selectedDate) {
     return (rotationOffset - 1) % assignedUsers.length;
   }
 
-  // Other daily tasks
+  // Other daily tasks (including multiple daily occurrences)
   const range = task.date.split(" to ");
   const taskStartDate = parseLocalDate(range[0]);
   let rotationOffset = 0;
@@ -821,22 +901,46 @@ function mixedTurnData(task, selectedDate) {
       }
     });
 
-    let currentTurnIndex;
-    // For simple rotation (non-fair rotation), prioritize calculated turn index
-    // to ensure rotation continues properly across days
-    if (typeof mixedTurnOffset === "function") {
-      currentTurnIndex = mixedTurnOffset(task, selectedDate);
-    } else if (typeof task.currentTurnIndex === "number") {
-      currentTurnIndex = task.currentTurnIndex;
-    } else {
-      // Simple fallback rotation based on date
-      const dateValue = new Date(selectedDate).getTime();
-      currentTurnIndex =
-        Math.floor(dateValue / (1000 * 60 * 60 * 24)) % assignedUsers.length;
+    // Use the new global occurrence approach for better rotation continuity
+    // This ensures rotation continues properly across days
+    let currentTurnIndex = 0;
+    try {
+      if (typeof mixedTurnOffset === "function") {
+        currentTurnIndex = mixedTurnOffset(task, selectedDate);
+      } else if (typeof task.currentTurnIndex === "number") {
+        currentTurnIndex = task.currentTurnIndex;
+      } else {
+        // Simple fallback rotation based on date
+        const dateValue = new Date(selectedDate).getTime();
+        currentTurnIndex =
+          Math.floor(dateValue / (1000 * 60 * 60 * 24)) % assignedUsers.length;
+      }
+
+      // Validate the result
+      if (
+        typeof currentTurnIndex !== "number" ||
+        isNaN(currentTurnIndex) ||
+        currentTurnIndex < 0
+      ) {
+        currentTurnIndex = 0;
+      }
+      currentTurnIndex = currentTurnIndex % assignedUsers.length;
+    } catch (error) {
+      console.warn(
+        `Turn index calculation error for task "${task.title}":`,
+        error,
+      );
+      currentTurnIndex = 0;
     }
 
     for (let i = 0; i < requiredTimes; i++) {
-      const userIndex = (i + currentTurnIndex) % assignedUsers.length;
+      // Calculate global occurrence number for this specific occurrence
+      const globalOccurrenceNumber = calculateGlobalOccurrenceNumber(
+        task,
+        selectedDate,
+        i,
+      );
+      const userIndex = (globalOccurrenceNumber - 1) % assignedUsers.length;
       const user = assignedUsers[userIndex];
       const originalUser = userOrder[userIndex];
 
@@ -858,6 +962,7 @@ function mixedTurnData(task, selectedDate) {
         isPending,
         originalUser,
         index: i,
+        globalOccurrence: globalOccurrenceNumber, // Add global occurrence number for debugging
       });
     }
 
