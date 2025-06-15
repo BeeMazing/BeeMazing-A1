@@ -6302,14 +6302,33 @@
                                 (freshTask.title.includes("1st") ||
                                     freshTask.title.includes("2nd") ||
                                     freshTask.title.includes("3rd"));
+                            const isReconstructedMaster =
+                                freshTask._isReconstructedMaster;
+
+                            // Debug logging for delete detection
+                            console.log("🗑️ DELETE DETECTION DEBUG:", {
+                                isOccurrenceTask,
+                                isOccurrenceByTitle,
+                                isReconstructedMaster,
+                                taskTitle: freshTask.title,
+                                originalTitle: freshTask.originalTitle,
+                                totalOccurrences: freshTask.totalOccurrences,
+                                _isReconstructedMaster:
+                                    freshTask._isReconstructedMaster,
+                            });
 
                             let titleToUse;
                             let confirmMessage;
 
-                            if (isOccurrenceTask || isOccurrenceByTitle) {
+                            if (
+                                isOccurrenceTask ||
+                                isOccurrenceByTitle ||
+                                isReconstructedMaster
+                            ) {
                                 titleToUse =
                                     freshTask.originalTitle ||
-                                    freshTask.title.split(" - ")[0];
+                                    freshTask.title.split(" - ")[0] ||
+                                    freshTask.title;
                                 confirmMessage = `Are you sure you want to delete ALL occurrences of "${titleToUse}"?\n\nThis will delete all daily occurrences (1st, 2nd, 3rd, etc.) across all past and future dates.`;
                             } else {
                                 titleToUse = freshTask.title;
@@ -6319,12 +6338,37 @@
                             if (confirm(confirmMessage)) {
                                 modal.remove();
 
-                                if (isOccurrenceTask || isOccurrenceByTitle) {
-                                    await deleteAllOccurrences(
+                                if (
+                                    isOccurrenceTask ||
+                                    isOccurrenceByTitle ||
+                                    isReconstructedMaster
+                                ) {
+                                    // Check if this is a reconstructed master task
+                                    if (isReconstructedMaster) {
+                                        console.log(
+                                            "🗑️ Using deleteAllOccurrencesAllDates for master task:",
+                                            titleToUse,
+                                        );
+                                        await deleteAllOccurrencesAllDates(
+                                            titleToUse,
+                                        );
+                                    } else {
+                                        console.log(
+                                            "🗑️ Using deleteAllOccurrences for individual task:",
+                                            titleToUse,
+                                            freshTask.date,
+                                        );
+                                        await deleteAllOccurrences(
+                                            titleToUse,
+                                            freshTask.date,
+                                        );
+                                    }
+                                } else {
+                                    console.log(
+                                        "🗑️ Using deleteTaskFromBackend for regular task:",
                                         titleToUse,
                                         freshTask.date,
                                     );
-                                } else {
                                     await deleteTaskFromBackend(
                                         titleToUse,
                                         freshTask.date,
@@ -6896,7 +6940,8 @@
                     );
 
                     const relatedTasks = allTasks.filter((task) => {
-                        const taskStartDate = freshTask.date.split(" to ")[0];
+                        if (!task.date) return false;
+                        const taskStartDate = task.date.split(" to ")[0];
                         const matchesOriginalTitle =
                             task.originalTitle === originalTitle;
                         const matchesTitlePattern =
@@ -7231,6 +7276,88 @@
                             setTimeout(resolve, 2000),
                         );
                     }
+                }
+            }
+
+            // Delete all occurrences of a task group across ALL dates (for master task view)
+            async function deleteAllOccurrencesAllDates(originalTitle) {
+                const adminEmail = localStorage.getItem("currentAdminEmail");
+                console.log(
+                    "🗑️ Deleting ALL occurrences across all dates for:",
+                    {
+                        adminEmail,
+                        originalTitle,
+                    },
+                );
+
+                if (!adminEmail) {
+                    alert("❌ Delete failed: No admin email found.");
+                    return;
+                }
+
+                try {
+                    // First, get all tasks to find related occurrences
+                    const response = await fetch(
+                        `https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`,
+                        { cache: "no-store" },
+                    );
+                    const result = await response.json();
+                    const allTasks = result.tasks || [];
+
+                    // Find all related occurrence tasks across ALL dates
+                    const relatedTasks = allTasks.filter((task) => {
+                        if (!task || !task.date) return false;
+
+                        const matchesOriginalTitle =
+                            task.originalTitle === originalTitle;
+                        const matchesTitlePattern =
+                            task.title &&
+                            task.title.startsWith(originalTitle + " - ");
+
+                        return matchesOriginalTitle || matchesTitlePattern;
+                    });
+
+                    console.log(
+                        `🗑️ Found ${relatedTasks.length} related tasks across all dates to delete`,
+                    );
+
+                    if (relatedTasks.length === 0) {
+                        alert("No related occurrences found to delete.");
+                        return;
+                    }
+
+                    // Confirm before deleting multiple tasks
+                    if (
+                        !confirm(
+                            `Are you sure you want to delete ${relatedTasks.length} related task occurrences across ALL dates?`,
+                        )
+                    ) {
+                        return;
+                    }
+
+                    // Delete each related task
+                    let deletedCount = 0;
+                    for (const task of relatedTasks) {
+                        try {
+                            await deleteTaskFromBackend(task.title, task.date);
+                            deletedCount++;
+                        } catch (error) {
+                            console.error(
+                                "Failed to delete task:",
+                                task.title,
+                                error,
+                            );
+                        }
+                    }
+
+                    alert(
+                        `Successfully deleted ${deletedCount} out of ${relatedTasks.length} related occurrences across all dates!`,
+                    );
+                } catch (error) {
+                    console.error("Error deleting all occurrences:", error);
+                    alert(
+                        "Failed to delete all occurrences. Please try again.",
+                    );
                 }
             }
 
