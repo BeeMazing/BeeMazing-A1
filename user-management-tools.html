@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeeMazing User Management Tools</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #5D4E41;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .tool-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 5px solid #FBB740;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .tool-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #5D4E41;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tool-description {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .tool-use-case {
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+            border-left: 3px solid #2196f3;
+        }
+
+        .tool-link {
+            display: inline-block;
+            background: #FBB740;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        .tool-link:hover {
+            background: #e6a537;
+        }
+
+        .problem-solved {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #155724;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+
+        .steps-list {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #ddd;
+        }
+
+        .steps-list ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .steps-list li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .icon {
+            font-size: 24px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .ready {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .advanced {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .quick-links {
+            background: #2d3748;
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .quick-links h3 {
+            color: #FBB740;
+            margin-bottom: 15px;
+        }
+
+        .quick-links a {
+            color: #81c784;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .quick-links a:hover {
+            color: #a5d6a7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛠️ BeeMazing User Management Tools</h1>
+        
+        <div class="problem-solved">
+            <h3></h3>✅ Problem Solved: User Name Changes</h3>
+            <p><strong>Issue:</strong> When you change a user's name, tasks don't recognize them anymore.</p>
+            <p><strong>Solution:</strong> We've created tools to handle this automatically by updating all task references when names change.</p>
+        </div>
+
+        <div class="quick-links">
+            <h3>🚀 Quick Access Links</h3>
+            <p>Replace <code>linda@pd.lv</code> with your admin email:</p>
+            <a href="rename-user-fix.html?admin=linda@pd.lv">✏️ Rename User Tool</a>
+            <a href="migrate-users-to-ids.html?admin=linda@pd.lv">🆔 Advanced ID Migration Tool</a>
+            <a href="debug-task-deletion.html?admin=linda@pd.lv">🐛 Task Deletion Debugger</a>
+            <a href="inspect-task-data.html?admin=linda@pd.lv">🔍 Task Data Inspector</a>
+        </div>
+
+        <div class="tool-card">
+            <div class="tool-title">
+                <span class="icon">✏️</span>
+                User Rename Tool
+                <span class="status-indicator ready">Ready to Use</span>
+            </div>
+            <div class="tool-description">
+                <strong>The immediate solution for name changes.</strong> When you need to rename a user, this tool automatically updates all their task references so they don't lose access to their assignments.
+            </div>
+            <div class="tool-use-case">
+                <strong>Use when:</strong> Someone's name changes (marriage, preference, spelling correction, etc.) and you want to keep all their task history and assignments.
+            </div>
+            <div class="steps-list">
+                <strong>How it works:</strong>
+                <ol>
+                    <li>Load all users and tasks</li>
+                    <li>Select the user to rename</li>
+                    <li>Enter the new name</li>
+                    <li>Preview all changes that will be made</li>
+                    <li>Execute the rename with one click</li>
+                </ol>
+            </div>
+            <br>
+            <a href="rename-user-fix.html?admin=linda@pd.lv" class="tool-link">Open Rename Tool</a>
+        </div>
+
+        <div class="tool-card">
+            <div class="tool-title">
+                <span class="icon">🆔</span>
+                Advanced ID Migration Tool
+                <span class="status-indicator advanced">Advanced Users</span>
+            </div>
+            <div class="tool-description">
+                <strong>Future-proof solution using unique IDs.</strong> This migrates your entire system from name-based to ID-based user references, making it completely immune to name changes.
+            </div>
+            <div class="tool-use-case">
+                <strong>Use when:</strong> You want a permanent solution that prevents name change issues forever, or you frequently rename users and want a robust system.
+            </div>
+            <div class="steps-list">
+                <strong>Migration process:</strong>
+                <ol>
+                    <li>Analyze current system and identify all user references</li>
+                    <li>Generate unique IDs for every user</li>
+                    <li>Migrate all tasks to use IDs instead of names</li>
+                    <li>Verify migration completed successfully</li>
+                </ol>
+            </div>
+            <br>
+            <a href="migrate-users-to-ids.html?admin=linda@pd.lv" class="tool-link">Open Migration</li> Tool</a>
+        </div>
+
+        <div class="tool-card">
+            <div class="tool-title">
+                <span class="icon">🐛</span>
+                Task Deletion Debugger
+                <span class="status-indicator ready">Ready to Use</span>
+            </div>
+            <div class="tool-description">
+                <strong>Diagnose and fix task deletion problems.</strong> Identifies problematic tasks that can't be deleted and provides tools to fix or force-delete them.
+            </div>
+            <div class="tool-use-case">
+                <strong>Use when:</strong> Tasks won't delete through the normal interface, or you want to identify and fix data integrity issues.
+            </div>
+            <div class="steps-list">
+                <strong>Features:</strong>
+                <ol>
+                    <li>Scan all tasks for deletion issues</li>
+                    <li>Highlight problematic tasks in red</li>
+                    <li>Test deletion without actually deleting</li>
+                    <li>Force delete stubborn tasks if needed</li>
+                    <li>Detailed error logging and diagnosis</li>
+                </ol>
+            </div>
+            <br>
+            <a href="debug-task-deletion.html?admin=linda@pd.lv" class="tool-link">Open Debugger</a>
+        </div>
+
+        <div class="tool-card">
+            <div class="tool-title">
+                <span class="icon">🔍</span>
+                Task Data Inspector
+                <span class="status-indicator ready">Ready to Use</span>
+            </div>
+            <div class="tool-description">
+                <strong>Deep dive into task data structure.</strong> Examine the raw data of your tasks to understand data integrity issues and see exactly what's stored.
+            </div>
+            <div class="tool-use-case">
+                <strong>Use when:</strong> You need to understand why certain tasks behave unexpectedly, or want to verify data structure after migrations.
+            </div>
+            <div class="steps-list">
+                <strong>Analysis includes:</strong>
+                <ol>
+                    <li>Field-by-field data analysis</li>
+                    <li>Data type validation</li>
+                    <li>Issue identification and categorization</li>
+                    <li>Raw JSON data examination</li>
+                    <li>Statistical summaries</li>
+                </ol>
+            </div>
+            <br>
+            <a href="inspect-task-data.html?admin=linda@pd.lv" class="tool-link">Open Inspector</a>
+        </div>
+
+        <div class="warning-box">
+            <h4>⚠️ Important Notes</h4>
+            <ul>
+                <li><strong>Backup First:</strong> Always ensure you have a recent backup before using migration tools</li>
+                <li><strong>Test Environment:</strong> Consider testing on a small subset of data first</li>
+                <li><strong>Admin Access:</strong> These tools require admin-level access to your BeeMazing system</li>
+                <li><strong>URL Parameters:</strong> Remember to replace <code>linda@pd.lv</code> with your actual admin email in the URLs</li>
+            </ul>
+        </div>
+
+        <div class="tool-card">
+            <div class="tool-title">
+                <span class="icon">🎯</span>
+                Recommended Workflow
+            </div>
+            <div class="steps-list">
+                <strong>For immediate name changes:</strong>
+                <ol>
+                    <li>Use the <strong>User Rename Tool</strong> - it's simple and effective</li>
+                    <li>Preview the changes before executing</li>
+                    <li>Verify the rename worked correctly</li>
+                </ol>
+                <br>
+                <strong>For long-term solution:</strong>
+                <ol>
+                    <li>Use the <strong>Task Data Inspector</strong> to understand your current data</li>
+                    <li>Run the <strong>Advanced ID Migration Tool</strong> to future-proof your system</li>
+                    <li>Verify migration with the <strong>Task Deletion Debugger</strong></li>
+                </ol>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Auto-update URLs with current admin email if available
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail');
+            
+            if (adminEmail && adminEmail !== 'linda@pd.lv') {
+                // Update all links to use the current admin email
+                document.querySelectorAll('a[href*="linda@pd.lv"]').forEach(link => {
+                    link.href = link.href.replace('linda@pd.lv', encodeURIComponent(adminEmail));
+                });
+                
+                // Update code examples
+                document.querySelectorAll('code').forEach(code => {
+                    if (code.textContent.includes('linda@pd.lv')) {
+                        code.textContent = code.textContent.replace('linda@pd.lv', adminEmail);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
