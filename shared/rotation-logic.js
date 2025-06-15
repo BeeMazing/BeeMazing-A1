@@ -10,6 +10,7 @@
  * @param {Object} pendingCompletions - Task pending completions data
  * @returns {Object} - { shouldAdvance: boolean, reason: string }
  */
+
 function shouldAdvanceRotation(
   task,
   selectedDate,
@@ -21,6 +22,20 @@ function shouldAdvanceRotation(
     // If not a rotation task, don't advance
     if (!task.settings?.includes("Rotation")) {
       return { shouldAdvance: false, reason: "Not a rotation task" };
+    }
+
+    // For simple rotation with rotation settings, don't advance turn index
+    // The assignment is calculated based on schedule, not turn advancement
+    if (
+      !task.fairRotation &&
+      task.settings?.includes("Rotation") &&
+      task.rotationSettings
+    ) {
+      return {
+        shouldAdvance: false,
+        reason:
+          "Simple rotation uses schedule-based assignment, no turn advancement needed",
+      };
     }
 
     // If no rotation settings, use legacy behavior (advance after completion)
@@ -36,14 +51,14 @@ function shouldAdvanceRotation(
 
     switch (rotationType) {
       case "completion":
-        // Advance immediately after current user completes
+        // For fair rotation, advance immediately after current user completes
         return {
           shouldAdvance: true,
           reason: "Completion-based rotation - advance after user completes",
         };
 
       case "occurrences":
-        // Advance after X occurrences by current user
+        // For fair rotation, advance after X occurrences by current user
         return checkOccurrenceBasedRotation(
           task,
           selectedDate,
@@ -54,7 +69,7 @@ function shouldAdvanceRotation(
         );
 
       case "time":
-        // Advance after X days/weeks since last rotation
+        // For fair rotation, advance after X days/weeks since last rotation
         return checkTimeBasedRotation(task, selectedDate, rotationSettings);
 
       default:
@@ -96,13 +111,15 @@ function checkOccurrenceBasedRotation(
   const requiredOccurrences = rotationSettings.value || 1;
 
   // Count how many times the current user has completed this task since their turn started
-  const userCompletions = countUserCompletionsSinceLastRotation(
-    task,
-    selectedDate,
-    completingUser,
-    completions,
-    pendingCompletions,
-  );
+  // Add 1 to include the current completion that's happening now
+  const userCompletions =
+    countUserCompletionsSinceLastRotation(
+      task,
+      selectedDate,
+      completingUser,
+      completions,
+      pendingCompletions,
+    ) + 1;
 
   if (userCompletions >= requiredOccurrences) {
     return {
@@ -315,6 +332,135 @@ function getCurrentTurnUser(task, selectedDate) {
   // Fallback to first user
   task.currentTurnIndex = 0;
   return task.users[0];
+}
+
+/**
+ * Calculate who should be assigned to a specific occurrence based on schedule
+ * @param {Object} task - The task object
+ * @param {string} selectedDate - The date in YYYY-MM-DD format
+ * @param {number} occurrenceIndex - The occurrence index for this date (0-based)
+ * @returns {string} - User who should be assigned to this occurrence
+ */
+function calculateScheduledAssignment(task, selectedDate, occurrenceIndex = 0) {
+  if (!task.users || task.users.length === 0) {
+    return null;
+  }
+
+  // For simple rotation (not fair rotation), calculate assignment based on schedule
+  if (
+    !task.fairRotation &&
+    task.settings?.includes("Rotation") &&
+    task.rotationSettings
+  ) {
+    const rotationSettings = task.rotationSettings;
+
+    // Calculate global occurrence number for this specific occurrence
+    const globalOccurrence = calculateGlobalOccurrenceNumber(
+      task,
+      selectedDate,
+      occurrenceIndex,
+    );
+
+    switch (rotationSettings.type) {
+      case "completion":
+        // Each occurrence goes to next user
+        return task.users[(globalOccurrence - 1) % task.users.length];
+
+      case "occurrences":
+        // Each user gets X occurrences before rotating
+        const occurrencesPerUser = rotationSettings.value || 1;
+        const userIndex =
+          Math.floor((globalOccurrence - 1) / occurrencesPerUser) %
+          task.users.length;
+        return task.users[userIndex];
+
+      case "time":
+        // Calculate based on time units since task start
+        const range = task.date.split(" to ");
+        const taskStartDate = new Date(range[0]);
+        const currentDate = new Date(selectedDate);
+
+        const daysSinceStart = Math.floor(
+          (currentDate - taskStartDate) / (1000 * 60 * 60 * 24),
+        );
+        const timeUnit = rotationSettings.unit || "days";
+        const rotationValue = rotationSettings.value || 1;
+
+        let rotationPeriods;
+        if (timeUnit === "weeks") {
+          rotationPeriods = Math.floor(daysSinceStart / (rotationValue * 7));
+        } else {
+          rotationPeriods = Math.floor(daysSinceStart / rotationValue);
+        }
+
+        return task.users[rotationPeriods % task.users.length];
+
+      default:
+        // Fallback to simple rotation
+        return task.users[(globalOccurrence - 1) % task.users.length];
+    }
+  }
+
+  // Fallback to current turn index system for fair rotation or legacy tasks
+  const currentIndex = task.currentTurnIndex || 0;
+  return task.users[currentIndex % task.users.length];
+}
+
+/**
+ * Calculate global occurrence number for continuous rotation
+ * @param {Object} task - The task object
+ * @param {string} selectedDate - The date in YYYY-MM-DD format
+ * @param {number} occurrenceIndex - The occurrence index for this date (0-based)
+ * @returns {number} - Global occurrence number
+ */
+function calculateGlobalOccurrenceNumber(
+  task,
+  selectedDate,
+  occurrenceIndex = 0,
+) {
+  const repeat = task.repeat || "Daily";
+  const requiredTimes =
+    repeat === "Monthly"
+      ? Number.isInteger(task.timesPerMonth)
+        ? task.timesPerMonth
+        : 1
+      : repeat === "Weekly"
+        ? Number.isInteger(task.timesPerWeek)
+          ? task.timesPerWeek
+          : 1
+        : repeat === "Daily"
+          ? Number.isInteger(task.timesPerDay)
+            ? task.timesPerDay
+            : 1
+          : 1;
+
+  const range = task.date.split(" to ");
+  const taskStartDate = new Date(range[0]);
+  const selected = new Date(selectedDate);
+
+  let totalOccurrences = 0;
+
+  // Count all occurrences from task start to day before selected date
+  for (
+    let currentDate = new Date(taskStartDate);
+    currentDate < selected;
+    currentDate.setDate(currentDate.getDate() + 1)
+  ) {
+    if (repeat === "Daily") {
+      totalOccurrences += requiredTimes;
+    } else if (repeat === "Weekly") {
+      // For weekly tasks, add occurrences if it's the right day of week
+      totalOccurrences += requiredTimes;
+    } else if (repeat === "Monthly") {
+      // For monthly tasks, add occurrences if it's the right day of month
+      totalOccurrences += requiredTimes;
+    }
+  }
+
+  // Add current occurrence index (0-based, so add 1)
+  totalOccurrences += occurrenceIndex + 1;
+
+  return totalOccurrences;
 }
 
 /**

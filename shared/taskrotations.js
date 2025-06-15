@@ -940,9 +940,23 @@ function mixedTurnData(task, selectedDate) {
         selectedDate,
         i,
       );
-      const userIndex = (globalOccurrenceNumber - 1) % assignedUsers.length;
-      const user = assignedUsers[userIndex];
-      const originalUser = userOrder[userIndex];
+
+      let user, originalUser;
+
+      // Use schedule-based assignment for simple rotation with rotation settings
+      if (
+        !task.fairRotation &&
+        task.settings?.includes("Rotation") &&
+        task.rotationSettings
+      ) {
+        user = calculateScheduledAssignment(task, selectedDate, i);
+        originalUser = user; // For simple rotation, assigned user is the original user
+      } else {
+        // Use existing logic for fair rotation or legacy tasks
+        const userIndex = (globalOccurrenceNumber - 1) % assignedUsers.length;
+        user = assignedUsers[userIndex];
+        originalUser = userOrder[userIndex];
+      }
 
       let isCompleted = false;
       let isPending = false;
@@ -1242,6 +1256,61 @@ window.saveTaskHistory = saveTaskHistory;
 window.updateLuckyChestProgress = updateLuckyChestProgress;
 
 // TEST FUNCTION FOR FAIR ROTATION
+// Schedule-based rotation assignment function
+function calculateScheduledAssignment(task, selectedDate, occurrenceIndex = 0) {
+  if (!task.users || task.users.length === 0) {
+    return null;
+  }
+
+  const rotationSettings = task.rotationSettings;
+
+  // Calculate global occurrence number for this specific occurrence
+  const globalOccurrence = calculateGlobalOccurrenceNumber(
+    task,
+    selectedDate,
+    occurrenceIndex,
+  );
+
+  switch (rotationSettings.type) {
+    case "completion":
+      // Each occurrence goes to next user
+      return task.users[(globalOccurrence - 1) % task.users.length];
+
+    case "occurrences":
+      // Each user gets X occurrences before rotating
+      const occurrencesPerUser = rotationSettings.value || 1;
+      const userIndex =
+        Math.floor((globalOccurrence - 1) / occurrencesPerUser) %
+        task.users.length;
+      return task.users[userIndex];
+
+    case "time":
+      // Calculate based on time units since task start
+      const range = task.date.split(" to ");
+      const taskStartDate = parseLocalDate(range[0]);
+      const currentDate = parseLocalDate(selectedDate);
+
+      const daysSinceStart = Math.floor(
+        (currentDate - taskStartDate) / (1000 * 60 * 60 * 24),
+      );
+      const timeUnit = rotationSettings.unit || "days";
+      const rotationValue = rotationSettings.value || 1;
+
+      let rotationPeriods;
+      if (timeUnit === "weeks") {
+        rotationPeriods = Math.floor(daysSinceStart / (rotationValue * 7));
+      } else {
+        rotationPeriods = Math.floor(daysSinceStart / rotationValue);
+      }
+
+      return task.users[rotationPeriods % task.users.length];
+
+    default:
+      // Fallback to simple rotation
+      return task.users[(globalOccurrence - 1) % task.users.length];
+  }
+}
+
 function testFairRotation() {
   console.log("🧪 TESTING FAIR ROTATION LOGIC");
   console.log("=".repeat(50));
