@@ -24,6 +24,15 @@ function shouldAdvanceRotation(
       return { shouldAdvance: false, reason: "Not a rotation task" };
     }
 
+    // For fair rotation, always trigger recalculation after any completion
+    if (task.fairRotation) {
+      return {
+        shouldAdvance: true,
+        reason: "Fair rotation - recalculate assignments after completion",
+        isFairRotation: true,
+      };
+    }
+
     // For simple rotation with rotation settings, don't advance turn index
     // The assignment is calculated based on schedule, not turn advancement
     if (
@@ -473,6 +482,26 @@ function calculateGlobalOccurrenceNumber(
 function advanceRotation(task, date, reason) {
   if (!task.users || task.users.length === 0) {
     return { previousUser: null, newUser: null };
+  }
+
+  // For fair rotation, we don't advance a simple turn index
+  // Instead, we mark that recalculation is needed
+  if (task.fairRotation) {
+    // Mark that fair rotation assignments need recalculation
+    if (!task.fairRotationRecalculationNeeded) {
+      task.fairRotationRecalculationNeeded = {};
+    }
+    task.fairRotationRecalculationNeeded[date] = true;
+
+    console.log(
+      `🔄 Fair rotation marked for recalculation on ${date} (${reason})`,
+    );
+
+    return {
+      previousUser: "Fair rotation",
+      newUser: "Recalculation needed",
+      isFairRotation: true,
+    };
   }
 
   const previousIndex = task.currentTurnIndex || 0;

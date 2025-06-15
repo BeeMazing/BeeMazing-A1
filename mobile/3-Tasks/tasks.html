@@ -2005,6 +2005,7 @@
         </div>
 
         <script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
+        <script src="/BeeMazing-A1/shared/predicted-schedule-system.js?t=${Date.now()}"></script>
         <script src="/BeeMazing-A1/shared/avatar-system.js"></script>
 
         <script>
@@ -3779,6 +3780,26 @@
                             continue; // Skip instead of delete
                         }
                         // Don't validate date field - As Needed tasks have empty dates
+                    }
+
+                    // Initialize predicted schedules for fair rotation tasks
+                    if (
+                        window.PredictedScheduleSystem &&
+                        typeof window.PredictedScheduleSystem
+                            .initializePredictedSchedules === "function"
+                    ) {
+                        console.log(
+                            `🔮 Initializing predicted schedules for ${tasks.length} tasks`,
+                        );
+                        window.PredictedScheduleSystem.initializePredictedSchedules(
+                            tasks,
+                            selectedDate,
+                        );
+                    } else if (
+                        typeof initializeFairRotationSchedules === "function"
+                    ) {
+                        // Fallback to direct function call
+                        initializeFairRotationSchedules(tasks, selectedDate);
                     }
 
                     const taskList = document.getElementById("taskList");
@@ -5761,6 +5782,45 @@
                         const result = await response.json();
                         console.log("✅ Task completed successfully:", result);
 
+                        // Trigger predicted schedule recalculation for fair rotation tasks
+                        if (
+                            task.fairRotation &&
+                            window.PredictedScheduleSystem &&
+                            typeof window.PredictedScheduleSystem
+                                .triggerScheduleRecalculation === "function"
+                        ) {
+                            console.log(
+                                `🔄 Triggering schedule recalculation for fair rotation task: ${task.title}`,
+                            );
+                            window.PredictedScheduleSystem.triggerScheduleRecalculation(
+                                task,
+                                selectedDate,
+                                `task completed by ${userName}`,
+                            );
+                        } else if (
+                            task.fairRotation &&
+                            typeof shouldRecalculateSchedule === "function" &&
+                            shouldRecalculateSchedule(
+                                task,
+                                selectedDate,
+                                userName,
+                            )
+                        ) {
+                            // Fallback recalculation
+                            console.log(
+                                `🔄 Fallback schedule recalculation for: ${task.title}`,
+                            );
+                            if (
+                                typeof recalculateFairRotationSchedule ===
+                                "function"
+                            ) {
+                                recalculateFairRotationSchedule(
+                                    task,
+                                    selectedDate,
+                                );
+                            }
+                        }
+
                         modal.remove();
 
                         if (typeof loadTasksForDate === "function") {
@@ -6843,6 +6903,38 @@
                         throw new Error(
                             result.error || "Failed to complete task",
                         );
+
+                    // Trigger predicted schedule recalculation for fair rotation tasks
+                    if (
+                        task.fairRotation &&
+                        window.PredictedScheduleSystem &&
+                        typeof window.PredictedScheduleSystem
+                            .triggerScheduleRecalculation === "function"
+                    ) {
+                        console.log(
+                            `🔄 Triggering schedule recalculation for fair rotation task: ${task.title}`,
+                        );
+                        window.PredictedScheduleSystem.triggerScheduleRecalculation(
+                            task,
+                            todayStr,
+                            `task completed by ${userName}`,
+                        );
+                    } else if (
+                        task.fairRotation &&
+                        typeof shouldRecalculateSchedule === "function" &&
+                        shouldRecalculateSchedule(task, todayStr, userName)
+                    ) {
+                        // Fallback recalculation
+                        console.log(
+                            `🔄 Fallback schedule recalculation for: ${task.title}`,
+                        );
+                        if (
+                            typeof recalculateFairRotationSchedule ===
+                            "function"
+                        ) {
+                            recalculateFairRotationSchedule(task, todayStr);
+                        }
+                    }
 
                     const rewardAmount = result.updatedTask.reward || 0;
                     const parentApprovalRequired =

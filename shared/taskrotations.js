@@ -589,223 +589,322 @@ function fairRotationTurnData(task, selectedDate) {
           : 1;
     } else if (repeat === "Daily") {
       requiredTimes =
-        Number.isInteger(task.timesPerDay) && task.timesPerDay > 0
-          ? task.timesPerDay
+        Number.isInteger(task.originalTimesPerDay || task.timesPerDay) &&
+        (task.originalTimesPerDay || task.timesPerDay) > 0
+          ? task.originalTimesPerDay || task.timesPerDay
           : 1;
     } else {
       requiredTimes = 1;
     }
 
-    // Get all completions for this task to calculate lifetime completion counts per user
-    const allUserCompletions = {};
-    const assignedUsers = [...task.users];
+    // Check if we have a pre-calculated fair rotation schedule
+    if (task.fairRotationSchedule && task.fairRotationSchedule[selectedDate]) {
+      const schedule = task.fairRotationSchedule[selectedDate];
 
-    // Initialize completion counts
-    assignedUsers.forEach((user) => {
-      allUserCompletions[user] = 0;
-    });
+      // Get actual completions for current date
+      const selected = parseLocalDate(selectedDate);
+      const selectedYear = selected.getFullYear();
+      const selectedMonth = selected.getMonth();
 
-    // Count all historical completions for each user
-    if (task.completions) {
-      Object.values(task.completions).forEach((dayCompletions) => {
-        if (Array.isArray(dayCompletions)) {
-          dayCompletions.forEach((completion) => {
-            if (assignedUsers.includes(completion.user)) {
-              allUserCompletions[completion.user]++;
-            }
-          });
-        }
-      });
-    }
+      let completions = [];
+      let pendingCompletions = [];
 
-    // Count pending completions
-    if (task.pendingCompletions) {
-      Object.values(task.pendingCompletions).forEach((dayPending) => {
-        if (Array.isArray(dayPending)) {
-          dayPending.forEach((pending) => {
-            if (assignedUsers.includes(pending.user)) {
-              allUserCompletions[pending.user]++;
-            }
-          });
-        }
-      });
-    }
-
-    // Debug logging for fair rotation
-    console.log(
-      `Fair Rotation Debug for task "${task.title}" on ${selectedDate}:`,
-    );
-    console.log("Lifetime completion counts:", allUserCompletions);
-
-    // Get completions for current date
-    const selected = parseLocalDate(selectedDate);
-    const selectedYear = selected.getFullYear();
-    const selectedMonth = selected.getMonth();
-
-    let completions = [];
-    let pendingCompletions = [];
-
-    if (repeat === "Monthly") {
-      const gather = (source) => {
-        const list = [];
-        for (const dateStr in source || {}) {
-          const d = parseLocalDate(dateStr);
-          if (
-            d.getFullYear() === selectedYear &&
-            d.getMonth() === selectedMonth
-          ) {
-            list.push(
-              ...(Array.isArray(source[dateStr]) ? source[dateStr] : []),
-            );
-          }
-        }
-        return list;
-      };
-      completions = gather(task.completions);
-      pendingCompletions = gather(task.pendingCompletions);
-    } else {
-      completions = Array.isArray(task.completions?.[selectedDate])
-        ? task.completions[selectedDate]
-        : [];
-      pendingCompletions = Array.isArray(
-        task.pendingCompletions?.[selectedDate],
-      )
-        ? task.pendingCompletions[selectedDate]
-        : [];
-    }
-
-    const userCompletionCounts = {};
-    const userPendingCounts = {};
-
-    // Handle merged completion data that includes isPending flag
-    completions.forEach((c) => {
-      if (c.isPending === true) {
-        userPendingCounts[c.user] = (userPendingCounts[c.user] || 0) + 1;
-      } else {
-        userCompletionCounts[c.user] = (userCompletionCounts[c.user] || 0) + 1;
-      }
-    });
-
-    // Legacy pending completions (if any still exist separately)
-    pendingCompletions.forEach((p) => {
-      userPendingCounts[p.user] = (userPendingCounts[p.user] || 0) + 1;
-    });
-
-    const turns = [];
-
-    for (let i = 0; i < requiredTimes; i++) {
-      // Find user with minimum completion count
-      let nextUser = null;
-      let minCompletions = Infinity;
-      let candidatesWithMinCount = [];
-
-      assignedUsers.forEach((user) => {
-        const totalCompletions = allUserCompletions[user];
-        if (totalCompletions < minCompletions) {
-          minCompletions = totalCompletions;
-          candidatesWithMinCount = [user];
-        } else if (totalCompletions === minCompletions) {
-          candidatesWithMinCount.push(user);
-        }
-      });
-
-      // If multiple users have same min count, use tiebreaker logic
-      if (candidatesWithMinCount.length > 1) {
-        if (task.fairRotationTimeBased) {
-          // Use time-based tie breaking - find who completed the task longest ago
-          let oldestCompletionUser = null;
-          let oldestCompletionDate = null;
-
-          candidatesWithMinCount.forEach((user) => {
-            let lastCompletionDate = null;
-
-            // Find the most recent completion for this user
-            if (task.completions) {
-              Object.keys(task.completions).forEach((dateStr) => {
-                const dayCompletions = task.completions[dateStr];
-                if (Array.isArray(dayCompletions)) {
-                  dayCompletions.forEach((completion) => {
-                    if (completion.user === user) {
-                      const completionDate = parseLocalDate(dateStr);
-                      if (
-                        !lastCompletionDate ||
-                        completionDate > lastCompletionDate
-                      ) {
-                        lastCompletionDate = completionDate;
-                      }
-                    }
-                  });
-                }
-              });
-            }
-
-            // If user never completed, or completed longer ago than current oldest
+      if (repeat === "Monthly") {
+        const gather = (source) => {
+          const list = [];
+          for (const dateStr in source || {}) {
+            const d = parseLocalDate(dateStr);
             if (
-              !lastCompletionDate ||
-              !oldestCompletionDate ||
-              lastCompletionDate < oldestCompletionDate
+              d.getFullYear() === selectedYear &&
+              d.getMonth() === selectedMonth
             ) {
-              oldestCompletionDate = lastCompletionDate;
-              oldestCompletionUser = user;
-            }
-          });
-
-          nextUser = oldestCompletionUser || candidatesWithMinCount[0];
-        } else {
-          // Use rotation order as tiebreaker
-          for (let j = 0; j < assignedUsers.length; j++) {
-            if (candidatesWithMinCount.includes(assignedUsers[j])) {
-              nextUser = assignedUsers[j];
-              break;
+              list.push(
+                ...(Array.isArray(source[dateStr]) ? source[dateStr] : []),
+              );
             }
           }
-        }
+          return list;
+        };
+        completions = gather(task.completions);
+        pendingCompletions = gather(task.pendingCompletions);
       } else {
-        nextUser = candidatesWithMinCount[0];
+        completions = Array.isArray(task.completions?.[selectedDate])
+          ? task.completions[selectedDate]
+          : [];
+        pendingCompletions = Array.isArray(
+          task.pendingCompletions?.[selectedDate],
+        )
+          ? task.pendingCompletions[selectedDate]
+          : [];
       }
 
-      // Check if this user has already completed/is pending for this turn
-      let isCompleted = false;
-      let isPending = false;
+      // Mark which turns are completed/pending
+      const userCompletionCounts = {};
+      const userPendingCounts = {};
 
-      if (userCompletionCounts[nextUser]) {
-        isCompleted = true;
-        userCompletionCounts[nextUser]--;
-      } else if (userPendingCounts[nextUser]) {
-        isPending = true;
-        userPendingCounts[nextUser]--;
-      }
-
-      turns.push({
-        user: nextUser,
-        repetition: i + 1,
-        isCompleted,
-        isPending,
-        originalUser: nextUser,
-        index: i,
+      task.users.forEach((user) => {
+        userCompletionCounts[user] = 0;
+        userPendingCounts[user] = 0;
       });
 
-      // Increment the user's completion count for fair distribution in subsequent turns
-      allUserCompletions[nextUser]++;
+      completions.forEach((c) => {
+        if (task.users.includes(c.user)) {
+          userCompletionCounts[c.user]++;
+        }
+      });
+
+      pendingCompletions.forEach((p) => {
+        if (task.users.includes(p.user)) {
+          userPendingCounts[p.user]++;
+        }
+      });
+
+      // Apply completion status to scheduled turns
+      const turns = schedule.map((scheduledTurn, i) => {
+        let isCompleted = false;
+        let isPending = false;
+
+        if (userCompletionCounts[scheduledTurn.user]) {
+          isCompleted = true;
+          userCompletionCounts[scheduledTurn.user]--;
+        } else if (userPendingCounts[scheduledTurn.user]) {
+          isPending = true;
+          userPendingCounts[scheduledTurn.user]--;
+        }
+
+        return {
+          ...scheduledTurn,
+          isCompleted,
+          isPending,
+          repetition: i + 1,
+          index: i,
+        };
+      });
+
+      const completedCount = completions.length + pendingCompletions.length;
+      return { turns, completedCount, requiredTimes };
     }
 
-    const completedCount = completions.length + pendingCompletions.length;
-
-    return { turns, completedCount, requiredTimes };
+    // If no pre-calculated schedule, fall back to live calculation
+    return calculateFairRotationLive(task, selectedDate, requiredTimes);
   } catch (err) {
     console.error("Error in fairRotationTurnData:", err);
     return { turns: [], completedCount: 0, requiredTimes: 1 };
   }
 }
 
+function calculateFairRotationLive(task, selectedDate, requiredTimes) {
+  // Get all completions for this task to calculate lifetime completion counts per user
+  const allUserCompletions = {};
+  const assignedUsers = [...task.users];
+
+  // Initialize completion counts
+  assignedUsers.forEach((user) => {
+    allUserCompletions[user] = 0;
+  });
+
+  // Count all historical completions for each user
+  if (task.completions) {
+    Object.values(task.completions).forEach((dayCompletions) => {
+      if (Array.isArray(dayCompletions)) {
+        dayCompletions.forEach((completion) => {
+          if (assignedUsers.includes(completion.user)) {
+            allUserCompletions[completion.user]++;
+          }
+        });
+      }
+    });
+  }
+
+  // Count pending completions
+  if (task.pendingCompletions) {
+    Object.values(task.pendingCompletions).forEach((dayPending) => {
+      if (Array.isArray(dayPending)) {
+        dayPending.forEach((pending) => {
+          if (assignedUsers.includes(pending.user)) {
+            allUserCompletions[pending.user]++;
+          }
+        });
+      }
+    });
+  }
+
+  // Get completions for current date
+  const repeat = task.repeat || "Daily";
+  const selected = parseLocalDate(selectedDate);
+  const selectedYear = selected.getFullYear();
+  const selectedMonth = selected.getMonth();
+
+  let completions = [];
+  let pendingCompletions = [];
+
+  if (repeat === "Monthly") {
+    const gather = (source) => {
+      const list = [];
+      for (const dateStr in source || {}) {
+        const d = parseLocalDate(dateStr);
+        if (
+          d.getFullYear() === selectedYear &&
+          d.getMonth() === selectedMonth
+        ) {
+          list.push(...(Array.isArray(source[dateStr]) ? source[dateStr] : []));
+        }
+      }
+      return list;
+    };
+    completions = gather(task.completions);
+    pendingCompletions = gather(task.pendingCompletions);
+  } else {
+    completions = Array.isArray(task.completions?.[selectedDate])
+      ? task.completions[selectedDate]
+      : [];
+    pendingCompletions = Array.isArray(task.pendingCompletions?.[selectedDate])
+      ? task.pendingCompletions[selectedDate]
+      : [];
+  }
+
+  // Count completions by user for this date
+  const userCompletionCounts = {};
+  const userPendingCounts = {};
+
+  assignedUsers.forEach((user) => {
+    userCompletionCounts[user] = 0;
+    userPendingCounts[user] = 0;
+  });
+
+  completions.forEach((c) => {
+    if (assignedUsers.includes(c.user)) {
+      userCompletionCounts[c.user]++;
+    }
+  });
+
+  pendingCompletions.forEach((p) => {
+    if (assignedUsers.includes(p.user)) {
+      userPendingCounts[p.user]++;
+    }
+  });
+
+  const turns = [];
+
+  // For each required occurrence, determine who should do it
+  for (let i = 0; i < requiredTimes; i++) {
+    let nextUser = null;
+
+    // Standard fair rotation - always assign to user with least completions
+    let minCompletions = Infinity;
+    let candidatesWithMinCount = [];
+
+    assignedUsers.forEach((user) => {
+      const totalCompletions = allUserCompletions[user];
+      if (totalCompletions < minCompletions) {
+        minCompletions = totalCompletions;
+        candidatesWithMinCount = [user];
+      } else if (totalCompletions === minCompletions) {
+        candidatesWithMinCount.push(user);
+      }
+    });
+
+    // If multiple users have same min count, use tiebreaker logic
+    if (candidatesWithMinCount.length > 1) {
+      if (task.fairRotationTimeBased) {
+        // Use time-based tie breaking - find who completed the task longest ago
+        let oldestCompletionUser = null;
+        let oldestCompletionDate = null;
+
+        candidatesWithMinCount.forEach((user) => {
+          let lastCompletionDate = null;
+
+          // Find the most recent completion for this user
+          if (task.completions) {
+            Object.keys(task.completions).forEach((dateStr) => {
+              const dayCompletions = task.completions[dateStr];
+              if (Array.isArray(dayCompletions)) {
+                dayCompletions.forEach((completion) => {
+                  if (completion.user === user) {
+                    const completionDate = parseLocalDate(dateStr);
+                    if (
+                      !lastCompletionDate ||
+                      completionDate > lastCompletionDate
+                    ) {
+                      lastCompletionDate = completionDate;
+                    }
+                  }
+                });
+              }
+            });
+          }
+
+          // If user never completed, or completed longer ago than current oldest
+          if (
+            !lastCompletionDate ||
+            !oldestCompletionDate ||
+            lastCompletionDate < oldestCompletionDate
+          ) {
+            oldestCompletionDate = lastCompletionDate;
+            oldestCompletionUser = user;
+          }
+        });
+
+        nextUser = oldestCompletionUser || candidatesWithMinCount[0];
+      } else {
+        // Use rotation order as tiebreaker
+        for (let j = 0; j < assignedUsers.length; j++) {
+          if (candidatesWithMinCount.includes(assignedUsers[j])) {
+            nextUser = assignedUsers[j];
+            break;
+          }
+        }
+      }
+    } else {
+      nextUser = candidatesWithMinCount[0];
+    }
+
+    // Check if this user has already completed/is pending for this turn
+    let isCompleted = false;
+    let isPending = false;
+
+    if (userCompletionCounts[nextUser]) {
+      isCompleted = true;
+      userCompletionCounts[nextUser]--;
+    } else if (userPendingCounts[nextUser]) {
+      isPending = true;
+      userPendingCounts[nextUser]--;
+    }
+
+    turns.push({
+      user: nextUser,
+      repetition: i + 1,
+      isCompleted,
+      isPending,
+      originalUser: nextUser,
+      index: i,
+      globalOccurrence: calculateGlobalOccurrenceNumber(task, selectedDate, i),
+    });
+
+    // Increment the user's completion count for fair distribution in subsequent turns
+    allUserCompletions[nextUser]++;
+  }
+
+  const completedCount = completions.length + pendingCompletions.length;
+  return { turns, completedCount, requiredTimes };
+}
+
 function mixedTurnData(task, selectedDate) {
   try {
-    // Check if fair rotation is enabled
+    // Check if fair rotation is enabled - use predicted schedule system
     if (
       task.fairRotation &&
       task.settings &&
       task.settings.includes("Rotation")
     ) {
+      // Use predicted schedule system if available
+      if (typeof window !== "undefined" && window.PredictedScheduleSystem) {
+        return window.PredictedScheduleSystem.mixedTurnDataWithPrediction(
+          task,
+          selectedDate,
+        );
+      }
+      // Fallback to existing logic
       return fairRotationTurnData(task, selectedDate);
     }
 
@@ -1321,6 +1420,192 @@ function calculateScheduledAssignment(task, selectedDate, occurrenceIndex = 0) {
       // Fallback to simple rotation
       return task.users[(globalOccurrence - 1) % task.users.length];
   }
+}
+
+// Function to pre-calculate fair rotation schedule for future dates
+function calculateFairRotationSchedule(task, startDate, days = 30) {
+  if (!task.fairRotation || !task.users || task.users.length === 0) {
+    return {};
+  }
+
+  const schedule = {};
+
+  // Get current completion counts
+  const allUserCompletions = {};
+  task.users.forEach((user) => {
+    allUserCompletions[user] = 0;
+  });
+
+  // Count historical completions
+  if (task.completions) {
+    Object.values(task.completions).forEach((dayCompletions) => {
+      if (Array.isArray(dayCompletions)) {
+        dayCompletions.forEach((completion) => {
+          if (task.users.includes(completion.user)) {
+            allUserCompletions[completion.user]++;
+          }
+        });
+      }
+    });
+  }
+
+  if (task.pendingCompletions) {
+    Object.values(task.pendingCompletions).forEach((dayPending) => {
+      if (Array.isArray(dayPending)) {
+        dayPending.forEach((pending) => {
+          if (task.users.includes(pending.user)) {
+            allUserCompletions[pending.user]++;
+          }
+        });
+      }
+    });
+  }
+
+  const repeat = task.repeat || "Daily";
+  const requiredTimes =
+    repeat === "Daily" ? task.originalTimesPerDay || task.timesPerDay || 1 : 1;
+
+  // Calculate schedule for each day
+  const start = parseLocalDate(startDate);
+  for (let dayOffset = 0; dayOffset < days; dayOffset++) {
+    const currentDate = new Date(start);
+    currentDate.setDate(currentDate.getDate() + dayOffset);
+    const dateStr = currentDate.toISOString().split("T")[0];
+
+    const daySchedule = [];
+
+    for (let i = 0; i < requiredTimes; i++) {
+      // Find user with minimum completions
+      let minCompletions = Infinity;
+      let candidatesWithMinCount = [];
+
+      task.users.forEach((user) => {
+        const totalCompletions = allUserCompletions[user];
+        if (totalCompletions < minCompletions) {
+          minCompletions = totalCompletions;
+          candidatesWithMinCount = [user];
+        } else if (totalCompletions === minCompletions) {
+          candidatesWithMinCount.push(user);
+        }
+      });
+
+      // Apply tiebreaker
+      let nextUser;
+      if (candidatesWithMinCount.length > 1) {
+        if (task.fairRotationTimeBased) {
+          // Time-based tiebreaker logic would go here
+          nextUser = candidatesWithMinCount[0];
+        } else {
+          // Use rotation order as tiebreaker
+          for (let j = 0; j < task.users.length; j++) {
+            if (candidatesWithMinCount.includes(task.users[j])) {
+              nextUser = task.users[j];
+              break;
+            }
+          }
+        }
+      } else {
+        nextUser = candidatesWithMinCount[0];
+      }
+
+      daySchedule.push({
+        user: nextUser,
+        originalUser: nextUser,
+        globalOccurrence: calculateGlobalOccurrenceNumber(task, dateStr, i),
+      });
+
+      // Increment completion count for next occurrence calculation
+      allUserCompletions[nextUser]++;
+    }
+
+    schedule[dateStr] = daySchedule;
+  }
+
+  return schedule;
+}
+
+// Function to recalculate fair rotation schedule after a completion
+function recalculateFairRotationSchedule(task, fromDate) {
+  if (!task.fairRotation) {
+    return;
+  }
+
+  console.log(`🔄 Recalculating fair rotation schedule from ${fromDate}`);
+
+  // Use predicted schedule system if available
+  if (typeof window !== "undefined" && window.PredictedScheduleSystem) {
+    window.PredictedScheduleSystem.triggerScheduleRecalculation(
+      task,
+      fromDate,
+      "manual recalculation",
+    );
+    return;
+  }
+
+  // Fallback to existing logic
+  // Calculate new schedule starting from the completion date
+  const newSchedule = calculateFairRotationSchedule(task, fromDate, 30);
+
+  // Update task's fair rotation schedule
+  if (!task.fairRotationSchedule) {
+    task.fairRotationSchedule = {};
+  }
+
+  // Merge new schedule with existing
+  Object.assign(task.fairRotationSchedule, newSchedule);
+
+  console.log(
+    `📅 Updated fair rotation schedule for ${Object.keys(newSchedule).length} days`,
+  );
+}
+
+/**
+ * Initialize predicted schedules for fair rotation tasks
+ * Should be called when tasks are loaded
+ */
+function initializeFairRotationSchedules(tasks, fromDate = null) {
+  if (!fromDate) {
+    fromDate = new Date().toISOString().split("T")[0];
+  }
+
+  console.log(`🚀 Initializing fair rotation schedules from ${fromDate}`);
+
+  if (typeof window !== "undefined" && window.PredictedScheduleSystem) {
+    window.PredictedScheduleSystem.initializePredictedSchedules(
+      tasks,
+      fromDate,
+    );
+  } else {
+    // Fallback initialization
+    tasks.forEach((task) => {
+      if (task.fairRotation && task.settings?.includes("Rotation")) {
+        if (!task.fairRotationSchedule) {
+          const schedule = calculateFairRotationSchedule(task, fromDate, 30);
+          task.fairRotationSchedule = schedule;
+        }
+      }
+    });
+  }
+}
+
+/**
+ * Check if a task completion should trigger schedule recalculation
+ */
+function shouldRecalculateSchedule(task, date, completingUser) {
+  if (!task.fairRotation) {
+    return false;
+  }
+
+  if (typeof window !== "undefined" && window.PredictedScheduleSystem) {
+    return window.PredictedScheduleSystem.needsScheduleRecalculation(
+      task,
+      date,
+      completingUser,
+    );
+  }
+
+  // Fallback: fair rotation always needs recalculation
+  return true;
 }
 
 function testFairRotation() {
