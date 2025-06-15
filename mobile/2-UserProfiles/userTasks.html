@@ -863,6 +863,8 @@
         </style>
     </head>
     <body>
+        <!-- Fair Rotation Dynamic System -->
+        <script src="../../fair-rotation-dynamic-system.js"></script>
         <div class="date-header">
             <div class="month-nav">
                 <button id="prevMonth">&lt;</button>
@@ -1157,6 +1159,32 @@
             function isUserCurrentlyAssigned(task, selectedDate, userName) {
                 // Check original assignments
                 const isOriginallyAssigned = task.users.includes(userName);
+
+                // For rotation tasks with occurrences, check specific assignment
+                if (
+                    task.settings &&
+                    task.settings.includes("Rotation") &&
+                    typeof task.currentTurnIndex !== "undefined"
+                ) {
+                    // This is a rotation task occurrence - check who is currently assigned
+                    const currentAssigneeIndex = task.currentTurnIndex;
+                    const currentAssignee = getCurrentAssignee(
+                        task,
+                        selectedDate,
+                        currentAssigneeIndex,
+                    );
+
+                    console.log(`🎯 Checking rotation occurrence assignment:`, {
+                        taskTitle: task.title,
+                        occurrence: task.occurrence || "N/A",
+                        currentTurnIndex: task.currentTurnIndex,
+                        currentAssignee: currentAssignee,
+                        userName: userName,
+                        isAssigned: currentAssignee === userName,
+                    });
+
+                    return currentAssignee === userName;
+                }
 
                 // Check temporary replacements
                 let isReplacementAssigned = false;
@@ -5471,6 +5499,18 @@
 
                     console.log("✅ finishTask: Task submitted", data);
                     popup.textContent = `Task Submitted by ${currentUser}! Waiting for Parent Review`;
+
+                    // 🔄 FAIR ROTATION: Trigger recalculation after task completion
+                    if (window.onFairRotationTaskCompleted) {
+                        console.log(
+                            "🔄 Triggering fair rotation recalculation...",
+                        );
+                        await window.onFairRotationTaskCompleted(
+                            task.title,
+                            currentUser,
+                            today,
+                        );
+                    }
 
                     // Update the specific task's turn display immediately
                     const taskItems = document.querySelectorAll(".task-item");

@@ -4250,6 +4250,136 @@ app.delete("/api/notifications", async (req, res) => {
 
 // Endpoint helpCenter.html //
 
+// Fair Rotation Dynamic System API Endpoints
+
+// GET /api/task-completions - Get completion history for a task
+app.get("/api/task-completions", async (req, res) => {
+  const { adminEmail, taskTitle, date } = req.query;
+
+  try {
+    if (!adminEmail || !taskTitle || !date) {
+      return res.status(400).json({ error: "Missing required parameters" });
+    }
+
+    const db = await connectDB();
+    const admins = db.collection("admins");
+    const admin = await admins.findOne({ email: adminEmail });
+
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    // Extract completion history for the specific task and date
+    const completions = [];
+    const normalizedDate = new Date(date).toLocaleDateString("sv-SE");
+
+    // Check all tasks for completions
+    if (admin.tasks) {
+      admin.tasks.forEach((task) => {
+        if (
+          task.title === taskTitle ||
+          (task.originalTitle &&
+            task.originalTitle === taskTitle.split(" - ")[0])
+        ) {
+          if (task.completedDates && task.completedDates[normalizedDate]) {
+            task.completedDates[normalizedDate].forEach((completion) => {
+              completions.push({
+                occurrence: task.occurrence || 1,
+                completedBy: completion.completedBy || completion.user,
+                completedAt: completion.completedAt || completion.timestamp,
+                taskTitle: task.title,
+              });
+            });
+          }
+        }
+      });
+    }
+
+    res.json({ success: true, completions });
+  } catch (err) {
+    console.error("Error fetching task completions:", err);
+    res.status(500).json({ error: "Failed to fetch task completions" });
+  }
+});
+
+// POST /api/update-task-assignments - Update task assignments for fair rotation
+app.post("/api/update-task-assignments", async (req, res) => {
+  const { adminEmail, taskTitle, assignments, date, fairRotation } = req.body;
+
+  try {
+    if (!adminEmail || !taskTitle || !assignments || !date) {
+      return res.status(400).json({ error: "Missing required parameters" });
+    }
+
+    const db = await connectDB();
+    const admins = db.collection("admins");
+    const admin = await admins.findOne({ email: adminEmail });
+
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const normalizedDate = new Date(date).toLocaleDateString("sv-SE");
+    let updatedCount = 0;
+
+    console.log("🔄 Updating task assignments for fair rotation", {
+      taskTitle,
+      assignments: assignments.length,
+      date: normalizedDate,
+    });
+
+    // Update assignments for each occurrence
+    if (admin.tasks) {
+      admin.tasks.forEach((task) => {
+        // Find matching tasks (occurrences)
+        const isMatchingTask =
+          task.title === taskTitle ||
+          (task.originalTitle &&
+            task.originalTitle === taskTitle.split(" - ")[0]) ||
+          (task.title.startsWith(taskTitle.split(" - ")[0]) && task.occurrence);
+
+        if (isMatchingTask && task.date === normalizedDate) {
+          // Find the assignment for this occurrence
+          const assignment = assignments.find(
+            (a) => a.occurrence === task.occurrence || a.title === task.title,
+          );
+
+          if (assignment) {
+            // Update the currentTurnIndex to reflect new assignment
+            task.currentTurnIndex = assignment.assignedUserIndex;
+            updatedCount++;
+
+            console.log(`✅ Updated assignment for ${task.title}:`, {
+              occurrence: task.occurrence,
+              newAssignee: assignment.assignedUser,
+              newIndex: assignment.assignedUserIndex,
+            });
+          }
+        }
+      });
+    }
+
+    // Save the updated admin data
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { tasks: admin.tasks } },
+    );
+
+    console.log(
+      `✅ Fair rotation update complete: ${updatedCount} tasks updated`,
+    );
+
+    res.json({
+      success: true,
+      message: `Updated ${updatedCount} task assignments`,
+      updatedCount,
+    });
+  } catch (err) {
+    console.error("Error updating task assignments:", err);
+    res.status(500).json({ error: "Failed to update task assignments" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`✅ Server is running on http://localhost:${port}`);
 });
