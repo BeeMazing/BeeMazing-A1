@@ -6431,6 +6431,28 @@
                                 "🔧 Creating multiple daily occurrences:",
                                 timesPerDay,
                             );
+
+                            // For fair rotation, we need to get the current global occurrence index
+                            // from existing tasks to continue rotation across days
+                            const fairRotationEnabled =
+                                document.getElementById(
+                                    "fairRotationToggle",
+                                ).checked;
+
+                            let globalOccurrenceIndex = 0;
+
+                            if (
+                                fairRotationEnabled &&
+                                settings === "Rotation"
+                            ) {
+                                // Get the next global occurrence index by checking existing tasks
+                                globalOccurrenceIndex =
+                                    await getNextGlobalOccurrenceIndex(
+                                        task.title,
+                                        task.users,
+                                    );
+                            }
+
                             for (
                                 let occurrence = 1;
                                 occurrence <= timesPerDay;
@@ -6453,23 +6475,44 @@
                                     users:
                                         settings === "Rotation"
                                             ? [
-                                                  getRotationUserForOccurrence(
+                                                  getFairRotationUserForOccurrence(
                                                       task.users,
-                                                      occurrence - 1,
+                                                      fairRotationEnabled
+                                                          ? globalOccurrenceIndex
+                                                          : occurrence - 1,
+                                                      fairRotationEnabled,
                                                   ),
                                               ]
                                             : task.users,
                                     currentTurnIndex:
                                         settings === "Rotation"
-                                            ? (occurrence - 1) %
-                                              task.users.length
+                                            ? fairRotationEnabled
+                                                ? globalOccurrenceIndex %
+                                                  task.users.length
+                                                : (occurrence - 1) %
+                                                  task.users.length
                                             : task.currentTurnIndex,
+                                    // Store the global index for tracking fair rotation across days
+                                    globalOccurrenceIndex:
+                                        settings === "Rotation" &&
+                                        fairRotationEnabled
+                                            ? globalOccurrenceIndex
+                                            : undefined,
                                 };
                                 console.log(
                                     `🔧 Created occurrence ${occurrence}:`,
                                     occurenceTask.title,
+                                    fairRotationEnabled
+                                        ? `(Fair rotation - Global index: ${globalOccurrenceIndex}, User: ${occurenceTask.users[0]})`
+                                        : "",
                                 );
                                 tasksToSave.push(occurenceTask);
+                                if (
+                                    fairRotationEnabled &&
+                                    settings === "Rotation"
+                                ) {
+                                    globalOccurrenceIndex++;
+                                }
                             }
                         } else {
                             // Single task (no multiple daily occurrences)
@@ -6507,8 +6550,100 @@
                             }
                         }
 
-                        function getRotationUserForOccurrence(users, index) {
+                        function getFairRotationUserForOccurrence(
+                            users,
+                            index,
+                            fairRotation,
+                        ) {
+                            // Both fair rotation and simple rotation use round-robin
+                            // The difference is in how the index is calculated
                             return users[index % users.length];
+                        }
+
+                        // Function to get the next global occurrence index for fair rotation
+                        async function getNextGlobalOccurrenceIndex(
+                            taskTitle,
+                            users,
+                        ) {
+                            try {
+                                console.log(
+                                    `🔍 Getting next global occurrence index for task: ${taskTitle}`,
+                                );
+
+                                // Fetch all existing tasks with the same original title
+                                const response = await fetch(
+                                    `https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(currentAdmin)}&t=${Date.now()}`,
+                                    { cache: "no-store" },
+                                );
+
+                                if (!response.ok) {
+                                    console.warn(
+                                        "Failed to fetch tasks for global index calculation, starting from 0",
+                                    );
+                                    return 0;
+                                }
+
+                                const data = await response.json();
+                                const allTasks = data.tasks || [];
+
+                                // Find all tasks with the same original title or base title
+                                const relatedTasks = allTasks.filter((task) => {
+                                    const baseTitle =
+                                        task.originalTitle ||
+                                        task.title.replace(
+                                            / - \d+(st|nd|rd|th)$/,
+                                            "",
+                                        );
+                                    const targetBaseTitle = taskTitle;
+                                    return (
+                                        baseTitle === targetBaseTitle &&
+                                        task.fairRotation &&
+                                        Array.isArray(task.users) &&
+                                        JSON.stringify(
+                                            [...task.users].sort(),
+                                        ) === JSON.stringify([...users].sort())
+                                    );
+                                });
+
+                                console.log(
+                                    `📊 Found ${relatedTasks.length} related fair rotation tasks`,
+                                );
+
+                                if (relatedTasks.length === 0) {
+                                    console.log(
+                                        "🆕 No existing tasks found, starting global index at 0",
+                                    );
+                                    return 0;
+                                }
+
+                                // Find the highest global occurrence index
+                                let maxGlobalIndex = -1;
+                                relatedTasks.forEach((task) => {
+                                    if (
+                                        typeof task.globalOccurrenceIndex ===
+                                        "number"
+                                    ) {
+                                        maxGlobalIndex = Math.max(
+                                            maxGlobalIndex,
+                                            task.globalOccurrenceIndex,
+                                        );
+                                    }
+                                });
+
+                                const nextIndex = maxGlobalIndex + 1;
+                                console.log(
+                                    `🔢 Next global occurrence index: ${nextIndex} (previous max: ${maxGlobalIndex})`,
+                                );
+
+                                return nextIndex;
+                            } catch (error) {
+                                console.error(
+                                    "Error calculating global occurrence index:",
+                                    error,
+                                );
+                                console.warn("Falling back to index 0");
+                                return 0;
+                            }
                         }
 
                         console.log(

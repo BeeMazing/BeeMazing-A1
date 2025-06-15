@@ -1461,6 +1461,192 @@ app.delete("/api/tasks/occurrence", async (req, res) => {
   }
 });
 
+// ✅ Delete future occurrences of a task from a specific date forward
+app.delete("/api/tasks/future", async (req, res) => {
+  const { adminEmail, title, fromDate, originalStartDate } = req.query;
+
+  if (!adminEmail || !title || !fromDate || !originalStartDate) {
+    return res.status(400).json({
+      error: "Missing adminEmail, title, fromDate, or originalStartDate",
+    });
+  }
+
+  try {
+    console.log(
+      `Deleting future occurrences: adminEmail=${adminEmail}, title=${title}, fromDate=${fromDate}, originalStartDate=${originalStartDate}`,
+    );
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const tasks = admin.tasks || [];
+    const taskIndex = tasks.findIndex((task) => {
+      const taskStartDate = task.date.split(" to ")[0];
+      return task.title === title && taskStartDate === originalStartDate;
+    });
+
+    if (taskIndex === -1) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    const task = tasks[taskIndex];
+    const [startDate, endDate] = task.date.split(" to ");
+
+    // If fromDate is after or equal to start date, we need to handle this
+    if (fromDate <= startDate) {
+      // Delete entire task since fromDate is before or at start
+      tasks.splice(taskIndex, 1);
+    } else {
+      // Update end date to day before fromDate
+      const newEndDate = new Date(fromDate);
+      newEndDate.setDate(newEndDate.getDate() - 1);
+      const newEndDateStr = newEndDate.toISOString().split("T")[0];
+
+      tasks[taskIndex].date = `${startDate} to ${newEndDateStr}`;
+
+      // Initialize exceptions if they don't exist
+      if (!tasks[taskIndex].exceptions) {
+        tasks[taskIndex].exceptions = {};
+      }
+
+      // Add deletion exceptions for all dates from fromDate forward
+      const currentDate = new Date(fromDate);
+      const originalEndDate =
+        endDate === "3000-01-01" ? new Date("2030-12-31") : new Date(endDate);
+
+      while (currentDate <= originalEndDate) {
+        const dateStr = currentDate.toISOString().split("T")[0];
+        tasks[taskIndex].exceptions[dateStr] = { deleted: true };
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    }
+
+    await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
+
+    console.log(
+      `Future occurrences deleted successfully: title=${title}, fromDate=${fromDate}`,
+    );
+    res.json({
+      success: true,
+      message: "Future occurrences deleted successfully",
+    });
+  } catch (err) {
+    console.error(
+      `Error deleting future occurrences (title=${title}, fromDate=${fromDate}):`,
+      err,
+    );
+    res.status(500).json({
+      error: "Failed to delete future occurrences",
+      details: err.message,
+    });
+  }
+});
+
+// ✅ Delete all future occurrences of an occurrence group from a specific date forward
+app.delete("/api/tasks/occurrences-future", async (req, res) => {
+  const { adminEmail, originalTitle, fromDate } = req.query;
+
+  if (!adminEmail || !originalTitle || !fromDate) {
+    return res.status(400).json({
+      error: "Missing adminEmail, originalTitle, or fromDate",
+    });
+  }
+
+  try {
+    console.log(
+      `Deleting all future occurrences: adminEmail=${adminEmail}, originalTitle=${originalTitle}, fromDate=${fromDate}`,
+    );
+    const db = await connectDB();
+    const admins = db.collection("admins");
+
+    const admin = await admins.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const tasks = admin.tasks || [];
+    let deletedCount = 0;
+    let updatedCount = 0;
+
+    // Find all occurrence tasks that match the original title
+    const occurrenceTasks = tasks.filter(
+      (task) =>
+        task.originalTitle === originalTitle ||
+        (task.title && task.title.startsWith(originalTitle + " - ")),
+    );
+
+    for (let i = tasks.length - 1; i >= 0; i--) {
+      const task = tasks[i];
+      const isOccurrenceTask =
+        task.originalTitle === originalTitle ||
+        (task.title && task.title.startsWith(originalTitle + " - "));
+
+      if (isOccurrenceTask) {
+        const [startDate, endDate] = task.date.split(" to ");
+
+        // If task starts on or after fromDate, delete entire task
+        if (startDate >= fromDate) {
+          tasks.splice(i, 1);
+          deletedCount++;
+        }
+        // If task spans across fromDate, truncate it
+        else if (endDate >= fromDate) {
+          const newEndDate = new Date(fromDate);
+          newEndDate.setDate(newEndDate.getDate() - 1);
+          const newEndDateStr = newEndDate.toISOString().split("T")[0];
+
+          tasks[i].date = `${startDate} to ${newEndDateStr}`;
+
+          // Initialize exceptions if they don't exist
+          if (!tasks[i].exceptions) {
+            tasks[i].exceptions = {};
+          }
+
+          // Add deletion exceptions for all dates from fromDate forward
+          const currentDate = new Date(fromDate);
+          const originalEndDate =
+            endDate === "3000-01-01"
+              ? new Date("2030-12-31")
+              : new Date(endDate);
+
+          while (currentDate <= originalEndDate) {
+            const dateStr = currentDate.toISOString().split("T")[0];
+            tasks[i].exceptions[dateStr] = { deleted: true };
+            currentDate.setDate(currentDate.getDate() + 1);
+          }
+
+          updatedCount++;
+        }
+      }
+    }
+
+    await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
+
+    console.log(
+      `All future occurrences processed: originalTitle=${originalTitle}, fromDate=${fromDate}, deleted=${deletedCount}, updated=${updatedCount}`,
+    );
+    res.json({
+      success: true,
+      message: `Future occurrences processed successfully: ${deletedCount} deleted, ${updatedCount} updated`,
+      deletedCount,
+      updatedCount,
+    });
+  } catch (err) {
+    console.error(
+      `Error deleting future occurrences (originalTitle=${originalTitle}, fromDate=${fromDate}):`,
+      err,
+    );
+    res.status(500).json({
+      error: "Failed to delete future occurrences",
+      details: err.message,
+    });
+  }
+});
+
 // ✅ Edit a single occurrence of a recurring task
 app.put("/api/tasks/occurrence", async (req, res) => {
   const {
