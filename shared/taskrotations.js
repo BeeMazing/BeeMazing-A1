@@ -822,10 +822,12 @@ function mixedTurnData(task, selectedDate) {
     });
 
     let currentTurnIndex;
-    if (typeof task.currentTurnIndex === "number") {
-      currentTurnIndex = task.currentTurnIndex;
-    } else if (typeof mixedTurnOffset === "function") {
+    // For simple rotation (non-fair rotation), prioritize calculated turn index
+    // to ensure rotation continues properly across days
+    if (typeof mixedTurnOffset === "function") {
       currentTurnIndex = mixedTurnOffset(task, selectedDate);
+    } else if (typeof task.currentTurnIndex === "number") {
+      currentTurnIndex = task.currentTurnIndex;
     } else {
       // Simple fallback rotation based on date
       const dateValue = new Date(selectedDate).getTime();
