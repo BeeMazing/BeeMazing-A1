@@ -281,6 +281,8 @@ function calculateGlobalOccurrenceNumber(
 ) {
   // Calculate global occurrence number for continuous rotation
   const repeat = task.repeat || "Daily";
+
+  // For multiple daily occurrence tasks, use originalTimesPerDay if available
   const requiredTimes =
     repeat === "Monthly"
       ? Number.isInteger(task.timesPerMonth)
@@ -291,8 +293,8 @@ function calculateGlobalOccurrenceNumber(
           ? task.timesPerWeek
           : 1
         : repeat === "Daily"
-          ? Number.isInteger(task.timesPerDay)
-            ? task.timesPerDay
+          ? Number.isInteger(task.originalTimesPerDay || task.timesPerDay)
+            ? task.originalTimesPerDay || task.timesPerDay
             : 1
           : 1;
 
@@ -302,7 +304,7 @@ function calculateGlobalOccurrenceNumber(
 
   let totalOccurrences = 0;
 
-  // Count all occurrences from task start to selected date
+  // Count all occurrences from task start up to (but not including) selected date
   for (
     let currentDate = new Date(taskStartDate);
     currentDate < selected;
@@ -319,8 +321,14 @@ function calculateGlobalOccurrenceNumber(
     }
   }
 
-  // Add current occurrence index (0-based)
-  totalOccurrences += occurrenceIndex + 1;
+  // For multiple daily occurrence sub-tasks, calculate the global occurrence
+  if (task.occurrence && task.totalOccurrences) {
+    // This is a sub-task of a multiple daily occurrence task
+    totalOccurrences += task.occurrence;
+  } else {
+    // Regular task or single occurrence
+    totalOccurrences += occurrenceIndex + 1;
+  }
 
   return totalOccurrences;
 }
@@ -1269,6 +1277,10 @@ function calculateScheduledAssignment(task, selectedDate, occurrenceIndex = 0) {
     task,
     selectedDate,
     occurrenceIndex,
+  );
+
+  console.log(
+    `🔄 Schedule calculation: ${task.title}, Date: ${selectedDate}, Global: ${globalOccurrence}, Users: ${task.users.join(",")}`,
   );
 
   switch (rotationSettings.type) {

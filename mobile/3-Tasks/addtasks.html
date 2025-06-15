@@ -6465,25 +6465,15 @@
                                     occurrence: occurrence,
                                     totalOccurrences: timesPerDay,
                                     timesPerDay: 1, // Each occurrence is now a single daily task
+                                    originalTimesPerDay: timesPerDay, // Keep original for rotation context
                                     // Assign specific due time for this occurrence
                                     dueTimes:
                                         task.dueTimes &&
                                         task.dueTimes[occurrence - 1]
                                             ? [task.dueTimes[occurrence - 1]]
                                             : undefined,
-                                    // For rotation tasks, adjust user assignment
-                                    users:
-                                        settings === "Rotation"
-                                            ? [
-                                                  getFairRotationUserForOccurrence(
-                                                      task.users,
-                                                      fairRotationEnabled
-                                                          ? globalOccurrenceIndex
-                                                          : occurrence - 1,
-                                                      fairRotationEnabled,
-                                                  ),
-                                              ]
-                                            : task.users,
+                                    // For rotation tasks, keep all users for schedule-based assignment
+                                    users: task.users,
                                     currentTurnIndex:
                                         settings === "Rotation"
                                             ? fairRotationEnabled
