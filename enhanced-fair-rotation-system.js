@@ -802,23 +802,34 @@ class EnhancedFairRotationSystem {
   }
 }
 
-// Create global instance
-window.enhancedFairRotationSystem = new EnhancedFairRotationSystem();
+// Create global instance (browser and Node.js compatible)
+let globalEnhancedFairRotationSystem = new EnhancedFairRotationSystem();
 
-// Initialize auto-refresh capabilities if in browser environment
+// Browser environment setup
 if (typeof window !== "undefined") {
-  window.enhancedFairRotationSystem.initializeWithAutoRefresh();
+  window.enhancedFairRotationSystem = globalEnhancedFairRotationSystem;
+  globalEnhancedFairRotationSystem.initializeWithAutoRefresh();
+}
+
+// Node.js environment setup
+if (typeof global !== "undefined" && typeof window === "undefined") {
+  global.enhancedFairRotationSystem = globalEnhancedFairRotationSystem;
 }
 
 // Integration functions for task completion workflow
-window.onEnhancedFairRotationTaskCompleted = async function (
+// Integration functions for task completion workflow
+const onEnhancedFairRotationTaskCompleted = async function (
   taskTitle,
   completingUser,
   selectedDate,
   occurrenceNumber,
 ) {
-  if (window.enhancedFairRotationSystem) {
-    return await window.enhancedFairRotationSystem.onTaskCompleted(
+  const rotationSystem =
+    (typeof window !== "undefined" && window.enhancedFairRotationSystem) ||
+    (typeof global !== "undefined" && global.enhancedFairRotationSystem);
+
+  if (rotationSystem) {
+    return await rotationSystem.onTaskCompleted(
       taskTitle,
       completingUser,
       selectedDate,
@@ -831,16 +842,22 @@ window.onEnhancedFairRotationTaskCompleted = async function (
   };
 };
 
+if (typeof window !== "undefined") {
+  window.onEnhancedFairRotationTaskCompleted =
+    onEnhancedFairRotationTaskCompleted;
+}
+
 // Integration functions for parent approval workflow
-window.onEnhancedFairRotationTaskApproved = async function (
+const onEnhancedFairRotationTaskApproved = async function (
   taskTitle,
   pendingId,
 ) {
-  if (window.enhancedFairRotationSystem) {
-    return await window.enhancedFairRotationSystem.onTaskApproved(
-      taskTitle,
-      pendingId,
-    );
+  const rotationSystem =
+    (typeof window !== "undefined" && window.enhancedFairRotationSystem) ||
+    (typeof global !== "undefined" && global.enhancedFairRotationSystem);
+
+  if (rotationSystem) {
+    return await rotationSystem.onTaskApproved(taskTitle, pendingId);
   }
   return {
     success: false,
@@ -848,17 +865,22 @@ window.onEnhancedFairRotationTaskApproved = async function (
   };
 };
 
-window.onEnhancedFairRotationTaskRejected = async function (
+if (typeof window !== "undefined") {
+  window.onEnhancedFairRotationTaskApproved =
+    onEnhancedFairRotationTaskApproved;
+}
+
+const onEnhancedFairRotationTaskRejected = async function (
   taskTitle,
   pendingId,
   reason,
 ) {
-  if (window.enhancedFairRotationSystem) {
-    return await window.enhancedFairRotationSystem.onTaskRejected(
-      taskTitle,
-      pendingId,
-      reason,
-    );
+  const rotationSystem =
+    (typeof window !== "undefined" && window.enhancedFairRotationSystem) ||
+    (typeof global !== "undefined" && global.enhancedFairRotationSystem);
+
+  if (rotationSystem) {
+    return await rotationSystem.onTaskRejected(taskTitle, pendingId, reason);
   }
   return {
     success: false,
@@ -866,15 +888,24 @@ window.onEnhancedFairRotationTaskRejected = async function (
   };
 };
 
+if (typeof window !== "undefined") {
+  window.onEnhancedFairRotationTaskRejected =
+    onEnhancedFairRotationTaskRejected;
+}
+
 // Utility function to check if user is assigned to a task occurrence
-window.isUserAssignedToEnhancedFairRotation = function (
+const isUserAssignedToEnhancedFairRotation = function (
   taskTitle,
   userName,
   selectedDate,
   occurrenceNumber,
 ) {
-  if (window.enhancedFairRotationSystem) {
-    return window.enhancedFairRotationSystem.isUserAssigned(
+  const rotationSystem =
+    (typeof window !== "undefined" && window.enhancedFairRotationSystem) ||
+    (typeof global !== "undefined" && global.enhancedFairRotationSystem);
+
+  if (rotationSystem) {
+    return rotationSystem.isUserAssigned(
       taskTitle,
       userName,
       selectedDate,
@@ -884,13 +915,26 @@ window.isUserAssignedToEnhancedFairRotation = function (
   return false;
 };
 
+if (typeof window !== "undefined") {
+  window.isUserAssignedToEnhancedFairRotation =
+    isUserAssignedToEnhancedFairRotation;
+}
+
 // Utility function to get debug information
-window.getEnhancedFairRotationDebugInfo = function (taskTitle) {
-  if (window.enhancedFairRotationSystem) {
-    return window.enhancedFairRotationSystem.getDebugInfo(taskTitle);
+const getEnhancedFairRotationDebugInfo = function (taskTitle) {
+  const rotationSystem =
+    (typeof window !== "undefined" && window.enhancedFairRotationSystem) ||
+    (typeof global !== "undefined" && global.enhancedFairRotationSystem);
+
+  if (rotationSystem) {
+    return rotationSystem.getDebugInfo(taskTitle);
   }
   return { error: "Enhanced fair rotation system not available" };
 };
+
+if (typeof window !== "undefined") {
+  window.getEnhancedFairRotationDebugInfo = getEnhancedFairRotationDebugInfo;
+}
 
 console.log("✅ Enhanced Fair Rotation System Loaded");
 

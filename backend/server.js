@@ -12,16 +12,36 @@ const {
 // Import Enhanced Fair Rotation System
 const fs = require("fs");
 const path_module = require("path");
-const enhancedRotationPath = path_module.join(
-  __dirname,
-  "..",
-  "enhanced-fair-rotation-system.js",
-);
-const enhancedRotationCode = fs.readFileSync(enhancedRotationPath, "utf8");
-eval(enhancedRotationCode);
 
-// Initialize Enhanced Fair Rotation System
-const enhancedFairRotation = new EnhancedFairRotationSystem();
+// Initialize Enhanced Fair Rotation System for Node.js
+let enhancedFairRotation = null;
+
+try {
+  const enhancedRotationPath = path_module.join(
+    __dirname,
+    "..",
+    "enhanced-fair-rotation-system.js",
+  );
+  const enhancedRotationCode = fs.readFileSync(enhancedRotationPath, "utf8");
+  eval(enhancedRotationCode);
+
+  // Get the system instance (available in global scope for Node.js)
+  enhancedFairRotation = global.enhancedFairRotationSystem;
+
+  if (enhancedFairRotation) {
+    console.log("✅ Enhanced Fair Rotation System initialized in Node.js");
+  } else {
+    console.warn("⚠️ Enhanced Fair Rotation System not found in global scope");
+  }
+} catch (error) {
+  console.error(
+    "❌ Failed to initialize Enhanced Fair Rotation System:",
+    error.message,
+  );
+  console.log(
+    "🔄 Server will continue without enhanced fair rotation features",
+  );
+}
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -3097,7 +3117,7 @@ app.post("/api/review-task", async (req, res) => {
         pendingEntry.pendingId || `legacy_${Date.now()}_${Math.random()}`;
 
       // Enhanced Fair Rotation: Handle task approval
-      if (isRotationTask) {
+      if (isRotationTask && enhancedFairRotation) {
         try {
           // Initialize task in rotation system if not already done
           if (!enhancedFairRotation.taskUsers.has(title)) {
@@ -3117,6 +3137,10 @@ app.post("/api/review-task", async (req, res) => {
           console.error("❌ Enhanced rotation approval error:", error);
           // Continue with standard processing if rotation fails
         }
+      } else if (isRotationTask && !enhancedFairRotation) {
+        console.warn(
+          "⚠️ Rotation task detected but Enhanced Fair Rotation System not available",
+        );
       }
 
       // Move from pending to completions
@@ -3139,7 +3163,7 @@ app.post("/api/review-task", async (req, res) => {
           pendingEntry.pendingId || `legacy_${Date.now()}_${Math.random()}`;
 
         // Enhanced Fair Rotation: Handle task rejection
-        if (isRotationTask) {
+        if (isRotationTask && enhancedFairRotation) {
           try {
             // Initialize task in rotation system if not already done
             if (!enhancedFairRotation.taskUsers.has(title)) {
@@ -3163,6 +3187,10 @@ app.post("/api/review-task", async (req, res) => {
             console.error("❌ Enhanced rotation rejection error:", error);
             // Continue with standard processing if rotation fails
           }
+        } else if (isRotationTask && !enhancedFairRotation) {
+          console.warn(
+            "⚠️ Rotation task detected but Enhanced Fair Rotation System not available",
+          );
         }
 
         // Remove from pending
@@ -3178,7 +3206,7 @@ app.post("/api/review-task", async (req, res) => {
       message: `Task ${decision}d successfully`,
       rewardAmount,
       rotationResult: rotationResult || null,
-      refreshRequired: isRotationTask, // Signal frontend to refresh avatars
+      refreshRequired: isRotationTask && enhancedFairRotation, // Signal frontend to refresh avatars
     });
   } catch (err) {
     console.error("Error reviewing task:", err);
@@ -3600,7 +3628,7 @@ app.post("/api/complete-task", async (req, res) => {
       let rotationResult = null;
 
       // Generate unique pending ID for rotation tracking
-      if (isRotation) {
+      if (isRotation && enhancedFairRotation) {
         try {
           // Initialize task in rotation system if not already done
           if (!enhancedFairRotation.taskUsers.has(taskTitle)) {
@@ -3630,6 +3658,10 @@ app.post("/api/complete-task", async (req, res) => {
           console.error("❌ Enhanced rotation completion error:", error);
           // Continue with standard processing if rotation fails
         }
+      } else if (isRotation && !enhancedFairRotation) {
+        console.warn(
+          "⚠️ Rotation task detected but Enhanced Fair Rotation System not available",
+        );
       }
 
       // For tasks requiring approval, submit for review
