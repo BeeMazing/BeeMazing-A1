@@ -1560,9 +1560,9 @@ function calculateFairRotationSchedule(task, startDate, days = 30) {
       let nextUser;
       if (candidatesWithMinCount.length > 1) {
         // Use simple rotation order for tie-breaking
-        for (let j = 0; j < users.length; j++) {
-          if (candidatesWithMinCount.includes(users[j])) {
-            nextUser = users[j];
+        for (let j = 0; j < task.users.length; j++) {
+          if (candidatesWithMinCount.includes(task.users[j])) {
+            nextUser = task.users[j];
             break;
           }
         }
