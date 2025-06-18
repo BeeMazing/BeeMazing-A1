@@ -3142,7 +3142,7 @@ async function loadOverdueTasks() {
     const overdueTasks = allTasks.filter(task => {
       if (!task || !task.users || !task.title || !task.date) return false;
       if (!filterTasksForDate([task], todayStr).length) return false;
-      
+
       // Only show overdue tasks if "On-time completion important" is enabled
       if (!task.onTimeCompletion) return false;
 
@@ -3179,12 +3179,12 @@ async function loadOverdueTasks() {
       overdueTasks.forEach(task => {
         const div = document.createElement("div");
         div.className = "overdue-task";
-        
+
         // Get overdue users
         const overdueUsers = task.settings?.includes("Individual") && task.usersNotDone?.length > 0
           ? task.usersNotDone
           : task.users;
-        
+
         // Generate avatar HTML for the first overdue user
         let avatarHTML = `<span style="font-size: 14px;">👤</span>`;
         if (window.avatarSystem && overdueUsers && overdueUsers.length > 0) {
@@ -3194,7 +3194,7 @@ async function loadOverdueTasks() {
             console.warn("Failed to generate avatar for:", overdueUsers[0]);
           }
         }
-        
+
         // Format due date/time (use task date)
         let dueDateText = '';
         if (task.date) {
@@ -3202,14 +3202,14 @@ async function loadOverdueTasks() {
             const [dateStart] = task.date.split(" to ");
             const date = new Date(dateStart);
             if (!isNaN(date.getTime())) {
-              const dateStr = date.toLocaleDateString('en-US', { 
-                month: 'short', 
+              const dateStr = date.toLocaleDateString('en-US', {
+                month: 'short',
                 day: 'numeric'
               });
-              const timeStr = date.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
+              const timeStr = date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
                 minute: '2-digit',
-                hour12: true 
+                hour12: true
               });
               dueDateText = `Due: ${dateStr} at ${timeStr}`;
             }
@@ -3217,7 +3217,7 @@ async function loadOverdueTasks() {
             console.warn("Failed to parse task date:", task.date);
           }
         }
-        
+
         div.innerHTML = `
           <div class="task-content-wrapper">
             <div class="task-header">
@@ -3236,7 +3236,7 @@ async function loadOverdueTasks() {
             </button>
           </div>
         `;
-        
+
         // Enable swipe functionality for this overdue task
         enableSwipeForOverdueTask(div);
         overdueContainer.appendChild(div);
@@ -3309,12 +3309,12 @@ async function loadPendingTasks() {
         task.pendingCompletions[todayStr].forEach((pending, index) => {
           const div = document.createElement("div");
           div.className = "pending-task";
-          
+
           // Log pending object to see available fields
           console.log("🔍 Pending object structure:", pending);
           console.log("🔍 All pending object keys:", Object.keys(pending));
           console.log("🔍 Pending object values:", Object.values(pending));
-          
+
           // Generate avatar HTML
           let avatarHTML = `<span style="font-size: 14px;">👤</span>`;
           if (window.avatarSystem) {
@@ -3324,34 +3324,34 @@ async function loadPendingTasks() {
               console.warn("Failed to generate avatar for:", pending.user);
             }
           }
-          
+
           // Format completion date and time - try multiple field names
           let completionTimeText = '';
           const possibleTimeFields = [
-            pending.timestamp, 
-            pending.completedAt, 
-            pending.time, 
+            pending.timestamp,
+            pending.completedAt,
+            pending.time,
             pending.date,
             pending.completionTime,
             pending.submittedAt,
             pending.createdAt
           ];
-          
+
           const timeValue = possibleTimeFields.find(field => field != null);
           console.log("🔍 Found time value:", timeValue);
-          
+
           if (timeValue) {
             try {
               const date = new Date(timeValue);
               if (!isNaN(date.getTime())) {
-                const dateStr = date.toLocaleDateString('en-US', { 
-                  month: 'short', 
+                const dateStr = date.toLocaleDateString('en-US', {
+                  month: 'short',
                   day: 'numeric'
                 });
-                const timeStr = date.toLocaleTimeString('en-US', { 
-                  hour: '2-digit', 
+                const timeStr = date.toLocaleTimeString('en-US', {
+                  hour: '2-digit',
                   minute: '2-digit',
-                  hour12: true 
+                  hour12: true
                 });
                 completionTimeText = `${dateStr} at ${timeStr}`;
                 console.log("🔍 Formatted time:", completionTimeText);
@@ -3364,19 +3364,19 @@ async function loadPendingTasks() {
           } else {
             // Fallback - use current time as placeholder for testing
             const now = new Date();
-            const dateStr = now.toLocaleDateString('en-US', { 
-              month: 'short', 
+            const dateStr = now.toLocaleDateString('en-US', {
+              month: 'short',
               day: 'numeric'
             });
-            const timeStr = now.toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
+            const timeStr = now.toLocaleTimeString('en-US', {
+              hour: '2-digit',
               minute: '2-digit',
-              hour12: true 
+              hour12: true
             });
             completionTimeText = `${dateStr} at ${timeStr}`;
             console.log("🔍 Using fallback time:", completionTimeText);
           }
-          
+
           div.innerHTML = `
             <div class="task-content-wrapper">
               <div class="task-header">
@@ -3392,7 +3392,7 @@ async function loadPendingTasks() {
               <button class="decline-btn" onclick="handleDecision('${task.title}', '${task.date}', '${todayStr}', ${index}, 'decline', '${pending.user}', ${pending.repetition}, event)">✕</button>
             </div>
           `;
-          
+
           // Enable swipe functionality
           enableSwipeForPendingTask(div);
           pendingContainer.appendChild(div);
@@ -3430,6 +3430,29 @@ async function handleDecision(title, date, selectedDate, index, decision, user, 
     }
 
     console.log("✅ handleDecision: Success", data);
+
+    // Trigger avatar refresh if rotation system is involved
+    if (data.refreshRequired) {
+      console.log("🔄 Triggering avatar refresh for fair rotation changes");
+
+      // Dispatch event for tasks.html to refresh avatars
+      const refreshEvent = new CustomEvent('taskApprovalCompleted', {
+        detail: {
+          taskTitle: title,
+          decision: decision,
+          timestamp: new Date().toISOString()
+        }
+      });
+      window.dispatchEvent(refreshEvent);
+
+      // Also try direct refresh methods if available
+      if (typeof window.forceRefreshTasks === 'function') {
+        setTimeout(() => {
+          window.forceRefreshTasks();
+        }, 500);
+      }
+    }
+
     const popup = document.createElement("div");
     popup.className = "reward-popup";
     popup.textContent = `Task ${decision}d successfully!`;
@@ -3484,7 +3507,7 @@ async function loadPendingRewardRequests() {
                     user: request.user,
                     adminEmail: adminEmail
                 });
-                
+
                 let avatarHTML = `<span style="font-size: 14px;">👤</span>`;
                 if (window.avatarSystem) {
                     try {
@@ -3496,7 +3519,7 @@ async function loadPendingRewardRequests() {
                 } else {
                     console.warn("❌ Avatar system not available");
                 }
-                
+
                 div.innerHTML = `
                     <div class="request-title">${request.rewardName}</div>
                     <div class="request-info">
@@ -3530,9 +3553,9 @@ async function reviewReward(requestIndex, decision, event) {
         event.preventDefault();
         event.stopPropagation();
     }
-    
+
     console.log("🎁 ReviewReward called:", { requestIndex, decision, adminEmail });
-    
+
     try {
         const buttons = document.querySelectorAll(`.reward-request button`);
         buttons.forEach(btn => {
@@ -3545,17 +3568,17 @@ async function reviewReward(requestIndex, decision, event) {
         const response = await fetch(`https://beemazing1.onrender.com/api/reward-requests?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, {
             cache: "no-store"
         });
-        
+
         console.log("📡 Reward requests response:", response.status);
         const data = await response.json();
         console.log("📊 Reward requests data:", data);
-        
+
         if (!response.ok) throw new Error(data.error || "Failed to fetch reward requests");
 
         const pendingRequests = data.requests || [];
         console.log("📋 Pending requests:", pendingRequests);
         console.log("📋 Request at index", requestIndex, ":", pendingRequests[requestIndex]);
-        
+
         const request = pendingRequests[requestIndex];
         if (!request) throw new Error("Reward request not found");
 
@@ -3564,20 +3587,20 @@ async function reviewReward(requestIndex, decision, event) {
         const reviewResponse = await fetch("https://beemazing1.onrender.com/api/review-reward", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                adminEmail, 
-                requestIndex, 
+            body: JSON.stringify({
+                adminEmail,
+                requestIndex,
                 decision,
                 user: request.user,
                 rewardName: request.rewardName,
                 timestamp: request.timestamp
             })
         });
-        
+
         console.log("📡 Review response:", reviewResponse.status);
         const reviewData = await reviewResponse.json();
         console.log("📊 Review data:", reviewData);
-        
+
         if (!reviewResponse.ok) throw new Error(reviewData.error || "Failed to process reward request");
 
         alert(`Reward ${decision}d successfully!`);
@@ -3697,7 +3720,7 @@ function enableSwipeForPendingTask(taskElement) {
     if (!isSwiping) return;
     currentX = e.touches[0].clientX;
     const diffX = startX - currentX;
-    
+
     if (diffX > 10 && diffX < maxSwipeDistance) {
       taskElement.classList.add('swiped');
     } else if (diffX < -10) {
@@ -3724,7 +3747,7 @@ function enableSwipeForPendingTask(taskElement) {
     if (!isSwiping) return;
     currentX = e.clientX;
     const diffX = startX - currentX;
-    
+
     if (diffX > 10 && diffX < maxSwipeDistance) {
       taskElement.classList.add('swiped');
     } else if (diffX < -10) {
@@ -3769,7 +3792,7 @@ function enableSwipeForOverdueTask(taskElement) {
     if (!isSwiping) return;
     currentX = e.touches[0].clientX;
     const diffX = startX - currentX;
-    
+
     if (diffX > 10 && diffX < maxSwipeDistance) {
       taskElement.classList.add('swiped');
     } else if (diffX < -10) {
@@ -3796,7 +3819,7 @@ function enableSwipeForOverdueTask(taskElement) {
     if (!isSwiping) return;
     currentX = e.clientX;
     const diffX = startX - currentX;
-    
+
     if (diffX > 10 && diffX < maxSwipeDistance) {
       taskElement.classList.add('swiped');
     } else if (diffX < -10) {
@@ -3822,7 +3845,7 @@ function enableSwipeForOverdueTask(taskElement) {
 
 function editOverdueTask(taskTitle, taskDate, event) {
   event.stopPropagation();
-  
+
   // Parse the date to get the specific date for the overdue task
   let specificDate = '';
   try {
@@ -3832,7 +3855,7 @@ function editOverdueTask(taskTitle, taskDate, event) {
     console.warn("Failed to parse task date:", taskDate);
     specificDate = new Date().toISOString().split('T')[0]; // fallback to today
   }
-  
+
   // Store comprehensive edit data in localStorage
   const editData = {
     taskTitle: taskTitle,
@@ -3843,22 +3866,22 @@ function editOverdueTask(taskTitle, taskDate, event) {
     timestamp: Date.now(),
     source: 'overdueTaskEdit'
   };
-  
+
   localStorage.setItem('familyApp_editOverdueTask', JSON.stringify(editData));
   localStorage.setItem('familyApp_autoTriggerEdit', 'true');
-  
+
   // Navigate to tasks page with correct path and admin/user parameters
   const urlParams = new URLSearchParams(window.location.search);
   const adminEmail = urlParams.get('admin') || localStorage.getItem('currentAdminEmail') || '';
   const userName = urlParams.get('user') || '';
-  
+
   let tasksUrl = '/BeeMazing-A1/mobile/3-Tasks/tasks.html';
   if (adminEmail && userName) {
     tasksUrl += `?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}&autoEdit=true&date=${encodeURIComponent(specificDate)}`;
   } else {
     tasksUrl += `?autoEdit=true&date=${encodeURIComponent(specificDate)}`;
   }
-  
+
   window.location.href = tasksUrl;
 }
 
@@ -3877,7 +3900,7 @@ async function loadAsNeededTasks() {
     if (!res.ok) throw new Error(data.error || "Failed to load tasks");
 
     const allTasks = data.tasks || [];
-    
+
     // Filter for Occasional tasks
     const asNeededTasks = allTasks.filter(task => {
       return task && task.repeat === "Occasional" && task.asNeeded === true;
@@ -3983,10 +4006,10 @@ document.getElementById("asNeededCard").addEventListener("click", (event) => {
   if (event.target.closest('.task-list')) {
     return; // Don't toggle if clicking inside task list
   }
-  
+
   const taskList = document.getElementById("asNeededTasks");
   const arrow = document.getElementById("asNeededArrow");
-  
+
   if (taskList.style.display === "none" || !taskList.style.display) {
     taskList.style.display = "block";
     arrow.textContent = "▼";

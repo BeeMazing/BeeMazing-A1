@@ -569,9 +569,6 @@ async function showTaskDetails(task) {
         if (freshTask.fairRotation) {
             rotationDetails.push("Fair Task Rotation");
         }
-        if (freshTask.fairRotationTimeBased) {
-            rotationDetails.push("Time-based tie breaking");
-        }
         if (rotationDetails.length > 0) {
             modalHTML += `<div class="task-info-row"><strong>Additional Details:</strong> ${rotationDetails.join(", ")}</div>`;
         }

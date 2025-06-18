@@ -2006,6 +2006,8 @@
 
         <script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
         <script src="/BeeMazing-A1/shared/predicted-schedule-system.js?t=${Date.now()}"></script>
+        <script src="/BeeMazing-A1/local-fair-rotation-system.js?t=${Date.now()}"></script>
+        <script src="/BeeMazing-A1/enhanced-fair-rotation-system.js?t=${Date.now()}"></script>
         <script src="/BeeMazing-A1/shared/avatar-system.js"></script>
 
         <script>
@@ -2374,33 +2376,33 @@
                     const overlay = document.createElement("div");
                     overlay.id = "autoEditOverlay";
                     overlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: #FFFFFF;
-                z-index: 9999;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                font-family: 'Poppins', sans-serif;
-            `;
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: #FFFFFF;
+                        z-index: 9999;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                        font-family: 'Poppins', sans-serif;
+                    `;
 
                     overlay.innerHTML = `
-                <div style="text-align: center;">
-                    <div style="width: 60px; height: 60px; border: 4px solid #FFC107; border-top: 4px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
-                    <h3 style="color: #6D4C41; margin: 0 0 10px 0; font-size: 18px; font-weight: 600;">Opening Task Editor</h3>
-                    <p style="color: #795548; margin: 0; font-size: 14px;">Please wait...</p>
-                </div>
-                <style>
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
-                </style>
-            `;
+                        <div style="text-align: center;">
+                            <div style="width: 60px; height: 60px; border: 4px solid #FFC107; border-top: 4px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                            <h3 style="color: #6D4C41; margin: 0 0 10px 0; font-size: 18px; font-weight: 600;">Opening Task Editor</h3>
+                            <p style="color: #795548; margin: 0; font-size: 14px;">Please wait...</p>
+                        </div>
+                        <style>
+                            @keyframes spin {
+                                0% { transform: rotate(0deg); }
+                                100% { transform: rotate(360deg); }
+                            }
+                        </style>
+                    `;
 
                     document.body.appendChild(overlay);
                 }
@@ -4136,14 +4138,14 @@
                         }
 
                         taskHTML += `
-                        <div class="task-header">
-                            <div class="task-title-row">
-                                ${statusIcon}${originalUserIcon}
-                                <div class="task-title">${task.title}${occurrenceIndicator}${approvalIcon}${modificationIndicator}</div>
-                                ${dueTimeHTML}
-                            </div>
-                        </div>
-                    `;
+                                <div class="task-header">
+                                    <div class="task-title-row">
+                                        ${statusIcon}${originalUserIcon}
+                                        <div class="task-title">${task.title}${occurrenceIndicator}${approvalIcon}${modificationIndicator}</div>
+                                        ${dueTimeHTML}
+                                    </div>
+                                </div>
+                            `;
 
                         // Generate avatars section with buzz points on same line
                         let avatarsHTML = '<div class="task-avatars">';
@@ -4161,21 +4163,61 @@
                         }
 
                         if (task.settings?.includes("Rotation")) {
-                            if (typeof mixedTurnData === "function") {
-                                try {
+                            try {
+                                // Use Local Fair Rotation System first, then fallback to other systems
+                                if (
+                                    task.fairRotation &&
+                                    window.localFairRotationSystem
+                                ) {
+                                    console.log(
+                                        `🔄 Using Local Fair Rotation System for task: ${task.title}`,
+                                    );
+
+                                    // Use local fair rotation system
+                                    turnData =
+                                        window.localFairRotationSystem.getLocalTurnData(
+                                            task,
+                                            selectedDate,
+                                        );
+                                } else if (
+                                    task.fairRotation &&
+                                    window.PredictedScheduleSystem
+                                        ?.mixedTurnDataWithPrediction
+                                ) {
+                                    console.log(
+                                        `🔮 Using PredictedScheduleSystem for fair rotation task: ${task.title}`,
+                                    );
+
+                                    // Use predicted schedule system for fair rotation
+                                    turnData =
+                                        window.PredictedScheduleSystem.mixedTurnDataWithPrediction(
+                                            task,
+                                            selectedDate,
+                                        );
+                                } else if (
+                                    typeof mixedTurnData === "function"
+                                ) {
+                                    // For regular rotation tasks, use turnData logic
                                     turnData = mixedTurnData(
                                         task,
                                         selectedDate,
                                     );
-                                    if (turnData.turns.length > 0) {
-                                        // Show current turn avatar
-                                        const currentTurn = turnData.turns.find(
-                                            (t) =>
-                                                !t.isCompleted && !t.isPending,
-                                        );
+                                }
+
+                                // Process turn data for display (both predicted and regular)
+                                if (turnData?.turns?.length > 0) {
+                                    // Show current turn avatar
+                                    const currentTurn = turnData.turns.find(
+                                        (t) => !t.isCompleted && !t.isPending,
+                                    );
+
+                                    if (
+                                        currentTurn &&
+                                        currentTurn.user !== "All done!"
+                                    ) {
                                         if (
-                                            currentTurn &&
-                                            currentTurn.user !== "All done!"
+                                            window.avatarSystem
+                                                ?.generateAvatarHTML
                                         ) {
                                             avatarsHTML +=
                                                 window.avatarSystem.generateAvatarHTML(
@@ -4183,54 +4225,197 @@
                                                     24,
                                                     "task-avatar",
                                                 );
+                                        } else {
+                                            const initials = currentTurn.user
+                                                .substring(0, 2)
+                                                .toUpperCase();
+                                            avatarsHTML += `<div class="task-avatar" title="${currentTurn.user}">${initials}</div>`;
                                         }
 
-                                        // Show "Next:" label and upcoming avatars
+                                        // Add indicator for predicted assignments
+                                        if (currentTurn.isPredicted) {
+                                            console.log(
+                                                `🔮 Showing predicted assignment for ${task.title}: ${currentTurn.user}`,
+                                            );
+                                        }
+                                    }
+
+                                    // Show "Next:" label and upcoming avatars for regular rotation
+                                    // (Skip for occurrence-based tasks)
+                                    if (
+                                        !task.occurrence &&
+                                        turnData.turns.length > 1
+                                    ) {
                                         const nextTurns = turnData.turns
                                             .filter(
                                                 (t) =>
                                                     !t.isCompleted &&
                                                     !t.isPending,
                                             )
-                                            .slice(1, 2); // Show next 1 only
+                                            .filter(
+                                                (t) =>
+                                                    t.user !==
+                                                    currentTurn?.user,
+                                            )
+                                            .slice(0, 1); // Show next 1 only
+
                                         if (nextTurns.length > 0) {
                                             avatarsHTML +=
                                                 '<span class="task-next-label">Next:</span>';
                                             nextTurns.forEach((turn) => {
-                                                avatarsHTML +=
-                                                    window.avatarSystem.generateAvatarHTML(
-                                                        turn.user,
-                                                        24,
-                                                        "task-avatar",
-                                                    );
+                                                if (
+                                                    window.avatarSystem
+                                                        ?.generateAvatarHTML
+                                                ) {
+                                                    avatarsHTML +=
+                                                        window.avatarSystem.generateAvatarHTML(
+                                                            turn.user,
+                                                            24,
+                                                            "task-avatar",
+                                                        );
+                                                } else {
+                                                    const initials = turn.user
+                                                        .substring(0, 2)
+                                                        .toUpperCase();
+                                                    avatarsHTML += `<div class="task-avatar" title="${turn.user}">${initials}</div>`;
+                                                }
                                             });
                                         }
                                     }
-                                } catch (err) {
-                                    console.error(
-                                        `Error processing Rotation task "${task.title}":`,
-                                        err,
+                                } else {
+                                    // No turn data available - show all users as fallback
+                                    console.warn(
+                                        `No turn data for rotation task: ${task.title}`,
                                     );
-                                    // Show all users as fallback
-                                    task.users.forEach((user) => {
-                                        avatarsHTML +=
-                                            window.avatarSystem.generateAvatarHTML(
-                                                user,
-                                                28,
-                                                "task-avatar",
-                                            );
+                                    task.users?.forEach((user) => {
+                                        if (
+                                            window.avatarSystem
+                                                ?.generateAvatarHTML
+                                        ) {
+                                            avatarsHTML +=
+                                                window.avatarSystem.generateAvatarHTML(
+                                                    user,
+                                                    24,
+                                                    "task-avatar",
+                                                );
+                                        } else {
+                                            const initials = user
+                                                .substring(0, 2)
+                                                .toUpperCase();
+                                            avatarsHTML += `<div class="task-avatar" title="${user}">${initials}</div>`;
+                                        }
                                     });
                                 }
-                            } else {
-                                // Fallback: show all users
-                                task.users.forEach((user) => {
-                                    avatarsHTML +=
-                                        window.avatarSystem.generateAvatarHTML(
-                                            user,
-                                            24,
-                                            "task-avatar",
+                            } catch (err) {
+                                console.error(
+                                    `Error processing Rotation task "${task.title}":`,
+                                    err,
+                                );
+
+                                // Robust fallback handling using local fair rotation system first
+                                if (
+                                    task.fairRotation &&
+                                    window.localFairRotationSystem
+                                ) {
+                                    // For fair rotation tasks, use local system even in error fallback
+                                    console.log(
+                                        `🔄 Using local fair rotation fallback for: ${task.title}`,
+                                    );
+
+                                    // Calculate assignment for first occurrence as fallback
+                                    const assignment =
+                                        window.localFairRotationSystem.calculateAssignee(
+                                            task,
+                                            selectedDate,
+                                            0,
                                         );
-                                });
+
+                                    if (assignment && assignment.user) {
+                                        const assignedUser = assignment.user;
+                                        if (
+                                            window.avatarSystem
+                                                ?.generateAvatarHTML
+                                        ) {
+                                            avatarsHTML +=
+                                                window.avatarSystem.generateAvatarHTML(
+                                                    assignedUser,
+                                                    24,
+                                                    "task-avatar",
+                                                );
+                                        } else {
+                                            const initials = assignedUser
+                                                .substring(0, 2)
+                                                .toUpperCase();
+                                            avatarsHTML += `<div class="task-avatar" title="${assignedUser}">${initials}</div>`;
+                                        }
+                                        console.log(
+                                            `✅ Fallback local fair rotation assignment: ${assignedUser}`,
+                                        );
+                                    }
+                                } else if (
+                                    task.fairRotation &&
+                                    typeof calculateGlobalOccurrenceNumber ===
+                                        "function"
+                                ) {
+                                    // Secondary fallback: global occurrence logic
+                                    console.log(
+                                        `🔄 Using global occurrence fallback for fair rotation: ${task.title}`,
+                                    );
+
+                                    // Calculate assignment for first occurrence as fallback
+                                    const globalOccurrence =
+                                        calculateGlobalOccurrenceNumber(
+                                            task,
+                                            selectedDate,
+                                            0,
+                                        );
+                                    const userIndex =
+                                        (globalOccurrence - 1) %
+                                        task.users.length;
+                                    const assignedUser = task.users[userIndex];
+
+                                    if (assignedUser) {
+                                        if (
+                                            window.avatarSystem
+                                                ?.generateAvatarHTML
+                                        ) {
+                                            avatarsHTML +=
+                                                window.avatarSystem.generateAvatarHTML(
+                                                    assignedUser,
+                                                    24,
+                                                    "task-avatar",
+                                                );
+                                        } else {
+                                            const initials = assignedUser
+                                                .substring(0, 2)
+                                                .toUpperCase();
+                                            avatarsHTML += `<div class="task-avatar" title="${assignedUser}">${initials}</div>`;
+                                        }
+                                        console.log(
+                                            `✅ Fallback global occurrence assignment: ${assignedUser}`,
+                                        );
+                                    }
+                                } else {
+                                    // For regular rotation tasks, show all users as fallback
+                                    task.users?.forEach((user) => {
+                                        if (
+                                            window.avatarSystem
+                                                ?.generateAvatarHTML
+                                        ) {
+                                            avatarsHTML +=
+                                                window.avatarSystem.generateAvatarHTML(
+                                                    user,
+                                                    28,
+                                                    "task-avatar",
+                                                );
+                                        } else {
+                                            const initials = user
+                                                .substring(0, 2)
+                                                .toUpperCase();
+                                            avatarsHTML += `<div class="task-avatar" title="${user}">${initials}</div>`;
+                                        }
+                                    });
+                                }
                             }
                         } else {
                             // Individual/Team Work tasks - show all assigned users
@@ -4508,15 +4693,195 @@
                         taskList.appendChild(taskDiv);
                         enableSwipeToDelete(taskDiv);
                     });
-                } catch (err) {
-                    console.error("Error loading tasks:", err, {
+                } catch (error) {
+                    console.error("Error loading tasks:", error, {
                         adminEmail,
                         selectedDate,
                     });
-                    document.getElementById("taskList").innerHTML =
-                        `<div style="text-align:center; margin-top: 40px; color: #ccc;">Error loading tasks: ${err.message}</div>`;
+
+                    // Try offline mode with mock data
+                    if (
+                        error.message.includes("Failed to fetch") ||
+                        error.message.includes("CORS")
+                    ) {
+                        console.log(
+                            "🔄 Switching to offline mode with mock data",
+                        );
+                        loadOfflineMode(selectedDate);
+                    } else {
+                        // Show detailed error message with retry option
+                        const errorHTML = `
+                            <div class="error-message" style="text-align: center; padding: 20px; color: #d32f2f;">
+                                <h3>⚠️ Unable to Load Tasks</h3>
+                                <p><strong>Error:</strong> ${error.message}</p>
+                                <div style="margin: 15px 0;">
+                                    <p>This might be due to:</p>
+                                    <ul style="text-align: left; display: inline-block;">
+                                        <li>Server temporarily unavailable</li>
+                                        <li>Network connectivity issues</li>
+                                        <li>CORS policy restrictions</li>
+                                    </ul>
+                                </div>
+                                <button onclick="loadTasksForDate('${selectedDate}')"
+                                        style="background: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px;">
+                                    🔄 Retry
+                                </button>
+                                <button onclick="loadOfflineMode('${selectedDate}')"
+                                        style="background: #ff9800; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px;">
+                                    📱 Offline Mode
+                                </button>
+                                <button onclick="location.reload()"
+                                        style="background: #757575; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px;">
+                                    🔃 Refresh Page
+                                </button>
+                            </div>
+                        `;
+
+                        document.getElementById("task-list").innerHTML =
+                            errorHTML;
+                    }
                 }
-                // Fixed syntax structure - no more duplicates
+            }
+
+            // Offline mode with mock data
+            function loadOfflineMode(selectedDate) {
+                console.log("🔄 Loading offline mode for date:", selectedDate);
+
+                const mockTasks = [
+                    {
+                        title: "Demo Task - Rotation Example",
+                        users: ["Linda", "John", "Alice"],
+                        settings: ["Rotation"],
+                        occurrence: "2025-06-15",
+                        currentTurnIndex: 0,
+                        reward: 5,
+                        dueTime: "09:00",
+                        status: "incomplete",
+                        completionStatus: "incomplete",
+                    },
+                    {
+                        title: "Demo Task - Team Work Example",
+                        users: ["Linda", "John"],
+                        settings: ["Team Work"],
+                        reward: 10,
+                        dueTime: "14:00",
+                        status: "incomplete",
+                        completionStatus: "incomplete",
+                    },
+                    {
+                        title: "Demo Task - Individual Example",
+                        users: ["Linda"],
+                        settings: ["Individual"],
+                        reward: 3,
+                        dueTime: "18:00",
+                        status: "incomplete",
+                        completionStatus: "incomplete",
+                    },
+                ];
+
+                // Show offline mode header
+                const offlineHeader = `
+                    <div style="background: #ff9800; color: white; padding: 10px; text-align: center; margin-bottom: 20px; border-radius: 5px;">
+                        📱 <strong>Offline Mode</strong> - Server unavailable. Showing demo tasks.
+                        <button onclick="loadTasksForDate('${selectedDate}')"
+                                style="background: white; color: #ff9800; border: none; padding: 5px 10px; border-radius: 3px; margin-left: 10px; cursor: pointer;">
+                            🔄 Try Online
+                        </button>
+                    </div>
+                `;
+
+                document.getElementById("task-list").innerHTML = offlineHeader;
+                const taskList = document.getElementById("task-list");
+
+                // Process mock tasks using existing logic
+                mockTasks.forEach((task, index) => {
+                    // Create task card using existing styling
+                    const taskDiv = document.createElement("div");
+                    taskDiv.className = "task-card";
+                    taskDiv.dataset.index = index;
+
+                    // Generate status icon
+                    const statusIcon =
+                        task.completionStatus === "incomplete"
+                            ? '<div class="task-status task-status-incomplete">⏳</div>'
+                            : '<div class="task-status task-status-complete">✅</div>';
+
+                    // Generate due time
+                    const dueTimeHTML = task.dueTime
+                        ? `<div class="task-due-time">${task.dueTime}</div>`
+                        : "";
+
+                    // Generate occurrence indicator
+                    const occurrenceIndicator = task.occurrence
+                        ? `<span class="occurrence-indicator" title="Occurrence: ${task.occurrence}">📅</span>`
+                        : "";
+
+                    // Generate avatars
+                    let avatarsHTML =
+                        '<div class="task-avatars"><div class="task-avatars-section">';
+
+                    // Add icons based on task type
+                    if (task.settings?.includes("Team Work")) {
+                        avatarsHTML += '<div class="team-icon">👥</div>';
+                    }
+                    if (task.settings?.includes("Rotation")) {
+                        avatarsHTML += '<div class="rotation-icon">🔄</div>';
+                    }
+
+                    // Add user avatars
+                    if (
+                        task.settings?.includes("Rotation") &&
+                        task.occurrence &&
+                        typeof task.currentTurnIndex !== "undefined"
+                    ) {
+                        // For occurrence tasks, show assigned user
+                        const assignedUser = task.users[task.currentTurnIndex];
+                        if (assignedUser) {
+                            const initials = assignedUser
+                                .substring(0, 2)
+                                .toUpperCase();
+                            avatarsHTML += `<div class="task-avatar" title="${assignedUser}">${initials}</div>`;
+                        }
+                    } else {
+                        // For other tasks, show all users
+                        task.users.forEach((user) => {
+                            const initials = user.substring(0, 2).toUpperCase();
+                            avatarsHTML += `<div class="task-avatar" title="${user}">${initials}</div>`;
+                        });
+                    }
+
+                    avatarsHTML += "</div>";
+
+                    // Add reward
+                    if (task.reward) {
+                        avatarsHTML += `<div class="task-reward">🍯 ${task.reward}</div>`;
+                    }
+
+                    avatarsHTML += "</div>";
+
+                    // Build task HTML
+                    taskDiv.innerHTML = `
+                        <div class="task-header">
+                            <div class="task-title-row">
+                                ${statusIcon}
+                                <div class="task-title">${task.title}${occurrenceIndicator}</div>
+                                ${dueTimeHTML}
+                            </div>
+                        </div>
+                        ${avatarsHTML}
+                    `;
+
+                    // Add click handler for demo
+                    taskDiv.addEventListener("click", () => {
+                        alert(
+                            `Demo Task: ${task.title}\n\nThis is offline mode. Task interactions are limited.\n\nUsers: ${task.users.join(", ")}\nSettings: ${task.settings.join(", ")}\nReward: ${task.reward || 0} 🍯`,
+                        );
+                    });
+
+                    taskList.appendChild(taskDiv);
+                });
+
+                console.log("✅ Offline mode loaded successfully");
             }
 
             async function showTaskDetails(task) {
@@ -4854,71 +5219,71 @@
                     modalHTML += `<div style="border-bottom: 1px solid var(--primary-color); padding: 3px 0; margin-bottom: 6px; font-size: 12px; line-height: 1;">`;
                     modalHTML += `<strong style="margin: 0; padding: 0; line-height: 1;">This is occurrence ${freshTask.occurrence} of ${freshTask.totalOccurrences}</strong> `;
                     modalHTML += `<button type="button" onclick="showMasterTaskDetails('${freshTask.originalTitle}', '${selectedDate}')" style="
-                                    margin-left: 8px;
-                                    padding: 8px 16px;
-                                    background: #ffc107;
-                                    color: #212121;
-                                    border: none;
-                                    border-radius: 6px;
-                                    font-size: 14px;
-                                    font-weight: 600;
-                                    cursor: pointer;
-                                    transition: all 0.2s;
-                                    vertical-align: middle;
-                                " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
-                                    View Full Task
-                                </button>`;
+                                            margin-left: 8px;
+                                            padding: 8px 16px;
+                                            background: #ffc107;
+                                            color: #212121;
+                                            border: none;
+                                            border-radius: 6px;
+                                            font-size: 14px;
+                                            font-weight: 600;
+                                            cursor: pointer;
+                                            transition: all 0.2s;
+                                            vertical-align: middle;
+                                        " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                                            View Full Task
+                                        </button>`;
                     modalHTML += `</div>`;
                 }
 
                 modalHTML += `
-        <div style="margin-top: 10px; margin-bottom: 15px; padding: 10px 0; border-bottom: 1px solid #FBB740;">
-            <!-- Compact Single Line Button Layout -->
-            <div style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
-                ${
-                    canComplete && !isTaskComplete
-                        ? `<button id="completeTaskBtn" style="padding: 8px 16px; background: #28a745; color: white; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; white-space: nowrap;">✓ Done</button>`
-                        : ""
-                }
+                <div style="margin-top: 10px; margin-bottom: 15px; padding: 10px 0; border-bottom: 1px solid #FBB740;">
+                    <!-- Compact Single Line Button Layout -->
+                    <div style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                        ${
+                            canComplete && !isTaskComplete
+                                ? `<button id="completeTaskBtn" style="padding: 8px 16px; background: #28a745; color: white; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; white-space: nowrap;">✓ Done</button>`
+                                : ""
+                        }
 
-                <div style="position: relative;">
-                    <button id="editDropdownBtn" style="padding: 8px 16px; background: #FBB740; color: #5D4E41; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
-                        Edit
-                        <span style="font-size: 10px;">▼</span>
-                    </button>
-                    <div id="editDropdown" style="display: none; position: absolute; top: 100%; left: 0; min-width: 140px; background: white; border: 2px solid #FBB740; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1001; margin-top: 3px;">
-                        <button id="editOccurrenceBtn" style="width: 100%; padding: 10px 12px; background: none; border: none; color: #5D4E41; cursor: pointer; font-size: 12px; text-align: left; border-bottom: 1px solid #f0f0f0; font-weight: 500;" onmouseover="this.style.background='#FFF6E9'" onmouseout="this.style.background='none'">
-                            This Day
-                        </button>
-                        <button id="editFutureBtn" style="width: 100%; padding: 10px 12px; background: none; border: none; color: #5D4E41; cursor: pointer; font-size: 12px; text-align: left; border-bottom: 1px solid #f0f0f0; font-weight: 500;" onmouseover="this.style.background='#FFF6E9'" onmouseout="this.style.background='none'">
-                            Future
-                        </button>
-                        <button id="editTaskBtn" style="width: 100%; padding: 10px 12px; background: none; border: none; color: #5D4E41; cursor: pointer; font-size: 12px; text-align: left; font-weight: 500;" onmouseover="this.style.background='#FFF6E9'" onmouseout="this.style.background='none'">
-                            Entire Task
-                        </button>
+                        <div style="position: relative;">
+                            <button id="editDropdownBtn" style="padding: 8px 16px; background: #FBB740; color: #5D4E41; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                                Edit
+                                <span style="font-size: 10px;">▼</span>
+                            </button>
+                            <div id="editDropdown" style="display: none; position: absolute; top: 100%; left: 0; min-width: 140px; background: white; border: 2px solid #FBB740; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1001; margin-top: 3px;">
+                                <button id="editOccurrenceBtn" style="width: 100%; padding: 10px 12px; background: none; border: none; color: #5D4E41; cursor: pointer; font-size: 12px; text-align: left; border-bottom: 1px solid #f0f0f0; font-weight: 500;" onmouseover="this.style.background='#FFF6E9'" onmouseout="this.style.background='none'">
+                                    This Day
+                                </button>
+                                <button id="editFutureBtn" style="width: 100%; padding: 10px 12px; background: none; border: none; color: #5D4E41; cursor: pointer; font-size: 12px; text-align: left; border-bottom: 1px solid #f0f0f0; font-weight: 500;" onmouseover="this.style.background='#FFF6E9'" onmouseout="this.style.background='none'">
+                                    Future
+                                </button>
+                                <button id="editTaskBtn" style="width: 100%; padding: 10px 12px; background: none; border: none; color: #5D4E41; cursor: pointer; font-size: 12px; text-align: left; font-weight: 500;" onmouseover="this.style.background='#FFF6E9'" onmouseout="this.style.background='none'">
+                                    Entire Task
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style="position: relative;">
+                            <button id="deleteDropdownBtn" style="padding: 8px 16px; background: #D32F2F; color: white; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                                Delete
+                                <span style="font-size: 10px;">▼</span>
+                            </button>
+                            <div id="deleteDropdown" style="display: none; position: absolute; top: 100%; left: 0; min-width: 140px; background: white; border: 2px solid #D32F2F; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1001; margin-top: 3px;">
+                                <button id="deleteOccurrenceBtn" style="width: 100%; padding: 10px 12px; background: none; border: none; color: #D32F2F; cursor: pointer; font-size: 12px; text-align: left; border-bottom: 1px solid #f0f0f0; font-weight: 500;" onmouseover="this.style.background='#ffe6e6'" onmouseout="this.style.background='none'">
+                                    This Day
+                                </button>
+                                <button id="deleteFutureBtn" style="width: 100%; padding: 10px 12px; background: none; border: none; color: #D32F2F; cursor: pointer; font-size: 12px; text-align: left; border-bottom: 1px solid #f0f0f0; font-weight: 500;" onmouseover="this.style.background='#ffe6e6'" onmouseout="this.style.background='none'">
+                                    Future
+                                </button>
+                                <button id="deleteEntireTaskBtn" style="width: 100%; padding: 10px 12px; background: none; border: none; color: #D32F2F; cursor: pointer; font-size: 12px; text-align: left; font-weight: 500;" onmouseover="this.style.background='#ffe6e6'" onmouseout="this.style.background='none'">
+                                    Entire Task
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <div style="position: relative;">
-                    <button id="deleteDropdownBtn" style="padding: 8px 16px; background: #D32F2F; color: white; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
-                        Delete
-                        <span style="font-size: 10px;">▼</span>
-                    </button>
-                    <div id="deleteDropdown" style="display: none; position: absolute; top: 100%; left: 0; min-width: 140px; background: white; border: 2px solid #D32F2F; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1001; margin-top: 3px;">
-                        <button id="deleteOccurrenceBtn" style="width: 100%; padding: 10px 12px; background: none; border: none; color: #D32F2F; cursor: pointer; font-size: 12px; text-align: left; border-bottom: 1px solid #f0f0f0; font-weight: 500;" onmouseover="this.style.background='#ffe6e6'" onmouseout="this.style.background='none'">
-                            This Day
-                        </button>
-                        <button id="deleteFutureBtn" style="width: 100%; padding: 10px 12px; background: none; border: none; color: #D32F2F; cursor: pointer; font-size: 12px; text-align: left; border-bottom: 1px solid #f0f0f0; font-weight: 500;" onmouseover="this.style.background='#ffe6e6'" onmouseout="this.style.background='none'">
-                            Future
-                        </button>
-                        <button id="deleteEntireTaskBtn" style="width: 100%; padding: 10px 12px; background: none; border: none; color: #D32F2F; cursor: pointer; font-size: 12px; text-align: left; font-weight: 500;" onmouseover="this.style.background='#ffe6e6'" onmouseout="this.style.background='none'">
-                            Entire Task
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
+            `;
 
                 // Buzz Points
                 modalHTML += `<div class="task-info-row"><strong>Buzz Points:</strong> ${freshTask.reward || 0} 🍯</div>`;
@@ -5229,9 +5594,6 @@
                     let rotationDetails = [];
                     if (freshTask.fairRotation) {
                         rotationDetails.push("Fair Task Rotation");
-                    }
-                    if (freshTask.fairRotationTimeBased) {
-                        rotationDetails.push("Time-based tie breaking");
                     }
                     if (rotationDetails.length > 0) {
                         modalHTML += `<div class="task-info-row"><strong>Additional Details:</strong> ${rotationDetails.join(", ")}</div>`;
@@ -5659,38 +6021,38 @@
                             : "background: #f8f9fa; border: 2px solid #e4e3e0;";
 
                         userOptionsHtml += `
-                            <button class="user-option-btn" data-user="${user}" style="
-                                display: block;
-                                width: 100%;
-                                padding: 12px;
-                                margin: 8px 0;
-                                ${buttonStyle}
-                                border-radius: 8px;
-                                color: #5D4E41;
-                                font-weight: 500;
-                                cursor: pointer;
-                                text-align: center;
-                                transition: all 0.2s ease;
-                            " onmouseover="this.style.background='#FBB740'; this.style.color='white';" onmouseout="this.style.background='${isAssigned ? "#FFF6E9" : "#f8f9fa"}'; this.style.color='#5D4E41';">
-                                ${user} ${isAssigned ? "(assigned)" : "(helped out)"}
-                            </button>
-                        `;
+                                    <button class="user-option-btn" data-user="${user}" style="
+                                        display: block;
+                                        width: 100%;
+                                        padding: 12px;
+                                        margin: 8px 0;
+                                        ${buttonStyle}
+                                        border-radius: 8px;
+                                        color: #5D4E41;
+                                        font-weight: 500;
+                                        cursor: pointer;
+                                        text-align: center;
+                                        transition: all 0.2s ease;
+                                    " onmouseover="this.style.background='#FBB740'; this.style.color='white';" onmouseout="this.style.background='${isAssigned ? "#FFF6E9" : "#f8f9fa"}'; this.style.color='#5D4E41';">
+                                        ${user} ${isAssigned ? "(assigned)" : "(helped out)"}
+                                    </button>
+                                `;
                     });
 
                     userModal.innerHTML = `
-                        <div class="modal-content">
-                            <h2>Who completed this task?</h2>
-                            <div style="margin: 15px 0; padding: 10px; background: #FFF6E9; border-radius: 6px; font-size: 13px; color: #5D4E41;">
-                                💡 The buzz points will go to whoever you select
-                            </div>
-                            <div style="margin: 20px 0;">
-                                ${userOptionsHtml}
-                            </div>
-                            <div style="text-align: center; margin-top: 20px;">
-                                <button id="cancelUserSelection" style="padding: 8px 16px; background: #e4e3e0; color: #5D4E41; font-weight: 500; border-radius: 6px; border: none; cursor: pointer;">Cancel</button>
-                            </div>
-                        </div>
-                    `;
+                                <div class="modal-content">
+                                    <h2>Who completed this task?</h2>
+                                    <div style="margin: 15px 0; padding: 10px; background: #FFF6E9; border-radius: 6px; font-size: 13px; color: #5D4E41;">
+                                        💡 The buzz points will go to whoever you select
+                                    </div>
+                                    <div style="margin: 20px 0;">
+                                        ${userOptionsHtml}
+                                    </div>
+                                    <div style="text-align: center; margin-top: 20px;">
+                                        <button id="cancelUserSelection" style="padding: 8px 16px; background: #e4e3e0; color: #5D4E41; font-weight: 500; border-radius: 6px; border: none; cursor: pointer;">Cancel</button>
+                                    </div>
+                                </div>
+                            `;
 
                     document.body.appendChild(userModal);
 
@@ -5782,42 +6144,70 @@
                         const result = await response.json();
                         console.log("✅ Task completed successfully:", result);
 
-                        // Trigger predicted schedule recalculation for fair rotation tasks
-                        if (
-                            task.fairRotation &&
-                            window.PredictedScheduleSystem &&
-                            typeof window.PredictedScheduleSystem
-                                .triggerScheduleRecalculation === "function"
-                        ) {
-                            console.log(
-                                `🔄 Triggering schedule recalculation for fair rotation task: ${task.title}`,
-                            );
-                            window.PredictedScheduleSystem.triggerScheduleRecalculation(
-                                task,
-                                selectedDate,
-                                `task completed by ${userName}`,
-                            );
-                        } else if (
-                            task.fairRotation &&
-                            typeof shouldRecalculateSchedule === "function" &&
-                            shouldRecalculateSchedule(
-                                task,
-                                selectedDate,
-                                userName,
-                            )
-                        ) {
-                            // Fallback recalculation
-                            console.log(
-                                `🔄 Fallback schedule recalculation for: ${task.title}`,
-                            );
+                        // Trigger both local and server-based fair rotation recalculation
+                        if (task.fairRotation) {
+                            // Use local fair rotation system for immediate updates
+                            if (window.onLocalFairRotationTaskCompleted) {
+                                console.log(
+                                    `🔄 Triggering local fair rotation recalculation for task: ${task.title}`,
+                                );
+
+                                // Determine occurrence index for this specific task
+                                let occurrenceIndex = 0;
+                                if (task.occurrence && task.totalOccurrences) {
+                                    occurrenceIndex = task.occurrence - 1; // Convert to 0-based
+                                }
+
+                                window.onLocalFairRotationTaskCompleted(
+                                    task.title,
+                                    userName,
+                                    selectedDate,
+                                    occurrenceIndex,
+                                );
+                            }
+
+                            // Also use server-based system for persistent tracking
                             if (
-                                typeof recalculateFairRotationSchedule ===
-                                "function"
+                                window.PredictedScheduleSystem &&
+                                typeof window.PredictedScheduleSystem
+                                    .triggerScheduleRecalculation === "function"
                             ) {
-                                recalculateFairRotationSchedule(
+                                console.log(
+                                    `🔮 Triggering server-based schedule recalculation for task: ${task.title}`,
+                                );
+                                try {
+                                    window.PredictedScheduleSystem.triggerScheduleRecalculation(
+                                        task,
+                                        selectedDate,
+                                        `task completed by ${userName}`,
+                                    );
+                                } catch (error) {
+                                    console.warn(
+                                        "Server-based recalculation failed:",
+                                        error,
+                                    );
+                                }
+                            } else if (
+                                typeof shouldRecalculateSchedule ===
+                                    "function" &&
+                                shouldRecalculateSchedule(
                                     task,
                                     selectedDate,
+                                    userName,
+                                )
+                            ) {
+                                console.log(
+                                    `🔄 Fallback recalculation for fair rotation task: ${task.title}`,
                                 );
+                                if (
+                                    typeof recalculateFairRotationSchedule ===
+                                    "function"
+                                ) {
+                                    recalculateFairRotationSchedule(
+                                        task,
+                                        selectedDate,
+                                    );
+                                }
                             }
                         }
 
@@ -6904,35 +7294,88 @@
                             result.error || "Failed to complete task",
                         );
 
-                    // Trigger predicted schedule recalculation for fair rotation tasks
-                    if (
-                        task.fairRotation &&
-                        window.PredictedScheduleSystem &&
-                        typeof window.PredictedScheduleSystem
-                            .triggerScheduleRecalculation === "function"
-                    ) {
-                        console.log(
-                            `🔄 Triggering schedule recalculation for fair rotation task: ${task.title}`,
-                        );
-                        window.PredictedScheduleSystem.triggerScheduleRecalculation(
-                            task,
-                            todayStr,
-                            `task completed by ${userName}`,
-                        );
-                    } else if (
-                        task.fairRotation &&
-                        typeof shouldRecalculateSchedule === "function" &&
-                        shouldRecalculateSchedule(task, todayStr, userName)
-                    ) {
-                        // Fallback recalculation
-                        console.log(
-                            `🔄 Fallback schedule recalculation for: ${task.title}`,
-                        );
-                        if (
-                            typeof recalculateFairRotationSchedule ===
-                            "function"
-                        ) {
-                            recalculateFairRotationSchedule(task, todayStr);
+                    // Trigger enhanced fair rotation recalculation (provisional state)
+                    if (task.fairRotation) {
+                        // Use enhanced fair rotation system for comprehensive tracking
+                        if (window.onEnhancedFairRotationTaskCompleted) {
+                            console.log(
+                                `🔄 Triggering enhanced fair rotation recalculation for task: ${task.title}`,
+                            );
+
+                            // Determine occurrence number for this specific task
+                            let occurrenceNumber = 1;
+                            if (task.occurrence) {
+                                occurrenceNumber = task.occurrence;
+                            } else {
+                                // Extract occurrence from title if present (e.g., "Task - 2nd")
+                                const occurrenceMatch =
+                                    task.title.match(/- (\d+)\w+$/);
+                                if (occurrenceMatch) {
+                                    occurrenceNumber = parseInt(
+                                        occurrenceMatch[1],
+                                    );
+                                }
+                            }
+
+                            // Store pending completion data for approval workflow
+                            const fairRotationResult =
+                                await window.onEnhancedFairRotationTaskCompleted(
+                                    task.originalTitle || task.title,
+                                    userName,
+                                    todayStr,
+                                    occurrenceNumber,
+                                );
+
+                            // Store pending ID for approval/rejection workflow
+                            if (
+                                fairRotationResult.success &&
+                                fairRotationResult.pendingId
+                            ) {
+                                // Store in localStorage for later approval/rejection handling
+                                const pendingData = {
+                                    taskTitle: task.originalTitle || task.title,
+                                    pendingId: fairRotationResult.pendingId,
+                                    completingUser: userName,
+                                    date: todayStr,
+                                    occurrence: occurrenceNumber,
+                                    timestamp: new Date().toISOString(),
+                                };
+
+                                // Store pending completion data
+                                let pendingCompletions = JSON.parse(
+                                    localStorage.getItem(
+                                        "pendingFairRotationCompletions",
+                                    ) || "[]",
+                                );
+                                pendingCompletions.push(pendingData);
+                                localStorage.setItem(
+                                    "pendingFairRotationCompletions",
+                                    JSON.stringify(pendingCompletions),
+                                );
+
+                                console.log(
+                                    `✅ Fair rotation completion stored as pending: ${fairRotationResult.pendingId}`,
+                                );
+                            }
+                        }
+
+                        // Fallback to existing systems if enhanced system not available
+                        else if (window.onLocalFairRotationTaskCompleted) {
+                            console.log(
+                                `🔄 Falling back to local fair rotation recalculation for task: ${task.title}`,
+                            );
+
+                            let occurrenceIndex = 0;
+                            if (task.occurrence && task.totalOccurrences) {
+                                occurrenceIndex = task.occurrence - 1;
+                            }
+
+                            window.onLocalFairRotationTaskCompleted(
+                                task.title,
+                                userName,
+                                todayStr,
+                                occurrenceIndex,
+                            );
                         }
                     }
 

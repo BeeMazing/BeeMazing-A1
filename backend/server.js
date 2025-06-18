@@ -9,6 +9,20 @@ const {
   getCurrentTurnUser,
 } = require("../shared/rotation-logic");
 
+// Import Enhanced Fair Rotation System
+const fs = require("fs");
+const path_module = require("path");
+const enhancedRotationPath = path_module.join(
+  __dirname,
+  "..",
+  "enhanced-fair-rotation-system.js",
+);
+const enhancedRotationCode = fs.readFileSync(enhancedRotationPath, "utf8");
+eval(enhancedRotationCode);
+
+// Initialize Enhanced Fair Rotation System
+const enhancedFairRotation = new EnhancedFairRotationSystem();
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -3063,6 +3077,10 @@ app.post("/api/review-task", async (req, res) => {
     let rewardAmount = 0;
     const requiredTimes = task.timesPerDay || 1;
 
+    // Enhanced Fair Rotation System Integration
+    const isRotationTask = task.rotation && task.rotation.enabled;
+    let rotationResult = null;
+
     if (decision === "accept") {
       // Count current completions for this user
       const userCompletions = completions.filter((c) => c.user === user).length;
@@ -3073,8 +3091,36 @@ app.post("/api/review-task", async (req, res) => {
         });
       }
 
+      // Find the pending entry to get the pendingId
+      const pendingEntry = pending[pendingEntryIndex];
+      const pendingId =
+        pendingEntry.pendingId || `legacy_${Date.now()}_${Math.random()}`;
+
+      // Enhanced Fair Rotation: Handle task approval
+      if (isRotationTask) {
+        try {
+          // Initialize task in rotation system if not already done
+          if (!enhancedFairRotation.taskUsers.has(title)) {
+            enhancedFairRotation.initializeTask(title, task.users || [], {
+              frequency: task.frequency || "daily",
+              timesPerDay: task.timesPerDay || 1,
+            });
+          }
+
+          // Process approval through enhanced rotation system
+          rotationResult = await enhancedFairRotation.onTaskApproved(
+            title,
+            pendingId,
+          );
+          console.log("🔄 Enhanced rotation approval result:", rotationResult);
+        } catch (error) {
+          console.error("❌ Enhanced rotation approval error:", error);
+          // Continue with standard processing if rotation fails
+        }
+      }
+
       // Move from pending to completions
-      const pendingEntry = pending.splice(pendingEntryIndex, 1)[0];
+      pending.splice(pendingEntryIndex, 1);
       completions.push({ user, repetition });
 
       // Award reward only if this is a new completion
@@ -3085,8 +3131,41 @@ app.post("/api/review-task", async (req, res) => {
         await admins.updateOne({ email: adminEmail }, { $set: { rewards } });
       }
     } else if (decision === "decline") {
-      // Remove from pending
+      // Find the pending entry to get the pendingId
+      let pendingId = null;
       if (pendingEntryIndex !== -1) {
+        const pendingEntry = pending[pendingEntryIndex];
+        pendingId =
+          pendingEntry.pendingId || `legacy_${Date.now()}_${Math.random()}`;
+
+        // Enhanced Fair Rotation: Handle task rejection
+        if (isRotationTask) {
+          try {
+            // Initialize task in rotation system if not already done
+            if (!enhancedFairRotation.taskUsers.has(title)) {
+              enhancedFairRotation.initializeTask(title, task.users || [], {
+                frequency: task.frequency || "daily",
+                timesPerDay: task.timesPerDay || 1,
+              });
+            }
+
+            // Process rejection through enhanced rotation system
+            rotationResult = await enhancedFairRotation.onTaskRejected(
+              title,
+              pendingId,
+              "Parent declined completion",
+            );
+            console.log(
+              "🔄 Enhanced rotation rejection result:",
+              rotationResult,
+            );
+          } catch (error) {
+            console.error("❌ Enhanced rotation rejection error:", error);
+            // Continue with standard processing if rotation fails
+          }
+        }
+
+        // Remove from pending
         pending.splice(pendingEntryIndex, 1);
       }
     }
@@ -3098,9 +3177,103 @@ app.post("/api/review-task", async (req, res) => {
       success: true,
       message: `Task ${decision}d successfully`,
       rewardAmount,
+      rotationResult: rotationResult || null,
+      refreshRequired: isRotationTask, // Signal frontend to refresh avatars
     });
   } catch (err) {
     console.error("Error reviewing task:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Enhanced Fair Rotation Assignment Update Endpoint
+app.post("/api/update-fair-rotation-assignments", async (req, res) => {
+  const { adminEmail, taskTitle, assignments, isProvisional, fairRotation } =
+    req.body;
+
+  try {
+    if (!adminEmail || !taskTitle || !assignments) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const db = await connectDB();
+    const admins = db.collection("admins");
+    const admin = await admins.findOne({ email: adminEmail });
+
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    const tasks = admin.tasks || [];
+    const taskIndex = tasks.findIndex((t) => t.title === taskTitle);
+
+    if (taskIndex === -1) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    const task = tasks[taskIndex];
+
+    // Update task assignments based on fair rotation calculations
+    if (assignments && assignments.length > 0) {
+      // Process each assignment update
+      assignments.forEach((assignment) => {
+        const { date, occurrenceIndex, newAssignee, reason } = assignment;
+
+        // Initialize assignment tracking if needed
+        if (!task.fairRotationAssignments) {
+          task.fairRotationAssignments = {};
+        }
+        if (!task.fairRotationAssignments[date]) {
+          task.fairRotationAssignments[date] = [];
+        }
+
+        // Update or add assignment
+        const existingIndex = task.fairRotationAssignments[date].findIndex(
+          (a) => a.occurrenceIndex === occurrenceIndex,
+        );
+
+        const assignmentRecord = {
+          occurrenceIndex,
+          assignee: newAssignee,
+          reason: reason || "Fair rotation update",
+          timestamp: new Date().toISOString(),
+          isProvisional: isProvisional || false,
+        };
+
+        if (existingIndex >= 0) {
+          task.fairRotationAssignments[date][existingIndex] = assignmentRecord;
+        } else {
+          task.fairRotationAssignments[date].push(assignmentRecord);
+        }
+
+        // Update the main users array for the task occurrence
+        if (task.users && task.users[occurrenceIndex]) {
+          task.users[occurrenceIndex] = newAssignee;
+        }
+      });
+
+      // Mark task as using fair rotation
+      task.fairRotation = true;
+      task.lastRotationUpdate = new Date().toISOString();
+    }
+
+    // Update the task in database
+    tasks[taskIndex] = task;
+    await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
+
+    console.log("✅ Fair rotation assignments updated:", {
+      taskTitle,
+      assignmentCount: assignments.length,
+      isProvisional,
+    });
+
+    res.json({
+      success: true,
+      message: "Fair rotation assignments updated successfully",
+      updatedAssignments: assignments.length,
+    });
+  } catch (err) {
+    console.error("❌ Error updating fair rotation assignments:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -3422,8 +3595,50 @@ app.post("/api/complete-task", async (req, res) => {
         }
       }
     } else {
+      // Enhanced Fair Rotation System Integration for Pending Completions
+      let pendingId = null;
+      let rotationResult = null;
+
+      // Generate unique pending ID for rotation tracking
+      if (isRotation) {
+        try {
+          // Initialize task in rotation system if not already done
+          if (!enhancedFairRotation.taskUsers.has(taskTitle)) {
+            enhancedFairRotation.initializeTask(taskTitle, task.users || [], {
+              frequency: task.frequency || "daily",
+              timesPerDay: task.timesPerDay || 1,
+            });
+          }
+
+          // Process completion through enhanced rotation system (provisional state)
+          rotationResult = await enhancedFairRotation.onTaskCompleted(
+            taskTitle,
+            user,
+            normalizedDate,
+            repetition,
+          );
+
+          if (rotationResult && rotationResult.success) {
+            pendingId = rotationResult.pendingId;
+            console.log("🔄 Enhanced rotation pending state created:", {
+              taskTitle,
+              user,
+              pendingId,
+            });
+          }
+        } catch (error) {
+          console.error("❌ Enhanced rotation completion error:", error);
+          // Continue with standard processing if rotation fails
+        }
+      }
+
       // For tasks requiring approval, submit for review
-      task.pendingCompletions[normalizedDate].push({ user, repetition });
+      const pendingCompletion = {
+        user,
+        repetition,
+        pendingId: pendingId || `legacy_${Date.now()}_${Math.random()}`, // Ensure all entries have an ID
+      };
+      task.pendingCompletions[normalizedDate].push(pendingCompletion);
 
       // Initialize completedDates if it doesn't exist for pending tasks too
       if (!task.completedDates) {
@@ -3455,6 +3670,7 @@ app.post("/api/complete-task", async (req, res) => {
       // Add to pendingCompletions for parent approval
       const pendingRecord = {
         user: user,
+        pendingId: pendingId || `legacy_${Date.now()}_${Math.random()}`,
         completedAt: new Date().toISOString(),
         reward: task.reward || 0,
         repetition: repetition,

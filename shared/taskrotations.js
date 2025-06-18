@@ -804,55 +804,12 @@ function calculateFairRotationLive(task, selectedDate, requiredTimes) {
       }
     });
 
-    // If multiple users have same min count, use tiebreaker logic
+    // If multiple users have same min count, use rotation order as tiebreaker
     if (candidatesWithMinCount.length > 1) {
-      if (task.fairRotationTimeBased) {
-        // Use time-based tie breaking - find who completed the task longest ago
-        let oldestCompletionUser = null;
-        let oldestCompletionDate = null;
-
-        candidatesWithMinCount.forEach((user) => {
-          let lastCompletionDate = null;
-
-          // Find the most recent completion for this user
-          if (task.completions) {
-            Object.keys(task.completions).forEach((dateStr) => {
-              const dayCompletions = task.completions[dateStr];
-              if (Array.isArray(dayCompletions)) {
-                dayCompletions.forEach((completion) => {
-                  if (completion.user === user) {
-                    const completionDate = parseLocalDate(dateStr);
-                    if (
-                      !lastCompletionDate ||
-                      completionDate > lastCompletionDate
-                    ) {
-                      lastCompletionDate = completionDate;
-                    }
-                  }
-                });
-              }
-            });
-          }
-
-          // If user never completed, or completed longer ago than current oldest
-          if (
-            !lastCompletionDate ||
-            !oldestCompletionDate ||
-            lastCompletionDate < oldestCompletionDate
-          ) {
-            oldestCompletionDate = lastCompletionDate;
-            oldestCompletionUser = user;
-          }
-        });
-
-        nextUser = oldestCompletionUser || candidatesWithMinCount[0];
-      } else {
-        // Use rotation order as tiebreaker
-        for (let j = 0; j < assignedUsers.length; j++) {
-          if (candidatesWithMinCount.includes(assignedUsers[j])) {
-            nextUser = assignedUsers[j];
-            break;
-          }
+      for (let j = 0; j < assignedUsers.length; j++) {
+        if (candidatesWithMinCount.includes(assignedUsers[j])) {
+          nextUser = assignedUsers[j];
+          break;
         }
       }
     } else {
@@ -1362,6 +1319,116 @@ window.updateUserReward = updateUserReward;
 window.saveTaskHistory = saveTaskHistory;
 window.updateLuckyChestProgress = updateLuckyChestProgress;
 
+// UNIVERSAL TASK ASSIGNMENT CALCULATOR
+// This function should be used by both tasks.html and userTasks.html to ensure consistent assignment calculation
+function getUniversalTaskAssignee(task, selectedDate, occurrenceIndex = 0) {
+  console.log(
+    `🎯 Universal assignment calculation for "${task.title}" on ${selectedDate}`,
+  );
+
+  if (!task || !task.users || task.users.length === 0) {
+    console.warn(`⚠️ Invalid task or no users for assignment calculation`);
+    return null;
+  }
+
+  // Check for temporary replacements first
+  if (task.tempTurnReplacement && task.tempTurnReplacement[selectedDate]) {
+    const replacement =
+      task.tempTurnReplacement[selectedDate][occurrenceIndex?.toString()];
+    if (replacement) {
+      console.log(`🔄 Temporary replacement found: ${replacement}`);
+      return replacement;
+    }
+  }
+
+  // For rotation tasks, calculate dynamic assignment
+  if (task.settings?.includes("Rotation")) {
+    try {
+      // Method 1: Use fair rotation system if available and enabled
+      if (
+        task.fairRotation &&
+        typeof window !== "undefined" &&
+        window.localFairRotationSystem?.calculateAssignee
+      ) {
+        console.log(`🔄 Using local fair rotation system for: ${task.title}`);
+        const assignment = window.localFairRotationSystem.calculateAssignee(
+          task,
+          selectedDate,
+          occurrenceIndex,
+        );
+        if (assignment && assignment.user) {
+          console.log(`✅ Fair rotation assignment: ${assignment.user}`);
+          return assignment.user;
+        }
+      }
+
+      // Method 2: Use predicted schedule system if available
+      if (
+        task.fairRotation &&
+        typeof window !== "undefined" &&
+        window.PredictedScheduleSystem?.mixedTurnDataWithPrediction
+      ) {
+        console.log(`🔄 Using predicted schedule system for: ${task.title}`);
+        const turnData =
+          window.PredictedScheduleSystem.mixedTurnDataWithPrediction(
+            task,
+            selectedDate,
+          );
+        const activeTurn = turnData.turns?.find(
+          (turn) => !turn.isCompleted && !turn.isPending,
+        );
+        if (activeTurn?.user) {
+          console.log(`✅ Predicted schedule assignment: ${activeTurn.user}`);
+          return activeTurn.user;
+        }
+      }
+
+      // Method 3: Use mixedTurnData for regular rotation
+      if (typeof mixedTurnData === "function") {
+        console.log(`🔄 Using mixedTurnData for rotation: ${task.title}`);
+        const turnData = mixedTurnData(task, selectedDate);
+        const activeTurn = turnData.turns?.find(
+          (turn) => !turn.isCompleted && !turn.isPending,
+        );
+        if (activeTurn?.user) {
+          console.log(`✅ Mixed turn data assignment: ${activeTurn.user}`);
+          return activeTurn.user;
+        }
+      }
+
+      // Method 4: Fallback calculation based on days since task start
+      console.log(`🔄 Using fallback rotation calculation for: ${task.title}`);
+      const taskStartDate = task.date
+        ? task.date.split(" to ")[0]
+        : selectedDate;
+      const startDate = new Date(taskStartDate);
+      const currentDate = new Date(selectedDate);
+
+      const daysDiff = Math.floor(
+        (currentDate - startDate) / (1000 * 60 * 60 * 24),
+      );
+      const rotationIndex =
+        (task.currentTurnIndex || 0 + daysDiff) % task.users.length;
+      const assignedUser = task.users[rotationIndex];
+
+      console.log(
+        `✅ Fallback assignment: ${assignedUser} (rotation index: ${rotationIndex})`,
+      );
+      return assignedUser;
+    } catch (error) {
+      console.warn(
+        `⚠️ Error in rotation calculation for "${task.title}":`,
+        error,
+      );
+    }
+  }
+
+  // For non-rotation tasks, return first user or based on occurrence
+  const assignedUser = task.users[occurrenceIndex % task.users.length];
+  console.log(`✅ Non-rotation assignment: ${assignedUser}`);
+  return assignedUser;
+}
+
 // TEST FUNCTION FOR FAIR ROTATION
 // Schedule-based rotation assignment function
 function calculateScheduledAssignment(task, selectedDate, occurrenceIndex = 0) {
@@ -1492,16 +1559,11 @@ function calculateFairRotationSchedule(task, startDate, days = 30) {
       // Apply tiebreaker
       let nextUser;
       if (candidatesWithMinCount.length > 1) {
-        if (task.fairRotationTimeBased) {
-          // Time-based tiebreaker logic would go here
-          nextUser = candidatesWithMinCount[0];
-        } else {
-          // Use rotation order as tiebreaker
-          for (let j = 0; j < task.users.length; j++) {
-            if (candidatesWithMinCount.includes(task.users[j])) {
-              nextUser = task.users[j];
-              break;
-            }
+        // Use simple rotation order for tie-breaking
+        for (let j = 0; j < users.length; j++) {
+          if (candidatesWithMinCount.includes(users[j])) {
+            nextUser = users[j];
+            break;
           }
         }
       } else {
@@ -1671,7 +1733,6 @@ function testFairRotation() {
     title: "Test Task 3",
     users: ["Alice", "Bob"],
     fairRotation: true,
-    fairRotationTimeBased: false,
     settings: ["Rotation"],
     repeat: "Daily",
     timesPerDay: 3,
@@ -1723,43 +1784,10 @@ function testFairRotation() {
     result4.turns[0]?.user === "Charlie" ? "PASSED" : "FAILED",
   );
 
-  // Test Scenario 5: Time-based tie breaking
-  console.log(
-    "\n📋 Test 5: Time-based tie breaking - picks user who completed longest ago",
-  );
+  // Test Scenario 5: Fallback to regular rotation when fairRotation is false
+  console.log("\n📋 Test 5: Regular rotation when fairRotation disabled");
   const task5 = {
     title: "Test Task 5",
-    users: ["Alice", "Bob", "Charlie"],
-    fairRotation: true,
-    fairRotationTimeBased: true,
-    settings: ["Rotation"],
-    repeat: "Daily",
-    timesPerDay: 1,
-    date: "2024-01-01 to 2024-12-31",
-    completions: {
-      "2024-01-01": [{ user: "Alice" }],
-      "2024-01-02": [{ user: "Bob" }],
-      "2024-01-03": [{ user: "Charlie" }],
-      "2024-01-05": [{ user: "Bob" }],
-      "2024-01-07": [{ user: "Charlie" }],
-    },
-    pendingCompletions: {},
-  };
-
-  const result5 = fairRotationTurnData(task5, "2024-01-08");
-  console.log(
-    "Expected: Alice (last completed 2024-01-01, vs Bob:2024-01-05, Charlie:2024-01-07)",
-  );
-  console.log("Actual:", result5.turns[0]?.user);
-  console.log(
-    "✅ Test 5:",
-    result5.turns[0]?.user === "Alice" ? "PASSED" : "FAILED",
-  );
-
-  // Test Scenario 6: Fallback to regular rotation when fairRotation is false
-  console.log("\n📋 Test 6: Regular rotation when fairRotation disabled");
-  const task6 = {
-    title: "Test Task 6",
     users: ["Alice", "Bob", "Charlie"],
     fairRotation: false,
     settings: ["Rotation"],
@@ -1774,12 +1802,12 @@ function testFairRotation() {
     pendingCompletions: {},
   };
 
-  const result6 = mixedTurnData(task6, "2024-01-04");
+  const result5 = mixedTurnData(task5, "2024-01-04");
   console.log("Expected: Regular rotation logic (not necessarily Charlie)");
-  console.log("Actual:", result6.turns[0]?.user);
+  console.log("Actual:", result5.turns[0]?.user);
   console.log(
-    "✅ Test 6: Using regular rotation -",
-    typeof result6.turns[0]?.user === "string" ? "PASSED" : "FAILED",
+    "✅ Test 5: Using regular rotation -",
+    typeof result5.turns[0]?.user === "string" ? "PASSED" : "FAILED",
   );
 
   console.log("\n" + "=".repeat(50));
@@ -1789,3 +1817,6 @@ function testFairRotation() {
 
 // Export test function
 window.testFairRotation = testFairRotation;
+
+// Export universal assignment function
+window.getUniversalTaskAssignee = getUniversalTaskAssignee;

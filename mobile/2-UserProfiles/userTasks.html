@@ -865,6 +865,8 @@
     <body>
         <!-- Fair Rotation Dynamic System -->
         <script src="../../fair-rotation-dynamic-system.js"></script>
+        <!-- Local Fair Rotation System -->
+        <script src="../../local-fair-rotation-system.js"></script>
         <div class="date-header">
             <div class="month-nav">
                 <button id="prevMonth">&lt;</button>
@@ -949,6 +951,7 @@
 
         <script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
         <script src="/BeeMazing-A1/shared/avatar-system.js?t=${Date.now()}"></script>
+        <script src="/BeeMazing-A1/enhanced-fair-rotation-system.js?t=${Date.now()}"></script>
 
         <script>
             document.addEventListener("DOMContentLoaded", async () => {
@@ -978,6 +981,9 @@
                         );
                     }
                 }
+
+                // Initialize Enhanced Fair Rotation System event listeners
+                setupEnhancedFairRotationListeners();
 
                 if (userName && adminEmail) {
                     // Check if user is admin
@@ -1132,96 +1138,339 @@
                         }
                     }
                 }
+
+                // Store current tab for refresh mechanisms
+                localStorage.setItem("userTasks_currentTab", tabId);
+
+                console.log(
+                    `🔄 Switched to ${tabId} tab for user: ${userName}`,
+                );
             }
+
+            // Force refresh current tab (used by Enhanced Fair Rotation System)
+            window.forceRefreshUserTasks = function () {
+                const currentTab =
+                    localStorage.getItem("userTasks_currentTab") || "myTasks";
+                const selectedDate = new Date().toLocaleDateString("sv-SE");
+
+                if (!userName) {
+                    console.warn("⚠️ No userName available for force refresh");
+                    return;
+                }
+
+                console.log(
+                    `🔄 Force refreshing ${currentTab} tab for fair rotation changes`,
+                );
+
+                if (currentTab === "myTasks") {
+                    loadUserTasks(userName, selectedDate);
+                } else if (currentTab === "allTasks") {
+                    loadAllTasks(userName, selectedDate);
+                }
+            };
 
             // addtasks.html Settings: Rotation //////////////////////////////////////////////////////////////////////////////////////////
 
             let isLoadingUserTasks = false;
+
+            // Enhanced Fair Rotation System Integration for userTasks.html
+            function setupEnhancedFairRotationListeners() {
+                console.log(
+                    "🔄 Setting up Enhanced Fair Rotation listeners for userTasks.html",
+                );
+
+                // Listen for approval/rejection completion events
+                window.addEventListener("taskApprovalCompleted", (event) => {
+                    const { taskTitle, decision } = event.detail;
+                    console.log(
+                        `🔄 Task approval completed: ${taskTitle} - ${decision}`,
+                    );
+
+                    // Refresh both My Tasks and All Tasks to reflect new assignments
+                    setTimeout(() => {
+                        refreshUserTasksView();
+                    }, 500);
+                });
+
+                // Listen for fair rotation update events
+                window.addEventListener("fairRotationUpdate", (event) => {
+                    const { taskTitle, isProvisional } = event.detail;
+                    console.log(
+                        `🔄 Fair rotation update: ${taskTitle} - provisional: ${isProvisional}`,
+                    );
+
+                    // Refresh task views to show new assignments
+                    setTimeout(() => {
+                        refreshUserTasksView();
+                    }, 300);
+                });
+
+                // Listen for custom refresh requests
+                window.addEventListener("userTasksRefreshRequest", () => {
+                    console.log("🔄 Received user tasks refresh request");
+                    refreshUserTasksView();
+                });
+
+                console.log(
+                    "✅ Enhanced Fair Rotation listeners set up for userTasks.html",
+                );
+            }
+
+            // Function to refresh both My Tasks and All Tasks views
+            function refreshUserTasksView() {
+                try {
+                    const today = new Date().toISOString().split("T")[0];
+                    const currentUser = userName;
+
+                    if (!currentUser) {
+                        console.warn("⚠️ No current user for refresh");
+                        return;
+                    }
+
+                    console.log(
+                        "🔄 Refreshing user tasks view for:",
+                        currentUser,
+                    );
+
+                    // Check which tab is currently active and refresh accordingly
+                    const myTasksTab = document.getElementById("myTasksList");
+                    const allTasksTab = document.getElementById("allTasksList");
+
+                    if (
+                        myTasksTab &&
+                        !myTasksTab.classList.contains("hidden")
+                    ) {
+                        console.log("🔄 Refreshing My Tasks tab");
+                        loadUserTasks(currentUser, today);
+                    }
+
+                    if (
+                        allTasksTab &&
+                        !allTasksTab.classList.contains("hidden")
+                    ) {
+                        console.log("🔄 Refreshing All Tasks tab");
+                        loadAllTasks(currentUser, today);
+                    }
+
+                    // If both are hidden, refresh both (they'll load when shown)
+                    if (
+                        (!myTasksTab ||
+                            myTasksTab.classList.contains("hidden")) &&
+                        (!allTasksTab ||
+                            allTasksTab.classList.contains("hidden"))
+                    ) {
+                        console.log(
+                            "🔄 Refreshing both tabs (currently hidden)",
+                        );
+                        loadUserTasks(currentUser, today);
+                        loadAllTasks(currentUser, today);
+                    }
+                } catch (error) {
+                    console.error(
+                        "❌ Error refreshing user tasks view:",
+                        error,
+                    );
+                }
+            }
+
+            // Enhanced function to check if Enhanced Fair Rotation System is available
+            function isEnhancedFairRotationAvailable() {
+                return (
+                    typeof window !== "undefined" &&
+                    window.enhancedFairRotationSystem &&
+                    typeof window.enhancedFairRotationSystem.isUserAssigned ===
+                        "function"
+                );
+            }
             let userName = null; // Global userName variable
 
             // Helper function to determine current assignee for a task at a specific date and user index
+            // Uses the universal assignment calculator from taskrotations.js for consistency
+            // Now integrated with Enhanced Fair Rotation System
             function getCurrentAssignee(task, selectedDate, userIndex = 0) {
-                // Check if there's a temporary replacement for this date and user index
+                // First check Enhanced Fair Rotation System if available and rotation is enabled
                 if (
-                    task.tempTurnReplacement &&
-                    task.tempTurnReplacement[selectedDate] &&
-                    task.tempTurnReplacement[selectedDate][userIndex.toString()]
+                    task.rotation &&
+                    task.rotation.enabled &&
+                    isEnhancedFairRotationAvailable()
                 ) {
-                    return task.tempTurnReplacement[selectedDate][
-                        userIndex.toString()
-                    ];
+                    try {
+                        const assignmentInfo =
+                            window.enhancedFairRotationSystem.getAssignmentInfo(
+                                task.title,
+                                selectedDate,
+                                task.occurrence || 1,
+                            );
+
+                        if (assignmentInfo && assignmentInfo.assignedUser) {
+                            console.log(
+                                `🔄 Enhanced Fair Rotation assignee for "${task.title}": ${assignmentInfo.assignedUser}`,
+                            );
+                            return assignmentInfo.assignedUser;
+                        }
+                    } catch (error) {
+                        console.warn(
+                            `⚠️ Enhanced Fair Rotation getCurrentAssignee failed for "${task.title}":`,
+                            error,
+                        );
+                        // Fall through to standard logic
+                    }
                 }
-                // Otherwise return the original assignee
-                return task.users[userIndex];
+
+                // Use the universal assignment function from taskrotations.js
+                if (typeof window.getUniversalTaskAssignee === "function") {
+                    const assignedUser = window.getUniversalTaskAssignee(
+                        task,
+                        selectedDate,
+                        userIndex,
+                    );
+                    if (assignedUser) {
+                        return assignedUser;
+                    }
+                }
+
+                console.warn(
+                    "⚠️ Universal assignment function not available, using fallback",
+                );
+                return task.users[userIndex] || null;
             }
 
-            // Helper function to check if a user is currently assigned to a task
+            // Enhanced function to check if a user is currently assigned to a task
+            // Handles both regular tasks and multiple daily occurrences properly
+            // Now integrated with Enhanced Fair Rotation System
             function isUserCurrentlyAssigned(task, selectedDate, userName) {
-                // Check original assignments
-                const isOriginallyAssigned = task.users.includes(userName);
+                console.log(
+                    `🔍 Enhanced assignment check for "${task.title}" - user: ${userName}`,
+                );
 
-                // For rotation tasks with occurrences, check specific assignment
+                // First check Enhanced Fair Rotation System if rotation is enabled
+                if (
+                    task.rotation &&
+                    task.rotation.enabled &&
+                    window.enhancedFairRotationSystem
+                ) {
+                    try {
+                        const rotationAssigned =
+                            window.enhancedFairRotationSystem.isUserAssigned(
+                                task.title,
+                                userName,
+                                selectedDate,
+                                task.occurrence || 1,
+                            );
+                        console.log(
+                            `🔄 Enhanced Fair Rotation assignment for "${task.title}": ${rotationAssigned}`,
+                        );
+
+                        if (rotationAssigned !== undefined) {
+                            return rotationAssigned;
+                        }
+                    } catch (error) {
+                        console.warn(
+                            `⚠️ Enhanced Fair Rotation check failed for "${task.title}":`,
+                            error,
+                        );
+                        // Fall through to standard logic
+                    }
+                }
+                console.log(`   Task structure:`, {
+                    title: task.title,
+                    originalTitle: task.originalTitle,
+                    occurrence: task.occurrence,
+                    totalOccurrences: task.totalOccurrences,
+                    users: task.users,
+                });
+
+                // For multiple daily occurrences, check specific occurrence assignment
+                if (
+                    task.originalTitle &&
+                    task.occurrence &&
+                    task.totalOccurrences
+                ) {
+                    console.log(
+                        `   🔄 Multiple daily occurrence detected: "${task.originalTitle}" - occurrence ${task.occurrence}/${task.totalOccurrences}`,
+                    );
+
+                    // For occurrences, the task.users array should contain only the assigned user(s)
+                    const isAssignedToOccurrence =
+                        task.users.includes(userName);
+                    console.log(
+                        `   Occurrence assignment: ${isAssignedToOccurrence}`,
+                    );
+
+                    if (isAssignedToOccurrence) {
+                        console.log(
+                            `   ✅ User is assigned to this occurrence`,
+                        );
+                        return true;
+                    } else {
+                        console.log(
+                            `   ❌ User is NOT assigned to this occurrence`,
+                        );
+                        return false;
+                    }
+                }
+
+                // For regular tasks, check original assignment logic
+                const isOriginallyAssigned = task.users.includes(userName);
+                console.log(
+                    `   📝 Regular task - original assignment: ${isOriginallyAssigned}`,
+                );
+
+                // Check for rotation tasks with turn index
                 if (
                     task.settings &&
                     task.settings.includes("Rotation") &&
                     typeof task.currentTurnIndex !== "undefined"
                 ) {
-                    // This is a rotation task occurrence - check who is currently assigned
-                    const currentAssigneeIndex = task.currentTurnIndex;
                     const currentAssignee = getCurrentAssignee(
                         task,
                         selectedDate,
-                        currentAssigneeIndex,
+                        task.currentTurnIndex,
                     );
-
-                    console.log(`🎯 Checking rotation occurrence assignment:`, {
-                        taskTitle: task.title,
-                        occurrence: task.occurrence || "N/A",
-                        currentTurnIndex: task.currentTurnIndex,
-                        currentAssignee: currentAssignee,
-                        userName: userName,
-                        isAssigned: currentAssignee === userName,
-                    });
-
+                    console.log(
+                        `   🔄 Rotation task - current assignee: ${currentAssignee}`,
+                    );
                     return currentAssignee === userName;
                 }
 
                 // Check temporary replacements
-                let isReplacementAssigned = false;
                 if (
                     task.tempTurnReplacement &&
                     task.tempTurnReplacement[selectedDate]
                 ) {
                     const replacements = task.tempTurnReplacement[selectedDate];
-                    isReplacementAssigned =
+                    const isReplacementAssigned =
                         Object.values(replacements).includes(userName);
-                }
 
-                // User is currently assigned if:
-                // 1. Originally assigned AND no one has replaced them, OR
-                // 2. They are assigned as a replacement
-                if (isReplacementAssigned) {
-                    return true;
-                }
+                    if (isReplacementAssigned) {
+                        console.log(`   🔄 User is assigned as replacement`);
+                        return true;
+                    }
 
-                if (
-                    isOriginallyAssigned &&
-                    task.tempTurnReplacement &&
-                    task.tempTurnReplacement[selectedDate]
-                ) {
-                    // Check if this user has been replaced
-                    const userIndex = task.users.indexOf(userName);
-                    if (
-                        userIndex !== -1 &&
-                        task.tempTurnReplacement[selectedDate][
-                            userIndex.toString()
-                        ]
-                    ) {
-                        return false; // User has been replaced
+                    // Check if user was replaced
+                    if (isOriginallyAssigned) {
+                        const userIndex = task.users.indexOf(userName);
+                        if (
+                            userIndex !== -1 &&
+                            task.tempTurnReplacement[selectedDate][
+                                userIndex.toString()
+                            ]
+                        ) {
+                            console.log(`   🔄 User was replaced`);
+                            return false;
+                        }
                     }
                 }
 
-                return isOriginallyAssigned;
+                if (isOriginallyAssigned) {
+                    console.log(
+                        `   ✅ User is originally assigned to regular task`,
+                    );
+                    return true;
+                }
+
+                console.log(`   ❌ User is NOT assigned to this task`);
+                return false;
             }
 
             // Helper function to determine original assignee for a task
@@ -1475,126 +1724,12 @@
                     // Sort tasks: incomplete (by due time) → incomplete (no due time) → pending approval → approved
                     otherTasks.sort((a, b) => {
                         const getTaskStatus = (task) => {
-                            const isRotation =
-                                task.settings?.includes("Rotation");
-                            let turnData;
-
-                            if (isRotation) {
-                                turnData =
-                                    typeof mixedTurnData === "function"
-                                        ? mixedTurnData(task, selectedDate)
-                                        : {
-                                              turns: [],
-                                              completedCount: 0,
-                                              requiredTimes: 1,
-                                          };
-                            } else {
-                                turnData =
-                                    typeof individualTurnData === "function"
-                                        ? individualTurnData(task, selectedDate)
-                                        : {
-                                              turns: [],
-                                              completedCount: 0,
-                                              requiredTimes: 1,
-                                          };
-                            }
-
-                            const totalRequiredCompletions = isRotation
-                                ? turnData.requiredTimes
-                                : turnData.requiredTimes * task.users.length;
-
-                            const hasSubmissions = turnData.completedCount > 0;
-                            if (!hasSubmissions) return "incomplete";
-
-                            if (task.parentApproval === true) {
-                                // Use improved cross-completion status calculation
-                                const pendingUsers = [];
-                                const approvedUsers = [];
-
-                                // Check ALL completions (including cross-completions)
-                                const allCompletions = [];
-
-                                // Get all completions from completedDates format
-                                if (
-                                    task.completedDates &&
-                                    task.completedDates[selectedDate]
-                                ) {
-                                    allCompletions.push(
-                                        ...task.completedDates[selectedDate],
-                                    );
-                                }
-                                // Fallback to completions format
-                                else if (
-                                    task.completions &&
-                                    task.completions[selectedDate]
-                                ) {
-                                    allCompletions.push(
-                                        ...task.completions[
-                                            selectedDate
-                                        ].filter(
-                                            (c) =>
-                                                c.isCompleted || !c.isPending,
-                                        ),
-                                    );
-                                }
-
-                                // CROSS-COMPLETION FIX: Also check task.completions for isPending status
-                                if (
-                                    task.completions &&
-                                    task.completions[selectedDate]
-                                ) {
-                                    const completionsData =
-                                        task.completions[selectedDate];
-                                    // Update isPending status from completions data
-                                    allCompletions.forEach((completion) => {
-                                        const matchingCompletion =
-                                            completionsData.find(
-                                                (c) =>
-                                                    c.user === completion.user,
-                                            );
-                                        if (matchingCompletion) {
-                                            // Use the isPending status from completions data (more accurate)
-                                            completion.isPending =
-                                                matchingCompletion.isPending;
-                                        }
-                                    });
-                                }
-
-                                // Process all completions (including cross-completions)
-                                allCompletions.forEach((completion) => {
-                                    const user = completion.user;
-                                    if (completion.isPending === true) {
-                                        if (!pendingUsers.includes(user)) {
-                                            pendingUsers.push(user);
-                                        }
-                                    } else {
-                                        if (!approvedUsers.includes(user)) {
-                                            approvedUsers.push(user);
-                                        }
-                                    }
-                                });
-
-                                if (
-                                    approvedUsers.length > 0 &&
-                                    pendingUsers.length === 0
-                                ) {
-                                    return "approved";
-                                } else if (pendingUsers.length > 0) {
-                                    return "pending";
-                                } else {
-                                    return "incomplete";
-                                }
-                            } else {
-                                // Non-approval tasks are approved when completed
-                                const isFullyCompleted =
-                                    turnData.completedCount >=
-                                    totalRequiredCompletions;
-                                if (isFullyCompleted) {
-                                    return "approved";
-                                } else {
-                                    return "incomplete";
-                                }
-                            }
+                            // Use enhanced calculateTaskStatusForUser function for all tasks
+                            return calculateTaskStatusForUser(
+                                task,
+                                selectedDate,
+                                userName,
+                            );
                         };
 
                         const getDueTimePriority = (task) => {
@@ -2546,206 +2681,17 @@
                         );
                     });
 
-                    // Calculate task statuses BEFORE sorting
+                    // Calculate task statuses BEFORE sorting using enhanced function
                     userTasks.forEach((task) => {
-                        const isRotation = task.settings?.includes("Rotation");
-                        let turnData;
-
-                        if (isRotation) {
-                            turnData =
-                                typeof mixedTurnData === "function"
-                                    ? mixedTurnData(task, selectedDate)
-                                    : {
-                                          turns: [],
-                                          completedCount: 0,
-                                          requiredTimes: 1,
-                                      };
-                        } else {
-                            turnData =
-                                typeof individualTurnData === "function"
-                                    ? individualTurnData(task, selectedDate)
-                                    : {
-                                          turns: [],
-                                          completedCount: 0,
-                                          requiredTimes: 1,
-                                      };
-                        }
-
-                        const totalRequiredCompletions = isRotation
-                            ? turnData.requiredTimes
-                            : turnData.requiredTimes * task.users.length;
-
-                        const todayStr = new Date().toLocaleDateString("sv-SE");
-                        const isToday = selectedDate === todayStr;
-
-                        // Check if task can be finished today
-                        let canFinish = false;
-                        if (isToday) {
-                            if (
-                                task.isPrivate === true &&
-                                !task.users.includes(userName)
-                            ) {
-                                canFinish = false;
-                            } else {
-                                canFinish =
-                                    turnData.completedCount <
-                                    totalRequiredCompletions;
-                            }
-                        }
-
-                        if (canFinish) {
-                            task._calculatedStatus = "incomplete";
-                            console.log(
-                                `🔴 TASK STATUS SET: "${task.title}" → INCOMPLETE (can finish today)`,
-                            );
-                        } else {
-                            const hasSubmissions = turnData.completedCount > 0;
-                            if (!hasSubmissions) {
-                                task._calculatedStatus = "incomplete";
-                                console.log(
-                                    `🔴 TASK STATUS SET: "${task.title}" → INCOMPLETE (no submissions)`,
-                                );
-                            } else {
-                                // Check approval status for completed tasks
-                                if (task.parentApproval === true) {
-                                    // Build pending and approved users arrays
-                                    const pendingUsers = [];
-                                    const approvedUsers = [];
-
-                                    // Check ALL completions (including cross-completions)
-                                    const allCompletions = [];
-
-                                    // Get all completions from completedDates format
-                                    if (
-                                        task.completedDates &&
-                                        task.completedDates[selectedDate]
-                                    ) {
-                                        allCompletions.push(
-                                            ...task.completedDates[
-                                                selectedDate
-                                            ],
-                                        );
-                                    }
-                                    // Fallback to completions format
-                                    else if (
-                                        task.completions &&
-                                        task.completions[selectedDate]
-                                    ) {
-                                        allCompletions.push(
-                                            ...task.completions[
-                                                selectedDate
-                                            ].filter(
-                                                (c) =>
-                                                    c.isCompleted ||
-                                                    !c.isPending,
-                                            ),
-                                        );
-                                    }
-
-                                    // CROSS-COMPLETION FIX: Also check task.completions for isPending status
-                                    // (completedDates may have isPending=true while completions has isPending=false)
-                                    if (
-                                        task.completions &&
-                                        task.completions[selectedDate]
-                                    ) {
-                                        const completionsData =
-                                            task.completions[selectedDate];
-                                        // Update isPending status from completions data
-                                        allCompletions.forEach((completion) => {
-                                            const matchingCompletion =
-                                                completionsData.find(
-                                                    (c) =>
-                                                        c.user ===
-                                                        completion.user,
-                                                );
-                                            if (matchingCompletion) {
-                                                // Use the isPending status from completions data (more accurate)
-                                                completion.isPending =
-                                                    matchingCompletion.isPending;
-                                            }
-                                        });
-                                    }
-
-                                    // Process all completions (including cross-completions)
-                                    console.log(
-                                        `🔍 COMPLETION PROCESSING DEBUG: "${task.title}" → allCompletions:`,
-                                        allCompletions,
-                                    );
-
-                                    allCompletions.forEach(
-                                        (completion, index) => {
-                                            const user = completion.user;
-                                            console.log(
-                                                `🔍 Processing completion ${index + 1}/${allCompletions.length} for "${task.title}": user="${user}", isPending=${completion.isPending}, isCompleted=${completion.isCompleted}, completion=`,
-                                                completion,
-                                            );
-
-                                            if (completion.isPending === true) {
-                                                if (
-                                                    !pendingUsers.includes(user)
-                                                ) {
-                                                    pendingUsers.push(user);
-                                                    console.log(
-                                                        `➕ Added to PENDING: "${user}" for task "${task.title}"`,
-                                                    );
-                                                }
-                                            } else {
-                                                if (
-                                                    !approvedUsers.includes(
-                                                        user,
-                                                    )
-                                                ) {
-                                                    approvedUsers.push(user);
-                                                    console.log(
-                                                        `➕ Added to APPROVED: "${user}" for task "${task.title}"`,
-                                                    );
-                                                }
-                                            }
-                                        },
-                                    );
-
-                                    console.log(
-                                        `🔍 FINAL ARRAYS for "${task.title}": pendingUsers=[${pendingUsers.join(", ")}], approvedUsers=[${approvedUsers.join(", ")}]`,
-                                    );
-
-                                    if (
-                                        approvedUsers.length > 0 &&
-                                        pendingUsers.length === 0
-                                    ) {
-                                        task._calculatedStatus = "approved";
-                                        console.log(
-                                            `🟢 TASK STATUS SET: "${task.title}" → APPROVED (${approvedUsers.length} approved, ${pendingUsers.length} pending)`,
-                                        );
-                                    } else if (pendingUsers.length > 0) {
-                                        task._calculatedStatus = "pending";
-                                        console.log(
-                                            `🟡 TASK STATUS SET: "${task.title}" → PENDING (${pendingUsers.length} pending, ${approvedUsers.length} approved)`,
-                                        );
-                                    } else {
-                                        task._calculatedStatus = "incomplete";
-                                        console.log(
-                                            `🔴 TASK STATUS SET: "${task.title}" → INCOMPLETE (no completion data found)`,
-                                        );
-                                    }
-                                } else {
-                                    // Non-approval tasks are approved when completed
-                                    const isFullyCompleted =
-                                        turnData.completedCount >=
-                                        totalRequiredCompletions;
-                                    if (isFullyCompleted) {
-                                        task._calculatedStatus = "approved";
-                                        console.log(
-                                            `🟢 TASK STATUS SET: "${task.title}" → APPROVED (non-approval task completed)`,
-                                        );
-                                    } else {
-                                        task._calculatedStatus = "incomplete";
-                                        console.log(
-                                            `🔴 TASK STATUS SET: "${task.title}" → INCOMPLETE (non-approval task not completed)`,
-                                        );
-                                    }
-                                }
-                            }
-                        }
+                        // Use enhanced calculateTaskStatusForUser function for all tasks
+                        task._calculatedStatus = calculateTaskStatusForUser(
+                            task,
+                            selectedDate,
+                            userName,
+                        );
+                        console.log(
+                            `🎯 ENHANCED STATUS SET: "${task.title}" → ${task._calculatedStatus}`,
+                        );
                     });
 
                     // Sort tasks: incomplete (by due time) → incomplete (no due time) → pending approval → approved
@@ -4912,9 +4858,6 @@
                     if (task.fairRotation) {
                         rotationDetails.push("Fair Task Rotation");
                     }
-                    if (task.fairRotationTimeBased) {
-                        rotationDetails.push("Time-based tie breaking");
-                    }
                     if (rotationDetails.length > 0) {
                         modalHTML += `<div class="task-info-row"><strong>Additional Details:</strong> ${rotationDetails.join(", ")}</div>`;
                     }
@@ -5415,6 +5358,18 @@
                     adminEmail,
                 });
 
+                // 🔍 DEBUG: Track title transformations
+                console.log("🔍 finishTask: Title debugging", {
+                    taskTitle: task.title,
+                    taskTitleType: typeof task.title,
+                    taskTitleLength: task.title ? task.title.length : 0,
+                    taskTitleTrimmed: task.title ? task.title.trim() : null,
+                    taskTitleEncoded: task.title
+                        ? encodeURIComponent(task.title)
+                        : null,
+                    fullTaskObject: task,
+                });
+
                 // Validation
                 if (!currentUser) {
                     console.error("🔥 finishTask: No currentUser provided");
@@ -5468,18 +5423,32 @@
                 document.body.appendChild(popup);
 
                 try {
+                    const requestPayload = {
+                        adminEmail,
+                        taskTitle: task.title.trim(),
+                        user: currentUser, // Who is actually completing the task
+                        date: today,
+                        isPrivate: task.isPrivate, // Let backend enforce private task rules
+                    };
+
+                    console.log("🔍 finishTask: API Request Details", {
+                        url: "https://beemazing1.onrender.com/api/complete-task",
+                        method: "POST",
+                        payload: requestPayload,
+                        payloadJSON: JSON.stringify(requestPayload),
+                        taskType: task.fairRotation
+                            ? "Fair Rotation"
+                            : "Simple Rotation",
+                        taskFairRotationFlag: task.fairRotation,
+                        taskSettings: task.settings,
+                    });
+
                     const response = await fetch(
                         "https://beemazing1.onrender.com/api/complete-task",
                         {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                adminEmail,
-                                taskTitle: task.title.trim(),
-                                user: currentUser, // Who is actually completing the task
-                                date: today,
-                                isPrivate: task.isPrivate, // Let backend enforce private task rules
-                            }),
+                            body: JSON.stringify(requestPayload),
                         },
                     );
                     const data = await response.json();
@@ -5500,15 +5469,97 @@
                     console.log("✅ finishTask: Task submitted", data);
                     popup.textContent = `Task Submitted by ${currentUser}! Waiting for Parent Review`;
 
-                    // 🔄 FAIR ROTATION: Trigger recalculation after task completion
-                    if (window.onFairRotationTaskCompleted) {
+                    // 🔄 FAIR ROTATION: Check if task uses fair rotation (either explicit flag or Rotation setting)
+                    const isFairRotationTask =
+                        task.fairRotation ||
+                        (task.settings?.includes("Rotation") &&
+                            task.title?.includes(" - "));
+
+                    console.log("🔍 Fair rotation check:", {
+                        taskTitle: task.title,
+                        hasFairRotationFlag: !!task.fairRotation,
+                        hasRotationSetting: task.settings?.includes("Rotation"),
+                        hasOccurrenceSuffix: task.title?.includes(" - "),
+                        isFairRotationTask,
+                    });
+
+                    if (isFairRotationTask) {
+                        // Use local fair rotation system for immediate updates
+                        if (window.onLocalFairRotationTaskCompleted) {
+                            console.log(
+                                "🔄 Triggering local fair rotation recalculation...",
+                            );
+
+                            // Determine occurrence index for this specific task
+                            let occurrenceIndex = 0;
+                            if (task.occurrence && task.totalOccurrences) {
+                                occurrenceIndex = task.occurrence - 1; // Convert to 0-based
+                            } else {
+                                // Extract occurrence from title if present (e.g., "testa versija - 2nd" -> 2)
+                                const occurrenceMatch =
+                                    task.title.match(/- (\d+)\w+$/);
+                                if (occurrenceMatch) {
+                                    occurrenceIndex =
+                                        parseInt(occurrenceMatch[1]) - 1; // Convert to 0-based
+                                }
+                            }
+
+                            console.log(
+                                "🔍 Calling local fair rotation with:",
+                                {
+                                    title: task.title,
+                                    user: currentUser,
+                                    date: today,
+                                    occurrenceIndex,
+                                },
+                            );
+
+                            window.onLocalFairRotationTaskCompleted(
+                                task.title,
+                                currentUser,
+                                today,
+                                occurrenceIndex,
+                            );
+                        } else {
+                            console.warn(
+                                "⚠️ Local fair rotation system not available",
+                            );
+                        }
+
+                        // Also use server-based system for persistent tracking
+                        if (window.onFairRotationTaskCompleted) {
+                            console.log(
+                                "🔄 Triggering server-based fair rotation recalculation...",
+                            );
+                            try {
+                                console.log(
+                                    "🔍 Calling server fair rotation with:",
+                                    {
+                                        title: task.title,
+                                        user: currentUser,
+                                        date: today,
+                                    },
+                                );
+
+                                await window.onFairRotationTaskCompleted(
+                                    task.title,
+                                    currentUser,
+                                    today,
+                                );
+                            } catch (error) {
+                                console.error(
+                                    "❌ Error in server-based fair rotation:",
+                                    error,
+                                );
+                            }
+                        } else {
+                            console.warn(
+                                "⚠️ Server fair rotation system not available",
+                            );
+                        }
+                    } else {
                         console.log(
-                            "🔄 Triggering fair rotation recalculation...",
-                        );
-                        await window.onFairRotationTaskCompleted(
-                            task.title,
-                            currentUser,
-                            today,
+                            "ℹ️ Task is not a fair rotation task, skipping recalculation",
                         );
                     }
 
@@ -5623,6 +5674,20 @@
                                 loadAllTasks(currentUser, today);
                             }, 100);
                         }
+
+                        // Dispatch event to notify other systems about task completion
+                        const completionEvent = new CustomEvent(
+                            "taskCompletedInUserTasks",
+                            {
+                                detail: {
+                                    taskTitle: task.title,
+                                    user: currentUser,
+                                    date: today,
+                                    timestamp: new Date().toISOString(),
+                                },
+                            },
+                        );
+                        window.dispatchEvent(completionEvent);
                     }, 2000);
                 } catch (err) {
                     console.error("🔥 finishTask: Error submitting task", {
@@ -5975,6 +6040,551 @@
             console.log(
                 "✅ Width debugging script loaded. Run debugTabWidths() to test.",
             );
+        </script>
+
+        <!-- TASK FLOW FIXES INTEGRATION -->
+        <script>
+            // COMPREHENSIVE TASK FLOW ISSUES FIX
+            // Fixes issues where completed tasks move incorrectly between "My Tasks" and "All Tasks"
+
+            console.log("🔧 Integrating Task Flow Issues Fix...");
+
+            // Enhanced task assignment checking that handles completed tasks correctly
+            function fixedIsUserCurrentlyAssigned(
+                task,
+                selectedDate,
+                userName,
+            ) {
+                console.log(
+                    `🔍 Checking assignment for task "${task.title}" - user: ${userName}, date: ${selectedDate}`,
+                );
+
+                // Check original assignments
+                const isOriginallyAssigned = task.users.includes(userName);
+                console.log(`   Original assignment: ${isOriginallyAssigned}`);
+
+                // For rotation tasks with occurrences, check specific assignment
+                if (
+                    task.settings &&
+                    task.settings.includes("Rotation") &&
+                    typeof task.currentTurnIndex !== "undefined"
+                ) {
+                    const currentAssignee = getCurrentAssignee(
+                        task,
+                        selectedDate,
+                        task.currentTurnIndex,
+                    );
+                    console.log(
+                        `   Rotation task - current assignee: ${currentAssignee}`,
+                    );
+                    return currentAssignee === userName;
+                }
+
+                // Check temporary replacements
+                let isReplacementAssigned = false;
+                if (
+                    task.tempTurnReplacement &&
+                    task.tempTurnReplacement[selectedDate]
+                ) {
+                    const replacements = task.tempTurnReplacement[selectedDate];
+                    isReplacementAssigned =
+                        Object.values(replacements).includes(userName);
+                    console.log(
+                        `   Replacement assigned: ${isReplacementAssigned}`,
+                    );
+                }
+
+                if (isReplacementAssigned) {
+                    return true;
+                }
+
+                // Check if user was replaced
+                if (
+                    isOriginallyAssigned &&
+                    task.tempTurnReplacement &&
+                    task.tempTurnReplacement[selectedDate]
+                ) {
+                    const userIndex = task.users.indexOf(userName);
+                    if (
+                        userIndex !== -1 &&
+                        task.tempTurnReplacement[selectedDate][
+                            userIndex.toString()
+                        ]
+                    ) {
+                        console.log(`   User was replaced`);
+                        return false;
+                    }
+                }
+
+                // FIXED LOGIC: User should see task in "My Tasks" if:
+                // 1. Originally assigned (even if completed)
+                // 2. Task was completed by someone else on their behalf (cross-completion)
+                if (isOriginallyAssigned) {
+                    console.log(
+                        `   User is originally assigned - checking completions...`,
+                    );
+
+                    // Check if task has completions by others on user's behalf
+                    const hasCompletions = hasTaskCompletionsForDate(
+                        task,
+                        selectedDate,
+                    );
+                    if (hasCompletions) {
+                        const completions = getTaskCompletionsForDate(
+                            task,
+                            selectedDate,
+                        );
+                        const completedByOthers = completions.some(
+                            (c) =>
+                                c.user !== userName &&
+                                c.originalAssignee === userName,
+                        );
+                        const completedByUser = completions.some(
+                            (c) => c.user === userName,
+                        );
+
+                        console.log(
+                            `   Completions found: completedByUser=${completedByUser}, completedByOthers=${completedByOthers}`,
+                        );
+
+                        // User should see task if they completed it OR if others completed it on their behalf
+                        if (completedByUser || completedByOthers) {
+                            console.log(
+                                `   ✅ Task should show in My Tasks (completed)`,
+                            );
+                            return true;
+                        }
+                    }
+
+                    console.log(
+                        `   ✅ Task should show in My Tasks (originally assigned)`,
+                    );
+                    return true;
+                }
+
+                console.log(`   ❌ Task should NOT show in My Tasks`);
+                return false;
+            }
+
+            // Enhanced task completion checking
+            function hasTaskCompletionsForDate(task, selectedDate) {
+                if (
+                    task.completedDates &&
+                    task.completedDates[selectedDate] &&
+                    task.completedDates[selectedDate].length > 0
+                ) {
+                    return true;
+                }
+                if (
+                    task.completions &&
+                    task.completions[selectedDate] &&
+                    task.completions[selectedDate].length > 0
+                ) {
+                    return true;
+                }
+                return false;
+            }
+
+            /**
+             * Check if a completion record matches a specific task occurrence
+             */
+            function isCompletionForTaskOccurrence(completion, task, userName) {
+                console.log(
+                    `🔍 Matching completion for task "${task.title}":`,
+                    {
+                        completion: completion,
+                        taskHasOccurrence: !!(
+                            task.originalTitle && task.occurrence
+                        ),
+                    },
+                );
+
+                // For regular tasks (no occurrence)
+                if (!task.originalTitle && !task.occurrence) {
+                    // Match if completion is for this exact task title OR if completion has no taskTitle (from completedDates)
+                    const matches =
+                        completion.taskTitle === task.title ||
+                        completion.taskTitle === undefined ||
+                        completion.taskTitle === null ||
+                        completion.taskTitle === "";
+                    console.log(
+                        `📝 Regular task match: ${matches} (taskTitle: "${completion.taskTitle}" vs "${task.title}", hasTaskTitle: ${!!completion.taskTitle})`,
+                    );
+                    return matches;
+                }
+
+                // For multiple daily occurrences
+                if (task.originalTitle && task.occurrence) {
+                    // Check if completion has exact task title match
+                    if (completion.taskTitle === task.title) {
+                        console.log(
+                            `✅ Exact title match: "${completion.taskTitle}" === "${task.title}"`,
+                        );
+                        return true;
+                    }
+
+                    // Check if completion has occurrence-specific data
+                    if (
+                        completion.originalTitle === task.originalTitle &&
+                        completion.occurrence === task.occurrence
+                    ) {
+                        console.log(
+                            `✅ Occurrence data match: "${completion.originalTitle}" === "${task.originalTitle}" && ${completion.occurrence} === ${task.occurrence}`,
+                        );
+                        return true;
+                    }
+
+                    // Check if completion has task ID match (if available)
+                    if (
+                        completion.taskId &&
+                        task.id &&
+                        completion.taskId === task.id
+                    ) {
+                        console.log(
+                            `✅ Task ID match: "${completion.taskId}" === "${task.id}"`,
+                        );
+                        return true;
+                    }
+
+                    // Fallback: check if completion title starts with original title
+                    if (
+                        completion.taskTitle &&
+                        completion.taskTitle.startsWith(task.originalTitle)
+                    ) {
+                        // Make sure it's the right occurrence
+                        const occurrenceSuffix = ` - ${task.occurrence}`;
+                        const matches =
+                            completion.taskTitle.includes(occurrenceSuffix);
+                        console.log(
+                            `✅ Fallback match: "${completion.taskTitle}" starts with "${task.originalTitle}" and includes "${occurrenceSuffix}": ${matches}`,
+                        );
+                        return matches;
+                    }
+
+                    console.log(`❌ No occurrence match found`);
+                }
+
+                console.log(`❌ No match found`);
+                return false;
+            }
+
+            function getTaskCompletionsForDate(task, selectedDate) {
+                const completions = [];
+
+                // Check completedDates structure
+                if (task.completedDates && task.completedDates[selectedDate]) {
+                    const dateCompletions = task.completedDates[selectedDate];
+
+                    if (Array.isArray(dateCompletions)) {
+                        completions.push(...dateCompletions);
+                    } else if (typeof dateCompletions === "object") {
+                        // Handle object-based completions
+                        Object.values(dateCompletions).forEach((completion) => {
+                            if (completion && typeof completion === "object") {
+                                completions.push(completion);
+                            }
+                        });
+                    }
+                }
+
+                // Check completions array
+                if (task.completions && Array.isArray(task.completions)) {
+                    const relevantCompletions = task.completions.filter(
+                        (c) =>
+                            c.date === selectedDate &&
+                            isCompletionForTaskOccurrence(c, task, null),
+                    );
+                    completions.push(...relevantCompletions);
+                }
+
+                // Filter out duplicates and ensure each completion has required fields
+                const uniqueCompletions = completions.filter(
+                    (completion, index, arr) => {
+                        // Remove duplicates based on user and timestamp
+                        const isDuplicate =
+                            arr.findIndex(
+                                (c) =>
+                                    c.user === completion.user &&
+                                    c.timestamp === completion.timestamp,
+                            ) !== index;
+
+                        return !isDuplicate && completion.user; // Ensure completion has user
+                    },
+                );
+
+                console.log(
+                    `   📋 Found ${uniqueCompletions.length} completions for task "${task.title}" on ${selectedDate}:`,
+                    uniqueCompletions,
+                );
+                return uniqueCompletions;
+            }
+
+            // Enhanced task status calculation with cross-completion support
+            function calculateTaskStatusForUser(task, selectedDate, userName) {
+                console.log(
+                    `🔍 Enhanced status calculation for "${task.title}" - user: ${userName}`,
+                );
+
+                if (task.originalTitle && task.occurrence) {
+                    console.log(
+                        `   🔄 Multiple daily occurrence: "${task.originalTitle}" - occurrence ${task.occurrence}/${task.totalOccurrences}`,
+                    );
+                }
+
+                const completions = getTaskCompletionsForDate(
+                    task,
+                    selectedDate,
+                );
+
+                if (completions.length === 0) {
+                    console.log(`   📊 Status: INCOMPLETE (no completions)`);
+                    return "incomplete";
+                }
+
+                // For occurrence tasks, only consider completions that match this specific task
+                const relevantCompletions = completions.filter((c) =>
+                    isCompletionForTaskOccurrence(c, task, userName),
+                );
+
+                console.log(
+                    `   📊 Relevant completions for this task/occurrence: ${relevantCompletions.length}`,
+                );
+
+                if (relevantCompletions.length === 0) {
+                    console.log(
+                        `   📊 Status: INCOMPLETE (no relevant completions)`,
+                    );
+                    return "incomplete";
+                }
+
+                // Check if user is assigned to this task/occurrence
+                const isUserAssigned = isUserCurrentlyAssigned(
+                    task,
+                    selectedDate,
+                    userName,
+                );
+
+                // Check user's own completions
+                const userCompletions = relevantCompletions.filter(
+                    (c) => c.user === userName,
+                );
+
+                // Check cross-completions (others completing on user's behalf)
+                const crossCompletions = relevantCompletions.filter(
+                    (c) =>
+                        c.user !== userName && c.originalAssignee === userName,
+                );
+
+                console.log(
+                    `   📊 User completions: ${userCompletions.length}, Cross completions: ${crossCompletions.length}`,
+                );
+
+                // For users not assigned to this task/occurrence, they should always be incomplete
+                if (!isUserAssigned) {
+                    console.log(
+                        `   📊 Status: INCOMPLETE (user not assigned to this task)`,
+                    );
+                    return "incomplete";
+                }
+
+                // For assigned users, determine which completions to use for status
+                let statusCompletions = [];
+                if (userCompletions.length > 0) {
+                    statusCompletions = userCompletions;
+                } else if (crossCompletions.length > 0) {
+                    statusCompletions = crossCompletions;
+                }
+
+                if (statusCompletions.length === 0) {
+                    console.log(
+                        `   📊 Status: INCOMPLETE (no status-relevant completions)`,
+                    );
+                    return "incomplete";
+                }
+
+                // Handle parent approval logic
+                if (task.parentApproval === true) {
+                    const hasPending = statusCompletions.some(
+                        (c) => c.isPending === true,
+                    );
+                    const hasApproved = statusCompletions.some(
+                        (c) => c.isPending === false,
+                    );
+
+                    if (hasApproved && !hasPending) {
+                        console.log(`   📊 Status: APPROVED (parent approved)`);
+                        return "approved";
+                    }
+                    if (hasPending) {
+                        console.log(
+                            `   📊 Status: PENDING (awaiting parent approval)`,
+                        );
+                        return "pending";
+                    }
+
+                    console.log(
+                        `   📊 Status: INCOMPLETE (completion exists but no clear approval)`,
+                    );
+                    return "incomplete";
+                } else {
+                    console.log(
+                        `   📊 Status: APPROVED (no parent approval required)`,
+                    );
+                    return "approved";
+                }
+            }
+
+            // Enhanced task display with cross-completion support
+            function createTaskDisplayWithCompletion(
+                task,
+                selectedDate,
+                userName,
+            ) {
+                console.log(
+                    `🎨 Creating enhanced display for "${task.title}" - user: ${userName}`,
+                );
+
+                const completions = getTaskCompletionsForDate(
+                    task,
+                    selectedDate,
+                );
+                const relevantCompletions = completions.filter((c) =>
+                    isCompletionForTaskOccurrence(c, task, userName),
+                );
+
+                // Check user's own completions
+                const userCompletions = relevantCompletions.filter(
+                    (c) => c.user === userName,
+                );
+
+                // Check cross-completions
+                const crossCompletions = relevantCompletions.filter(
+                    (c) =>
+                        c.user !== userName && c.originalAssignee === userName,
+                );
+
+                if (userCompletions.length > 0) {
+                    // User completed their own task/occurrence
+                    const completion = userCompletions[0];
+                    console.log(`   🎨 Display: User's own completion`);
+
+                    return {
+                        showAvatar: true,
+                        avatarUser: userName,
+                        completerText: "Completed by you",
+                        completionData: completion,
+                        showDoneButton: false,
+                    };
+                } else if (crossCompletions.length > 0) {
+                    // Someone else completed user's task/occurrence
+                    const crossCompletion = crossCompletions[0];
+                    console.log(
+                        `   🎨 Display: Cross-completion by ${crossCompletion.user}`,
+                    );
+
+                    return {
+                        showAvatar: true,
+                        avatarUser: crossCompletion.user,
+                        completerText: `Completed by ${crossCompletion.user}`,
+                        completionData: crossCompletion,
+                        showDoneButton: false,
+                    };
+                } else {
+                    // Task/occurrence is incomplete - show Done button
+                    console.log(
+                        `   🎨 Display: Incomplete - showing Done button`,
+                    );
+
+                    return {
+                        showDoneButton: true,
+                        statusText: "Ready to complete",
+                        showAvatar: false,
+                    };
+                }
+            }
+
+            // Apply the fixes by overriding existing functions
+            function applyTaskFlowFixes() {
+                console.log("🔧 Applying Task Flow Fixes...");
+
+                // Store original functions for potential rollback
+                if (typeof window.isUserCurrentlyAssigned === "function") {
+                    window.originalIsUserCurrentlyAssigned =
+                        window.isUserCurrentlyAssigned;
+                    window.isUserCurrentlyAssigned =
+                        fixedIsUserCurrentlyAssigned;
+                    console.log("✅ Enhanced isUserCurrentlyAssigned function");
+                }
+
+                // Add helper functions to window for global access
+                window.calculateTaskStatusForUser = calculateTaskStatusForUser;
+                window.createTaskDisplayWithCompletion =
+                    createTaskDisplayWithCompletion;
+                window.hasTaskCompletionsForDate = hasTaskCompletionsForDate;
+                window.getTaskCompletionsForDate = getTaskCompletionsForDate;
+
+                // Add CSS for task status styling if not already present
+                if (!document.getElementById("taskFlowFixesStyles")) {
+                    const style = document.createElement("style");
+                    style.id = "taskFlowFixesStyles";
+                    style.textContent = `
+                        .task-incomplete {
+                            border-left: 4px solid #ff6b6b;
+                        }
+                        .task-pending {
+                            border-left: 4px solid #ffa500;
+                            background-color: #fff8e1;
+                        }
+                        .task-approved {
+                            border-left: 4px solid #4CAF50;
+                            background-color: #e8f5e8;
+                        }
+                        .task-item .completer-text {
+                            font-size: 12px;
+                            color: #666;
+                            text-align: center;
+                            margin-top: 2px;
+                        }
+                        .avatar-container {
+                            position: relative;
+                        }
+                        .avatar-container img {
+                            transition: all 0.2s ease;
+                        }
+                        .avatar-container:hover img {
+                            transform: scale(1.05);
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+
+                console.log("✅ Task Flow Fixes Applied Successfully!");
+                console.log("📋 Fixed Issues:");
+                console.log(
+                    "   1. Tasks now stay in 'My Tasks' after completion with proper status",
+                );
+                console.log(
+                    "   2. Cross-completions now show completer's avatar in original assignee's 'My Tasks'",
+                );
+                console.log(
+                    "   3. Proper filtering prevents tasks from appearing in both sections",
+                );
+                console.log(
+                    "   4. Enhanced status calculation handles all completion scenarios",
+                );
+            }
+
+            // Auto-apply fixes when script loads
+            if (document.readyState === "loading") {
+                document.addEventListener(
+                    "DOMContentLoaded",
+                    applyTaskFlowFixes,
+                );
+            } else {
+                applyTaskFlowFixes();
+            }
+
+            console.log("🔧 Task Flow Issues Fix integrated and ready!");
         </script>
     </body>
 </html>
