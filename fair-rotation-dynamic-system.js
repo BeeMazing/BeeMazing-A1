@@ -434,7 +434,7 @@ class FairRotationDynamicSystem {
   shouldUseFairRotation(task) {
     return (
       task.settings?.includes("Rotation") &&
-      task.fairRotation === true &&
+      (task.fairRotation === true || task.rotation?.type === "fair") &&
       task.fairRotationTimeBased !== true
     );
   }

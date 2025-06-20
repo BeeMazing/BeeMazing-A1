@@ -3437,6 +3437,17 @@
                     await window.ensureAvatarSystemReady();
                 }
 
+                // Ensure Enhanced Fair Rotation System is ready
+                if (window.enhancedFairRotationSystem) {
+                    console.log(
+                        "✅ Enhanced Fair Rotation System available for task loading",
+                    );
+                } else {
+                    console.log(
+                        "⚠️ Enhanced Fair Rotation System not available - will use fallback rotation methods",
+                    );
+                }
+
                 const adminEmail = localStorage.getItem("currentAdminEmail");
                 if (!adminEmail) {
                     document.getElementById("taskList").innerHTML =
@@ -3843,6 +3854,194 @@
                         });
                     }
 
+                    // Migrate existing fair rotation tasks to have rotation.enabled property
+                    visibleTasks.forEach((task) => {
+                        if (task.fairRotation && !task.rotation) {
+                            task.rotation = {
+                                enabled: true,
+                                type: "fair",
+                            };
+                            console.log(
+                                `🔄 Migrated fair rotation task "${task.title}" to have rotation.enabled`,
+                            );
+                        }
+                    });
+
+                    // Initialize Enhanced Fair Rotation System for fair rotation tasks
+                    if (window.enhancedFairRotationSystem) {
+                        console.log(
+                            `🔍 Checking ${visibleTasks.length} visible tasks for Enhanced Fair Rotation initialization`,
+                        );
+
+                        // Group subtasks by base name for Enhanced Fair Rotation
+                        const taskGroups = new Map();
+
+                        visibleTasks.forEach((task) => {
+                            console.log(`🔍 Task "${task.title}" analysis:`, {
+                                fairRotation: task.fairRotation,
+                                settings: task.settings,
+                                rotation: task.rotation,
+                                hasRotationSetting:
+                                    task.settings?.includes("Rotation"),
+                                users: task.users,
+                                taskStructure: Object.keys(task),
+                            });
+
+                            // Check multiple conditions for fair rotation tasks
+                            const isFairRotation = task.fairRotation === true;
+                            const hasRotationSetting = Array.isArray(
+                                task.settings,
+                            )
+                                ? task.settings.includes("Rotation")
+                                : typeof task.settings === "string" &&
+                                  task.settings.includes("Rotation");
+                            const hasRotationProperty =
+                                task.rotation?.enabled === true;
+                            const isFairRotationType =
+                                task.rotation?.type === "fair";
+
+                            if (
+                                isFairRotation ||
+                                isFairRotationType ||
+                                (hasRotationSetting &&
+                                    task.fairRotation !== false)
+                            ) {
+                                console.log(
+                                    `✅ Task "${task.title}" identified as fair rotation task (type: ${task.rotation?.type || "legacy"})`,
+                                );
+
+                                // Extract base task name (remove " - 1st", " - 2nd", etc.)
+                                const baseTaskName = task.title.replace(
+                                    / - \d+(?:st|nd|rd|th)$/,
+                                    "",
+                                );
+
+                                // Group tasks by base name
+                                if (!taskGroups.has(baseTaskName)) {
+                                    taskGroups.set(baseTaskName, []);
+                                }
+                                taskGroups.get(baseTaskName).push(task);
+                            } else {
+                                console.log(
+                                    `❌ Task "${task.title}" not identified as fair rotation task`,
+                                );
+                            }
+                        });
+
+                        // Initialize each task group
+                        taskGroups.forEach((subtasks, baseTaskName) => {
+                            try {
+                                if (
+                                    !window.enhancedFairRotationSystem.taskUsers.has(
+                                        baseTaskName,
+                                    )
+                                ) {
+                                    console.log(
+                                        `🔄 Initializing Enhanced Fair Rotation for task group: ${baseTaskName} (${subtasks.length} subtasks)`,
+                                    );
+
+                                    // Use first subtask for basic info
+                                    const firstTask = subtasks[0];
+
+                                    // Collect all completion history from all subtasks
+                                    const combinedCompletions = {};
+                                    subtasks.forEach((subtask) => {
+                                        if (subtask.completions) {
+                                            Object.keys(
+                                                subtask.completions,
+                                            ).forEach((date) => {
+                                                if (
+                                                    !combinedCompletions[date]
+                                                ) {
+                                                    combinedCompletions[date] =
+                                                        [];
+                                                }
+                                                combinedCompletions[date].push(
+                                                    ...(subtask.completions[
+                                                        date
+                                                    ] || []),
+                                                );
+                                            });
+                                        }
+                                    });
+
+                                    window.enhancedFairRotationSystem.initializeTask(
+                                        baseTaskName,
+                                        firstTask.users || [],
+                                        {
+                                            frequency:
+                                                firstTask.frequency || "daily",
+                                            timesPerDay: subtasks.length, // Number of subtasks = occurrences per day
+                                        },
+                                    );
+
+                                    // Import existing completion history
+                                    if (
+                                        Object.keys(combinedCompletions)
+                                            .length > 0
+                                    ) {
+                                        console.log(
+                                            `📊 Importing ${Object.keys(combinedCompletions).length} days of completion history for ${baseTaskName}`,
+                                        );
+                                        Object.keys(
+                                            combinedCompletions,
+                                        ).forEach((date) => {
+                                            combinedCompletions[date].forEach(
+                                                (completion) => {
+                                                    if (!completion.isPending) {
+                                                        // Add to approved completions
+                                                        const history =
+                                                            window.enhancedFairRotationSystem.completionHistory.get(
+                                                                baseTaskName,
+                                                            );
+                                                        if (history) {
+                                                            history.approved.push(
+                                                                {
+                                                                    user: completion.user,
+                                                                    occurrence: 1, // Will be adjusted by system
+                                                                    date: date,
+                                                                    timestamp:
+                                                                        completion.timestamp ||
+                                                                        new Date().toISOString(),
+                                                                },
+                                                            );
+                                                        }
+                                                    }
+                                                },
+                                            );
+                                        });
+
+                                        // Recalculate assignments with imported history
+                                        window.enhancedFairRotationSystem.recalculateAssignments(
+                                            baseTaskName,
+                                            false,
+                                        );
+                                    }
+
+                                    console.log(
+                                        `✅ Successfully initialized Enhanced Fair Rotation for: ${baseTaskName}`,
+                                    );
+                                } else {
+                                    console.log(
+                                        `ℹ️ Task group "${baseTaskName}" already initialized in Enhanced Fair Rotation System`,
+                                    );
+                                }
+                            } catch (error) {
+                                console.error(
+                                    `❌ Failed to initialize Enhanced Fair Rotation for ${baseTaskName}:`,
+                                    error,
+                                );
+                            }
+                        });
+
+                        // Summary after initialization
+                        const initializedCount =
+                            window.enhancedFairRotationSystem.taskUsers.size;
+                        console.log(
+                            `📊 Enhanced Fair Rotation System now has ${initializedCount} task groups initialized`,
+                        );
+                    }
+
                     if (visibleTasks.length === 0) {
                         taskList.innerHTML = `<div style="text-align:center; margin-top: 40px; color: #ccc;">No tasks for this day 🌙</div>`;
                         return;
@@ -4152,56 +4351,142 @@
                         avatarsHTML += '<div class="task-avatars-section">';
 
                         // Add team icon for Team Work tasks
-                        if (task.settings?.includes("Team Work")) {
+                        const hasTeamWorkSetting = Array.isArray(task.settings)
+                            ? task.settings.includes("Team Work")
+                            : typeof task.settings === "string" &&
+                              task.settings.includes("Team Work");
+                        if (hasTeamWorkSetting) {
                             avatarsHTML += '<div class="team-icon">👥</div>';
                         }
 
                         // Add rotation icon for Rotation tasks
-                        if (task.settings?.includes("Rotation")) {
+                        const hasRotationSetting = Array.isArray(task.settings)
+                            ? task.settings.includes("Rotation")
+                            : typeof task.settings === "string" &&
+                              task.settings.includes("Rotation");
+                        if (hasRotationSetting) {
                             avatarsHTML +=
                                 '<div class="rotation-icon">🔄</div>';
                         }
 
-                        if (task.settings?.includes("Rotation")) {
+                        if (hasRotationSetting) {
                             try {
-                                // Use Local Fair Rotation System first, then fallback to other systems
+                                // First priority: Enhanced Fair Rotation System for actual assignments
+                                let enhancedAssignment = null;
+                                const isFairRotationType =
+                                    task.rotation?.type === "fair";
                                 if (
-                                    task.fairRotation &&
-                                    window.localFairRotationSystem
+                                    (task.fairRotation || isFairRotationType) &&
+                                    window.enhancedFairRotationSystem
                                 ) {
-                                    console.log(
-                                        `🔄 Using Local Fair Rotation System for task: ${task.title}`,
+                                    // Extract base task name for Enhanced Fair Rotation lookup
+                                    const baseTaskName = task.title.replace(
+                                        / - \d+(?:st|nd|rd|th)$/,
+                                        "",
                                     );
+                                    const occurrenceMatch = task.title.match(
+                                        / - (\d+)(?:st|nd|rd|th)$/,
+                                    );
+                                    const occurrenceNumber = occurrenceMatch
+                                        ? parseInt(occurrenceMatch[1])
+                                        : 1;
 
-                                    // Use local fair rotation system
-                                    turnData =
-                                        window.localFairRotationSystem.getLocalTurnData(
+                                    // Initialize task in Enhanced Fair Rotation System if not already done
+                                    if (
+                                        !window.enhancedFairRotationSystem.taskUsers.has(
+                                            baseTaskName,
+                                        )
+                                    ) {
+                                        console.log(
+                                            `🔄 Initializing Enhanced Fair Rotation for base task: ${baseTaskName}`,
+                                        );
+                                        window.enhancedFairRotationSystem.initializeTask(
+                                            baseTaskName,
+                                            task.users || [],
+                                            {
+                                                frequency:
+                                                    task.frequency || "daily",
+                                                timesPerDay:
+                                                    task.timesPerDay || 1,
+                                            },
+                                        );
+                                    }
+
+                                    // Get actual Enhanced Fair Rotation assignment using base name
+                                    enhancedAssignment =
+                                        window.enhancedFairRotationSystem.getAssignmentInfo(
+                                            baseTaskName,
+                                            selectedDate,
+                                            occurrenceNumber,
+                                        );
+
+                                    if (enhancedAssignment) {
+                                        console.log(
+                                            `✅ Using Enhanced Fair Rotation assignment for ${task.title}: ${enhancedAssignment.assignedUser}`,
+                                        );
+
+                                        // Create turn data structure compatible with existing UI
+                                        turnData = {
+                                            turns: [
+                                                {
+                                                    user: enhancedAssignment.assignedUser,
+                                                    isCompleted: false,
+                                                    isPending: false,
+                                                    isEnhanced: true, // Flag to indicate this is from Enhanced Fair Rotation
+                                                },
+                                            ],
+                                            completedCount: 0,
+                                            requiredTimes: 1,
+                                        };
+                                    } else {
+                                        console.log(
+                                            `⚠️ No Enhanced Fair Rotation assignment found for ${task.title} on ${selectedDate}, falling back to prediction systems`,
+                                        );
+                                    }
+                                }
+
+                                // Fallback systems if Enhanced Fair Rotation doesn't have assignment
+                                if (!enhancedAssignment) {
+                                    // Use Local Fair Rotation System first, then fallback to other systems
+                                    if (
+                                        task.fairRotation &&
+                                        window.localFairRotationSystem
+                                    ) {
+                                        console.log(
+                                            `🔄 Using Local Fair Rotation System for task: ${task.title}`,
+                                        );
+
+                                        // Use local fair rotation system
+                                        turnData =
+                                            window.localFairRotationSystem.getLocalTurnData(
+                                                task,
+                                                selectedDate,
+                                            );
+                                    } else if (
+                                        (task.fairRotation ||
+                                            isFairRotationType) &&
+                                        window.PredictedScheduleSystem
+                                            ?.mixedTurnDataWithPrediction
+                                    ) {
+                                        console.log(
+                                            `🔮 Using PredictedScheduleSystem for fair rotation task: ${task.title}`,
+                                        );
+
+                                        // Use predicted schedule system for fair rotation
+                                        turnData =
+                                            window.PredictedScheduleSystem.mixedTurnDataWithPrediction(
+                                                task,
+                                                selectedDate,
+                                            );
+                                    } else if (
+                                        typeof mixedTurnData === "function"
+                                    ) {
+                                        // For regular rotation tasks, use turnData logic
+                                        turnData = mixedTurnData(
                                             task,
                                             selectedDate,
                                         );
-                                } else if (
-                                    task.fairRotation &&
-                                    window.PredictedScheduleSystem
-                                        ?.mixedTurnDataWithPrediction
-                                ) {
-                                    console.log(
-                                        `🔮 Using PredictedScheduleSystem for fair rotation task: ${task.title}`,
-                                    );
-
-                                    // Use predicted schedule system for fair rotation
-                                    turnData =
-                                        window.PredictedScheduleSystem.mixedTurnDataWithPrediction(
-                                            task,
-                                            selectedDate,
-                                        );
-                                } else if (
-                                    typeof mixedTurnData === "function"
-                                ) {
-                                    // For regular rotation tasks, use turnData logic
-                                    turnData = mixedTurnData(
-                                        task,
-                                        selectedDate,
-                                    );
+                                    }
                                 }
 
                                 // Process turn data for display (both predicted and regular)
@@ -4232,8 +4517,12 @@
                                             avatarsHTML += `<div class="task-avatar" title="${currentTurn.user}">${initials}</div>`;
                                         }
 
-                                        // Add indicator for predicted assignments
-                                        if (currentTurn.isPredicted) {
+                                        // Add indicator for enhanced or predicted assignments
+                                        if (currentTurn.isEnhanced) {
+                                            console.log(
+                                                `✅ Showing Enhanced Fair Rotation assignment for ${task.title}: ${currentTurn.user}`,
+                                            );
+                                        } else if (currentTurn.isPredicted) {
                                             console.log(
                                                 `🔮 Showing predicted assignment for ${task.title}: ${currentTurn.user}`,
                                             );
@@ -4312,12 +4601,96 @@
                                     err,
                                 );
 
-                                // Robust fallback handling using local fair rotation system first
+                                // Robust fallback handling - try Enhanced Fair Rotation System first
+                                const isFairRotationType =
+                                    task.rotation?.type === "fair";
                                 if (
-                                    task.fairRotation &&
+                                    (task.fairRotation || isFairRotationType) &&
+                                    window.enhancedFairRotationSystem
+                                ) {
+                                    // For fair rotation tasks, try Enhanced Fair Rotation System first in fallback
+                                    console.log(
+                                        `🔄 Using Enhanced Fair Rotation fallback for: ${task.title}`,
+                                    );
+
+                                    try {
+                                        // Extract base task name for Enhanced Fair Rotation lookup
+                                        const baseTaskName = task.title.replace(
+                                            / - \d+(?:st|nd|rd|th)$/,
+                                            "",
+                                        );
+                                        const occurrenceMatch =
+                                            task.title.match(
+                                                / - (\d+)(?:st|nd|rd|th)$/,
+                                            );
+                                        const occurrenceNumber = occurrenceMatch
+                                            ? parseInt(occurrenceMatch[1])
+                                            : 1;
+
+                                        // Initialize task if not already done
+                                        if (
+                                            !window.enhancedFairRotationSystem.taskUsers.has(
+                                                baseTaskName,
+                                            )
+                                        ) {
+                                            window.enhancedFairRotationSystem.initializeTask(
+                                                baseTaskName,
+                                                task.users || [],
+                                                {
+                                                    frequency:
+                                                        task.frequency ||
+                                                        "daily",
+                                                    timesPerDay:
+                                                        task.timesPerDay || 1,
+                                                },
+                                            );
+                                        }
+
+                                        // Try to get assignment using base name
+                                        const assignment =
+                                            window.enhancedFairRotationSystem.getAssignmentInfo(
+                                                baseTaskName,
+                                                selectedDate,
+                                                occurrenceNumber,
+                                            );
+
+                                        if (
+                                            assignment &&
+                                            assignment.assignedUser
+                                        ) {
+                                            const assignedUser =
+                                                assignment.assignedUser;
+                                            if (
+                                                window.avatarSystem
+                                                    ?.generateAvatarHTML
+                                            ) {
+                                                avatarsHTML +=
+                                                    window.avatarSystem.generateAvatarHTML(
+                                                        assignedUser,
+                                                        24,
+                                                        "task-avatar",
+                                                    );
+                                            } else {
+                                                const initials = assignedUser
+                                                    .substring(0, 2)
+                                                    .toUpperCase();
+                                                avatarsHTML += `<div class="task-avatar" title="${assignedUser}">${initials}</div>`;
+                                            }
+                                            console.log(
+                                                `✅ Fallback Enhanced Fair Rotation assignment: ${assignedUser}`,
+                                            );
+                                        }
+                                    } catch (enhancedError) {
+                                        console.error(
+                                            `❌ Enhanced Fair Rotation fallback failed:`,
+                                            enhancedError,
+                                        );
+                                    }
+                                } else if (
+                                    (task.fairRotation || isFairRotationType) &&
                                     window.localFairRotationSystem
                                 ) {
-                                    // For fair rotation tasks, use local system even in error fallback
+                                    // Secondary fallback: local fair rotation system
                                     console.log(
                                         `🔄 Using local fair rotation fallback for: ${task.title}`,
                                     );
@@ -4353,11 +4726,11 @@
                                         );
                                     }
                                 } else if (
-                                    task.fairRotation &&
+                                    (task.fairRotation || isFairRotationType) &&
                                     typeof calculateGlobalOccurrenceNumber ===
                                         "function"
                                 ) {
-                                    // Secondary fallback: global occurrence logic
+                                    // Tertiary fallback: global occurrence logic
                                     console.log(
                                         `🔄 Using global occurrence fallback for fair rotation: ${task.title}`,
                                     );
@@ -4418,15 +4791,117 @@
                                 }
                             }
                         } else {
-                            // Individual/Team Work tasks - show all assigned users
-                            task.users.forEach((user) => {
-                                avatarsHTML +=
-                                    window.avatarSystem.generateAvatarHTML(
-                                        user,
-                                        24,
-                                        "task-avatar",
+                            // Individual/Team Work tasks - check for fair rotation first
+                            if (
+                                task.fairRotation &&
+                                window.localFairRotationSystem
+                            ) {
+                                try {
+                                    // Get current assignee for fair rotation tasks
+                                    const assignment =
+                                        window.localFairRotationSystem.calculateAssignee(
+                                            task,
+                                            selectedDate,
+                                            (task.occurrence || 1) - 1, // Convert to 0-based index
+                                        );
+
+                                    if (assignment && assignment.user) {
+                                        console.log(
+                                            `🔄 Fair rotation assignee for "${task.title}": ${assignment.user}`,
+                                        );
+                                        avatarsHTML +=
+                                            window.avatarSystem.generateAvatarHTML(
+                                                assignment.user,
+                                                24,
+                                                "task-avatar",
+                                            );
+                                    } else {
+                                        // Fallback to showing all users
+                                        task.users.forEach((user) => {
+                                            avatarsHTML +=
+                                                window.avatarSystem.generateAvatarHTML(
+                                                    user,
+                                                    24,
+                                                    "task-avatar",
+                                                );
+                                        });
+                                    }
+                                } catch (error) {
+                                    console.warn(
+                                        `⚠️ Fair rotation assignment failed for "${task.title}":`,
+                                        error,
                                     );
-                            });
+                                    // Fallback to showing all users
+                                    task.users.forEach((user) => {
+                                        avatarsHTML +=
+                                            window.avatarSystem.generateAvatarHTML(
+                                                user,
+                                                24,
+                                                "task-avatar",
+                                            );
+                                    });
+                                }
+                            } else if (
+                                task.fairRotation &&
+                                typeof window.getUniversalTaskAssignee ===
+                                    "function"
+                            ) {
+                                try {
+                                    // Try universal assignee function for fair rotation
+                                    const currentAssignee =
+                                        window.getUniversalTaskAssignee(
+                                            task,
+                                            selectedDate,
+                                            (task.occurrence || 1) - 1, // Convert to 0-based index
+                                        );
+
+                                    if (currentAssignee) {
+                                        console.log(
+                                            `🔄 Universal assignee for fair rotation "${task.title}": ${currentAssignee}`,
+                                        );
+                                        avatarsHTML +=
+                                            window.avatarSystem.generateAvatarHTML(
+                                                currentAssignee,
+                                                24,
+                                                "task-avatar",
+                                            );
+                                    } else {
+                                        // Fallback to showing all users
+                                        task.users.forEach((user) => {
+                                            avatarsHTML +=
+                                                window.avatarSystem.generateAvatarHTML(
+                                                    user,
+                                                    24,
+                                                    "task-avatar",
+                                                );
+                                        });
+                                    }
+                                } catch (error) {
+                                    console.warn(
+                                        `⚠️ Universal assignee failed for "${task.title}":`,
+                                        error,
+                                    );
+                                    // Fallback to showing all users
+                                    task.users.forEach((user) => {
+                                        avatarsHTML +=
+                                            window.avatarSystem.generateAvatarHTML(
+                                                user,
+                                                24,
+                                                "task-avatar",
+                                            );
+                                    });
+                                }
+                            } else {
+                                // Regular tasks - show all assigned users
+                                task.users.forEach((user) => {
+                                    avatarsHTML +=
+                                        window.avatarSystem.generateAvatarHTML(
+                                            user,
+                                            24,
+                                            "task-avatar",
+                                        );
+                                });
+                            }
                         }
 
                         avatarsHTML += "</div>"; // Close task-avatars-section
@@ -8022,7 +8497,343 @@
                 }
             }
 
-            // Generate scrollable date picker
+            // Expose loadTasksForDate globally for Enhanced Fair Rotation System
+            window.loadTasksForDate = loadTasksForDate;
+
+            // Debug function to test Enhanced Fair Rotation System assignments
+            window.testEnhancedFairRotation = function (
+                taskTitle,
+                date,
+                occurrence,
+            ) {
+                console.log(
+                    `🧪 Testing Enhanced Fair Rotation for: ${taskTitle}`,
+                );
+
+                if (!window.enhancedFairRotationSystem) {
+                    console.log(
+                        "❌ Enhanced Fair Rotation System not available",
+                    );
+                    return;
+                }
+
+                const testDate = date || new Date().toISOString().split("T")[0];
+                const testOccurrence = occurrence || 1;
+
+                // Extract base task name if it looks like a subtask
+                const baseTaskName = taskTitle.replace(
+                    / - \d+(?:st|nd|rd|th)$/,
+                    "",
+                );
+                const occurrenceMatch = taskTitle.match(
+                    / - (\d+)(?:st|nd|rd|th)$/,
+                );
+                const actualOccurrence = occurrenceMatch
+                    ? parseInt(occurrenceMatch[1])
+                    : testOccurrence;
+
+                console.log(
+                    `🔍 Looking for base task: ${baseTaskName}, occurrence: ${actualOccurrence}`,
+                );
+
+                // Get assignment info using base task name
+                const assignment =
+                    window.enhancedFairRotationSystem.getAssignmentInfo(
+                        baseTaskName,
+                        testDate,
+                        actualOccurrence,
+                    );
+
+                if (assignment) {
+                    console.log(
+                        `✅ Enhanced Fair Rotation assignment found:`,
+                        assignment,
+                    );
+                    console.log(
+                        `   👤 Assigned User: ${assignment.assignedUser}`,
+                    );
+                    console.log(`   📅 Date: ${assignment.date}`);
+                    console.log(`   🔢 Occurrence: ${assignment.occurrence}`);
+                    console.log(`   💭 Reason: ${assignment.assignmentReason}`);
+                } else {
+                    console.log(
+                        `❌ No Enhanced Fair Rotation assignment found for ${baseTaskName} on ${testDate}, occurrence ${actualOccurrence}`,
+                    );
+                }
+
+                // Get debug info using base task name
+                const debugInfo =
+                    window.enhancedFairRotationSystem.getDebugInfo(
+                        baseTaskName,
+                    );
+                console.log(`🔍 Debug info:`, debugInfo);
+
+                // Test if task is initialized using base task name
+                const isInitialized =
+                    window.enhancedFairRotationSystem.taskUsers.has(
+                        baseTaskName,
+                    );
+                console.log(`📋 Base task initialized: ${isInitialized}`);
+
+                if (isInitialized) {
+                    const users =
+                        window.enhancedFairRotationSystem.taskUsers.get(
+                            baseTaskName,
+                        );
+                    console.log(`👥 Task users:`, users);
+                }
+            };
+
+            // Helper function to list all Enhanced Fair Rotation tasks
+            window.listEnhancedFairRotationTasks = function () {
+                console.log("🔄 Enhanced Fair Rotation Task Groups:");
+
+                if (!window.enhancedFairRotationSystem) {
+                    console.log(
+                        "❌ Enhanced Fair Rotation System not available",
+                    );
+                    return;
+                }
+
+                const taskUsers = window.enhancedFairRotationSystem.taskUsers;
+                if (taskUsers.size === 0) {
+                    console.log(
+                        "   📋 No task groups initialized in Enhanced Fair Rotation System",
+                    );
+                    return;
+                }
+
+                console.log(
+                    `   📊 Total initialized task groups: ${taskUsers.size}`,
+                );
+
+                taskUsers.forEach((users, baseTaskName) => {
+                    console.log(`   🎯 "${baseTaskName}" (base task)`);
+                    console.log(`      👥 Users: [${users.join(", ")}]`);
+
+                    // Show current assignments for today (multiple occurrences)
+                    const today = new Date().toISOString().split("T")[0];
+                    const scheduleInfo =
+                        window.enhancedFairRotationSystem.taskSchedules.get(
+                            baseTaskName,
+                        );
+                    const timesPerDay = scheduleInfo?.timesPerDay || 1;
+
+                    console.log(`      🔄 Occurrences per day: ${timesPerDay}`);
+
+                    for (let occ = 1; occ <= timesPerDay; occ++) {
+                        const assignment =
+                            window.enhancedFairRotationSystem.getAssignmentInfo(
+                                baseTaskName,
+                                today,
+                                occ,
+                            );
+
+                        if (assignment) {
+                            console.log(
+                                `      👤 Today's occ ${occ}: ${assignment.assignedUser}`,
+                            );
+                        } else {
+                            console.log(
+                                `      ❌ No assignment found for today occ ${occ}`,
+                            );
+                        }
+                    }
+                });
+
+                console.log(
+                    "💡 Use testEnhancedFairRotation('Base Task Name', date, occurrence) to test specific assignments",
+                );
+            };
+
+            // Debug function to analyze all tasks for fair rotation properties
+            window.debugAllTasksForFairRotation = async function () {
+                console.log("🔍 ANALYZING ALL TASKS FOR FAIR ROTATION:");
+
+                const adminEmail = localStorage.getItem("currentAdminEmail");
+                if (!adminEmail) {
+                    console.log("❌ No admin email found");
+                    return;
+                }
+
+                try {
+                    const response = await fetch(
+                        `https://beemazing1.onrender.com/api/tasks?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`,
+                        { cache: "no-store" },
+                    );
+                    const result = await response.json();
+                    const tasks = result.tasks || [];
+
+                    console.log(`📊 Total tasks found: ${tasks.length}`);
+
+                    let fairRotationCount = 0;
+                    let rotationSettingCount = 0;
+                    let bothCount = 0;
+
+                    tasks.forEach((task, index) => {
+                        const hasFairRotation = task.fairRotation === true;
+                        const hasRotationSetting =
+                            task.settings?.includes("Rotation");
+                        const hasRotationProperty =
+                            task.rotation?.enabled === true;
+
+                        if (hasFairRotation) fairRotationCount++;
+                        if (hasRotationSetting) rotationSettingCount++;
+                        if (hasFairRotation && hasRotationSetting) bothCount++;
+
+                        // Show all tasks that might be relevant
+                        console.log(`\n🎯 Task ${index + 1}: "${task.title}"`);
+                        console.log(`   fairRotation: ${task.fairRotation}`);
+                        console.log(
+                            `   settings: ${JSON.stringify(task.settings) || "none"}`,
+                        );
+                        console.log(
+                            `   rotation: ${JSON.stringify(task.rotation)}`,
+                        );
+                        console.log(
+                            `   users: [${task.users?.join(", ") || "none"}]`,
+                        );
+                        console.log(`   date: ${task.date}`);
+                        console.log(`   frequency: ${task.frequency}`);
+                        console.log(`   timesPerDay: ${task.timesPerDay}`);
+
+                        // Check if it would be initialized
+                        const isFairRotationType =
+                            task.rotation?.type === "fair";
+                        const wouldBeInitialized =
+                            hasFairRotation ||
+                            isFairRotationType ||
+                            (hasRotationSetting && task.fairRotation !== false);
+                        console.log(
+                            `   ✅ Would be initialized: ${wouldBeInitialized}`,
+                        );
+
+                        if (
+                            hasFairRotation ||
+                            hasRotationSetting ||
+                            hasRotationProperty
+                        ) {
+                            console.log(`   🔄 This is a rotation task!`);
+                        }
+                    });
+
+                    console.log(`\n📊 SUMMARY:`);
+                    console.log(
+                        `   Tasks with fairRotation=true: ${fairRotationCount}`,
+                    );
+                    console.log(
+                        `   Tasks with Rotation setting: ${rotationSettingCount}`,
+                    );
+                    console.log(`   Tasks with both: ${bothCount}`);
+
+                    // Try to initialize them manually
+                    if (window.enhancedFairRotationSystem) {
+                        console.log(`\n🔄 MANUAL INITIALIZATION ATTEMPT:`);
+                        let initCount = 0;
+
+                        tasks.forEach((task) => {
+                            const hasFairRotation = task.fairRotation === true;
+                            const hasRotationSetting = Array.isArray(
+                                task.settings,
+                            )
+                                ? task.settings.includes("Rotation")
+                                : typeof task.settings === "string" &&
+                                  task.settings.includes("Rotation");
+                            const isFairRotationType =
+                                task.rotation?.type === "fair";
+
+                            if (
+                                hasFairRotation ||
+                                isFairRotationType ||
+                                (hasRotationSetting &&
+                                    task.fairRotation !== false)
+                            ) {
+                                try {
+                                    if (
+                                        !window.enhancedFairRotationSystem.taskUsers.has(
+                                            task.title,
+                                        )
+                                    ) {
+                                        window.enhancedFairRotationSystem.initializeTask(
+                                            task.title,
+                                            task.users || [],
+                                            {
+                                                frequency:
+                                                    task.frequency || "daily",
+                                                timesPerDay:
+                                                    task.timesPerDay || 1,
+                                            },
+                                        );
+                                        initCount++;
+                                        console.log(
+                                            `   ✅ Initialized: ${task.title}`,
+                                        );
+                                    }
+                                } catch (error) {
+                                    console.log(
+                                        `   ❌ Failed to initialize ${task.title}:`,
+                                        error.message,
+                                    );
+                                }
+                            }
+                        });
+
+                        console.log(
+                            `\n📊 Manually initialized ${initCount} tasks`,
+                        );
+                        console.log(
+                            `📊 Enhanced Fair Rotation System now has ${window.enhancedFairRotationSystem.taskUsers.size} tasks`,
+                        );
+                    }
+                } catch (error) {
+                    console.error("❌ Error fetching tasks:", error);
+                }
+            };
+
+            // Function to manually refresh Enhanced Fair Rotation assignments
+            window.refreshEnhancedFairRotationUI = function (taskTitle) {
+                console.log(
+                    "🔄 Manually refreshing Enhanced Fair Rotation UI",
+                    taskTitle ? `for: ${taskTitle}` : "for all tasks",
+                );
+
+                if (!window.enhancedFairRotationSystem) {
+                    console.log(
+                        "❌ Enhanced Fair Rotation System not available",
+                    );
+                    return;
+                }
+
+                try {
+                    if (taskTitle) {
+                        // Refresh specific task
+                        window.enhancedFairRotationSystem.refreshFrontendAvatars(
+                            taskTitle,
+                            false,
+                        );
+                    } else {
+                        // Refresh all Enhanced Fair Rotation tasks
+                        const taskUsers =
+                            window.enhancedFairRotationSystem.taskUsers;
+                        taskUsers.forEach((users, title) => {
+                            window.enhancedFairRotationSystem.refreshFrontendAvatars(
+                                title,
+                                false,
+                            );
+                        });
+                    }
+
+                    console.log(
+                        "✅ Enhanced Fair Rotation UI refresh triggered",
+                    );
+                } catch (error) {
+                    console.error(
+                        "❌ Error refreshing Enhanced Fair Rotation UI:",
+                        error,
+                    );
+                }
+            };
+
             function generateScrollableDates(monthOffset = 0) {
                 const container = document.getElementById("dayScrollContainer");
                 container.innerHTML = "";

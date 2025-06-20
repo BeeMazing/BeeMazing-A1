@@ -6367,6 +6367,11 @@
                             dateValue = `${today} to 3000-01-01`;
                         }
 
+                        const fairRotationEnabled =
+                            document.getElementById(
+                                "fairRotationToggle",
+                            ).checked;
+
                         const task = {
                             title,
                             notes: notes || undefined,
@@ -6386,9 +6391,14 @@
                                     : undefined,
                             users,
                             reward: reward || undefined,
-                            fairRotation:
-                                document.getElementById("fairRotationToggle")
-                                    .checked,
+                            fairRotation: fairRotationEnabled,
+                            // Add rotation property for enhanced fair rotation system compatibility
+                            rotation: fairRotationEnabled
+                                ? {
+                                      enabled: true,
+                                      type: "fair",
+                                  }
+                                : undefined,
                             parentApproval: document.getElementById(
                                 "parentApprovalToggle",
                             ).checked,
@@ -6538,6 +6548,8 @@
                                     users: task.users,
                                     // Copy fair rotation settings to sub-tasks
                                     fairRotation: task.fairRotation,
+                                    // Copy rotation property for enhanced system
+                                    rotation: task.rotation,
                                     rotationSettings: task.rotationSettings,
                                     currentTurnIndex:
                                         settings === "Rotation"

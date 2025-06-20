@@ -3098,7 +3098,19 @@ app.post("/api/review-task", async (req, res) => {
     const requiredTimes = task.timesPerDay || 1;
 
     // Enhanced Fair Rotation System Integration
-    const isRotationTask = task.rotation && task.rotation.enabled;
+    const isRotationTask =
+      (task.rotation && task.rotation.enabled) ||
+      (task.rotation && task.rotation.type === "fair") ||
+      (task.settings && task.settings.includes("Rotation"));
+
+    console.log("🔍 Backend rotation task detection:", {
+      taskTitle: task.title,
+      taskRotation: task.rotation,
+      taskSettings: task.settings,
+      isRotationTask,
+      enhancedFairRotationAvailable: !!enhancedFairRotation,
+    });
+
     let rotationResult = null;
 
     if (decision === "accept") {
@@ -3477,7 +3489,10 @@ app.post("/api/complete-task", async (req, res) => {
     }
 
     const repetition = totalCount + 1;
-    const isRotation = task.settings?.includes("Rotation");
+    const isRotation =
+      task.settings?.includes("Rotation") ||
+      (task.rotation && task.rotation.type === "fair") ||
+      (task.rotation && task.rotation.enabled);
 
     // Initialize currentTurnIndex if not set
     if (
@@ -3628,7 +3643,21 @@ app.post("/api/complete-task", async (req, res) => {
       let rotationResult = null;
 
       // Generate unique pending ID for rotation tracking
-      if (isRotation && enhancedFairRotation) {
+      const isFairRotationTask =
+        (task.rotation && task.rotation.type === "fair") ||
+        task.fairRotation ||
+        (isRotation && task.rotation && task.rotation.enabled);
+
+      console.log("🔍 Backend fair rotation task detection:", {
+        taskTitle: taskTitle,
+        taskRotation: task.rotation,
+        taskFairRotation: task.fairRotation,
+        isRotation,
+        isFairRotationTask,
+        enhancedFairRotationAvailable: !!enhancedFairRotation,
+      });
+
+      if (isFairRotationTask && enhancedFairRotation) {
         try {
           // Initialize task in rotation system if not already done
           if (!enhancedFairRotation.taskUsers.has(taskTitle)) {
@@ -3658,7 +3687,7 @@ app.post("/api/complete-task", async (req, res) => {
           console.error("❌ Enhanced rotation completion error:", error);
           // Continue with standard processing if rotation fails
         }
-      } else if (isRotation && !enhancedFairRotation) {
+      } else if (isFairRotationTask && !enhancedFairRotation) {
         console.warn(
           "⚠️ Rotation task detected but Enhanced Fair Rotation System not available",
         );

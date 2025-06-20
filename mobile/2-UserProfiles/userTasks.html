@@ -1290,8 +1290,9 @@
             function getCurrentAssignee(task, selectedDate, userIndex = 0) {
                 // First check Enhanced Fair Rotation System if available and rotation is enabled
                 if (
-                    task.rotation &&
-                    task.rotation.enabled &&
+                    (task.rotation?.enabled ||
+                        task.fairRotation ||
+                        task.rotation?.type === "fair") &&
                     isEnhancedFairRotationAvailable()
                 ) {
                     try {
@@ -1343,10 +1344,11 @@
                     `🔍 Enhanced assignment check for "${task.title}" - user: ${userName}`,
                 );
 
-                // First check Enhanced Fair Rotation System if rotation is enabled
+                // First check Enhanced Fair Rotation System if fair rotation is enabled
                 if (
-                    task.rotation &&
-                    task.rotation.enabled &&
+                    (task.fairRotation ||
+                        task.rotation?.enabled ||
+                        task.rotation?.type === "fair") &&
                     window.enhancedFairRotationSystem
                 ) {
                     try {
@@ -1367,6 +1369,63 @@
                     } catch (error) {
                         console.warn(
                             `⚠️ Enhanced Fair Rotation check failed for "${task.title}":`,
+                            error,
+                        );
+                        // Fall through to standard logic
+                    }
+                }
+
+                // Check Local Fair Rotation System for fair rotation tasks
+                if (
+                    (task.fairRotation || task.rotation?.type === "fair") &&
+                    window.localFairRotationSystem
+                ) {
+                    try {
+                        const assignment =
+                            window.localFairRotationSystem.calculateAssignee(
+                                task,
+                                selectedDate,
+                                (task.occurrence || 1) - 1, // Convert to 0-based index
+                            );
+
+                        if (assignment && assignment.user) {
+                            const isAssigned = assignment.user === userName;
+                            console.log(
+                                `🔄 Local Fair Rotation assignment for "${task.title}": ${assignment.user} (user ${userName} assigned: ${isAssigned})`,
+                            );
+                            return isAssigned;
+                        }
+                    } catch (error) {
+                        console.warn(
+                            `⚠️ Local Fair Rotation check failed for "${task.title}":`,
+                            error,
+                        );
+                        // Fall through to standard logic
+                    }
+                }
+
+                // Check Universal Task Assignee function for fair rotation
+                if (
+                    (task.fairRotation || task.rotation?.type === "fair") &&
+                    typeof window.getUniversalTaskAssignee === "function"
+                ) {
+                    try {
+                        const currentAssignee = window.getUniversalTaskAssignee(
+                            task,
+                            selectedDate,
+                            (task.occurrence || 1) - 1, // Convert to 0-based index
+                        );
+
+                        if (currentAssignee) {
+                            const isAssigned = currentAssignee === userName;
+                            console.log(
+                                `🔄 Universal assignee for fair rotation "${task.title}": ${currentAssignee} (user ${userName} assigned: ${isAssigned})`,
+                            );
+                            return isAssigned;
+                        }
+                    } catch (error) {
+                        console.warn(
+                            `⚠️ Universal assignee check failed for "${task.title}":`,
                             error,
                         );
                         // Fall through to standard logic
@@ -1699,6 +1758,19 @@
                             "<p>Failed to load tasks. Please try again later.</p>";
                         return;
                     }
+
+                    // Migrate existing fair rotation tasks to have rotation.enabled property
+                    tasks.forEach((task) => {
+                        if (task.fairRotation && !task.rotation) {
+                            task.rotation = {
+                                enabled: true,
+                                type: "fair",
+                            };
+                            console.log(
+                                `🔄 Migrated fair rotation task "${task.title}" to have rotation.enabled`,
+                            );
+                        }
+                    });
 
                     // Show only public tasks NOT assigned to current user in All Tasks view
                     const otherTasks = filterTasksForDate(
@@ -2665,6 +2737,19 @@
                             "<p>Failed to load tasks. Please try again later.</p>";
                         return;
                     }
+
+                    // Migrate existing fair rotation tasks to have rotation.enabled property
+                    tasks.forEach((task) => {
+                        if (task.fairRotation && !task.rotation) {
+                            task.rotation = {
+                                enabled: true,
+                                type: "fair",
+                            };
+                            console.log(
+                                `🔄 Migrated fair rotation task "${task.title}" to have rotation.enabled`,
+                            );
+                        }
+                    });
 
                     const userTasks = filterTasksForDate(
                         tasks,
@@ -4855,7 +4940,7 @@
                 // Additional Details for Rotational
                 if (task.settings?.includes("Rotation")) {
                     let rotationDetails = [];
-                    if (task.fairRotation) {
+                    if (task.fairRotation || task.rotation?.type === "fair") {
                         rotationDetails.push("Fair Task Rotation");
                     }
                     if (rotationDetails.length > 0) {
@@ -5436,10 +5521,12 @@
                         method: "POST",
                         payload: requestPayload,
                         payloadJSON: JSON.stringify(requestPayload),
-                        taskType: task.fairRotation
-                            ? "Fair Rotation"
-                            : "Simple Rotation",
-                        taskFairRotationFlag: task.fairRotation,
+                        taskType:
+                            task.fairRotation || task.rotation?.type === "fair"
+                                ? "Fair Rotation"
+                                : "Simple Rotation",
+                        taskFairRotationFlag:
+                            task.fairRotation || task.rotation?.type === "fair",
                         taskSettings: task.settings,
                     });
 
@@ -5469,15 +5556,17 @@
                     console.log("✅ finishTask: Task submitted", data);
                     popup.textContent = `Task Submitted by ${currentUser}! Waiting for Parent Review`;
 
-                    // 🔄 FAIR ROTATION: Check if task uses fair rotation (either explicit flag or Rotation setting)
+                    // 🔄 FAIR ROTATION: Check if task uses fair rotation (either explicit flag, rotation.type, or Rotation setting)
                     const isFairRotationTask =
                         task.fairRotation ||
+                        task.rotation?.type === "fair" ||
                         (task.settings?.includes("Rotation") &&
                             task.title?.includes(" - "));
 
                     console.log("🔍 Fair rotation check:", {
                         taskTitle: task.title,
                         hasFairRotationFlag: !!task.fairRotation,
+                        hasRotationTypeFair: task.rotation?.type === "fair",
                         hasRotationSetting: task.settings?.includes("Rotation"),
                         hasOccurrenceSuffix: task.title?.includes(" - "),
                         isFairRotationTask,
