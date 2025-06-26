@@ -10,6 +10,38 @@ function parseLocalDate(dateStr) {
   return date;
 }
 
+// Calculate global occurrence number for a task on a specific date
+function calculateGlobalOccurrenceNumber(
+  task,
+  selectedDate,
+  occurrenceIndex = 0,
+) {
+  const repeat = task.repeat || "Daily";
+  const requiredTimes = repeat === "Daily" ? task.timesPerDay || 1 : 1;
+
+  const range = task.date.split(" to ");
+  const taskStartDate = parseLocalDate(range[0]);
+  const selected = parseLocalDate(selectedDate);
+
+  let totalOccurrences = 0;
+
+  // Count all occurrences from task start up to (but not including) selected date
+  for (
+    let currentDate = new Date(taskStartDate);
+    currentDate < selected;
+    currentDate.setDate(currentDate.getDate() + 1)
+  ) {
+    if (repeat === "Daily") {
+      totalOccurrences += requiredTimes;
+    }
+  }
+
+  // Add current occurrence index for the selected date (0-based, so add 1)
+  totalOccurrences += occurrenceIndex + 1;
+
+  return totalOccurrences;
+}
+
 // Filter tasks for a given date, returning only those that should be visible
 function filterTasksForDate(tasks, selectedDate) {
   if (!Array.isArray(tasks)) return [];
@@ -848,21 +880,252 @@ function calculateFairRotationLive(task, selectedDate, requiredTimes) {
 
 function mixedTurnData(task, selectedDate) {
   try {
-    // Check if fair rotation is enabled - use predicted schedule system
+    console.log(
+      `🔍 mixedTurnData called for "${task.title}" - fairRotation: ${task.fairRotation}, settings: ${task.settings}`,
+    );
+    // Check if fair rotation is enabled - use Enhanced Fair Rotation system first
     if (
       task.fairRotation &&
       task.settings &&
       task.settings.includes("Rotation")
     ) {
+      console.log(`🎯 Using Enhanced Fair Rotation path for "${task.title}"`);
+      // First try Enhanced Fair Rotation system if available
+      if (typeof window !== "undefined" && window.enhancedFairRotationSystem) {
+        console.log(
+          `✅ Enhanced Fair Rotation system available for "${task.title}"`,
+        );
+        try {
+          // Extract base task name and ensure task is initialized
+          const baseTaskName = task.title.replace(/ - \d+(?:st|nd|rd|th)$/, "");
+
+          // Initialize task if not already done
+          if (task.users && task.users.length > 0) {
+            window.enhancedFairRotationSystem.initializeTask(
+              baseTaskName,
+              task.users,
+            );
+
+            // Initialize without refreshing completion data to keep function synchronous
+            // Data will be refreshed by other parts of the system as needed
+          }
+
+          // Check if this is a subtask (like "Iznest miskasti - 1st")
+          const isSubtask = / - \d+(?:st|nd|rd|th)$/.test(task.title);
+
+          let specificOccurrence = null;
+          if (isSubtask) {
+            const match = task.title.match(/ - (\d+)(?:st|nd|rd|th)$/);
+            specificOccurrence = match ? parseInt(match[1]) : null;
+            console.log(
+              `🎯 Detected subtask "${task.title}" as occurrence ${specificOccurrence} of "${baseTaskName}"`,
+            );
+          }
+
+          const repeat = task.repeat || "Daily";
+          const requiredTimes =
+            repeat === "Daily"
+              ? Number.isInteger(task.timesPerDay)
+                ? task.timesPerDay
+                : 1
+              : 1;
+
+          const turns = [];
+
+          // If this is a subtask, only process its specific occurrence
+          if (isSubtask && specificOccurrence) {
+            const assignmentInfo =
+              window.enhancedFairRotationSystem.getAssignmentInfo(
+                baseTaskName,
+                selectedDate,
+                specificOccurrence,
+              );
+
+            // If no assignment found, calculate one
+            let assignedUser = null;
+            if (assignmentInfo && assignmentInfo.assignedUser) {
+              assignedUser = assignmentInfo.assignedUser;
+              console.log(
+                `✅ Found assignment for ${baseTaskName} occurrence ${specificOccurrence}: ${assignedUser}`,
+              );
+            } else if (task.users && task.users.length > 0) {
+              // Fallback: use rotation based on occurrence
+              const userIndex = (specificOccurrence - 1) % task.users.length;
+              assignedUser = task.users[userIndex];
+              console.log(
+                `⚠️ Using fallback assignment for ${baseTaskName} occurrence ${specificOccurrence}: ${assignedUser}`,
+              );
+            }
+
+            if (assignedUser) {
+              // Check if this occurrence is completed
+              const occurrenceTaskTitle = task.title; // Use the actual subtask title
+
+              const completions = Array.isArray(
+                task.completions?.[selectedDate],
+              )
+                ? task.completions[selectedDate]
+                : [];
+              const pendingCompletions = Array.isArray(
+                task.pendingCompletions?.[selectedDate],
+              )
+                ? task.pendingCompletions[selectedDate]
+                : [];
+
+              const isCompleted = completions.some(
+                (c) =>
+                  c.user === assignedUser &&
+                  (c.taskTitle === occurrenceTaskTitle ||
+                    c.taskTitle === baseTaskName) &&
+                  c.isPending !== true,
+              );
+              const isPending =
+                pendingCompletions.some(
+                  (c) =>
+                    c.user === assignedUser &&
+                    (c.taskTitle === occurrenceTaskTitle ||
+                      c.taskTitle === baseTaskName),
+                ) ||
+                completions.some(
+                  (c) =>
+                    c.user === assignedUser &&
+                    (c.taskTitle === occurrenceTaskTitle ||
+                      c.taskTitle === baseTaskName) &&
+                    c.isPending === true,
+                );
+
+              turns.push({
+                user: assignedUser,
+                originalUser: assignedUser,
+                isCompleted: isCompleted,
+                isPending: isPending,
+                occurrence: specificOccurrence,
+                assignmentReason: assignmentInfo
+                  ? assignmentInfo.assignmentReason
+                  : "fallback",
+              });
+            }
+          } else {
+            // Original logic for non-subtasks - process all occurrences
+            for (
+              let occurrence = 1;
+              occurrence <= requiredTimes;
+              occurrence++
+            ) {
+              const assignmentInfo =
+                window.enhancedFairRotationSystem.getAssignmentInfo(
+                  baseTaskName,
+                  selectedDate,
+                  occurrence,
+                );
+
+              // If no assignment found, calculate one
+              let assignedUser = null;
+              if (assignmentInfo && assignmentInfo.assignedUser) {
+                assignedUser = assignmentInfo.assignedUser;
+              } else if (task.users && task.users.length > 0) {
+                // Fallback: use first user or simple rotation
+                const userIndex = (occurrence - 1) % task.users.length;
+                assignedUser = task.users[userIndex];
+                console.log(
+                  `⚠️ Using fallback assignment for ${baseTaskName} occurrence ${occurrence}: ${assignedUser}`,
+                );
+              }
+
+              if (assignedUser) {
+                // Check if this occurrence is completed
+                const occurrenceTaskTitle =
+                  requiredTimes > 1
+                    ? `${baseTaskName} - ${occurrence}${occurrence === 1 ? "st" : occurrence === 2 ? "nd" : occurrence === 3 ? "rd" : "th"}`
+                    : baseTaskName;
+
+                const completions = Array.isArray(
+                  task.completions?.[selectedDate],
+                )
+                  ? task.completions[selectedDate]
+                  : [];
+                const pendingCompletions = Array.isArray(
+                  task.pendingCompletions?.[selectedDate],
+                )
+                  ? task.pendingCompletions[selectedDate]
+                  : [];
+
+                const isCompleted = completions.some(
+                  (c) =>
+                    c.user === assignedUser &&
+                    (c.taskTitle === occurrenceTaskTitle ||
+                      c.taskTitle === baseTaskName) &&
+                    c.isPending !== true,
+                );
+                const isPending =
+                  pendingCompletions.some(
+                    (c) =>
+                      c.user === assignedUser &&
+                      (c.taskTitle === occurrenceTaskTitle ||
+                        c.taskTitle === baseTaskName),
+                  ) ||
+                  completions.some(
+                    (c) =>
+                      c.user === assignedUser &&
+                      (c.taskTitle === occurrenceTaskTitle ||
+                        c.taskTitle === baseTaskName) &&
+                      c.isPending === true,
+                  );
+
+                turns.push({
+                  user: assignedUser,
+                  originalUser: assignedUser,
+                  isCompleted: isCompleted,
+                  isPending: isPending,
+                  occurrence: occurrence,
+                  assignmentReason: assignmentInfo
+                    ? assignmentInfo.assignmentReason
+                    : "fallback",
+                });
+              }
+            }
+          }
+
+          const completedCount = turns.filter(
+            (t) => t.isCompleted || t.isPending,
+          ).length;
+
+          console.log(
+            `🎉 Enhanced Fair Rotation mixedTurnData success for "${task.title}": ${turns.length} turns, ${completedCount} completed/pending`,
+          );
+          return {
+            turns: turns,
+            completedCount: completedCount,
+            requiredTimes: requiredTimes,
+          };
+        } catch (error) {
+          console.warn(
+            `⚠️ Enhanced Fair Rotation mixedTurnData failed for "${task.title}":`,
+            error,
+          );
+          // Fall through to next option
+        }
+      } else {
+        console.log(
+          `❌ Enhanced Fair Rotation system not available for "${task.title}"`,
+        );
+      }
+
       // Use predicted schedule system if available
       if (typeof window !== "undefined" && window.PredictedScheduleSystem) {
+        console.log(
+          `🔄 Using PredictedScheduleSystem fallback for "${task.title}"`,
+        );
         return window.PredictedScheduleSystem.mixedTurnDataWithPrediction(
           task,
           selectedDate,
         );
       }
       // Fallback to existing logic
+      console.log(`🔄 Using fairRotationTurnData fallback for "${task.title}"`);
       return fairRotationTurnData(task, selectedDate);
+    } else {
+      console.log(`🔄 Not a fair rotation task: "${task.title}"`);
     }
 
     if (!task || typeof task !== "object" || !Array.isArray(task.users)) {
@@ -1008,14 +1271,28 @@ function mixedTurnData(task, selectedDate) {
       let user, originalUser;
 
       // Use schedule-based assignment for simple rotation with rotation settings
+      console.log(
+        `🔍 mixedTurnData assignment logic for "${task.title}" occurrence ${i + 1}:`,
+        {
+          fairRotation: task.fairRotation,
+          notFairRotation: !task.fairRotation,
+          hasRotationSettings: task.settings?.includes("Rotation"),
+          hasRotationSettingsObj: !!task.rotationSettings,
+        },
+      );
+
       if (
         !task.fairRotation &&
         task.settings?.includes("Rotation") &&
         task.rotationSettings
       ) {
+        console.log(
+          `🔄 Using calculateScheduledAssignment for simple rotation: ${task.title}`,
+        );
         user = calculateScheduledAssignment(task, selectedDate, i);
         originalUser = user; // For simple rotation, assigned user is the original user
       } else {
+        console.log(`🔄 Using legacy assignment logic for: ${task.title}`);
         // Use existing logic for fair rotation or legacy tasks
         const userIndex = (globalOccurrenceNumber - 1) % assignedUsers.length;
         user = assignedUsers[userIndex];
@@ -1344,7 +1621,46 @@ function getUniversalTaskAssignee(task, selectedDate, occurrenceIndex = 0) {
   // For rotation tasks, calculate dynamic assignment
   if (task.settings?.includes("Rotation")) {
     try {
-      // Method 1: Use fair rotation system if available and enabled
+      // Method 1: Use Enhanced Fair Rotation system if available and enabled
+      if (
+        task.fairRotation &&
+        typeof window !== "undefined" &&
+        window.enhancedFairRotationSystem
+      ) {
+        console.log(
+          `🔄 Using Enhanced Fair Rotation system for: ${task.title}`,
+        );
+        try {
+          // Extract base task name for Enhanced Fair Rotation lookup
+          const baseTaskName = task.title.replace(/ - \d+(?:st|nd|rd|th)$/, "");
+          const occurrenceMatch = task.title.match(/ - (\d+)(?:st|nd|rd|th)$/);
+          const occurrenceNumber = occurrenceMatch
+            ? parseInt(occurrenceMatch[1])
+            : occurrenceIndex + 1; // Convert 0-based to 1-based
+
+          const assignmentInfo =
+            window.enhancedFairRotationSystem.getAssignmentInfo(
+              baseTaskName,
+              selectedDate,
+              occurrenceNumber,
+            );
+
+          if (assignmentInfo && assignmentInfo.assignedUser) {
+            console.log(
+              `✅ Enhanced Fair Rotation assignment: ${assignmentInfo.assignedUser}`,
+            );
+            return assignmentInfo.assignedUser;
+          }
+        } catch (error) {
+          console.warn(
+            `⚠️ Enhanced Fair Rotation assignment failed for "${task.title}":`,
+            error,
+          );
+          // Fall through to next method
+        }
+      }
+
+      // Method 2: Use local fair rotation system if available and enabled
       if (
         task.fairRotation &&
         typeof window !== "undefined" &&
@@ -1362,7 +1678,7 @@ function getUniversalTaskAssignee(task, selectedDate, occurrenceIndex = 0) {
         }
       }
 
-      // Method 2: Use predicted schedule system if available
+      // Method 3: Use predicted schedule system if available
       if (
         task.fairRotation &&
         typeof window !== "undefined" &&
@@ -1383,7 +1699,7 @@ function getUniversalTaskAssignee(task, selectedDate, occurrenceIndex = 0) {
         }
       }
 
-      // Method 3: Use mixedTurnData for regular rotation
+      // Method 4: Use mixedTurnData for regular rotation
       if (typeof mixedTurnData === "function") {
         console.log(`🔄 Using mixedTurnData for rotation: ${task.title}`);
         const turnData = mixedTurnData(task, selectedDate);
@@ -1396,7 +1712,7 @@ function getUniversalTaskAssignee(task, selectedDate, occurrenceIndex = 0) {
         }
       }
 
-      // Method 4: Fallback calculation based on days since task start
+      // Method 5: Fallback calculation based on days since task start
       console.log(`🔄 Using fallback rotation calculation for: ${task.title}`);
       const taskStartDate = task.date
         ? task.date.split(" to ")[0]

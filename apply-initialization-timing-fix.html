@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply Initialization Timing Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+
+        .button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .button.success {
+            background-color: #28a745;
+        }
+        .button.success:hover {
+            background-color: #218838;
+        }
+        .button.danger {
+            background-color: #dc3545;
+        }
+        .button.danger:hover {
+            background-color: #c82333;
+        }
+
+        .log-container {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 2px 0;
+        }
+        .log-success { color: #28a745; }
+        .log-error { color: #dc3545; }
+        .log-warning { color: #ffc107; }
+        .log-info { color: #17a2b8; }
+
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+        }
+        .section h3 {
+            color: #495057;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Enhanced Fair Rotation - Initialization Timing Fix</h1>
+            <p>This tool fixes the initialization timing issue where tasks show wrong assignments on first load</p>
+        </div>
+
+        <div id="status" class="status info">
+            Ready to apply initialization timing fix...
+        </div>
+
+        <div class="section">
+            <h3>🚀 Quick Fix</h3>
+            <p>Apply the initialization timing fix to resolve wrong task assignments on page load:</p>
+            <button class="button" onclick="applyQuickFix()">Apply Initialization Timing Fix</button>
+            <button class="button success" onclick="testFix()">Test Fix</button>
+            <button class="button" onclick="debugTaskStates()">Debug Task States</button>
+        </div>
+
+        <div class="section">
+            <h3>📋 Manual Actions</h3>
+            <button class="button" onclick="loadFixScript()">Load Fix Script</button>
+            <button class="button" onclick="ensureSystemReady()">Ensure System Ready</button>
+            <button class="button" onclick="forceInitializeAllTasks()">Force Initialize All Tasks</button>
+            <button class="button danger" onclick="clearLogs()">Clear Logs</button>
+        </div>
+
+        <div class="section">
+            <h3>📊 System Status</h3>
+            <div id="systemInfo">Checking system status...</div>
+        </div>
+
+        <div class="section">
+            <h3>📝 Activity Log</h3>
+            <div id="logContainer" class="log-container">
+                <div class="log-entry log-info">🔄 System ready. Click "Apply Initialization Timing Fix" to start.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let logContainer;
+        let statusDiv;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            logContainer = document.getElementById('logContainer');
+            statusDiv = document.getElementById('status');
+
+            checkSystemStatus();
+
+            // Auto-apply fix if we detect the issue
+            setTimeout(detectAndAutoFix, 2000);
+        });
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+
+            console.log(message);
+        }
+
+        function updateStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        async function loadFixScript() {
+            try {
+                log('🔄 Loading initialization timing fix script...', 'info');
+
+                // Create script element to load the fix
+                const script = document.createElement('script');
+                script.src = 'fix-initialization-timing.js?t=' + Date.now();
+                script.onload = function() {
+                    log('✅ Initialization timing fix script loaded successfully', 'success');
+                    updateStatus('Fix script loaded successfully', 'success');
+                };
+                script.onerror = function() {
+                    log('❌ Failed to load initialization timing fix script', 'error');
+                    updateStatus('Failed to load fix script', 'error');
+                };
+
+                document.head.appendChild(script);
+
+            } catch (error) {
+                log(`❌ Error loading fix script: ${error.message}`, 'error');
+                updateStatus('Error loading fix script', 'error');
+            }
+        }
+
+        async function applyQuickFix() {
+            try {
+                log('🚀 Starting initialization timing fix application...', 'info');
+                updateStatus('Applying initialization timing fix...', 'info');
+
+                // First, load the fix script if not already loaded
+                if (!window.initializationTimingFix) {
+                    await loadFixScript();
+
+                    // Wait for script to load
+                    let attempts = 0;
+                    while (!window.initializationTimingFix && attempts < 50) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        attempts++;
+                    }
+                }
+
+                if (!window.initializationTimingFix) {
+                    throw new Error('Fix script not available');
+                }
+
+                // Apply the fix
+                log('🔧 Applying initialization timing fix...', 'info');
+                await window.initializationTimingFix.applyFix();
+
+                // Ensure system is ready
+                log('🔄 Ensuring Enhanced Fair Rotation system is ready...', 'info');
+                await window.initializationTimingFix.ensureReady();
+
+                // Initialize all tasks
+                log('📋 Initializing all fair rotation tasks...', 'info');
+                await window.initializationTimingFix.initializeAllTasks();
+
+                log('✅ Initialization timing fix applied successfully!', 'success');
+                updateStatus('Fix applied successfully! Try reloading userTasks.html now.', 'success');
+
+                // Test the fix
+                setTimeout(testFix, 1000);
+
+            } catch (error) {
+                log(`❌ Error applying fix: ${error.message}`, 'error');
+                updateStatus('Error applying fix', 'error');
+                console.error('Fix application error:', error);
+            }
+        }
+
+        async function testFix() {
+            try {
+                log('🧪 Testing initialization timing fix...', 'info');
+
+                if (!window.initializationTimingFix) {
+                    log('⚠️ Fix not loaded yet. Loading now...', 'warning');
+                    await loadFixScript();
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+
+                if (window.initializationTimingFix && typeof window.initializationTimingFix.testInitialization === 'function') {
+                    const testResult = await window.initializationTimingFix.testInitialization();
+
+                    if (testResult) {
+                        log('✅ Test PASSED - Fix is working correctly', 'success');
+                        updateStatus('Test passed - fix is working!', 'success');
+                    } else {
+                        log('❌ Test FAILED - Fix may not be working correctly', 'error');
+                        updateStatus('Test failed - fix may need troubleshooting', 'error');
+                    }
+                } else {
+                    log('⚠️ Test function not available', 'warning');
+                }
+
+            } catch (error) {
+                log(`❌ Error testing fix: ${error.message}`, 'error');
+            }
+        }
+
+        async function debugTaskStates() {
+            try {
+                log('🔍 Debugging task initialization states...', 'info');
+
+                if (window.initializationTimingFix && typeof window.initializationTimingFix.debugTaskStates === 'function') {
+                    window.initializationTimingFix.debugTaskStates();
+                    log('📊 Debug information logged to console', 'info');
+                } else {
+                    log('⚠️ Debug function not available', 'warning');
+                }
+
+            } catch (error) {
+                log(`❌ Error debugging: ${error.message}`, 'error');
+            }
+        }
+
+        async function ensureSystemReady() {
+            try {
+                log('🔄 Ensuring Enhanced Fair Rotation system is ready...', 'info');
+
+                if (window.initializationTimingFix) {
+                    await window.initializationTimingFix.ensureReady();
+                    log('✅ System readiness check completed', 'success');
+                } else {
+                    log('⚠️ Fix not loaded - loading now...', 'warning');
+                    await loadFixScript();
+                }
+
+            } catch (error) {
+                log(`❌ Error ensuring system ready: ${error.message}`, 'error');
+            }
+        }
+
+        async function forceInitializeAllTasks() {
+            try {
+                log('🔄 Force initializing all fair rotation tasks...', 'info');
+
+                if (window.initializationTimingFix) {
+                    await window.initializationTimingFix.initializeAllTasks();
+                    log('✅ Force initialization completed', 'success');
+                } else {
+                    log('⚠️ Fix not loaded - loading now...', 'warning');
+                    await loadFixScript();
+                }
+
+            } catch (error) {
+                log(`❌ Error force initializing: ${error.message}`, 'error');
+            }
+        }
+
+        function clearLogs() {
+            logContainer.innerHTML = '<div class="log-entry log-info">📝 Logs cleared.</div>';
+            log('🧹 Logs cleared', 'info');
+        }
+
+        function checkSystemStatus() {
+            const systemInfo = document.getElementById('systemInfo');
+
+            let status = '<div style="font-family: monospace;">';
+
+            // Check if we're in the right context
+            if (typeof window !== 'undefined') {
+                status += `🌐 Window object: ✅ Available<br>`;
+
+                // Check for Enhanced Fair Rotation System
+                if (window.enhancedFairRotationSystem) {
+                    status += `🔄 Enhanced Fair Rotation System: ✅ Available<br>`;
+
+                    const taskCount = window.enhancedFairRotationSystem.taskUsers ?
+                                    window.enhancedFairRotationSystem.taskUsers.size : 0;
+                    status += `📋 Registered Tasks: ${taskCount}<br>`;
+                } else {
+                    status += `🔄 Enhanced Fair Rotation System: ❌ Not Available<br>`;
+                }
+
+                // Check for allTasks
+                if (window.allTasks && Array.isArray(window.allTasks)) {
+                    status += `📊 All Tasks: ✅ Available (${window.allTasks.length} tasks)<br>`;
+
+                    const fairRotationTasks = window.allTasks.filter(task =>
+                        task.fairRotation || task.rotation?.type === 'fair'
+                    ).length;
+                    status += `🎯 Fair Rotation Tasks: ${fairRotationTasks}<br>`;
+                } else {
+                    status += `📊 All Tasks: ❌ Not Available<br>`;
+                }
+
+                // Check for our fix
+                if (window.initializationTimingFix) {
+                    status += `🔧 Initialization Timing Fix: ✅ Loaded<br>`;
+                } else {
+                    status += `🔧 Initialization Timing Fix: ❌ Not Loaded<br>`;
+                }
+
+            } else {
+                status += `❌ Window object not available<br>`;
+            }
+
+            status += '</div>';
+            systemInfo.innerHTML = status;
+        }
+
+        async function detectAndAutoFix() {
+            try {
+                // Check if we have fair rotation tasks but they're not properly initialized
+                if (window.allTasks && window.enhancedFairRotationSystem) {
+                    const fairRotationTasks = window.allTasks.filter(task =>
+                        task.fairRotation || task.rotation?.type === 'fair'
+                    );
+
+                    if (fairRotationTasks.length > 0) {
+                        // Check if any of these tasks have proper assignments
+                        let hasProperAssignments = false;
+
+                        for (const task of fairRotationTasks) {
+                            const baseTaskName = task.title.replace(/ - \d+(?:st|nd|rd|th)$/, '');
+                            const taskData = window.enhancedFairRotationSystem.getTaskData(baseTaskName);
+
+                            if (taskData && taskData.hasAssignments) {
+                                hasProperAssignments = true;
+                                break;
+                            }
+                        }
+
+                        if (!hasProperAssignments) {
+                            log('🚨 Detected initialization timing issue - auto-applying fix...', 'warning');
+                            updateStatus('Detected issue - auto-applying fix...', 'warning');
+
+                            await applyQuickFix();
+                        } else {
+                            log('✅ No initialization timing issues detected', 'success');
+                        }
+                    }
+                }
+
+                // Update system status
+                checkSystemStatus();
+
+            } catch (error) {
+                log(`❌ Error in auto-detection: ${error.message}`, 'error');
+            }
+        }
+
+        // Refresh system status every 5 seconds
+        setInterval(checkSystemStatus, 5000);
+    </script>
+</body>
+</html>

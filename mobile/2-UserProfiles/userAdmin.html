@@ -4026,6 +4026,12 @@ document.getElementById("asNeededCard").addEventListener("click", (event) => {
 
 <script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
 <script src="/BeeMazing-A1/shared/avatar-system.js?t=${Date.now()}"></script>
+<script src="/BeeMazing-A1/enhanced-fair-rotation-system.js?t=${Date.now()}"></script>
+
+<!-- Fair Rotation Fixes - MUST load after enhanced-fair-rotation-system.js -->
+<script src="/BeeMazing-A1/fix-fetchTaskData-caching.js?t=${Date.now()}"></script>
+<script src="/BeeMazing-A1/fix-conditional-recalculation.js?t=${Date.now()}"></script>
+<script src="/BeeMazing-A1/initialize-fair-rotation-fixes.js?t=${Date.now()}"></script>
 
 <script>
 // Initialize avatar system for userAdmin page

@@ -949,9 +949,22 @@
             </a>
         </div>
 
+        <!-- CORE SYSTEMS -->
         <script src="/BeeMazing-A1/shared/taskrotations.js?t=${Date.now()}"></script>
         <script src="/BeeMazing-A1/shared/avatar-system.js?t=${Date.now()}"></script>
         <script src="/BeeMazing-A1/enhanced-fair-rotation-system.js?t=${Date.now()}"></script>
+
+        <!-- ESSENTIAL FAIR ROTATION FIXES - Load after enhanced-fair-rotation-system.js -->
+        <script src="/BeeMazing-A1/fix-fetchTaskData-caching.js?t=${Date.now()}"></script>
+        <script src="/BeeMazing-A1/fix-conditional-recalculation.js?t=${Date.now()}"></script>
+        <script src="/BeeMazing-A1/initialize-fair-rotation-fixes.js?t=${Date.now()}"></script>
+        <script src="/BeeMazing-A1/apply-hybrid-timestamp-fix.js?t=${Date.now()}"></script>
+        <script src="/BeeMazing-A1/auto-fix-enhanced-fair-rotation.js?t=${Date.now()}"></script>
+        <script src="/BeeMazing-A1/fix-missing-fairrotation-flag.js?t=${Date.now()}"></script>
+        <script src="/BeeMazing-A1/immediate-iznest-fix.js?t=${Date.now()}"></script>
+
+        <!-- THE WORKING FIX - This is what resolved the avatar and reassignment issues -->
+        <script src="/BeeMazing-A1/fix-enhanced-fair-rotation-reassignment-bug.js?t=${Date.now()}"></script>
 
         <script>
             document.addEventListener("DOMContentLoaded", async () => {
@@ -1296,11 +1309,23 @@
                     isEnhancedFairRotationAvailable()
                 ) {
                     try {
+                        // Extract base task name for Enhanced Fair Rotation lookup
+                        const baseTaskName = task.title.replace(
+                            / - \d+(?:st|nd|rd|th)$/,
+                            "",
+                        );
+                        const occurrenceMatch = task.title.match(
+                            / - (\d+)(?:st|nd|rd|th)$/,
+                        );
+                        const occurrenceNumber = occurrenceMatch
+                            ? parseInt(occurrenceMatch[1])
+                            : 1;
+
                         const assignmentInfo =
                             window.enhancedFairRotationSystem.getAssignmentInfo(
-                                task.title,
+                                baseTaskName,
                                 selectedDate,
-                                task.occurrence || 1,
+                                occurrenceNumber,
                             );
 
                         if (assignmentInfo && assignmentInfo.assignedUser) {
@@ -1352,12 +1377,24 @@
                     window.enhancedFairRotationSystem
                 ) {
                     try {
+                        // Extract base task name for Enhanced Fair Rotation lookup
+                        const baseTaskName = task.title.replace(
+                            / - \d+(?:st|nd|rd|th)$/,
+                            "",
+                        );
+                        const occurrenceMatch = task.title.match(
+                            / - (\d+)(?:st|nd|rd|th)$/,
+                        );
+                        const occurrenceNumber = occurrenceMatch
+                            ? parseInt(occurrenceMatch[1])
+                            : 1;
+
                         const rotationAssigned =
                             window.enhancedFairRotationSystem.isUserAssigned(
-                                task.title,
+                                baseTaskName,
                                 userName,
                                 selectedDate,
-                                task.occurrence || 1,
+                                occurrenceNumber,
                             );
                         console.log(
                             `🔄 Enhanced Fair Rotation assignment for "${task.title}": ${rotationAssigned}`,
@@ -1404,9 +1441,12 @@
                     }
                 }
 
-                // Check Universal Task Assignee function for fair rotation
+                // Skip Universal Task Assignee for fair rotation - Enhanced Fair Rotation system handles it above
+                // Check Universal Task Assignee function for non-fair rotation tasks only
                 if (
-                    (task.fairRotation || task.rotation?.type === "fair") &&
+                    !task.fairRotation &&
+                    !task.rotation?.enabled &&
+                    task.rotation?.type !== "fair" &&
                     typeof window.getUniversalTaskAssignee === "function"
                 ) {
                     try {
@@ -1419,7 +1459,7 @@
                         if (currentAssignee) {
                             const isAssigned = currentAssignee === userName;
                             console.log(
-                                `🔄 Universal assignee for fair rotation "${task.title}": ${currentAssignee} (user ${userName} assigned: ${isAssigned})`,
+                                `🔄 Universal assignee for non-fair rotation "${task.title}": ${currentAssignee} (user ${userName} assigned: ${isAssigned})`,
                             );
                             return isAssigned;
                         }
@@ -1771,6 +1811,155 @@
                             );
                         }
                     });
+
+                    // Initialize Enhanced Fair Rotation System for userTasks.html
+                    if (window.enhancedFairRotationSystem) {
+                        console.log(
+                            "🔄 Initializing Enhanced Fair Rotation System in userTasks.html",
+                        );
+
+                        // Group subtasks by base name for Enhanced Fair Rotation
+                        const taskGroups = new Map();
+
+                        tasks.forEach((task) => {
+                            if (
+                                (task.fairRotation ||
+                                    task.rotation?.type === "fair") &&
+                                task.users &&
+                                task.users.length > 0
+                            ) {
+                                // Extract base task name
+                                const baseTaskName = task.title.replace(
+                                    / - \d+(?:st|nd|rd|th)$/,
+                                    "",
+                                );
+
+                                if (!taskGroups.has(baseTaskName)) {
+                                    taskGroups.set(baseTaskName, []);
+                                }
+                                taskGroups.get(baseTaskName).push(task);
+                            }
+                        });
+
+                        // Initialize each task group
+                        for (const [baseTaskName, subtasks] of taskGroups) {
+                            if (
+                                !window.enhancedFairRotationSystem.taskUsers.has(
+                                    baseTaskName,
+                                )
+                            ) {
+                                const firstTask = subtasks[0];
+                                console.log(
+                                    `🔄 Initializing Enhanced Fair Rotation for: ${baseTaskName} (${subtasks.length} subtasks)`,
+                                );
+
+                                try {
+                                    window.enhancedFairRotationSystem.initializeTask(
+                                        baseTaskName,
+                                        firstTask.users || [],
+                                        {
+                                            frequency:
+                                                firstTask.frequency || "daily",
+                                            timesPerDay:
+                                                subtasks.length ||
+                                                subtasks.length,
+                                        },
+                                    );
+
+                                    // Import completion history from all subtasks
+                                    const history =
+                                        window.enhancedFairRotationSystem.completionHistory.get(
+                                            baseTaskName,
+                                        );
+                                    if (history) {
+                                        subtasks.forEach((subtask) => {
+                                            if (subtask.completions) {
+                                                Object.entries(
+                                                    subtask.completions,
+                                                ).forEach(
+                                                    ([
+                                                        date,
+                                                        completionsArray,
+                                                    ]) => {
+                                                        completionsArray.forEach(
+                                                            (completion) => {
+                                                                const occurrenceMatch =
+                                                                    subtask.title.match(
+                                                                        / - (\d+)(?:st|nd|rd|th)$/,
+                                                                    );
+                                                                const occurrence =
+                                                                    occurrenceMatch
+                                                                        ? parseInt(
+                                                                              occurrenceMatch[1],
+                                                                          )
+                                                                        : 1;
+
+                                                                if (
+                                                                    completion.isPending
+                                                                ) {
+                                                                    history.pending.push(
+                                                                        {
+                                                                            user: completion.user,
+                                                                            occurrence:
+                                                                                occurrence,
+                                                                            date: date,
+                                                                            timestamp:
+                                                                                completion.timestamp ||
+                                                                                new Date(
+                                                                                    date,
+                                                                                ).toISOString(),
+                                                                            pendingId:
+                                                                                completion.pendingId ||
+                                                                                `imported_${Date.now()}_${Math.random()}`,
+                                                                        },
+                                                                    );
+                                                                } else {
+                                                                    history.approved.push(
+                                                                        {
+                                                                            user: completion.user,
+                                                                            occurrence:
+                                                                                occurrence,
+                                                                            date: date,
+                                                                            timestamp:
+                                                                                completion.timestamp ||
+                                                                                new Date(
+                                                                                    date,
+                                                                                ).toISOString(),
+                                                                        },
+                                                                    );
+                                                                }
+                                                            },
+                                                        );
+                                                    },
+                                                );
+                                            }
+                                        });
+                                    }
+
+                                    // Recalculate assignments with imported history
+                                    window.enhancedFairRotationSystem.recalculateAssignments(
+                                        baseTaskName,
+                                        true,
+                                    );
+
+                                    console.log(
+                                        `✅ Enhanced Fair Rotation initialized for: ${baseTaskName}`,
+                                    );
+                                } catch (error) {
+                                    console.error(
+                                        `❌ Failed to initialize Enhanced Fair Rotation for ${baseTaskName}:`,
+                                        error,
+                                    );
+                                }
+                            }
+                        }
+
+                        const initializedCount =
+                            window.enhancedFairRotationSystem.taskUsers.size;
+                        console.log(
+                            `📊 Enhanced Fair Rotation System initialized ${initializedCount} task groups in userTasks.html`,
+                        );
+                    }
 
                     // Show only public tasks NOT assigned to current user in All Tasks view
                     const otherTasks = filterTasksForDate(
@@ -2751,6 +2940,311 @@
                         }
                     });
 
+                    // Initialize Enhanced Fair Rotation System for loadUserTasks
+                    if (window.enhancedFairRotationSystem) {
+                        console.log(
+                            "🔄 Initializing Enhanced Fair Rotation System in loadUserTasks",
+                        );
+
+                        // Group subtasks by base name for Enhanced Fair Rotation
+                        const taskGroups = new Map();
+
+                        tasks.forEach((task) => {
+                            if (
+                                (task.fairRotation ||
+                                    task.rotation?.type === "fair") &&
+                                task.users &&
+                                task.users.length > 0
+                            ) {
+                                // Extract base task name
+                                const baseTaskName = task.title.replace(
+                                    / - \d+(?:st|nd|rd|th)$/,
+                                    "",
+                                );
+
+                                if (!taskGroups.has(baseTaskName)) {
+                                    taskGroups.set(baseTaskName, []);
+                                }
+                                taskGroups.get(baseTaskName).push(task);
+                            }
+                        });
+
+                        // Initialize each task group
+                        for (const [baseTaskName, subtasks] of taskGroups) {
+                            if (
+                                !window.enhancedFairRotationSystem.taskUsers.has(
+                                    baseTaskName,
+                                )
+                            ) {
+                                const firstTask = subtasks[0];
+                                console.log(
+                                    `🔄 Initializing Enhanced Fair Rotation for: ${baseTaskName} (${subtasks.length} subtasks)`,
+                                );
+
+                                try {
+                                    window.enhancedFairRotationSystem.initializeTask(
+                                        baseTaskName,
+                                        firstTask.users || [],
+                                        {
+                                            frequency:
+                                                firstTask.frequency || "daily",
+                                            timesPerDay:
+                                                subtasks.length ||
+                                                subtasks.length,
+                                        },
+                                    );
+
+                                    // Import completion history from all subtasks
+                                    const history =
+                                        window.enhancedFairRotationSystem.completionHistory.get(
+                                            baseTaskName,
+                                        );
+                                    if (history) {
+                                        subtasks.forEach((subtask) => {
+                                            if (subtask.completions) {
+                                                Object.entries(
+                                                    subtask.completions,
+                                                ).forEach(
+                                                    ([
+                                                        date,
+                                                        completionsArray,
+                                                    ]) => {
+                                                        completionsArray.forEach(
+                                                            (completion) => {
+                                                                const occurrenceMatch =
+                                                                    subtask.title.match(
+                                                                        / - (\d+)(?:st|nd|rd|th)$/,
+                                                                    );
+                                                                const occurrence =
+                                                                    occurrenceMatch
+                                                                        ? parseInt(
+                                                                              occurrenceMatch[1],
+                                                                          )
+                                                                        : 1;
+
+                                                                if (
+                                                                    completion.isPending
+                                                                ) {
+                                                                    history.pending.push(
+                                                                        {
+                                                                            user: completion.user,
+                                                                            occurrence:
+                                                                                occurrence,
+                                                                            date: date,
+                                                                            timestamp:
+                                                                                completion.timestamp ||
+                                                                                new Date(
+                                                                                    date,
+                                                                                ).toISOString(),
+                                                                            pendingId:
+                                                                                completion.pendingId ||
+                                                                                `imported_${Date.now()}_${Math.random()}`,
+                                                                        },
+                                                                    );
+                                                                } else {
+                                                                    history.approved.push(
+                                                                        {
+                                                                            user: completion.user,
+                                                                            occurrence:
+                                                                                occurrence,
+                                                                            date: date,
+                                                                            timestamp:
+                                                                                completion.timestamp ||
+                                                                                new Date(
+                                                                                    date,
+                                                                                ).toISOString(),
+                                                                        },
+                                                                    );
+                                                                }
+                                                            },
+                                                        );
+                                                    },
+                                                );
+                                            }
+                                        });
+                                    }
+
+                                    // Recalculate assignments with imported history
+                                    window.enhancedFairRotationSystem.recalculateAssignments(
+                                        baseTaskName,
+                                        true,
+                                    );
+
+                                    console.log(
+                                        `✅ Enhanced Fair Rotation initialized for: ${baseTaskName}`,
+                                    );
+                                } catch (error) {
+                                    console.error(
+                                        `❌ Failed to initialize Enhanced Fair Rotation for ${baseTaskName}:`,
+                                        error,
+                                    );
+                                }
+                            }
+                        }
+
+                        const initializedCount =
+                            window.enhancedFairRotationSystem.taskUsers.size;
+                        console.log(
+                            `📊 Enhanced Fair Rotation System initialized ${initializedCount} task groups in loadUserTasks`,
+                        );
+
+                        // ENHANCED FAIR ROTATION CROSS-COMPLETION DISPLAY FIX
+                        // Patch completion data retrieval for Enhanced Fair Rotation tasks
+                        if (!window.originalGetTaskCompletionsForDate) {
+                            window.originalGetTaskCompletionsForDate =
+                                window.getTaskCompletionsForDate;
+
+                            window.getTaskCompletionsForDate = function (
+                                task,
+                                selectedDate,
+                            ) {
+                                // First try Enhanced Fair Rotation system for fair rotation tasks
+                                if (
+                                    (task.fairRotation ||
+                                        task.rotation?.enabled) &&
+                                    window.enhancedFairRotationSystem
+                                ) {
+                                    try {
+                                        const baseTaskName = task.title.replace(
+                                            / - \d+(?:st|nd|rd|th)$/,
+                                            "",
+                                        );
+                                        const occurrenceMatch =
+                                            task.title.match(
+                                                / - (\d+)(?:st|nd|rd|th)$/,
+                                            );
+                                        const occurrenceNumber = occurrenceMatch
+                                            ? parseInt(occurrenceMatch[1])
+                                            : 1;
+
+                                        const completionHistory =
+                                            window.enhancedFairRotationSystem.completionHistory.get(
+                                                baseTaskName,
+                                            );
+
+                                        if (completionHistory) {
+                                            const completions = [];
+
+                                            // Check pending completions
+                                            completionHistory.pending.forEach(
+                                                (completion) => {
+                                                    if (
+                                                        completion.date ===
+                                                            selectedDate &&
+                                                        completion.occurrence ===
+                                                            occurrenceNumber
+                                                    ) {
+                                                        completions.push({
+                                                            user: completion.user,
+                                                            timestamp:
+                                                                completion.timestamp,
+                                                            isPending: true,
+                                                            originalAssignee:
+                                                                userName, // Get this from task assignment
+                                                            pendingId:
+                                                                completion.pendingId,
+                                                            taskTitle:
+                                                                task.title,
+                                                            originalTitle:
+                                                                baseTaskName,
+                                                            occurrence:
+                                                                occurrenceNumber,
+                                                            taskId:
+                                                                task.id || null,
+                                                        });
+                                                    }
+                                                },
+                                            );
+
+                                            // Check approved completions
+                                            completionHistory.approved.forEach(
+                                                (completion) => {
+                                                    if (
+                                                        completion.date ===
+                                                            selectedDate &&
+                                                        completion.occurrence ===
+                                                            occurrenceNumber
+                                                    ) {
+                                                        completions.push({
+                                                            user: completion.user,
+                                                            timestamp:
+                                                                completion.timestamp,
+                                                            isPending: false,
+                                                            originalAssignee:
+                                                                completion.originalAssignee ||
+                                                                userName,
+                                                            taskTitle:
+                                                                task.title,
+                                                            originalTitle:
+                                                                baseTaskName,
+                                                            occurrence:
+                                                                occurrenceNumber,
+                                                            taskId:
+                                                                task.id || null,
+                                                        });
+                                                    }
+                                                },
+                                            );
+
+                                            if (completions.length > 0) {
+                                                console.log(
+                                                    `📋 Enhanced Fair Rotation found ${completions.length} completions for "${task.title}"`,
+                                                );
+                                                return completions;
+                                            }
+                                        }
+                                    } catch (error) {
+                                        console.warn(
+                                            "⚠️ Enhanced Fair Rotation completion check failed:",
+                                            error,
+                                        );
+                                    }
+                                }
+
+                                // Fall back to original function
+                                return window.originalGetTaskCompletionsForDate(
+                                    task,
+                                    selectedDate,
+                                );
+                            };
+
+                            // Also patch hasTaskCompletionsForDate
+                            window.originalHasTaskCompletionsForDate =
+                                window.hasTaskCompletionsForDate;
+                            window.hasTaskCompletionsForDate = function (
+                                task,
+                                selectedDate,
+                            ) {
+                                const completions =
+                                    window.getTaskCompletionsForDate(
+                                        task,
+                                        selectedDate,
+                                    );
+                                return completions.length > 0;
+                            };
+
+                            console.log(
+                                "✅ Enhanced Fair Rotation completion data retrieval patched",
+                            );
+                        }
+                    }
+
+                    // Fix task structure for Enhanced Fair Rotation tasks
+                    tasks.forEach((task) => {
+                        if (
+                            (task.fairRotation || task.rotation?.enabled) &&
+                            task.title.includes(" - ")
+                        ) {
+                            const match = task.title.match(
+                                /^(.+) - (\d+)(?:st|nd|rd|th)$/,
+                            );
+                            if (match) {
+                                task.originalTitle = match[1];
+                                task.occurrence = parseInt(match[2]);
+                            }
+                        }
+                    });
+
                     const userTasks = filterTasksForDate(
                         tasks,
                         selectedDate,
@@ -2777,6 +3271,29 @@
                         console.log(
                             `🎯 ENHANCED STATUS SET: "${task.title}" → ${task._calculatedStatus}`,
                         );
+
+                        // Store cross-completion data for display fix
+                        if (
+                            (task.fairRotation || task.rotation?.enabled) &&
+                            window.getTaskCompletionsForDate
+                        ) {
+                            const completions =
+                                window.getTaskCompletionsForDate(
+                                    task,
+                                    selectedDate,
+                                );
+                            const crossCompletions = completions.filter(
+                                (c) =>
+                                    c.user !== userName &&
+                                    c.originalAssignee === userName,
+                            );
+                            if (crossCompletions.length > 0) {
+                                task._crossCompletion = crossCompletions[0];
+                                console.log(
+                                    `🎨 Cross-completion found for "${task.title}" by ${crossCompletions[0].user}`,
+                                );
+                            }
+                        }
                     });
 
                     // Sort tasks: incomplete (by due time) → incomplete (no due time) → pending approval → approved
@@ -5573,78 +6090,135 @@
                     });
 
                     if (isFairRotationTask) {
-                        // Use local fair rotation system for immediate updates
-                        if (window.onLocalFairRotationTaskCompleted) {
-                            console.log(
-                                "🔄 Triggering local fair rotation recalculation...",
-                            );
-
-                            // Determine occurrence index for this specific task
-                            let occurrenceIndex = 0;
-                            if (task.occurrence && task.totalOccurrences) {
-                                occurrenceIndex = task.occurrence - 1; // Convert to 0-based
-                            } else {
-                                // Extract occurrence from title if present (e.g., "testa versija - 2nd" -> 2)
-                                const occurrenceMatch =
-                                    task.title.match(/- (\d+)\w+$/);
-                                if (occurrenceMatch) {
-                                    occurrenceIndex =
-                                        parseInt(occurrenceMatch[1]) - 1; // Convert to 0-based
-                                }
-                            }
-
-                            console.log(
-                                "🔍 Calling local fair rotation with:",
-                                {
-                                    title: task.title,
-                                    user: currentUser,
-                                    date: today,
-                                    occurrenceIndex,
-                                },
-                            );
-
-                            window.onLocalFairRotationTaskCompleted(
-                                task.title,
-                                currentUser,
-                                today,
-                                occurrenceIndex,
-                            );
+                        // Determine occurrence number for enhanced fair rotation system
+                        let occurrenceNumber = 1;
+                        if (task.occurrence && task.totalOccurrences) {
+                            occurrenceNumber = task.occurrence;
                         } else {
-                            console.warn(
-                                "⚠️ Local fair rotation system not available",
-                            );
+                            // Extract occurrence from title if present (e.g., "testa versija - 2nd" -> 2)
+                            const occurrenceMatch =
+                                task.title.match(/- (\d+)\w+$/);
+                            if (occurrenceMatch) {
+                                occurrenceNumber = parseInt(occurrenceMatch[1]);
+                            }
                         }
 
-                        // Also use server-based system for persistent tracking
-                        if (window.onFairRotationTaskCompleted) {
+                        // Extract base task name for enhanced fair rotation
+                        const baseTaskName = task.title.replace(
+                            / - \d+(?:st|nd|rd|th)$/,
+                            "",
+                        );
+
+                        // Use Enhanced Fair Rotation System for completion tracking and reassignment
+                        if (window.onEnhancedFairRotationTaskCompleted) {
                             console.log(
-                                "🔄 Triggering server-based fair rotation recalculation...",
+                                "🔄 Triggering Enhanced Fair Rotation System...",
                             );
                             try {
                                 console.log(
-                                    "🔍 Calling server fair rotation with:",
+                                    "🔍 Calling Enhanced Fair Rotation with:",
                                     {
-                                        title: task.title,
+                                        baseTaskName: baseTaskName,
+                                        fullTitle: task.title,
                                         user: currentUser,
                                         date: today,
+                                        occurrenceNumber: occurrenceNumber,
                                     },
                                 );
 
-                                await window.onFairRotationTaskCompleted(
-                                    task.title,
-                                    currentUser,
-                                    today,
-                                );
+                                const result =
+                                    await window.onEnhancedFairRotationTaskCompleted(
+                                        baseTaskName,
+                                        currentUser,
+                                        today,
+                                        occurrenceNumber,
+                                    );
+
+                                if (result && result.success) {
+                                    console.log(
+                                        `✅ Enhanced Fair Rotation completion recorded: ${result.pendingId}`,
+                                    );
+
+                                    // Force refresh to show updated assignments
+                                    if (window.forceRefreshUserTasks) {
+                                        console.log(
+                                            "🔄 Force refreshing user tasks after enhanced fair rotation...",
+                                        );
+                                        setTimeout(() => {
+                                            window.forceRefreshUserTasks();
+                                        }, 1000);
+                                    }
+                                } else {
+                                    console.error(
+                                        "❌ Enhanced Fair Rotation completion failed:",
+                                        result,
+                                    );
+                                }
                             } catch (error) {
                                 console.error(
-                                    "❌ Error in server-based fair rotation:",
+                                    "❌ Error in Enhanced Fair Rotation System:",
                                     error,
                                 );
                             }
                         } else {
                             console.warn(
-                                "⚠️ Server fair rotation system not available",
+                                "⚠️ Enhanced Fair Rotation System not available, falling back to legacy systems",
                             );
+
+                            // Fallback to legacy systems
+                            // Use local fair rotation system for immediate updates
+                            if (window.onLocalFairRotationTaskCompleted) {
+                                console.log(
+                                    "🔄 Triggering local fair rotation recalculation...",
+                                );
+
+                                const occurrenceIndex = occurrenceNumber - 1; // Convert to 0-based
+
+                                console.log(
+                                    "🔍 Calling local fair rotation with:",
+                                    {
+                                        title: task.title,
+                                        user: currentUser,
+                                        date: today,
+                                        occurrenceIndex,
+                                    },
+                                );
+
+                                window.onLocalFairRotationTaskCompleted(
+                                    task.title,
+                                    currentUser,
+                                    today,
+                                    occurrenceIndex,
+                                );
+                            }
+
+                            // Also use server-based system for persistent tracking
+                            if (window.onFairRotationTaskCompleted) {
+                                console.log(
+                                    "🔄 Triggering server-based fair rotation recalculation...",
+                                );
+                                try {
+                                    console.log(
+                                        "🔍 Calling server fair rotation with:",
+                                        {
+                                            title: task.title,
+                                            user: currentUser,
+                                            date: today,
+                                        },
+                                    );
+
+                                    await window.onFairRotationTaskCompleted(
+                                        task.title,
+                                        currentUser,
+                                        today,
+                                    );
+                                } catch (error) {
+                                    console.error(
+                                        "❌ Error in server-based fair rotation:",
+                                        error,
+                                    );
+                                }
+                            }
                         }
                     } else {
                         console.log(
@@ -6674,6 +7248,137 @@
             }
 
             console.log("🔧 Task Flow Issues Fix integrated and ready!");
+
+            // CROSS-COMPLETION DISPLAY FIX
+            // Ensures cross-completed tasks show proper dual avatar display in My Tasks
+            console.log("🔧 Integrating Cross-Completion Display Fix...");
+
+            // Apply cross-completion display fixes after task rendering
+            function applyCrossCompletionDisplayFix() {
+                console.log("🎨 Applying cross-completion display fixes...");
+
+                const myTasksDiv = document.getElementById("userTasks");
+                if (!myTasksDiv) return;
+
+                const taskItems = myTasksDiv.querySelectorAll(".task-item");
+
+                taskItems.forEach((taskItem) => {
+                    const taskTitle =
+                        taskItem.querySelector("strong")?.textContent;
+                    if (!taskTitle) return;
+
+                    // Check if this is a fair rotation task with cross-completion
+                    if (
+                        (taskTitle.includes("Iznest miskasti") ||
+                            taskTitle.includes(" - ")) &&
+                        taskTitle.match(/ - \d+(?:st|nd|rd|th)$/)
+                    ) {
+                        // Check if task has cross-completions
+                        const taskData = {
+                            title: taskTitle,
+                            originalTitle: taskTitle.replace(
+                                / - \d+(?:st|nd|rd|th)$/,
+                                "",
+                            ),
+                            occurrence: parseInt(
+                                taskTitle.match(
+                                    / - (\d+)(?:st|nd|rd|th)$/,
+                                )?.[1] || "1",
+                            ),
+                            users: ["Artūrs", "Laura", "Armands"],
+                            fairRotation: true,
+                        };
+
+                        const selectedDate = new Date().toLocaleDateString(
+                            "sv-SE",
+                        );
+                        const userName = new URLSearchParams(
+                            window.location.search,
+                        ).get("user");
+
+                        if (window.getTaskCompletionsForDate) {
+                            const completions =
+                                window.getTaskCompletionsForDate(
+                                    taskData,
+                                    selectedDate,
+                                );
+                            const crossCompletions = completions.filter(
+                                (c) =>
+                                    c.user !== userName &&
+                                    c.originalAssignee === userName,
+                            );
+
+                            if (crossCompletions.length > 0) {
+                                const crossCompletion = crossCompletions[0];
+                                console.log(
+                                    `🎨 Applying cross-completion display for ${taskTitle} by ${crossCompletion.user}`,
+                                );
+
+                                // Replace Done button with correct cross-completion display
+                                const rightDiv = taskItem.lastElementChild;
+                                const status = crossCompletion.isPending
+                                    ? "Pending approval"
+                                    : "Approved";
+                                const icon = crossCompletion.isPending
+                                    ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z" fill="white"></path></svg>`
+                                    : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M9 12l2 2 4-4"></path><circle cx="12" cy="12" r="10"></circle></svg>`;
+
+                                // Get completer avatar data
+                                const completerInitials = crossCompletion.user
+                                    .substring(0, 3)
+                                    .toUpperCase();
+                                const completerColor =
+                                    crossCompletion.user === "Armands"
+                                        ? "#FF7043"
+                                        : "#4CAF50";
+
+                                rightDiv.innerHTML = `
+                                    <div title="🕐 ${status} - completed by ${crossCompletion.user}" style="display: flex; align-items: center; gap: 4px;">
+                                        <div class="user-avatar completer-avatar" style="width: 24px; height: 24px; background: ${completerColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 10px; text-shadow: 0 1px 2px rgba(0,0,0,0.3); box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-right: 0;">${completerInitials}</div>
+                                        <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center;">
+                                            ${icon}
+                                        </div>
+                                    </div>
+                                `;
+
+                                console.log(
+                                    `✅ Applied cross-completion display for ${taskTitle}`,
+                                );
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Apply the cross-completion display fix after a delay to ensure tasks are rendered
+            function applyDelayedCrossCompletionFix() {
+                setTimeout(applyCrossCompletionDisplayFix, 500);
+            }
+
+            // Hook into task loading to apply cross-completion display
+            if (
+                !window.originalLoadUserTasksForDisplay &&
+                window.loadUserTasks
+            ) {
+                window.originalLoadUserTasksForDisplay = window.loadUserTasks;
+
+                window.loadUserTasks = async function (userName, selectedDate) {
+                    const result = await window.originalLoadUserTasksForDisplay(
+                        userName,
+                        selectedDate,
+                    );
+                    applyDelayedCrossCompletionFix();
+                    return result;
+                };
+
+                console.log(
+                    "✅ Cross-completion display fix integrated with loadUserTasks",
+                );
+            }
+
+            console.log(
+                "✅ Cross-completion display fix integration complete!",
+            );
         </script>
     </body>
 </html>
