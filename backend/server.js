@@ -13,35 +13,47 @@ const {
 const fs = require("fs");
 const path_module = require("path");
 
-// Initialize Enhanced Fair Rotation System for Node.js
+// Initialize Enhanced Fair Rotation System for Node.js (non-blocking)
 let enhancedFairRotation = null;
 
-try {
-  const enhancedRotationPath = path_module.join(
-    __dirname,
-    "..",
-    "enhanced-fair-rotation-system.js",
-  );
-  const enhancedRotationCode = fs.readFileSync(enhancedRotationPath, "utf8");
-  eval(enhancedRotationCode);
+// Load Enhanced Fair Rotation System asynchronously to prevent server hang
+setTimeout(() => {
+  try {
+    const enhancedRotationPath = path_module.join(
+      __dirname,
+      "..",
+      "enhanced-fair-rotation-system.js",
+    );
 
-  // Get the system instance (available in global scope for Node.js)
-  enhancedFairRotation = global.enhancedFairRotationSystem;
+    if (fs.existsSync(enhancedRotationPath)) {
+      const enhancedRotationCode = fs.readFileSync(
+        enhancedRotationPath,
+        "utf8",
+      );
+      eval(enhancedRotationCode);
 
-  if (enhancedFairRotation) {
-    console.log("✅ Enhanced Fair Rotation System initialized in Node.js");
-  } else {
-    console.warn("⚠️ Enhanced Fair Rotation System not found in global scope");
+      // Get the system instance (available in global scope for Node.js)
+      enhancedFairRotation = global.enhancedFairRotationSystem;
+
+      if (enhancedFairRotation) {
+        console.log("✅ Enhanced Fair Rotation System initialized in Node.js");
+      } else {
+        console.log(
+          "ℹ️ Enhanced Fair Rotation System not available (frontend-only mode)",
+        );
+      }
+    } else {
+      console.log(
+        "ℹ️ Enhanced Fair Rotation System file not found (frontend-only mode)",
+      );
+    }
+  } catch (error) {
+    console.log(
+      "ℹ️ Enhanced Fair Rotation System not available:",
+      error.message,
+    );
   }
-} catch (error) {
-  console.error(
-    "❌ Failed to initialize Enhanced Fair Rotation System:",
-    error.message,
-  );
-  console.log(
-    "🔄 Server will continue without enhanced fair rotation features",
-  );
-}
+}, 100);
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -58,6 +70,15 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// ✅ Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    enhancedFairRotation: !!enhancedFairRotation,
+  });
+});
 
 // ✅ Serve frontend files (optional)
 app.use(express.static(path.join(__dirname, "public")));
@@ -3691,7 +3712,10 @@ app.post("/api/complete-task", async (req, res) => {
       if (isFairRotationTask && enhancedFairRotation) {
         try {
           // Initialize task in rotation system if not already done
-          if (!enhancedFairRotation.taskUsers.has(taskTitle)) {
+          if (
+            enhancedFairRotation &&
+            !enhancedFairRotation.taskUsers.has(taskTitle)
+          ) {
             enhancedFairRotation.initializeTask(taskTitle, task.users || [], {
               frequency: task.frequency || "daily",
               timesPerDay: task.timesPerDay || 1,
@@ -4688,6 +4712,33 @@ app.post("/api/update-task-assignments", async (req, res) => {
   }
 });
 
-app.listen(port, () => {
+// Start server with timeout and better error handling
+const server = app.listen(port, () => {
   console.log(`✅ Server is running on http://localhost:${port}`);
+});
+
+// Set timeout to prevent hanging
+server.timeout = 30000; // 30 seconds
+
+// Handle server errors
+server.on("error", (error) => {
+  console.error("❌ Server error:", error.message);
+  process.exit(1);
+});
+
+// Graceful shutdown
+process.on("SIGTERM", () => {
+  console.log("📡 SIGTERM received, shutting down gracefully");
+  server.close(() => {
+    console.log("✅ Server closed");
+    process.exit(0);
+  });
+});
+
+process.on("SIGINT", () => {
+  console.log("📡 SIGINT received, shutting down gracefully");
+  server.close(() => {
+    console.log("✅ Server closed");
+    process.exit(0);
+  });
 });
