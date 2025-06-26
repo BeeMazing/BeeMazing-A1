@@ -1,515 +1,639 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Login - BeeMazing</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --primary-color: #FFC107;
-      --secondary-color: #212121;
-      --accent-color: #2C2F3A;
-      --light-bg: #FFFFF8;
-      --text-color: #FFFFFF;
-      --danger-color: #D32F2F;
-      --border-dark: #444754;
-    }
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <title>Login - BeeMazing</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --primary-color: #ffc107;
+                --secondary-color: #212121;
+                --accent-color: #2c2f3a;
+                --light-bg: #fffff8;
+                --text-color: #ffffff;
+                --danger-color: #d32f2f;
+                --border-dark: #444754;
+            }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
 
-    body {
-      font-family: 'Poppins', sans-serif;
-      background-color: var(--light-bg);
-      color: var(--text-color);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+            body {
+                font-family: "Poppins", sans-serif;
+                background-color: var(--light-bg);
+                color: var(--text-color);
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
 
-    .wrapper {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
+            .wrapper {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
 
-    .top-left {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      background-color: var(--primary-color);
-      color: var(--secondary-color);
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      z-index: 10;
-    }
+            .top-left {
+                position: absolute;
+                top: 20px;
+                left: 20px;
+                background-color: var(--primary-color);
+                color: var(--secondary-color);
+                padding: 10px 16px;
+                border-radius: 8px;
+                font-weight: bold;
+                cursor: pointer;
+                z-index: 10;
+            }
 
-    .logo {
-      text-align: center;
-      margin-bottom: 30px;
-    }
+            .logo {
+                text-align: center;
+                margin-bottom: 30px;
+            }
 
-    .logo img {
-      width: 240px;
-      height: auto;
-    }
+            .logo img {
+                width: 240px;
+                height: auto;
+            }
 
-    .button-container {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      width: 100%;
-      max-width: 300px;
-    }
+            .button-container {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+                width: 100%;
+                max-width: 300px;
+            }
 
-    .login-btn {
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
-      padding: 14px 32px;
-      font-size: 18px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.3s ease;
-    }
+            .login-btn {
+                background-color: var(--primary-color);
+                color: white;
+                border: none;
+                padding: 14px 32px;
+                font-size: 18px;
+                border-radius: 10px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: background 0.3s ease;
+            }
 
-    .login-btn:hover {
-      background-color: #FFB300;
-    }
+            .login-btn:hover {
+                background-color: #ffb300;
+            }
 
-    #passwordPrompt {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 20px;
-      width: 100%;
-      max-width: 300px;
-    }
+            #passwordPrompt {
+                display: none;
+                flex-direction: column;
+                align-items: center;
+                margin-top: 20px;
+                width: 100%;
+                max-width: 300px;
+            }
 
-    #passwordPrompt input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 2px solid #ccc;
-      background: #ffffff;
-      color: #333333;
-      margin-bottom: 10px;
-      font-size: 16px;
-    }
+            #passwordPrompt input {
+                width: 100%;
+                padding: 10px;
+                border-radius: 8px;
+                border: 2px solid #ccc;
+                background: #ffffff;
+                color: #333333;
+                margin-bottom: 10px;
+                font-size: 16px;
+            }
 
-    .error {
-      color: var(--danger-color);
-      font-size: 14px;
-      margin-top: 5px;
-      text-align: center;
-    }
+            .error {
+                color: var(--danger-color);
+                font-size: 14px;
+                margin-top: 5px;
+                text-align: center;
+            }
 
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            }
 
-    .modal.show {
-      display: flex;
-    }
+            .modal.show {
+                display: flex;
+            }
 
-    .modal-content {
-      background: #2A2B32;
-      padding: 25px;
-      border-radius: 12px;
-      text-align: center;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
-      border: 2px solid var(--border-dark);
-    }
+            .modal-content {
+                background: #2a2b32;
+                padding: 25px;
+                border-radius: 12px;
+                text-align: center;
+                width: 90%;
+                max-width: 400px;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+                border: 2px solid var(--border-dark);
+            }
 
-    .modal-content input {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      background: #ffffff;
-      color: #333333;
-      border: 2px solid #ccc;
-      border-radius: 8px;
-      font-size: 16px;
-    }
+            .modal-content input {
+                width: 100%;
+                padding: 10px;
+                margin: 10px 0;
+                background: #ffffff;
+                color: #333333;
+                border: 2px solid #ccc;
+                border-radius: 8px;
+                font-size: 16px;
+            }
 
-    .modal-content button {
-      margin-top: 10px;
-    }
+            .modal-content button {
+                margin-top: 10px;
+            }
 
-    @media (max-height: 600px) {
-      .wrapper {
-        justify-content: flex-start;
-        padding-top: 80px;
-      }
-    }
+            @media (max-height: 600px) {
+                .wrapper {
+                    justify-content: flex-start;
+                    padding-top: 80px;
+                }
+            }
 
+            .top-bar {
+                position: absolute;
+                top: 20px;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                padding: 0 20px;
+                z-index: 10;
+            }
 
-    .top-bar {
-  position: absolute;
-  top: 20px;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  padding: 0 20px;
-  z-index: 10;
-}
+            .top-bar button {
+                background-color: var(--primary-color);
+                color: white;
+                padding: 10px 16px;
+                border: none;
+                border-radius: 8px;
+                font-weight: bold;
+                cursor: pointer;
+                font-size: 14px;
+            }
 
-.top-bar button {
-  background-color: var(--primary-color);
-  color: white;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-  font-size: 14px;
-}
+            .top-bar button:hover {
+                background-color: #ffb300;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="top-bar">
+            <button id="logoutBtn">Logout</button>
+            <button id="setPasswordBtn" style="display: none">
+                Set Parent Password
+            </button>
+        </div>
 
-.top-bar button:hover {
-  background-color: #FFB300;
-}
+        <div class="wrapper">
+            <div class="logo">
+                <img src="mobile/1-Home/logo.png" alt="BeeMazing Logo" />
+            </div>
 
-  </style>
-</head>
-<body>
+            <div class="button-container">
+                <button class="login-btn" id="adminBtn">For parents</button>
+                <button class="login-btn" id="userBtn">For kids</button>
+            </div>
 
-  <div class="top-bar">
-    <button id="logoutBtn">Logout</button>
-    <button id="setPasswordBtn" style="display: none;">Set Parent Password</button>
-  </div>
-  
+            <div id="passwordPrompt">
+                <input
+                    type="password"
+                    id="adminPasswordInput"
+                    placeholder="Enter Admin Password"
+                />
+                <button class="login-btn" id="submitPasswordBtn">Login</button>
+                <div class="error" id="passwordError"></div>
+            </div>
+        </div>
 
-  <div class="wrapper">
-    <div class="logo">
-      <img src="mobile/1-Home/logo.png" alt="BeeMazing Logo" />
-    </div>
+        <!-- Modal -->
+        <div class="modal" id="adminModal">
+            <div class="modal-content">
+                <h3 id="modalTitle">Set Parent Password</h3>
+                <div id="setPasswordSection">
+                    <input
+                        type="password"
+                        id="setPasswordInput"
+                        placeholder="Enter Password"
+                    />
+                    <input
+                        type="password"
+                        id="confirmSetPasswordInput"
+                        placeholder="Confirm Password"
+                    />
+                    <button class="login-btn" id="saveSetPasswordBtn">
+                        Save
+                    </button>
+                </div>
+                <div id="changePasswordSection" style="display: none">
+                    <div id="currentPasswordSection">
+                        <input
+                            type="password"
+                            id="currentPasswordInput"
+                            placeholder="Enter Current Password"
+                        />
+                        <button class="login-btn" id="verifyPasswordBtn">
+                            Verify
+                        </button>
+                    </div>
+                    <div id="newPasswordSection" style="display: none">
+                        <input
+                            type="password"
+                            id="newPasswordInput"
+                            placeholder="Enter New Password"
+                        />
+                        <input
+                            type="password"
+                            id="confirmNewPasswordInput"
+                            placeholder="Confirm New Password"
+                        />
+                        <button class="login-btn" id="saveChangePasswordBtn">
+                            Save
+                        </button>
+                    </div>
+                </div>
+                <div class="error" id="modalError"></div>
+            </div>
+        </div>
 
-    <div class="button-container">
-      <button class="login-btn" id="adminBtn">For parents</button>
-      <button class="login-btn" id="userBtn">For kids</button>
-    </div>
+        <script>
+            // Immediately hide the "Set Parent Password" button to prevent flash
+            document.getElementById("setPasswordBtn").style.display = "none";
 
-    <div id="passwordPrompt">
-      <input type="password" id="adminPasswordInput" placeholder="Enter Admin Password" />
-      <button class="login-btn" id="submitPasswordBtn">Login</button>
-      <div class="error" id="passwordError"></div>
-    </div>
-  </div>
+            document.addEventListener("DOMContentLoaded", () => {
+                const setPasswordBtn =
+                    document.getElementById("setPasswordBtn");
+                const adminBtn = document.getElementById("adminBtn");
+                const userBtn = document.getElementById("userBtn");
+                const passwordPrompt =
+                    document.getElementById("passwordPrompt");
+                const submitPasswordBtn =
+                    document.getElementById("submitPasswordBtn");
+                const adminPasswordInput =
+                    document.getElementById("adminPasswordInput");
+                const passwordError = document.getElementById("passwordError");
 
-<!-- Modal -->
-<div class="modal" id="adminModal">
-  <div class="modal-content">
-    <h3 id="modalTitle">Set Parent Password</h3>
-    <div id="setPasswordSection">
-      <input type="password" id="setPasswordInput" placeholder="Enter Password" />
-      <input type="password" id="confirmSetPasswordInput" placeholder="Confirm Password" />
-      <button class="login-btn" id="saveSetPasswordBtn">Save</button>
-    </div>
-    <div id="changePasswordSection" style="display: none;">
-      <div id="currentPasswordSection">
-        <input type="password" id="currentPasswordInput" placeholder="Enter Current Password" />
-        <button class="login-btn" id="verifyPasswordBtn">Verify</button>
-      </div>
-      <div id="newPasswordSection" style="display: none;">
-        <input type="password" id="newPasswordInput" placeholder="Enter New Password" />
-        <input type="password" id="confirmNewPasswordInput" placeholder="Confirm New Password" />
-        <button class="login-btn" id="saveChangePasswordBtn">Save</button>
-      </div>
-    </div>
-    <div class="error" id="modalError"></div>
-  </div>
-</div>
+                const adminModal = document.getElementById("adminModal");
+                const modalTitle = document.getElementById("modalTitle");
+                const setPasswordSection =
+                    document.getElementById("setPasswordSection");
+                const setPasswordInput =
+                    document.getElementById("setPasswordInput");
+                const confirmSetPasswordInput = document.getElementById(
+                    "confirmSetPasswordInput",
+                );
+                const saveSetPasswordBtn =
+                    document.getElementById("saveSetPasswordBtn");
+                const changePasswordSection = document.getElementById(
+                    "changePasswordSection",
+                );
+                const currentPasswordSection = document.getElementById(
+                    "currentPasswordSection",
+                );
+                const currentPasswordInput = document.getElementById(
+                    "currentPasswordInput",
+                );
+                const verifyPasswordBtn =
+                    document.getElementById("verifyPasswordBtn");
+                const newPasswordSection =
+                    document.getElementById("newPasswordSection");
+                const newPasswordInput =
+                    document.getElementById("newPasswordInput");
+                const confirmNewPasswordInput = document.getElementById(
+                    "confirmNewPasswordInput",
+                );
+                const saveChangePasswordBtn = document.getElementById(
+                    "saveChangePasswordBtn",
+                );
+                const modalError = document.getElementById("modalError");
 
+                const targetPage = "mobile/1-Home/home.html";
 
+                // Retrieve current admin email from localStorage (set during registration)
+                const adminEmail = localStorage.getItem("currentAdminEmail");
 
-<script>
-  // Immediately hide the "Set Parent Password" button to prevent flash
-  document.getElementById("setPasswordBtn").style.display = "none";
+                // Check if admin password exists in MongoDB
+                if (adminEmail) {
+                    fetch(
+                        `https://beemazing1.onrender.com/check-admin-password`,
+                        {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ email: adminEmail }),
+                        },
+                    )
+                        .then((res) => res.json())
+                        .then((data) => {
+                            setPasswordBtn.style.display = "block";
+                            if (data.success && data.hasPassword) {
+                                // Password exists
+                                setPasswordBtn.textContent =
+                                    "Change Parent Password";
+                                modalTitle.textContent =
+                                    "Change Parent Password";
+                            } else {
+                                // No password set
+                                setPasswordBtn.textContent =
+                                    "Set Parent Password";
+                                modalTitle.textContent = "Set Parent Password";
+                            }
+                        })
+                        .catch(() => {
+                            // Show button on error to allow setting password
+                            setPasswordBtn.style.display = "block";
+                            setPasswordBtn.textContent = "Set Parent Password";
+                            modalTitle.textContent = "Set Parent Password";
+                        });
+                } else {
+                    // Show button if no email (user needs to register)
+                    setPasswordBtn.style.display = "block";
+                    setPasswordBtn.textContent = "Set Parent Password";
+                    modalTitle.textContent = "Set Parent Password";
+                }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const setPasswordBtn = document.getElementById("setPasswordBtn");
-    const adminBtn = document.getElementById("adminBtn");
-    const userBtn = document.getElementById("userBtn");
-    const passwordPrompt = document.getElementById("passwordPrompt");
-    const submitPasswordBtn = document.getElementById("submitPasswordBtn");
-    const adminPasswordInput = document.getElementById("adminPasswordInput");
-    const passwordError = document.getElementById("passwordError");
+                // Show modal to set/change admin password
+                setPasswordBtn.addEventListener("click", () => {
+                    adminModal.classList.add("show");
+                    modalError.textContent = "";
+                    if (setPasswordBtn.textContent === "Set Parent Password") {
+                        setPasswordSection.style.display = "block";
+                        changePasswordSection.style.display = "none";
+                        setPasswordInput.value = "";
+                        confirmSetPasswordInput.value = "";
+                        setPasswordInput.focus();
+                    } else {
+                        setPasswordSection.style.display = "none";
+                        changePasswordSection.style.display = "block";
+                        currentPasswordSection.style.display = "block";
+                        newPasswordSection.style.display = "none";
+                        currentPasswordInput.value = "";
+                        newPasswordInput.value = "";
+                        confirmNewPasswordInput.value = "";
+                        currentPasswordInput.focus();
+                    }
+                });
 
-    const adminModal = document.getElementById("adminModal");
-    const modalTitle = document.getElementById("modalTitle");
-    const setPasswordSection = document.getElementById("setPasswordSection");
-    const setPasswordInput = document.getElementById("setPasswordInput");
-    const confirmSetPasswordInput = document.getElementById("confirmSetPasswordInput");
-    const saveSetPasswordBtn = document.getElementById("saveSetPasswordBtn");
-    const changePasswordSection = document.getElementById("changePasswordSection");
-    const currentPasswordSection = document.getElementById("currentPasswordSection");
-    const currentPasswordInput = document.getElementById("currentPasswordInput");
-    const verifyPasswordBtn = document.getElementById("verifyPasswordBtn");
-    const newPasswordSection = document.getElementById("newPasswordSection");
-    const newPasswordInput = document.getElementById("newPasswordInput");
-    const confirmNewPasswordInput = document.getElementById("confirmNewPasswordInput");
-    const saveChangePasswordBtn = document.getElementById("saveChangePasswordBtn");
-    const modalError = document.getElementById("modalError");
+                // Save initial admin password
+                saveSetPasswordBtn.addEventListener("click", async () => {
+                    const password = setPasswordInput.value.trim();
+                    const confirmPassword =
+                        confirmSetPasswordInput.value.trim();
 
-    const targetPage = "mobile/1-Home/home.html";
+                    if (!adminEmail) {
+                        modalError.textContent =
+                            "No admin email found. Please register first.";
+                        return;
+                    }
 
-    // Retrieve current admin email from localStorage (set during registration)
-    const adminEmail = localStorage.getItem("currentAdminEmail");
+                    if (!password || !confirmPassword) {
+                        modalError.textContent =
+                            "Please fill in both password fields.";
+                        return;
+                    }
 
-    // Check if admin password exists in MongoDB
-    if (adminEmail) {
-      fetch(`https://beemazing1.onrender.com/check-admin-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: adminEmail }),
-      })
-        .then(res => res.json())
-        .then(data => {
-          setPasswordBtn.style.display = "block";
-          if (data.success && data.hasPassword) {
-            // Password exists
-            setPasswordBtn.textContent = "Change Parent Password";
-            modalTitle.textContent = "Change Parent Password";
-          } else {
-            // No password set
-            setPasswordBtn.textContent = "Set Parent Password";
-            modalTitle.textContent = "Set Parent Password";
-          }
-        })
-        .catch(() => {
-          // Show button on error to allow setting password
-          setPasswordBtn.style.display = "block";
-          setPasswordBtn.textContent = "Set Parent Password";
-          modalTitle.textContent = "Set Parent Password";
-        });
-    } else {
-      // Show button if no email (user needs to register)
-      setPasswordBtn.style.display = "block";
-      setPasswordBtn.textContent = "Set Parent Password";
-      modalTitle.textContent = "Set Parent Password";
-    }
+                    if (password !== confirmPassword) {
+                        modalError.textContent = "Passwords do not match.";
+                        return;
+                    }
 
-    // Show modal to set/change admin password
-    setPasswordBtn.addEventListener("click", () => {
-      adminModal.classList.add("show");
-      modalError.textContent = "";
-      if (setPasswordBtn.textContent === "Set Parent Password") {
-        setPasswordSection.style.display = "block";
-        changePasswordSection.style.display = "none";
-        setPasswordInput.value = "";
-        confirmSetPasswordInput.value = "";
-        setPasswordInput.focus();
-      } else {
-        setPasswordSection.style.display = "none";
-        changePasswordSection.style.display = "block";
-        currentPasswordSection.style.display = "block";
-        newPasswordSection.style.display = "none";
-        currentPasswordInput.value = "";
-        newPasswordInput.value = "";
-        confirmNewPasswordInput.value = "";
-        currentPasswordInput.focus();
-      }
-    });
+                    try {
+                        const res = await fetch(
+                            `https://beemazing1.onrender.com/set-admin-password`,
+                            {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    email: adminEmail,
+                                    password,
+                                }),
+                            },
+                        );
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            alert("Parent password set successfully!");
+                            adminModal.classList.remove("show");
+                            setPasswordBtn.textContent =
+                                "Change Parent Password";
+                            modalTitle.textContent = "Change Parent Password";
+                        } else {
+                            modalError.textContent =
+                                data.message ||
+                                "Failed to set Parent password.";
+                        }
+                    } catch (err) {
+                        modalError.textContent = "Error connecting to server.";
+                    }
+                });
 
-    // Save initial admin password
-    saveSetPasswordBtn.addEventListener("click", async () => {
-      const password = setPasswordInput.value.trim();
-      const confirmPassword = confirmSetPasswordInput.value.trim();
+                // Verify current password for change
+                verifyPasswordBtn.addEventListener("click", async () => {
+                    const currentPassword = currentPasswordInput.value.trim();
 
-      if (!adminEmail) {
-        modalError.textContent = "No admin email found. Please register first.";
-        return;
-      }
+                    if (!adminEmail) {
+                        modalError.textContent =
+                            "No admin email found. Please register first.";
+                        return;
+                    }
 
-      if (!password || !confirmPassword) {
-        modalError.textContent = "Please fill in both password fields.";
-        return;
-      }
+                    if (!currentPassword) {
+                        modalError.textContent =
+                            "Please enter the current password.";
+                        return;
+                    }
 
-      if (password !== confirmPassword) {
-        modalError.textContent = "Passwords do not match.";
-        return;
-      }
+                    try {
+                        const res = await fetch(
+                            `https://beemazing1.onrender.com/verify-admin-password`,
+                            {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    email: adminEmail,
+                                    password: currentPassword,
+                                }),
+                            },
+                        );
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            currentPasswordSection.style.display = "none";
+                            newPasswordSection.style.display = "block";
+                            modalError.textContent = "";
+                            newPasswordInput.focus();
+                        } else {
+                            modalError.textContent =
+                                data.message || "Incorrect current password.";
+                        }
+                    } catch (err) {
+                        modalError.textContent = "Error connecting to server.";
+                    }
+                });
 
-      try {
-        const res = await fetch(`https://beemazing1.onrender.com/set-admin-password`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: adminEmail, password }),
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          alert("Parent password set successfully!");
-          adminModal.classList.remove("show");
-          setPasswordBtn.textContent = "Change Parent Password";
-          modalTitle.textContent = "Change Parent Password";
-        } else {
-          modalError.textContent = data.message || "Failed to set Parent password.";
-        }
-      } catch (err) {
-        modalError.textContent = "Error connecting to server.";
-      }
-    });
+                // Save new admin password for change
+                saveChangePasswordBtn.addEventListener("click", async () => {
+                    const newPassword = newPasswordInput.value.trim();
+                    const confirmPassword =
+                        confirmNewPasswordInput.value.trim();
+                    const currentPassword = currentPasswordInput.value.trim();
 
-    // Verify current password for change
-    verifyPasswordBtn.addEventListener("click", async () => {
-      const currentPassword = currentPasswordInput.value.trim();
+                    if (!adminEmail) {
+                        modalError.textContent =
+                            "No admin email found. Please register first.";
+                        return;
+                    }
 
-      if (!adminEmail) {
-        modalError.textContent = "No admin email found. Please register first.";
-        return;
-      }
+                    if (!newPassword || !confirmPassword) {
+                        modalError.textContent =
+                            "Please fill in both new password fields.";
+                        return;
+                    }
 
-      if (!currentPassword) {
-        modalError.textContent = "Please enter the current password.";
-        return;
-      }
+                    if (newPassword !== confirmPassword) {
+                        modalError.textContent = "New passwords do not match.";
+                        return;
+                    }
 
-      try {
-        const res = await fetch(`https://beemazing1.onrender.com/verify-admin-password`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: adminEmail, password: currentPassword }),
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          currentPasswordSection.style.display = "none";
-          newPasswordSection.style.display = "block";
-          modalError.textContent = "";
-          newPasswordInput.focus();
-        } else {
-          modalError.textContent = data.message || "Incorrect current password.";
-        }
-      } catch (err) {
-        modalError.textContent = "Error connecting to server.";
-      }
-    });
+                    try {
+                        const res = await fetch(
+                            `https://beemazing1.onrender.com/change-admin-password`,
+                            {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    email: adminEmail,
+                                    currentPassword,
+                                    newPassword,
+                                }),
+                            },
+                        );
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            alert("Parent password changed successfully!");
+                            adminModal.classList.remove("show");
+                        } else {
+                            modalError.textContent =
+                                data.message ||
+                                "Failed to change Parent password.";
+                        }
+                    } catch (err) {
+                        modalError.textContent = "Error connecting to server.";
+                    }
+                });
 
-    // Save new admin password for change
-    saveChangePasswordBtn.addEventListener("click", async () => {
-      const newPassword = newPasswordInput.value.trim();
-      const confirmPassword = confirmNewPasswordInput.value.trim();
-      const currentPassword = currentPasswordInput.value.trim();
+                // Close modal if clicked outside
 
-      if (!adminEmail) {
-        modalError.textContent = "No admin email found. Please register first.";
-        return;
-      }
+                // Logout button
+                document
+                    .getElementById("logoutBtn")
+                    .addEventListener("click", () => {
+                        localStorage.clear(); // Clear everything
+                        window.location.href = "register.html";
+                    });
 
-      if (!newPassword || !confirmPassword) {
-        modalError.textContent = "Please fill in both new password fields.";
-        return;
-      }
+                adminModal.addEventListener("click", (e) => {
+                    if (e.target === adminModal) {
+                        adminModal.classList.remove("show");
+                    }
+                });
 
-      if (newPassword !== confirmPassword) {
-        modalError.textContent = "New passwords do not match.";
-        return;
-      }
+                // Admin login
+                adminBtn.addEventListener("click", () => {
+                    if (!adminEmail) {
+                        passwordError.textContent =
+                            "No admin email found. Please register first.";
+                        return;
+                    }
+                    passwordPrompt.style.display = "flex";
+                    adminPasswordInput.focus();
+                });
 
-      try {
-        const res = await fetch(`https://beemazing1.onrender.com/change-admin-password`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: adminEmail, currentPassword, newPassword }),
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          alert("Parent password changed successfully!");
-          adminModal.classList.remove("show");
-        } else {
-          modalError.textContent = data.message || "Failed to change Parent password.";
-        }
-      } catch (err) {
-        modalError.textContent = "Error connecting to server.";
-      }
-    });
+                submitPasswordBtn.addEventListener("click", async () => {
+                    const enteredPassword = adminPasswordInput.value.trim();
+                    if (!adminEmail) {
+                        passwordError.textContent =
+                            "No admin email found. Please register first.";
+                        return;
+                    }
+                    try {
+                        const res = await fetch(
+                            `https://beemazing1.onrender.com/verify-admin-password`,
+                            {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    email: adminEmail,
+                                    password: enteredPassword,
+                                }),
+                            },
+                        );
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            localStorage.setItem("isAdmin", "true");
 
-    // Close modal if clicked outside
+                            // Store admin permissions and user data
+                            if (data.permissions && data.users) {
+                                const userData =
+                                    JSON.parse(
+                                        localStorage.getItem("userData"),
+                                    ) || {};
+                                userData[adminEmail] = {
+                                    permissions: data.permissions,
+                                    users: data.users,
+                                };
+                                localStorage.setItem(
+                                    "userData",
+                                    JSON.stringify(userData),
+                                );
+                                localStorage.setItem(
+                                    "userPermissions",
+                                    JSON.stringify(data.permissions),
+                                );
+                            }
 
-    // Logout button
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  localStorage.clear(); // Clear everything
-  window.location.href = "register.html";
-});
+                            passwordError.textContent = "";
+                            setTimeout(() => {
+                                window.location.href = targetPage;
+                            }, 1000);
+                        } else {
+                            passwordError.textContent =
+                                data.message ||
+                                "Incorrect password. Please try again.";
+                        }
+                    } catch (err) {
+                        passwordError.textContent =
+                            "Error connecting to server.";
+                    }
+                });
 
-
-    adminModal.addEventListener("click", (e) => {
-      if (e.target === adminModal) {
-        adminModal.classList.remove("show");
-      }
-    });
-
-    // Admin login
-    adminBtn.addEventListener("click", () => {
-      if (!adminEmail) {
-        passwordError.textContent = "No admin email found. Please register first.";
-        return;
-      }
-      passwordPrompt.style.display = "flex";
-      adminPasswordInput.focus();
-    });
-
-    submitPasswordBtn.addEventListener("click", async () => {
-      const enteredPassword = adminPasswordInput.value.trim();
-      if (!adminEmail) {
-        passwordError.textContent = "No admin email found. Please register first.";
-        return;
-      }
-      try {
-        const res = await fetch(`https://beemazing1.onrender.com/verify-admin-password`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: adminEmail, password: enteredPassword }),
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          localStorage.setItem("isAdmin", "true");
-          passwordError.textContent = "";
-          setTimeout(() => {
-            window.location.href = targetPage;
-          }, 1000);
-        } else {
-          passwordError.textContent = data.message || "Incorrect password. Please try again.";
-        }
-      } catch (err) {
-        passwordError.textContent = "Error connecting to server.";
-      }
-    });
-
-    // User login
-    userBtn.addEventListener("click", () => {
-      localStorage.setItem("isAdmin", "false");
-      if (adminEmail) {
-        localStorage.setItem("currentAdminEmail", adminEmail); // Keep email for consistency
-      }
-      setTimeout(() => {
-        window.location.href = targetPage;
-      }, 1000);
-    });
-  });
-</script>
-
-
-
-
-</body>
+                // User login
+                userBtn.addEventListener("click", () => {
+                    localStorage.setItem("isAdmin", "false");
+                    if (adminEmail) {
+                        localStorage.setItem("currentAdminEmail", adminEmail); // Keep email for consistency
+                    }
+                    setTimeout(() => {
+                        window.location.href = targetPage;
+                    }, 1000);
+                });
+            });
+        </script>
+    </body>
 </html>

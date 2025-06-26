@@ -176,6 +176,7 @@ app.post("/verify-admin-password", async (req, res) => {
 
     const db = await connectDB();
     const admins = db.collection("admins");
+    const adminUsers = db.collection("adminUsers");
     const admin = await admins.findOne({ email });
 
     if (!admin || admin.adminPassword !== password) {
@@ -186,8 +187,18 @@ app.post("/verify-admin-password", async (req, res) => {
       });
     }
 
+    // Get admin permissions data
+    const adminDoc = await adminUsers.findOne({ email });
+    const permissions = adminDoc?.permissions || {};
+    const users = adminDoc?.users || [];
+
     console.log("✅ Admin password verified for:", email);
-    res.json({ success: true, message: "Admin password verified" });
+    res.json({
+      success: true,
+      message: "Admin password verified",
+      permissions: permissions,
+      users: users,
+    });
   } catch (error) {
     console.error("❌ Error verifying admin password:", error);
     res.status(500).json({
@@ -287,6 +298,14 @@ app.post("/add-user", async (req, res) => {
     const db = await connectDB();
     const adminUsers = db.collection("adminUsers");
 
+    // Add user to the users array (if not already added)
+    await adminUsers.updateOne(
+      { email: adminEmail },
+      { $addToSet: { users: newUser } }, // avoids duplicates
+      { upsert: true },
+    );
+
+    // Set their role in permissions
     await adminUsers.updateOne(
       { email: adminEmail },
       { $set: { [`permissions.${newUser}`]: role || "User" } },
@@ -317,6 +336,25 @@ app.delete("/delete-user", async (req, res) => {
 
     const db = await connectDB();
     const adminUsers = db.collection("adminUsers");
+
+    const admin = await adminUsers.findOne({ email: adminEmail });
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin not found",
+      });
+    }
+
+    // Remove user from users array and permissions
+    const updatedUsers = (admin.users || []).filter(
+      (user) => user !== username,
+    );
+
+    // Update the admin's user list in the database
+    await adminUsers.updateOne(
+      { email: adminEmail },
+      { $set: { users: updatedUsers } },
+    );
 
     await adminUsers.updateOne(
       { email: adminEmail },
@@ -602,11 +640,17 @@ app.post("/api/complete-task", async (req, res) => {
 
     const db = await connectDB();
     const admins = db.collection("admins");
+    const adminUsers = db.collection("adminUsers");
     const admin = await admins.findOne({ email: adminEmail });
 
     if (!admin) {
       return res.status(404).json({ error: "Admin not found" });
     }
+
+    // Check if user is an Admin
+    const adminDoc = await adminUsers.findOne({ email: adminEmail });
+    const isAdmin = adminDoc?.permissions?.[user] === "Admin";
+    console.log("🔍 /api/complete-task: User permission", { user, isAdmin });
 
     const tasks = admin.tasks || [];
     const normalizedDate = date.split("T")[0];
@@ -634,8 +678,17 @@ app.post("/api/complete-task", async (req, res) => {
       task.completedDates[normalizedDate] = [];
     }
 
-    // Check if task requires parent approval
-    const requiresApproval = task.parentApproval === true;
+    // Check if task requires parent approval OR if user is admin (admins can bypass approval)
+    const requiresApproval = task.parentApproval === true && !isAdmin;
+
+    console.log("🔍 /api/complete-task: Approval decision debug", {
+      taskTitle,
+      user,
+      parentApproval: task.parentApproval,
+      isAdmin,
+      requiresApproval,
+      decision: requiresApproval ? "PENDING_APPROVAL" : "DIRECT_COMPLETION",
+    });
 
     if (requiresApproval) {
       // Add to pending completions
@@ -693,7 +746,17 @@ app.post("/api/complete-task", async (req, res) => {
         await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
       }
 
-      console.log("Task completed:", { taskTitle, user, originalAssignee });
+      console.log("✅ /api/complete-task: Task completed", {
+        originalAssigneeDetected: originalAssignee,
+        completingUser: user,
+        isCrossCompletion: originalAssignee && originalAssignee !== user,
+        user,
+        taskTitle,
+        rewardAmount,
+        requiresApproval: false,
+        isAdmin,
+        parentApproval: task.parentApproval,
+      });
       res.json({
         success: true,
         message: "Task completed successfully",
@@ -887,6 +950,148 @@ app.post("/api/market-rewards", async (req, res) => {
   } catch (error) {
     console.error("Error updating market rewards:", error);
     res.status(500).json({ error: "Failed to update market rewards" });
+  }
+});
+
+// USER ID MAPPING ENDPOINTS
+app.post("/api/user-id-mapping", async (req, res) => {
+  try {
+    const { adminEmail, userIdMap } = req.body;
+
+    if (!adminEmail || !userIdMap) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing adminEmail or userIdMap",
+      });
+    }
+
+    const db = await connectDB();
+    const adminUsers = db.collection("adminUsers");
+
+    // Store the user ID mapping
+    await adminUsers.updateOne(
+      { email: adminEmail },
+      {
+        $set: {
+          userIdMap: userIdMap,
+          userIdMapCreated: new Date().toISOString(),
+        },
+      },
+      { upsert: true },
+    );
+
+    console.log("User ID mapping saved for:", adminEmail);
+    res.json({ success: true, message: "User ID mapping saved successfully" });
+  } catch (error) {
+    console.error("Error saving user ID mapping:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error saving user ID mapping",
+    });
+  }
+});
+
+app.get("/api/user-id-mapping", async (req, res) => {
+  try {
+    const { adminEmail } = req.query;
+
+    if (!adminEmail) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing adminEmail",
+      });
+    }
+
+    const db = await connectDB();
+    const adminUsers = db.collection("adminUsers");
+    const adminDoc = await adminUsers.findOne({ email: adminEmail });
+    const userIdMap = adminDoc?.userIdMap || {};
+
+    res.json({
+      success: true,
+      userIdMap: userIdMap,
+      created: adminDoc?.userIdMapCreated,
+    });
+  } catch (error) {
+    console.error("Error getting user ID mapping:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error getting user ID mapping",
+    });
+  }
+});
+
+// AVATAR MANAGEMENT ENDPOINTS
+app.post("/api/save-avatar", async (req, res) => {
+  try {
+    const { adminEmail, userName, avatar } = req.body;
+
+    if (!adminEmail || !userName || !avatar) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing adminEmail, userName, or avatar",
+      });
+    }
+
+    const db = await connectDB();
+    const adminUsers = db.collection("adminUsers");
+
+    console.log(`Saving avatar for ${userName} under ${adminEmail}: ${avatar}`);
+
+    const admin = (await adminUsers.findOne({ email: adminEmail })) || {};
+    const avatars = admin.avatars || {};
+
+    avatars[userName] = avatar;
+
+    await adminUsers.updateOne(
+      { email: adminEmail },
+      { $set: { avatars } },
+      { upsert: true },
+    );
+
+    console.log("Avatar saved successfully");
+    res.json({ success: true, message: "Avatar saved successfully" });
+  } catch (error) {
+    console.error("Error saving avatar:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error saving avatar",
+    });
+  }
+});
+
+app.get("/api/get-avatar", async (req, res) => {
+  try {
+    const { adminEmail, user } = req.query;
+
+    if (!adminEmail || !user) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing adminEmail or user",
+      });
+    }
+
+    const db = await connectDB();
+    const adminUsers = db.collection("adminUsers");
+    const admin = await adminUsers.findOne({ email: adminEmail });
+
+    if (!admin || !admin.avatars || !admin.avatars[user]) {
+      return res.status(404).json({
+        success: false,
+        message: "Avatar not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      avatar: admin.avatars[user],
+    });
+  } catch (error) {
+    console.error("Error getting avatar:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error getting avatar",
+    });
   }
 });
 
