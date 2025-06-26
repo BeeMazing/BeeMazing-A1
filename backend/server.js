@@ -26,6 +26,11 @@ app.get("/health", (req, res) => {
   res.status(200).json({
     status: "ok",
     timestamp: new Date().toISOString(),
+    endpoints: [
+      "/check-admin-password",
+      "/verify-admin-password",
+      "/set-admin-password",
+    ],
   });
 });
 
@@ -101,7 +106,11 @@ app.post("/set-admin-password", async (req, res) => {
 
     const db = await connectDB();
     const admins = db.collection("admins");
-    await admins.updateOne({ email }, { $set: { password } }, { upsert: true });
+    await admins.updateOne(
+      { email },
+      { $set: { adminPassword: password } },
+      { upsert: true },
+    );
 
     console.log("Admin password set for:", email);
     res.json({ success: true, message: "Admin password set successfully" });
@@ -116,9 +125,11 @@ app.post("/set-admin-password", async (req, res) => {
 
 app.post("/check-admin-password", async (req, res) => {
   try {
+    console.log("🔍 /check-admin-password called with:", req.body);
     const { email } = req.body;
 
     if (!email) {
+      console.log("❌ Missing email in request");
       return res.status(400).json({
         success: false,
         message: "Missing email",
@@ -128,14 +139,18 @@ app.post("/check-admin-password", async (req, res) => {
     const db = await connectDB();
     const admins = db.collection("admins");
     const admin = await admins.findOne({ email });
-    const hasPassword = admin && admin.password;
+    const hasPassword = admin && admin.adminPassword;
 
+    console.log("✅ Admin password check result:", {
+      email,
+      hasPassword: !!hasPassword,
+    });
     res.json({
       success: true,
       hasPassword: !!hasPassword,
     });
   } catch (error) {
-    console.error("Error checking admin password:", error);
+    console.error("❌ Error checking admin password:", error);
     res.status(500).json({
       success: false,
       message: "Server error checking admin password",
@@ -145,9 +160,14 @@ app.post("/check-admin-password", async (req, res) => {
 
 app.post("/verify-admin-password", async (req, res) => {
   try {
+    console.log("🔍 /verify-admin-password called with:", {
+      email: req.body.email,
+      hasPassword: !!req.body.password,
+    });
     const { email, password } = req.body;
 
     if (!email || password === undefined) {
+      console.log("❌ Missing email or password in request");
       return res.status(400).json({
         success: false,
         message: "Missing email or password",
@@ -158,17 +178,18 @@ app.post("/verify-admin-password", async (req, res) => {
     const admins = db.collection("admins");
     const admin = await admins.findOne({ email });
 
-    if (!admin || admin.password !== password) {
+    if (!admin || admin.adminPassword !== password) {
+      console.log("❌ Invalid admin password for:", email);
       return res.status(401).json({
         success: false,
         message: "Invalid admin password",
       });
     }
 
-    console.log("Admin password verified for:", email);
+    console.log("✅ Admin password verified for:", email);
     res.json({ success: true, message: "Admin password verified" });
   } catch (error) {
-    console.error("Error verifying admin password:", error);
+    console.error("❌ Error verifying admin password:", error);
     res.status(500).json({
       success: false,
       message: "Server error verifying admin password",
@@ -191,14 +212,14 @@ app.post("/change-admin-password", async (req, res) => {
     const admins = db.collection("admins");
     const admin = await admins.findOne({ email });
 
-    if (!admin || admin.password !== currentPassword) {
+    if (!admin || admin.adminPassword !== currentPassword) {
       return res.status(401).json({
         success: false,
         message: "Current password is incorrect",
       });
     }
 
-    await admins.updateOne({ email }, { $set: { password: newPassword } });
+    await admins.updateOne({ email }, { $set: { adminPassword: newPassword } });
 
     console.log("Admin password changed for:", email);
     res.json({ success: true, message: "Password changed successfully" });
@@ -269,7 +290,7 @@ app.post("/add-user", async (req, res) => {
     await adminUsers.updateOne(
       { email: adminEmail },
       { $set: { [`permissions.${newUser}`]: role || "User" } },
-      { upsert: true }
+      { upsert: true },
     );
 
     console.log("User added:", { adminEmail, newUser, role });
@@ -299,7 +320,7 @@ app.delete("/delete-user", async (req, res) => {
 
     await adminUsers.updateOne(
       { email: adminEmail },
-      { $unset: { [`permissions.${username}`]: "" } }
+      { $unset: { [`permissions.${username}`]: "" } },
     );
 
     console.log("User deleted:", { adminEmail, username });
@@ -338,7 +359,7 @@ app.post("/rename-user", async (req, res) => {
       {
         $set: { [`permissions.${newName}`]: currentPermission },
         $unset: { [`permissions.${oldName}`]: "" },
-      }
+      },
     );
 
     // Update tasks
@@ -349,7 +370,10 @@ app.post("/rename-user", async (req, res) => {
         users: task.users.map((user) => (user === oldName ? newName : user)),
       }));
 
-      await admins.updateOne({ email: adminEmail }, { $set: { tasks: updatedTasks } });
+      await admins.updateOne(
+        { email: adminEmail },
+        { $set: { tasks: updatedTasks } },
+      );
     }
 
     console.log("User renamed:", { adminEmail, oldName, newName });
@@ -380,7 +404,7 @@ app.post("/save-permissions", async (req, res) => {
     await adminUsers.updateOne(
       { email: adminEmail },
       { $set: { permissions } },
-      { upsert: true }
+      { upsert: true },
     );
 
     console.log("Permissions saved for:", adminEmail);
@@ -459,7 +483,7 @@ app.post("/api/tasks", async (req, res) => {
     const admin = await admins.findOne({ email: adminEmail });
     const updatedTasks = admin?.tasks || [];
     const taskIndex = updatedTasks.findIndex(
-      (t) => t.title === task.title && t.date === task.date
+      (t) => t.title === task.title && t.date === task.date,
     );
 
     if (taskIndex >= 0) {
@@ -471,7 +495,7 @@ app.post("/api/tasks", async (req, res) => {
     await admins.updateOne(
       { email: adminEmail },
       { $set: { tasks: updatedTasks } },
-      { upsert: true }
+      { upsert: true },
     );
 
     console.log("Task saved:", { title: task.title, users: task.users });
@@ -501,7 +525,7 @@ app.put("/api/tasks", async (req, res) => {
 
     const tasks = admin.tasks || [];
     const taskIndex = tasks.findIndex(
-      (t) => t.title === originalTitle && t.date === originalDate
+      (t) => t.title === originalTitle && t.date === originalDate,
     );
 
     if (taskIndex === -1) {
@@ -545,7 +569,10 @@ app.delete("/api/tasks", async (req, res) => {
       }
     });
 
-    await admins.updateOne({ email: adminEmail }, { $set: { tasks: updatedTasks } });
+    await admins.updateOne(
+      { email: adminEmail },
+      { $set: { tasks: updatedTasks } },
+    );
 
     console.log("Task deleted:", { title, date });
     res.json({ success: true, message: "Task deleted successfully" });
@@ -558,7 +585,14 @@ app.delete("/api/tasks", async (req, res) => {
 // TASK COMPLETION ENDPOINT
 app.post("/api/complete-task", async (req, res) => {
   try {
-    const { adminEmail, taskTitle, user, date, originalAssignee, parentApproval } = req.body;
+    const {
+      adminEmail,
+      taskTitle,
+      user,
+      date,
+      originalAssignee,
+      parentApproval,
+    } = req.body;
 
     if (!adminEmail || !taskTitle || !user || !date) {
       return res.status(400).json({
@@ -624,7 +658,11 @@ app.post("/api/complete-task", async (req, res) => {
 
       await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
 
-      console.log("Task marked for approval:", { taskTitle, user, originalAssignee });
+      console.log("Task marked for approval:", {
+        taskTitle,
+        user,
+        originalAssignee,
+      });
       res.json({
         success: true,
         message: "Task completion submitted for approval",
@@ -649,7 +687,7 @@ app.post("/api/complete-task", async (req, res) => {
         rewards[user] = (rewards[user] || 0) + rewardAmount;
         await admins.updateOne(
           { email: adminEmail },
-          { $set: { rewards, tasks } }
+          { $set: { rewards, tasks } },
         );
       } else {
         await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
@@ -733,7 +771,7 @@ app.post("/api/approve-task", async (req, res) => {
           rewards[user] = (rewards[user] || 0) + rewardAmount;
           await admins.updateOne(
             { email: adminEmail },
-            { $set: { rewards, tasks } }
+            { $set: { rewards, tasks } },
           );
         } else {
           await admins.updateOne({ email: adminEmail }, { $set: { tasks } });
@@ -794,7 +832,7 @@ app.post("/api/rewards", async (req, res) => {
     await admins.updateOne(
       { email: adminEmail },
       { $set: { rewards } },
-      { upsert: true }
+      { upsert: true },
     );
 
     console.log("Reward added:", { user, amount });
@@ -830,7 +868,9 @@ app.post("/api/market-rewards", async (req, res) => {
     const { adminEmail, rewards } = req.body;
 
     if (!adminEmail || !Array.isArray(rewards)) {
-      return res.status(400).json({ error: "Missing adminEmail or rewards array" });
+      return res
+        .status(400)
+        .json({ error: "Missing adminEmail or rewards array" });
     }
 
     const db = await connectDB();
@@ -839,7 +879,7 @@ app.post("/api/market-rewards", async (req, res) => {
     await admins.updateOne(
       { email: adminEmail },
       { $set: { marketRewards: rewards } },
-      { upsert: true }
+      { upsert: true },
     );
 
     console.log("Market rewards updated for:", adminEmail);
@@ -914,6 +954,11 @@ app.post("/reset-password", async (req, res) => {
 // Start server
 const server = app.listen(port, () => {
   console.log(`✅ Server is running on http://localhost:${port}`);
+  console.log(`🔗 Available endpoints:`);
+  console.log(`   POST /check-admin-password`);
+  console.log(`   POST /verify-admin-password`);
+  console.log(`   POST /set-admin-password`);
+  console.log(`   GET /health`);
 });
 
 // Set timeout
