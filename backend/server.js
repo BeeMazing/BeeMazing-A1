@@ -99,19 +99,46 @@ app.post("/register", async (req, res) => {
 
 // ✅ LOGIN
 app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  const db = await connectDB();
-  const users = db.collection("users");
+  try {
+    console.log("🔍 Login attempt:", { email: req.body.email });
 
-  const user = await users.findOne({ email });
+    const { email, password } = req.body;
 
-  if (!user || user.password !== password) {
-    return res
-      .status(401)
-      .json({ success: false, message: "Invalid email or password" });
+    if (!email || !password) {
+      console.log("❌ Login failed: Missing credentials");
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing email or password" });
+    }
+
+    // Add timeout to database operations
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Database timeout")), 10000),
+    );
+
+    const dbPromise = connectDB();
+    const db = await Promise.race([dbPromise, timeoutPromise]);
+    const users = db.collection("users");
+
+    const userPromise = users.findOne({ email });
+    const user = await Promise.race([userPromise, timeoutPromise]);
+
+    if (!user || user.password !== password) {
+      console.log("❌ Login failed: Invalid credentials for", email);
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
+    }
+
+    console.log("✅ Login successful for", email);
+    res.json({ success: true, message: "Login successful" });
+  } catch (error) {
+    console.error("🔥 Login error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server error during login. Please try again.",
+    });
   }
-
-  res.json({ success: true, message: "Login successful" });
 });
 
 // login.html //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
