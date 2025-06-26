@@ -6589,6 +6589,66 @@
                         localStorage.getItem("currentAdminEmail");
 
                     try {
+                        // Determine original assignee for Enhanced Fair Rotation tasks
+                        let originalAssignee = null;
+                        const isEnhancedFairRotation =
+                            task.usesEnhancedFairRotation ||
+                            task.fairRotation ||
+                            (task.settings &&
+                                task.settings.includes("Rotation"));
+
+                        if (
+                            isEnhancedFairRotation &&
+                            window.enhancedFairRotationSystem
+                        ) {
+                            try {
+                                // Extract base task name and occurrence number
+                                const baseTaskName = task.title.replace(
+                                    / - \d+(?:st|nd|rd|th)$/,
+                                    "",
+                                );
+                                const occurrenceMatch = task.title.match(
+                                    / - (\d+)(?:st|nd|rd|th)$/,
+                                );
+                                const occurrenceNumber = occurrenceMatch
+                                    ? parseInt(occurrenceMatch[1])
+                                    : 1;
+
+                                // Get current assignee from Enhanced Fair Rotation system
+                                const assignmentInfo =
+                                    window.enhancedFairRotationSystem.getAssignmentInfo(
+                                        baseTaskName,
+                                        selectedDate,
+                                        occurrenceNumber,
+                                    );
+
+                                if (
+                                    assignmentInfo &&
+                                    assignmentInfo.assignedUser
+                                ) {
+                                    const currentAssignee =
+                                        assignmentInfo.assignedUser;
+
+                                    // Only set originalAssignee if it's different from completing user (cross-completion)
+                                    if (currentAssignee !== userName) {
+                                        originalAssignee = currentAssignee;
+                                        console.log(
+                                            `🎯 Frontend detected cross-completion: ${userName} completing task assigned to ${originalAssignee}`,
+                                        );
+                                    } else {
+                                        console.log(
+                                            `✅ Frontend detected normal completion: ${userName} completing their own task`,
+                                        );
+                                    }
+                                }
+                            } catch (error) {
+                                console.warn(
+                                    `⚠️ Frontend original assignee detection failed for "${task.title}":`,
+                                    error,
+                                );
+                            }
+                        }
+
                         const requestBody = {
                             adminEmail: adminEmail,
                             taskTitle: task.title,
@@ -6596,6 +6656,7 @@
                             date: selectedDate,
                             parentApproval: task.parentApproval,
                             taskUsers: task.users,
+                            originalAssignee: originalAssignee, // Send original assignee to backend
                         };
 
                         const response = await fetch(

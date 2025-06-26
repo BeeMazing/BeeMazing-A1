@@ -969,6 +969,12 @@
         <!-- CROSS-COMPLETION FIX - Ensures cross-completions trigger proper recalculation and UI refresh -->
         <script src="/BeeMazing-A1/fix-cross-completion-refresh.js?t=${Date.now()}"></script>
 
+        <!-- CROSS-COMPLETION TEST SUITE - Comprehensive testing for cross-completion fixes -->
+        <script src="/BeeMazing-A1/test-cross-completion-ui-sync.js?t=${Date.now()}"></script>
+
+        <!-- QUICK CROSS-COMPLETION TEST RUNNER - Immediate testing capabilities -->
+        <script src="/BeeMazing-A1/quick-cross-completion-test.js?t=${Date.now()}"></script>
+
         <!-- HISTORICAL CROSS-COMPLETION ANALYSIS - Analyzes past cross-completions and recalculates accordingly -->
         <script src="/BeeMazing-A1/fix-historical-cross-completions.js?t=${Date.now()}"></script>
 
@@ -997,19 +1003,51 @@
                     localStorage.setItem("currentAdminEmail", adminEmail);
                 }
 
-                // Initialize avatar system first
-                if (adminEmail && window.avatarSystem) {
-                    try {
-                        await window.avatarSystem.initialize(adminEmail);
-                        console.log(
-                            "✅ Avatar system initialized for:",
-                            adminEmail,
+                // Initialize avatar system first with fallback
+                if (adminEmail) {
+                    if (window.avatarSystem) {
+                        try {
+                            await window.avatarSystem.initialize(adminEmail);
+                            console.log(
+                                "✅ Avatar system initialized for:",
+                                adminEmail,
+                            );
+                        } catch (error) {
+                            console.error(
+                                "❌ Failed to initialize avatar system:",
+                                error,
+                            );
+                        }
+                    } else {
+                        console.warn(
+                            "⚠️ Avatar system not found, creating fallback",
                         );
-                    } catch (error) {
-                        console.error(
-                            "❌ Failed to initialize avatar system:",
-                            error,
-                        );
+                        // Create fallback avatar system
+                        window.avatarSystem = {
+                            generateAvatarHTML: function (
+                                user,
+                                size = 20,
+                                className = "user-avatar",
+                                extraStyle = "",
+                            ) {
+                                const initials = user
+                                    ? user.substring(0, 2).toUpperCase()
+                                    : "??";
+                                const colors = [
+                                    "#FF8A50",
+                                    "#4CAF50",
+                                    "#2196F3",
+                                    "#9C27B0",
+                                    "#FF5722",
+                                ];
+                                const colorIndex = user
+                                    ? user.charCodeAt(0) % colors.length
+                                    : 0;
+                                const bgColor = colors[colorIndex];
+                                return `<div class="${className}" style="width: ${size}px; height: ${size}px; border: 1px solid #fbb740; border-radius: 50%; background: ${bgColor}; color: white; font-size: ${Math.round(size * 0.4)}px; display: flex; align-items: center; justify-content: center; font-weight: bold; ${extraStyle}" title="${user}">${initials}</div>`;
+                            },
+                        };
+                        console.log("✅ Fallback avatar system created");
                     }
                 }
 
@@ -3647,6 +3685,9 @@
                                     },
                                 );
 
+                                // Store completion data for avatar display
+                                let latestCompletionData = null;
+
                                 // First check completedDates (new format with timestamps)
                                 if (
                                     task.completedDates &&
@@ -3688,8 +3729,10 @@
                                                     completerUser,
                                                 );
 
-                                            // Just store the time string, we'll format it later
+                                            // Store completion data including completer
                                             completionTimeStr = timeStr;
+                                            latestCompletionData =
+                                                latestCompletion;
 
                                             console.log(
                                                 "🔍 Set completion time from completedDates:",
@@ -3744,8 +3787,10 @@
                                                     completerUser,
                                                 );
 
-                                            // Just store the time string, we'll format it later
+                                            // Store completion data including completer
                                             completionTimeStr = timeStr;
+                                            latestCompletionData =
+                                                latestCompletion;
 
                                             console.log(
                                                 "🔍 Set completion time from completions:",
@@ -3879,15 +3924,53 @@
                                     secondLine += `<span style="color: #6d4c41; font-size: 14px; display: flex; align-items: center; gap: 2px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6d4c41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12,6 12,12 16,14"></polyline></svg>${dueTimeStr}</span>`;
                                 }
 
-                                // Add completion time if task is completed (just the time, no avatar)
-                                if (completionTimeStr) {
+                                // Add completion time with completer avatar
+                                if (completionTimeStr && latestCompletionData) {
                                     if (secondLine)
                                         secondLine += `<span style="margin: 0 8px; color: #ccc;">|</span>`;
 
                                     const checkmarkColor = "#6d4c41";
                                     const checkmarkSVG = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${checkmarkColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><circle cx="12" cy="12" r="10"></circle></svg>`;
 
-                                    secondLine += `<span style="color: ${checkmarkColor}; font-size: 14px; display: flex; align-items: center; gap: 2px;">${checkmarkSVG}${completionTimeStr}</span>`;
+                                    // Generate completer avatar
+                                    let completerAvatarHTML = "";
+                                    if (latestCompletionData.user) {
+                                        if (
+                                            window.avatarSystem &&
+                                            typeof window.avatarSystem
+                                                .generateAvatarHTML ===
+                                                "function"
+                                        ) {
+                                            completerAvatarHTML =
+                                                window.avatarSystem.generateAvatarHTML(
+                                                    latestCompletionData.user,
+                                                    14,
+                                                    "task-completed-avatar",
+                                                    "margin-right: 4px;",
+                                                );
+                                        } else {
+                                            // Fallback avatar creation
+                                            const initials =
+                                                latestCompletionData.user
+                                                    .substring(0, 2)
+                                                    .toUpperCase();
+                                            const colors = [
+                                                "#4CAF50",
+                                                "#2196F3",
+                                                "#FF9800",
+                                                "#9C27B0",
+                                                "#F44336",
+                                            ];
+                                            const colorIndex =
+                                                latestCompletionData.user.charCodeAt(
+                                                    0,
+                                                ) % colors.length;
+                                            const bgColor = colors[colorIndex];
+                                            completerAvatarHTML = `<div class="task-completed-avatar" style="width: 14px; height: 14px; border: 1px solid #fbb740; border-radius: 50%; background: ${bgColor}; color: white; font-size: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 4px;" title="Completed by ${latestCompletionData.user}">${initials}</div>`;
+                                        }
+                                    }
+
+                                    secondLine += `<span style="color: ${checkmarkColor}; font-size: 14px; display: flex; align-items: center; gap: 2px;">${completerAvatarHTML}${checkmarkSVG}${completionTimeStr}</span>`;
                                 }
 
                                 if (secondLine) {
