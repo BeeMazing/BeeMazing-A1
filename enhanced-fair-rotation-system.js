@@ -68,6 +68,7 @@ class EnhancedFairRotationSystem {
         );
         if (task) {
           task.useFairRotation = true;
+          task.fairRotation = true;
         }
       }
     }
@@ -99,12 +100,109 @@ class EnhancedFairRotationSystem {
       // Use actual timestamp from completion or current time
       const completionTimestamp = actualTimestamp || new Date().toISOString();
 
-      // Get completion history
-      const history = this.completionHistory.get(taskTitle);
+      // Get completion history - auto-initialize if not found
+      let history = this.completionHistory.get(taskTitle);
       if (!history) {
-        console.error(`❌ No completion history found for task: ${taskTitle}`);
-        return false;
+        console.warn(
+          `⚠️ No completion history found for task: ${taskTitle}, attempting comprehensive auto-initialization...`,
+        );
+
+        // Extract base task name for better matching
+        const baseTaskName = taskTitle.replace(/ - \d+(?:st|nd|rd|th)$/, "");
+
+        // Try to auto-initialize from current task data
+        if (
+          typeof window !== "undefined" &&
+          window.allTasks &&
+          Array.isArray(window.allTasks)
+        ) {
+          const matchingTasks = window.allTasks.filter(
+            (task) =>
+              task.title === taskTitle ||
+              task.title === baseTaskName ||
+              task.title.startsWith(baseTaskName + " - ") ||
+              taskTitle.startsWith(
+                task.title.replace(/ - \d+(?:st|nd|rd|th)$/, ""),
+              ),
+          );
+
+          if (matchingTasks.length > 0) {
+            const firstTask = matchingTasks[0];
+            const users = firstTask.users || ["Artūrs", "Laura", "Armands"];
+
+            console.log(
+              `🔧 Auto-initializing Enhanced Fair Rotation for: ${baseTaskName} with users: ${users.join(", ")}`,
+            );
+
+            // Initialize with base task name for consistency
+            this.initializeTask(baseTaskName, users);
+
+            // Also ensure the specific task title is initialized if different
+            if (taskTitle !== baseTaskName) {
+              this.initializeTask(taskTitle, users);
+            }
+
+            // Load existing completion data from the matching tasks
+            const today = selectedDate;
+            matchingTasks.forEach((task) => {
+              if (task.completions && task.completions[today]) {
+                const completions = task.completions[today];
+                completions.forEach((completion) => {
+                  // Add to baseline if already approved
+                  if (
+                    completion.status === "approved" ||
+                    !completion.isPending
+                  ) {
+                    const historyRecord =
+                      this.completionHistory.get(baseTaskName);
+                    if (historyRecord) {
+                      historyRecord.approved.push({
+                        user: completion.user,
+                        occurrence: completion.occurrenceIndex
+                          ? completion.occurrenceIndex + 1
+                          : 1,
+                        date: today,
+                        timestamp:
+                          completion.timestamp ||
+                          completion.time ||
+                          new Date().toISOString(),
+                      });
+                    }
+                  }
+                });
+              }
+            });
+
+            history =
+              this.completionHistory.get(baseTaskName) ||
+              this.completionHistory.get(taskTitle);
+
+            // If we initialized with base name, update history baseline
+            if (history) {
+              history.baseline = [...history.approved];
+              history.provisional = [...history.baseline, ...history.pending];
+            }
+          }
+        }
+
+        if (!history) {
+          console.error(
+            `❌ Could not initialize or find completion history for task: ${taskTitle}`,
+          );
+          return { success: false, error: "Task not initialized" };
+        }
       }
+
+      console.log(`🔍 DEBUG: Task completion details for ${taskTitle}:`, {
+        completingUser,
+        selectedDate,
+        occurrenceNumber,
+        historyExists: !!history,
+        pendingCount: history.pending.length,
+        baselineCount: history.baseline.length,
+        taskUsers: this.taskUsers.get(taskTitle),
+        isInitialized: this.isInitialized,
+      });
 
       // Add to pending completions with actual timestamp
       const pendingCompletion = {
@@ -120,16 +218,57 @@ class EnhancedFairRotationSystem {
       // Update provisional state (baseline + pending)
       history.provisional = [...history.baseline, ...history.pending];
 
+      // Check if this is a cross-completion (different user completed than assigned)
+      const assignmentInfo = this.getAssignmentInfo(
+        taskTitle,
+        selectedDate,
+        occurrenceNumber,
+      );
+      const isCrossCompletion =
+        assignmentInfo && assignmentInfo.assignedUser !== completingUser;
+
+      console.log(`🔍 Cross-completion check for ${taskTitle}:`, {
+        assignedUser: assignmentInfo?.assignedUser,
+        completingUser,
+        isCrossCompletion,
+        occurrenceNumber,
+        assignmentInfo,
+      });
+
       // Trigger provisional recalculation using hybrid algorithm
-      await this.recalculateAssignments(taskTitle, true);
+      console.log(
+        `🔄 Starting recalculation for ${taskTitle} (includeProvisional: true)`,
+      );
+      const recalcResult = await this.recalculateAssignments(taskTitle, true);
+      console.log(`📊 Recalculation result for ${taskTitle}:`, recalcResult);
 
       // Update server with provisional assignments
+      console.log(`🔄 Updating server assignments for ${taskTitle}`);
       await this.updateServerAssignments(taskTitle, true);
+
+      // Force refresh frontend for any completion to show updated assignments
+      if (typeof window !== "undefined" && window.forceRefreshUserTasks) {
+        const refreshDelay = isCrossCompletion ? 500 : 200;
+        console.log(
+          `🔄 ${isCrossCompletion ? "Cross-completion" : "Completion"} detected! Forcing frontend refresh in ${refreshDelay}ms...`,
+        );
+        setTimeout(() => {
+          window.forceRefreshUserTasks();
+        }, refreshDelay);
+      }
+
+      // Also trigger a direct UI update if available
+      if (typeof window !== "undefined" && window.updateTaskAssignmentDisplay) {
+        console.log(`🎨 Triggering direct assignment display update...`);
+        window.updateTaskAssignmentDisplay(taskTitle);
+      }
 
       this.log(`✅ Task completion recorded as pending: ${pendingId}`, {
         timestamp: completionTimestamp,
+        isCrossCompletion,
+        recalculated: !!recalcResult,
       });
-      return { success: true, pendingId };
+      return { success: true, pendingId, isCrossCompletion };
     } catch (error) {
       console.error(`❌ Error handling task completion:`, error);
       return { success: false, error: error.message };
@@ -287,6 +426,20 @@ class EnhancedFairRotationSystem {
 
       // Store assignments for retrieval
       taskData.enhancedAssignments = assignments;
+
+      // Update cache
+      const baseTaskName = taskTitle.replace(/ - \d+(?:st|nd|rd|th)$/, "");
+      if (!this.taskDataCache) this.taskDataCache = {};
+      this.taskDataCache[baseTaskName] = taskData;
+
+      // Clear assignment cache to force refresh
+      if (this.assignmentCache) {
+        Object.keys(this.assignmentCache).forEach((key) => {
+          if (key.startsWith(baseTaskName) || key.startsWith(taskTitle)) {
+            delete this.assignmentCache[key];
+          }
+        });
+      }
 
       this.log(`✅ Assignments recalculated for ${taskTitle}`, {
         assignmentCount: assignments.length,
@@ -991,12 +1144,69 @@ class EnhancedFairRotationSystem {
    * Update server assignments
    */
   async updateServerAssignments(taskTitle, isProvisional = false) {
-    // This would integrate with the server API to update assignments
-    // For now, just log the action
     this.log(`🔄 Updating server assignments for ${taskTitle}`, {
       isProvisional,
     });
-    return true;
+
+    try {
+      const taskData = await this.fetchTaskData(taskTitle);
+      if (!taskData || !taskData.enhancedAssignments) {
+        console.warn(`⚠️ No assignments to update for ${taskTitle}`);
+        return false;
+      }
+
+      // Update local window.allTasks with new assignments
+      if (typeof window !== "undefined" && Array.isArray(window.allTasks)) {
+        const baseTaskName = taskTitle.replace(/ - \d+(?:st|nd|rd|th)$/, "");
+
+        // Find all related tasks (base task + occurrences)
+        const relatedTasks = window.allTasks.filter(
+          (task) =>
+            task.title === baseTaskName ||
+            task.title.startsWith(baseTaskName + " - ") ||
+            task.title === taskTitle,
+        );
+
+        // Update each related task with new assignment data
+        relatedTasks.forEach((task) => {
+          if (!task.enhancedFairRotationData) {
+            task.enhancedFairRotationData = {};
+          }
+
+          // Store the enhanced assignments
+          task.enhancedFairRotationData.assignments =
+            taskData.enhancedAssignments;
+          task.enhancedFairRotationData.lastUpdated = new Date().toISOString();
+          task.enhancedFairRotationData.isProvisional = isProvisional;
+
+          // Mark as using enhanced fair rotation
+          task.usesEnhancedFairRotation = true;
+          task.fairRotation = true;
+          task.useFairRotation = true;
+
+          console.log(`✅ Updated local task data for: ${task.title}`, {
+            assignmentCount: taskData.enhancedAssignments.length,
+            isProvisional,
+          });
+        });
+
+        // Force a refresh of the current view
+        if (window.forceRefreshUserTasks) {
+          setTimeout(() => {
+            console.log("🔄 Forcing UI refresh after assignment update...");
+            window.forceRefreshUserTasks();
+          }, 100);
+        }
+      }
+
+      // TODO: Future server API integration would go here
+      // For now, we're updating the local data structure which the frontend uses
+
+      return true;
+    } catch (error) {
+      console.error(`❌ Error updating server assignments:`, error);
+      return false;
+    }
   }
 
   /**
@@ -1021,12 +1231,60 @@ class EnhancedFairRotationSystem {
    */
   getAssignmentInfo(taskTitle, selectedDate, occurrence) {
     try {
-      const taskData = this.fetchTaskData(taskTitle);
-      if (!taskData || !taskData.enhancedAssignments) return null;
+      // First try to get from cache
+      const cacheKey = `${taskTitle}_${selectedDate}_${occurrence}`;
+      if (this.assignmentCache && this.assignmentCache[cacheKey]) {
+        return this.assignmentCache[cacheKey];
+      }
+
+      // Extract base task name for lookup
+      const baseTaskName = taskTitle.replace(/ - \d+(?:st|nd|rd|th)$/, "");
+
+      // Try to get cached task data first
+      let taskData = null;
+      if (this.taskDataCache && this.taskDataCache[baseTaskName]) {
+        taskData = this.taskDataCache[baseTaskName];
+      } else {
+        // Fallback to fetchTaskData (but make it synchronous by using cached data)
+        if (this.taskUsers.has(baseTaskName)) {
+          const users = this.taskUsers.get(baseTaskName);
+          taskData = {
+            title: baseTaskName,
+            users: users,
+            enhancedAssignments: [],
+            timesPerDay: 4,
+            fairRotation: true,
+          };
+
+          // Cache the task data
+          if (!this.taskDataCache) this.taskDataCache = {};
+          this.taskDataCache[baseTaskName] = taskData;
+        }
+      }
+
+      if (!taskData || !taskData.enhancedAssignments) {
+        console.log(
+          `🔍 No assignment data for ${taskTitle} on ${selectedDate}, occurrence ${occurrence}`,
+        );
+        return null;
+      }
 
       const assignment = taskData.enhancedAssignments.find(
         (a) => a.date === selectedDate && a.occurrence === occurrence,
       );
+
+      // Cache the result
+      if (!this.assignmentCache) this.assignmentCache = {};
+      this.assignmentCache[cacheKey] = assignment || null;
+
+      console.log(`🔍 Assignment lookup for ${taskTitle}:`, {
+        selectedDate,
+        occurrence,
+        totalAssignments: taskData.enhancedAssignments.length,
+        foundAssignment: !!assignment,
+        assignedUser: assignment?.assignedUser,
+        cached: false,
+      });
 
       return assignment || null;
     } catch (error) {
@@ -1256,6 +1514,7 @@ if (typeof module !== "undefined" && module.exports) {
   };
 } else if (typeof window !== "undefined") {
   // Browser
+  window.EnhancedFairRotationSystem = EnhancedFairRotationSystem;
   window.onEnhancedFairRotationTaskCompleted =
     onEnhancedFairRotationTaskCompleted;
   window.onEnhancedFairRotationTaskApproved =
@@ -1301,6 +1560,154 @@ if (typeof module !== "undefined" && module.exports) {
     }
 
     return window.debugEnhancedFairRotation(taskTitle);
+  };
+}
+
+// Add comprehensive debugging and testing functions
+if (typeof window !== "undefined") {
+  window.testEnhancedFairRotationCompletion = function (
+    taskTitle,
+    completingUser,
+    selectedDate = null,
+  ) {
+    const date = selectedDate || new Date().toISOString().split("T")[0];
+    console.log(
+      `🧪 Testing Enhanced Fair Rotation completion for: ${taskTitle}`,
+    );
+    console.log(`👤 Completing user: ${completingUser}, Date: ${date}`);
+
+    if (!window.onEnhancedFairRotationTaskCompleted) {
+      console.error("❌ Enhanced Fair Rotation system not available");
+      return false;
+    }
+
+    // Extract occurrence number from task title
+    let occurrenceNumber = 1;
+    const occurrenceMatch = taskTitle.match(/- (\d+)(?:st|nd|rd|th)$/);
+    if (occurrenceMatch) {
+      occurrenceNumber = parseInt(occurrenceMatch[1]);
+    }
+
+    console.log(`🔢 Occurrence number: ${occurrenceNumber}`);
+
+    // Get base task name
+    const baseTaskName = taskTitle.replace(/ - \d+(?:st|nd|rd|th)$/, "");
+    console.log(`📝 Base task name: ${baseTaskName}`);
+
+    // Check current assignment before completion
+    if (
+      window.enhancedFairRotationSystem &&
+      window.enhancedFairRotationSystem.getAssignmentInfo
+    ) {
+      const currentAssignment =
+        window.enhancedFairRotationSystem.getAssignmentInfo(
+          baseTaskName,
+          date,
+          occurrenceNumber,
+        );
+      console.log(`📋 Current assignment:`, currentAssignment);
+
+      if (
+        currentAssignment &&
+        currentAssignment.assignedUser !== completingUser
+      ) {
+        console.log(`🔄 This will be a CROSS-COMPLETION!`);
+        console.log(`   Assigned to: ${currentAssignment.assignedUser}`);
+        console.log(`   Completing: ${completingUser}`);
+      } else {
+        console.log(
+          `✅ This is a normal completion (assigned user completing)`,
+        );
+      }
+    }
+
+    // Call the completion function
+    return window
+      .onEnhancedFairRotationTaskCompleted(
+        baseTaskName,
+        completingUser,
+        date,
+        occurrenceNumber,
+      )
+      .then((result) => {
+        console.log(`🎯 Completion result:`, result);
+
+        // Check assignments after completion
+        setTimeout(() => {
+          console.log(`🔍 Checking assignments after completion...`);
+          if (
+            window.enhancedFairRotationSystem &&
+            window.enhancedFairRotationSystem.getAssignmentInfo
+          ) {
+            for (let i = 1; i <= 4; i++) {
+              const assignment =
+                window.enhancedFairRotationSystem.getAssignmentInfo(
+                  baseTaskName,
+                  date,
+                  i,
+                );
+              console.log(
+                `   Occurrence ${i}:`,
+                assignment?.assignedUser || "Not assigned",
+              );
+            }
+          }
+        }, 100);
+
+        return result;
+      })
+      .catch((error) => {
+        console.error(`❌ Completion test failed:`, error);
+        return false;
+      });
+  };
+
+  window.debugEnhancedFairRotationState = function (taskTitle) {
+    const baseTaskName = taskTitle.replace(/ - \d+(?:st|nd|rd|th)$/, "");
+    console.log(`🔍 Enhanced Fair Rotation Debug State for: ${baseTaskName}`);
+
+    if (!globalEnhancedFairRotationSystem) {
+      console.error("❌ Enhanced Fair Rotation system not initialized");
+      return;
+    }
+
+    console.log("📊 System State:");
+    console.log(
+      "  Task Users:",
+      globalEnhancedFairRotationSystem.taskUsers.get(baseTaskName),
+    );
+    console.log(
+      "  Initial Orders:",
+      globalEnhancedFairRotationSystem.taskInitialOrders.get(baseTaskName),
+    );
+    console.log(
+      "  Completion History:",
+      globalEnhancedFairRotationSystem.completionHistory.get(baseTaskName),
+    );
+
+    // Check task data
+    const taskData =
+      globalEnhancedFairRotationSystem.fetchTaskData(baseTaskName);
+    console.log("  Task Data:", taskData);
+
+    if (taskData && taskData.enhancedAssignments) {
+      console.log("  Current Assignments:");
+      const today = new Date().toISOString().split("T")[0];
+      taskData.enhancedAssignments
+        .filter((a) => a.date === today)
+        .forEach((assignment) => {
+          console.log(
+            `    ${assignment.date} occurrence ${assignment.occurrence}: ${assignment.assignedUser}`,
+          );
+        });
+    }
+
+    return {
+      taskUsers: globalEnhancedFairRotationSystem.taskUsers.get(baseTaskName),
+      taskData: taskData,
+      history:
+        globalEnhancedFairRotationSystem.completionHistory.get(baseTaskName),
+    };
   };
 }
 

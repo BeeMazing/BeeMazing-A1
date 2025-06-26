@@ -966,6 +966,24 @@
         <!-- THE WORKING FIX - This is what resolved the avatar and reassignment issues -->
         <script src="/BeeMazing-A1/fix-enhanced-fair-rotation-reassignment-bug.js?t=${Date.now()}"></script>
 
+        <!-- CROSS-COMPLETION FIX - Ensures cross-completions trigger proper recalculation and UI refresh -->
+        <script src="/BeeMazing-A1/fix-cross-completion-refresh.js?t=${Date.now()}"></script>
+
+        <!-- HISTORICAL CROSS-COMPLETION ANALYSIS - Analyzes past cross-completions and recalculates accordingly -->
+        <script src="/BeeMazing-A1/fix-historical-cross-completions.js?t=${Date.now()}"></script>
+
+        <!-- TASK FAIR ROTATION MARKING FIX - Ensures tasks are properly flagged as fair rotation -->
+        <script src="/BeeMazing-A1/fix-task-fair-rotation-marking.js?t=${Date.now()}"></script>
+
+        <!-- FAIR ROTATION RECALCULATION FIX - Fixes the issue where cross-completions don't properly balance future assignments -->
+        <script src="/BeeMazing-A1/debug-fair-rotation-recalculation.js?t=${Date.now()}"></script>
+
+        <!-- CRITICAL FIX: Fair Rotation Recalculation Imbalance - Fixes users getting more assignments after completing extra tasks -->
+        <script src="/BeeMazing-A1/fix-fair-rotation-recalculation-imbalance.js?t=${Date.now()}"></script>
+
+        <!-- VERIFICATION: Verify recalculation fix is working correctly -->
+        <script src="/BeeMazing-A1/verify-recalculation-fix.js?t=${Date.now()}"></script>
+
         <script>
             document.addEventListener("DOMContentLoaded", async () => {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -1127,7 +1145,12 @@
                 }
 
                 // Load appropriate tasks based on selected tab
-                const selectedDate = new Date().toLocaleDateString("sv-SE");
+                // Get currently selected date from the calendar, fallback to today if none selected
+                const selectedDateElement =
+                    document.querySelector(".day.selected");
+                const selectedDate = selectedDateElement
+                    ? selectedDateElement.dataset.date
+                    : new Date().toLocaleDateString("sv-SE");
                 if (userName) {
                     if (tabId === "myTasks") {
                         // Ensure avatar system is ready before loading tasks
@@ -1164,7 +1187,12 @@
             window.forceRefreshUserTasks = function () {
                 const currentTab =
                     localStorage.getItem("userTasks_currentTab") || "myTasks";
-                const selectedDate = new Date().toLocaleDateString("sv-SE");
+                // Get currently selected date from the calendar, fallback to today if none selected
+                const selectedDateElement =
+                    document.querySelector(".day.selected");
+                const selectedDate = selectedDateElement
+                    ? selectedDateElement.dataset.date
+                    : new Date().toLocaleDateString("sv-SE");
 
                 if (!userName) {
                     console.warn("⚠️ No userName available for force refresh");
@@ -1179,6 +1207,71 @@
                     loadUserTasks(userName, selectedDate);
                 } else if (currentTab === "allTasks") {
                     loadAllTasks(userName, selectedDate);
+                }
+            };
+
+            // Direct assignment display update (used by Enhanced Fair Rotation System)
+            window.updateTaskAssignmentDisplay = function (taskTitle) {
+                console.log(`🎨 Updating assignment display for: ${taskTitle}`);
+
+                try {
+                    // Get the base task name
+                    const baseTaskName = taskTitle.replace(
+                        / - \d+(?:st|nd|rd|th)$/,
+                        "",
+                    );
+
+                    // Find all task elements that match this base name
+                    const taskElements =
+                        document.querySelectorAll(".task-item");
+                    let updatedCount = 0;
+
+                    taskElements.forEach((taskElement) => {
+                        const taskTitleElement =
+                            taskElement.querySelector(".task-title");
+                        if (taskTitleElement) {
+                            const elementTaskTitle =
+                                taskTitleElement.textContent.trim();
+
+                            // Check if this task element matches our base task name
+                            if (
+                                elementTaskTitle === baseTaskName ||
+                                elementTaskTitle.startsWith(
+                                    baseTaskName + " - ",
+                                )
+                            ) {
+                                // Update the visual styling to indicate assignment change
+                                taskElement.classList.add("assignment-updated");
+
+                                // Add a subtle animation to draw attention
+                                taskElement.style.transition = "all 0.3s ease";
+                                taskElement.style.borderLeft =
+                                    "4px solid #FFC107";
+
+                                // Remove the highlight after a short delay
+                                setTimeout(() => {
+                                    taskElement.classList.remove(
+                                        "assignment-updated",
+                                    );
+                                    taskElement.style.borderLeft = "";
+                                }, 2000);
+
+                                updatedCount++;
+                                console.log(
+                                    `✅ Updated display for: ${elementTaskTitle}`,
+                                );
+                            }
+                        }
+                    });
+
+                    console.log(
+                        `🎨 Updated ${updatedCount} task display elements`,
+                    );
+                } catch (error) {
+                    console.error(
+                        "❌ Error updating task assignment display:",
+                        error,
+                    );
                 }
             };
 
@@ -1392,23 +1485,22 @@
                         const rotationAssigned =
                             window.enhancedFairRotationSystem.isUserAssigned(
                                 baseTaskName,
-                                userName,
                                 selectedDate,
                                 occurrenceNumber,
+                                userName,
                             );
+
                         console.log(
                             `🔄 Enhanced Fair Rotation assignment for "${task.title}": ${rotationAssigned}`,
                         );
 
-                        if (rotationAssigned !== undefined) {
-                            return rotationAssigned;
-                        }
+                        return rotationAssigned;
                     } catch (error) {
                         console.warn(
                             `⚠️ Enhanced Fair Rotation check failed for "${task.title}":`,
                             error,
                         );
-                        // Fall through to standard logic
+                        // Fall through to standard assignment check
                     }
                 }
 

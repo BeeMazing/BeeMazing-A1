@@ -881,14 +881,18 @@ function calculateFairRotationLive(task, selectedDate, requiredTimes) {
 function mixedTurnData(task, selectedDate) {
   try {
     console.log(
-      `🔍 mixedTurnData called for "${task.title}" - fairRotation: ${task.fairRotation}, settings: ${task.settings}`,
+      `🔍 mixedTurnData called for "${task.title}" - fairRotation: ${task.fairRotation}, useFairRotation: ${task.useFairRotation}, settings: ${task.settings}`,
     );
     // Check if fair rotation is enabled - use Enhanced Fair Rotation system first
-    if (
-      task.fairRotation &&
-      task.settings &&
-      task.settings.includes("Rotation")
-    ) {
+    // Multiple ways a task can be marked as fair rotation:
+    const isFairRotationTask =
+      task.fairRotation ||
+      task.useFairRotation ||
+      task.usesEnhancedFairRotation ||
+      task.rotation?.type === "fair" ||
+      (task.settings && task.settings.includes("Rotation"));
+
+    if (isFairRotationTask) {
       console.log(`🎯 Using Enhanced Fair Rotation path for "${task.title}"`);
       // First try Enhanced Fair Rotation system if available
       if (typeof window !== "undefined" && window.enhancedFairRotationSystem) {
