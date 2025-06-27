@@ -1055,30 +1055,42 @@
                 setupEnhancedFairRotationListeners();
 
                 if (userName && adminEmail) {
-                    // Check if user is admin
+                    // Check if current profile user is admin
                     const userData =
                         JSON.parse(localStorage.getItem("userData")) || {};
                     const permissions = userData[adminEmail]?.permissions || {};
-                    const isUserAdmin = permissions[userName] === "Admin";
+                    const isCurrentUserAdmin =
+                        permissions[userName] === "Admin";
 
-                    // Set footer button links
+                    // Set footer button links based on the profile being viewed
                     const basePath = "/BeeMazing-A1/mobile/2-UserProfiles";
                     const homeButton = document.getElementById("homeButton");
                     const tasksButton = document.getElementById("tasksButton");
                     const marketButton =
                         document.getElementById("marketButton");
 
-                    if (homeButton) {
-                        const homePage = isUserAdmin
-                            ? "userAdmin.html"
-                            : "users.html";
-                        homeButton.href = `${basePath}/${homePage}?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-                    }
-                    if (tasksButton) {
-                        tasksButton.href = `${basePath}/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-                    }
-                    if (marketButton) {
-                        marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                    if (isCurrentUserAdmin) {
+                        // Viewing admin profile - use admin pages and admin footers
+                        if (homeButton) {
+                            homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                        }
+                        if (tasksButton) {
+                            tasksButton.href = `/BeeMazing-A1/mobile/3-Tasks/tasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                        }
+                        if (marketButton) {
+                            marketButton.href = `/BeeMazing-A1/mobile/4-Market/market.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                        }
+                    } else {
+                        // Viewing child profile - use child pages and child footers
+                        if (homeButton) {
+                            homeButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                        }
+                        if (tasksButton) {
+                            tasksButton.href = `${basePath}/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                        }
+                        if (marketButton) {
+                            marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                        }
                     }
 
                     // Set active state

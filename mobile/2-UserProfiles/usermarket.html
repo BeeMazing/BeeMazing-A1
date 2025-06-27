@@ -1,1164 +1,1431 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BeeMazing Rewards</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        :root {
-            --primary-color: #FFC107;
-            --secondary-color: #212121;
-            --accent-color: #2A2B32;
-            --light-bg: #FFFFF8;
-            --text-color: #FFFFFF;
-            --danger-color: #D32F2F;
-            --modal-bg: rgba(33, 33, 33, 0.7);
-            --header-height: 58px;
-            --footer-height: 70px;
-            --border-dark: #444754;
-            --card-bg: #2A2B32;
-            --card-back-bg: #FFC107; /* Yellow for back */
-            --card-back-text: #212121; /* Black for back text */
-        }
-
-        
-        body {
-            font-family: 'Poppins', Arial, sans-serif;
-            background-color: var(--light-bg);
-            color: var(--text-color);
-            min-height: 100vh;
-            margin: 0;
-            padding-bottom: var(--footer-height);
-        }
-
-
-
-        .reward-card {
-            background-color: #FFFFFF;
-            border: 2px solid var(--primary-color);
-            border-radius: 0.5rem;
-            padding: 0.5rem 0.5rem 0 0.5rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            color: #6D4C41;
-            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            min-height: 95px;
-        }
-
-        .reward-card:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
-        }
-
-        .reward-card h3 {
-            color: #6D4C41;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-            font-size: 1.1rem;
-            text-align: center;
-            line-height: 1.2;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .reward-indicators-row {
-            width: 100%;
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            margin-bottom: 0.5rem;
-            min-height: 20px;
-            gap: 10px;
-        }
-
-        .reward-indicators-row:empty {
-            margin-bottom: 0.5rem;
-            min-height: 0;
-        }
-
-        .reward-card .bottom-row {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            width: 100%;
-            gap: 1.5rem;
-            padding-right: 0.5rem;
-        }
-
-        .reward-card .cost-display {
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1.2rem;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            height: 1.875rem;
-            margin-right: 0.25rem;
-        }
-
-        .reward-type-indicator {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.6rem;
-            font-weight: bold;
-            color: white;
-        }
-
-        .reward-type-indicator.onetime {
-            background: rgba(109, 76, 65, 0.15) !important;
-            color: #6D4C41 !important;
-            border: 1px solid rgba(109, 76, 65, 0.3) !important;
-        }
-
-        .info-icon {
-            width: 20px;
-            height: 20px;
-            background: rgba(109, 76, 65, 0.15) !important;
-            color: #6D4C41 !important;
-            border: 1px solid rgba(109, 76, 65, 0.3) !important;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.6rem;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        .description-popup {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .description-popup.show {
-            display: flex;
-        }
-
-        .description-popup-content {
-            background: #FFFFFF;
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid var(--primary-color);
-            box-shadow: 0 0 20px rgba(255, 193, 7, 0.5);
-            text-align: left;
-            max-width: 300px;
-            width: 90%;
-            position: relative;
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-
-        .description-popup-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .description-popup-title {
-            color: #6D4C41;
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .description-popup-close {
-            background: none;
-            border: none;
-            font-size: 20px;
-            color: #666;
-            cursor: pointer;
-            padding: 0;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .description-popup-close:hover {
-            color: #333;
-        }
-
-        .description-popup-text {
-            color: #6D4C41;
-            font-size: 0.9rem;
-            line-height: 1.4;
-            white-space: pre-wrap;
-        }
-
-
-
-        .purchase-indicator {
-            background-color: var(--primary-color);
-            color: var(--secondary-color);
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-            display: none;
-        }
-
-        .purchase-indicator[data-count="0"] {
-            display: none !important;
-        }
-
-        .reward-indicators-row.no-purchase-indicator {
-            justify-content: flex-start;
-        }
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: #6D4C41;
-            font-weight: 600;
-            font-size: 0.875rem;
-            padding: 0.375rem 0.75rem;
-            flex-shrink: 0;
-        }
-        .btn-primary:hover {
-            background-color: #FFB300;
-            transform: scale(1.05);
-        }
-        .btn-back {
-            background-color: var(--secondary-color);
-            color: var(--text-color);
-        }
-        .btn-back:hover {
-            background-color: #3A3B3F;
-        }
-        .btn-disabled {
-            background-color: #E5E5E5;
-            color: #8D6E63;
-            cursor: not-allowed;
-            border: 2px solid #E5E5E5;
-            font-weight: 600;
-            font-size: 0.875rem;
-            padding: 0.375rem 0.75rem;
-        }
-        .btn-disabled:hover {
-            background-color: #E5E5E5;
-            transform: none;
-        }
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--modal-bg);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .reward-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-        .reward-overlay.show {
-            display: flex;
-        }
-        .reward-message {
-            background: #FFFFFF;
-            padding: 25px;
-            border-radius: 15px;
-            border: 3px solid var(--primary-color);
-            box-shadow: 0 0 20px rgba(255, 193, 7, 0.8);
-            text-align: center;
-            animation: zoomFlash 0.8s ease-out forwards;
-            position: relative;
-            z-index: 1001;
-            cursor: default;
-        }
-        .confetti {
-            position: absolute;
-            width: 15px;
-            height: 15px;
-            background: var(--primary-color);
-            border-radius: 50%;
-            animation: burst 1.5s ease-out forwards;
-            z-index: 1000;
-        }
-        .flash {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 193, 7, 0.5);
-            animation: flashEffect 0.3s ease-out 2;
-            z-index: 1000;
-        }
-        @keyframes zoomFlash {
-            0% { transform: scale(0.5); opacity: 0; box-shadow: 0 0 0 rgba(255, 193, 7, 0); }
-            50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 30px rgba(255, 193, 7, 1); }
-            100% { transform: scale(1); opacity: 1; box-shadow: 0 0 20px rgba(255, 193, 7, 0.8); }
-        }
-        @keyframes burst {
-            0% { transform: scale(1) translate(0, 0); opacity: 1; }
-            100% { transform: scale(0) translate(calc(var(--x) * 1vw), calc(var(--y) * 1vh)); opacity: 0; }
-        }
-        @keyframes flashEffect {
-            0% { opacity: 0; }
-            50% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-        @media (max-width: 640px) {
-
-
-
-            .reward-card { 
-                padding: 0.375rem 0.375rem 0.5rem 0.375rem;
-                min-height: 80px;
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>BeeMazing Rewards</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+            rel="stylesheet"
+        />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            :root {
+                --primary-color: #ffc107;
+                --secondary-color: #212121;
+                --accent-color: #2a2b32;
+                --light-bg: #fffff8;
+                --text-color: #ffffff;
+                --danger-color: #d32f2f;
+                --modal-bg: rgba(33, 33, 33, 0.7);
+                --header-height: 58px;
+                --footer-height: 70px;
+                --border-dark: #444754;
+                --card-bg: #2a2b32;
+                --card-back-bg: #ffc107; /* Yellow for back */
+                --card-back-text: #212121; /* Black for back text */
             }
-            .reward-card h3 { 
-                font-size: 1rem; 
-                color: #6D4C41;
-                margin-bottom: 0.375rem;
+
+            body {
+                font-family: "Poppins", Arial, sans-serif;
+                background-color: var(--light-bg);
+                color: var(--text-color);
+                min-height: 100vh;
+                margin: 0;
+                padding-bottom: var(--footer-height);
+            }
+
+            .reward-card {
+                background-color: #ffffff;
+                border: 2px solid var(--primary-color);
+                border-radius: 0.5rem;
+                padding: 0.5rem 0.5rem 0 0.5rem;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                position: relative;
+                color: #6d4c41;
+                box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
+                transition:
+                    transform 0.3s ease,
+                    box-shadow 0.3s ease;
+                min-height: 95px;
+            }
+
+            .reward-card:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+            }
+
+            .reward-card h3 {
+                color: #6d4c41;
+                font-weight: 600;
+                margin-bottom: 0.75rem;
+                font-size: 1.1rem;
+                text-align: center;
+                line-height: 1.2;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 width: 100%;
                 box-sizing: border-box;
             }
-            .reward-card .cost-display { 
-                font-size: 1rem; 
-                height: 1.875rem;
+
+            .reward-indicators-row {
+                width: 100%;
+                display: flex;
+                justify-content: flex-start;
+                align-items: center;
+                margin-bottom: 0.5rem;
+                min-height: 20px;
+                gap: 10px;
+            }
+
+            .reward-indicators-row:empty {
+                margin-bottom: 0.5rem;
+                min-height: 0;
+            }
+
+            .reward-card .bottom-row {
                 display: flex;
                 align-items: center;
+                justify-content: flex-end;
+                width: 100%;
+                gap: 1.5rem;
+                padding-right: 0.5rem;
+            }
+
+            .reward-card .cost-display {
+                color: var(--primary-color);
+                font-weight: 600;
+                font-size: 1.2rem;
+                white-space: nowrap;
+                display: flex;
+                align-items: center;
+                height: 1.875rem;
                 margin-right: 0.25rem;
             }
-            .btn-primary {
-                font-size: 0.75rem;
-                padding: 0.3rem 0.5rem;
-            }
-            .btn-disabled {
-                font-size: 0.75rem;
-                padding: 0.3rem 0.5rem;
-            }
 
-
-
-            .purchase-indicator {
+            .reward-type-indicator {
                 width: 20px;
                 height: 20px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.6rem;
+                font-weight: bold;
+                color: white;
+            }
+
+            .reward-type-indicator.onetime {
+                background: rgba(109, 76, 65, 0.15) !important;
+                color: #6d4c41 !important;
+                border: 1px solid rgba(109, 76, 65, 0.3) !important;
+            }
+
+            .info-icon {
+                width: 20px;
+                height: 20px;
+                background: rgba(109, 76, 65, 0.15) !important;
+                color: #6d4c41 !important;
+                border: 1px solid rgba(109, 76, 65, 0.3) !important;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.6rem;
+                font-weight: bold;
+                cursor: pointer;
+                z-index: 10;
+            }
+
+            .description-popup {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 2000;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .description-popup.show {
+                display: flex;
+            }
+
+            .description-popup-content {
+                background: #ffffff;
+                padding: 20px;
+                border-radius: 10px;
+                border: 2px solid var(--primary-color);
+                box-shadow: 0 0 20px rgba(255, 193, 7, 0.5);
+                text-align: left;
+                max-width: 300px;
+                width: 90%;
+                position: relative;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+
+            .description-popup-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+                padding-bottom: 10px;
+                border-bottom: 1px solid #eee;
+            }
+
+            .description-popup-title {
+                color: #6d4c41;
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin: 0;
+            }
+
+            .description-popup-close {
+                background: none;
+                border: none;
+                font-size: 20px;
+                color: #666;
+                cursor: pointer;
+                padding: 0;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .description-popup-close:hover {
+                color: #333;
+            }
+
+            .description-popup-text {
+                color: #6d4c41;
+                font-size: 0.9rem;
+                line-height: 1.4;
+                white-space: pre-wrap;
+            }
+
+            .purchase-indicator {
+                background-color: var(--primary-color);
+                color: var(--secondary-color);
+                border-radius: 50%;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 font-size: 12px;
-            }
-            .reward-indicators-row {
-                margin-bottom: 0.375rem;
-                gap: 8px;
-            }
-        }
-
-
-
-
-
-
-        .footer {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    background: var(--secondary-color);
-    padding: 10px 0;
-    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
-    z-index: 100;
-    height: var(--footer-height);
-}
-.footer a {
-    text-decoration: none;
-    color: var(--text-color);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transition: transform 0.3s ease;
-}
-.footer a:hover {
-    transform: scale(1.1);
-}
-.footer-icon img {
-    width: 40px;
-    height: 40px;
-    filter: invert(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-.footer a.active img {
-    filter: invert(77%) sepia(88%) saturate(900%) hue-rotate(0deg)
-        brightness(100%) contrast(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
-}
-.footer-icon span {
-    font-size: 12px;
-    margin-top: 5px;
-    font-weight: 600;
-}
-.footer a.active span {
-    color: var(--primary-color);
-}
-@media (max-width: 600px) {
-    .footer-icon img {
-        width: 35px;
-        height: 35px;
-    }
-}
-        
-
-
-.quantity-circle {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 18px;
-    height: 18px;
-    background-color: black;
-    color: #FFC107; /* Yellow color for the number */
-    border-radius: 50%;
-    font-size: 0.6rem;
-    font-weight: bold;
-    margin: 8px auto;
-}
-
-/* Tab button styling */
-.tab-button {
-    background-color: var(--light-bg) !important;
-    color: #6D4C41 !important;
-    border: 2px solid var(--primary-color) !important;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    opacity: 0.6;
-}
-
-.tab-button:hover {
-    background-color: rgba(255, 193, 7, 0.1) !important;
-    transform: translateY(-1px);
-}
-
-.tab-button.active {
-    background-color: var(--primary-color) !important;
-    color: #6D4C41 !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-    opacity: 1;
-}
-
-/* History card specific styling */
-#history-grid .reward-card, #claimed-grid .reward-card {
-background-color: #FFFFFF;
-border: 2px solid var(--primary-color);
-color: #6D4C41;
-padding: 0.5rem 0.5rem 0.75rem 0.5rem;
-}
-
-#history-grid .reward-card h3, #claimed-grid .reward-card h3 {
-color: #6D4C41;
-}
-
-#history-grid .reward-card p, #claimed-grid .reward-card p {
-color: #6D4C41 !important;
-}
-
-.action-btn {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    margin: 0.125rem;
-}
-
-.return-btn {
-    background-color: #FF9800;
-    color: white;
-}
-
-.return-btn:hover {
-    background-color: #F57C00;
-}
-
-.received-btn {
-    background-color: #4CAF50;
-    color: white;
-}
-
-.received-btn:hover {
-    background-color: #45a049;
-}
-
-.delete-btn {
-    background-color: #f44336;
-    color: white;
-}
-
-.delete-btn:hover {
-    background-color: #da190b;
-}
-
-/* Status circle styling for history cards */
-.status-circle {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    font-weight: bold;
-    font-size: 11px;
-    color: white;
-    margin-right: 8px;
-    vertical-align: middle;
-}
-
-.status-circle svg {
-    width: 12px;
-    height: 12px;
-    fill: white;
-}
-
-.status-circle.pending {
-    background-color: #FF9800; /* Orange for pending */
-}
-
-.status-circle.approved {
-    background-color: #4CAF50; /* Green for approved */
-}
-
-.status-circle.declined {
-    background-color: #F44336; /* Red for declined */
-}
-
-/* Custom popup modal for insufficient honey */
-.honey-popup {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    z-index: 2000;
-    justify-content: center;
-    align-items: center;
-}
-
-.honey-popup.show {
-    display: flex;
-}
-
-.honey-popup-content {
-    background: #FFFFFF;
-    padding: 30px;
-    border-radius: 15px;
-    border: 3px solid var(--primary-color);
-    box-shadow: 0 0 25px rgba(255, 193, 7, 0.6);
-    text-align: center;
-    max-width: 300px;
-    width: 90%;
-    position: relative;
-    animation: popupZoom 0.3s ease-out forwards;
-}
-
-.honey-popup-message {
-    color: #6D4C41;
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 20px;
-    line-height: 1.4;
-}
-
-.honey-popup-close {
-    background-color: var(--primary-color);
-    color: #6D4C41;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.honey-popup-close:hover {
-    background-color: #FFB300;
-    transform: scale(1.05);
-}
-
-@keyframes popupZoom {
-    0% { transform: scale(0.5); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-/* Custom popup modal for successful reward claim */
-.success-popup {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    z-index: 2000;
-    justify-content: center;
-    align-items: center;
-}
-
-.success-popup.show {
-    display: flex;
-}
-
-.success-popup-content {
-    background: #FFFFFF;
-    padding: 30px;
-    border-radius: 15px;
-    border: 3px solid var(--primary-color);
-    box-shadow: 0 0 25px rgba(255, 193, 7, 0.6);
-    text-align: center;
-    max-width: 350px;
-    width: 90%;
-    position: relative;
-    animation: popupZoom 0.3s ease-out forwards;
-}
-
-.success-popup-message {
-    color: #6D4C41;
-    font-size: 1.1rem;
-    font-weight: 400;
-    margin-bottom: 20px;
-    line-height: 1.4;
-}
-
-.success-popup-message .reward-title {
-    font-weight: bold;
-}
-
-.success-popup-close {
-    background-color: var(--primary-color);
-    color: #6D4C41;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.success-popup-close:hover {
-    background-color: #FFB300;
-    transform: scale(1.05);
-}
-
-
-    </style>
-</head>
-<body>
-    <div class="header bg-[var(--secondary-color)] h-[var(--header-height)] p-4 flex items-center justify-center shadow-md fixed top-0 w-full z-10">
-      <div class="title text-2xl font-semibold text-[var(--primary-color)]">Rewards for <span id="userName"></span> (<span id="honeyBalance">0</span> 🍯)</div>
-    </div>
-
-    <div class="container mx-auto p-4 pt-[calc(var(--header-height)+1rem)]">
-        <div class="flex justify-center mb-4">
-            <button onclick="showTab('rewards')" class="tab-button px-4 py-2 rounded-l-lg shadow-md active">Rewards</button>
-            <button onclick="showTab('claimed')" class="tab-button px-4 py-2 shadow-md">Claimed</button>
-            <button onclick="showTab('history')" class="tab-button px-4 py-2 rounded-r-lg shadow-md">Received</button>
-        </div>
-        <div id="rewards" class="tab-content">
-            <div class="grid grid-cols-2 gap-4" id="rewards-grid">
-                <!-- Available rewards will be loaded here -->
-            </div>
-        </div>
-        <div id="claimed" class="tab-content hidden">
-            <div class="grid grid-cols-2 gap-4" id="claimed-grid">
-                <!-- Claimed rewards waiting for approval will be loaded here -->
-            </div>
-        </div>
-        <div id="history" class="tab-content hidden">
-            <div class="grid grid-cols-2 gap-4" id="history-grid">
-                <!-- Received rewards will be loaded here -->
-            </div>
-        </div>
-    </div>
-
-    <div class="footer">
-        <a href="#" id="homeButton" class="footer-icon active" aria-label="Home">
-            <img src="/BeeMazing-A1/mobile/1-Home/HomeBtn.png" alt="Home" />
-        </a>
-        <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
-            <img src="/BeeMazing-A1/mobile/1-Home/TasksBtn.png" alt="Tasks" />
-        </a>
-        <a href="#" id="marketButton" class="footer-icon" aria-label="Market">
-            <img src="/BeeMazing-A1/mobile/1-Home/MarketBtn.png" alt="Market" />
-        </a>
-    </div>
-    
-
-    <!-- Custom Honey Popup -->
-    <div id="honeyPopup" class="honey-popup">
-        <div class="honey-popup-content">
-            <div id="honeyPopupMessage" class="honey-popup-message"></div>
-            <button class="honey-popup-close" onclick="closeHoneyPopup()">OK</button>
-        </div>
-    </div>
-
-    <!-- Custom Success Popup -->
-    <div id="successPopup" class="success-popup">
-        <div class="success-popup-content">
-            <div id="successPopupMessage" class="success-popup-message"></div>
-            <button class="success-popup-close" onclick="closeSuccessPopup()">OK</button>
-        </div>
-    </div>
-
-    <!-- The Key Popup -->
-    <div id="keyPopup" class="modal hidden">
-        <div class="bg-[var(--card-bg)] text-[var(--text-color)] p-6 rounded-lg max-w-sm w-full shadow-lg border-2 border-[var(--primary-color)]">
-            <h3 class="text-xl font-semibold mb-4">Delegate a Task</h3>
-            <label class="block mb-2">Select Task:</label>
-            <select id="taskSelect" class="w-full p-2 bg-[var(--secondary-color)] text-[var(--text-color)] rounded mb-4"></select>
-            <label class="block mb-2">Select User:</label>
-            <select id="userSelect" class="w-full p-2 bg-[var(--secondary-color)] text-[var(--text-color)] rounded mb-4"></select>
-            <button onclick="confirmKeyTransfer()" class="btn-primary w-full p-2 rounded font-semibold">Send Task</button>
-        </div>
-    </div>
-
-    <!-- Reward Claim Overlay -->
-    <div class="reward-overlay" id="rewardOverlay">
-        <div class="reward-message">
-            <h3 class="text-2xl font-semibold text-[var(--secondary-color)] mb-2">Reward Claimed!</h3>
-            <p class="text-lg text-[var(--text-color)]">You got <span id="claimedRewardName"></span>!</p>
-        </div>
-    </div>
-
-    <!-- Description Popup -->
-    <div id="descriptionPopup" class="description-popup">
-        <div class="description-popup-content">
-            <div class="description-popup-header">
-                <h4 id="descriptionPopupTitle" class="description-popup-title">Reward Details</h4>
-                <button class="description-popup-close" onclick="closeDescriptionPopup()">&times;</button>
-            </div>
-            <div id="descriptionPopupText" class="description-popup-text"></div>
-        </div>
-    </div>
-
-    <script>
-      // Function to truncate reward titles to prevent overflow
-      function truncateTitle(title, maxLength = 15) {
-          if (!title) return '';
-          if (title.length <= maxLength) return title;
-          return title.substring(0, maxLength - 3) + '...';
-      }
-
-      let keyTransferData = null;
-      const urlParams = new URLSearchParams(window.location.search);
-      const userName = urlParams.get('user');
-      let adminEmail = urlParams.get('admin') || urlParams.get('adminEmail') || localStorage.getItem("currentAdminEmail");
-      const tabParam = urlParams.get('tab') || 'rewards';
-      const basePath = "/BeeMazing-A1/mobile/2-UserProfiles";
-  
-      if (userName && adminEmail) {
-          document.getElementById('userName').textContent = userName;
-          localStorage.setItem("currentAdminEmail", adminEmail);
-  
-          // Check if user is admin
-          const userData = JSON.parse(localStorage.getItem("userData")) || {};
-          const permissions = userData[adminEmail]?.permissions || {};
-          const isUserAdmin = permissions[userName] === "Admin";
-  
-          // Set footer button links
-
-
-
-          const homeButton = document.getElementById("homeButton");
-const tasksButton = document.getElementById("tasksButton");
-const marketButton = document.getElementById("marketButton");
-
-if (isUserAdmin) {
-    homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-    tasksButton.href = `${basePath}/tasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-} else {
-    homeButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-    tasksButton.href = `${basePath}/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-}
-
-marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
-
-// Active class logic
-const currentPath = window.location.pathname.replace(/\/$/, '').toLowerCase();
-document.querySelectorAll('.footer a').forEach(link => {
-    const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '').toLowerCase();
-    if (currentPath === linkPath) {
-        link.classList.add('active');
-    } else {
-        link.classList.remove('active');
-    }
-});
-
-
-
-
-
-
-
-
-
-
-          // Set active state
-// Set active state
-document.querySelectorAll('.footer a').forEach(link => {
-    const currentPath = window.location.pathname.replace(/\/$/, '');
-    const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');
-    if (currentPath === linkPath) {
-        link.classList.add('active');
-    } else {
-        link.classList.remove('active');
-    }
-});
-  
-          // Load initial tab
-          showTab(tabParam);
-          loadRewards(userName);
-      } else {
-          document.getElementById('rewards-grid').innerHTML = "<p class='text-center'>Error: Missing user or admin email. Please log in again.</p>";
-          document.getElementById('claimed-grid').innerHTML = "<p class='text-center'>Error: Missing user or admin email. Please log in again.</p>";
-          document.getElementById('history-grid').innerHTML = "<p class='text-center'>Error: Missing user or admin email. Please log in again.</p>";
-      }
-  
-      // Action functions for claimed rewards
-      async function returnReward(rewardName, timestamp, rewardCost) {
-          if (confirm(`Return "${rewardName}" and get back ${rewardCost} honey points?`)) {
-              try {
-                  const response = await fetch('https://beemazing1.onrender.com/api/return-reward', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                          adminEmail: adminEmail,
-                          user: userName,
-                          rewardName: rewardName,
-                          timestamp: timestamp,
-                          rewardCost: rewardCost
-                      })
-                  });
-                  
-                  if (response.status === 404) {
-                      // API endpoint not available, use fallback
-                      alert(`Return request for "${rewardName}" logged.\n\nNote: The server API is being updated. Please contact your parent/admin to manually restore ${rewardCost} honey points.`);
-                      // Hide the card temporarily
-                      const cards = document.querySelectorAll('#claimed-grid .reward-card');
-                      cards.forEach(card => {
-                          const cardTitle = card.querySelector('h3').textContent;
-                          if (cardTitle.includes(truncateTitle(rewardName))) {
-                              card.style.opacity = '0.5';
-                              card.querySelector('.action-btn').disabled = true;
-                              card.querySelector('.action-btn').textContent = 'Returned';
-                          }
-                      });
-                      return;
-                  }
-                  
-                  const data = await response.json();
-                  if (!response.ok) throw new Error(data.error || 'Failed to return reward');
-                  
-                  showSuccessPopup(`Returned ${rewardName}. ${rewardCost} honey restored.`);
-                  loadRewards(userName); // Reload all sections
-              } catch (err) {
-                  console.error('Error returning reward:', err);
-                  if (err.message.includes('Failed to fetch') || err.message.includes('TypeError')) {
-                      alert(`Return request for "${rewardName}" logged.\n\nNote: Server connection issue. Please contact your parent/admin to manually restore ${rewardCost} honey points.`);
-                  } else {
-                      alert('Failed to return reward. Please try again.');
-                  }
-              }
-          }
-      }
-
-      async function markAsReceived(rewardName, timestamp) {
-          if (confirm(`Mark "${rewardName}" as received?`)) {
-              try {
-                  const response = await fetch('https://beemazing1.onrender.com/api/mark-received', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                          adminEmail: adminEmail,
-                          user: userName,
-                          rewardName: rewardName,
-                          timestamp: timestamp
-                      })
-                  });
-                  
-                  if (response.status === 404) {
-                      // API endpoint not available, use fallback
-                      alert(`"${rewardName}" marked as received.\n\nNote: The server API is being updated. This will be moved to your received rewards history automatically once the system is updated.`);
-                      // Hide the card temporarily
-                      const cards = document.querySelectorAll('#claimed-grid .reward-card');
-                      cards.forEach(card => {
-                          const cardTitle = card.querySelector('h3').textContent;
-                          if (cardTitle.includes(truncateTitle(rewardName))) {
-                              card.style.opacity = '0.5';
-                              card.querySelector('.action-btn').disabled = true;
-                              card.querySelector('.action-btn').textContent = 'Received';
-                          }
-                      });
-                      return;
-                  }
-                  
-                  const data = await response.json();
-                  if (!response.ok) throw new Error(data.error || 'Failed to mark as received');
-                  
-                  showSuccessPopup(`${rewardName} moved to received rewards.`);
-                  loadRewards(userName); // Reload all sections
-              } catch (err) {
-                  console.error('Error marking as received:', err);
-                  if (err.message.includes('Failed to fetch') || err.message.includes('TypeError')) {
-                      alert(`"${rewardName}" marked as received.\n\nNote: Server connection issue. This will be processed automatically once connection is restored.`);
-                  } else {
-                      alert('Failed to mark as received. Please try again.');
-                  }
-              }
-          }
-      }
-
-      async function deleteRejectedReward(rewardName, timestamp) {
-          if (confirm(`Remove the rejected reward "${rewardName}" from your list?`)) {
-              try {
-                  const response = await fetch('https://beemazing1.onrender.com/api/delete-rejected-reward', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                          adminEmail: adminEmail,
-                          user: userName,
-                          rewardName: rewardName,
-                          timestamp: timestamp
-                      })
-                  });
-                  
-                  if (response.status === 404) {
-                      // API endpoint not available, use fallback
-                      alert(`Rejected reward "${rewardName}" removed from your view.\n\nNote: The server API is being updated. This will be permanently removed once the system is updated.`);
-                      // Hide the card temporarily
-                      const cards = document.querySelectorAll('#claimed-grid .reward-card');
-                      cards.forEach(card => {
-                          const cardTitle = card.querySelector('h3').textContent;
-                          if (cardTitle.includes(truncateTitle(rewardName))) {
-                              card.style.display = 'none';
-                          }
-                      });
-                      return;
-                  }
-                  
-                  const data = await response.json();
-                  if (!response.ok) throw new Error(data.error || 'Failed to delete rejected reward');
-                  
-                  showSuccessPopup(`Removed rejected reward: ${rewardName}`);
-                  loadRewards(userName); // Reload all sections
-              } catch (err) {
-                  console.error('Error deleting rejected reward:', err);
-                  alert('Failed to delete rejected reward. Please try again.');
-              }
-          }
-      }
-
-      async function getUserHoney(userName) {
-          try {
-              const response = await fetch(`https://beemazing1.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-              const data = await response.json();
-              if (!response.ok) throw new Error(data.error || "Failed to fetch user rewards");
-              const rewards = data.rewards || {};
-              const userHoney = rewards[userName] || 0;
-              console.log(`getUserHoney: user=${userName}, honey=${userHoney}, rawResponse=`, data);
-              return userHoney;
-          } catch (err) {
-              console.error("Error fetching user honey:", err);
-              return 0;
-          }
-      }
-  
-      function showTab(tabId) {
-          document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
-          document.getElementById(tabId).classList.remove('hidden');
-          document.querySelectorAll('.tab-button').forEach(button => {
-              button.classList.remove('active');
-          });
-          const activeButton = document.querySelector(`button[onclick="showTab('${tabId}')"]`);
-          if (activeButton) {
-              activeButton.classList.add('active');
-          }
-      }
-  
-
-
-
-
-      async function loadRewards(userName) {
-    const rewardsGrid = document.getElementById("rewards-grid");
-    const historyGrid = document.getElementById("history-grid");
-    const claimedGrid = document.getElementById("claimed-grid");
-    rewardsGrid.innerHTML = "<p class='text-center'>Loading rewards...</p>";
-    claimedGrid.innerHTML = "<p class='text-center'>Loading claimed rewards...</p>";
-    historyGrid.innerHTML = "<p class='text-center'>Loading received rewards...</p>";
-
-    try {
-        const userHoney = await getUserHoney(userName);
-        document.getElementById('honeyBalance').textContent = userHoney;
-
-        // Fetch market rewards
-        const marketResponse = await fetch(`https://beemazing1.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-        const marketData = await marketResponse.json();
-        if (!marketResponse.ok) throw new Error(marketData.error || "Failed to fetch market rewards");
-        const marketRewards = marketData.rewards || [];
-
-        // Fetch user rewards
-        const userRewardsResponse = await fetch(`https://beemazing1.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-        const userRewardsData = await userRewardsResponse.json();
-        if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
-        const userRewards = (userRewardsData.userRewards || {})[userName] || [];
-
-        // Fetch pending reward requests
-        const pendingResponse = await fetch(`https://beemazing1.onrender.com/api/reward-requests?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-        const pendingData = await pendingResponse.json();
-        if (!pendingResponse.ok) throw new Error(pendingData.error || "Failed to fetch pending reward requests");
-        const pendingRequests = (pendingData.requests || []).filter(req => req.user === userName && req.status === "pending");
-
-        // Build market reward map
-        const marketRewardMap = {};
-        marketRewards.forEach(reward => {
-            marketRewardMap[reward.name] = {
-                honey: reward.honey || 0,
-                diamonds: reward.diamonds || 0,
-                type: reward.type || 'normal',
-                outcomes: reward.outcomes || [],
-                assignedUsers: reward.assignedUsers || [],
-                description: reward.description || undefined
-            };
-        });
-
-        // Count only pendingRequests for purchase indicator
-        const rewardCounts = {};
-        pendingRequests.forEach(req => {
-            rewardCounts[req.rewardName] = (rewardCounts[req.rewardName] || 0) + 1;
-        });
-
-        // Filter market rewards - exclude one-time rewards already claimed by this user
-        const filteredRewards = marketRewards.filter(reward => {
-            // Check if user is assigned to this reward
-            const isAssigned = !reward.assignedUsers || reward.assignedUsers.length === 0 || reward.assignedUsers.includes(userName);
-            if (!isAssigned) return false;
-
-            // For one-time rewards, check if user has already claimed it
-            if (reward.type === 'oneTime' && reward.claimedBy && reward.claimedBy.includes(userName)) {
-                return false;
+                font-weight: bold;
+                display: none;
             }
 
-            return true;
-        });
+            .purchase-indicator[data-count="0"] {
+                display: none !important;
+            }
 
-        // Only show rewards that are in marketRewards or are usable (The Key or dice) in userRewards
-        const allRewardNames = [...new Set([
-            ...filteredRewards.map(r => r.name),
-            ...userRewards
-                .filter(r => r.name === "The Key" || r.type === "dice")
-                .map(r => r.name)
-        ])];
+            .reward-indicators-row.no-purchase-indicator {
+                justify-content: flex-start;
+            }
+            .btn-primary {
+                background-color: var(--primary-color);
+                color: #6d4c41;
+                font-weight: 600;
+                font-size: 0.875rem;
+                padding: 0.375rem 0.75rem;
+                flex-shrink: 0;
+            }
+            .btn-primary:hover {
+                background-color: #ffb300;
+                transform: scale(1.05);
+            }
+            .btn-back {
+                background-color: var(--secondary-color);
+                color: var(--text-color);
+            }
+            .btn-back:hover {
+                background-color: #3a3b3f;
+            }
+            .btn-disabled {
+                background-color: #e5e5e5;
+                color: #8d6e63;
+                cursor: not-allowed;
+                border: 2px solid #e5e5e5;
+                font-weight: 600;
+                font-size: 0.875rem;
+                padding: 0.375rem 0.75rem;
+            }
+            .btn-disabled:hover {
+                background-color: #e5e5e5;
+                transform: none;
+            }
+            .modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: var(--modal-bg);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            }
+            .reward-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 1000;
+                justify-content: center;
+                align-items: center;
+                overflow: hidden;
+            }
+            .reward-overlay.show {
+                display: flex;
+            }
+            .reward-message {
+                background: #ffffff;
+                padding: 25px;
+                border-radius: 15px;
+                border: 3px solid var(--primary-color);
+                box-shadow: 0 0 20px rgba(255, 193, 7, 0.8);
+                text-align: center;
+                animation: zoomFlash 0.8s ease-out forwards;
+                position: relative;
+                z-index: 1001;
+                cursor: default;
+            }
+            .confetti {
+                position: absolute;
+                width: 15px;
+                height: 15px;
+                background: var(--primary-color);
+                border-radius: 50%;
+                animation: burst 1.5s ease-out forwards;
+                z-index: 1000;
+            }
+            .flash {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(255, 193, 7, 0.5);
+                animation: flashEffect 0.3s ease-out 2;
+                z-index: 1000;
+            }
+            @keyframes zoomFlash {
+                0% {
+                    transform: scale(0.5);
+                    opacity: 0;
+                    box-shadow: 0 0 0 rgba(255, 193, 7, 0);
+                }
+                50% {
+                    transform: scale(1.1);
+                    opacity: 1;
+                    box-shadow: 0 0 30px rgba(255, 193, 7, 1);
+                }
+                100% {
+                    transform: scale(1);
+                    opacity: 1;
+                    box-shadow: 0 0 20px rgba(255, 193, 7, 0.8);
+                }
+            }
+            @keyframes burst {
+                0% {
+                    transform: scale(1) translate(0, 0);
+                    opacity: 1;
+                }
+                100% {
+                    transform: scale(0)
+                        translate(calc(var(--x) * 1vw), calc(var(--y) * 1vh));
+                    opacity: 0;
+                }
+            }
+            @keyframes flashEffect {
+                0% {
+                    opacity: 0;
+                }
+                50% {
+                    opacity: 1;
+                }
+                100% {
+                    opacity: 0;
+                }
+            }
+            @media (max-width: 640px) {
+                .reward-card {
+                    padding: 0.375rem 0.375rem 0.5rem 0.375rem;
+                    min-height: 80px;
+                }
+                .reward-card h3 {
+                    font-size: 1rem;
+                    color: #6d4c41;
+                    margin-bottom: 0.375rem;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    width: 100%;
+                    box-sizing: border-box;
+                }
+                .reward-card .cost-display {
+                    font-size: 1rem;
+                    height: 1.875rem;
+                    display: flex;
+                    align-items: center;
+                    margin-right: 0.25rem;
+                }
+                .btn-primary {
+                    font-size: 0.75rem;
+                    padding: 0.3rem 0.5rem;
+                }
+                .btn-disabled {
+                    font-size: 0.75rem;
+                    padding: 0.3rem 0.5rem;
+                }
 
-        // Render rewards
-        rewardsGrid.innerHTML = "";
-        if (allRewardNames.length === 0) {
-            rewardsGrid.innerHTML = "<p class='text-center'>No rewards available in the hive.</p>";
-        } else {
-            allRewardNames.forEach((rewardName, index) => {
-                const userRewardCount = rewardCounts[rewardName] || 0;
-                const marketInfo = marketRewardMap[rewardName] || {};
-                const userRewardInfo = userRewards.find(r => r.name === rewardName) || {};
-                const rewardType = marketInfo.type || userRewardInfo.type || 'normal';
-                const rewardCost = marketInfo.honey || marketInfo.diamonds || 0;
-                const isOneTime = marketInfo.type === 'oneTime';
-                const outcomes = marketInfo.outcomes || userRewardInfo.outcomes || [];
-                const isTheKey = rewardName === "The Key";
-                const isDiceChest = rewardType === "dice";
-                const canAfford = userHoney >= rewardCost;
+                .purchase-indicator {
+                    width: 20px;
+                    height: 20px;
+                    font-size: 12px;
+                }
+                .reward-indicators-row {
+                    margin-bottom: 0.375rem;
+                    gap: 8px;
+                }
+            }
 
-                const card = document.createElement("div");
-                card.className = "reward-card";
-                card.dataset.reward = rewardName;
-                card.dataset.index = index;
+            .footer {
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                background: var(--secondary-color);
+                padding: 10px 0;
+                box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+                z-index: 100;
+                height: var(--footer-height);
+            }
+            .footer a {
+                text-decoration: none;
+                color: var(--text-color);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                transition: transform 0.3s ease;
+            }
+            .footer a:hover {
+                transform: scale(1.1);
+            }
+            .footer-icon img {
+                width: 40px;
+                height: 40px;
+                filter: invert(100%) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+            }
+            .footer a.active img {
+                filter: invert(77%) sepia(88%) saturate(900%) hue-rotate(0deg)
+                    brightness(100%) contrast(100%)
+                    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+            }
+            .footer-icon span {
+                font-size: 12px;
+                margin-top: 5px;
+                font-weight: 600;
+            }
+            .footer a.active span {
+                color: var(--primary-color);
+            }
+            @media (max-width: 600px) {
+                .footer-icon img {
+                    width: 35px;
+                    height: 35px;
+                }
+            }
 
-                const safeEncodedOutcomes = encodeURIComponent(btoa(JSON.stringify(outcomes)));
+            .quantity-circle {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 18px;
+                height: 18px;
+                background-color: black;
+                color: #ffc107; /* Yellow color for the number */
+                border-radius: 50%;
+                font-size: 0.6rem;
+                font-weight: bold;
+                margin: 8px auto;
+            }
 
-                let buttonContent = '';
-                if (userRewardCount > 0 && (isTheKey || isDiceChest)) {
-                    buttonContent = `
+            /* Tab button styling */
+            .tab-button {
+                background-color: var(--light-bg) !important;
+                color: #6d4c41 !important;
+                border: 2px solid var(--primary-color) !important;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                text-decoration: none;
+                opacity: 0.6;
+            }
+
+            .tab-button:hover {
+                background-color: rgba(255, 193, 7, 0.1) !important;
+                transform: translateY(-1px);
+            }
+
+            .tab-button.active {
+                background-color: var(--primary-color) !important;
+                color: #6d4c41 !important;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+                opacity: 1;
+            }
+
+            /* History card specific styling */
+            #history-grid .reward-card,
+            #claimed-grid .reward-card {
+                background-color: #ffffff;
+                border: 2px solid var(--primary-color);
+                color: #6d4c41;
+                padding: 0.5rem 0.5rem 0.75rem 0.5rem;
+            }
+
+            #history-grid .reward-card h3,
+            #claimed-grid .reward-card h3 {
+                color: #6d4c41;
+            }
+
+            #history-grid .reward-card p,
+            #claimed-grid .reward-card p {
+                color: #6d4c41 !important;
+            }
+
+            .action-btn {
+                font-size: 0.75rem;
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.25rem;
+                font-weight: 600;
+                cursor: pointer;
+                border: none;
+                margin: 0.125rem;
+            }
+
+            .return-btn {
+                background-color: #ff9800;
+                color: white;
+            }
+
+            .return-btn:hover {
+                background-color: #f57c00;
+            }
+
+            .received-btn {
+                background-color: #4caf50;
+                color: white;
+            }
+
+            .received-btn:hover {
+                background-color: #45a049;
+            }
+
+            .delete-btn {
+                background-color: #f44336;
+                color: white;
+            }
+
+            .delete-btn:hover {
+                background-color: #da190b;
+            }
+
+            /* Status circle styling for history cards */
+            .status-circle {
+                display: inline-flex;
+                justify-content: center;
+                align-items: center;
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                font-weight: bold;
+                font-size: 11px;
+                color: white;
+                margin-right: 8px;
+                vertical-align: middle;
+            }
+
+            .status-circle svg {
+                width: 12px;
+                height: 12px;
+                fill: white;
+            }
+
+            .status-circle.pending {
+                background-color: #ff9800; /* Orange for pending */
+            }
+
+            .status-circle.approved {
+                background-color: #4caf50; /* Green for approved */
+            }
+
+            .status-circle.declined {
+                background-color: #f44336; /* Red for declined */
+            }
+
+            /* Custom popup modal for insufficient honey */
+            .honey-popup {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 2000;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .honey-popup.show {
+                display: flex;
+            }
+
+            .honey-popup-content {
+                background: #ffffff;
+                padding: 30px;
+                border-radius: 15px;
+                border: 3px solid var(--primary-color);
+                box-shadow: 0 0 25px rgba(255, 193, 7, 0.6);
+                text-align: center;
+                max-width: 300px;
+                width: 90%;
+                position: relative;
+                animation: popupZoom 0.3s ease-out forwards;
+            }
+
+            .honey-popup-message {
+                color: #6d4c41;
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin-bottom: 20px;
+                line-height: 1.4;
+            }
+
+            .honey-popup-close {
+                background-color: var(--primary-color);
+                color: #6d4c41;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 1rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .honey-popup-close:hover {
+                background-color: #ffb300;
+                transform: scale(1.05);
+            }
+
+            @keyframes popupZoom {
+                0% {
+                    transform: scale(0.5);
+                    opacity: 0;
+                }
+                100% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
+
+            /* Custom popup modal for successful reward claim */
+            .success-popup {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 2000;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .success-popup.show {
+                display: flex;
+            }
+
+            .success-popup-content {
+                background: #ffffff;
+                padding: 30px;
+                border-radius: 15px;
+                border: 3px solid var(--primary-color);
+                box-shadow: 0 0 25px rgba(255, 193, 7, 0.6);
+                text-align: center;
+                max-width: 350px;
+                width: 90%;
+                position: relative;
+                animation: popupZoom 0.3s ease-out forwards;
+            }
+
+            .success-popup-message {
+                color: #6d4c41;
+                font-size: 1.1rem;
+                font-weight: 400;
+                margin-bottom: 20px;
+                line-height: 1.4;
+            }
+
+            .success-popup-message .reward-title {
+                font-weight: bold;
+            }
+
+            .success-popup-close {
+                background-color: var(--primary-color);
+                color: #6d4c41;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 1rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .success-popup-close:hover {
+                background-color: #ffb300;
+                transform: scale(1.05);
+            }
+        </style>
+    </head>
+    <body>
+        <div
+            class="header bg-[var(--secondary-color)] h-[var(--header-height)] p-4 flex items-center justify-center shadow-md fixed top-0 w-full z-10"
+        >
+            <div
+                class="title text-2xl font-semibold text-[var(--primary-color)]"
+            >
+                Rewards for <span id="userName"></span> (<span id="honeyBalance"
+                    >0</span
+                >
+                🍯)
+            </div>
+        </div>
+
+        <div class="container mx-auto p-4 pt-[calc(var(--header-height)+1rem)]">
+            <div class="flex justify-center mb-4">
+                <button
+                    onclick="showTab('rewards')"
+                    class="tab-button px-4 py-2 rounded-l-lg shadow-md active"
+                >
+                    Rewards
+                </button>
+                <button
+                    onclick="showTab('claimed')"
+                    class="tab-button px-4 py-2 shadow-md"
+                >
+                    Claimed
+                </button>
+                <button
+                    onclick="showTab('history')"
+                    class="tab-button px-4 py-2 rounded-r-lg shadow-md"
+                >
+                    Received
+                </button>
+            </div>
+            <div id="rewards" class="tab-content">
+                <div class="grid grid-cols-2 gap-4" id="rewards-grid">
+                    <!-- Available rewards will be loaded here -->
+                </div>
+            </div>
+            <div id="claimed" class="tab-content hidden">
+                <div class="grid grid-cols-2 gap-4" id="claimed-grid">
+                    <!-- Claimed rewards waiting for approval will be loaded here -->
+                </div>
+            </div>
+            <div id="history" class="tab-content hidden">
+                <div class="grid grid-cols-2 gap-4" id="history-grid">
+                    <!-- Received rewards will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <a
+                href="#"
+                id="homeButton"
+                class="footer-icon active"
+                aria-label="Home"
+            >
+                <img src="/BeeMazing-A1/mobile/1-Home/HomeBtn.png" alt="Home" />
+            </a>
+            <a href="#" id="tasksButton" class="footer-icon" aria-label="Tasks">
+                <img
+                    src="/BeeMazing-A1/mobile/1-Home/TasksBtn.png"
+                    alt="Tasks"
+                />
+            </a>
+            <a
+                href="#"
+                id="marketButton"
+                class="footer-icon"
+                aria-label="Market"
+            >
+                <img
+                    src="/BeeMazing-A1/mobile/1-Home/MarketBtn.png"
+                    alt="Market"
+                />
+            </a>
+        </div>
+
+        <!-- Custom Honey Popup -->
+        <div id="honeyPopup" class="honey-popup">
+            <div class="honey-popup-content">
+                <div id="honeyPopupMessage" class="honey-popup-message"></div>
+                <button class="honey-popup-close" onclick="closeHoneyPopup()">
+                    OK
+                </button>
+            </div>
+        </div>
+
+        <!-- Custom Success Popup -->
+        <div id="successPopup" class="success-popup">
+            <div class="success-popup-content">
+                <div
+                    id="successPopupMessage"
+                    class="success-popup-message"
+                ></div>
+                <button
+                    class="success-popup-close"
+                    onclick="closeSuccessPopup()"
+                >
+                    OK
+                </button>
+            </div>
+        </div>
+
+        <!-- The Key Popup -->
+        <div id="keyPopup" class="modal hidden">
+            <div
+                class="bg-[var(--card-bg)] text-[var(--text-color)] p-6 rounded-lg max-w-sm w-full shadow-lg border-2 border-[var(--primary-color)]"
+            >
+                <h3 class="text-xl font-semibold mb-4">Delegate a Task</h3>
+                <label class="block mb-2">Select Task:</label>
+                <select
+                    id="taskSelect"
+                    class="w-full p-2 bg-[var(--secondary-color)] text-[var(--text-color)] rounded mb-4"
+                ></select>
+                <label class="block mb-2">Select User:</label>
+                <select
+                    id="userSelect"
+                    class="w-full p-2 bg-[var(--secondary-color)] text-[var(--text-color)] rounded mb-4"
+                ></select>
+                <button
+                    onclick="confirmKeyTransfer()"
+                    class="btn-primary w-full p-2 rounded font-semibold"
+                >
+                    Send Task
+                </button>
+            </div>
+        </div>
+
+        <!-- Reward Claim Overlay -->
+        <div class="reward-overlay" id="rewardOverlay">
+            <div class="reward-message">
+                <h3
+                    class="text-2xl font-semibold text-[var(--secondary-color)] mb-2"
+                >
+                    Reward Claimed!
+                </h3>
+                <p class="text-lg text-[var(--text-color)]">
+                    You got <span id="claimedRewardName"></span>!
+                </p>
+            </div>
+        </div>
+
+        <!-- Description Popup -->
+        <div id="descriptionPopup" class="description-popup">
+            <div class="description-popup-content">
+                <div class="description-popup-header">
+                    <h4
+                        id="descriptionPopupTitle"
+                        class="description-popup-title"
+                    >
+                        Reward Details
+                    </h4>
+                    <button
+                        class="description-popup-close"
+                        onclick="closeDescriptionPopup()"
+                    >
+                        &times;
+                    </button>
+                </div>
+                <div
+                    id="descriptionPopupText"
+                    class="description-popup-text"
+                ></div>
+            </div>
+        </div>
+
+        <script>
+            // Function to truncate reward titles to prevent overflow
+            function truncateTitle(title, maxLength = 15) {
+                if (!title) return "";
+                if (title.length <= maxLength) return title;
+                return title.substring(0, maxLength - 3) + "...";
+            }
+
+            let keyTransferData = null;
+            const urlParams = new URLSearchParams(window.location.search);
+            const userName = urlParams.get("user");
+            let adminEmail =
+                urlParams.get("admin") ||
+                urlParams.get("adminEmail") ||
+                localStorage.getItem("currentAdminEmail");
+            const tabParam = urlParams.get("tab") || "rewards";
+            const basePath = "/BeeMazing-A1/mobile/2-UserProfiles";
+
+            if (userName && adminEmail) {
+                document.getElementById("userName").textContent = userName;
+                localStorage.setItem("currentAdminEmail", adminEmail);
+
+                // Check if current profile user is admin
+                const userData =
+                    JSON.parse(localStorage.getItem("userData")) || {};
+                const permissions = userData[adminEmail]?.permissions || {};
+                const isCurrentUserAdmin = permissions[userName] === "Admin";
+
+                // Set footer button links based on the profile being viewed
+
+                const homeButton = document.getElementById("homeButton");
+                const tasksButton = document.getElementById("tasksButton");
+                const marketButton = document.getElementById("marketButton");
+
+                if (isCurrentUserAdmin) {
+                    // Viewing admin profile - use admin pages and admin footers
+                    homeButton.href = `${basePath}/userAdmin.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                    tasksButton.href = `/BeeMazing-A1/mobile/3-Tasks/tasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                    marketButton.href = `/BeeMazing-A1/mobile/4-Market/market.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                } else {
+                    // Viewing child profile - use child pages and child footers
+                    homeButton.href = `${basePath}/users.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                    tasksButton.href = `${basePath}/userTasks.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                    marketButton.href = `${basePath}/usermarket.html?admin=${encodeURIComponent(adminEmail)}&user=${encodeURIComponent(userName)}`;
+                }
+
+                // Active class logic
+                const currentPath = window.location.pathname
+                    .replace(/\/$/, "")
+                    .toLowerCase();
+                document.querySelectorAll(".footer a").forEach((link) => {
+                    const linkPath = new URL(
+                        link.href,
+                        window.location.origin,
+                    ).pathname
+                        .replace(/\/$/, "")
+                        .toLowerCase();
+                    if (currentPath === linkPath) {
+                        link.classList.add("active");
+                    } else {
+                        link.classList.remove("active");
+                    }
+                });
+
+                // Set active state
+                // Set active state
+                document.querySelectorAll(".footer a").forEach((link) => {
+                    const currentPath = window.location.pathname.replace(
+                        /\/$/,
+                        "",
+                    );
+                    const linkPath = new URL(
+                        link.href,
+                        window.location.origin,
+                    ).pathname.replace(/\/$/, "");
+                    if (currentPath === linkPath) {
+                        link.classList.add("active");
+                    } else {
+                        link.classList.remove("active");
+                    }
+                });
+
+                // Load initial tab
+                showTab(tabParam);
+                loadRewards(userName);
+            } else {
+                document.getElementById("rewards-grid").innerHTML =
+                    "<p class='text-center'>Error: Missing user or admin email. Please log in again.</p>";
+                document.getElementById("claimed-grid").innerHTML =
+                    "<p class='text-center'>Error: Missing user or admin email. Please log in again.</p>";
+                document.getElementById("history-grid").innerHTML =
+                    "<p class='text-center'>Error: Missing user or admin email. Please log in again.</p>";
+            }
+
+            // Action functions for claimed rewards
+            async function returnReward(rewardName, timestamp, rewardCost) {
+                if (
+                    confirm(
+                        `Return "${rewardName}" and get back ${rewardCost} honey points?`,
+                    )
+                ) {
+                    try {
+                        const response = await fetch(
+                            "https://beemazing1.onrender.com/api/return-reward",
+                            {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    adminEmail: adminEmail,
+                                    user: userName,
+                                    rewardName: rewardName,
+                                    timestamp: timestamp,
+                                    rewardCost: rewardCost,
+                                }),
+                            },
+                        );
+
+                        if (response.status === 404) {
+                            // API endpoint not available, use fallback
+                            alert(
+                                `Return request for "${rewardName}" logged.\n\nNote: The server API is being updated. Please contact your parent/admin to manually restore ${rewardCost} honey points.`,
+                            );
+                            // Hide the card temporarily
+                            const cards = document.querySelectorAll(
+                                "#claimed-grid .reward-card",
+                            );
+                            cards.forEach((card) => {
+                                const cardTitle =
+                                    card.querySelector("h3").textContent;
+                                if (
+                                    cardTitle.includes(
+                                        truncateTitle(rewardName),
+                                    )
+                                ) {
+                                    card.style.opacity = "0.5";
+                                    card.querySelector(".action-btn").disabled =
+                                        true;
+                                    card.querySelector(
+                                        ".action-btn",
+                                    ).textContent = "Returned";
+                                }
+                            });
+                            return;
+                        }
+
+                        const data = await response.json();
+                        if (!response.ok)
+                            throw new Error(
+                                data.error || "Failed to return reward",
+                            );
+
+                        showSuccessPopup(
+                            `Returned ${rewardName}. ${rewardCost} honey restored.`,
+                        );
+                        loadRewards(userName); // Reload all sections
+                    } catch (err) {
+                        console.error("Error returning reward:", err);
+                        if (
+                            err.message.includes("Failed to fetch") ||
+                            err.message.includes("TypeError")
+                        ) {
+                            alert(
+                                `Return request for "${rewardName}" logged.\n\nNote: Server connection issue. Please contact your parent/admin to manually restore ${rewardCost} honey points.`,
+                            );
+                        } else {
+                            alert("Failed to return reward. Please try again.");
+                        }
+                    }
+                }
+            }
+
+            async function markAsReceived(rewardName, timestamp) {
+                if (confirm(`Mark "${rewardName}" as received?`)) {
+                    try {
+                        const response = await fetch(
+                            "https://beemazing1.onrender.com/api/mark-received",
+                            {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    adminEmail: adminEmail,
+                                    user: userName,
+                                    rewardName: rewardName,
+                                    timestamp: timestamp,
+                                }),
+                            },
+                        );
+
+                        if (response.status === 404) {
+                            // API endpoint not available, use fallback
+                            alert(
+                                `"${rewardName}" marked as received.\n\nNote: The server API is being updated. This will be moved to your received rewards history automatically once the system is updated.`,
+                            );
+                            // Hide the card temporarily
+                            const cards = document.querySelectorAll(
+                                "#claimed-grid .reward-card",
+                            );
+                            cards.forEach((card) => {
+                                const cardTitle =
+                                    card.querySelector("h3").textContent;
+                                if (
+                                    cardTitle.includes(
+                                        truncateTitle(rewardName),
+                                    )
+                                ) {
+                                    card.style.opacity = "0.5";
+                                    card.querySelector(".action-btn").disabled =
+                                        true;
+                                    card.querySelector(
+                                        ".action-btn",
+                                    ).textContent = "Received";
+                                }
+                            });
+                            return;
+                        }
+
+                        const data = await response.json();
+                        if (!response.ok)
+                            throw new Error(
+                                data.error || "Failed to mark as received",
+                            );
+
+                        showSuccessPopup(
+                            `${rewardName} moved to received rewards.`,
+                        );
+                        loadRewards(userName); // Reload all sections
+                    } catch (err) {
+                        console.error("Error marking as received:", err);
+                        if (
+                            err.message.includes("Failed to fetch") ||
+                            err.message.includes("TypeError")
+                        ) {
+                            alert(
+                                `"${rewardName}" marked as received.\n\nNote: Server connection issue. This will be processed automatically once connection is restored.`,
+                            );
+                        } else {
+                            alert(
+                                "Failed to mark as received. Please try again.",
+                            );
+                        }
+                    }
+                }
+            }
+
+            async function deleteRejectedReward(rewardName, timestamp) {
+                if (
+                    confirm(
+                        `Remove the rejected reward "${rewardName}" from your list?`,
+                    )
+                ) {
+                    try {
+                        const response = await fetch(
+                            "https://beemazing1.onrender.com/api/delete-rejected-reward",
+                            {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    adminEmail: adminEmail,
+                                    user: userName,
+                                    rewardName: rewardName,
+                                    timestamp: timestamp,
+                                }),
+                            },
+                        );
+
+                        if (response.status === 404) {
+                            // API endpoint not available, use fallback
+                            alert(
+                                `Rejected reward "${rewardName}" removed from your view.\n\nNote: The server API is being updated. This will be permanently removed once the system is updated.`,
+                            );
+                            // Hide the card temporarily
+                            const cards = document.querySelectorAll(
+                                "#claimed-grid .reward-card",
+                            );
+                            cards.forEach((card) => {
+                                const cardTitle =
+                                    card.querySelector("h3").textContent;
+                                if (
+                                    cardTitle.includes(
+                                        truncateTitle(rewardName),
+                                    )
+                                ) {
+                                    card.style.display = "none";
+                                }
+                            });
+                            return;
+                        }
+
+                        const data = await response.json();
+                        if (!response.ok)
+                            throw new Error(
+                                data.error ||
+                                    "Failed to delete rejected reward",
+                            );
+
+                        showSuccessPopup(
+                            `Removed rejected reward: ${rewardName}`,
+                        );
+                        loadRewards(userName); // Reload all sections
+                    } catch (err) {
+                        console.error("Error deleting rejected reward:", err);
+                        alert(
+                            "Failed to delete rejected reward. Please try again.",
+                        );
+                    }
+                }
+            }
+
+            async function getUserHoney(userName) {
+                try {
+                    const response = await fetch(
+                        `https://beemazing1.onrender.com/api/rewards?adminEmail=${encodeURIComponent(adminEmail)}`,
+                    );
+                    const data = await response.json();
+                    if (!response.ok)
+                        throw new Error(
+                            data.error || "Failed to fetch user rewards",
+                        );
+                    const rewards = data.rewards || {};
+                    const userHoney = rewards[userName] || 0;
+                    console.log(
+                        `getUserHoney: user=${userName}, honey=${userHoney}, rawResponse=`,
+                        data,
+                    );
+                    return userHoney;
+                } catch (err) {
+                    console.error("Error fetching user honey:", err);
+                    return 0;
+                }
+            }
+
+            function showTab(tabId) {
+                document
+                    .querySelectorAll(".tab-content")
+                    .forEach((tab) => tab.classList.add("hidden"));
+                document.getElementById(tabId).classList.remove("hidden");
+                document.querySelectorAll(".tab-button").forEach((button) => {
+                    button.classList.remove("active");
+                });
+                const activeButton = document.querySelector(
+                    `button[onclick="showTab('${tabId}')"]`,
+                );
+                if (activeButton) {
+                    activeButton.classList.add("active");
+                }
+            }
+
+            async function loadRewards(userName) {
+                const rewardsGrid = document.getElementById("rewards-grid");
+                const historyGrid = document.getElementById("history-grid");
+                const claimedGrid = document.getElementById("claimed-grid");
+                rewardsGrid.innerHTML =
+                    "<p class='text-center'>Loading rewards...</p>";
+                claimedGrid.innerHTML =
+                    "<p class='text-center'>Loading claimed rewards...</p>";
+                historyGrid.innerHTML =
+                    "<p class='text-center'>Loading received rewards...</p>";
+
+                try {
+                    const userHoney = await getUserHoney(userName);
+                    document.getElementById("honeyBalance").textContent =
+                        userHoney;
+
+                    // Fetch market rewards
+                    const marketResponse = await fetch(
+                        `https://beemazing1.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`,
+                        { cache: "no-store" },
+                    );
+                    const marketData = await marketResponse.json();
+                    if (!marketResponse.ok)
+                        throw new Error(
+                            marketData.error ||
+                                "Failed to fetch market rewards",
+                        );
+                    const marketRewards = marketData.rewards || [];
+
+                    // Fetch user rewards
+                    const userRewardsResponse = await fetch(
+                        `https://beemazing1.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`,
+                        { cache: "no-store" },
+                    );
+                    const userRewardsData = await userRewardsResponse.json();
+                    if (!userRewardsResponse.ok)
+                        throw new Error(
+                            userRewardsData.error ||
+                                "Failed to fetch user rewards",
+                        );
+                    const userRewards =
+                        (userRewardsData.userRewards || {})[userName] || [];
+
+                    // Fetch pending reward requests
+                    const pendingResponse = await fetch(
+                        `https://beemazing1.onrender.com/api/reward-requests?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`,
+                        { cache: "no-store" },
+                    );
+                    const pendingData = await pendingResponse.json();
+                    if (!pendingResponse.ok)
+                        throw new Error(
+                            pendingData.error ||
+                                "Failed to fetch pending reward requests",
+                        );
+                    const pendingRequests = (pendingData.requests || []).filter(
+                        (req) =>
+                            req.user === userName && req.status === "pending",
+                    );
+
+                    // Build market reward map
+                    const marketRewardMap = {};
+                    marketRewards.forEach((reward) => {
+                        marketRewardMap[reward.name] = {
+                            honey: reward.honey || 0,
+                            diamonds: reward.diamonds || 0,
+                            type: reward.type || "normal",
+                            outcomes: reward.outcomes || [],
+                            assignedUsers: reward.assignedUsers || [],
+                            description: reward.description || undefined,
+                        };
+                    });
+
+                    // Count only pendingRequests for purchase indicator
+                    const rewardCounts = {};
+                    pendingRequests.forEach((req) => {
+                        rewardCounts[req.rewardName] =
+                            (rewardCounts[req.rewardName] || 0) + 1;
+                    });
+
+                    // Filter market rewards - exclude one-time rewards already claimed by this user
+                    const filteredRewards = marketRewards.filter((reward) => {
+                        // Check if user is assigned to this reward
+                        const isAssigned =
+                            !reward.assignedUsers ||
+                            reward.assignedUsers.length === 0 ||
+                            reward.assignedUsers.includes(userName);
+                        if (!isAssigned) return false;
+
+                        // For one-time rewards, check if user has already claimed it
+                        if (
+                            reward.type === "oneTime" &&
+                            reward.claimedBy &&
+                            reward.claimedBy.includes(userName)
+                        ) {
+                            return false;
+                        }
+
+                        return true;
+                    });
+
+                    // Only show rewards that are in marketRewards or are usable (The Key or dice) in userRewards
+                    const allRewardNames = [
+                        ...new Set([
+                            ...filteredRewards.map((r) => r.name),
+                            ...userRewards
+                                .filter(
+                                    (r) =>
+                                        r.name === "The Key" ||
+                                        r.type === "dice",
+                                )
+                                .map((r) => r.name),
+                        ]),
+                    ];
+
+                    // Render rewards
+                    rewardsGrid.innerHTML = "";
+                    if (allRewardNames.length === 0) {
+                        rewardsGrid.innerHTML =
+                            "<p class='text-center'>No rewards available in the hive.</p>";
+                    } else {
+                        allRewardNames.forEach((rewardName, index) => {
+                            const userRewardCount =
+                                rewardCounts[rewardName] || 0;
+                            const marketInfo =
+                                marketRewardMap[rewardName] || {};
+                            const userRewardInfo =
+                                userRewards.find(
+                                    (r) => r.name === rewardName,
+                                ) || {};
+                            const rewardType =
+                                marketInfo.type ||
+                                userRewardInfo.type ||
+                                "normal";
+                            const rewardCost =
+                                marketInfo.honey || marketInfo.diamonds || 0;
+                            const isOneTime = marketInfo.type === "oneTime";
+                            const outcomes =
+                                marketInfo.outcomes ||
+                                userRewardInfo.outcomes ||
+                                [];
+                            const isTheKey = rewardName === "The Key";
+                            const isDiceChest = rewardType === "dice";
+                            const canAfford = userHoney >= rewardCost;
+
+                            const card = document.createElement("div");
+                            card.className = "reward-card";
+                            card.dataset.reward = rewardName;
+                            card.dataset.index = index;
+
+                            const safeEncodedOutcomes = encodeURIComponent(
+                                btoa(JSON.stringify(outcomes)),
+                            );
+
+                            let buttonContent = "";
+                            if (
+                                userRewardCount > 0 &&
+                                (isTheKey || isDiceChest)
+                            ) {
+                                buttonContent = `
                         <div class="quantity-circle">${userRewardCount}</div>
-                        <button class="mt-2 px-3 py-1 btn-back rounded font-semibold" 
-                            onclick="${isTheKey ? 
-                                `useTheKey('${userName}', '${rewardName}', 1)` : 
-                                `useDiceChest('${userName}', '${rewardName}', '${safeEncodedOutcomes}', 1)`}">
+                        <button class="mt-2 px-3 py-1 btn-back rounded font-semibold"
+                            onclick="${
+                                isTheKey
+                                    ? `useTheKey('${userName}', '${rewardName}', 1)`
+                                    : `useDiceChest('${userName}', '${rewardName}', '${safeEncodedOutcomes}', 1)`
+                            }">
                             Use it
                         </button>
                     `;
-                } else {
-                    if (canAfford) {
-                        buttonContent = `
-                            <button class="rounded font-semibold btn-primary" 
+                            } else {
+                                if (canAfford) {
+                                    buttonContent = `
+                            <button class="rounded font-semibold btn-primary"
                                 onclick="claimReward('${userName}', '${rewardName}', '${rewardType}', ${rewardCost}, '${JSON.stringify(outcomes)}')">Claim</button>
                         `;
-                    } else {
-                        const needed = rewardCost - userHoney;
-                        buttonContent = `
-                            <button class="rounded font-semibold btn-disabled" 
+                                } else {
+                                    const needed = rewardCost - userHoney;
+                                    buttonContent = `
+                            <button class="rounded font-semibold btn-disabled"
                                 onclick="showInsufficientHoneyMessage(${needed})">Claim</button>
                         `;
-                    }
-                }
+                                }
+                            }
 
-                const typeIndicator = isOneTime ? 
-                    '<div class="reward-type-indicator onetime">1×</div>' : 
-                    (userRewardCount > 0 ? `<div class="reward-type-indicator onetime">${userRewardCount}</div>` : '');
+                            const typeIndicator = isOneTime
+                                ? '<div class="reward-type-indicator onetime">1×</div>'
+                                : userRewardCount > 0
+                                  ? `<div class="reward-type-indicator onetime">${userRewardCount}</div>`
+                                  : "";
 
+                            const infoIcon = marketInfo.description
+                                ? `<div class="info-icon" onclick="showDescriptionPopup('${rewardName.replace(/'/g, "\\'")}', '${marketInfo.description.replace(/'/g, "\\'").replace(/\n/g, "\\n")}')" title="View description">i</div>`
+                                : "";
 
-                
-                const infoIcon = marketInfo.description 
-                    ? `<div class="info-icon" onclick="showDescriptionPopup('${rewardName.replace(/'/g, "\\'")}', '${marketInfo.description.replace(/'/g, "\\'").replace(/\n/g, "\\n")}')" title="View description">i</div>`
-                    : '';
+                            const indicatorsRowClass =
+                                userRewardCount > 0
+                                    ? "reward-indicators-row"
+                                    : "reward-indicators-row no-purchase-indicator";
 
-                const indicatorsRowClass = userRewardCount > 0 ? 'reward-indicators-row' : 'reward-indicators-row no-purchase-indicator';
-                
-                card.innerHTML = `
+                            card.innerHTML = `
                     <div class="${indicatorsRowClass}">
                         ${infoIcon}
                         <div style="display: flex; gap: 10px; margin-left: auto;">
@@ -1172,507 +1439,632 @@ document.querySelectorAll('.footer a').forEach(link => {
                     </div>
                 `;
 
-                rewardsGrid.appendChild(card);
-            });
-        }
-
-        // Load claimed rewards (all pending/approved/rejected requests) in separate try-catch
-        try {
-            // Fetch all reward requests for this user (not just pending)
-            const allRequestsResponse = await fetch(`https://beemazing1.onrender.com/api/reward-requests?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-            const allRequestsData = await allRequestsResponse.json();
-            if (!allRequestsResponse.ok) throw new Error(allRequestsData.error || "Failed to fetch all reward requests");
-            const allUserRequests = (allRequestsData.requests || []).filter(req => req.user === userName);
-
-            claimedGrid.innerHTML = "";
-            if (allUserRequests.length === 0) {
-                claimedGrid.innerHTML = "<p class='text-center'>No claimed rewards yet.</p>";
-            } else {
-                const sortedRequests = [...allUserRequests].reverse(); // Show newest first
-                sortedRequests.forEach((request) => {
-                    const card = document.createElement("div");
-                    card.className = "reward-card";
-                    
-                    const status = request.status || 'Unknown';
-                    const isPending = status.toLowerCase() === 'pending';
-                    const isApproved = status.toLowerCase() === 'approved' || status.toLowerCase() === 'received';
-                    const isRejected = status.toLowerCase() === 'declined' || status.toLowerCase() === 'rejected' || status.toLowerCase() === 'denied';
-                    
-                    let statusDisplay = '';
-                    if (isPending) {
-                        statusDisplay = '<span class="status-circle pending"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z"/></svg></span>';
-                    } else if (isApproved) {
-                        statusDisplay = '<span class="status-circle approved"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span>';
-                    } else if (isRejected) {
-                        statusDisplay = '<span class="status-circle declined"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></span>';
-                    } else {
-                        statusDisplay = `<span class="status-circle">${status.charAt(0).toUpperCase()}</span>`;
+                            rewardsGrid.appendChild(card);
+                        });
                     }
-                    
-                    let dateToShow = 'Unknown date';
+
+                    // Load claimed rewards (all pending/approved/rejected requests) in separate try-catch
                     try {
-                        if (request.timestamp) {
-                            dateToShow = new Date(request.timestamp).toLocaleDateString();
-                        }
-                    } catch (e) {
-                        console.warn('Invalid timestamp:', request.timestamp);
-                    }
+                        // Fetch all reward requests for this user (not just pending)
+                        const allRequestsResponse = await fetch(
+                            `https://beemazing1.onrender.com/api/reward-requests?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`,
+                            { cache: "no-store" },
+                        );
+                        const allRequestsData =
+                            await allRequestsResponse.json();
+                        if (!allRequestsResponse.ok)
+                            throw new Error(
+                                allRequestsData.error ||
+                                    "Failed to fetch all reward requests",
+                            );
+                        const allUserRequests = (
+                            allRequestsData.requests || []
+                        ).filter((req) => req.user === userName);
 
-                    // Determine button based on status
-                    let actionButton = '';
-                    if (isPending) {
-                        actionButton = `<button class="action-btn return-btn" onclick="returnReward('${request.rewardName}', '${request.timestamp}', ${request.rewardCost})">Return</button>`;
-                    } else if (isApproved) {
-                        actionButton = `<button class="action-btn received-btn" onclick="markAsReceived('${request.rewardName}', '${request.timestamp}')">Received</button>`;
-                    } else if (isRejected) {
-                        actionButton = `<button class="action-btn delete-btn" onclick="deleteRejectedReward('${request.rewardName}', '${request.timestamp}')">Remove</button>`;
-                    }
-                    
-                    card.innerHTML = `
-                        <h3 class="text-lg font-semibold" title="${request.rewardName || 'Unknown Reward'}">${truncateTitle(request.rewardName || 'Unknown Reward')}</h3>
+                        claimedGrid.innerHTML = "";
+                        if (allUserRequests.length === 0) {
+                            claimedGrid.innerHTML =
+                                "<p class='text-center'>No claimed rewards yet.</p>";
+                        } else {
+                            const sortedRequests = [
+                                ...allUserRequests,
+                            ].reverse(); // Show newest first
+                            sortedRequests.forEach((request) => {
+                                const card = document.createElement("div");
+                                card.className = "reward-card";
+
+                                const status = request.status || "Unknown";
+                                const isPending =
+                                    status.toLowerCase() === "pending";
+                                const isApproved =
+                                    status.toLowerCase() === "approved" ||
+                                    status.toLowerCase() === "received";
+                                const isRejected =
+                                    status.toLowerCase() === "declined" ||
+                                    status.toLowerCase() === "rejected" ||
+                                    status.toLowerCase() === "denied";
+
+                                let statusDisplay = "";
+                                if (isPending) {
+                                    statusDisplay =
+                                        '<span class="status-circle pending"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z"/></svg></span>';
+                                } else if (isApproved) {
+                                    statusDisplay =
+                                        '<span class="status-circle approved"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span>';
+                                } else if (isRejected) {
+                                    statusDisplay =
+                                        '<span class="status-circle declined"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></span>';
+                                } else {
+                                    statusDisplay = `<span class="status-circle">${status.charAt(0).toUpperCase()}</span>`;
+                                }
+
+                                let dateToShow = "Unknown date";
+                                try {
+                                    if (request.timestamp) {
+                                        dateToShow = new Date(
+                                            request.timestamp,
+                                        ).toLocaleDateString();
+                                    }
+                                } catch (e) {
+                                    console.warn(
+                                        "Invalid timestamp:",
+                                        request.timestamp,
+                                    );
+                                }
+
+                                // Determine button based on status
+                                let actionButton = "";
+                                if (isPending) {
+                                    actionButton = `<button class="action-btn return-btn" onclick="returnReward('${request.rewardName}', '${request.timestamp}', ${request.rewardCost})">Return</button>`;
+                                } else if (isApproved) {
+                                    actionButton = `<button class="action-btn received-btn" onclick="markAsReceived('${request.rewardName}', '${request.timestamp}')">Received</button>`;
+                                } else if (isRejected) {
+                                    actionButton = `<button class="action-btn delete-btn" onclick="deleteRejectedReward('${request.rewardName}', '${request.timestamp}')">Remove</button>`;
+                                }
+
+                                card.innerHTML = `
+                        <h3 class="text-lg font-semibold" title="${request.rewardName || "Unknown Reward"}">${truncateTitle(request.rewardName || "Unknown Reward")}</h3>
                         <p>${request.rewardCost || 0} 🍯</p>
                         <p style="margin-bottom: 0.25rem;">${statusDisplay} ${dateToShow}</p>
                         ${actionButton}
                     `;
-                    claimedGrid.appendChild(card);
-                });
-            }
-        } catch (claimedErr) {
-            console.error("Error loading claimed rewards:", claimedErr);
-            claimedGrid.innerHTML = "<p class='text-center'>Failed to load claimed rewards. Please try again later.</p>";
-        }
-
-        // Load reward history (including pending requests) in separate try-catch
-        try {
-            const historyResponse = await fetch(`https://beemazing1.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`, { cache: "no-store" });
-            const historyData = await historyResponse.json();
-            if (!historyResponse.ok) throw new Error(historyData.error || "Failed to fetch reward history");
-            const rewardHistory = (historyData.rewardHistory || {})[userName] || [];
-
-            // Deduplicate history entries
-            const seenEntries = new Set();
-            const combinedHistory = [];
-            // Only show rewards with "Received" status in the Received section
-            const allHistoryItems = rewardHistory
-                .filter(item => item.status && item.status.toLowerCase() === 'received')
-                .map(item => ({
-                    rewardName: item.rewardName,
-                    rewardCost: item.rewardCost,
-                    status: item.status,
-                    timestamp: item.timestamp
-                }));
-
-            allHistoryItems.forEach(item => {
-                const key = `${item.rewardName}|${item.timestamp}|${item.status}`;
-                if (!seenEntries.has(key)) {
-                    seenEntries.add(key);
-                    combinedHistory.push(item);
-                }
-            });
-
-            historyGrid.innerHTML = "";
-            if (combinedHistory.length === 0) {
-                historyGrid.innerHTML = "<p class='text-center'>No rewards received yet.</p>";
-            } else {
-                const reversedHistory = [...combinedHistory].reverse();
-                reversedHistory.forEach((reward) => {
-                    const card = document.createElement("div");
-                    card.className = "reward-card";
-                    // Determine status display and date logic
-                    const status = reward.status || 'Unknown';
-                    const isApproved = status.toLowerCase() === 'approved' || status.toLowerCase() === 'received';
-                    const isPending = status.toLowerCase() === 'pending';
-                    const isDeclined = status.toLowerCase() === 'declined' || status.toLowerCase() === 'rejected' || status.toLowerCase() === 'denied';
-                    
-                    let statusDisplay = '';
-                    if (isPending) {
-                        statusDisplay = '<span class="status-circle pending"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z"/></svg></span>';
-                    } else if (isApproved) {
-                        statusDisplay = '<span class="status-circle approved"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span>';
-                    } else if (isDeclined) {
-                        statusDisplay = '<span class="status-circle declined"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></span>';
-                    } else {
-                        statusDisplay = `<span class="status-circle">${status.charAt(0).toUpperCase()}</span>`;
-                    }
-                    
-                    // For date display - pending shows claim date, approved shows approval date
-                    let dateToShow = 'Unknown date';
-                    try {
-                        if (reward.timestamp) {
-                            dateToShow = new Date(reward.timestamp).toLocaleDateString();
+                                claimedGrid.appendChild(card);
+                            });
                         }
-                    } catch (e) {
-                        console.warn('Invalid timestamp:', reward.timestamp);
+                    } catch (claimedErr) {
+                        console.error(
+                            "Error loading claimed rewards:",
+                            claimedErr,
+                        );
+                        claimedGrid.innerHTML =
+                            "<p class='text-center'>Failed to load claimed rewards. Please try again later.</p>";
                     }
-                    
-                    card.innerHTML = `
-                        <h3 class="text-lg font-semibold" title="${reward.rewardName || 'Unknown Reward'}">${truncateTitle(reward.rewardName || 'Unknown Reward')}</h3>
+
+                    // Load reward history (including pending requests) in separate try-catch
+                    try {
+                        const historyResponse = await fetch(
+                            `https://beemazing1.onrender.com/api/reward-history?adminEmail=${encodeURIComponent(adminEmail)}&t=${Date.now()}`,
+                            { cache: "no-store" },
+                        );
+                        const historyData = await historyResponse.json();
+                        if (!historyResponse.ok)
+                            throw new Error(
+                                historyData.error ||
+                                    "Failed to fetch reward history",
+                            );
+                        const rewardHistory =
+                            (historyData.rewardHistory || {})[userName] || [];
+
+                        // Deduplicate history entries
+                        const seenEntries = new Set();
+                        const combinedHistory = [];
+                        // Only show rewards with "Received" status in the Received section
+                        const allHistoryItems = rewardHistory
+                            .filter(
+                                (item) =>
+                                    item.status &&
+                                    item.status.toLowerCase() === "received",
+                            )
+                            .map((item) => ({
+                                rewardName: item.rewardName,
+                                rewardCost: item.rewardCost,
+                                status: item.status,
+                                timestamp: item.timestamp,
+                            }));
+
+                        allHistoryItems.forEach((item) => {
+                            const key = `${item.rewardName}|${item.timestamp}|${item.status}`;
+                            if (!seenEntries.has(key)) {
+                                seenEntries.add(key);
+                                combinedHistory.push(item);
+                            }
+                        });
+
+                        historyGrid.innerHTML = "";
+                        if (combinedHistory.length === 0) {
+                            historyGrid.innerHTML =
+                                "<p class='text-center'>No rewards received yet.</p>";
+                        } else {
+                            const reversedHistory = [
+                                ...combinedHistory,
+                            ].reverse();
+                            reversedHistory.forEach((reward) => {
+                                const card = document.createElement("div");
+                                card.className = "reward-card";
+                                // Determine status display and date logic
+                                const status = reward.status || "Unknown";
+                                const isApproved =
+                                    status.toLowerCase() === "approved" ||
+                                    status.toLowerCase() === "received";
+                                const isPending =
+                                    status.toLowerCase() === "pending";
+                                const isDeclined =
+                                    status.toLowerCase() === "declined" ||
+                                    status.toLowerCase() === "rejected" ||
+                                    status.toLowerCase() === "denied";
+
+                                let statusDisplay = "";
+                                if (isPending) {
+                                    statusDisplay =
+                                        '<span class="status-circle pending"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z"/></svg></span>';
+                                } else if (isApproved) {
+                                    statusDisplay =
+                                        '<span class="status-circle approved"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span>';
+                                } else if (isDeclined) {
+                                    statusDisplay =
+                                        '<span class="status-circle declined"><svg viewBox="0 0 24 24" style="width: 12px; height: 12px; fill: white;"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></span>';
+                                } else {
+                                    statusDisplay = `<span class="status-circle">${status.charAt(0).toUpperCase()}</span>`;
+                                }
+
+                                // For date display - pending shows claim date, approved shows approval date
+                                let dateToShow = "Unknown date";
+                                try {
+                                    if (reward.timestamp) {
+                                        dateToShow = new Date(
+                                            reward.timestamp,
+                                        ).toLocaleDateString();
+                                    }
+                                } catch (e) {
+                                    console.warn(
+                                        "Invalid timestamp:",
+                                        reward.timestamp,
+                                    );
+                                }
+
+                                card.innerHTML = `
+                        <h3 class="text-lg font-semibold" title="${reward.rewardName || "Unknown Reward"}">${truncateTitle(reward.rewardName || "Unknown Reward")}</h3>
                         <p>${reward.rewardCost || 0} 🍯</p>
                         <p style="margin-bottom: 0.25rem;">${statusDisplay} ${dateToShow}</p>
                     `;
-                    historyGrid.appendChild(card);
+                                historyGrid.appendChild(card);
+                            });
+                        }
+                    } catch (historyErr) {
+                        console.error(
+                            "Error loading reward history:",
+                            historyErr,
+                        );
+                        historyGrid.innerHTML =
+                            "<p class='text-center'>Failed to load history. Please try again later.</p>";
+                    }
+                } catch (err) {
+                    console.error("Error loading rewards:", err);
+                    rewardsGrid.innerHTML =
+                        "<p class='text-center'>Failed to load rewards. Please try again later.</p>";
+                }
+            }
+
+            async function claimReward(
+                userName,
+                rewardName,
+                rewardType,
+                honey,
+                outcomes,
+            ) {
+                try {
+                    // Fetch user honey balance
+                    const userHoney = await getUserHoney(userName);
+                    if (userHoney < honey) {
+                        alert("Not enough Buzz Points to claim this reward!");
+                        return;
+                    }
+
+                    // Fetch market rewards to check reward type and claim status
+                    const marketResponse = await fetch(
+                        `https://beemazing1.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`,
+                    );
+                    const marketData = await marketResponse.json();
+                    if (!marketResponse.ok)
+                        throw new Error(
+                            marketData.error ||
+                                "Failed to fetch market rewards",
+                        );
+                    const marketRewards = marketData.rewards || [];
+
+                    // Find the specific reward
+                    const reward = marketRewards.find(
+                        (r) => r.name === rewardName,
+                    );
+                    if (!reward) {
+                        alert("This reward is no longer available.");
+                        return;
+                    }
+
+                    // Check if this is a one-time reward and user has already claimed it
+                    if (
+                        reward.type === "oneTime" &&
+                        reward.claimedBy &&
+                        reward.claimedBy.includes(userName)
+                    ) {
+                        alert("You have already claimed this one-time reward!");
+                        return;
+                    }
+
+                    // For one-time rewards, update the claimedBy array
+                    if (reward.type === "oneTime") {
+                        if (!reward.claimedBy) {
+                            reward.claimedBy = [];
+                        }
+                        reward.claimedBy.push(userName);
+
+                        // Update the reward in the database
+                        const updateResponse = await fetch(
+                            "https://beemazing1.onrender.com/api/market-rewards",
+                            {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    adminEmail,
+                                    rewards: marketRewards,
+                                }),
+                            },
+                        );
+                        const updateData = await updateResponse.json();
+                        if (!updateResponse.ok)
+                            throw new Error(
+                                updateData.error ||
+                                    "Failed to update reward status",
+                            );
+                    }
+
+                    // Deduct points and submit reward request
+                    const response = await fetch(
+                        "https://beemazing1.onrender.com/api/reward-request",
+                        {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                adminEmail,
+                                user: userName,
+                                rewardName,
+                                rewardCost: honey,
+                                deductPoints: true,
+                                rewardType: reward.type || "continuous",
+                            }),
+                        },
+                    );
+                    const data = await response.json();
+                    if (!response.ok)
+                        throw new Error(
+                            data.error || "Failed to submit reward request",
+                        );
+
+                    if (reward.type === "oneTime") {
+                        showSuccessPopup(rewardName, "oneTime", honey);
+                    } else {
+                        showSuccessPopup(rewardName, "continuous", honey);
+                    }
+
+                    loadRewards(userName); // Refresh rewards and received
+                } catch (err) {
+                    console.error(`Error requesting ${rewardName}:`, err);
+                    alert(
+                        `Failed to request ${rewardName}: ${err.message}. Please try again or contact support.`,
+                    );
+                }
+            }
+
+            function showRewardEffect(rewardName, userName) {
+                const overlay = document.getElementById("rewardOverlay");
+                const rewardMessage =
+                    document.getElementById("claimedRewardName");
+                rewardMessage.textContent = rewardName;
+
+                overlay.classList.add("show");
+
+                const flash = document.createElement("div");
+                flash.className = "flash";
+                overlay.appendChild(flash);
+                setTimeout(() => flash.remove(), 600);
+
+                for (let i = 0; i < 30; i++) {
+                    const confetti = document.createElement("div");
+                    confetti.className = "confetti";
+                    const angle = Math.random() * 360;
+                    const distance = Math.random() * 20 + 10;
+                    confetti.style.setProperty(
+                        "--x",
+                        Math.cos((angle * Math.PI) / 180) * distance,
+                    );
+                    confetti.style.setProperty(
+                        "--y",
+                        Math.sin((angle * Math.PI) / 180) * distance,
+                    );
+                    confetti.style.left = "50%";
+                    confetti.style.top = "50%";
+                    confetti.style.background =
+                        i % 2 === 0 ? "var(--primary-color)" : "#FFB300";
+                    overlay.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 1500);
+                }
+
+                overlay.addEventListener("click", function closeOverlay(e) {
+                    if (e.target === overlay) {
+                        overlay.classList.remove("show");
+                        overlay.removeEventListener("click", closeOverlay);
+                    }
                 });
             }
-        } catch (historyErr) {
-            console.error("Error loading reward history:", historyErr);
-            historyGrid.innerHTML = "<p class='text-center'>Failed to load history. Please try again later.</p>";
-        }
-    } catch (err) {
-        console.error("Error loading rewards:", err);
-        rewardsGrid.innerHTML = "<p class='text-center'>Failed to load rewards. Please try again later.</p>";
-    }
-}
 
-
-
-
-
-
-
-
-async function claimReward(userName, rewardName, rewardType, honey, outcomes) {
-    try {
-        // Fetch user honey balance
-        const userHoney = await getUserHoney(userName);
-        if (userHoney < honey) {
-            alert("Not enough Buzz Points to claim this reward!");
-            return;
-        }
-
-        // Fetch market rewards to check reward type and claim status
-        const marketResponse = await fetch(`https://beemazing1.onrender.com/api/market-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-        const marketData = await marketResponse.json();
-        if (!marketResponse.ok) throw new Error(marketData.error || "Failed to fetch market rewards");
-        const marketRewards = marketData.rewards || [];
-
-        // Find the specific reward
-        const reward = marketRewards.find(r => r.name === rewardName);
-        if (!reward) {
-            alert("This reward is no longer available.");
-            return;
-        }
-
-        // Check if this is a one-time reward and user has already claimed it
-        if (reward.type === 'oneTime' && reward.claimedBy && reward.claimedBy.includes(userName)) {
-            alert("You have already claimed this one-time reward!");
-            return;
-        }
-
-        // For one-time rewards, update the claimedBy array
-        if (reward.type === 'oneTime') {
-            if (!reward.claimedBy) {
-                reward.claimedBy = [];
-            }
-            reward.claimedBy.push(userName);
-
-            // Update the reward in the database
-            const updateResponse = await fetch("https://beemazing1.onrender.com/api/market-rewards", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ adminEmail, rewards: marketRewards })
-            });
-            const updateData = await updateResponse.json();
-            if (!updateResponse.ok) throw new Error(updateData.error || "Failed to update reward status");
-        }
-
-        // Deduct points and submit reward request
-        const response = await fetch("https://beemazing1.onrender.com/api/reward-request", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                adminEmail,
-                user: userName,
+            async function useDiceChest(
+                userName,
                 rewardName,
-                rewardCost: honey,
-                deductPoints: true,
-                rewardType: reward.type || 'continuous'
-            })
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Failed to submit reward request");
+                encodedOutcomes,
+                quantity,
+            ) {
+                try {
+                    const outcomes = JSON.parse(
+                        atob(decodeURIComponent(encodedOutcomes)),
+                    );
 
-        if (reward.type === 'oneTime') {
-            showSuccessPopup(rewardName, 'oneTime', honey);
-        } else {
-            showSuccessPopup(rewardName, 'continuous', honey);
-        }
-        
-        loadRewards(userName); // Refresh rewards and received
-    } catch (err) {
-        console.error(`Error requesting ${rewardName}:`, err);
-        alert(`Failed to request ${rewardName}: ${err.message}. Please try again or contact support.`);
-    }
-}
+                    const qty = parseInt(quantity, 10);
+                    if (isNaN(qty) || qty <= 0) {
+                        throw new Error("Invalid quantity selected");
+                    }
 
+                    // ✅ DON'T remove the reward yet!
 
+                    const fullChest = { type: "dice", outcomes: outcomes };
+                    const encoded = encodeURIComponent(
+                        btoa(JSON.stringify(fullChest)),
+                    );
 
+                    window.location.href = `/BeeMazing-A1/mobile/4-Market/rollthedice.html?user=${encodeURIComponent(userName)}&data=${encoded}&admin=${encodeURIComponent(adminEmail)}&rewardName=${encodeURIComponent(rewardName)}`;
+                } catch (err) {
+                    console.error("Error using dice chest:", err);
+                    alert(
+                        `Failed to process ${rewardName}: ${err.message}. Please try again.`,
+                    );
+                }
+            }
 
-      
+            async function useTheKey(userName, rewardName, quantity) {
+                try {
+                    const qty = parseInt(quantity, 10);
+                    if (isNaN(qty) || qty <= 0) {
+                        throw new Error("Invalid quantity selected");
+                    }
+                    const userRewardsResponse = await fetch(
+                        `https://beemazing1.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`,
+                    );
+                    const userRewardsData = await userRewardsResponse.json();
+                    if (!userRewardsResponse.ok)
+                        throw new Error(
+                            userRewardsData.error ||
+                                "Failed to fetch user rewards",
+                        );
+                    const userRewards = userRewardsData.userRewards || {};
+                    const rewards = userRewards[userName] || [];
+                    const matchingRewards = rewards.filter(
+                        (r) => r.name === rewardName,
+                    );
+                    if (matchingRewards.length < qty) {
+                        throw new Error(
+                            `Not enough ${rewardName} rewards to use (${matchingRewards.length} available)`,
+                        );
+                    }
 
+                    // Remove 'qty' instances
+                    for (let i = 0; i < qty; i++) {
+                        const rewardIndex = rewards.findIndex(
+                            (r) => r.name === rewardName,
+                        );
+                        if (rewardIndex === -1) break;
+                        rewards.splice(rewardIndex, 1);
+                    }
 
+                    await fetch(
+                        "https://beemazing1.onrender.com/api/user-rewards",
+                        {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                adminEmail,
+                                userRewards: { [userName]: rewards },
+                            }),
+                        },
+                    );
 
+                    const tasksResponse = await fetch(
+                        `https://beemazing1.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`,
+                    );
+                    const tasksData = await tasksResponse.json();
+                    if (!tasksResponse.ok)
+                        throw new Error(
+                            tasksData.error || "Failed to fetch tasks",
+                        );
+                    const allTasks = tasksData.tasks || [];
+                    const userTasks = allTasks.filter((task) =>
+                        task.users.includes(userName),
+                    );
 
-      
+                    const allUsers = new Set();
+                    allTasks.forEach((task) =>
+                        task.users.forEach((user) => allUsers.add(user)),
+                    );
+                    Object.keys(userRewards).forEach((user) =>
+                        allUsers.add(user),
+                    );
 
+                    const taskSelect = document.getElementById("taskSelect");
+                    const userSelect = document.getElementById("userSelect");
+                    taskSelect.innerHTML = "";
+                    userSelect.innerHTML = "";
 
+                    userTasks.forEach((task) => {
+                        const option = document.createElement("option");
+                        option.value = task.title;
+                        option.textContent = task.title;
+                        taskSelect.appendChild(option);
+                    });
 
+                    allUsers.forEach((u) => {
+                        if (u !== userName) {
+                            const option = document.createElement("option");
+                            option.value = u;
+                            option.textContent = u;
+                            userSelect.appendChild(option);
+                        }
+                    });
 
+                    keyTransferData = { userName, rewardName, quantity: qty };
+                    document.getElementById("keyPopup").style.display = "flex";
+                } catch (err) {
+                    console.error("Error loading data for The Key:", err);
+                    alert(
+                        `Failed to load tasks or users for ${rewardName}: ${err.message}. Please try again.`,
+                    );
+                }
+            }
 
+            async function confirmKeyTransfer() {
+                const { userName, rewardName, quantity } = keyTransferData;
+                const selectedTask =
+                    document.getElementById("taskSelect").value;
+                const selectedUser =
+                    document.getElementById("userSelect").value;
 
+                try {
+                    const tasksResponse = await fetch(
+                        `https://beemazing1.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`,
+                    );
+                    const tasksData = await tasksResponse.json();
+                    if (!tasksResponse.ok)
+                        throw new Error(
+                            tasksData.error || "Failed to fetch tasks",
+                        );
+                    const tasks = tasksData.tasks || [];
+                    const taskIndex = tasks.findIndex(
+                        (t) => t.title === selectedTask,
+                    );
+                    if (taskIndex === -1) {
+                        alert("Task not found");
+                        return;
+                    }
 
-      function showRewardEffect(rewardName, userName) {
-          const overlay = document.getElementById("rewardOverlay");
-          const rewardMessage = document.getElementById("claimedRewardName");
-          rewardMessage.textContent = rewardName;
-  
-          overlay.classList.add("show");
-  
-          const flash = document.createElement("div");
-          flash.className = "flash";
-          overlay.appendChild(flash);
-          setTimeout(() => flash.remove(), 600);
-  
-          for (let i = 0; i < 30; i++) {
-              const confetti = document.createElement("div");
-              confetti.className = "confetti";
-              const angle = Math.random() * 360;
-              const distance = Math.random() * 20 + 10;
-              confetti.style.setProperty('--x', Math.cos(angle * Math.PI / 180) * distance);
-              confetti.style.setProperty('--y', Math.sin(angle * Math.PI / 180) * distance);
-              confetti.style.left = '50%';
-              confetti.style.top = '50%';
-              confetti.style.background = i % 2 === 0 ? 'var(--primary-color)' : '#FFB300';
-              overlay.appendChild(confetti);
-              setTimeout(() => confetti.remove(), 1500);
-          }
-  
-          overlay.addEventListener("click", function closeOverlay(e) {
-              if (e.target === overlay) {
-                  overlay.classList.remove("show");
-                  overlay.removeEventListener("click", closeOverlay);
-              }
-          });
-      }
-  
+                    const task = tasks[taskIndex];
+                    const index = task.users.indexOf(userName);
+                    if (index === -1) {
+                        alert("You're not assigned to this task");
+                        return;
+                    }
 
+                    task.tempTurnReplacement = {
+                        original: userName,
+                        replacement: selectedUser,
+                        restoreAfter: true,
+                    };
+                    task.originalOwner = task.originalOwner || {};
+                    task.originalOwner[selectedUser] = userName;
+                    task.turn = selectedUser;
 
+                    await fetch("https://beemazing1.onrender.com/api/tasks", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ adminEmail, task }),
+                    });
 
+                    loadRewards(userName);
+                    document.getElementById("keyPopup").style.display = "none";
+                    alert(
+                        `You delegated "${selectedTask}" to ${selectedUser} ${quantity} time(s)!`,
+                    );
+                } catch (err) {
+                    console.error("Error confirming key transfer:", err);
+                    alert("Failed to delegate task. Please try again.");
+                }
+            }
 
+            function showInsufficientHoneyMessage(needed) {
+                const message = `Not enough honey! You need to earn ${needed} 🍯 to claim this reward`;
+                document.getElementById("honeyPopupMessage").textContent =
+                    message;
+                document.getElementById("honeyPopup").classList.add("show");
+            }
 
+            function closeHoneyPopup() {
+                document.getElementById("honeyPopup").classList.remove("show");
+            }
 
-      async function useDiceChest(userName, rewardName, encodedOutcomes, quantity) {
-  try {
-    const outcomes = JSON.parse(atob(decodeURIComponent(encodedOutcomes)));
+            function showSuccessPopup(rewardName, rewardType, rewardCost) {
+                let message;
+                if (rewardType === "oneTime") {
+                    message = `One-time reward <span class="reward-title">${rewardName}</span> claimed successfully! ${rewardCost} 🍯 deducted.`;
+                } else {
+                    message = `<span class="reward-title">${rewardName}</span> claimed successfully! ${rewardCost} 🍯 deducted.`;
+                }
+                document.getElementById("successPopupMessage").innerHTML =
+                    message;
+                document.getElementById("successPopup").classList.add("show");
+            }
 
-    const qty = parseInt(quantity, 10);
-    if (isNaN(qty) || qty <= 0) {
-      throw new Error("Invalid quantity selected");
-    }
+            function closeSuccessPopup() {
+                document
+                    .getElementById("successPopup")
+                    .classList.remove("show");
+            }
 
-    // ✅ DON'T remove the reward yet!
+            // Function to show description popup
+            function showDescriptionPopup(rewardName, description) {
+                const popup = document.getElementById("descriptionPopup");
+                const title = document.getElementById("descriptionPopupTitle");
+                const text = document.getElementById("descriptionPopupText");
 
-    const fullChest = { type: "dice", outcomes: outcomes };
-    const encoded = encodeURIComponent(btoa(JSON.stringify(fullChest)));
+                title.textContent = rewardName;
+                text.textContent = description;
+                popup.classList.add("show");
+            }
 
-    window.location.href = `/BeeMazing-A1/mobile/4-Market/rollthedice.html?user=${encodeURIComponent(userName)}&data=${encoded}&admin=${encodeURIComponent(adminEmail)}&rewardName=${encodeURIComponent(rewardName)}`;
-  } catch (err) {
-    console.error("Error using dice chest:", err);
-    alert(`Failed to process ${rewardName}: ${err.message}. Please try again.`);
-  }
-}
+            // Function to close description popup
+            function closeDescriptionPopup() {
+                const popup = document.getElementById("descriptionPopup");
+                popup.classList.remove("show");
+            }
 
+            document
+                .getElementById("keyPopup")
+                .addEventListener("click", function (e) {
+                    if (e.target === this) {
+                        this.style.display = "none";
+                    }
+                });
 
+            document
+                .getElementById("honeyPopup")
+                .addEventListener("click", function (e) {
+                    if (e.target === this) {
+                        closeHoneyPopup();
+                    }
+                });
 
-
-
-
-
-
-
-
-
-      async function useTheKey(userName, rewardName, quantity) {
-          try {
-              const qty = parseInt(quantity, 10);
-              if (isNaN(qty) || qty <= 0) {
-                  throw new Error("Invalid quantity selected");
-              }
-              const userRewardsResponse = await fetch(`https://beemazing1.onrender.com/api/user-rewards?adminEmail=${encodeURIComponent(adminEmail)}`);
-              const userRewardsData = await userRewardsResponse.json();
-              if (!userRewardsResponse.ok) throw new Error(userRewardsData.error || "Failed to fetch user rewards");
-              const userRewards = userRewardsData.userRewards || {};
-              const rewards = userRewards[userName] || [];
-              const matchingRewards = rewards.filter(r => r.name === rewardName);
-              if (matchingRewards.length < qty) {
-                  throw new Error(`Not enough ${rewardName} rewards to use (${matchingRewards.length} available)`);
-              }
-  
-              // Remove 'qty' instances
-              for (let i = 0; i < qty; i++) {
-                  const rewardIndex = rewards.findIndex(r => r.name === rewardName);
-                  if (rewardIndex === -1) break;
-                  rewards.splice(rewardIndex, 1);
-              }
-  
-              await fetch("https://beemazing1.onrender.com/api/user-rewards", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ adminEmail, userRewards: { [userName]: rewards } })
-              });
-  
-              const tasksResponse = await fetch(`https://beemazing1.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-              const tasksData = await tasksResponse.json();
-              if (!tasksResponse.ok) throw new Error(tasksData.error || "Failed to fetch tasks");
-              const allTasks = tasksData.tasks || [];
-              const userTasks = allTasks.filter(task => task.users.includes(userName));
-  
-              const allUsers = new Set();
-              allTasks.forEach(task => task.users.forEach(user => allUsers.add(user)));
-              Object.keys(userRewards).forEach(user => allUsers.add(user));
-  
-              const taskSelect = document.getElementById("taskSelect");
-              const userSelect = document.getElementById("userSelect");
-              taskSelect.innerHTML = "";
-              userSelect.innerHTML = "";
-  
-              userTasks.forEach(task => {
-                  const option = document.createElement("option");
-                  option.value = task.title;
-                  option.textContent = task.title;
-                  taskSelect.appendChild(option);
-              });
-  
-              allUsers.forEach(u => {
-                  if (u !== userName) {
-                      const option = document.createElement("option");
-                      option.value = u;
-                      option.textContent = u;
-                      userSelect.appendChild(option);
-                  }
-              });
-  
-              keyTransferData = { userName, rewardName, quantity: qty };
-              document.getElementById("keyPopup").style.display = "flex";
-          } catch (err) {
-              console.error("Error loading data for The Key:", err);
-              alert(`Failed to load tasks or users for ${rewardName}: ${err.message}. Please try again.`);
-          }
-      }
-  
-      async function confirmKeyTransfer() {
-          const { userName, rewardName, quantity } = keyTransferData;
-          const selectedTask = document.getElementById("taskSelect").value;
-          const selectedUser = document.getElementById("userSelect").value;
-  
-          try {
-              const tasksResponse = await fetch(`https://beemazing1.onrender.com/get-tasks?adminEmail=${encodeURIComponent(adminEmail)}`);
-              const tasksData = await tasksResponse.json();
-              if (!tasksResponse.ok) throw new Error(tasksData.error || "Failed to fetch tasks");
-              const tasks = tasksData.tasks || [];
-              const taskIndex = tasks.findIndex(t => t.title === selectedTask);
-              if (taskIndex === -1) {
-                  alert("Task not found");
-                  return;
-              }
-  
-              const task = tasks[taskIndex];
-              const index = task.users.indexOf(userName);
-              if (index === -1) {
-                  alert("You're not assigned to this task");
-                  return;
-              }
-  
-              task.tempTurnReplacement = {
-                  original: userName,
-                  replacement: selectedUser,
-                  restoreAfter: true
-              };
-              task.originalOwner = task.originalOwner || {};
-              task.originalOwner[selectedUser] = userName;
-              task.turn = selectedUser;
-  
-              await fetch("https://beemazing1.onrender.com/api/tasks", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ adminEmail, task })
-              });
-  
-              loadRewards(userName);
-              document.getElementById("keyPopup").style.display = "none";
-              alert(`You delegated "${selectedTask}" to ${selectedUser} ${quantity} time(s)!`);
-          } catch (err) {
-              console.error("Error confirming key transfer:", err);
-              alert("Failed to delegate task. Please try again.");
-          }
-      }
-  
-
-
-
-
-
-
-
-
-      function showInsufficientHoneyMessage(needed) {
-          const message = `Not enough honey! You need to earn ${needed} 🍯 to claim this reward`;
-          document.getElementById('honeyPopupMessage').textContent = message;
-          document.getElementById('honeyPopup').classList.add('show');
-      }
-
-      function closeHoneyPopup() {
-          document.getElementById('honeyPopup').classList.remove('show');
-      }
-
-      function showSuccessPopup(rewardName, rewardType, rewardCost) {
-          let message;
-          if (rewardType === 'oneTime') {
-              message = `One-time reward <span class="reward-title">${rewardName}</span> claimed successfully! ${rewardCost} 🍯 deducted.`;
-          } else {
-              message = `<span class="reward-title">${rewardName}</span> claimed successfully! ${rewardCost} 🍯 deducted.`;
-          }
-          document.getElementById('successPopupMessage').innerHTML = message;
-          document.getElementById('successPopup').classList.add('show');
-      }
-
-      function closeSuccessPopup() {
-          document.getElementById('successPopup').classList.remove('show');
-      }
-
-      // Function to show description popup
-      function showDescriptionPopup(rewardName, description) {
-          const popup = document.getElementById('descriptionPopup');
-          const title = document.getElementById('descriptionPopupTitle');
-          const text = document.getElementById('descriptionPopupText');
-
-          title.textContent = rewardName;
-          text.textContent = description;
-          popup.classList.add('show');
-      }
-
-      // Function to close description popup
-      function closeDescriptionPopup() {
-          const popup = document.getElementById('descriptionPopup');
-          popup.classList.remove('show');
-      }
-
-      document.getElementById("keyPopup").addEventListener("click", function(e) {
-          if (e.target === this) {
-              this.style.display = "none";
-          }
-      });
-
-      document.getElementById("honeyPopup").addEventListener("click", function(e) {
-          if (e.target === this) {
-              closeHoneyPopup();
-          }
-      });
-
-      document.getElementById("successPopup").addEventListener("click", function(e) {
-          if (e.target === this) {
-              closeSuccessPopup();
-          }
-      });
-  </script>
-</body>
+            document
+                .getElementById("successPopup")
+                .addEventListener("click", function (e) {
+                    if (e.target === this) {
+                        closeSuccessPopup();
+                    }
+                });
+        </script>
+    </body>
 </html>

@@ -42,6 +42,11 @@ app.get("/", (req, res) => {
 // Serve static files
 app.use(express.static(path.join(__dirname, "public")));
 
+// Serve manifest.json
+app.get("/manifest.json", (req, res) => {
+  res.sendFile(path.join(__dirname, "../manifest.json"));
+});
+
 // AUTHENTICATION ENDPOINTS
 app.post("/register", async (req, res) => {
   try {
@@ -270,11 +275,24 @@ app.get("/get-users", async (req, res) => {
     const adminDoc = await adminUsers.findOne({ email: adminEmail });
 
     if (!adminDoc) {
-      return res.json({ success: true, users: [] });
+      return res.json({
+        success: true,
+        users: [],
+        permissions: {},
+        avatars: {},
+      });
     }
 
-    const users = Object.keys(adminDoc.permissions || {});
-    res.json({ success: true, users });
+    const users = adminDoc.users || Object.keys(adminDoc.permissions || {});
+    const permissions = adminDoc.permissions || {};
+    const avatars = adminDoc.avatars || {};
+
+    res.json({
+      success: true,
+      users,
+      permissions,
+      avatars,
+    });
   } catch (error) {
     console.error("Error getting users:", error);
     res.status(500).json({
@@ -479,6 +497,75 @@ app.get("/get-permission", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Server error getting permission",
+    });
+  }
+});
+
+// AVATAR ENDPOINTS
+app.get("/get-avatar", async (req, res) => {
+  try {
+    const { adminEmail, user } = req.query;
+
+    if (!adminEmail || !user) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing adminEmail or user",
+      });
+    }
+
+    const db = await connectDB();
+    const adminUsers = db.collection("adminUsers");
+    const adminDoc = await adminUsers.findOne({ email: adminEmail });
+
+    if (!adminDoc || !adminDoc.avatars || !adminDoc.avatars[user]) {
+      return res.json({
+        success: true,
+        avatar: "/BeeMazing-A1/shared/Avatars/default.png",
+      });
+    }
+
+    res.json({
+      success: true,
+      avatar: adminDoc.avatars[user],
+    });
+  } catch (error) {
+    console.error("Error getting avatar:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error getting avatar",
+    });
+  }
+});
+
+app.post("/set-avatar", async (req, res) => {
+  try {
+    const { adminEmail, user, avatar } = req.body;
+
+    if (!adminEmail || !user || !avatar) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing adminEmail, user, or avatar",
+      });
+    }
+
+    const db = await connectDB();
+    const adminUsers = db.collection("adminUsers");
+
+    await adminUsers.updateOne(
+      { email: adminEmail },
+      { $set: { [`avatars.${user}`]: avatar } },
+      { upsert: true },
+    );
+
+    res.json({
+      success: true,
+      message: "Avatar updated successfully",
+    });
+  } catch (error) {
+    console.error("Error setting avatar:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error setting avatar",
     });
   }
 });
