@@ -13,9 +13,12 @@ const corsOptions = {
     "https://g4mechanger.github.io",
     "https://beemazing.github.io",
     "http://127.0.0.1:3000",
+    "http://localhost:3000",
   ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: false,
+  optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
@@ -1244,6 +1247,7 @@ app.post("/reset-password", async (req, res) => {
 });
 
 // ✅ Get reward requests for an admin
+/*
 app.get("/api/reward-requests", async (req, res) => {
   try {
     const { adminEmail } = req.query;
@@ -1548,6 +1552,7 @@ app.get("/api/user-rewards", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch user rewards" });
   }
 });
+*/
 
 // Start server
 const server = app.listen(port, () => {
