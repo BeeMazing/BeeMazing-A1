@@ -1554,6 +1554,87 @@ app.get("/api/user-rewards", async (req, res) => {
 });
 */
 
+// ✅ Get reward history for an admin
+app.get("/api/reward-history", async (req, res) => {
+  try {
+    const { adminEmail } = req.query;
+
+    if (!adminEmail) {
+      return res.status(400).json({ error: "Missing adminEmail" });
+    }
+
+    const db = await connectDB();
+    const admins = db.collection("admins");
+    const admin = await admins.findOne({ email: adminEmail });
+
+    if (!admin) {
+      return res.json({ rewardHistory: {} });
+    }
+
+    res.json({ rewardHistory: admin.rewardHistory || {} });
+  } catch (err) {
+    console.error("Error fetching reward history:", err);
+    res.status(500).json({ error: "Failed to fetch reward history" });
+  }
+});
+
+// ✅ Get reward requests for an admin
+app.get("/api/reward-requests", async (req, res) => {
+  try {
+    const { adminEmail } = req.query;
+
+    if (!adminEmail) {
+      return res.status(400).json({ error: "Missing adminEmail" });
+    }
+
+    const db = await connectDB();
+    const admins = db.collection("admins");
+    const admin = await admins.findOne({ email: adminEmail });
+
+    if (!admin) {
+      return res.json({ success: true, requests: [] });
+    }
+
+    const pendingRewardRequests = admin.pendingRewardRequests || [];
+    const rewardHistory = admin.rewardHistory || {};
+
+    // Combine pending requests with approved/declined requests from history
+    const allRequests = [...pendingRewardRequests];
+
+    // Add approved/declined requests from history back to the requests list
+    if (rewardHistory && typeof rewardHistory === "object") {
+      Object.keys(rewardHistory).forEach((user) => {
+        const userHistory = rewardHistory[user] || [];
+        if (Array.isArray(userHistory)) {
+          userHistory.forEach((historyItem) => {
+            // Only include approved/declined items (not received ones)
+            if (
+              historyItem &&
+              (historyItem.status === "Approved" ||
+                historyItem.status === "Declined")
+            ) {
+              allRequests.push({
+                user: user,
+                rewardName: historyItem.rewardName,
+                rewardCost: historyItem.rewardCost,
+                status: historyItem.status.toLowerCase(),
+                timestamp: historyItem.timestamp
+                  ? new Date(historyItem.timestamp).getTime()
+                  : Date.now(),
+              });
+            }
+          });
+        }
+      });
+    }
+
+    res.json({ success: true, requests: allRequests });
+  } catch (err) {
+    console.error("Error fetching reward requests:", err);
+    res.status(500).json({ error: "Failed to fetch reward requests" });
+  }
+});
+
 // Start server
 const server = app.listen(port, () => {
   console.log(`✅ Server is running on http://localhost:${port}`);
